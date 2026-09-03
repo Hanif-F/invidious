@@ -182,6 +182,7 @@ module Invidious::Routes::Account
     end
 
     Invidious::Database::Users.clear_watch_history(user)
+    Invidious::Database::PlaybackPositions.clear(user.email)
     env.redirect referer
   end
 

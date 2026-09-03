@@ -105,6 +105,35 @@ struct Invidious::User
       if data["preferences"]?
         user.preferences = Preferences.from_json(data["preferences"].to_json)
         Invidious::Database::Users.update_preferences(user)
+        Invidious::Database::PlaybackPositions.clear(user.email) unless user.preferences.save_player_pos
+      end
+
+      if user.preferences.save_player_pos && (positions = data["playback_positions"]?.try &.as_a?)
+        cutoff = Time.utc - Invidious::Database::PlaybackPositions::RETENTION_PERIOD
+
+        valid_positions = positions.compact_map do |item|
+          video_id = item["video_id"]?.try &.as_s?
+          position = item["position"]?.try &.as_i?
+          updated_timestamp = item["updated_at"]?.try &.as_i?
+          updated_at = updated_timestamp.try { |timestamp| Time.unix(timestamp) }
+
+          next unless video_id && video_id.match(/^[a-zA-Z0-9_-]{11}$/)
+          next unless position && position >= 0 && position <= Int32::MAX
+          next unless updated_at && updated_at >= cutoff
+
+          updated_at = Time.utc if updated_at > Time.utc
+          {video_id: video_id, position: position.to_i32, updated_at: updated_at}
+        end
+
+        valid_positions.sort_by!(&.[:updated_at]).reverse!
+        valid_positions.first(Invidious::Database::PlaybackPositions::MAX_POSITIONS_PER_USER).each do |position|
+          Invidious::Database::PlaybackPositions.upsert(
+            user.email,
+            position[:video_id],
+            position[:position],
+            position[:updated_at]
+          )
+        end
       end
 
       if playlists = data["playlists"]?.try &.as_a?

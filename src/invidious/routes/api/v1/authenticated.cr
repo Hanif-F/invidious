@@ -27,6 +27,7 @@ module Invidious::Routes::API::V1::Authenticated
     end
 
     Invidious::Database::Users.update_preferences(user)
+    Invidious::Database::PlaybackPositions.clear(user.email) unless user.preferences.save_player_pos
 
     env.response.status_code = 204
   end
@@ -110,6 +111,57 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
 
     Invidious::Database::Users.clear_watch_history(user)
+    Invidious::Database::PlaybackPositions.clear(user.email)
+    env.response.status_code = 204
+  end
+
+  def self.get_playback_position(env)
+    env.response.content_type = "application/json"
+    user = env.get("user").as(User)
+    id = env.params.url["id"]
+
+    return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+
+    if position = Invidious::Database::PlaybackPositions.select(user.email, id)
+      return {
+        videoId:   position[:video_id],
+        position:  position[:position_seconds],
+        updatedAt: position[:updated_at].to_unix,
+      }.to_json
+    end
+
+    error_json(404, "Playback position does not exist.")
+  end
+
+  def self.set_playback_position(env)
+    user = env.get("user").as(User)
+    id = env.params.url["id"]
+
+    return error_json(409, "Saving playback position is disabled in preferences.") unless user.preferences.save_player_pos
+    return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+
+    position = env.params.json["position"]?
+    unless position.is_a?(Int64) && position >= 0 && position <= Int32::MAX
+      return error_json(400, "Invalid playback position.")
+    end
+
+    Invidious::Database::PlaybackPositions.upsert(user.email, id, position.to_i32)
+    env.response.status_code = 204
+  end
+
+  def self.delete_playback_position(env)
+    user = env.get("user").as(User)
+    id = env.params.url["id"]
+
+    return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+
+    Invidious::Database::PlaybackPositions.delete(user.email, id)
+    env.response.status_code = 204
+  end
+
+  def self.clear_playback_positions(env)
+    user = env.get("user").as(User)
+    Invidious::Database::PlaybackPositions.clear(user.email)
     env.response.status_code = 204
   end
 

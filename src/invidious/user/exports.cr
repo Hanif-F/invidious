@@ -10,6 +10,17 @@ struct Invidious::User
           json.field "subscriptions", user.subscriptions
           json.field "watch_history", user.watched
           json.field "preferences", user.preferences
+          json.field "playback_positions" do
+            json.array do
+              Invidious::Database::PlaybackPositions.select_all(user.email).each do |position|
+                json.object do
+                  json.field "video_id", position[:video_id]
+                  json.field "position", position[:position_seconds]
+                  json.field "updated_at", position[:updated_at].to_unix
+                end
+              end
+            end
+          end
           json.field "playlists" do
             json.array do
               playlists.each do |playlist|

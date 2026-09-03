@@ -374,26 +374,72 @@ if (video_data.premiere_timestamp && Math.round(new Date() / 1000) < video_data.
 
 if (video_data.params.save_player_pos) {
     const url = new URL(location);
-    const hasTimeParam = url.searchParams.has('t');
-    const rememberedTime = get_video_time();
+    const hasTimeParam = url.searchParams.has('t') || url.searchParams.has('start') || url.searchParams.has('time_continue');
+    const rememberedTime = video_data.playback_sync ? (video_data.playback_position || 0) : get_video_time();
     let lastUpdated = 0;
+    let lastSyncedAt = 0;
+    let lastSyncedPosition = -1;
+    let positionCleared = false;
 
     if(!hasTimeParam) {
-      if (rememberedTime >= video_data.length_seconds - 20)
+      if (rememberedTime >= video_data.length_seconds - 20) {
         set_seconds_after_start(0);
-      else
+        if (video_data.playback_sync && rememberedTime > 0)
+          clear_server_video_time(false);
+      } else {
         set_seconds_after_start(rememberedTime);
+      }
     }
 
     player.on('timeupdate', function () {
         const raw = player.currentTime();
         const time = Math.floor(raw);
 
-        if(lastUpdated !== time && raw <= video_data.length_seconds - 15) {
-            save_video_time(time);
-            lastUpdated = time;
+        if (raw > video_data.length_seconds - 15) {
+            if (video_data.playback_sync && !positionCleared) {
+                clear_server_video_time(false);
+                positionCleared = true;
+            }
+            return;
+        }
+
+        positionCleared = false;
+        if (video_data.playback_sync) {
+            const now = Date.now();
+            if (time !== lastSyncedPosition && now - lastSyncedAt >= 15000) {
+                save_server_video_time(time, false);
+                lastSyncedAt = now;
+                lastSyncedPosition = time;
+            }
+        } else if(lastUpdated !== time) {
+          save_video_time(time);
+          lastUpdated = time;
         }
     });
+
+    if (video_data.playback_sync) {
+        const flushPosition = function (useBeacon) {
+            const time = Math.floor(player.currentTime());
+            if (!isFinite(time) || time < 0 || time === lastSyncedPosition)
+                return;
+
+            if (time > video_data.length_seconds - 15) {
+                if (!positionCleared) clear_server_video_time(useBeacon);
+                positionCleared = true;
+            } else {
+                save_server_video_time(time, useBeacon);
+                lastSyncedPosition = time;
+            }
+        };
+
+        player.on('pause', function () { flushPosition(false); });
+        player.on('seeked', function () { flushPosition(false); });
+        player.on('ended', function () {
+            clear_server_video_time(false);
+            positionCleared = true;
+        });
+        window.addEventListener('pagehide', function () { flushPosition(true); });
+    }
 }
 else remove_all_video_times();
 
@@ -524,6 +570,33 @@ function save_video_time(seconds) {
     const all_video_times = get_all_video_times();
     all_video_times[video_data.id] = seconds;
     helpers.storage.set(save_player_pos_key, all_video_times);
+}
+
+function playback_position_payload(position) {
+    let payload = 'csrf_token=' + encodeURIComponent(video_data.csrf_token || '');
+    if (position !== undefined)
+        payload += '&position=' + encodeURIComponent(position);
+    return payload;
+}
+
+function send_playback_position(action, position, useBeacon) {
+    const url = '/watch_ajax?action=' + action + '&redirect=false&id=' + encodeURIComponent(video_data.id);
+    const payload = playback_position_payload(position);
+
+    if (useBeacon && navigator.sendBeacon) {
+        const body = new Blob([payload], {type: 'application/x-www-form-urlencoded'});
+        navigator.sendBeacon(url, body);
+    } else {
+        helpers.xhr('POST', url, {payload: payload}, {});
+    }
+}
+
+function save_server_video_time(seconds, useBeacon) {
+    send_playback_position('set_progress', seconds, useBeacon);
+}
+
+function clear_server_video_time(useBeacon) {
+    send_playback_position('clear_progress', undefined, useBeacon);
 }
 
 function get_video_time() {

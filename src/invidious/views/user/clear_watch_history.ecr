@@ -5,6 +5,7 @@
 <div class="h-box">
     <form class="pure-form pure-form-aligned" action="/clear_watch_history?referer=<%= URI.encode_www_form(referer) %>" method="post">
         <legend><%= I18n.translate(locale, "Clear watch history?") %></legend>
+        <p><%= I18n.translate(locale, "Clearing watch history also removes all saved playback positions.") %></p>
 
         <div class="pure-g">
             <div class="pure-u-1-2">

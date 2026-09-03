@@ -71,6 +71,9 @@ module Invidious::Routes::Watch
       Invidious::Database::Users.mark_watched(user.as(User), id)
     end
 
+    playback_sync = !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now
+    playback_position = playback_sync ? Invidious::Database::PlaybackPositions.select(user.not_nil!.email, id).try(&.[:position_seconds]) : nil
+
     if CONFIG.enable_user_notifications && notifications && notifications.includes? id
       Invidious::Database::Users.remove_notification(user.as(User), id)
       env.get("user").as(User).notifications.delete(id)
@@ -255,6 +258,18 @@ module Invidious::Routes::Watch
       Invidious::Database::Users.mark_watched(user, id)
     when "mark_unwatched"
       Invidious::Database::Users.mark_unwatched(user, id)
+    when "set_progress"
+      return error_json(409, "Saving playback position is disabled in preferences.") unless user.preferences.save_player_pos
+      return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+
+      position = env.params.body["position"]?.try &.to_i?
+      return error_json(400, "Invalid playback position.") unless position && position >= 0
+
+      Invidious::Database::PlaybackPositions.upsert(user.email, id, position)
+    when "clear_progress"
+      return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+
+      Invidious::Database::PlaybackPositions.delete(user.email, id)
     else
       return error_json(400, "Unsupported action #{action}")
     end
