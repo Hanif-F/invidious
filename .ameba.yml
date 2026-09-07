@@ -8,6 +8,7 @@ Lint/UselessAssign:
   - src/invidious.cr
   - src/invidious/helpers/errors.cr
   - src/invidious/routes/**/*.cr
+  - tests/frontend/render_fixtures.cr
 
 # Ignore false negative (if !db.query_one?...)
 Lint/UnreachableCode:

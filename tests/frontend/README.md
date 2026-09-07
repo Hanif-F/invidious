@@ -9,6 +9,7 @@ Thumbnails and video content in the screenshots are synthetic test media.
 With Crystal, Shards, Node.js and FFmpeg installed:
 
 ```sh
+git submodule update --init mocks
 shards install --skip-postinstall --skip-executables
 crystal scripts/fetch-player-dependencies.cr
 crystal run tests/frontend/render_fixtures.cr
