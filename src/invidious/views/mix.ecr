@@ -13,8 +13,8 @@
     </div>
 </div>
 
-<div class="pure-g">
-<% mix.videos.each do |item| %>
+<div class="pure-g media-grid">
+<% mix.videos.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>

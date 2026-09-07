@@ -27,9 +27,9 @@ module Invidious::Frontend::ChannelPage
           str << %(<div class="pure-u-1 pure-md-1-3">\n)
 
           if tab == selected_tab
-            str << "\t<b>"
+            str << "\t<strong aria-current=\"page\">"
             str << I18n.translate(locale, "channel_tab_#{tab_name}_label")
-            str << "</b>\n"
+            str << "</strong>\n"
           else
             # Video tab doesn't have the last path component
             url = tab.videos? ? base_url : "#{base_url}/#{tab_name}"

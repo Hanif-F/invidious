@@ -3,9 +3,15 @@
 <% end %>
 
 <div class="h-box">
-    <form class="pure-form pure-form-aligned" action="/preferences?referer=<%= URI.encode_www_form(referer) %>" method="post">
+    <h1><%= I18n.translate(locale, "Preferences") %></h1>
+    <nav class="preference-nav" aria-label="<%= I18n.translate(locale, "Preferences") %>">
+        <% {"appearance", "playback", "content"}.each do |section| %><a href="#preferences-<%= section %>"><%= I18n.translate(locale, "ui_#{section}") %></a><% end %>
+        <% if env.get?("user") %><a href="#preferences-account"><%= I18n.translate(locale, "ui_account_data") %></a><% end %>
+    </nav>
+    <form class="pure-form pure-form-aligned preferences-form" action="/preferences?referer=<%= URI.encode_www_form(referer) %>" method="post">
         <fieldset>
-            <legend><%= I18n.translate(locale, "preferences_category_player") %></legend>
+            <legend id="preferences-playback"><%= I18n.translate(locale, "ui_playback") %></legend>
+            <p class="preference-description"><%= I18n.translate(locale, "ui_playback_hint") %></p>
 
             <div class="pure-control-group">
                 <label for="video_loop"><%= I18n.translate(locale, "preferences_video_loop_label") %></label>
@@ -79,16 +85,7 @@
                 <span class="pure-form-message-inline" id="volume-value"><%= preferences.volume %></span>
             </div>
 
-            <div class="pure-control-group">
-                <label for="comments[0]"><%= I18n.translate(locale, "preferences_comments_label") %></label>
-                <% preferences.comments.each_with_index do |comments, index| %>
-                    <select name="comments[<%= index %>]" id="comments[<%= index %>]">
-                        <% {"", "youtube", "reddit"}.each do |option| %>
-                            <option value="<%= option %>" <% if preferences.comments[index] == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "none" : option) %></option>
-                        <% end %>
-                    </select>
-                <% end %>
-            </div>
+
 
             <div class="pure-control-group">
                 <label for="captions[0]"><%= I18n.translate(locale, "preferences_captions_label") %></label>
@@ -101,20 +98,14 @@
                 <% end %>
             </div>
 
-            <div class="pure-control-group">
-                <label for="related_videos"><%= I18n.translate(locale, "preferences_related_videos_label") %></label>
-                <input name="related_videos" id="related_videos" type="checkbox" <% if preferences.related_videos %>checked<% end %>>
-            </div>
+
 
             <div class="pure-control-group">
                 <label for="annotations"><%= I18n.translate(locale, "preferences_annotations_label") %></label>
                 <input name="annotations" id="annotations" type="checkbox" <% if preferences.annotations %>checked<% end %>>
             </div>
 
-            <div class="pure-control-group">
-                <label for="extend_desc"><%= I18n.translate(locale, "preferences_extend_desc_label") %></label>
-                <input name="extend_desc" id="extend_desc" type="checkbox" <% if preferences.extend_desc %>checked<% end %>>
-            </div>
+
 
             <div class="pure-control-group">
                 <label for="vr_mode"><%= I18n.translate(locale, "preferences_vr_mode_label") %></label>
@@ -139,7 +130,13 @@
                 </div>
             <% end %>
 
-            <legend><%= I18n.translate(locale, "preferences_category_visual") %></legend>
+            </fieldset><fieldset>
+            <legend id="preferences-appearance"><%= I18n.translate(locale, "ui_appearance") %></legend>
+            <p class="preference-description"><%= I18n.translate(locale, "ui_appearance_hint") %></p>
+            <div class="pure-control-group">
+                <label for="ui_density"><%= I18n.translate(locale, "ui_density") %></label>
+                <select name="ui_density" id="ui_density"><% {"balanced", "compact"}.each do |density| %><option value="<%= density %>" <%= "selected" if preferences.ui_density == density %>><%= I18n.translate(locale, "ui_density_#{density}") %></option><% end %></select>
+            </div>
 
             <div class="pure-control-group">
                 <label for="locale"><%= I18n.translate(locale, "preferences_locale_label") %></label>
@@ -214,7 +211,27 @@
                 </div>
             <% end %>
 
-            <legend><%= I18n.translate(locale, "preferences_category_misc") %></legend>
+            </fieldset><fieldset>
+            <legend id="preferences-content"><%= I18n.translate(locale, "ui_content") %></legend>
+            <p class="preference-description"><%= I18n.translate(locale, "ui_content_hint") %></p>
+            <div class="pure-control-group">
+                <label for="comments[0]"><%= I18n.translate(locale, "preferences_comments_label") %></label>
+                <% preferences.comments.each_with_index do |comments, index| %>
+                    <select name="comments[<%= index %>]" id="comments[<%= index %>]">
+                        <% {"", "youtube", "reddit"}.each do |option| %>
+                            <option value="<%= option %>" <% if preferences.comments[index] == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "none" : option) %></option>
+                        <% end %>
+                    </select>
+                <% end %>
+            </div>
+            <div class="pure-control-group">
+                <label for="related_videos"><%= I18n.translate(locale, "preferences_related_videos_label") %></label>
+                <input name="related_videos" id="related_videos" type="checkbox" <% if preferences.related_videos %>checked<% end %>>
+            </div>
+            <div class="pure-control-group">
+                <label for="extend_desc"><%= I18n.translate(locale, "preferences_extend_desc_label") %></label>
+                <input name="extend_desc" id="extend_desc" type="checkbox" <% if preferences.extend_desc %>checked<% end %>>
+            </div>
 
             <div class="pure-control-group">
                 <label for="automatic_instance_redirect"><%= I18n.translate(locale, "preferences_automatic_instance_redirect_label") %></label>
@@ -228,7 +245,7 @@
             </div>
 
             <% if env.get? "user" %>
-                <legend><%= I18n.translate(locale, "preferences_category_subscription") %></legend>
+                <h2><%= I18n.translate(locale, "preferences_category_subscription") %></h2>
 
                 <div class="pure-control-group">
                     <label for="watch_history"><%= I18n.translate(locale, "preferences_watch_history_label") %></label>
@@ -284,7 +301,7 @@
             <% end %>
 
             <% if env.get?("user") && CONFIG.admins.includes? env.get?("user").as(Invidious::User).email %>
-                <legend><%= I18n.translate(locale, "preferences_category_admin") %></legend>
+                <h2><%= I18n.translate(locale, "preferences_category_admin") %></h2>
 
                 <div class="pure-control-group">
                     <label for="admin_default_home"><%= I18n.translate(locale, "preferences_default_home_label") %></label>
@@ -339,7 +356,7 @@
             <% end %>
 
             <% if env.get? "user" %>
-                <legend><%= I18n.translate(locale, "preferences_category_data") %></legend>
+                <h2 id="preferences-account"><%= I18n.translate(locale, "ui_account_data") %></h2>
 
                 <div class="pure-control-group">
                     <a href="/clear_watch_history?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Clear watch history") %></a>
@@ -374,7 +391,7 @@
                 </div>
             <% end %>
 
-            <div class="pure-controls">
+            <div class="pure-controls preferences-save">
                 <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Save preferences") %></button>
             </div>
         </fieldset>

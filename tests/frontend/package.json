@@ -1,0 +1,6 @@
+{
+  "name": "invidious-frontend-tests",
+  "private": true,
+  "scripts": { "test": "node --test ui.test.cjs" },
+  "devDependencies": { "playwright": "1.62.1" }
+}

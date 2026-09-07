@@ -40,8 +40,8 @@
     <hr>
 </div>
 
-<div class="pure-g">
-<% trending.each do |item| %>
+<div class="pure-g media-grid">
+<% trending.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>

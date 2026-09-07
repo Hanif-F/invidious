@@ -1,0 +1,54 @@
+name: Frontend regression tests
+
+on:
+  push:
+    paths:
+      - 'assets/**'
+      - 'src/**'
+      - 'locales/**'
+      - 'tests/frontend/**'
+      - 'shard.*'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    paths:
+      - 'assets/**'
+      - 'src/**'
+      - 'locales/**'
+      - 'tests/frontend/**'
+      - 'shard.*'
+      - '.github/workflows/frontend.yml'
+
+jobs:
+  browser-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: crystal-lang/install-crystal@v1.9.2
+        with:
+          crystal: 1.19.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/frontend/package-lock.json
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libyaml-dev libxml2-dev ffmpeg
+      - name: Install Crystal dependencies
+        run: shards install --skip-postinstall --skip-executables
+      - name: Fetch pinned player assets
+        run: crystal scripts/fetch-player-dependencies.cr
+      - name: Render production templates with fixture data
+        run: |
+          crystal run tests/frontend/render_fixtures.cr
+          ffmpeg -f lavfi -i color=c=0x303a53:s=320x180:r=12 -t 4 -an -c:v libvpx -y tests/frontend/.generated/fixture.webm
+      - name: Install browser test dependencies
+        working-directory: tests/frontend
+        run: npm ci --ignore-scripts && npx playwright install --with-deps chromium firefox
+      - name: Check frontend behavior and responsive layouts
+        run: node --test tests/frontend/ui.test.cjs
+      - name: Save visual snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-snapshots
+          path: tests/frontend/artifacts/

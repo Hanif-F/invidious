@@ -45,6 +45,8 @@ struct ConfigPreferences
   property sort : String = "published"
   property speed : Float32 = 1.0_f32
   property thin_mode : Bool = false
+  @[YAML::Field(converter: Preferences::UIDensity)]
+  property ui_density : String = "balanced"
   property unseen_only : Bool = false
   property video_loop : Bool = false
   property extend_desc : Bool = false

@@ -11,8 +11,8 @@
 
 <%= rendered "components/feed_menu" %>
 
-<div class="pure-g">
-<% popular_videos.each do |item| %>
+<div class="pure-g media-grid">
+<% popular_videos.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>

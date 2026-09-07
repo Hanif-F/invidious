@@ -10,7 +10,21 @@
 
 <!-- Search redirection and filtering UI -->
 <%= Invidious::Frontend::SearchFilters.generate(query.filters, query.text, query.page, locale) %>
-<hr/>
+<div class="active-filters">
+<% query.filters.to_iv_params.each do |key, value| %>
+    <% value.split(",").each do |option| %>
+        <%
+            remaining = query.to_http_params
+            if key == "features" && value.split(",").size > 1
+                remaining[key] = value.split(",").reject { |feature| feature == option }.join(",")
+            else
+                remaining.delete(key)
+            end
+        %>
+        <a href="/search?<%= HTML.escape(remaining.to_s) %>" aria-label="<%= I18n.translate(locale, "ui_remove_filter") %>: <%= HTML.escape(I18n.translate(locale, "search_filters_#{key}_option_#{option}")) %>"><%= I18n.translate(locale, "search_filters_#{key}_option_#{option}") %> <span aria-hidden="true">×</span></a>
+    <% end %>
+<% end %>
+</div>
 
 
 <%- if items.empty? -%>

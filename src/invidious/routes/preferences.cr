@@ -121,6 +121,9 @@ module Invidious::Routes::PreferencesRoute
     dark_mode = env.params.body["dark_mode"]?.try &.as(String)
     dark_mode ||= CONFIG.default_user_preferences.dark_mode
 
+    ui_density = env.params.body["ui_density"]? || env.get("preferences").as(Preferences).ui_density
+    ui_density = Preferences::UIDensity.normalize(ui_density)
+
     thin_mode = env.params.body["thin_mode"]?.try &.as(String)
     thin_mode ||= "off"
     thin_mode = thin_mode == "on"
@@ -178,6 +181,7 @@ module Invidious::Routes::PreferencesRoute
       sort:                        sort,
       speed:                       speed,
       thin_mode:                   thin_mode,
+      ui_density:                  ui_density,
       unseen_only:                 unseen_only,
       video_loop:                  video_loop,
       volume:                      volume,

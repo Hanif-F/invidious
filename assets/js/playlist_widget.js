@@ -3,7 +3,9 @@ var playlist_data = JSON.parse(document.getElementById('playlist_data').textCont
 var payload = 'csrf_token=' + playlist_data.csrf_token;
 
 function add_playlist_video(target) {
-    var select = target.parentNode.children[0].children[1];
+    var select = target.form.querySelector('select[name=playlist_id]');
+    if (!select || target.disabled) return;
+    target.disabled = true;
     var option = select.children[select.selectedIndex];
 
     var url = '/playlist_ajax?action=add_video&redirect=false' +
@@ -12,9 +14,18 @@ function add_playlist_video(target) {
 
     helpers.xhr('POST', url, {payload: payload}, {
         on200: function (response) {
-            option.textContent = '✓' + option.textContent;
-        }
+            target.disabled = false;
+            if (!option.textContent.startsWith('✓ ')) option.textContent = '✓ ' + option.textContent;
+            var status = document.getElementById('playlist-save-status');
+            if (status) status.textContent = status.dataset.saved;
+        },
+        onNon200: failed, onError: failed, onTimeout: failed
     });
+    function failed() {
+        target.disabled = false;
+        var status = document.getElementById('playlist-save-status');
+        if (status) status.textContent = status.dataset.error;
+    }
 }
 
 function add_playlist_item(target) {

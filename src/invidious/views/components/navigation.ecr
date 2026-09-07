@@ -1,0 +1,12 @@
+<a class="navigation-link" href="/" <%= "aria-current=page" if env.request.path == "/" %>><span aria-hidden="true">⌂</span><%= I18n.translate(locale, "ui_home") %></a>
+<% navigation_feeds = preferences.feed_menu.reject { |feed| feed.empty? || {"Subscriptions", "Playlists", "History"}.includes?(feed) }.uniq %>
+<% navigation_feeds.each do |feed| %>
+    <a class="navigation-link" href="/feed/<%= feed.downcase %>" <%= "aria-current=page" if env.request.path == "/feed/#{feed.downcase}" %>><span aria-hidden="true"><%= {"Popular" => "◇", "Trending" => "↗"}[feed]? || "•" %></span><%= I18n.translate(locale, feed) %></a>
+<% end %>
+<% if env.get?("user") || CONFIG.login_enabled %>
+    <h2 class="navigation-heading"><%= I18n.translate(locale, "ui_library") %></h2>
+    <% {"history" => {"◷", "Watch history"}, "subscriptions" => {"▣", "Subscriptions"}, "playlists" => {"≡", "Playlists"}}.each do |feed, label| %>
+        <a class="navigation-link" href="/feed/<%= feed %>" <%= "aria-current=page" if env.request.path == "/feed/#{feed}" %>><span aria-hidden="true"><%= label[0] %></span><%= I18n.translate(locale, label[1]) %></a>
+    <% end %>
+<% end %>
+<div class="navigation-settings"><a class="navigation-link" href="/preferences" <%= "aria-current=page" if env.request.path == "/preferences" %>><span aria-hidden="true">⚙</span><%= I18n.translate(locale, "Preferences") %></a></div>

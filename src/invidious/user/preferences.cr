@@ -51,6 +51,9 @@ struct Preferences
   property sort : String = CONFIG.default_user_preferences.sort
   property speed : Float32 = CONFIG.default_user_preferences.speed
   property thin_mode : Bool = CONFIG.default_user_preferences.thin_mode
+  @[JSON::Field(converter: Preferences::UIDensity)]
+  @[YAML::Field(converter: Preferences::UIDensity)]
+  property ui_density : String = CONFIG.default_user_preferences.ui_density
   property unseen_only : Bool = CONFIG.default_user_preferences.unseen_only
   property video_loop : Bool = CONFIG.default_user_preferences.video_loop
   property extend_desc : Bool = CONFIG.default_user_preferences.extend_desc
@@ -58,6 +61,28 @@ struct Preferences
   property save_player_pos : Bool = CONFIG.default_user_preferences.save_player_pos
   property default_playlist : String? = nil
   property search_privacy : Bool = CONFIG.default_user_preferences.search_privacy
+
+  module UIDensity
+    def self.normalize(value : String) : String
+      {"balanced", "compact"}.includes?(value) ? value : "balanced"
+    end
+
+    def self.from_json(value : JSON::PullParser) : String
+      normalize(value.read_string)
+    end
+
+    def self.to_json(value : String, json : JSON::Builder)
+      json.string normalize(value)
+    end
+
+    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : String
+      node.is_a?(YAML::Nodes::Scalar) ? normalize(node.value) : "balanced"
+    end
+
+    def self.to_yaml(value : String, yaml : YAML::Nodes::Builder)
+      yaml.scalar normalize(value)
+    end
+  end
 
   module BoolToString
     def self.to_json(value : String, json : JSON::Builder)

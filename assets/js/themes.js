@@ -8,7 +8,7 @@ const THEME_LIGHT = 'light';
 
 // TODO: theme state controlled by system
 toggle_theme.addEventListener('click', function () {
-    const isDarkTheme = helpers.storage.get(STORAGE_KEY_THEME) === THEME_DARK;
+    const isDarkTheme = document.body.classList.contains('dark-theme') || (document.body.classList.contains('no-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
     const newTheme = isDarkTheme ? THEME_LIGHT : THEME_DARK;
     setTheme(newTheme);
     helpers.storage.set(STORAGE_KEY_THEME, newTheme);
@@ -18,15 +18,18 @@ toggle_theme.addEventListener('click', function () {
 /** @param {THEME_DARK|THEME_LIGHT} theme */
 function setTheme(theme) {
     // By default body element has .no-theme class that uses OS theme via CSS @media rules
-    // It rewrites using hard className below
+    // Preserve unrelated classes when switching themes.
     if (theme === THEME_DARK) {
         toggle_theme.children[0].className = 'icon ion-ios-sunny';
-        document.body.className = 'dark-theme';
+        document.body.classList.remove('no-theme', 'light-theme');
+        document.body.classList.add('dark-theme');
     } else if (theme === THEME_LIGHT) {
         toggle_theme.children[0].className = 'icon ion-ios-moon';
-        document.body.className = 'light-theme';
+        document.body.classList.remove('no-theme', 'dark-theme');
+        document.body.classList.add('light-theme');
     } else {
-        document.body.className = 'no-theme';
+        document.body.classList.remove('dark-theme', 'light-theme');
+        document.body.classList.add('no-theme');
     }
 }
 

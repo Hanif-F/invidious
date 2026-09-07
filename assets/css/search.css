@@ -37,7 +37,7 @@
 }
 
 
-fieldset, legend {
+#filters fieldset, #filters legend {
 	display: contents !important;
 	border: none !important;
 	margin: 0 !important;
@@ -85,7 +85,7 @@ fieldset, legend {
 /* Responsive rules */
 
 @media only screen and (max-width: 800px) {
-	summary { font-size: 1.30em; }
+	#filters summary { font-size: 1.30em; }
 	#filters-box {
 		margin: 10px 0 0 0;
 		padding: 0;

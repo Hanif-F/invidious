@@ -4,7 +4,7 @@
   dark_mode = preferences.dark_mode
 %>
 <!DOCTYPE html>
-<html lang="<%= locale %>">
+<html lang="<%= locale %>" dir="<%= I18n.locale_is_rtl?(locale) ? "rtl" : "ltr" %>">
 
 <head>
     <meta charset="utf-8">
@@ -16,31 +16,36 @@
     <link rel="manifest" href="/site.webmanifest?v=<%= ASSET_COMMIT %>">
     <link rel="mask-icon" href="/safari-pinned-tab.svg?v=<%= ASSET_COMMIT %>" color="#575757">
     <meta name="msapplication-TileColor" content="#575757">
-    <meta name="theme-color" content="#575757">
+    <meta name="theme-color" content="#101322">
     <link title="Invidious" type="application/opensearchdescription+xml" rel="search" href="/opensearch.xml">
     <link rel="stylesheet" href="/css/pure-min.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/css/grids-responsive-min.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/css/ionicons.min.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/css/default.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/css/carousel.css?v=<%= ASSET_COMMIT %>">
+    <link rel="stylesheet" href="/css/modern.css?v=<%= ASSET_COMMIT %>">
     <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
 </head>
 
-<body class="<%= dark_mode.blank? ? "no" : dark_mode %>-theme">
+<body class="<%= dark_mode.blank? ? "no" : dark_mode %>-theme" data-page="<%= env.request.path == "/watch" ? "watch" : (env.request.path == "/search" ? "search" : (env.request.path.includes?("playlist") || env.request.path.starts_with?("/mix") ? "playlist" : "browse")) %>" data-density="<%= preferences.ui_density == "compact" ? "compact" : "balanced" %>" data-thin="<%= preferences.thin_mode %>">
+    <a class="skip-link" href="#main-content"><%= I18n.translate(locale, "ui_skip_content") %></a>
     <span style="display:none" id="dark_mode_pref"><%= dark_mode %></span>
     <div class="pure-g">
         <div class="pure-u-1 pure-u-xl-20-24" id="contents">
-            <div class="pure-g navbar h-box">
+            <header class="navbar">
+                <div class="brand-group">
+                    <details class="navigation-menu">
+                        <summary aria-label="<%= I18n.translate(locale, "ui_navigation") %>"><span aria-hidden="true">☰</span><span class="control-label"><%= I18n.translate(locale, "ui_navigation") %></span></summary>
+                        <nav><%= rendered "components/navigation" %></nav>
+                    </details>
+                    <a href="/" class="index-link"><span class="brand-mark" aria-hidden="true">▶</span>Invidious</a>
+                </div>
                 <% if navbar_search %>
-                    <div class="pure-u-1 pure-u-md-4-24">
-                        <a href="/" class="index-link pure-menu-heading">Invidious</a>
-                    </div>
-                    <div class="pure-u-1 pure-u-md-12-24 searchbar">
-                        <% autofocus = false %><%= rendered "components/search_box" %>
-                    </div>
+                <div class="searchbar">
+                    <% autofocus = false %><%= rendered "components/search_box" %>
+                </div>
                 <% end %>
-
-                <div class="pure-u-1 pure-u-md-8-24 user-field">
+                <div class="user-field">
                     <% if env.get? "user" %>
                         <div class="pure-u-1-4">
                             <a id="toggle_theme" href="/toggle_theme?referer=<%= env.get?("current_page") %>" class="pure-menu-heading" title="<%= I18n.translate(locale, "toggle_theme") %>">
@@ -61,11 +66,6 @@
                                 <% end %>
                             </a>
                         </div>
-                        <div class="pure-u-1-4">
-                            <a title="<%= I18n.translate(locale, "Preferences") %>" href="/preferences?referer=<%= env.get?("current_page") %>" class="pure-menu-heading">
-                                <i class="icon ion-ios-cog"></i>
-                            </a>
-                        </div>
                         <% if env.get("preferences").as(Preferences).show_nick %>
                             <div class="pure-u-1-4" style="overflow: hidden; white-space: nowrap;">
                                 <span id="user_name"><%= HTML.escape(env.get("user").as(Invidious::User).email) %></span>
@@ -74,9 +74,7 @@
                         <div class="pure-u-1-4">
                             <form action="/signout?referer=<%= env.get?("current_page") %>" method="post">
                                 <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try &.as(String) || "") %>">
-                                <a class="pure-menu-heading" href="#">
-                                    <input style="all:unset" type="submit" value="<%= I18n.translate(locale, "Log out") %>">
-                                </a>
+                                <button class="pure-menu-heading" type="submit"><%= I18n.translate(locale, "Log out") %></button>
                             </form>
                         </div>
                     <% else %>
@@ -89,11 +87,6 @@
                                 <% end %>
                             </a>
                         </div>
-                        <div class="pure-u-1-3">
-                            <a title="<%= I18n.translate(locale, "Preferences") %>" href="/preferences?referer=<%= env.get?("current_page") %>" class="pure-menu-heading">
-                                <i class="icon ion-ios-cog"></i>
-                            </a>
-                        </div>
                         <% if CONFIG.login_enabled %>
                             <div class="pure-u-1-3">
                                 <a href="/login?referer=<%= env.get?("current_page") %>" class="pure-menu-heading">
@@ -103,7 +96,10 @@
                         <% end %>
                     <% end %>
                 </div>
-            </div>
+            </header>
+            <div class="app-layout">
+                <nav class="navigation-rail" aria-label="<%= I18n.translate(locale, "ui_navigation") %>"><%= rendered "components/navigation" %></nav>
+                <main id="main-content" tabindex="-1">
 
             <% if CONFIG.banner %>
                 <div class="h-box">
@@ -113,6 +109,8 @@
 
             <%= content %>
 
+                </main>
+            </div>
             <footer>
                 <div class="pure-g">
                     <div class="pure-u-1 pure-u-md-1-3">
@@ -176,6 +174,7 @@
     </div>
     <script src="/js/handlers.js?v=<%= ASSET_COMMIT %>"></script>
     <script src="/js/themes.js?v=<%= ASSET_COMMIT %>"></script>
+    <script src="/js/interface.js?v=<%= ASSET_COMMIT %>" defer></script>
     <% if env.get? "user" %>
         <script src="/js/sse.js?v=<%= ASSET_COMMIT %>"></script>
         <script id="notification_data" type="application/json">

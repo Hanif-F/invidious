@@ -1,7 +1,7 @@
 <%= page_nav_html %>
 
-<div class="pure-g">
-    <%- items.each do |item| -%>
+<div class="pure-g media-grid">
+    <%- items.each_with_index do |item, item_position| -%>
         <%= rendered "components/item" %>
     <%- end -%>
 </div>

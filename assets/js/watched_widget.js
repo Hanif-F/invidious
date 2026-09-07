@@ -3,7 +3,7 @@ var watched_data = JSON.parse(document.getElementById('watched_data').textConten
 var payload = 'csrf_token=' + watched_data.csrf_token;
 
 function mark_watched(target) {
-    var tile = target.parentNode.parentNode.parentNode.parentNode.parentNode;
+    var tile = target.closest('.media-item') || target.parentNode.parentNode.parentNode.parentNode.parentNode;
     tile.style.display = 'none';
 
     var url = '/watch_ajax?action=mark_watched&redirect=false' +
@@ -17,7 +17,7 @@ function mark_watched(target) {
 }
 
 function mark_unwatched(target) {
-    var tile = target.parentNode.parentNode.parentNode.parentNode.parentNode;
+    var tile = target.closest('.media-item') || target.parentNode.parentNode.parentNode.parentNode.parentNode;
     tile.style.display = 'none';
     var count = document.getElementById('count');
     count.textContent--;

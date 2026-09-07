@@ -541,39 +541,37 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
   return videos
 end
 
-def template_playlist(playlist, listen)
-  html = <<-END_HTML
-  <h3>
-    <a href="/playlist?list=#{playlist["playlistId"]}">
-      #{playlist["title"]}
-    </a>
-  </h3>
-  <div class="pure-menu pure-menu-scrollable playlist-restricted">
-    <ol class="pure-menu-list">
-  END_HTML
+def template_playlist(playlist, listen, thin_mode = false)
+  template_queue(playlist, listen, false, thin_mode)
+end
 
-  playlist["videos"].as_a.each do |video|
-    html += <<-END_HTML
-      <li class="pure-menu-item" id="#{video["videoId"]}">
-        <a href="/watch?v=#{video["videoId"]}&list=#{playlist["playlistId"]}&index=#{video["index"]}#{listen ? "&listen=1" : ""}">
-          <div class="thumbnail">
-              <img loading="lazy" class="thumbnail" src="/vi/#{video["videoId"]}/mqdefault.jpg" alt="" />
-              <p class="length">#{recode_length_seconds(video["lengthSeconds"].as_i)}</p>
-          </div>
-          <p style="width:100%">#{video["title"]}</p>
-          <p>
-            <b style="width:100%">#{video["author"]}</b>
-          </p>
-        </a>
-      </li>
-    END_HTML
+# The DOM carries occurrence indices; video IDs alone are not unique in playlists.
+def template_queue(playlist, listen, mix = false, thin_mode = false)
+  plid = playlist[mix ? "mixId" : "playlistId"].as_s
+  String.build do |html|
+    html << %(<div class="queue-metadata" hidden data-title="#{HTML.escape(playlist["title"].as_s)}")
+    if count = playlist["videoCount"]?
+      html << %( data-count="#{count.as_i}")
+    end
+    html << "></div><ol>"
+    playlist["videos"].as_a.each do |video|
+      id = video["videoId"].as_s
+      index = video["index"].as_i64
+      title = HTML.escape(video["title"].as_s)
+      author = HTML.escape(video["author"].as_s)
+      url = "/watch?v=#{URI.encode_www_form(id)}&list=#{URI.encode_www_form(plid)}"
+      url += "&index=#{index}" unless mix
+      url += "&listen=1" if listen
+      html << %(<li class="queue-row" data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}">)
+      html << %(<a href="#{HTML.escape(url)}"><span class="queue-number">#{index >= 0 ? (index + 1).to_s : ""}</span>)
+      unless thin_mode
+        html << %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
+      end
+      html << %(<span><span class="queue-title" dir="auto">#{title}</span><span class="queue-meta" dir="auto">#{author})
+      length = video["lengthSeconds"].as_i
+      html << " · #{recode_length_seconds(length)}" if length > 0
+      html << "</span></span></a></li>"
+    end
+    html << "</ol>"
   end
-
-  html += <<-END_HTML
-    </ol>
-  </div>
-  <hr>
-  END_HTML
-
-  html
 end

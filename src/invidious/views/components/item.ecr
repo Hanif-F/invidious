@@ -4,8 +4,9 @@
   author_verified = item.responds_to?(:author_verified) && item.author_verified
 -%>
 
-<div class="pure-u-1 pure-u-md-1-4">
-    <div class="h-box">
+<div class="pure-u-1 pure-u-md-1-4 media-item" data-kind="<%= item.is_a?(PlaylistVideo | MixVideo) ? "playlist-video" : (item.is_a?(SearchChannel) ? "channel" : (item.is_a?(SearchPlaylist | InvidiousPlaylist) ? "playlist" : "video")) %>">
+    <div class="h-box media-card">
+        <% if item.is_a?(PlaylistVideo | MixVideo) %><span class="playlist-position"><%= item.is_a?(PlaylistVideo) && item.plid.starts_with?("IV") ? ((env.params.query["page"]?.try &.to_i? || 1) - 1) * 100 + item_position + 1 : item.index + 1 %></span><% end %>
         <% case item when %>
         <% when SearchChannel %>
             <% if !thin_mode %>
@@ -66,7 +67,7 @@
             <div class="thumbnail">
                 <%- if !thin_mode %>
                     <a tabindex="-1" href="<%= link_url %>">
-                        <img loading="lazy" class="thumbnail" src="<%= URI.parse(item.thumbnail || "/").request_target %>" alt="" />
+                        <img loading="lazy" width="320" height="180" class="thumbnail" src="<%= URI.parse(item.thumbnail || "/").request_target %>" alt="" />
                     </a>
                 <%- else -%>
                     <div class="thumbnail-placeholder"></div>
@@ -127,7 +128,7 @@
             <div class="thumbnail">
                 <%- if !thin_mode -%>
                     <a tabindex="-1" href="<%= link_url %>">
-                        <img loading="lazy" class="thumbnail" src="/vi/<%= item.id %>/mqdefault.jpg" alt="" />
+                        <img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= item.id %>/mqdefault.jpg" alt="" />
 
                         <% if item_watched %>
                             <div class="watched-overlay"></div>

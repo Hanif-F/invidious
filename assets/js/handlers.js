@@ -142,7 +142,9 @@
 
         // Focus search bar on '/'
         if (event.key === '/') {
-            document.getElementById('searchbox').focus();
+            var searchbox = document.getElementById('searchbox');
+            if (!searchbox) return;
+            searchbox.focus();
             event.preventDefault();
         }
     });

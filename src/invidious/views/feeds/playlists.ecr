@@ -22,8 +22,8 @@
     </div>
 </div>
 
-<div class="pure-g">
-<% items_created.each do |item| %>
+<div class="pure-g media-grid">
+<% items_created.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>
@@ -34,8 +34,8 @@
     </div>
 </div>
 
-<div class="pure-g">
-<% items_saved.each do |item| %>
+<div class="pure-g media-grid">
+<% items_saved.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>
