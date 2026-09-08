@@ -1,4 +1,3 @@
-<a class="navigation-link" href="/" <%= "aria-current=page" if env.request.path == "/" %>><span aria-hidden="true">⌂</span><%= I18n.translate(locale, "ui_home") %></a>
 <% navigation_feeds = preferences.feed_menu.reject { |feed| feed.empty? || {"Subscriptions", "Playlists", "History"}.includes?(feed) }.uniq %>
 <% navigation_feeds.each do |feed| %>
     <a class="navigation-link" href="/feed/<%= feed.downcase %>" <%= "aria-current=page" if env.request.path == "/feed/#{feed.downcase}" %>><span aria-hidden="true"><%= {"Popular" => "◇", "Trending" => "↗"}[feed]? || "•" %></span><%= I18n.translate(locale, feed) %></a>

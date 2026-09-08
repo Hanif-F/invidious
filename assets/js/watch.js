@@ -160,7 +160,13 @@ if (queue_toggle) {
         queue_toggle.textContent = expanded ? watch_ui.hide_queue : watch_ui.show_queue;
         if (expanded) reveal_current_queue_item();
     };
-    window.addEventListener('resize', reveal_current_queue_item);
+    var queue_viewport_width = window.innerWidth;
+    window.addEventListener('resize', function () {
+        // Mobile browser chrome changes height during scrolling; preserve the user's place.
+        if (window.innerWidth === queue_viewport_width) return;
+        queue_viewport_width = window.innerWidth;
+        reveal_current_queue_item();
+    });
 }
 
 function get_reddit_comments() {
@@ -235,12 +241,6 @@ addEventListener('load', function (e) {
 
 var reddit_link = document.getElementById('try-reddit-comments-link');
 if (reddit_link) reddit_link.onclick = swap_comments;
-
-var wide_player = document.getElementById('wide-player');
-wide_player.onclick = function () {
-    var wide = document.getElementById('watch-layout').classList.toggle('watch-wide');
-    wide_player.setAttribute('aria-pressed', wide);
-};
 
 document.getElementById('share-video').onclick = function () {
     var url = new URL(location.href);

@@ -133,6 +133,7 @@ module Invidious::Routes::Feeds
       watched = user.watched.reverse[(page - 1) * max_results, max_results]
     end
     watched ||= [] of String
+    history_titles = IV::Database::Videos.select_titles(watched)
 
     # Used for pagination links
     base_url = "/feed/history"

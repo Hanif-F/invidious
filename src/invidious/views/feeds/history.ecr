@@ -49,7 +49,11 @@
                     </form>
                     </div></div>
                 </div>
-                <p><a href="/watch?v=<%= item %>"><%= I18n.translate(locale, "ui_open_video") %> · <%= item %></a></p>
+                <% if history_title = history_titles[item]? %>
+                <p><a href="/watch?v=<%= item %>" dir="auto"><%= HTML.escape(history_title) %></a></p>
+                <% elsif env.get("preferences").as(Preferences).thin_mode %>
+                <p><a href="/watch?v=<%= item %>"><%= I18n.translate(locale, "ui_open_video") %></a></p>
+                <% end %>
             </div>
         </div>
     <% end %>

@@ -28,7 +28,8 @@ ignored by Git.
 ## Coverage and limits
 
 - Production Video.js controls, playback, pause, seeking and playback speed using
-  a local clip, at desktop and touch viewport sizes.
+  a local clip, at desktop and touch viewport sizes. Includes paused auto-hide,
+  mouse/touch wake-up, keyboard focus, speed menus and the in-player wide toggle.
 - Horizontal branding and direct Library links, including customized feed menus.
 - Playlist occurrence selection, previous/next links, recommendation separation,
   retries, empty/end states and mobile queue placement.
@@ -37,6 +38,9 @@ ignored by Git.
 - Theme switching, system theme, thin mode, keyboard interaction and no-JavaScript
   navigation. Responsive checks at 320, 390, 768, 1024, 1440 and 1920 pixels,
   including RTL and enlarged text.
+- History renders escaped locally cached titles, with thumbnail-only fallback;
+  playlist-library thumbnails use desktop cards while playlist entries keep their
+  list layout. Mobile queue scrolling survives browser-toolbar height changes.
 - Initial CSS/JavaScript gzip growth against the recorded pre-redesign revision
   in `asset-baseline.json`. Unchanged player assets are excluded; transcript code
   is fetched only on request. The 30 KiB cap also includes changed assets that do

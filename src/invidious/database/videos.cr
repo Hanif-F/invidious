@@ -49,4 +49,20 @@ module Invidious::Database::Videos
 
     return PG_DB.query_one?(request, id, as: Video)
   end
+
+  # Only read metadata already cached locally; never refresh videos from YouTube.
+  def select_titles(ids : Array(String)) : Hash(String, String)
+    titles = {} of String => String
+    return titles if ids.empty?
+
+    request = <<-SQL
+      SELECT id, title FROM channel_videos WHERE id = ANY($1)
+      UNION ALL
+      SELECT id, info::json ->> 'title' FROM videos WHERE id = ANY($1)
+    SQL
+    PG_DB.query_all(request, ids, as: {String, String?}).each do |id, title|
+      titles[id] = title unless title.nil? || title.blank?
+    end
+    titles
+  end
 end

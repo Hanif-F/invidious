@@ -73,7 +73,7 @@ body .searchbar input[type=search], body .searchbar input[type=search]:focus { b
 .navbar .pure-menu-heading:hover { background: var(--surface-raised); }
 #user_name { display: inline-block; max-width: 100px; text-overflow: ellipsis; overflow: hidden; vertical-align: middle; }
 .navigation-menu { position: relative; }
-.navigation-menu > summary { list-style: none; display: flex; gap: 8px; align-items: center; }
+.navigation-menu > summary { list-style: none; display: flex; gap: 8px; align-items: center; justify-content: center; min-width: 44px; }
 .navigation-menu > summary::-webkit-details-marker { display: none; }
 .navigation-menu nav { position: absolute; inset-block-start: 100%; inset-inline-start: 0; z-index: 25; width: 240px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 12px 32px #0003; }
 .navigation-link { display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 44px; border-radius: 10px; margin-block: 4px; font-size: .95rem; }
@@ -243,8 +243,7 @@ body #filters-box { background: var(--surface); margin: 0; }
   .queue-panel:not([data-expanded=true]) .queue-list { display: none; }
   .queue-row a { grid-template-columns: 24px 100px minmax(0, 1fr); }
   .queue-row img { width: 100px; height: 56px; }
-  .wide-toggle { display: none !important; }
-  .watch-wide #player-container { aspect-ratio: 16 / 9; height: auto; }
+  .watch-wide #player-container { aspect-ratio: 16 / 9; height: auto; max-height: none; }
   .recommendation { grid-template-columns: 180px minmax(0, 1fr); }
 }
 @media (max-width: 767px) {
@@ -313,7 +312,7 @@ body .video-js .vjs-menu .vjs-menu-content { background: #131827; border: 1px so
 body .video-js .vjs-big-play-button { border-radius: 50%; width: 64px; height: 64px; line-height: 60px; margin: -32px 0 0 -32px; top: 50%; left: 50%; border: 1px solid #ffffff80; }
 body .video-js .vjs-menu li.vjs-selected { background: #68def7; color: #071b28; }
 body .video-js button:focus-visible { outline: 3px solid #bc9bff; outline-offset: -3px; }
-body #player-container:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
+body #player-container:has(:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
 body .video-js .vjs-control:focus::before { text-shadow: none; }
 @media (pointer: coarse) {
   .video-js .vjs-control-bar { min-height: 44px; }
@@ -337,3 +336,79 @@ body .searchbar .pure-form input[type=search] { border: 0 !important; }
 .navigation-settings { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 12px; }
 .navigation-menu nav { max-height: min(75vh, 700px); overflow-y: auto; }
 @media (min-width: 1100px) { .navigation-rail { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; } }
+
+/* The playlist library is a card grid; individual playlist entries remain rows. */
+@media (min-width: 768px) {
+  body[data-page=playlist] .playlist-library { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); max-width: none; }
+  body[data-page=playlist][data-density=compact] .playlist-library { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+}
+@media (max-width: 1099px) {
+  body .queue-toggle { width: calc(100% - 32px); margin: 0 16px 12px; text-align: center; font-size: .85rem; }
+  .queue-toggle::after { content: '⌄'; display: inline-block; margin-inline-start: 10px; }
+  .queue-toggle[aria-expanded=true]::after { transform: rotate(180deg); }
+}
+
+/* Larger watch-page controls. Keep video surfaces dark in both page themes. */
+body[data-page=watch] .video-js { font-size: 13px; }
+body[data-page=watch] .video-js .vjs-control-bar {
+  height: 52px; padding: 0 8px; align-items: center; gap: 2px;
+  background: linear-gradient(180deg, #101624eb, #080d17f5); color: #f4f7ff;
+  border-top: 1px solid #ffffff12;
+}
+body[data-page=watch] .video-js .vjs-control { height: 52px; }
+body[data-page=watch] .video-js .vjs-button { width: 44px; min-width: 44px; border-radius: 8px; }
+body[data-page=watch] .video-js .vjs-button > .vjs-icon-placeholder::before { font-size: 24px; line-height: 52px; }
+body[data-page=watch] .video-js .vjs-button:hover { color: #80e7ff; background: #ffffff0c; }
+body[data-page=watch] .video-js .vjs-time-control { font-size: 13px; line-height: 52px; padding: 0 5px; min-width: 0; }
+body[data-page=watch] .video-js .vjs-remaining-time { display: none; }
+body[data-page=watch] .video-js .vjs-spacer { display: block; flex: 1; order: 2; }
+body[data-page=watch] .video-js .vjs-progress-control {
+  position: absolute; top: -30px; left: 12px; right: 12px; width: auto; height: 44px; margin: 0;
+}
+body[data-page=watch] .video-js .vjs-progress-control .vjs-progress-holder {
+  position: relative; height: 5px; width: 100%; margin: 0; border-radius: 4px; font-size: 13px;
+}
+body[data-page=watch] .video-js .vjs-progress-control:hover .vjs-progress-holder { height: 7px; }
+body[data-page=watch] .video-js .vjs-play-progress { background: #68def7; border-radius: 4px; }
+body[data-page=watch] .video-js .vjs-play-progress::before { color: #e9fbff; display: block; }
+body[data-page=watch] .video-js .vjs-slider { background: #ffffff30; }
+body[data-page=watch] .video-js .vjs-load-progress,
+body[data-page=watch] .video-js .vjs-load-progress div { background: #ffffff40; border-radius: 4px; }
+body[data-page=watch] .video-js .vjs-playback-rate-value { font-size: 14px; line-height: 52px; }
+body[data-page=watch] .video-js .vjs-menu-content { padding: 6px; box-shadow: 0 8px 24px #0005; }
+body[data-page=watch] .video-js .vjs-menu li { font-size: 13px; min-height: 44px; line-height: 1.4; padding: 10px; border-radius: 5px; text-transform: none; }
+body[data-page=watch] .video-js .vjs-menu-button-popup .vjs-menu { bottom: 52px; margin-bottom: 0; }
+body[data-page=watch] .video-js .vjs-playback-rate > .vjs-menu { width: 90px; left: -23px; }
+body[data-page=watch] .video-js .vjs-menu .vjs-menu-content { max-height: min(300px, var(--player-menu-height, 120px)); scrollbar-width: thin; scrollbar-color: #60728f #131827; }
+body[data-page=watch] .video-js .vjs-menu li:focus:not(.vjs-selected),
+body[data-page=watch] .video-js .vjs-menu li:hover:not(.vjs-selected) { color: #f4f7ff; background: #26334b; }
+body[data-page=watch] .video-js .vjs-menu-content::-webkit-scrollbar { display: block; width: 5px; }
+body[data-page=watch] .video-js .vjs-menu-content::-webkit-scrollbar-thumb { background: #60728f; border-radius: 5px; }
+body[data-page=watch] .video-js .vjs-big-play-button {
+  width: 76px; height: 76px; margin: -38px 0 0 -38px; line-height: 72px;
+  background: #111c30db; border: 1px solid #80e7ff99; box-shadow: 0 4px 24px #0005;
+}
+body[data-page=watch] .video-js .vjs-wide-control { order: 7; }
+body[data-page=watch] .video-js .vjs-fullscreen-control { order: 8; }
+.vjs-wide-control .vjs-icon-placeholder::before { content: ''; }
+.vjs-wide-control::before { content: ''; display: block; width: 24px; height: 15px; border: 2px solid currentColor; border-radius: 3px; margin: auto; }
+.vjs-wide-control[aria-pressed=true]::before { box-shadow: inset 4px 0 currentColor, inset -4px 0 currentColor; }
+.video-js.vjs-fullscreen .vjs-wide-control { display: none !important; }
+body[data-page=watch] .video-js .mobile-operations-bar { top: 8px; right: 8px !important; border: 1px solid #ffffff20; border-radius: 10px; }
+body[data-page=watch] .video-js .mobile-operations-bar .vjs-menu { top: 52px; bottom: auto; }
+body[data-page=watch] .video-js .mobile-operations-bar .vjs-menu-content { position: relative !important; top: 0; }
+body[data-page=watch] .video-js .vjs-touch-overlay .vjs-play-control {
+  width: 72px; height: 72px; border-radius: 50%; background: #111c30db; border: 1px solid #80e7ff99;
+}
+body[data-page=watch] .vjs-has-started.vjs-user-inactive.vjs-paused:not(.vjs-ended) .vjs-control-bar {
+  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s, visibility .2s;
+}
+/* Never hide a keyboard-focused control or an open settings/captions menu. */
+body[data-page=watch] .video-js.vjs-has-started:has(.vjs-control-bar :focus-visible, .vjs-menu.vjs-lock-showing) .vjs-control-bar {
+  opacity: 1; visibility: visible; pointer-events: auto;
+}
+@media (max-width: 1099px) { .video-js .vjs-wide-control { display: none !important; } }
+@media (max-width: 767px) {
+  body[data-page=watch] .video-js .vjs-control-bar { padding: 0 4px; gap: 0; }
+  body[data-page=watch] .video-js .vjs-control-bar:not(.mobile-operations-bar) { height: auto; min-height: 52px; flex-wrap: wrap; }
+}

@@ -96,8 +96,8 @@ async function pageFor(engine, options = {}) {
 
 for (const engine of engines) {
     test(`${engine}: actual Video.js player retains playback, seeking and controls`, async () => {
-        for (const touch of [false, true]) {
-            const { page, context, errors } = await pageFor(engine, { realPlayer: true, touch, width: touch ? 390 : 1440 });
+        for (const [width, height, touch] of [[1440, 1000, false], [320, 700, true], [390, 844, true], [768, 1000, true], [844, 390, true], [1024, 768, false]]) {
+            const { page, context, errors } = await pageFor(engine, { realPlayer: true, touch, width, height });
             await page.waitForFunction(() => window.player && typeof player.play === 'function');
             await page.evaluate(() => { player.muted(true); player.play(); });
             await page.waitForFunction(() => player.currentTime() > 0.1, { timeout: 10000 });
@@ -109,7 +109,13 @@ for (const engine of engines) {
             assert.equal(await page.locator('.vjs-fullscreen-control').count(), 1);
             assert.equal(await page.locator('button.vjs-captions-button').count(), 1);
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
-            await page.screenshot({ path: path.join(artifacts, `${engine}-actual-player-${touch ? 'mobile' : 'desktop'}.png`) });
+            const playerBox = await page.locator('#player').boundingBox();
+            const fullBox = await page.locator('.vjs-fullscreen-control').boundingBox();
+            assert.ok(fullBox.width >= 44 && fullBox.height >= 44);
+            assert.ok(fullBox.x >= playerBox.x && fullBox.x + fullBox.width <= playerBox.x + playerBox.width + 1);
+            assert.equal(await page.locator('.vjs-wide-control').isVisible(), width >= 1100);
+            await page.screenshot({ path: path.join(artifacts, `${engine}-actual-player-${width}.png`) });
+            if ([390, 1440].includes(width)) await page.screenshot({ path: path.join(artifacts, `${engine}-actual-player-${touch ? 'mobile' : 'desktop'}.png`) });
             assert.deepEqual(errors, []);
             await context.close();
         }
@@ -120,6 +126,9 @@ for (const engine of engines) {
         const rail = page.locator('.navigation-rail');
         for (const feed of ['history', 'subscriptions', 'playlists']) assert.equal(await rail.locator(`a[href="/feed/${feed}"]`).isVisible(), true);
         assert.equal(await rail.locator('a[href="/preferences"]').isVisible(), true);
+        assert.equal(await rail.locator('a[href="/"]').count(), 0);
+        assert.equal(await page.locator('.index-link').getAttribute('href'), '/');
+        assert.equal((await page.locator('.navigation-menu > summary').textContent()).trim(), '☰');
         assert.equal(await page.locator('.user-field a[href*="preferences"]').count(), 0);
         assert.ok((await page.locator('.index-link').boundingBox()).height <= 40);
         await page.setViewportSize({ width: 390, height: 844 });
@@ -127,6 +136,102 @@ for (const engine of engines) {
         for (const feed of ['history', 'subscriptions', 'playlists']) assert.equal(await page.locator(`.navigation-menu a[href="/feed/${feed}"]`).isVisible(), true);
         await page.keyboard.press('Escape');
         assert.equal(await page.locator('.navigation-menu').getAttribute('open'), null);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: player wide control, paused idle state and keyboard access`, async () => {
+        const { page, context, errors } = await pageFor(engine, { realPlayer: true });
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.evaluate(() => player.pause());
+        const wide = page.locator('.vjs-wide-control');
+        assert.equal(await wide.getAttribute('title'), 'Wide player');
+        assert.equal(await page.locator('.watch-actions #wide-player').count(), 0);
+        const before = await page.locator('#player-container').boundingBox();
+        assert.equal(await wide.getAttribute('aria-pressed'), 'true');
+        await wide.click();
+        assert.equal(await wide.getAttribute('aria-pressed'), 'false');
+        assert.ok((await page.locator('#player-container').boundingBox()).width < before.width);
+        await wide.click();
+        assert.equal(await wide.getAttribute('aria-pressed'), 'true');
+        const wideBox = await wide.boundingBox();
+        const fullBox = await page.locator('.vjs-fullscreen-control').boundingBox();
+        assert.ok(Math.abs(fullBox.x - (wideBox.x + wideBox.width)) <= 4);
+        assert.ok(wideBox.width >= 44 && wideBox.height >= 44);
+        await page.mouse.move(0, 0);
+        await page.waitForFunction(() => !player.userActive(), null, { timeout: 6000 });
+        await page.waitForFunction(() => getComputedStyle(player.controlBar.el()).opacity === '0');
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        await page.mouse.move(before.x + 100, before.y + 100, { steps: 5 });
+        await page.waitForFunction(() => getComputedStyle(player.controlBar.el()).opacity === '1');
+        // Keyboard focus must keep the focused control accessible during inactivity.
+        await page.keyboard.press('Tab');
+        await wide.focus();
+        await page.evaluate(() => player.userActive(false));
+        assert.equal(await wide.isVisible(), true);
+        await page.keyboard.press('Enter');
+        assert.equal(await wide.getAttribute('aria-pressed'), 'false');
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: cached history titles and compact desktop playlist library`, async () => {
+        const history = await pageFor(engine, { fixture: 'history' });
+        const cards = history.page.locator('.media-card');
+        assert.match(await cards.nth(0).textContent(), /A journey through light/);
+        assert.match(await cards.nth(1).textContent(), /Light <study> & color/);
+        assert.equal(await cards.nth(2).locator('p').count(), 0);
+        assert.equal(await cards.nth(2).locator('img').count(), 1);
+        assert.equal(history.requests.some(url => url.startsWith('/api/v1/videos/')), false);
+        assert.deepEqual(history.errors, []);
+        await history.context.close();
+        const library = await pageFor(engine, { fixture: 'playlist-library' });
+        const image = library.page.locator('.playlist-library img').first();
+        assert.ok((await image.boundingBox()).width < 420);
+        await library.page.setViewportSize({ width: 390, height: 844 });
+        assert.ok((await image.boundingBox()).width > 300);
+        assert.deepEqual(library.errors, []);
+        await library.context.close();
+    });
+
+    test(`${engine}: mobile paused controls hide, wake on tap, and keep menus usable`, async () => {
+        const { page, context, errors } = await pageFor(engine, { realPlayer: true, touch: true, width: 390, height: 844 });
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.evaluate(() => player.pause());
+        await page.waitForFunction(() => !player.userActive(), null, { timeout: 6000 });
+        await page.locator('.mobile-operations-bar').waitFor({ state: 'hidden' });
+        const box = await page.locator('#player').boundingBox();
+        await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+        await page.waitForFunction(() => player.userActive());
+        await page.locator('.mobile-operations-bar').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.mobile-operations-bar').isVisible(), true);
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        await page.locator('button.vjs-playback-rate').tap();
+        const menu = page.locator('.vjs-playback-rate .vjs-menu');
+        await menu.locator('.vjs-menu-content').waitFor({ state: 'visible', timeout: 3000 });
+        await page.evaluate(() => player.userActive(false));
+        assert.equal(await menu.locator('.vjs-menu-content').isVisible(), true);
+        const menuBox = await menu.locator('.vjs-menu-content').boundingBox();
+        assert.ok(menuBox.x >= box.x && menuBox.x + menuBox.width <= box.x + box.width + 1);
+        assert.ok(menuBox.y + menuBox.height <= box.y + box.height + 1);
+        await page.screenshot({ path: path.join(artifacts, `${engine}-player-mobile-menu.png`) });
+        await menu.getByText('1.5x', { exact: true }).tap();
+        await page.waitForFunction(() => player.playbackRate() === 1.5, null, { timeout: 3000 });
+        await menu.locator('.vjs-menu-content').waitFor({ state: 'hidden' });
+        assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        await page.setViewportSize({ width: 320, height: 700 });
+        await page.locator('button.vjs-playback-rate').tap();
+        await menu.locator('.vjs-menu-content').waitFor({ state: 'visible' });
+        const smallPlayer = await page.locator('#player').boundingBox();
+        const smallMenu = await menu.locator('.vjs-menu-content').boundingBox();
+        assert.ok(smallMenu.y + smallMenu.height <= smallPlayer.y + smallPlayer.height + 1);
+        await menu.getByText('1.5x', { exact: true }).tap();
+        await menu.locator('.vjs-menu-content').waitFor({ state: 'hidden' });
+        assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
         assert.deepEqual(errors, []);
         await context.close();
     });
@@ -211,6 +316,17 @@ for (const engine of engines) {
         assert.equal(await page.locator('#playlist').isVisible(), true);
         assert.equal(await page.locator('#queue-toggle').getAttribute('aria-expanded'), 'true');
         assert.equal(await page.evaluate(() => document.activeElement.id), 'queue-toggle');
+        await page.evaluate(() => {
+            const list = document.getElementById('playlist');
+            const rows = list.querySelector('ol');
+            for (let i = 0; i < 8; i++) rows.appendChild(rows.lastElementChild.cloneNode(true));
+            list.scrollTop = list.scrollHeight;
+        });
+        const scroll = await page.locator('#playlist').evaluate(el => el.scrollTop);
+        assert.ok(scroll > 0);
+        await page.setViewportSize({ width: 390, height: 800 });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.equal(await page.locator('#playlist').evaluate(el => el.scrollTop), scroll);
         assert.deepEqual(errors, []);
         await context.close();
     });
@@ -240,7 +356,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: responsive layouts and representative visual snapshots`, async () => {
-        for (const fixture of ['watch-dark', 'watch-light', 'watch-rtl', 'browse-dark', 'browse-light', 'browse-compact', 'browse-signed-in', 'preferences', 'history']) {
+        for (const fixture of ['watch-dark', 'watch-light', 'watch-rtl', 'browse-dark', 'browse-light', 'browse-compact', 'browse-signed-in', 'preferences', 'history', 'playlist-library']) {
             const session = await pageFor(engine, { fixture });
             for (const width of [320, 390, 768, 1024, 1440, 1920]) {
                 await session.page.setViewportSize({ width, height: 1000 });

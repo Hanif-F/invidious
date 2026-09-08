@@ -87,6 +87,7 @@
     "show_queue" => I18n.translate(locale, "ui_show_queue"),
     "hide_queue" => I18n.translate(locale, "ui_hide_queue"),
     "share" => I18n.translate(locale, "ui_share"),
+    "wide_player" => I18n.translate(locale, "ui_wide_player"),
     "copied" => I18n.translate(locale, "ui_copied"),
     "transcript_error" => I18n.translate(locale, "ui_transcript_error"),
     "transcript_empty" => I18n.translate(locale, "ui_transcript_empty"),
@@ -95,7 +96,7 @@
     "transcript_script" => "/js/transcript.js?v=#{ASSET_COMMIT}",
 }.to_json
 %></script>
-<div class="watch-layout<%= " watch-without-sidebar" unless params.related_videos || plid %>" id="watch-layout">
+<div class="watch-layout watch-wide<%= " watch-without-sidebar" unless params.related_videos || plid %>" id="watch-layout">
     <div class="watch-player">
         <div id="player-container"><%= rendered "components/player" %></div>
     </div>
@@ -229,7 +230,6 @@
 
 
             </div></details>
-            <button type="button" class="pure-button wide-toggle js-only" id="wide-player" aria-pressed="false"><%= I18n.translate(locale, "ui_wide_player") %></button>
         </div>
         <p id="share-status" role="status"></p>
         <div id="share-fallback" hidden class="pure-form"><label for="share-url"><%= I18n.translate(locale, "ui_share") %></label><input id="share-url" readonly type="url"></div>
@@ -378,3 +378,4 @@
 </div>
 <script src="/js/comments.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/watch.js?v=<%= ASSET_COMMIT %>"></script>
+<script src="/js/player-ui.js?v=<%= ASSET_COMMIT %>"></script>

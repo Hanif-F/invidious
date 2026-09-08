@@ -135,6 +135,18 @@ def preferences_fixture(env)
   render "src/invidious/views/user/preferences.ecr", "src/invidious/views/template.ecr"
 end
 
+def playlist_library_fixture
+  env = signed_in_env("/feed/playlists")
+  preferences = env.get("preferences").as(Preferences)
+  locale = preferences.locale
+  items_created = (0...4).map do |i|
+    SearchPlaylist.new({title: "Light and motion #{i + 1}", id: "PLfixture#{i}", author: "Studio North", ucid: "UCfixture", video_count: 12, videos: [] of SearchPlaylistVideo, thumbnail: "/vi/2isYuQZMbdU/mqdefault.jpg", author_verified: false})
+  end
+  items_saved = items_created.first(2)
+  navbar_search = true
+  render "src/invidious/views/feeds/playlists.ecr", "src/invidious/views/template.ecr"
+end
+
 def queue_fixture(thin = false)
   playlist = JSON.parse({playlistId: "PLfixture", title: "Light & motion <study>", videoCount: 4, videos: [
     {videoId: "2isYuQZMbdU", index: 0, title: "Introduction", author: "Studio North", lengthSeconds: 240},
@@ -166,6 +178,7 @@ def history_fixture
   user = env.get("user").as(User)
   user.watched = ["2isYuQZMbdU", "previous001", "nextvideo01"]
   watched = user.watched
+  history_titles = {"2isYuQZMbdU" => "A journey through light, color, and motion", "previous001" => "Light <study> & color"}
   locale = user.preferences.locale
   page = 1
   max_results = 20
@@ -196,4 +209,5 @@ File.write("#{output}/queue-thin.json", queue_fixture(true))
 File.write("#{output}/browse-signed-in.html", browse_fixture(signed_in_env("/feed/popular")))
 File.write("#{output}/navigation-subscribed.html", navigation_fixture)
 File.write("#{output}/history.html", history_fixture)
+File.write("#{output}/playlist-library.html", playlist_library_fixture)
 puts "Rendered frontend fixtures to #{output}"
