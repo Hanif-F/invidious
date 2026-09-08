@@ -66,8 +66,8 @@ YT_POOL              = YoutubeConnectionPool.new(URI.parse("https://www.youtube.
 GGPHT_POOL           = YoutubeConnectionPool.new(URI.parse("https://yt3.ggpht.com"), capacity: 1)
 COMPANION_POOL       = CompanionConnectionPool.new(capacity: 1)
 
-def fixture_env(path, theme = "dark", thin = false, density = "balanced", locale = "en-US")
-  preferences = Preferences.from_json({"dark_mode" => theme, "thin_mode" => thin, "ui_density" => density, "locale" => locale, "comments" => ["", ""], "preload" => false}.to_json)
+def fixture_env(path, theme = "dark", thin = false, density = "balanced", locale = "en-US", visual_theme = "modern-neon")
+  preferences = Preferences.from_json({"theme" => visual_theme, "dark_mode" => theme, "thin_mode" => thin, "ui_density" => density, "locale" => locale, "comments" => ["", ""], "preload" => false}.to_json)
   env = HTTP::Server::Context.new(HTTP::Request.new("GET", path), HTTP::Server::Response.new(IO::Memory.new))
   env.set "preferences", preferences
   env.set "current_page", path
@@ -136,8 +136,9 @@ def preferences_fixture(env)
   render "src/invidious/views/user/preferences.ecr", "src/invidious/views/template.ecr"
 end
 
-def playlist_library_fixture
+def playlist_library_fixture(visual_theme = "modern-neon")
   env = signed_in_env("/feed/playlists")
+  env.get("preferences").as(Preferences).theme = visual_theme
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   items_created = (0...4).map do |i|
@@ -174,8 +175,9 @@ def navigation_fixture
   render "src/invidious/views/components/navigation.ecr"
 end
 
-def history_fixture
+def history_fixture(visual_theme = "modern-neon")
   env = signed_in_env("/feed/history")
+  env.get("preferences").as(Preferences).theme = visual_theme
   user = env.get("user").as(User)
   user.watched = ["2isYuQZMbdU", "previous001", "nextvideo01"]
   watched = user.watched
@@ -186,6 +188,55 @@ def history_fixture
   base_url = "/feed/history"
   navbar_search = true
   render "src/invidious/views/feeds/history.ecr", "src/invidious/views/template.ecr"
+end
+
+def diary_channel_fixture
+  env = fixture_env("/channel/UCfixture", "light", visual_theme: "diary")
+  locale = "en-US"
+  user = nil
+  subscriptions = [] of String
+  channel = AboutChannel.new(ucid: "UCfixture", author: "Studio North", auto_generated: false,
+    author_url: "/channel/UCfixture", author_thumbnail: "https://example.test/avatar", banner: "https://example.test/banner",
+    description: "Collecting the small details of everyday life.", description_html: "Collecting the small details of everyday life.",
+    total_views: 123456_i64, sub_count: 1200, joined: Time.utc, is_family_friendly: true, pronouns: nil,
+    allowed_regions: [] of String, tabs: ["videos", "shorts", "playlists"], tags: [] of String, verified: true, is_age_gated: false)
+  selected_tab = Invidious::Frontend::ChannelPage::TabsAvailable::Videos
+  continuation = next_continuation = nil
+  sort_options = ["newest", "oldest", "popular"]
+  sort_by = "newest"
+  items = [SearchVideo.new({title: "The art of noticing", id: "fixture0", author: "Studio North", ucid: "UCfixture", published: Time.utc, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})]
+  navbar_search = true
+  render "src/invidious/views/channel.ecr", "src/invidious/views/template.ecr"
+end
+
+def diary_login_fixture
+  env = fixture_env("/login", "light", visual_theme: "diary")
+  locale = "en-US"
+  account_type = "invidious"
+  referer = "/"
+  email = password = captcha = nil
+  navbar_search = true
+  render "src/invidious/views/user/login.ecr", "src/invidious/views/template.ecr"
+end
+
+def diary_error_fixture
+  env = fixture_env("/unavailable", "light", visual_theme: "diary")
+  locale = "en-US"
+  error_message = "<h1>This page is unavailable</h1><p>Please try again later.</p>"
+  next_steps = "<a href=\"/\">Return home</a>"
+  navbar_search = true
+  render "src/invidious/views/error.ecr", "src/invidious/views/template.ecr"
+end
+
+def diary_playlist_fixture
+  env = fixture_env("/playlist?list=PLfixture", "light", visual_theme: "diary")
+  locale = "en-US"
+  items = (0...6).map do |i|
+    PlaylistVideo.new({title: "A chapter in light and motion #{i + 1}", id: "fixture#{i}", author: "Studio North", ucid: "UCfixture", length_seconds: 720, published: Time.utc, plid: "PLfixture", index: i.to_i64, live_now: false})
+  end
+  navbar_search = true
+  page_nav_html = ""
+  render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
 end
 
 raise "Density default changed" unless Preferences.from_json("{}").ui_density == "balanced"
@@ -213,8 +264,25 @@ File.write("#{output}/browse-signed-in.html", browse_fixture(signed_in_env("/fee
 File.write("#{output}/navigation-subscribed.html", navigation_fixture)
 File.write("#{output}/history.html", history_fixture)
 File.write("#{output}/playlist-library.html", playlist_library_fixture)
+# Render Diary through the same production templates and preference resolution.
+{"dark", "light", ""}.each do |mode|
+  suffix = mode.empty? ? "auto" : mode
+  File.write("#{output}/browse-diary-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", mode, visual_theme: "diary")))
+  File.write("#{output}/watch-diary-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode, visual_theme: "diary")))
+end
+File.write("#{output}/preferences-diary.html", preferences_fixture(fixture_env("/preferences", "light", visual_theme: "diary")))
+File.write("#{output}/browse-diary-compact.html", browse_fixture(fixture_env("/feed/popular", "light", false, "compact", visual_theme: "diary")))
+File.write("#{output}/browse-diary-thin.html", browse_fixture(fixture_env("/feed/popular", "light", true, visual_theme: "diary")))
+File.write("#{output}/watch-diary-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "light", false, "balanced", "ar", "diary")))
+File.write("#{output}/search-diary.html", browse_fixture(fixture_env("/search?q=light", "light", visual_theme: "diary")))
+File.write("#{output}/playlist-diary.html", diary_playlist_fixture)
+File.write("#{output}/history-diary.html", history_fixture("diary"))
+File.write("#{output}/playlist-library-diary.html", playlist_library_fixture("diary"))
+File.write("#{output}/channel-diary.html", diary_channel_fixture)
+File.write("#{output}/login-diary.html", diary_login_fixture)
+File.write("#{output}/error-diary.html", diary_error_fixture)
 # Register an alternative only inside this fixture process; never ship it as an option.
-Invidious::Themes::AVAILABLE << Invidious::Themes::Theme.new("fixture-theme", "Fixture Theme", "/themes/fixture-theme/theme.css", "/themes/modern-neon/preview.svg")
+Invidious::Themes::AVAILABLE << Invidious::Themes::Theme.new("fixture-theme", "Fixture Theme", "/themes/fixture-theme/theme.css", "/themes/modern-neon/preview.webp")
 begin
   env = fixture_env("/preferences")
   preferences = env.get("preferences").as(Preferences)

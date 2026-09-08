@@ -6,6 +6,13 @@ def check_theme_preferences
     raise "Invalid JSON theme accepted" unless Preferences.from_json({theme: id}.to_json).theme == "modern-neon"
     raise "Invalid YAML theme accepted" unless Preferences.from_yaml({"theme" => id}.to_yaml).theme == "modern-neon"
   end
+  diary = Preferences.from_json(%({"theme":"diary"}))
+  raise "Diary JSON lost" unless Preferences.from_json(diary.to_json).theme == "diary"
+  raise "Diary YAML lost" unless Preferences.from_yaml(diary.to_yaml).theme == "diary"
+  env = theme_post_env("theme=diary")
+  env.set "preferences", diary
+  Invidious::Routes::PreferencesRoute.update(env)
+  raise "Diary cookie lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "diary"
   prefs = Preferences.from_json(%({"theme":"fixture-theme","save_player_pos":true}))
   raise "JSON round trip failed" unless Preferences.from_json(prefs.to_json).theme == "fixture-theme"
   raise "YAML round trip failed" unless Preferences.from_yaml(prefs.to_yaml).theme == "fixture-theme"

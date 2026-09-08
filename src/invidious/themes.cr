@@ -5,7 +5,8 @@ module Invidious::Themes
   record Theme, id : String, name : String, stylesheet : String, preview : String
 
   AVAILABLE = [
-    Theme.new(DEFAULT, "Modern Neon", "/themes/modern-neon/theme.css", "/themes/modern-neon/preview.svg"),
+    Theme.new(DEFAULT, "Modern Neon", "/themes/modern-neon/theme.css", "/themes/modern-neon/preview.webp"),
+    Theme.new("diary", "Diary", "/themes/diary/theme.css", "/themes/diary/preview.webp"),
   ]
 
   def self.resolve(id : String) : Theme

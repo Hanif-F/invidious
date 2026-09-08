@@ -58,6 +58,14 @@ New strings use the existing English fallback until translations are supplied.
 
 Theme fixtures also exercise registry fallback, configured defaults, JSON/YAML,
 anonymous form cookies, account form storage, authenticated preferences and
-preference export/import using in-memory SQLite tables. A second theme is registered
+preference export/import using in-memory SQLite tables. An additional theme is registered
 only in the fixture process to check asset isolation and keyboard selection.
+Diary fixtures cover light/dark/system modes, compact/thin layouts, RTL, enlarged
+text, search and playlist rows, channels, history, login, errors and preferences.
+Its CSS and doodles count toward the 30 KiB asset cap; lazy-loaded screenshot
+previews use the separate budget below.
 The picker submits without JavaScript. See [theming](../../docs/theming.md).
+
+Lazy-loaded theme preview images have a separate 24 KiB compressed budget; the
+shared CSS/JavaScript budget remains 30 KiB. Modern Neon and Diary previews use
+the same 1280×720 browse framing, downsampled to 640×360 WebP screenshots.

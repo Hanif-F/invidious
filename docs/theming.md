@@ -3,7 +3,9 @@
 A theme controls the visual styling of the shared Invidious pages: colors,
 typography, spacing and CSS layout. Modern Neon (`modern-neon`) is the initial
 and fallback theme. Choose it under **Preferences → Appearance → Theme** and
-save. Light/dark/system mode, density, thin mode and player style remain separate
+save. **Diary** (`diary`) offers a paper scrapbook alternative with ink accents,
+taped photo cards and pen doodles; it includes light and charcoal-paper dark modes.
+Light/dark/system mode, density, thin mode and player style remain separate
 preferences. Selection takes effect on the next page load, without JavaScript.
 
 ## Organization and registration
@@ -13,7 +15,7 @@ Each theme has its own folder:
 ```text
 assets/themes/modern-neon/
   theme.css
-  preview.svg
+  preview.webp
 ```
 
 `src/invidious/themes.cr` is the authoritative registry. Every entry has a stable
@@ -36,9 +38,15 @@ changes. Deploy assets with that build. Stylesheets and previews use the existin
 building a release. Restart after replacing assets because the server may cache
 them. The example entry above is not shipped as a selectable theme.
 
-Replace `preview.svg` with your own 16:9 screenshot, preferably at least 640×360.
-To use PNG/WebP instead, change the preview URL in the registry. The initial SVG
-is a schematic placeholder. One preview represents the theme; it does not switch
+Diary ships a WebP screenshot preview rendered from the frontend browse fixture
+with synthetic landscape thumbnails. Its original pen doodles live in `doodles.svg`;
+all decorations are local and non-interactive. Headings use a system handwriting
+font stack, so their appearance varies with installed fonts.
+
+Modern Neon also ships a 640×360 browse screenshot, captured in dark mode with
+the same framing and synthetic thumbnails as Diary. Replace `preview.webp` with
+your own 16:9 screenshot. To use another format, change the preview URL in the
+registry. One preview represents the theme; it does not switch
 with light/dark mode. Images have empty alt text because the adjacent theme name
 labels the radio control. Keep previews local, lightweight and free of private data.
 

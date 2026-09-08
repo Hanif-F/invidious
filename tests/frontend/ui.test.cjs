@@ -101,9 +101,9 @@ for (const engine of engines) {
         const radio = page.getByRole('radio', { name: 'Modern Neon' });
         assert.equal(await radio.isChecked(), true);
         assert.equal(await page.locator('body').getAttribute('data-theme'), 'modern-neon');
-        assert.equal(await page.locator('.theme-card-selected').isVisible(), true);
+        assert.equal(await page.locator('.theme-option').filter({ has: radio }).locator('.theme-card-selected').isVisible(), true);
         await radio.scrollIntoViewIfNeeded();
-        const preview = page.locator('.theme-card img');
+        const preview = page.locator('.theme-option').filter({ has: radio }).locator('img');
         await preview.waitFor();
         assert.equal(await preview.evaluate(img => img.complete && img.naturalWidth > 0), true);
         await radio.focus();
@@ -121,12 +121,75 @@ for (const engine of engines) {
         assert.ok(requests.some(url => url.startsWith('/themes/fixture-theme/theme.css')));
         assert.ok(!requests.some(url => url.startsWith('/themes/modern-neon/theme.css')));
         await page.getByRole('radio', { name: 'Fixture Theme' }).focus();
-        await page.keyboard.press('ArrowLeft');
+        await page.keyboard.press('ArrowRight');
         assert.equal(await page.getByRole('radio', { name: 'Modern Neon' }).isChecked(), true);
         assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
         await page.locator('#toggle_theme').click();
         assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
         await context.close();
+    });
+    test(`${engine}: Diary selection submits without JavaScript and loads alone`, async () => {
+        const { page, context, requests } = await pageFor(engine, { fixture: 'preferences-diary', javascript: false, width: 390 });
+        const radio = page.getByRole('radio', { name: 'Diary', exact: true });
+        assert.equal(await radio.isChecked(), true);
+        for (const img of await page.locator('.theme-card img').all()) {
+            assert.equal(await img.evaluate(el => el.complete && el.naturalWidth > 0), true);
+        }
+        assert.ok(requests.some(url => url.startsWith('/themes/diary/theme.css')));
+        assert.ok(!requests.some(url => url.startsWith('/themes/modern-neon/theme.css')));
+        const posted = page.waitForRequest(request => request.method() === 'POST');
+        await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
+        assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'diary');
+        await context.close();
+    });
+    test(`${engine}: Diary palettes, mode toggle and keyboard selection`, async () => {
+        for (const [mode, systemTheme, expected] of [['light', 'dark', 'light'], ['dark', 'light', 'dark'], ['auto', 'dark', 'dark'], ['auto', 'light', 'light']]) {
+            const { page, context } = await pageFor(engine, { fixture: `browse-diary-${mode}`, systemTheme });
+            assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme), expected);
+            await page.locator('#toggle_theme').click();
+            assert.equal(await page.locator('body').getAttribute('data-theme'), 'diary');
+            assert.equal(await page.locator('body').getAttribute('data-density'), 'balanced');
+            await context.close();
+        }
+        const { page, context } = await pageFor(engine, { fixture: 'preferences' });
+        await page.getByRole('radio', { name: 'Modern Neon' }).focus();
+        await page.keyboard.press('ArrowRight');
+        assert.equal(await page.getByRole('radio', { name: 'Diary', exact: true }).isChecked(), true);
+        await context.close();
+    });
+    test(`${engine}: Diary preserves real player controls`, async () => {
+        for (const width of [390, 1440]) {
+            const { page, context, errors } = await pageFor(engine, { fixture: 'watch-diary-light', realPlayer: true, width, touch: width === 390 });
+            await page.waitForFunction(() => window.player && typeof player.play === 'function');
+            await page.evaluate(() => { player.muted(true); player.play(); });
+            await page.waitForFunction(() => player.currentTime() > 0.1);
+            await page.evaluate(() => { player.pause(); player.currentTime(1); player.playbackRate(1.5); });
+            assert.equal(await page.evaluate(() => player.paused()), true);
+            assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
+            await page.waitForFunction(() => player.currentTime() >= 0.9);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+    test(`${engine}: Diary responsive paper layouts`, async () => {
+        for (const width of [320, 390, 768, 1024, 1440, 1920]) {
+            for (const fixture of ['browse-diary-light', 'browse-diary-dark', 'browse-diary-compact', 'browse-diary-thin', 'watch-diary-light', 'watch-diary-dark', 'watch-diary-rtl', 'preferences-diary', 'search-diary', 'playlist-diary', 'history-diary', 'playlist-library-diary', 'login-diary', 'error-diary', 'channel-diary']) {
+                const { page, context, errors } = await pageFor(engine, { fixture, width });
+                assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${fixture} overflows at ${width}`);
+                assert.deepEqual(errors, []);
+                if ([320, 1440].includes(width)) {
+                    await page.locator('img.thumbnail').evaluateAll(images => Promise.all(images.filter(img => img.getBoundingClientRect().top < innerHeight).map(img => img.decode())));
+                    await page.screenshot({ path: path.join(artifacts, `${engine}-${fixture}-${width}.png`) });
+                }
+                if (fixture === 'browse-diary-light' && width === 320) {
+                    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+                    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Diary enlarged text overflows');
+                    await page.keyboard.press('Tab');
+                    assert.equal(await page.locator('.skip-link').evaluate(el => el === document.activeElement), true);
+                }
+                await context.close();
+            }
+        }
     });
     test(`${engine}: actual Video.js player retains playback, seeking and controls`, async () => {
         for (const [width, height, touch] of [[1440, 1000, false], [320, 700, true], [390, 844, true], [768, 1000, true], [844, 390, true], [1024, 768, false]]) {
@@ -442,4 +505,14 @@ test('UI asset additions stay below the 30KB compressed initial-load budget', ()
     }
     assert.ok(delta <= 30 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
+});
+
+// Picker previews are lazy-loaded on preferences, not part of the site-wide CSS/JS budget.
+test('Theme preview images stay below the 24KB compressed budget', () => {
+    const baseline = require('./asset-baseline.json');
+    let delta = 0;
+    for (const [file, originalBytes] of Object.entries(baseline.previewGzipBytes)) {
+        delta += gzipSync(fs.readFileSync(path.join(root, 'assets', file))).length - originalBytes;
+    }
+    assert.ok(delta <= 24 * 1024, `${delta} preview bytes added`);
 });
