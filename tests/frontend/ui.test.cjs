@@ -35,7 +35,8 @@ async function pageFor(engine, options = {}) {
         javaScriptEnabled: options.javascript !== false,
         colorScheme: options.systemTheme || 'dark',
         reducedMotion: 'reduce',
-        hasTouch: Boolean(options.touch)
+        hasTouch: Boolean(options.touch),
+        ...(options.mobileUserAgent ? { userAgent: 'Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36' } : {})
     });
     const page = await context.newPage();
     const errors = [];
@@ -273,6 +274,37 @@ for (const engine of engines) {
         await context.close();
     });
 
+    test(`${engine}: player menus support transient hover and persistent click modes`, async () => {
+        const { page, context, errors } = await pageFor(engine, { realPlayer: true });
+        const button = page.locator('button.vjs-playback-rate');
+        const menu = page.locator('.vjs-playback-rate .vjs-menu-content');
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.evaluate(() => player.userActive(true));
+        await button.hover();
+        await menu.waitFor({ state: 'visible' });
+        await menu.getByText('1.5x', { exact: true }).hover();
+        assert.equal(await menu.isVisible(), true);
+        await menu.getByText('1.5x', { exact: true }).click();
+        await page.waitForFunction(() => player.playbackRate() === 1.5);
+        await menu.waitFor({ state: 'hidden' });
+
+        await button.hover();
+        await menu.waitFor({ state: 'visible' });
+        await page.mouse.move(0, 0);
+        await menu.waitFor({ state: 'hidden' });
+
+        await button.click();
+        await menu.waitFor({ state: 'visible' });
+        await page.mouse.move(0, 0);
+        assert.equal(await menu.isVisible(), true);
+        await menu.getByText('1.25x', { exact: true }).click();
+        await page.waitForFunction(() => player.playbackRate() === 1.25);
+        await menu.waitFor({ state: 'hidden' });
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
     test(`${engine}: cached history titles and compact desktop playlist library`, async () => {
         const history = await pageFor(engine, { fixture: 'history' });
         const cards = history.page.locator('.media-card');
@@ -328,6 +360,24 @@ for (const engine of engines) {
         await menu.getByText('1.5x', { exact: true }).tap();
         await menu.locator('.vjs-menu-content').waitFor({ state: 'hidden' });
         assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: mobile video taps toggle all controls while playing`, async () => {
+        const { page, context, errors } = await pageFor(engine, { realPlayer: true, touch: true, mobileUserAgent: true, width: 390, height: 844 });
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.waitForFunction(() => !player.userActive(), null, { timeout: 6000 });
+        const box = await page.locator('#player').boundingBox();
+        await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 3);
+        await page.waitForFunction(() => player.userActive());
+        await page.locator('.vjs-touch-overlay.show-play-toggle').waitFor({ state: 'attached' });
+        assert.equal(await page.locator('.mobile-operations-bar').isVisible(), true);
+        await page.touchscreen.tap(box.x + box.width / 4, box.y + box.height / 3);
+        await page.waitForFunction(() => !player.userActive());
+        await page.locator('.mobile-operations-bar').waitFor({ state: 'hidden' });
+        await page.waitForFunction(() => getComputedStyle(document.querySelector('.vjs-touch-overlay .vjs-play-control')).opacity === '0');
         assert.deepEqual(errors, []);
         await context.close();
     });

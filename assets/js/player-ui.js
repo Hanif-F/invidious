@@ -45,6 +45,19 @@
         player.on('dispose', function () { resize.disconnect(); });
     }
 
+    // videojs-mobile-ui only toggles its central play control on a single tap.
+    // Keep the rest of the player chrome in sync with that control so a second
+    // tap hides everything immediately instead of waiting for inactivity.
+    var TouchOverlay = videojs.getComponent('TouchOverlay');
+    if (TouchOverlay && !TouchOverlay.prototype.invidiousTogglesControls_) {
+        var handleSingleTap = TouchOverlay.prototype.handleSingleTap;
+        TouchOverlay.prototype.handleSingleTap = function (event) {
+            handleSingleTap.call(this, event);
+            this.player().userActive(this.hasClass('show-play-toggle'));
+        };
+        TouchOverlay.prototype.invidiousTogglesControls_ = true;
+    }
+
     // Reveal controls when pausing; the existing Video.js idle timer hides them again.
     player.on('pause', function () {
         player.userActive(true);
