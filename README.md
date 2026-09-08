@@ -164,3 +164,8 @@ DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
 PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
 EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
+
+### Visual themes
+
+Choose a visual theme in **Preferences → Appearance → Theme**. See the
+[theming guide](docs/theming.md) to add a theme or replace its preview image.

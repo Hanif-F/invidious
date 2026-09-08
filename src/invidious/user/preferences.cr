@@ -21,6 +21,9 @@ struct Preferences
   @[JSON::Field(converter: Preferences::BoolToString)]
   @[YAML::Field(converter: Preferences::BoolToString)]
   property dark_mode : String = CONFIG.default_user_preferences.dark_mode
+  @[JSON::Field(converter: Preferences::Theme)]
+  @[YAML::Field(converter: Preferences::Theme)]
+  property theme : String = Invidious::Themes.normalize(CONFIG.default_user_preferences.theme)
   property latest_only : Bool = CONFIG.default_user_preferences.latest_only
   property listen : Bool = CONFIG.default_user_preferences.listen
   property local : Bool = CONFIG.default_user_preferences.local
@@ -61,6 +64,24 @@ struct Preferences
   property save_player_pos : Bool = CONFIG.default_user_preferences.save_player_pos
   property default_playlist : String? = nil
   property search_privacy : Bool = CONFIG.default_user_preferences.search_privacy
+
+  module Theme
+    def self.from_json(value : JSON::PullParser) : String
+      Invidious::Themes.normalize(value.read_string)
+    end
+
+    def self.to_json(value : String, json : JSON::Builder)
+      json.string Invidious::Themes.normalize(value)
+    end
+
+    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : String
+      node.is_a?(YAML::Nodes::Scalar) ? Invidious::Themes.normalize(node.value) : Invidious::Themes::DEFAULT
+    end
+
+    def self.to_yaml(value : String, yaml : YAML::Nodes::Builder)
+      yaml.scalar Invidious::Themes.normalize(value)
+    end
+  end
 
   module UIDensity
     def self.normalize(value : String) : String

@@ -734,6 +734,9 @@ default_user_preferences:
   ##
   #dark_mode: "auto"
 
+  # Visual theme ID registered in src/invidious/themes.cr.
+  #theme: "modern-neon"
+
   ##
   ## Enable/Disable thin mode (no video thumbnails).
   ##

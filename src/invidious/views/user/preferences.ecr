@@ -133,6 +133,22 @@
             </fieldset><fieldset>
             <legend id="preferences-appearance"><%= I18n.translate(locale, "ui_appearance") %></legend>
             <p class="preference-description"><%= I18n.translate(locale, "ui_appearance_hint") %></p>
+            <fieldset class="theme-picker" aria-describedby="theme-hint">
+                <legend><%= I18n.translate(locale, "preferences_theme_label") %></legend>
+                <p id="theme-hint" class="preference-description"><%= I18n.translate(locale, "preferences_theme_hint") %></p>
+                <div class="theme-options">
+                    <% Invidious::Themes::AVAILABLE.each do |theme| %>
+                        <label class="theme-option" for="theme-<%= theme.id %>">
+                            <input type="radio" name="theme" id="theme-<%= theme.id %>" value="<%= theme.id %>" <%= "checked" if Invidious::Themes.normalize(preferences.theme) == theme.id %>>
+                            <span class="theme-card">
+                                <img src="<%= theme.preview %>?v=<%= ASSET_COMMIT %>" alt="" width="640" height="360" loading="lazy">
+                                <span class="theme-card-name"><%= HTML.escape(theme.name) %></span>
+                                <span class="theme-card-selected" aria-hidden="true"><%= I18n.translate(locale, "preferences_theme_selected") %></span>
+                            </span>
+                        </label>
+                    <% end %>
+                </div>
+            </fieldset>
             <div class="pure-control-group">
                 <label for="ui_density"><%= I18n.translate(locale, "ui_density") %></label>
                 <select name="ui_density" id="ui_density"><% {"balanced", "compact"}.each do |density| %><option value="<%= density %>" <%= "selected" if preferences.ui_density == density %>><%= I18n.translate(locale, "ui_density_#{density}") %></option><% end %></select>
@@ -166,7 +182,7 @@
             </div>
 
             <div class="pure-control-group">
-                <label for="dark_mode"><%= I18n.translate(locale, "preferences_dark_mode_label") %></label>
+                <label for="dark_mode"><%= I18n.translate(locale, "preferences_color_mode_label") %></label>
                 <select name="dark_mode" id="dark_mode">
                     <% {"", "light", "dark"}.each do |option| %>
                         <option value="<%= option %>" <% if preferences.dark_mode == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "auto" : option) %></option>

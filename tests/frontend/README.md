@@ -55,3 +55,9 @@ required libicu74, libjpeg-turbo8 and libmanette libraries.
 The UI uses the existing renderers, routes and preference storage. `ui_density`
 accepts `balanced` (default) or `compact`. No database migration is required.
 New strings use the existing English fallback until translations are supplied.
+
+Theme fixtures also exercise registry fallback, configured defaults, JSON/YAML,
+anonymous form cookies, account form storage, authenticated preferences and
+preference export/import using in-memory SQLite tables. A second theme is registered
+only in the fixture process to check asset isolation and keyboard selection.
+The picker submits without JavaScript. See [theming](../../docs/theming.md).

@@ -49,21 +49,22 @@ add_context_storage_type(Array(String))
 add_context_storage_type(Preferences)
 add_context_storage_type(Invidious::User)
 
-CONFIG             = Config.from_yaml("hmac_key: frontend-fixtures\n")
-HMAC_KEY           = "frontend-fixtures"
-PG_DB              = DB.open("sqlite3::memory:")
-HOST_URL           = "https://invidious.test"
-MAX_ITEMS_PER_PAGE = 1500
-CURRENT_BRANCH     = "fixture"
-CURRENT_COMMIT     = "fixture"
-CURRENT_VERSION    = "fixture"
-CURRENT_TAG        = ""
-ASSET_COMMIT       = "fixture"
-OUTPUT             = File.open(File::NULL, "w")
-LOGGER             = Invidious::LogHandler.new(OUTPUT, LogLevel::Off)
-YT_POOL            = YoutubeConnectionPool.new(URI.parse("https://www.youtube.com"), capacity: 1)
-GGPHT_POOL         = YoutubeConnectionPool.new(URI.parse("https://yt3.ggpht.com"), capacity: 1)
-COMPANION_POOL     = CompanionConnectionPool.new(capacity: 1)
+NOTIFICATION_CHANNEL = ::Channel(VideoNotification).new(32)
+CONFIG               = Config.from_yaml("hmac_key: frontend-fixtures\n")
+HMAC_KEY             = "frontend-fixtures"
+PG_DB                = DB.open("sqlite3::memory:")
+HOST_URL             = "https://invidious.test"
+MAX_ITEMS_PER_PAGE   = 1500
+CURRENT_BRANCH       = "fixture"
+CURRENT_COMMIT       = "fixture"
+CURRENT_VERSION      = "fixture"
+CURRENT_TAG          = ""
+ASSET_COMMIT         = "fixture"
+OUTPUT               = File.open(File::NULL, "w")
+LOGGER               = Invidious::LogHandler.new(OUTPUT, LogLevel::Off)
+YT_POOL              = YoutubeConnectionPool.new(URI.parse("https://www.youtube.com"), capacity: 1)
+GGPHT_POOL           = YoutubeConnectionPool.new(URI.parse("https://yt3.ggpht.com"), capacity: 1)
+COMPANION_POOL       = CompanionConnectionPool.new(capacity: 1)
 
 def fixture_env(path, theme = "dark", thin = false, density = "balanced", locale = "en-US")
   preferences = Preferences.from_json({"dark_mode" => theme, "thin_mode" => thin, "ui_density" => density, "locale" => locale, "comments" => ["", ""], "preload" => false}.to_json)
@@ -192,6 +193,8 @@ raise "Invalid density accepted" unless Preferences.from_json(%({"ui_density":"u
 raise "Density round trip failed" unless Preferences.from_json(Preferences.from_json(%({"ui_density":"compact"})).to_json).ui_density == "compact"
 raise "Invalid YAML density accepted" unless Preferences.from_yaml("ui_density: unknown").ui_density == "balanced"
 
+require "./theme_checks"
+
 output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
 Dir.mkdir_p(output)
 {"dark", "light", ""}.each do |theme|
@@ -210,4 +213,16 @@ File.write("#{output}/browse-signed-in.html", browse_fixture(signed_in_env("/fee
 File.write("#{output}/navigation-subscribed.html", navigation_fixture)
 File.write("#{output}/history.html", history_fixture)
 File.write("#{output}/playlist-library.html", playlist_library_fixture)
+# Register an alternative only inside this fixture process; never ship it as an option.
+Invidious::Themes::AVAILABLE << Invidious::Themes::Theme.new("fixture-theme", "Fixture Theme", "/themes/fixture-theme/theme.css", "/themes/modern-neon/preview.svg")
+begin
+  env = fixture_env("/preferences")
+  preferences = env.get("preferences").as(Preferences)
+  preferences.theme = "fixture-theme"
+  env.set "preferences", preferences
+  File.write("#{output}/preferences-alternative.html", preferences_fixture(env))
+  check_theme_preferences
+ensure
+  Invidious::Themes::AVAILABLE.pop
+end
 puts "Rendered frontend fixtures to #{output}"

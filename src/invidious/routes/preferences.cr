@@ -121,6 +121,9 @@ module Invidious::Routes::PreferencesRoute
     dark_mode = env.params.body["dark_mode"]?.try &.as(String)
     dark_mode ||= CONFIG.default_user_preferences.dark_mode
 
+    theme = env.params.body["theme"]? || env.get("preferences").as(Preferences).theme
+    theme = Invidious::Themes.normalize(theme)
+
     ui_density = env.params.body["ui_density"]? || env.get("preferences").as(Preferences).ui_density
     ui_density = Preferences::UIDensity.normalize(ui_density)
 
@@ -163,6 +166,7 @@ module Invidious::Routes::PreferencesRoute
       continue:                    continue,
       continue_autoplay:           continue_autoplay,
       dark_mode:                   dark_mode,
+      theme:                       theme,
       latest_only:                 latest_only,
       listen:                      listen,
       local:                       local,

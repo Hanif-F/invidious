@@ -1,0 +1,11 @@
+/* Shared, accessible theme selector. Themes may override its visual styling. */
+.theme-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 320px)); gap: 16px; }
+body .pure-form .theme-option { display: block; position: relative; width: auto; margin: 0; text-align: start; cursor: pointer; }
+.theme-option > input { position: absolute; inset-block-start: 12px; inset-inline-start: 12px; z-index: 1; }
+.theme-card { display: block; height: 100%; overflow: hidden; border: 2px solid var(--line, #777); border-radius: var(--radius, 12px); background: var(--surface, transparent); }
+.theme-card img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+.theme-card-name { display: block; padding: 12px 16px 4px; font-weight: 600; }
+.theme-card-selected { display: block; padding: 0 16px 12px; visibility: hidden; font-size: .875rem; }
+.theme-option > input:checked + .theme-card { border-color: var(--accent, currentColor); }
+.theme-option > input:checked + .theme-card .theme-card-selected { visibility: visible; }
+.theme-option > input:focus-visible + .theme-card { outline: 3px solid var(--focus, currentColor); outline-offset: 3px; }

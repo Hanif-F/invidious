@@ -1,7 +1,9 @@
 {
   "revision": "f19196ca7bcf54b4f5efc59013b34656780a31d0",
   "gzipBytes": {
-    "css/modern.css": 0,
+    "themes/modern-neon/theme.css": 0,
+    "css/theme-picker.css": 0,
+    "themes/modern-neon/preview.svg": 0,
     "js/interface.js": 0,
     "js/player-ui.js": 0,
     "js/watch.js": 1555,

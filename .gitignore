@@ -1,4 +1,5 @@
-/docs/
+/docs/*
+!/docs/theming.md
 /dev/
 /lib/
 /bin/

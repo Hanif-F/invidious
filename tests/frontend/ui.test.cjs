@@ -83,18 +83,51 @@ async function pageFor(engine, options = {}) {
             return route.fulfill({ contentType: 'video/webm', headers: { 'accept-ranges': 'bytes' }, body });
         }
         if (url.pathname.startsWith('/api/v1/captions/')) return route.fulfill({ contentType: 'text/vtt', body: 'WEBVTT\n\n00:00.000 --> 00:04.000\nFixture captions\n' });
-        if (/^\/(css|js|fonts|videojs)\//.test(url.pathname)) {
+        if (url.pathname === '/themes/fixture-theme/theme.css') return route.fulfill({ contentType: 'text/css', body: 'body { --fixture-theme: active; }' });
+        if (/^\/(css|js|fonts|videojs|themes)\//.test(url.pathname)) {
             const file = path.join(root, 'assets', url.pathname);
             if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: '' });
-            return route.fulfill({ contentType: url.pathname.endsWith('.css') ? 'text/css' : url.pathname.endsWith('.js') ? 'application/javascript' : 'application/octet-stream', body: fs.readFileSync(file) });
+            return route.fulfill({ contentType: url.pathname.endsWith('.css') ? 'text/css' : url.pathname.endsWith('.js') ? 'application/javascript' : url.pathname.endsWith('.svg') ? 'image/svg+xml' : 'application/octet-stream', body: fs.readFileSync(file) });
         }
         return route.fulfill({ contentType: 'application/json', body: '{}' });
     });
-    await page.goto('https://invidious.test/' + (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture === 'preferences' ? 'preferences' : 'feed/popular'));
+    await page.goto('https://invidious.test/' + (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture.startsWith('preferences') ? 'preferences' : 'feed/popular'));
     return { page, context, errors, requests, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls };
 }
 
 for (const engine of engines) {
+    test(`${engine}: theme cards render and submit without JavaScript`, async () => {
+        const { page, context } = await pageFor(engine, { fixture: 'preferences', javascript: false, width: 390 });
+        const radio = page.getByRole('radio', { name: 'Modern Neon' });
+        assert.equal(await radio.isChecked(), true);
+        assert.equal(await page.locator('body').getAttribute('data-theme'), 'modern-neon');
+        assert.equal(await page.locator('.theme-card-selected').isVisible(), true);
+        await radio.scrollIntoViewIfNeeded();
+        const preview = page.locator('.theme-card img');
+        await preview.waitFor();
+        assert.equal(await preview.evaluate(img => img.complete && img.naturalWidth > 0), true);
+        await radio.focus();
+        await page.keyboard.press('Space');
+        await page.locator('.theme-picker').screenshot({ path: path.join(artifacts, `${engine}-theme-picker.png`) });
+        const posted = page.waitForRequest(request => request.method() === 'POST');
+        await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
+        assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'modern-neon');
+        await context.close();
+    });
+    test(`${engine}: alternative theme loads in isolation and supports keyboard selection`, async () => {
+        const { page, context, requests } = await pageFor(engine, { fixture: 'preferences-alternative' });
+        assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
+        assert.equal(await page.getByRole('radio', { name: 'Fixture Theme' }).isChecked(), true);
+        assert.ok(requests.some(url => url.startsWith('/themes/fixture-theme/theme.css')));
+        assert.ok(!requests.some(url => url.startsWith('/themes/modern-neon/theme.css')));
+        await page.getByRole('radio', { name: 'Fixture Theme' }).focus();
+        await page.keyboard.press('ArrowLeft');
+        assert.equal(await page.getByRole('radio', { name: 'Modern Neon' }).isChecked(), true);
+        assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
+        await page.locator('#toggle_theme').click();
+        assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
+        await context.close();
+    });
     test(`${engine}: actual Video.js player retains playback, seeking and controls`, async () => {
         for (const [width, height, touch] of [[1440, 1000, false], [320, 700, true], [390, 844, true], [768, 1000, true], [844, 390, true], [1024, 768, false]]) {
             const { page, context, errors } = await pageFor(engine, { realPlayer: true, touch, width, height });

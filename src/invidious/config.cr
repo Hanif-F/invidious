@@ -27,6 +27,8 @@ struct ConfigPreferences
   property continue : Bool = false
   property continue_autoplay : Bool = true
   property dark_mode : String = ""
+  @[YAML::Field(converter: Preferences::Theme)]
+  property theme : String = Invidious::Themes::DEFAULT
   property latest_only : Bool = false
   property listen : Bool = false
   property local : Bool = false
