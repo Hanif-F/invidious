@@ -1,129 +1,175 @@
-# Theming
+# WARNING: THIS IS A BASELINE GUIDANCE, AND ANY PART CAN BE IGNORED TO ACHIVE INTENDED DESIGN
 
-A theme controls the visual styling of the shared Invidious pages: colors,
-typography, spacing and CSS layout. Modern Neon (`modern-neon`) is the initial
-and fallback theme. Choose it under **Preferences → Appearance → Theme** and
-save. **Diary** (`diary`) offers a paper scrapbook alternative with ink accents,
-taped photo cards and pen doodles; it includes light and charcoal-paper dark modes.
-Light/dark/system mode, density, thin mode and player style remain separate
-preferences. Selection takes effect on the next page load, without JavaScript.
+## Theme authoring contract
 
-## Organization and registration
+This document defines what a complete Invidious theme must provide and the shared
+system it must work within. It is intended for human contributors and AI agents
+creating themes. Requirements describe compatibility and completeness; visual
+direction, palette, typography, decoration and CSS organization remain design
+choices. Existing themes are implementations, not specifications for new designs.
 
-Each theme has its own folder:
 
-```text
-assets/themes/modern-neon/
-  theme.css
-  preview.webp
-```
+## System context and boundaries
 
-`src/invidious/themes.cr` is the authoritative registry. Every entry has a stable
-ID, display name, stylesheet URL and preview URL. IDs must be unique lowercase
-slugs (letters, digits and hyphens), and asset URLs must be local absolute paths.
-These are trusted source-code values, not user input. Keep `modern-neon` registered:
-it is the fallback for unknown or removed IDs. Never derive asset URLs directly
-from a submitted preference or load a stylesheet from another theme.
+A theme controls the visual presentation of pages using the shared application
+layout: colors, typography, spacing and CSS layout. The server resolves the active
+theme through the [theme registry](../src/invidious/themes.cr). The
+[main template](../src/invidious/views/template.ecr) loads page-specific header
+styles, shared framework/grid styles, icons and application component styles,
+followed by exactly one registered theme stylesheet.
 
-To add a theme, create its folder and add an entry to `AVAILABLE`, for example:
+The shared CSS is not an unstyled foundation. It contains legacy visual defaults,
+component rules and selectors with their own specificity. A theme must account
+for that cascade; defining tokens alone does not restyle every component. Themes
+must be independent of other themes' stylesheets and assets, with no runtime
+imports from another theme.
 
-```crystal
-Theme.new("paper", "Paper", "/themes/paper/theme.css", "/themes/paper/preview.png"),
-```
+Templates, semantic content, routes, scripts and player behavior belong to the
+shared application. Themes do not provide templates or JavaScript. Preserve
+script hooks, IDs, classes, control semantics and states such as `hidden`, expanded
+and selected. A visual design must not remove functionality or change behavior.
+If additional markup is necessary, it must be a compatible shared hook, verified
+across all themes. Embedded player pages and player styles have their own shared
+implementation; the site theme does not replace that system. On watch pages,
+theme CSS must preserve player controls and the independent player-style preference.
 
-The registry drives both the picker and stylesheet selection. No template changes
-are needed to register a theme. Rebuild and restart the application after registry
-changes. Deploy assets with that build. Stylesheets and previews use the existing
-`ASSET_COMMIT` query parameter for cache invalidation; commit asset changes before
-building a release. Restart after replacing assets because the server may cache
-them. The example entry above is not shipped as a selectable theme.
+Theme identity is separate from light/dark/system color mode, density and thin
+mode. A theme must work with each of those preferences rather than assume a
+particular combination.
 
-Diary ships a WebP screenshot preview rendered from the frontend browse fixture
-with synthetic landscape thumbnails. Its original pen doodles live in `doodles.svg`;
-all decorations are local and non-interactive. Headings use a system handwriting
-font stack, so their appearance varies with installed fonts.
+## Required theme deliverables
 
-Modern Neon also ships a 640×360 browse screenshot, captured in dark mode with
-the same framing and synthetic thumbnails as Diary. Replace `preview.webp` with
-your own 16:9 screenshot. To use another format, change the preview URL in the
-registry. One preview represents the theme; it does not switch
-with light/dark mode. Images have empty alt text because the adjacent theme name
-labels the radio control. Keep previews local, lightweight and free of private data.
+A complete theme consists of:
 
-## Shared foundation and theme contract
+- **Registry identity:** a unique, stable lowercase slug using letters, digits and
+  hyphens, a human-readable display name, and explicit stylesheet and preview URLs
+  in the registry. `random` is reserved for the shared Random picker option.
+- **Independent stylesheet:** a theme-owned `theme.css` under
+  `assets/themes/<theme-id>/`, covering the shared pages and states below.
+- **Representative preview:** one local, lightweight 16:9 screenshot of the actual
+  theme, free of private data. The picker displays it in a 640×360 image slot. One
+  preview represents all color modes; its format is determined by the registered
+  URL. The shared picker supplies the adjacent name and empty image alt text.
+- **Supporting assets, when used:** local theme-owned fonts, images and decorations
+  with usable fallbacks. Decorations must not intercept input or carry essential
+  information. Text and controls must remain usable while fonts or images load,
+  or if they fail to load.
 
-The main template loads page-specific shared styles, Pure/grid styles, icons,
-`default.css`, `carousel.css`, and `theme-picker.css`, followed by exactly one
-registered theme stylesheet. The legacy shared CSS contains visual defaults as
-well as component rules; override those in your theme when necessary. Modern Neon
-is the former `modern.css`, moved without changing its rules. A new theme can use
-it as a reference or copy it as a starting point, but owns its resulting CSS and
-must not import Modern Neon at runtime.
+Registered asset URLs must be local absolute paths. The registry is the trusted
+source of URLs; preference strings must never be used to construct asset paths.
+The registry drives both the picker and stylesheet selection, so ordinary theme
+registration requires no picker template changes.
 
-Page templates, semantic markup, scripts, routes, player controls and embedded
-player styles remain shared. Themes do not supply templates or JavaScript. Do not
-rename IDs/classes used by scripts or alter behavior to implement a visual design.
-If a design needs new markup, add a compatible shared hook and verify all themes.
+The registry's default entry must remain resolvable: unknown or removed theme IDs
+fall back to it. Registry changes require a rebuilt application and matching
+assets. Stylesheet and preview URLs use `ASSET_COMMIT`, derived from committed
+asset history at build time, for cache invalidation. Release assets therefore need
+to be committed before the build, and asset replacement requires a restart because
+the server can cache files.
 
-The body exposes these independent hooks:
+## Styling interface
 
-| Hook | Values / meaning |
+The shared template exposes these hooks. Their values describe application state;
+a theme consumes them without redefining their meaning.
+
+| Hook | Meaning |
 | --- | --- |
-| `data-theme` | Registered theme ID |
-| `.light-theme` | Explicit light mode |
-| `.dark-theme` | Explicit dark mode |
-| `.no-theme` | System mode; use `prefers-color-scheme` |
-| `data-density` | `balanced` or `compact` |
-| `data-thin` | `true` or `false` |
-| `data-page` | `watch`, `search`, `playlist`, or `browse` |
+| Body `data-theme` | Resolved registered theme ID |
+| Body `.light-theme` | Explicit light mode |
+| Body `.dark-theme` | Explicit dark mode |
+| Body `.no-theme` | System mode, following `prefers-color-scheme` |
+| Body `data-density` | `balanced` or `compact` |
+| Body `data-thin` | `true` or `false`; thin mode can omit thumbnails |
+| Body `data-page` | `watch`, `search`, `playlist`, or `browse`; broad layout categories, not an exhaustive route list |
 | HTML `dir` | `ltr` or `rtl` |
 
-Define the existing design tokens for shared components and consistent styling:
+Provide the existing token vocabulary for consistent component styling. Shared
+components consume some of these directly; others are conventions used by theme
+layouts. They do not constitute a complete component API.
 
-- Colors: `--page`, `--surface`, `--surface-raised`, `--text`, `--muted`, `--line`,
-  `--accent`, `--accent-ink`, `--focus`, `--selected`, `--gradient`.
-- Geometry: `--radius`, `--gap`, `--card-gap`, `--header-height`.
+| Token | Role |
+| --- | --- |
+| `--page` | Page background |
+| `--surface` | Primary component background |
+| `--surface-raised` | Raised or contrasting component background |
+| `--text` | Primary text |
+| `--muted` | Secondary text that must remain readable |
+| `--line` | Borders and separators |
+| `--accent` | Accent color for links and actions |
+| `--accent-ink` | Foreground on accent backgrounds |
+| `--focus` | Visible keyboard-focus indicator |
+| `--selected` | Selected-state background |
+| `--gradient` | Decorative background value; a solid color is also valid |
+| `--radius` | Common corner radius |
+| `--gap` | General layout/grid spacing |
+| `--card-gap` | Spacing within card layouts |
+| `--header-height` | Header sizing reference |
 
-Start with light tokens on `:root`, override dark tokens on `.dark-theme`, and
-repeat those overrides for `.no-theme` inside
-`@media (prefers-color-scheme: dark)`. Set the matching `color-scheme`. The existing
-navigation toggle changes only mode classes; it preserves `data-theme` and other
-body attributes. Explicit light mode must stay light even on a dark system.
+Token values and component rules must produce coherent light and dark appearances,
+with a matching `color-scheme` for native controls. Explicit light or dark mode
+must override system appearance. System mode must follow system changes while the
+page remains open. The shared [mode script](../assets/js/themes.js) changes mode
+classes without replacing theme identity or other body attributes; theme rules
+must respond to those changes without custom JavaScript or a reload. No particular
+selector organization or palette is required.
 
-Keep semantic content and controls usable at 320px through desktop sizes, with
-keyboard focus, enlarged text, reduced motion and RTL. Use logical properties for
-directional spacing. Support both densities and pages without thumbnails in thin
-mode. Do not rely solely on color to show selection or hide core functionality.
+Both densities must remain usable, and thin mode must produce a complete layout
+when thumbnails are absent. Support right-to-left content and direction-aware
+spacing, long or translated labels, enlarged text and viewport widths from 320px
+through desktop sizes. Core content and controls must remain reachable without
+accidental clipping or page-wide overflow.
 
-## Storage and compatibility
+Keyboard focus, selected states, hover, disabled controls and expanded menus must
+remain distinguishable and usable. Do not rely solely on color for selection.
+Preserve readable contrast, touch targets and the shared skip link. Respect reduced
+motion and forced-colors preferences; decorative effects must not obscure content
+or controls in those modes.
 
-`theme` is a string in the existing preferences JSON/YAML, anonymous `PREFS` cookie,
-account preferences, authenticated preferences API and Invidious import/export.
-There is no database migration or new endpoint. Configure an instance default with:
+## Selection and persistence context
 
-```yaml
-default_user_preferences:
-  theme: modern-neon
-```
+The shared preferences form selects and saves themes without JavaScript. `theme`
+is stored through existing anonymous cookies, account preferences, configuration,
+authenticated preferences API and import/export. Themes need no new storage,
+database migration or endpoint. Missing values use the configured default;
+unrecognized IDs resolve to the registry fallback. Theme authors must preserve
+this shared selection flow rather than introduce theme-specific settings storage.
 
-Missing values use the configured default. Unknown or removed IDs fall back to
-Modern Neon. Form submissions without `theme` preserve the current selection for
-compatibility with older forms. API replacement semantics remain unchanged:
-omitted fields use defaults. Asset lookup also validates IDs, including values
-assigned internally. New picker text uses English translation fallback; theme
-names are display names from the registry.
+Random is a selection policy, not a theme or stylesheet. It keeps an active
+registered theme and can choose another when its interval is overdue on eligible
+HTML document navigation. It does not replace the theme on an already-open page.
+Selecting a named theme disables Random. Every registered theme must therefore be
+complete when selected independently, without relying on a previously loaded
+theme or an initialization script. Color mode remains independent of this policy.
 
-## Contributor checklist
+## Completion criteria and verification references
 
-1. Create an independent folder and register a unique ID and local asset URLs.
-2. Supply all tokens, light/dark/system modes, and a lightweight preview.
-3. Check preferences, browse/search, channels, watch/queues, playlists, history,
-   login and error pages; exercise density, thin mode, RTL and responsive layouts.
-4. Verify keyboard radio selection, selected indicator, preview loading, saving
-   without JavaScript, account and anonymous persistence, and the mode toggle.
-5. Run the frontend fixture generator and browser suite described in
-   [frontend verification](../tests/frontend/README.md). Extend the asset budget
-   for new shipped assets. Test alternatives must stay in test fixtures.
-6. Inspect screenshots before release. Rebuild/restart with committed assets and
-   verify only the selected theme stylesheet loads. Removing a theme must leave
-   existing users with the Modern Neon fallback.
+A theme is complete when there is evidence for all of the following:
+
+- **Page coverage:** preferences and its picker; browse/feed cards; search results;
+  channels; watch pages, queues and transcripts; playlists and playlist libraries;
+  history; login/account forms; and error and empty states. Coverage extends beyond
+  the four broad `data-page` categories.
+- **Preference and layout coverage:** light, dark and system modes, including live
+  mode changes; balanced and compact density; thin mode; enlarged text; and
+  mobile through wide desktop layouts.
+- **Interaction coverage:** keyboard navigation and visible focus, picker radio
+  selection and its selected indicator, menus/dialogs, form controls, and working
+  shared player controls. Theme selection and navigation remain usable without
+  JavaScript wherever the shared application supports them.
+- **Integration coverage:** previews load, only the selected theme stylesheet is
+  loaded, supporting assets remain independent of other themes, saved selections
+  persist for guests and accounts, and invalid or removed IDs retain a valid
+  fallback.
+- **Asset and visual verification:** new shipped assets are included in the asset
+  budget inventory, applicable browser checks pass, and rendered screenshots are
+  inspected for layout and readability. A passing test suite alone is not visual
+  approval. Previews must represent the resulting implementation.
+
+[Frontend verification](../tests/frontend/README.md) documents fixture generation,
+browser commands, screenshot artifacts and test limitations. The
+[browser suite](../tests/frontend/ui.test.cjs) and
+[asset inventory](../tests/frontend/asset-baseline.json) define the enforced budget
+checks, including separate stylesheet/shared-asset and preview accounting.
+[Theme preference checks](../tests/frontend/theme_checks.cr) cover shared selection
+and persistence behavior. Extend relevant fixtures and coverage for a new theme;
+test-only theme alternatives belong in fixtures rather than the shipped registry.

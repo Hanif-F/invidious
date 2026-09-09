@@ -11,7 +11,7 @@ function setTheme(theme) {
     document.body.classList.remove('no-theme', 'light-theme', 'dark-theme');
     document.body.classList.add((colorMode || 'no') + '-theme');
     if (!toggle_theme) return;
-    toggle_theme.children[0].className = 'icon ' + (colorMode === 'dark' ? 'ion-ios-moon' : colorMode === 'light' ? 'ion-ios-sunny' : 'ion-monitor');
+    toggle_theme.children[0].className = 'icon ' + (colorMode === 'dark' ? 'ion-ios-moon' : colorMode === 'light' ? 'ion-ios-sunny' : 'ion-ios-desktop');
     var label = toggle_theme.getAttribute('data-mode-' + (colorMode || 'system'));
     toggle_theme.title = label;
     toggle_theme.setAttribute('aria-label', label);

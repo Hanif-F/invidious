@@ -118,7 +118,7 @@ def watch_fixture(env, plid : String? = "PLfixture")
   render "src/invidious/views/watch.ecr", "src/invidious/views/template.ecr"
 end
 
-def browse_fixture(env)
+def browse_fixture(env, editorial = false)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   items = (0...12).map do |i|
@@ -126,7 +126,12 @@ def browse_fixture(env)
   end
   navbar_search = true
   page_nav_html = "<nav class=page-navigation><a class=pure-button href=?page=2>Next page</a></nav>"
-  render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
+  if editorial
+    popular_videos = items
+    render "src/invidious/views/feeds/popular.ecr", "src/invidious/views/template.ecr"
+  else
+    render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
+  end
 end
 
 def preferences_fixture(env)
@@ -289,12 +294,12 @@ File.write("#{output}/error-diary.html", diary_error_fixture)
 # Render Cinematic through the same production templates and preference resolution.
 {"dark", "light", ""}.each do |mode|
   suffix = mode.empty? ? "auto" : mode
-  File.write("#{output}/browse-cinematic-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", mode, visual_theme: "cinematic")))
+  File.write("#{output}/browse-cinematic-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", mode, visual_theme: "cinematic"), true))
   File.write("#{output}/watch-cinematic-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode, visual_theme: "cinematic")))
 end
 File.write("#{output}/preferences-cinematic.html", preferences_fixture(fixture_env("/preferences", "light", visual_theme: "cinematic")))
-File.write("#{output}/browse-cinematic-compact.html", browse_fixture(fixture_env("/feed/popular", "light", false, "compact", visual_theme: "cinematic")))
-File.write("#{output}/browse-cinematic-thin.html", browse_fixture(fixture_env("/feed/popular", "light", true, visual_theme: "cinematic")))
+File.write("#{output}/browse-cinematic-compact.html", browse_fixture(fixture_env("/feed/popular", "light", false, "compact", visual_theme: "cinematic"), true))
+File.write("#{output}/browse-cinematic-thin.html", browse_fixture(fixture_env("/feed/popular", "light", true, visual_theme: "cinematic"), true))
 File.write("#{output}/watch-cinematic-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "light", false, "balanced", "ar", "cinematic")))
 File.write("#{output}/search-cinematic.html", browse_fixture(fixture_env("/search?q=light", "light", visual_theme: "cinematic")))
 File.write("#{output}/playlist-cinematic.html", diary_playlist_fixture("cinematic", "dark"))

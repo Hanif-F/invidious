@@ -11,7 +11,7 @@
 
 <%= rendered "components/feed_menu" %>
 
-<div class="pure-g media-grid">
+<div class="pure-g media-grid editorial-feed">
 <% Invidious::Frontend::BlockedChannels.filter(popular_videos, Invidious::Frontend::BlockedChannels.ids(env)).each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>

@@ -104,11 +104,16 @@ simulate sessions; they do not validate a deployed PostgreSQL login session.
 New strings include English and Indonesian, with the existing English fallback
 for other locales. Thumbnail URLs and existing video API metadata are unchanged.
 
-Cinematic adds a standalone amber/charcoal theme, preserving light/dark/system
-preferences and the existing default. Its fixtures cover the same six responsive
-widths, enlarged text, RTL, compact/thin modes, no-JavaScript selection, and real
-player controls. The picker preview is a reduced WebP capture of the dark browse
-fixture; screenshots use synthetic media rather than upstream thumbnails.
+Cinematic uses a standalone arthouse layout: a horizontal program index, Oswald
+headings, vermilion accents, and an editorial opening entry on eligible feeds.
+Dark/light/system, RTL, compact/thin modes, font failure, forced colors, and live
+system changes are covered. Desktop watch checks enforce the common 440px sidebar
+and 140px recommendation thumbnails in both player layouts. Browse fixtures for
+Cinematic render the production Popular template and its `editorial-feed` hook.
+The picker preview is a 640×360 WebP capture of the dark browse fixture with
+synthetic test thumbnails. `Oswald.woff2` is bundled locally, retaining its full
+character set and variable weights; its 72,104-byte transfer and 96 KiB allowance
+are recorded separately in `asset-baseline.json`. No external font request occurs.
 Preview images share an aggregate allowance of 12 KiB per theme (36 KiB for
 three themes), preserving the previous 24 KiB allowance for two themes.
 

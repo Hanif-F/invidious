@@ -97,6 +97,7 @@ async function pageFor(engine, options = {}) {
         }
         if (url.pathname.startsWith('/api/v1/captions/')) return route.fulfill({ contentType: 'text/vtt', body: 'WEBVTT\n\n00:00.000 --> 00:04.000\nFixture captions\n' });
         if (url.pathname === '/themes/fixture-theme/theme.css') return route.fulfill({ contentType: 'text/css', body: 'body { --fixture-theme: active; }' });
+        if (options.fontFailure && url.pathname === '/themes/cinematic/Oswald.woff2') return route.abort();
         if (/^\/(css|js|fonts|videojs|themes)\//.test(url.pathname)) {
             const file = path.join(root, 'assets', url.pathname);
             if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: '' });
@@ -153,6 +154,51 @@ for (const engine of engines) {
         const posted = page.waitForRequest(request => request.method() === 'POST');
         await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
         assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'cinematic');
+        await context.close();
+    });
+    test(`${engine}: Cinematic editorial composition, font fallback, and feed order`, async () => {
+        for (const fontFailure of [false, true]) {
+            const { page, context, requests } = await pageFor(engine, { fixture: 'browse-cinematic-dark', fontFailure });
+            await page.evaluate(() => document.fonts.ready);
+            assert.ok(requests.some(url => url.startsWith('/themes/cinematic/Oswald.woff2')));
+            assert.ok(!requests.some(url => url.startsWith('/themes/diary/') || url.startsWith('/themes/modern-neon/')));
+            if (!fontFailure) assert.equal(await page.evaluate(() => document.fonts.check('600 56px Oswald')), true);
+            const cards = page.locator('.editorial-feed > .media-item');
+            const originalTitles = await cards.locator('[data-dearrow-id]').allTextContents();
+            const lead = await cards.first().boundingBox();
+            const second = await cards.nth(1).boundingBox();
+            assert.ok(lead.width > second.width * 2.5, 'Opening entry must span the catalog');
+            const frame = await cards.first().locator('.media-card > .thumbnail').boundingBox();
+            assert.ok(frame.width / lead.width > .6 && frame.width / lead.width < .7);
+            assert.ok(second.y > lead.y + lead.height - 1, 'Next entry must follow the opening entry');
+            const rail = await page.locator('.navigation-rail').boundingBox();
+            assert.ok(rail.width > 1200 && rail.height < 180, 'Navigation must be a horizontal index');
+            await cards.first().locator('[data-dearrow-id]').evaluate(el => el.textContent = 'A very long multilingual film title — '.repeat(10));
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+            await cards.first().locator('[data-dearrow-id]').evaluate((el, title) => el.textContent = title, originalTitles[0]);
+            for (const [attribute, value] of [['data-density', 'compact'], ['data-thin', 'true']]) {
+                await page.locator('body').evaluate((el, [key, value]) => el.setAttribute(key, value), [attribute, value]);
+                const firstBox = await cards.first().boundingBox(), nextBox = await cards.nth(1).boundingBox();
+                assert.ok(Math.abs(firstBox.width - nextBox.width) < 2, `${attribute} must use equal entries`);
+                assert.deepEqual(await cards.locator('[data-dearrow-id]').allTextContents(), originalTitles);
+                await page.locator('body').evaluate((el, key) => el.setAttribute(key, key === 'data-density' ? 'balanced' : 'false'), attribute);
+            }
+            await page.emulateMedia({ forcedColors: 'active' });
+            await page.keyboard.press('Tab');
+            assert.equal(await page.locator('.skip-link').evaluate(el => el === document.activeElement), true);
+            assert.notEqual(await page.locator('.skip-link').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
+            await cards.evaluateAll(items => items.slice(1).forEach(el => el.remove()));
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Single entry overflow');
+            await cards.first().evaluate(el => el.remove());
+            assert.equal(await page.locator('.navigation-rail').isVisible(), true);
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Empty feed overflow');
+            await context.close();
+        }
+        const { page, context } = await pageFor(engine, { fixture: 'browse-cinematic-auto', systemTheme: 'dark' });
+        await page.emulateMedia({ colorScheme: 'light' });
+        assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme), 'light');
+        await page.emulateMedia({ colorScheme: 'dark' });
+        assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme), 'dark');
         await context.close();
     });
     test(`${engine}: Cinematic responsive layouts`, async () => {
@@ -263,10 +309,18 @@ for (const engine of engines) {
             assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
             await page.waitForFunction(() => player.currentTime() >= 0.9);
             if (width === 1440) {
+                const checkGeometry = async () => {
+                    assert.equal(Math.round((await page.locator('.watch-sidebar').boundingBox()).width), 440);
+                    assert.equal(Math.round((await page.locator('.recommendation > .thumbnail').first().boundingBox()).width), 140);
+                };
+                await checkGeometry();
                 const wasWide = await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide'));
                 await page.locator('.vjs-wide-control').click();
+                await checkGeometry();
                 assert.equal(await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide')), !wasWide);
+                await page.screenshot({ path: path.join(artifacts, `${engine}-cinematic-player-alternate.png`) });
                 await page.locator('.vjs-wide-control').click();
+                await checkGeometry();
                 assert.equal(await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide')), wasWide);
             }
             assert.deepEqual(errors, []);
@@ -1278,3 +1332,14 @@ for (const engine of engines) {
     });
 
 }
+
+// Font transfer is reported separately from the existing CSS/JS and preview budgets.
+test('Cinematic bundled font transfer stays within its recorded allowance', () => {
+    const inventory = require('./asset-baseline.json').fontAssets;
+    for (const [file, entry] of Object.entries(inventory)) {
+        const bytes = fs.statSync(path.join(root, 'assets', file)).size;
+        assert.equal(bytes, entry.bytes, `${file}: update the recorded transfer size`);
+        assert.ok(bytes <= entry.maxBytes, `${file}: ${bytes} font bytes`);
+        console.log(`${file}: ${bytes} font bytes (separate from CSS/JS)`);
+    }
+});

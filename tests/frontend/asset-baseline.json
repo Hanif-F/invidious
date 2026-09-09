@@ -21,5 +21,11 @@
     "themes/modern-neon/preview.webp": 0,
     "themes/diary/preview.webp": 0,
     "themes/cinematic/preview.webp": 0
+  },
+  "fontAssets": {
+    "themes/cinematic/Oswald.woff2": {
+      "bytes": 72104,
+      "maxBytes": 98304
+    }
   }
 }
