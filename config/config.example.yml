@@ -622,6 +622,11 @@ videojs:
   max_goal_buffer_length: 60
 
 default_user_preferences:
+  ## Opt-in community title replacements from DeArrow (no license key required).
+  ## These defaults also apply to accounts that have not saved DeArrow settings.
+  #dearrow_enabled: false
+  #dearrow_show_original: true
+
 
   # -----------------------------
   #  Internationalization

@@ -195,6 +195,8 @@ module Invidious::Routes::PreferencesRoute
       save_player_pos:             save_player_pos,
       default_playlist:            default_playlist,
       search_privacy:              search_privacy,
+      dearrow_enabled:             env.params.body["dearrow_enabled"]? == "on",
+      dearrow_show_original:       env.params.body["dearrow_show_original"]? == "on",
     }.to_json)
 
     if user = env.get? "user"

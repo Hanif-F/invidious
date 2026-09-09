@@ -1,4 +1,9 @@
 {
+    "preferences_dearrow_enabled_label": "Replace video titles with DeArrow",
+    "preferences_dearrow_show_original_label": "Show original titles on hover or focus",
+    "preferences_dearrow_attribution": "Uses community title data from",
+    "dearrow_original_title": "Original title:",
+
     "preferences_theme_label": "Theme",
     "preferences_color_mode_label": "Color mode:",
     "preferences_theme_hint": "Choose a visual style. Save preferences to apply your selection. Light and dark mode are set separately.",

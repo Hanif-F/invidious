@@ -51,6 +51,10 @@ async function pageFor(engine, options = {}) {
         if (route.request().isNavigationRequest()) {
             return route.fulfill({ contentType: 'text/html', body: fs.readFileSync(path.join(generated, fixture + '.html'), 'utf8') });
         }
+        if (url.pathname.startsWith('/api/v1/dearrow/')) {
+            if (options.dearrowError) return route.fulfill({ status: 503, body: '{}' });
+            return route.fulfill({ contentType: 'application/json', body: JSON.stringify({title: options.dearrowMissing ? null : 'A clear title <img src=x onerror=alert(1)>'}) });
+        }
         if (url.pathname === '/api/v1/auth/subscriptions') return route.fulfill({ contentType: 'application/json', body: '[]' });
         if (url.pathname === '/api/v1/auth/notifications') return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
         if (/^\/api\/v1\/(playlists|mixes)\//.test(url.pathname)) {
@@ -554,6 +558,7 @@ test('UI asset additions stay below the 30KB compressed initial-load budget', ()
         const current = fs.readFileSync(path.join(root, 'assets', file));
         delta += gzipSync(current).length - originalBytes;
     }
+    delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js/dearrow.js'))).length;
     assert.ok(delta <= 30 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
@@ -904,6 +909,87 @@ for (const engine of engines) {
         await page.waitForFunction(() => document.activeElement.closest('.video-context-actions'));
         assert.ok(Math.abs(await page.evaluate(() => player.volume()) - 0.5) < 0.01);
         assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: DeArrow replaces titles safely, deduplicates queues, and exposes originals`, async () => {
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: 'watch-dearrow'});
+        const replacement = 'A clear title <img src=x onerror=alert(1)>';
+        await page.waitForFunction(() => document.querySelector('[data-dearrow-watch]').textContent.startsWith('A clear title'));
+        assert.equal(await page.title(), replacement + ' - Invidious');
+        assert.equal(await page.locator('[data-dearrow-watch] img').count(), 0);
+        const heading = page.locator('[data-dearrow-watch]');
+        await heading.focus();
+        const tooltip = page.locator('#' + await heading.getAttribute('aria-describedby'));
+        assert.equal(await tooltip.isVisible(), true);
+        assert.match(await tooltip.textContent(), /A journey through light, color, and motion/);
+        await page.keyboard.press('Escape');
+        assert.equal(await tooltip.isVisible(), false);
+        await heading.hover();
+        assert.equal(await tooltip.isVisible(), true);
+        await page.locator('.queue-row').first().waitFor();
+        const id = '2isYuQZMbdU';
+        const duplicate = page.locator('#playlist [data-dearrow-id="' + id + '"]').first();
+        await duplicate.scrollIntoViewIfNeeded();
+        await page.waitForFunction(() => document.querySelector('#playlist [data-dearrow-id="2isYuQZMbdU"]').textContent.startsWith('A clear title'));
+        assert.equal(requests.filter(url => url === '/api/v1/dearrow/' + id).length, 1);
+        assert.equal(await page.locator('.queue-playing').count(), 1);
+        assert.ok((await page.locator('.recommendation img').first().getAttribute('src')).startsWith('/vi/'));
+        await page.evaluate(() => get_playlist('PLfixture'));
+        await page.waitForFunction(() => document.querySelector('#playlist [data-dearrow-id="2isYuQZMbdU"]')?.textContent.startsWith('A clear title'));
+        assert.equal(requests.filter(url => url === '/api/v1/dearrow/' + id).length, 1);
+        assert.deepEqual(errors, []);
+        const tooltipsBefore = await page.locator('.dearrow-tooltip').count();
+        await page.evaluate(() => {
+            window.removedRecommendation = document.querySelector('.recommendation');
+            window.removedRecommendation.remove();
+        });
+        await page.waitForFunction(count => document.querySelectorAll('.dearrow-tooltip').length < count, tooltipsBefore);
+        await page.evaluate(() => document.querySelector('.recommendations').appendChild(window.removedRecommendation));
+        const restored = page.locator('.recommendation').last().locator('h3 a');
+        await restored.scrollIntoViewIfNeeded();
+        await page.waitForFunction(() => window.removedRecommendation.querySelector('[data-dearrow-id]').textContent.startsWith('A clear title'));
+        await restored.focus();
+        assert.equal(await page.locator('#' + await restored.getAttribute('aria-describedby')).isVisible(), true);
+        await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-desktop.png`)});
+        await context.close();
+    });
+
+    test(`${engine}: DeArrow covers video lists on mobile without original tooltips`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'browse-dearrow-no-original', width: 390});
+        await page.waitForFunction(() => Array.from(document.querySelectorAll('[data-dearrow-id]')).some(el => el.textContent.startsWith('A clear title')));
+        assert.equal(await page.locator('.dearrow-tooltip').count(), 0);
+        assert.equal(await page.locator('[data-dearrow-id] img').count(), 0);
+        await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-mobile.png`)});
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: DeArrow disabled, missing, failed and no-JavaScript modes retain originals`, async () => {
+        for (const options of [{fixture: 'watch-dark'}, {fixture: 'watch-dearrow', javascript: false}, {fixture: 'watch-dearrow', dearrowError: true}, {fixture: 'watch-dearrow', dearrowMissing: true}]) {
+            const {page, context, requests, errors} = await pageFor(engine, options);
+            await page.waitForLoadState('networkidle');
+            assert.equal(await page.locator('h1').first().textContent(), 'A journey through light, color, and motion');
+            assert.equal(await page.locator('.dearrow-tooltip').count(), 0);
+            if (options.fixture === 'watch-dark' || options.javascript === false) assert.ok(!requests.some(url => url.startsWith('/api/v1/dearrow/')));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: DeArrow preference controls submit without JavaScript`, async () => {
+        const {page, context} = await pageFor(engine, {fixture: 'preferences', javascript: false});
+        assert.equal(await page.locator('#dearrow_enabled').isChecked(), false);
+        assert.equal(await page.locator('#dearrow_show_original').isChecked(), true);
+        await page.locator('#dearrow_enabled').check();
+        await page.locator('#dearrow_show_original').uncheck();
+        const posted = page.waitForRequest(request => request.method() === 'POST');
+        await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
+        const body = new URLSearchParams((await posted).postData());
+        assert.equal(body.get('dearrow_enabled'), 'on');
+        assert.equal(body.has('dearrow_show_original'), false);
         await context.close();
     });
 }

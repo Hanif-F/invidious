@@ -1,4 +1,9 @@
 {
+    "preferences_dearrow_enabled_label": "Ganti judul video dengan DeArrow",
+    "preferences_dearrow_show_original_label": "Tampilkan judul asli saat disorot atau difokuskan",
+    "preferences_dearrow_attribution": "Menggunakan data judul komunitas dari",
+    "dearrow_original_title": "Judul asli:",
+
     "generic_views_count_0": "{{count}} tampilan",
     "generic_videos_count_0": "{{count}} video",
     "generic_playlists_count_0": "{{count}} daftar putar",

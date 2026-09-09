@@ -927,3 +927,16 @@ h1, h2, h3, h4, h5, p,
 #comments-turned-off-on-video-message > p, #comments-disabled-message > p {
   text-align: center;
 }
+
+.dearrow-tooltip {
+    position: fixed;
+    z-index: 10000;
+    max-width: min(28rem, calc(100vw - 16px));
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    background: #222;
+    color: #fff;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}

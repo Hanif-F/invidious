@@ -229,6 +229,16 @@
 
             </fieldset><fieldset>
             <legend id="preferences-content"><%= I18n.translate(locale, "ui_content") %></legend>
+            <div class="pure-control-group">
+                <label for="dearrow_enabled"><%= I18n.translate(locale, "preferences_dearrow_enabled_label") %></label>
+                <input name="dearrow_enabled" id="dearrow_enabled" type="checkbox" <% if preferences.dearrow_enabled %>checked<% end %>>
+            </div>
+            <div class="pure-control-group">
+                <label for="dearrow_show_original"><%= I18n.translate(locale, "preferences_dearrow_show_original_label") %></label>
+                <input name="dearrow_show_original" id="dearrow_show_original" type="checkbox" <% if preferences.dearrow_show_original %>checked<% end %>>
+            </div>
+            <p class="preference-description"><%= I18n.translate(locale, "preferences_dearrow_attribution") %> <a href="https://dearrow.ajay.app/" rel="noopener noreferrer">DeArrow</a> / <a href="https://sponsor.ajay.app/" rel="noopener noreferrer">SponsorBlock</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>).</p>
+
             <p class="preference-description"><%= I18n.translate(locale, "ui_content_hint") %></p>
             <div class="pure-control-group">
                 <label for="comments[0]"><%= I18n.translate(locale, "preferences_comments_label") %></label>

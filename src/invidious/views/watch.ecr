@@ -106,7 +106,7 @@
     </div>
     <div class="watch-primary">
         <header class="watch-heading">
-            <h1 dir="auto"><%= title %></h1>
+            <h1 dir="auto" data-dearrow-id="<%= HTML.escape(video.id) %>" data-dearrow-watch><%= title %></h1>
     <% if !video.is_listed %>
         <h3>
             <i class="icon ion-ios-unlock"></i> <%= I18n.translate(locale, "Unlisted") %>
@@ -344,7 +344,7 @@
             <header class="queue-heading">
                 <h2><%= I18n.translate(locale, "ui_playing_playlist") %></h2>
                 <a id="queue-title" href="/<%= plid.starts_with?("RD") ? "mix" : "playlist" %>?list=<%= plid %>"><%= I18n.translate(locale, "ui_open_playlist") %></a>
-                <p class="queue-context"><span id="queue-count"></span><span id="queue-current"><%= I18n.translate(locale, "ui_now_playing") %>: <%= title %></span></p>
+                <p class="queue-context"><span id="queue-count"></span><span id="queue-current"><%= I18n.translate(locale, "ui_now_playing") %>: <span data-dearrow-id="<%= HTML.escape(video.id) %>"><%= title %></span></span></p>
             </header>
             <div id="queue-navigation" class="queue-navigation" hidden></div>
             <p id="queue-status" class="queue-status" role="status"></p>
@@ -367,7 +367,7 @@
                         <% if (length = rv["length_seconds"]?.try &.to_i?) && length > 0 %><div class="bottom-right-overlay"><span class="length"><%= recode_length_seconds(length) %></span></div><% end %>
                     </div>
                     <div>
-                        <h3 dir="auto"><a href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><%= HTML.escape(rv["title"]) %></a></h3>
+                        <h3 dir="auto"><a href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><span data-dearrow-id="<%= HTML.escape(rv["id"]) %>"><%= HTML.escape(rv["title"]) %></span></a></h3>
                         <p dir="auto"><% if !(rv["ucid"]? || "").empty? %><a href="/channel/<%= rv["ucid"] %>"><%= HTML.escape(rv["author"]? || "") %></a><% else %><%= HTML.escape(rv["author"]? || "") %><% end %><% if rv["author_verified"]? == "true" %> <i class="icon ion-md-checkmark-circle" title="<%= I18n.translate(locale, "ui_verified") %>"></i><% end %></p>
                         <% if count = rv["short_view_count"]?.presence %><p><%= I18n.translate_count(locale, "generic_views_count", short_text_to_number(count), I18n::NumberFormatting::Short) %></p><% end %>
                         <% if date = rv["published"]?.try { |value| Time.parse_rfc3339(value) rescue nil } %><p><%= I18n.translate(locale, "`x` ago", recode_date(date, locale)) %></p><% end %>

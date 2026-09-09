@@ -248,6 +248,7 @@ module Invidious::Routing
       {{namespace = Routes::API::V1}}
 
       # Videos
+      get "/api/v1/dearrow/:id", {{namespace}}::DeArrow, :title
       get "/api/v1/videos/:id", {{namespace}}::Videos, :videos
       get "/api/v1/storyboards/:id", {{namespace}}::Videos, :storyboards
       get "/api/v1/captions/:id", {{namespace}}::Videos, :captions

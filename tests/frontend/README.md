@@ -69,3 +69,27 @@ The picker submits without JavaScript. See [theming](../../docs/theming.md).
 Lazy-loaded theme preview images have a separate 24 KiB compressed budget; the
 shared CSS/JavaScript budget remains 30 KiB. Modern Neon and Diary previews use
 the same 1280×720 browse framing, downsampled to 640×360 WebP screenshots.
+
+## DeArrow
+
+DeArrow title replacement is opt-in under Preferences → Content. Both switches
+are saved with the account (or in the preferences cookie for guests). The
+`dearrow_enabled` and `dearrow_show_original` fields are also available through
+the existing authenticated preferences API. No database migration or license
+key is required. Instance operators can override their defaults through
+`default_user_preferences` in the configuration.
+
+The same-origin `GET /api/v1/dearrow/:id` endpoint returns `{"title": string | null}`
+(or HTTP 400 for an invalid video ID). The server queries the fixed SponsorBlock
+host using a four-character hash prefix, with a bounded in-memory cache and
+four upstream requests at most. Upstream failures return a null title, leaving
+the original visible. Browser requests are deferred until titles approach the
+viewport. JavaScript-disabled pages retain their original titles.
+
+Tests include ranking/trust rules, cache expiry and concurrency, guest/account/API
+preference persistence, dynamic queue updates, safe text insertion, original-title
+tooltips, disabled/failure fallbacks, and desktop/mobile screenshots. Database
+checks use the existing SQLite fixture harness and separate account objects to
+simulate sessions; they do not validate a deployed PostgreSQL login session.
+New strings include English and Indonesian, with the existing English fallback
+for other locales. Thumbnail URLs and existing video API metadata are unchanged.

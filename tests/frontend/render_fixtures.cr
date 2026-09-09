@@ -122,7 +122,7 @@ def browse_fixture(env)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   items = (0...12).map do |i|
-    SearchVideo.new({title: ["The art of noticing", "An ordinary day, beautifully observed", "Finding color in unexpected places"][i % 3], id: "fixture#{i}", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})
+    SearchVideo.new({title: ["The art of noticing", "An ordinary day, beautifully observed", "Finding color in unexpected places"][i % 3], id: preferences.dearrow_enabled ? i.to_s.rjust(11, '0') : "fixture#{i}", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})
   end
   navbar_search = true
   page_nav_html = "<nav class=page-navigation><a class=pure-button href=?page=2>Next page</a></nav>"
@@ -332,3 +332,16 @@ File.write("#{output}/queue-editable.json", editable_queue_fixture)
 File.write("#{output}/queue-removed-before.json", editable_queue_fixture([0], 1))
 File.write("#{output}/queue-removed-current.json", editable_queue_fixture([2], 2, true))
 File.write("#{output}/queue-removed-next.json", editable_queue_fixture([3], 2))
+
+require "./dearrow_checks"
+check_dearrow_preferences
+{true, false}.each do |show_original|
+  env = fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2")
+  prefs = env.get("preferences").as(Preferences)
+  prefs.dearrow_enabled = true
+  prefs.dearrow_show_original = show_original
+  env.set "preferences", prefs
+  suffix = show_original ? "dearrow" : "dearrow-no-original"
+  File.write("#{output}/watch-#{suffix}.html", watch_fixture(env))
+  File.write("#{output}/browse-#{suffix}.html", browse_fixture(env))
+end

@@ -572,7 +572,7 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       unless thin_mode
         html << %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
       end
-      html << %(<span><span class="queue-title" dir="auto">#{title}</span><span class="queue-meta" dir="auto">#{author})
+      html << %(<span><span class="queue-title" dir="auto"><span data-dearrow-id="#{HTML.escape(id)}">#{title}</span></span><span class="queue-meta" dir="auto">#{author})
       length = video["lengthSeconds"].as_i
       html << " · #{recode_length_seconds(length)}" if length > 0
       html << "</span></span></a></li>"

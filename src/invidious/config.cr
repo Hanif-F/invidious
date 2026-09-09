@@ -58,6 +58,8 @@ struct ConfigPreferences
   property save_player_pos : Bool = false
   @[YAML::Field(ignore: true)]
   property default_playlist : String? = nil
+  property dearrow_enabled : Bool = false
+  property dearrow_show_original : Bool = true
   property search_privacy : Bool = false
 
   def to_tuple

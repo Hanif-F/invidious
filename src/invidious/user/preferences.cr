@@ -63,6 +63,8 @@ struct Preferences
   property volume : Int32 = CONFIG.default_user_preferences.volume
   property save_player_pos : Bool = CONFIG.default_user_preferences.save_player_pos
   property default_playlist : String? = nil
+  property dearrow_enabled : Bool = CONFIG.default_user_preferences.dearrow_enabled
+  property dearrow_show_original : Bool = CONFIG.default_user_preferences.dearrow_show_original
   property search_privacy : Bool = CONFIG.default_user_preferences.search_privacy
 
   module Theme
