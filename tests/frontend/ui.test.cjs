@@ -162,6 +162,18 @@ for (const engine of engines) {
         assert.equal(await page.getByRole('radio', { name: 'Diary', exact: true }).isChecked(), true);
         await context.close();
     });
+    test(`${engine}: Diary local lettering loads and decorations stay noninteractive`, async () => {
+        const { page, context, requests } = await pageFor(engine, { fixture: 'browse-diary-light' });
+        await page.evaluate(() => document.fonts.ready);
+        assert.deepEqual(await page.evaluate(() => [...document.fonts].filter(font => ['Dudu', 'Helvetica Punk'].includes(font.family.replace(/["']/g, ''))).map(font => font.status)), ['loaded', 'loaded']);
+        assert.ok(requests.some(url => url.includes('/themes/diary/Dudu_Calligraphy.ttf')));
+        assert.ok(requests.some(url => url.includes('/themes/diary/Helvetica-Punk.ttf')));
+        assert.equal(await page.locator('.media-card').first().evaluate(el => getComputedStyle(el, '::before').pointerEvents), 'none');
+        assert.equal(await page.locator('.media-card').first().evaluate(el => getComputedStyle(el, '::after').pointerEvents), 'none');
+        await page.emulateMedia({ forcedColors: 'active' });
+        assert.equal(await page.locator('.media-card').first().evaluate(el => getComputedStyle(el, '::before').display), 'none');
+        await context.close();
+    });
     test(`${engine}: Diary preserves real player controls`, async () => {
         for (const width of [390, 1440]) {
             const { page, context, errors } = await pageFor(engine, { fixture: 'watch-diary-light', realPlayer: true, width, touch: width === 390 });
@@ -180,6 +192,8 @@ for (const engine of engines) {
         for (const width of [320, 390, 768, 1024, 1440, 1920]) {
             for (const fixture of ['browse-diary-light', 'browse-diary-dark', 'browse-diary-compact', 'browse-diary-thin', 'watch-diary-light', 'watch-diary-dark', 'watch-diary-rtl', 'preferences-diary', 'search-diary', 'playlist-diary', 'history-diary', 'playlist-library-diary', 'login-diary', 'error-diary', 'channel-diary']) {
                 const { page, context, errors } = await pageFor(engine, { fixture, width });
+                await page.evaluate(() => document.fonts.ready);
+                assert.equal(await page.locator('body').getAttribute('data-theme'), 'diary', `${fixture} must exercise Diary`);
                 assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${fixture} overflows at ${width}`);
                 assert.deepEqual(errors, []);
                 if ([320, 1440].includes(width)) {

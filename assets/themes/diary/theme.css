@@ -1,27 +1,41 @@
-/* Diary owns this stylesheet; layout adapted from Modern Neon. No runtime theme imports. */
+/* Diary: a collected-paper journal. Layout and player contracts remain theme-local. */
 :root {
-  --page: #f3ecdc; --surface: #fffaf0; --surface-raised: #e9dfcb; --text: #29384b;
-  --muted: #62655e; --line: #c9bfa9; --accent: #315d80; --accent-ink: #fffaf0;
-  --focus: #9b4960; --selected: #e9d3d5; --gradient: linear-gradient(115deg, #315d80, #416d84);
-  --radius: 3px; --gap: 24px; --card-gap: 16px; --header-height: 80px;
+  --page: #eee3d0; --surface: #fff9e9; --surface-raised: #e7ddc5; --text: #302e42;
+  --muted: #60586a; --line: #998777; --accent: #17665f; --accent-ink: #fffaf0;
+  --focus: #99355d; --selected: #cce7dd; --gradient: linear-gradient(115deg, #17665f, #285f74);
+  --coral: #a73543; --teal: #17665f; --mustard: #78520c; --violet: #694291; --blue: #315b9a;
+  --rose-paper: #f8d9d2; --mint-paper: #d7ebe0; --gold-paper: #f4e2ad;
+  --violet-paper: #e9ddf3; --blue-paper: #dce8f3; --paper-rule: #5b638b18;
+  --paper-shadow: #473c3528; --tape: #ddad55a6;
+  --handwriting: "Dudu", "Segoe Print", "Bradley Hand", sans-serif;
+  --reading: "Segoe UI", Arial, sans-serif;
+  --radius: 2px; --gap: 28px; --card-gap: 16px; --header-height: 88px;
   color-scheme: light;
 }
 .dark-theme {
-  --page: #202728; --surface: #293233; --surface-raised: #343e3e; --text: #f0e9d9;
-  --muted: #bdbcae; --line: #566160; --accent: #a9d0dc; --accent-ink: #202728;
-  --focus: #e6a8b6; --selected: #534049; --gradient: linear-gradient(115deg, #405963, #4e6870);
+  --page: #171d30; --surface: #252d43; --surface-raised: #343c53; --text: #f7eedc;
+  --muted: #c4c0ce; --line: #7c8199; --accent: #91dbc7; --accent-ink: #172a2c;
+  --focus: #ffadca; --selected: #304f50; --gradient: linear-gradient(115deg, #304f50, #304660);
+  --coral: #ffb1ac; --teal: #91dbc7; --mustard: #f1d184; --violet: #d5b6fc; --blue: #adcfff;
+  --rose-paper: #493342; --mint-paper: #2b4547; --gold-paper: #494332;
+  --violet-paper: #3d3555; --blue-paper: #2d405a; --paper-rule: #c2c9fa12;
+  --paper-shadow: #0005; --tape: #d8b65e80;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
   .no-theme {
-    --page: #202728; --surface: #293233; --surface-raised: #343e3e; --text: #f0e9d9;
-    --muted: #bdbcae; --line: #566160; --accent: #a9d0dc; --accent-ink: #202728;
-    --focus: #e6a8b6; --selected: #534049; --gradient: linear-gradient(115deg, #405963, #4e6870);
+  --page: #171d30; --surface: #252d43; --surface-raised: #343c53; --text: #f7eedc;
+  --muted: #c4c0ce; --line: #7c8199; --accent: #91dbc7; --accent-ink: #172a2c;
+  --focus: #ffadca; --selected: #304f50; --gradient: linear-gradient(115deg, #304f50, #304660);
+  --coral: #ffb1ac; --teal: #91dbc7; --mustard: #f1d184; --violet: #d5b6fc; --blue: #adcfff;
+  --rose-paper: #493342; --mint-paper: #2b4547; --gold-paper: #494332;
+  --violet-paper: #3d3555; --blue-paper: #2d405a; --paper-rule: #c2c9fa12;
+  --paper-shadow: #0005; --tape: #d8b65e80;
     color-scheme: dark;
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; line-height: 1.5; }
+body { margin: 0; line-height: 1.55; font-family: var(--handwriting); font-size: 1.125rem; }
 body.light-theme, body.dark-theme, body.no-theme { background: var(--page); color: var(--text); }
 body a, body.light-theme a, body.dark-theme a, body.no-theme a { color: var(--accent); text-decoration: none; }
 body a:hover { text-decoration: underline; }
@@ -413,97 +427,119 @@ body[data-page=watch] .video-js.vjs-has-started:has(.vjs-control-bar :focus-visi
   body[data-page=watch] .video-js .vjs-control-bar:not(.mobile-operations-bar) { height: auto; min-height: 52px; flex-wrap: wrap; }
 }
 
-/* Paper, ink and collected photographs. Decorations never cover interactive content. */
-:root {
-  --handwriting: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive;
-  --paper-rule: #637f9620;
-  --paper-shadow: #4b38251c;
-  --tape: #d5bb8770;
-}
-.dark-theme { --paper-rule: #c5d2d310; --paper-shadow: #0003; --tape: #baa57b40; }
-@media (prefers-color-scheme: dark) {
-  .no-theme { --paper-rule: #c5d2d310; --paper-shadow: #0003; --tape: #baa57b40; }
-}
-body.light-theme, body.dark-theme, body.no-theme {
-  background-image: repeating-linear-gradient(0deg, transparent 0 31px, var(--paper-rule) 31px 32px);
-}
-body { font-family: "Segoe UI", Arial, sans-serif; }
-h1, h2, h3, body .index-link, .navigation-link, .preferences-form legend {
-  font-family: var(--handwriting); letter-spacing: .015em;
-}
-h1 { font-style: italic; }
-.navbar { background: var(--surface); border-bottom: 2px solid var(--line); box-shadow: 0 3px 0 var(--paper-shadow); }
-.brand-mark { border-radius: 3px 7px 2px 5px; transform: rotate(-6deg); box-shadow: 2px 2px 0 var(--line); }
-body .index-link { font-size: 1.45rem; }
-.searchbar form { border-radius: 4px 9px 3px 6px; border-bottom: 2px solid var(--line); }
-.navigation-rail { padding: 8px; background: var(--surface); border: 1px solid var(--line); box-shadow: 3px 4px 0 var(--paper-shadow); }
-.navigation-heading { letter-spacing: .15em; }
-.navigation-link { border-radius: 2px 8px 3px 5px; }
-body .navigation-link[aria-current=page] {
-  color: var(--text); background: var(--selected); border-inline-start: 3px solid var(--accent); font-weight: 700;
-}
-body .navigation-link[aria-current=page] > span { color: var(--accent); }
-.media-card {
-  position: relative; padding: 10px 10px 6px; background: var(--surface);
-  border: 1px solid var(--line); box-shadow: 2px 4px 0 var(--paper-shadow);
-}
-.media-card::before {
-  content: ""; position: absolute; inset-block-start: -7px; inset-inline-start: 35%;
-  width: 30%; height: 16px; background: var(--tape); transform: rotate(-3deg);
-  pointer-events: none; z-index: 1;
-}
-.media-item:nth-child(3n) .media-card::before { transform: rotate(3deg); }
-.media-card .thumbnail { border-radius: 1px; }
-.media-card .video-card-row > a > p { font-weight: 600; }
-.media-card .video-card-row { margin-inline: 3px; }
-.media-grid { row-gap: calc(var(--gap) + 8px); }
-body .pure-button, body a.pure-button, body .pure-form input, body .pure-form select,
-body .pure-form textarea, .preference-nav a, .active-filters a {
-  border-radius: 3px 6px 3px 5px;
-}
-body .pure-button { border-bottom-width: 2px; }
-body .pure-button-primary { border-color: var(--accent); }
-.panel, .queue-panel, .comments, .preferences-form fieldset, #filters {
-  box-shadow: 2px 3px 0 var(--paper-shadow);
-}
-.preferences-form legend { font-style: italic; }
-.channel-tabs [aria-current] { border-bottom-style: double; border-bottom-width: 4px; }
-.theme-card { border-radius: 3px; background: var(--surface); }
-.theme-option > input:checked + .theme-card { box-shadow: 3px 3px 0 var(--paper-shadow); }
-footer {
-  position: relative; background: var(--surface); border-top: 1px dashed var(--line);
-  padding-block-start: 42px;
-}
-footer::before {
-  content: ""; position: absolute; inset-block-start: 7px; inset-inline-end: 24px;
-  width: 120px; height: 28px; background: url("doodles.svg") center / contain no-repeat;
-  opacity: .65; pointer-events: none;
-}
-[data-thin=true] .media-card::before { display: none; }
-[data-density=compact] .media-card { padding: 8px; }
-[data-page=search] .media-card::before, [data-page=playlist] .media-card::before {
-  inset-inline-start: auto; inset-inline-end: 18px; width: 48px;
-}
-/* Video remains a dark viewing surface with Diary ink accents. */
-body[data-page=watch] .video-js .vjs-play-progress { background: #a9d0dc; }
-body[data-page=watch] .video-js .vjs-button:hover { color: #c7e0e8; }
-body[data-page=watch] .video-js .vjs-big-play-button,
-body[data-page=watch] .video-js .vjs-touch-overlay .vjs-play-control { border-color: #a9d0dc99; background: #202728db; }
-@media (max-width: 767px) {
-  .media-card { padding: 8px; }
-  .media-card::before { height: 12px; inset-block-start: -5px; }
-  .navigation-menu nav { max-width: calc(100vw - 40px); }
-}
-@media (forced-colors: active) {
-  .media-card::before, footer::before { display: none; }
-}
-
-/* A small pen sketch at the bottom of the notebook's index. */
-.navigation-rail::after {
-  content: ""; display: block; width: 120px; height: 28px; margin: 18px auto 8px;
-  background: url("doodles.svg") center / contain no-repeat; pointer-events: none; opacity: .8;
-}
-@media (forced-colors: active) { .navigation-rail::after { display: none; } }
-
 /* Keep the YouTube-style bar transparent across player sizes. */
 body .video-js.player-style-youtube .vjs-control-bar { background: linear-gradient(transparent, rgba(0, 0, 0, 0.2)); }
+
+/* Hand lettering is local to Diary; preserve icon and player font families. */
+@font-face { font-family: Dudu; src: url("Dudu_Calligraphy.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Helvetica Punk"; src: url("Helvetica-Punk.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+h1, h2, h3, .pure-g [class*=pure-u], button, summary, .navigation-link, .preferences-form legend { font-family: var(--handwriting); }
+h1, h2, h3 { font-weight: 400; letter-spacing: .01em; line-height: 1.4; overflow-wrap: anywhere; }
+h1 { font-size: clamp(1.8rem, 2.5vw, 2.5rem); }
+h2 { font-size: 1.55rem; }
+h3 { font-size: 1.3rem; }
+body input, body select, body textarea, #descriptionWrapper, .description-preview, .comments .pure-g,
+.comments .pure-g [class*=pure-u], .video-data, .video-stats, .queue-meta, .queue-number,
+.channel-name, .length, .timestamp-list, .transcript-lines, .preference-description, .video-js { font-family: var(--reading); }
+body input, body select, body textarea, #descriptionWrapper, .comments .pure-g { font-size: 1rem; }
+body.light-theme, body.dark-theme, body.no-theme {
+  background-image: radial-gradient(var(--paper-shadow) .6px, transparent .8px),
+    repeating-linear-gradient(0deg, transparent 0 31px, var(--paper-rule) 31px 32px);
+  background-size: 7px 7px, auto;
+}
+/* The masthead is a stack of patterned paper and cutout tabs. */
+.navbar { background: repeating-linear-gradient(100deg, transparent 0 70px, var(--paper-rule) 70px 72px), var(--surface); border-bottom: 5px double var(--teal); box-shadow: 0 6px 0 var(--paper-shadow); }
+body .navbar .index-link { font-family: "Helvetica Punk", var(--reading); font-size: 25px; font-weight: 400; line-height: 1.8; letter-spacing: 0; gap: 8px; }
+.brand-mark { font-family: var(--reading); font-size: 14px; width: 30px; height: 30px; background: var(--coral); color: var(--page); border-radius: 1px; transform: rotate(-8deg); box-shadow: 3px 3px 0 var(--paper-shadow); }
+.searchbar form { border-radius: 2px 12px 3px 3px; border: 1px solid var(--blue); border-bottom: 3px solid var(--blue); background: var(--blue-paper); }
+.navbar .pure-menu-heading { border-radius: 1px 8px 2px 3px; background: var(--gold-paper); color: var(--text); }
+.navbar .user-field { gap: 5px; }
+.navigation-rail { padding: 14px 10px; background: var(--mint-paper); border: 1px solid var(--teal); border-top: 8px solid var(--teal); box-shadow: 4px 5px 0 var(--paper-shadow); }
+.navigation-heading { font-size: 1rem; color: var(--teal); letter-spacing: .06em; }
+.navigation-link { font-size: 1.15rem; border-radius: 1px 9px 2px 1px; border-bottom: 1px dashed var(--line); padding: 10px; }
+.navigation-link:nth-of-type(3n+1) { background: var(--surface); }
+.navigation-link:nth-of-type(3n+2) { background: var(--gold-paper); }
+.navigation-link:nth-of-type(3n) { background: var(--rose-paper); }
+body .navigation-link[aria-current=page] { color: var(--text); background: var(--selected); border-inline-start: 4px solid var(--teal); text-decoration: underline; text-decoration-style: wavy; text-underline-offset: 5px; }
+body .navigation-link > span { color: var(--teal); }
+.navigation-menu nav { background: var(--mint-paper); }
+.navigation-rail::after, footer::before { content: ""; display: block; height: 60px; background: url("doodles.svg") center / contain no-repeat; pointer-events: none; margin: 14px auto; max-width: 220px; }
+/* Six repeating photo mounts, with upright text and independently tilted tape. */
+.media-grid { row-gap: calc(var(--gap) + 12px); }
+.media-card { --scrap: var(--rose-paper); --ink: var(--coral); position: relative; padding: 18px 12px 12px; background: var(--scrap); border: 1px solid var(--line); border-bottom: 5px solid var(--ink); box-shadow: 3px 4px 0 var(--surface), 6px 7px 0 var(--paper-shadow); }
+.media-item:nth-child(6n+2) .media-card { --scrap: var(--mint-paper); --ink: var(--teal); border-style: dashed; }
+.media-item:nth-child(6n+3) .media-card { --scrap: var(--gold-paper); --ink: var(--mustard); border: 4px double var(--ink); }
+.media-item:nth-child(6n+4) .media-card { --scrap: var(--violet-paper); --ink: var(--violet); border-radius: 2px 18px 2px 2px; }
+.media-item:nth-child(6n+5) .media-card { --scrap: var(--blue-paper); --ink: var(--blue); border-inline-start: 5px solid var(--ink); }
+.media-item:nth-child(6n) .media-card { --scrap: var(--surface); --ink: var(--coral); border-bottom: 5px dotted var(--ink); background-image: repeating-linear-gradient(0deg, transparent 0 27px, var(--paper-rule) 27px 28px); }
+.media-card::before { content: ""; position: absolute; top: -7px; inset-inline-start: 28%; width: 38%; height: 22px; background: repeating-linear-gradient(45deg, var(--tape) 0 5px, var(--gold-paper) 5px 8px); transform: rotate(-4deg); clip-path: polygon(3% 0, 100% 5%, 97% 40%, 100% 90%, 0 100%, 3% 65%, 0 20%); pointer-events: none; z-index: 1; }
+.media-item:nth-child(even) .media-card::before { transform: rotate(5deg); background: repeating-linear-gradient(90deg, var(--violet-paper) 0 8px, var(--paper-shadow) 8px 10px); }
+.media-item:nth-child(3n) .media-card::before { inset-inline-start: 12%; width: 25%; background: var(--tape); }
+.media-card::after { content: ""; display: block; height: 24px; margin-top: 8px; background: url("doodles.svg") right center / 120px 36px no-repeat; pointer-events: none; border-top: 1px dashed var(--ink); }
+.media-item:nth-child(6n+1) .media-card::after { background-image: url("doodles.svg#heart"); background-size: 30px 28px; }
+.media-item:nth-child(6n+2) .media-card::after { background-image: url("doodles.svg#flower"); background-position: left center; background-size: 32px 28px; border-top-style: double; }
+.media-item:nth-child(6n+3) .media-card::after { background-image: url("doodles.svg#stamp"); background-size: 30px 28px; border-top-style: dotted; }
+.media-item:nth-child(6n+4) .media-card::after { background-image: url("doodles.svg#star"); background-position: left center; background-size: 30px 28px; }
+.media-item:nth-child(6n+5) .media-card::after { background-image: url("doodles.svg#scribble"); background-size: 55px 28px; border-top-style: double; }
+.media-card .thumbnail { border-radius: 1px; }
+.media-card .video-card-row > a > p { font-family: var(--handwriting); font-size: 1.35rem; line-height: 1.4; font-weight: 400; overflow-wrap: anywhere; }
+.media-card .video-card-row { margin-inline: 2px; }
+.media-card .channel-name, .media-card .video-data { font-family: var(--reading); }
+/* Each notebook section has its own paper and ink identity. */
+.panel, .comments, .preferences-form fieldset, #filters { border-radius: 2px 12px 3px 2px; box-shadow: 4px 4px 0 var(--paper-shadow); }
+.panel-heading { font-size: 1.45rem; font-weight: 400; background: var(--blue-paper); border-bottom: 2px dashed var(--blue); color: var(--blue); }
+.watch-heading h1::after { content: ""; display: inline-block; width: 50px; height: 30px; margin-inline-start: 12px; background: url("doodles.svg#scribble") center / contain no-repeat; pointer-events: none; }
+.watch-heading { padding: 14px 18px; background: var(--rose-paper); border-inline-start: 5px solid var(--coral); box-shadow: 4px 4px 0 var(--paper-shadow); }
+.watch-description { background: var(--surface); background-image: repeating-linear-gradient(0deg, transparent 0 31px, var(--paper-rule) 31px 32px); border-inline-start: 4px double var(--coral); }
+.queue-panel { background: var(--gold-paper); border: 2px dashed var(--mustard); }
+.queue-heading { background: var(--gold-paper); color: var(--mustard); border-bottom: 4px double var(--mustard); }
+.queue-heading h2 { font-size: 1.3rem; }
+.queue-heading a { color: var(--text) !important; font-size: 1.2rem; font-weight: 400; }
+.queue-row a { border-bottom: 1px dashed var(--line); border-radius: 0; }
+.queue-title { font-size: 1.15rem; font-weight: 400; }
+.queue-row a[aria-current] { box-shadow: inset 4px 0 var(--mustard); background: var(--surface); }
+.recommendations { background: var(--mint-paper); }
+.recommendations .panel-heading { color: var(--teal); background: var(--mint-paper); border-color: var(--teal); }
+.recommendation { border-bottom: 1px dashed var(--line); }
+.recommendation h3 { font-size: 1.2rem; }
+.recommendation p { font-family: var(--reading); }
+.comments { background-color: var(--violet-paper); background-image: linear-gradient(var(--paper-rule) 1px, transparent 1px), linear-gradient(90deg, var(--paper-rule) 1px, transparent 1px); background-size: 20px 20px; border-top: 6px solid var(--violet); }
+.comments .comment-replies { border-color: var(--violet); }
+.preferences-form fieldset { background: var(--blue-paper); border-top: 4px solid var(--blue); }
+body .preferences-form legend { font-size: 1.5rem; font-weight: 400; color: var(--blue); background: var(--surface); border: 1px solid var(--blue); padding: 3px 14px; }
+.preference-nav a { border-radius: 5px 10px 0 0; background: var(--blue-paper); border-bottom: 3px solid var(--blue); }
+.preferences-save { background: var(--blue-paper); }
+.channel-navigation { border-bottom: 3px double var(--teal); }
+.channel-tabs a, .channel-tabs [aria-current] { background: var(--mint-paper); border-radius: 8px 4px 0 0; }
+.channel-tabs [aria-current] { border-color: var(--teal); }
+body .pure-button, body a.pure-button { font-family: var(--handwriting); font-size: 1.125rem; font-weight: 400; border-radius: 2px 7px 2px 3px; border-bottom-width: 3px; }
+body .pure-button-primary, body a.pure-button-primary { background: var(--coral); color: var(--page); border-color: var(--coral); }
+body .pure-form input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]), body .pure-form select, body .pure-form textarea { font-family: var(--reading); border-radius: 2px; }
+body summary { font-weight: 400; }
+#filters { background: var(--blue-paper); border-top: 4px solid var(--blue); }
+.active-filters a { background: var(--gold-paper); color: var(--mustard); border-radius: 1px; border-bottom: 2px dashed var(--mustard); }
+[data-page=search] .media-card, [data-page=playlist] .media-item[data-kind=playlist-video] .media-card { background: var(--scrap); border-radius: 0; border: 1px dashed var(--ink); border-inline-start: 5px solid var(--ink); padding: 18px 14px 12px; }
+body[data-page=search] .media-item .media-card::before, body[data-page=playlist] .media-item .media-card::before { inset-inline-start: auto; inset-inline-end: 18px; width: 48px; }
+[data-page=playlist] .media-item[data-kind=playlist-video] .media-card { --scrap: var(--gold-paper); --ink: var(--mustard); }
+footer { background: var(--surface); border-top: 4px double var(--coral); font-family: var(--reading); }
+footer::before { height: 55px; }
+.theme-card { border-radius: 2px; }
+[data-density=compact] .media-card { padding: 12px 8px 8px; }
+[data-density=compact] .media-card::after, [data-thin=true] .media-card::before, [data-thin=true] .media-card::after { display: none; }
+[data-thin=true] .media-card { border-bottom: 3px solid var(--ink); }
+@media (max-width: 767px) {
+  .navbar .user-field { gap: 2px; }
+  body .navbar .index-link { font-size: 21px; gap: 5px; }
+  .brand-mark { width: 24px; height: 24px; }
+  .media-card { padding: 14px 9px 9px; }
+  .media-card::before { height: 16px; top: -4px; }
+  .media-card::after { height: 18px; background-size: 96px 29px; }
+  .navigation-menu nav { max-width: calc(100vw - 40px); }
+  .watch-heading { padding: 12px; }
+}
+@media (forced-colors: active) {
+  body, .media-card, .comments, .watch-description { background-image: none !important; }
+  .media-card::before, .media-card::after, .navigation-rail::after, footer::before, .watch-heading h1::after { display: none; }
+  .media-card, .panel, .comments, .navigation-rail { box-shadow: none; border: 1px solid CanvasText; }
+  body .navigation-link[aria-current=page] { border-inline-start: 4px solid Highlight; }
+}

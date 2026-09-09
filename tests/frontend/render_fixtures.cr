@@ -139,8 +139,9 @@ end
 
 def playlist_library_fixture(visual_theme = "modern-neon")
   env = signed_in_env("/feed/playlists")
-  env.get("preferences").as(Preferences).theme = visual_theme
   preferences = env.get("preferences").as(Preferences)
+  preferences.theme = visual_theme
+  env.set "preferences", preferences
   locale = preferences.locale
   items_created = (0...4).map do |i|
     SearchPlaylist.new({title: "Light and motion #{i + 1}", id: "PLfixture#{i}", author: "Studio North", ucid: "UCfixture", video_count: 12, videos: [] of SearchPlaylistVideo, thumbnail: "/vi/2isYuQZMbdU/mqdefault.jpg", author_verified: false})
@@ -179,7 +180,9 @@ end
 
 def history_fixture(visual_theme = "modern-neon")
   env = signed_in_env("/feed/history")
-  env.get("preferences").as(Preferences).theme = visual_theme
+  preferences = env.get("preferences").as(Preferences)
+  preferences.theme = visual_theme
+  env.set "preferences", preferences
   user = env.get("user").as(User)
   user.watched = ["2isYuQZMbdU", "previous001", "nextvideo01"]
   watched = user.watched

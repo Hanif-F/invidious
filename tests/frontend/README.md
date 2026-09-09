@@ -64,6 +64,12 @@ Diary fixtures cover light/dark/system modes, compact/thin layouts, RTL, enlarge
 text, search and playlist rows, channels, history, login, errors and preferences.
 Its CSS and doodles count toward the 30 KiB asset cap; lazy-loaded screenshot
 previews use the separate budget below.
+Diary also serves two theme-local fonts with `font-display: swap`: Dudu Calligraphy
+(73,684 bytes) and Helvetica Punk (319,064 bytes), totaling 392,748 bytes
+(383.5 KiB) before HTTP compression, separate from the CSS/JS budget. They are
+requested only by Diary. Handwriting covers short interface text; dense reading
+text and player controls retain system fonts. Browser checks await font loading
+before measuring Diary layouts and verify forced-colors decoration removal.
 The picker submits without JavaScript. See [theming](../../docs/theming.md).
 
 Lazy-loaded theme preview images have a separate 24 KiB compressed budget; the
