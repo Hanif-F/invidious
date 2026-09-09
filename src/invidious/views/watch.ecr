@@ -363,8 +363,6 @@
                 <% if rv["id"]? %>
                 <article class="recommendation" data-video-id="<%= rv["id"] %>" data-channel-id="<%= HTML.escape(rv["ucid"]? || "") %>">
                     <div class="thumbnail">
-                        <% context_video_id = rv["id"]; context_channel_id = rv["ucid"]? || ""; context_channel_name = rv["author"]? || ""; endpoint_params = "?v=#{rv["id"]}" %>
-                        <%= rendered "components/video-context-buttons" %>
                         <% unless preferences.thin_mode %><a tabindex="-1" href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= rv["id"] %>/mqdefault.jpg" alt=""></a><% end %>
                         <% if (length = rv["length_seconds"]?.try &.to_i?) && length > 0 %><div class="bottom-right-overlay"><span class="length"><%= recode_length_seconds(length) %></span></div><% end %>
                     </div>
@@ -374,6 +372,8 @@
                         <% if count = rv["short_view_count"]?.presence %><p><%= I18n.translate_count(locale, "generic_views_count", short_text_to_number(count), I18n::NumberFormatting::Short) %></p><% end %>
                         <% if date = rv["published"]?.try { |value| Time.parse_rfc3339(value) rescue nil } %><p><%= I18n.translate(locale, "`x` ago", recode_date(date, locale)) %></p><% end %>
                     </div>
+                        <% context_video_id = rv["id"]; context_channel_id = rv["ucid"]? || ""; context_channel_name = rv["author"]? || ""; endpoint_params = "?v=#{rv["id"]}" %>
+                        <%= rendered "components/video-context-buttons" %>
                 </article>
                 <% end %>
             <% end %>

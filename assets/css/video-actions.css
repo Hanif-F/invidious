@@ -6,8 +6,8 @@ body .video-context > summary { display: grid; place-items: center; width: 40px;
 body .video-context-actions a, body .video-context-actions button { display: block; width: 100%; box-sizing: border-box; padding: 10px 12px; min-height: 44px; border: 0; border-radius: 4px; background: transparent; color: var(--text, #ddd); text-align: start; text-decoration: none; font: inherit; cursor: pointer; }
 body .video-context-actions a:hover, body .video-context-actions button:hover { background: var(--surface-raised, #444); }
 .recommendation > .thumbnail { position: relative; overflow: visible; }
-.recommendation .video-context { position: absolute; inset-inline-start: 4px; top: 4px; }
-.recommendation .video-context-actions { inset-inline-start: 0; inset-inline-end: auto; }
+.recommendation > .video-context { position: relative; align-self: start; }
+
 .media-item:has(.video-context[open]), .media-card:has(.video-context[open]), .recommendation:has(.video-context[open]) { overflow: visible; position: relative; z-index: 200; }
 #video-playlist-dialog { width: 440px; max-width: calc(100vw - 40px); max-height: 85vh; box-sizing: border-box; padding: 24px; border: 1px solid var(--line, #777); border-radius: 12px; color: var(--text, #ddd); background: var(--surface, #232323); }
 #video-playlist-dialog::backdrop { background: #0008; }

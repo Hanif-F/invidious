@@ -12,7 +12,7 @@
         var anchor = menu.querySelector('summary').getBoundingClientRect();
         var width = panel.offsetWidth;
         var height = panel.offsetHeight;
-        var left = menu.closest('.recommendation') ? anchor.left : anchor.right - width;
+        var left = anchor.right - width;
         left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
         var top = Math.max(8, Math.min(anchor.bottom, window.innerHeight - height - 8));
         // Apply positioning atomically. A temporary fixed element with top:100%
