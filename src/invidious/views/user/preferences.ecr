@@ -133,13 +133,26 @@
             </fieldset><fieldset>
             <legend id="preferences-appearance"><%= I18n.translate(locale, "ui_appearance") %></legend>
             <p class="preference-description"><%= I18n.translate(locale, "ui_appearance_hint") %></p>
+            <div class="pure-control-group">
+                <label for="theme_random_interval_hours"><%= I18n.translate(locale, "preferences_theme_random_interval") %></label>
+                <input type="number" id="theme_random_interval_hours" name="theme_random_interval_hours" min="1" max="168" step="1" required value="<%= preferences.theme_random_interval_hours %>" aria-describedby="theme-random-hint">
+                <p id="theme-random-hint" class="preference-description"><%= I18n.translate(locale, "preferences_theme_random_hint") %></p>
+            </div>
             <fieldset class="theme-picker" aria-describedby="theme-hint">
                 <legend><%= I18n.translate(locale, "preferences_theme_label") %></legend>
                 <p id="theme-hint" class="preference-description"><%= I18n.translate(locale, "preferences_theme_hint") %></p>
                 <div class="theme-options">
+                    <label class="theme-option" for="theme-random">
+                        <input type="radio" name="theme" id="theme-random" value="random" <%= "checked" if preferences.theme_random %>>
+                        <span class="theme-card">
+                            <span class="theme-random-preview" aria-hidden="true"><svg viewBox="0 0 64 64" width="96" height="96" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16h8c12 0 20 32 32 32h8m-10-10 10 10-10 10M8 48h8c5 0 9-5 13-11m6-10c4-6 8-11 13-11h8M46 6l10 10-10 10"/></svg></span>
+                            <span class="theme-card-name"><%= I18n.translate(locale, "preferences_theme_random") %></span>
+                            <span class="theme-card-selected" aria-hidden="true"><%= I18n.translate(locale, "preferences_theme_selected") %></span>
+                        </span>
+                    </label>
                     <% Invidious::Themes::AVAILABLE.each do |theme| %>
                         <label class="theme-option" for="theme-<%= theme.id %>">
-                            <input type="radio" name="theme" id="theme-<%= theme.id %>" value="<%= theme.id %>" <%= "checked" if Invidious::Themes.normalize(preferences.theme) == theme.id %>>
+                            <input type="radio" name="theme" id="theme-<%= theme.id %>" value="<%= theme.id %>" <%= "checked" if !preferences.theme_random && Invidious::Themes.normalize(preferences.theme) == theme.id %>>
                             <span class="theme-card">
                                 <img src="<%= theme.preview %>?v=<%= ASSET_COMMIT %>" alt="" width="640" height="360" loading="lazy">
                                 <span class="theme-card-name"><%= HTML.escape(theme.name) %></span>
@@ -185,7 +198,7 @@
                 <label for="dark_mode"><%= I18n.translate(locale, "preferences_color_mode_label") %></label>
                 <select name="dark_mode" id="dark_mode">
                     <% {"", "light", "dark"}.each do |option| %>
-                        <option value="<%= option %>" <% if preferences.dark_mode == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "auto" : option) %></option>
+                        <option value="<%= option %>" <% if preferences.dark_mode == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "preferences_color_system" : option) %></option>
                     <% end %>
                 </select>
             </div>

@@ -1,49 +1,50 @@
 'use strict';
 var toggle_theme = document.getElementById('toggle_theme');
-toggle_theme.href = 'javascript:void(0)';
-
 const STORAGE_KEY_THEME = 'dark_mode';
 const THEME_DARK = 'dark';
 const THEME_LIGHT = 'light';
+var colorMode = '';
+var systemColor = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
-// TODO: theme state controlled by system
-toggle_theme.addEventListener('click', function () {
-    const isDarkTheme = document.body.classList.contains('dark-theme') || (document.body.classList.contains('no-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
-    const newTheme = isDarkTheme ? THEME_LIGHT : THEME_DARK;
-    setTheme(newTheme);
-    helpers.storage.set(STORAGE_KEY_THEME, newTheme);
-    helpers.xhr('GET', '/toggle_theme?redirect=false', {}, {});
-});
-
-/** @param {THEME_DARK|THEME_LIGHT} theme */
 function setTheme(theme) {
-    // By default body element has .no-theme class that uses OS theme via CSS @media rules
-    // Preserve unrelated classes when switching themes.
-    if (theme === THEME_DARK) {
-        toggle_theme.children[0].className = 'icon ion-ios-sunny';
-        document.body.classList.remove('no-theme', 'light-theme');
-        document.body.classList.add('dark-theme');
-    } else if (theme === THEME_LIGHT) {
-        toggle_theme.children[0].className = 'icon ion-ios-moon';
-        document.body.classList.remove('no-theme', 'dark-theme');
-        document.body.classList.add('light-theme');
-    } else {
-        document.body.classList.remove('dark-theme', 'light-theme');
-        document.body.classList.add('no-theme');
-    }
+    colorMode = theme === THEME_DARK || theme === THEME_LIGHT ? theme : '';
+    document.body.classList.remove('no-theme', 'light-theme', 'dark-theme');
+    document.body.classList.add((colorMode || 'no') + '-theme');
+    if (!toggle_theme) return;
+    toggle_theme.children[0].className = 'icon ' + (colorMode === 'dark' ? 'ion-ios-moon' : colorMode === 'light' ? 'ion-ios-sunny' : 'ion-monitor');
+    var label = toggle_theme.getAttribute('data-mode-' + (colorMode || 'system'));
+    toggle_theme.title = label;
+    toggle_theme.setAttribute('aria-label', label);
+    toggle_theme.dataset.mode = colorMode || 'system';
 }
 
-// Handles theme change event caused by other tab
-addEventListener('storage', function (e) {
-    if (e.key === STORAGE_KEY_THEME)
-        setTheme(helpers.storage.get(STORAGE_KEY_THEME));
+if (toggle_theme) {
+    toggle_theme.addEventListener('click', function (event) {
+        event.preventDefault();
+        var next = colorMode === '' ? THEME_LIGHT : colorMode === THEME_LIGHT ? THEME_DARK : '';
+        setTheme(next);
+        helpers.storage.set(STORAGE_KEY_THEME, next);
+        helpers.xhr('GET', '/toggle_theme?redirect=false&mode=' + encodeURIComponent(next), {}, {});
+    });
+}
+
+// CSS follows the system while no-theme is active; keep the control synchronized.
+if (systemColor) {
+    var systemChanged = function () { if (colorMode === '') setTheme(''); };
+    if (systemColor.addEventListener) systemColor.addEventListener('change', systemChanged);
+    else if (systemColor.addListener) systemColor.addListener(systemChanged);
+}
+
+addEventListener('storage', function (event) {
+    if (event.key === STORAGE_KEY_THEME) {
+        var mode = helpers.storage.get(STORAGE_KEY_THEME);
+        if (mode === '' || mode === THEME_LIGHT || mode === THEME_DARK) setTheme(mode);
+    }
 });
 
-// Set theme from preferences on page load
 addEventListener('DOMContentLoaded', function () {
-    const prefTheme = document.getElementById('dark_mode_pref').textContent;
-    if (prefTheme) {
-        setTheme(prefTheme);
-        helpers.storage.set(STORAGE_KEY_THEME, prefTheme);
-    }
+    var pref = document.getElementById('dark_mode_pref');
+    if (!pref) return;
+    setTheme(pref.textContent);
+    helpers.storage.set(STORAGE_KEY_THEME, colorMode);
 });

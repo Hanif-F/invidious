@@ -127,7 +127,7 @@ struct Invidious::User
       end
 
       if data["preferences"]?
-        user.preferences = Preferences.from_json(data["preferences"].to_json)
+        user.preferences = Invidious::Themes.prepare_schedule(user.preferences, Preferences.from_json(data["preferences"].to_json))
         Invidious::Database::Users.update_preferences(user)
         Invidious::Database::PlaybackPositions.clear(user.email) unless user.preferences.save_player_pos
       end

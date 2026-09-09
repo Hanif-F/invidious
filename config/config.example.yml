@@ -737,7 +737,11 @@ default_user_preferences:
   ## Accepted values: "dark", "light", "auto"
   ## Default: "auto"
   ##
-  #dark_mode: "auto"
+  #dark_mode: ""
+
+  # Random visual themes change only on page navigation, preserving color mode.
+  #theme_random: false
+  #theme_random_interval_hours: 6
 
   # Visual theme ID registered in src/invidious/themes.cr.
   #theme: "modern-neon"

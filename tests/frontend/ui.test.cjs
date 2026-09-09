@@ -135,7 +135,7 @@ for (const engine of engines) {
         assert.ok(!requests.some(url => url.startsWith('/themes/modern-neon/theme.css')));
         await page.getByRole('radio', { name: 'Fixture Theme' }).focus();
         await page.keyboard.press('ArrowRight');
-        assert.equal(await page.getByRole('radio', { name: 'Modern Neon' }).isChecked(), true);
+        assert.equal(await page.getByRole('radio', { name: 'Random', exact: true }).isChecked(), true);
         assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
         await page.locator('#toggle_theme').click();
         assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
@@ -597,11 +597,78 @@ for (const engine of engines) {
         await context.close();
     });
 
+    test(`${engine}: Random is the leftmost accessible theme choice and submits without JavaScript`, async () => {
+        const { page, context } = await pageFor(engine, { fixture: 'preferences', javascript: false });
+        const random = page.locator('#theme-random');
+        assert.equal(await page.locator('.theme-option input').first().getAttribute('value'), 'random');
+        assert.equal(await page.locator('label[for="theme-random"] svg').count(), 1);
+        await random.check();
+        await page.locator('#theme_random_interval_hours').fill('12');
+        const posted = page.waitForRequest(request => request.method() === 'POST');
+        await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
+        const data = new URLSearchParams((await posted).postData());
+        assert.equal(data.get('theme'), 'random');
+        assert.equal(data.get('theme_random_interval_hours'), '12');
+        await context.close();
+    });
+
+    test(`${engine}: Random remains selected and open pages do not change at the deadline`, async () => {
+        const selection = await pageFor(engine, { fixture: 'preferences-random' });
+        assert.equal(await selection.page.locator('#theme-random').isChecked(), true);
+        await selection.page.locator('#theme-random').focus();
+        await selection.page.keyboard.press('ArrowRight');
+        assert.equal(await selection.page.locator('#theme-modern-neon').isChecked(), true);
+        await selection.context.close();
+        const { page, context, requests } = await pageFor(engine, { fixture: 'browse-random' });
+        const theme = await page.locator('body').getAttribute('data-theme');
+        const navigations = requests.length;
+        await page.clock.install();
+        await page.clock.fastForward(7 * 60 * 60 * 1000);
+        assert.equal(await page.locator('body').getAttribute('data-theme'), theme);
+        assert.equal(requests.length, navigations);
+        await context.close();
+    });
+
+    test(`${engine}: System follows live appearance changes and cycles independently of visual themes`, async () => {
+        for (const fixture of ['browse-auto', 'browse-diary-auto', 'browse-cinematic-auto']) {
+            const { page, context, requests, errors } = await pageFor(engine, { fixture, systemTheme: 'dark' });
+            const activeTheme = await page.locator('body').getAttribute('data-theme');
+            const scheme = () => page.locator('body').evaluate(el => getComputedStyle(el).colorScheme);
+            assert.equal(await scheme(), 'dark');
+            await page.emulateMedia({ colorScheme: 'light' });
+            assert.equal(await scheme(), 'light');
+            await page.evaluate(() => document.body.classList.add('extra-class'));
+            for (const [mode, css] of [['light', 'light'], ['dark', 'dark'], ['', 'light']]) {
+                await page.locator('#toggle_theme').click();
+                assert.equal(await scheme(), css);
+                assert.equal(await page.locator('#toggle_theme').getAttribute('data-mode'), mode || 'system');
+                assert.equal(await page.locator('body').getAttribute('data-theme'), activeTheme);
+                assert.ok(await page.locator('body').evaluate(el => el.classList.contains('extra-class')));
+            }
+            assert.ok(requests.some(url => url === '/toggle_theme?redirect=false&mode='));
+            await page.reload();
+            assert.equal(await page.locator('#toggle_theme').getAttribute('data-mode'), 'system');
+            await page.emulateMedia({ colorScheme: 'dark' });
+            assert.equal(await scheme(), 'dark');
+            const otherTab = await context.newPage();
+            await otherTab.route('**/*', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+            await otherTab.goto('https://invidious.test/other-tab');
+            await otherTab.evaluate(() => localStorage.setItem('dark_mode', encodeURIComponent(JSON.stringify('light'))));
+            await page.waitForFunction(() => document.body.classList.contains('light-theme'));
+            assert.equal(await scheme(), 'light');
+            await otherTab.evaluate(() => localStorage.setItem('dark_mode', encodeURIComponent(JSON.stringify(''))));
+            await page.waitForFunction(() => document.body.classList.contains('no-theme'));
+            assert.equal(await scheme(), 'dark');
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
     test(`${engine}: theme switching preserves density and page layout`, async () => {
         const { page, context, errors } = await pageFor(engine, { fixture: 'browse-compact' });
         await page.locator('#toggle_theme').click();
         assert.equal(await page.locator('body').getAttribute('data-density'), 'compact');
-        assert.equal(await page.locator('body').getAttribute('class'), 'light-theme');
+        assert.equal(await page.locator('body').getAttribute('class'), 'no-theme');
         assert.deepEqual(errors, []);
         await context.close();
     });

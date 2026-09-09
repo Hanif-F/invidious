@@ -22,7 +22,7 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
 
     begin
-      user.preferences = Preferences.from_json(env.request.body || "{}")
+      user.preferences = Invidious::Themes.prepare_schedule(user.preferences, Preferences.from_json(env.request.body || "{}"))
     rescue
     end
 

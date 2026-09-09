@@ -29,6 +29,11 @@ struct ConfigPreferences
   property dark_mode : String = ""
   @[YAML::Field(converter: Preferences::Theme)]
   property theme : String = Invidious::Themes::DEFAULT
+  property theme_random : Bool = false
+  @[YAML::Field(converter: Preferences::ThemeInterval)]
+  property theme_random_interval_hours : Int32 = 6
+  @[YAML::Field(converter: Preferences::ThemeDeadline)]
+  property theme_random_next_at : Int64? = nil
   property latest_only : Bool = false
   property listen : Bool = false
   property local : Bool = false

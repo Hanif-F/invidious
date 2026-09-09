@@ -303,6 +303,13 @@ File.write("#{output}/playlist-library-cinematic.html", playlist_library_fixture
 File.write("#{output}/channel-cinematic.html", diary_channel_fixture("cinematic", "dark"))
 File.write("#{output}/login-cinematic.html", diary_login_fixture("cinematic", "dark"))
 File.write("#{output}/error-cinematic.html", diary_error_fixture("cinematic", "dark"))
+random_env = fixture_env("/preferences", "")
+random_preferences = random_env.get("preferences").as(Preferences)
+random_preferences.theme_random = true
+random_preferences.theme_random_next_at = Time.utc.to_unix + 21600
+random_env.set "preferences", random_preferences
+File.write("#{output}/preferences-random.html", preferences_fixture(random_env))
+File.write("#{output}/browse-random.html", browse_fixture(random_env))
 # Register an alternative only inside this fixture process; never ship it as an option.
 Invidious::Themes::AVAILABLE << Invidious::Themes::Theme.new("fixture-theme", "Fixture Theme", "/themes/fixture-theme/theme.css", "/themes/modern-neon/preview.webp")
 begin
@@ -312,6 +319,7 @@ begin
   env.set "preferences", preferences
   File.write("#{output}/preferences-alternative.html", preferences_fixture(env))
   check_theme_preferences
+  check_random_themes
 ensure
   Invidious::Themes::AVAILABLE.pop
 end

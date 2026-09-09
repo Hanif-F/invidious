@@ -111,3 +111,17 @@ player controls. The picker preview is a reduced WebP capture of the dark browse
 fixture; screenshots use synthetic media rather than upstream thumbnails.
 Preview images share an aggregate allowance of 12 KiB per theme (36 KiB for
 three themes), preserving the previous 24 KiB allowance for two themes.
+
+Random themes use the existing preference storage: `theme` remains the active
+registered style, `theme_random` enables selection, `theme_random_interval_hours`
+accepts 1–168 (default 6), and `theme_random_next_at` holds a UTC epoch deadline.
+Named theme selection disables Random. The first interval keeps the current
+theme; overdue HTML navigation chooses once, excluding that theme. Account
+updates use a conditional write so overlapping requests share one result.
+
+Color mode remains `""` (System), `light`, or `dark`. The header cycles in that
+order and `/toggle_theme?mode=...` can persist an explicit mode (including empty).
+System follows browser-reported appearance live. Tests cover live media changes,
+real cross-tab storage events, Random selection without JavaScript, and no theme
+change on an open page after an elapsed interval. Physical Android/iOS, Windows,
+and Linux desktop appearance integration still requires device testing.

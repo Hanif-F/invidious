@@ -164,6 +164,15 @@ module Invidious::Database::Users
     PG_DB.exec(request, channel_id)
   end
 
+  def preference_json(email : String) : String
+    PG_DB.query_one("SELECT preferences FROM users WHERE email = $1", email, as: String)
+  end
+
+  def compare_and_set_preferences(email : String, previous : String, preferences : Preferences) : Bool
+    PG_DB.exec("UPDATE users SET preferences = $1 WHERE email = $2 AND preferences = $3",
+      preferences.to_json, email, previous).rows_affected == 1
+  end
+
   def update_preferences(user : User)
     request = <<-SQL
       UPDATE users

@@ -109,6 +109,8 @@ module Invidious::Routes::BeforeAll
       end
     end
 
+    preferences = Invidious::Themes.apply_random_theme(env, preferences)
+
     dark_mode = convert_theme(env.params.query["dark_mode"]?) || preferences.dark_mode.to_s
     thin_mode = env.params.query["thin_mode"]?
     thin_mode = (thin_mode == "true") || preferences.thin_mode

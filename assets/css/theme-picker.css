@@ -9,3 +9,9 @@ body .pure-form .theme-option { display: block; position: relative; width: auto;
 .theme-option > input:checked + .theme-card { border-color: var(--accent, currentColor); }
 .theme-option > input:checked + .theme-card .theme-card-selected { visibility: visible; }
 .theme-option > input:focus-visible + .theme-card { outline: 3px solid var(--focus, currentColor); outline-offset: 3px; }
+
+/* Keep Random visually leftmost, including in RTL layouts. */
+.theme-options { direction: ltr; }
+.theme-option { direction: inherit; }
+[dir="rtl"] .theme-card { direction: rtl; }
+.theme-random-preview { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 9; color: var(--accent, currentColor); }

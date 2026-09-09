@@ -121,8 +121,18 @@ module Invidious::Routes::PreferencesRoute
     dark_mode = env.params.body["dark_mode"]?.try &.as(String)
     dark_mode ||= CONFIG.default_user_preferences.dark_mode
 
-    theme = env.params.body["theme"]? || env.get("preferences").as(Preferences).theme
-    theme = Invidious::Themes.normalize(theme)
+    previous = env.get("preferences").as(Preferences)
+    selection = env.params.body["theme"]?
+    theme_random = selection ? selection == "random" : previous.theme_random
+    theme = selection && selection != "random" ? Invidious::Themes.normalize(selection) : previous.theme
+    interval = env.params.body["theme_random_interval_hours"]?
+    theme_random_interval_hours = interval ? Preferences::ThemeInterval.normalize(interval.to_i64? || 6) : previous.theme_random_interval_hours
+    theme_random_next_at = previous.theme_random_next_at
+    if !theme_random
+      theme_random_next_at = nil
+    elsif !previous.theme_random || theme_random_interval_hours != previous.theme_random_interval_hours
+      theme_random_next_at = Time.utc.to_unix + theme_random_interval_hours.to_i64 * 3600
+    end
 
     ui_density = env.params.body["ui_density"]? || env.get("preferences").as(Preferences).ui_density
     ui_density = Preferences::UIDensity.normalize(ui_density)
@@ -167,6 +177,9 @@ module Invidious::Routes::PreferencesRoute
       continue_autoplay:           continue_autoplay,
       dark_mode:                   dark_mode,
       theme:                       theme,
+      theme_random:                theme_random,
+      theme_random_interval_hours: theme_random_interval_hours,
+      theme_random_next_at:        theme_random_next_at,
       latest_only:                 latest_only,
       listen:                      listen,
       local:                       local,
@@ -264,23 +277,15 @@ module Invidious::Routes::PreferencesRoute
     if user = env.get? "user"
       user = user.as(User)
 
-      case user.preferences.dark_mode
-      when "dark"
-        user.preferences.dark_mode = "light"
-      else
-        user.preferences.dark_mode = "dark"
-      end
+      requested = env.params.query["mode"]?
+      user.preferences.dark_mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : Invidious::Themes.next_mode(user.preferences.dark_mode)
 
       Invidious::Database::Users.update_preferences(user)
     else
       preferences = env.get("preferences").as(Preferences)
 
-      case preferences.dark_mode
-      when "dark"
-        preferences.dark_mode = "light"
-      else
-        preferences.dark_mode = "dark"
-      end
+      requested = env.params.query["mode"]?
+      preferences.dark_mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : Invidious::Themes.next_mode(preferences.dark_mode)
 
       host = env.get("header_x-forwarded-host")
       if alt = CONFIG.alternative_domains.index(host)
