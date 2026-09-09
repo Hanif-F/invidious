@@ -88,7 +88,7 @@ viewport. JavaScript-disabled pages retain their original titles.
 
 Tests include ranking/trust rules, cache expiry and concurrency, guest/account/API
 preference persistence, dynamic queue updates, safe text insertion, original-title
-tooltips, disabled/failure fallbacks, and desktop/mobile screenshots. Database
+text swaps on hover or keyboard focus, disabled/failure fallbacks, and desktop/mobile screenshots. Database
 checks use the existing SQLite fixture harness and separate account objects to
 simulate sessions; they do not validate a deployed PostgreSQL login session.
 New strings include English and Indonesian, with the existing English fallback

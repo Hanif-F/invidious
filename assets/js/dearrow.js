@@ -8,7 +8,6 @@
     var seen = new WeakSet();
     var queue = [];
     var active = 0;
-    var tooltipId = 0;
 
     function pump() {
         while (active < 4 && queue.length) {
@@ -35,59 +34,30 @@
         return requests.get(id);
     }
 
-    function originalTooltip(element, original) {
+    function originalOnInteraction(element, original, replacement) {
         var trigger = element.closest('a') || element;
         var addedTabIndex = !trigger.hasAttribute('tabindex') && trigger.tagName !== 'A';
         if (addedTabIndex) trigger.tabIndex = 0;
-        var tip = document.createElement('span');
-        tip.id = 'dearrow-original-' + (++tooltipId);
-        tip.className = 'dearrow-tooltip';
-        tip.dir = 'auto';
-        tip.setAttribute('role', 'tooltip');
-        tip.textContent = config.originalLabel + ' ' + original;
-        tip.hidden = true;
-        document.body.appendChild(tip);
-        var describedBy = trigger.getAttribute('aria-describedby');
-        trigger.setAttribute('aria-describedby', (describedBy ? describedBy + ' ' : '') + tip.id);
-        var hovered = trigger.matches(':hover');
-        var focused = document.activeElement === trigger;
-        var hideTimer;
+        var hovered = element.matches(':hover');
+        var focused = document.activeElement === trigger && trigger.matches(':focus-visible');
         function update() {
-            tip.hidden = !(hovered || focused);
-            if (tip.hidden) return;
-            var rect = trigger.getBoundingClientRect();
-            tip.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - tip.offsetWidth - 8)) + 'px';
-            tip.style.top = Math.max(8, Math.min(rect.bottom + 4, window.innerHeight - tip.offsetHeight - 8)) + 'px';
+            element.textContent = hovered || focused ? original : replacement;
         }
-        function enter() { clearTimeout(hideTimer); hovered = true; update(); }
-        function leave() {
-            // Allow the pointer to cross the small gap to the tooltip itself.
-            hideTimer = setTimeout(function () { hovered = false; update(); }, 100);
-        }
-        trigger.addEventListener('mouseenter', enter);
-        trigger.addEventListener('mouseleave', leave);
-        tip.addEventListener('mouseenter', enter);
-        tip.addEventListener('mouseleave', leave);
-        function focus() { focused = true; update(); }
+        function enter() { hovered = true; update(); }
+        function leave() { hovered = false; update(); }
+        function focus() { focused = trigger.matches(':focus-visible'); update(); }
         function blur() { focused = false; update(); }
-        function keydown(event) {
-            if (event.key === 'Escape') { hovered = false; focused = false; update(); }
-        }
+        element.addEventListener('mouseenter', enter);
+        element.addEventListener('mouseleave', leave);
         trigger.addEventListener('focus', focus);
         trigger.addEventListener('blur', blur);
-        trigger.addEventListener('keydown', keydown);
-        // Undo can reinsert the same card. Restore its accessibility state on removal.
+        // Undo can reinsert the same card. Remove listeners before restoring it.
         element.dearrowCleanup = function () {
-            clearTimeout(hideTimer);
-            trigger.removeEventListener('mouseenter', enter);
-            trigger.removeEventListener('mouseleave', leave);
+            element.removeEventListener('mouseenter', enter);
+            element.removeEventListener('mouseleave', leave);
             trigger.removeEventListener('focus', focus);
             trigger.removeEventListener('blur', blur);
-            trigger.removeEventListener('keydown', keydown);
-            if (describedBy) trigger.setAttribute('aria-describedby', describedBy);
-            else trigger.removeAttribute('aria-describedby');
             if (addedTabIndex) trigger.removeAttribute('tabindex');
-            tip.remove();
         };
         update();
     }
@@ -100,7 +70,7 @@
             element.dataset.dearrowOriginal = original;
             element.textContent = title;
             if (element.hasAttribute('data-dearrow-watch')) document.title = title + ' - Invidious';
-            if (config.showOriginal) originalTooltip(element, original);
+            if (config.showOriginal) originalOnInteraction(element, original, title);
         });
     }
 

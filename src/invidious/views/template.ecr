@@ -177,7 +177,7 @@
     </div>
     <%= rendered "components/video-actions-dialog" %>
     <% if preferences.dearrow_enabled %>
-        <script id="dearrow-config" type="application/json"><%= {"showOriginal" => preferences.dearrow_show_original, "originalLabel" => I18n.translate(locale, "dearrow_original_title")}.to_json.gsub("<", "\\u003c") %></script>
+        <script id="dearrow-config" type="application/json"><%= {"showOriginal" => preferences.dearrow_show_original}.to_json.gsub("<", "\\u003c") %></script>
         <script src="/js/dearrow.js?v=<%= ASSET_COMMIT %>" defer></script>
     <% end %>
     <script src="/js/video-actions.js?v=<%= ASSET_COMMIT %>" defer></script>

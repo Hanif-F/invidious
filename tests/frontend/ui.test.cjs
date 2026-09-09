@@ -921,14 +921,17 @@ for (const engine of engines) {
         assert.equal(await page.title(), replacement + ' - Invidious');
         assert.equal(await page.locator('[data-dearrow-watch] img').count(), 0);
         const heading = page.locator('[data-dearrow-watch]');
-        await heading.focus();
-        const tooltip = page.locator('#' + await heading.getAttribute('aria-describedby'));
-        assert.equal(await tooltip.isVisible(), true);
-        assert.match(await tooltip.textContent(), /A journey through light, color, and motion/);
-        await page.keyboard.press('Escape');
-        assert.equal(await tooltip.isVisible(), false);
+        const original = 'A journey through light, color, and motion';
         await heading.hover();
-        assert.equal(await tooltip.isVisible(), true);
+        assert.equal(await heading.textContent(), original);
+        assert.equal(await page.locator('.dearrow-tooltip').count(), 0);
+        await page.mouse.move(0, 0);
+        assert.equal(await heading.textContent(), replacement);
+        await heading.focus();
+        assert.equal(await heading.textContent(), original);
+        await heading.evaluate(el => el.blur());
+        assert.equal(await heading.textContent(), replacement);
+        assert.equal(await page.title(), replacement + ' - Invidious');
         await page.locator('.queue-row').first().waitFor();
         const id = '2isYuQZMbdU';
         const duplicate = page.locator('#playlist [data-dearrow-id="' + id + '"]').first();
@@ -941,27 +944,33 @@ for (const engine of engines) {
         await page.waitForFunction(() => document.querySelector('#playlist [data-dearrow-id="2isYuQZMbdU"]')?.textContent.startsWith('A clear title'));
         assert.equal(requests.filter(url => url === '/api/v1/dearrow/' + id).length, 1);
         assert.deepEqual(errors, []);
-        const tooltipsBefore = await page.locator('.dearrow-tooltip').count();
         await page.evaluate(() => {
             window.removedRecommendation = document.querySelector('.recommendation');
             window.removedRecommendation.remove();
         });
-        await page.waitForFunction(count => document.querySelectorAll('.dearrow-tooltip').length < count, tooltipsBefore);
+        await page.waitForFunction(() => !window.removedRecommendation.querySelector('[data-dearrow-id]').hasAttribute('data-dearrow-original'));
         await page.evaluate(() => document.querySelector('.recommendations').appendChild(window.removedRecommendation));
         const restored = page.locator('.recommendation').last().locator('h3 a');
         await restored.scrollIntoViewIfNeeded();
         await page.waitForFunction(() => window.removedRecommendation.querySelector('[data-dearrow-id]').textContent.startsWith('A clear title'));
-        await restored.focus();
-        assert.equal(await page.locator('#' + await restored.getAttribute('aria-describedby')).isVisible(), true);
+        const restoredTitle = restored.locator('[data-dearrow-id]');
+        await restoredTitle.hover();
+        assert.equal(await restoredTitle.textContent(), await restoredTitle.getAttribute('data-dearrow-original'));
+        await page.mouse.move(0, 0);
+        assert.equal(await restoredTitle.textContent(), replacement);
         await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-desktop.png`)});
         await context.close();
     });
 
-    test(`${engine}: DeArrow covers video lists on mobile without original tooltips`, async () => {
+    test(`${engine}: DeArrow keeps replacements on hover when original display is disabled`, async () => {
         const {page, context, errors} = await pageFor(engine, {fixture: 'browse-dearrow-no-original', width: 390});
         await page.waitForFunction(() => Array.from(document.querySelectorAll('[data-dearrow-id]')).some(el => el.textContent.startsWith('A clear title')));
         assert.equal(await page.locator('.dearrow-tooltip').count(), 0);
         assert.equal(await page.locator('[data-dearrow-id] img').count(), 0);
+        const cardTitle = page.locator('[data-dearrow-id]').first();
+        await cardTitle.hover();
+        assert.equal(await cardTitle.textContent(), 'A clear title <img src=x onerror=alert(1)>');
+
         await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-mobile.png`)});
         assert.deepEqual(errors, []);
         await context.close();
