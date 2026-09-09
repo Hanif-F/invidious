@@ -59,6 +59,10 @@ module Invidious::Routing
     post "/login", Routes::Login, :login
     post "/signout", Routes::Login, :signout
 
+    get "/blocked_channels", Routes::BlockedChannels, :index
+    post "/blocked_channels", Routes::BlockedChannels, :update
+    get "/video_actions", Routes::BlockedChannels, :video_actions
+
     # User preferences
     get "/preferences", Routes::PreferencesRoute, :show
     post "/preferences", Routes::PreferencesRoute, :update

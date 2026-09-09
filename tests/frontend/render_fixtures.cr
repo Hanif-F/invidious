@@ -91,6 +91,7 @@ def watch_fixture(env, plid : String? = "PLfixture")
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   video = fixture_video
+  related_videos = video.related_videos
   id = video.id
   continuation = 2
   params = Invidious::Videos.process_video_params(URI::Params.new, preferences)
@@ -164,6 +165,7 @@ def signed_in_env(path)
   user = Invidious::User.new({updated: Time.utc, notifications: [] of String, subscriptions: [] of String, email: "viewer@example.test", preferences: env.get("preferences").as(Preferences), password: nil, token: "fixture", watched: [] of String, feed_needs_update: false})
   env.set "user", user
   env.set "csrf_token", "fixture-token"
+  env.set "blocked_channels", [] of String
   env
 end
 
@@ -294,3 +296,39 @@ ensure
   Invidious::Themes::AVAILABLE.pop
 end
 puts "Rendered frontend fixtures to #{output}"
+
+# Account menus on recommendation cards without a PostgreSQL dependency.
+File.write("#{output}/watch-actions.html", watch_fixture(signed_in_env("/watch?v=2isYuQZMbdU"), nil))
+
+def search_blocked_fixture(include_blocked = false)
+  env = signed_in_env("/search?q=light")
+  preferences = env.get("preferences").as(Preferences)
+  locale = "en-US"
+  query = Invidious::Search::Query.new(HTTP::Params.parse("q=light&page=2&type=video&include_blocked=#{include_blocked ? 1 : 0}"))
+  items = [] of SearchVideo
+  blocked_results = !include_blocked
+  redirect_url = "/"
+  page_nav_html = Invidious::Frontend::Pagination.nav_numeric(locale, base_url: "/search?#{query.to_http_params}", current_page: 2, show_next: true)
+  navbar_search = true
+  render "src/invidious/views/search.ecr", "src/invidious/views/template.ecr"
+end
+
+File.write("#{output}/search-blocked.html", search_blocked_fixture)
+File.write("#{output}/search-included.html", search_blocked_fixture(true))
+
+File.write("#{output}/watch-owned.html", watch_fixture(signed_in_env("/watch?v=2isYuQZMbdU&list=IVfixture&index=2"), "IVfixture"))
+
+def editable_queue_fixture(removed = [] of Int32, cursor = 2, current_removed = false)
+  ids = ["2isYuQZMbdU", "previous001", "2isYuQZMbdU", "nextvideo01"]
+  videos = ids.each_with_index.reject { |_, original| removed.includes?(original) }.map_with_index do |(id, original), index|
+    {videoId: id, index: index, indexId: (9007199254740993_i64 + original).to_s(16).upcase, title: "Occurrence #{original + 1}", author: "Studio North", lengthSeconds: 240}
+  end
+  playlist = JSON.parse({playlistId: "IVfixture", title: "Editable playlist", videoCount: videos.size, videos: videos}.to_json)
+  next_index = cursor + (current_removed ? 0 : 1)
+  {playlistHtml: template_playlist(playlist, false, false, true), currentIndex: cursor, nextVideo: videos[next_index]?.try(&.[:videoId]), index: videos[next_index]?.try(&.[:index])}.to_json
+end
+
+File.write("#{output}/queue-editable.json", editable_queue_fixture)
+File.write("#{output}/queue-removed-before.json", editable_queue_fixture([0], 1))
+File.write("#{output}/queue-removed-current.json", editable_queue_fixture([2], 2, true))
+File.write("#{output}/queue-removed-next.json", editable_queue_fixture([3], 2))

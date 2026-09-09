@@ -24,7 +24,11 @@ module Invidious::Routes::Playlists
     sid = env.get? "sid"
     referer = get_referer(env)
 
-    return env.redirect "/" if user.nil?
+    json_response = env.params.query["redirect"]? == "false"
+    if user.nil?
+      return error_json(403, "No such user") if json_response
+      return env.redirect "/"
+    end
 
     user = user.as(User)
     sid = sid.as(String)
@@ -33,25 +37,33 @@ module Invidious::Routes::Playlists
     begin
       validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
+      return error_json(400, ex) if json_response
       return error_template(400, ex)
     end
 
-    title = env.params.body["title"]?.try &.as(String)
+    title = env.params.body["title"]?.try &.strip
     if !title || title.empty?
+      return error_json(400, "Title cannot be empty.") if json_response
       return error_template(400, "Title cannot be empty.")
     end
 
     privacy = PlaylistPrivacy.parse?(env.params.body["privacy"]?.try &.as(String) || "")
     if !privacy
+      return error_json(400, "Invalid privacy setting.") if json_response
       return error_template(400, "Invalid privacy setting.")
     end
 
     if Invidious::Database::Playlists.count_owned_by(user.email) >= 100
+      return error_json(400, "User cannot have more than 100 playlists.") if json_response
       return error_template(400, "User cannot have more than 100 playlists.")
     end
 
     playlist = create_playlist(title, privacy, user)
 
+    if env.params.query["redirect"]? == "false"
+      env.response.content_type = "application/json"
+      return {"playlistId" => playlist.id, "title" => playlist.title}.to_json
+    end
     env.redirect "/playlist?list=#{playlist.id}"
   end
 

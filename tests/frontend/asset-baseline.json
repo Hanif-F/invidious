@@ -12,7 +12,9 @@
     "js/watched_widget.js": 365,
     "css/search.css": 835,
     "themes/diary/theme.css": 0,
-    "themes/diary/doodles.svg": 0
+    "themes/diary/doodles.svg": 0,
+    "css/video-actions.css": 0,
+    "js/video-actions.js": 0
   },
   "previewGzipBytes": {
     "themes/modern-neon/preview.webp": 0,

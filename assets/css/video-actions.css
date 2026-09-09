@@ -1,0 +1,28 @@
+.video-context { position: relative; flex: 0 0 auto; align-self: start; }
+body .video-context > summary { display: grid; place-items: center; width: 40px; min-height: 40px; padding: 0; font-size: 1.6rem; cursor: pointer; list-style: none; border-radius: 50%; color: var(--text, #ddd); background: var(--surface, #232323); }
+.video-context > summary::-webkit-details-marker { display: none; }
+.video-context[open] { z-index: 200; }
+.video-context-actions { position: absolute; inset-inline-end: 0; top: 100%; z-index: 200; width: 245px; max-height: calc(100vh - 16px); overflow-y: auto; box-sizing: border-box; max-width: calc(100vw - 32px); padding: 6px; border: 1px solid var(--line, #777); border-radius: 8px; background: var(--surface, #232323); box-shadow: 0 8px 24px #0005; }
+body .video-context-actions a, body .video-context-actions button { display: block; width: 100%; box-sizing: border-box; padding: 10px 12px; min-height: 44px; border: 0; border-radius: 4px; background: transparent; color: var(--text, #ddd); text-align: start; text-decoration: none; font: inherit; cursor: pointer; }
+body .video-context-actions a:hover, body .video-context-actions button:hover { background: var(--surface-raised, #444); }
+.recommendation > .thumbnail { position: relative; overflow: visible; }
+.recommendation .video-context { position: absolute; inset-inline-start: 4px; top: 4px; }
+.recommendation .video-context-actions { inset-inline-start: 0; inset-inline-end: auto; }
+.media-item:has(.video-context[open]), .media-card:has(.video-context[open]), .recommendation:has(.video-context[open]) { overflow: visible; position: relative; z-index: 200; }
+#video-playlist-dialog { width: 440px; max-width: calc(100vw - 40px); max-height: 85vh; box-sizing: border-box; padding: 24px; border: 1px solid var(--line, #777); border-radius: 12px; color: var(--text, #ddd); background: var(--surface, #232323); }
+#video-playlist-dialog::backdrop { background: #0008; }
+#video-playlist-dialog select, #video-playlist-dialog input { width: 100%; box-sizing: border-box; }
+#video-playlist-dialog .dialog-close { float: right; }
+#video-playlist-create-details { margin-top: 20px; }
+#video-playlist-status { min-height: 1.5em; }
+#video-actions-notice { position: fixed; bottom: 24px; inset-inline-start: 24px; max-width: calc(100vw - 48px); z-index: 300; padding: 12px; border: 1px solid var(--line, #777); border-radius: 8px; color: var(--text, #ddd); background: var(--surface, #232323); box-shadow: 0 4px 20px #0005; }
+
+.queue-row:has(.queue-remove) { display: flex; align-items: center; gap: 4px; }
+.queue-row:has(.queue-remove) > a { flex: 1; min-width: 0; }
+.queue-row .queue-remove { flex: 0 0 44px; width: 44px; min-height: 44px; padding: 8px; border: 0; border-radius: 6px; background: transparent; color: var(--muted, #aaa); cursor: pointer; }
+.queue-row .queue-remove:hover { background: var(--surface-raised, #444); color: var(--text, white); }
+.queue-row .queue-remove:disabled { opacity: .5; cursor: wait; }
+
+/* Hide the open panel until its viewport placement has been measured. */
+.js-video-context .video-context-actions { visibility: hidden; }
+.js-video-context[open] .video-context-actions[data-positioned=true] { visibility: visible; }

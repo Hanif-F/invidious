@@ -24,6 +24,7 @@ function swap_comments(event) {
 var watch_ui = JSON.parse(document.getElementById('watch_ui_data').textContent);
 var playlist_ended_handler;
 var playlist_request = 0;
+var playlist_mutating = false;
 
 // Keep ordinary navigation and playlist advancement on the existing playback settings.
 function playback_url(url, advancing) {
@@ -58,7 +59,7 @@ function reveal_current_queue_item() {
     }
 }
 
-function get_playlist(plid) {
+function get_playlist(plid, removedNotice, focusIndex) {
     var playlist = document.getElementById('playlist');
     if (!playlist) return;
     var request = ++playlist_request;
@@ -75,7 +76,8 @@ function get_playlist(plid) {
     navigation.textContent = '';
     var mix = plid.startsWith('RD');
     var url = new URL('/api/v1/' + (mix ? 'mixes/' : 'playlists/') + encodeURIComponent(plid), location.origin);
-    url.searchParams.set('continuation', video_data.id);
+    if (video_data.playlist_current_removed) url.searchParams.set('current_removed', '1');
+    else url.searchParams.set('continuation', video_data.id);
     if (!mix && video_data.index !== null && video_data.index !== undefined)
         url.searchParams.set('index', video_data.index);
     url.searchParams.set('format', 'html');
@@ -95,7 +97,8 @@ function get_playlist(plid) {
             if (!response || typeof response.playlistHtml !== 'string') { failed(); return; }
             playlist.innerHTML = response.playlistHtml;
             playlist.setAttribute('aria-busy', 'false');
-            status.textContent = '';
+            var notice = removedNotice ? watch_ui.queue_removed + ' ' : '';
+            status.textContent = notice;
             var metadata = playlist.querySelector('.queue-metadata');
             if (metadata) {
                 document.getElementById('queue-title').textContent = metadata.dataset.title;
@@ -104,11 +107,26 @@ function get_playlist(plid) {
             }
             var rows = Array.from(playlist.querySelectorAll('.queue-row'));
             var sameVideo = rows.filter(function (row) { return row.dataset.videoId === video_data.id; });
-            var current = sameVideo.find(function (row) { return row.dataset.index === String(video_data.index); });
-            if (!current && sameVideo.length === 1) current = sameVideo[0];
+            var currentIndex = response.currentIndex === undefined ? video_data.index : response.currentIndex;
+            var current = video_data.playlist_current_removed ? null : sameVideo.find(function (row) { return row.dataset.index === String(currentIndex); });
+            if (!video_data.playlist_current_removed && !current && sameVideo.length === 1) current = sameVideo[0];
+            if (current) video_data.index = Number(current.dataset.index);
             rows.forEach(function (row) {
                 var link = row.querySelector('a');
                 link.href = playback_url(link.getAttribute('href'), false);
+                if (row.dataset.removeIndex && video_data.csrf_token) {
+                    var remove = document.createElement('button');
+                    remove.type = 'button';
+                    remove.className = 'queue-remove';
+                    remove.title = watch_ui.queue_remove;
+                    remove.setAttribute('aria-label', watch_ui.queue_remove + ': ' + row.querySelector('.queue-title').textContent);
+                    var icon = document.createElement('i');
+                    icon.className = 'icon ion-md-trash';
+                    icon.setAttribute('aria-hidden', 'true');
+                    remove.appendChild(icon);
+                    remove.onclick = function () { remove_queue_item(row, plid); };
+                    row.appendChild(remove);
+                }
             });
             if (current) {
                 current.querySelector('a').setAttribute('aria-current', 'true');
@@ -127,14 +145,19 @@ function get_playlist(plid) {
                 navigation.appendChild(link);
                 navigation.hidden = false;
             }
-            if (current) {
-                var previous = rows.slice(0, rows.indexOf(current)).reverse().find(function (row) {
-                    return row.dataset.unavailable !== 'true';
-                });
+            if (current || video_data.playlist_current_removed) {
+                var previous = rows.filter(function (row) {
+                    return Number(row.dataset.index) < Number(video_data.index) && row.dataset.unavailable !== 'true';
+                }).pop();
                 if (previous) add_navigation(previous.querySelector('a').href, watch_ui.previous, 'previous');
             }
-            if (!rows.length) status.textContent = watch_ui.queue_empty;
-            else if (!response.nextVideo) status.textContent = watch_ui.queue_end;
+            if (focusIndex !== undefined) {
+                var focusRow = rows.find(function (row) { return Number(row.dataset.index) >= focusIndex; }) || rows[rows.length - 1];
+                if (focusRow) (focusRow.querySelector('.queue-remove') || focusRow.querySelector('a')).focus({ preventScroll: true });
+                else document.getElementById('queue-title').focus({ preventScroll: true });
+            }
+            if (!rows.length) status.textContent = notice + watch_ui.queue_empty;
+            else if (!response.nextVideo) status.textContent = notice + watch_ui.queue_end;
             if (!response.nextVideo) return;
             var next = new URL('/watch', location.origin);
             next.searchParams.set('v', response.nextVideo);
@@ -144,9 +167,52 @@ function get_playlist(plid) {
             add_navigation(playback_url(next.href, false), watch_ui.next, 'next');
             playlist_ended_handler = function () { location.assign(playback_url(next.href, true)); };
             player.on('ended', playlist_ended_handler);
+            if (removedNotice && player.ended && player.ended()) playlist_ended_handler();
         },
         onNon200: failed,
         onTotalFail: failed
+    });
+}
+
+// Remove the stable occurrence ID, never the video ID or its displayed position.
+// The current video keeps playing even when its own occurrence is removed.
+function remove_queue_item(row, plid) {
+    if (playlist_mutating || !row.dataset.removeIndex) return;
+    playlist_mutating = true;
+    var list = document.getElementById('playlist');
+    var status = document.getElementById('queue-status');
+    var buttons = list.querySelectorAll('.queue-remove');
+    buttons.forEach(function (button) { button.disabled = true; });
+    var oldHandler = playlist_ended_handler;
+    if (oldHandler) player.off('ended', oldHandler);
+    var removedIndex = Number(row.dataset.index);
+    var url = '/playlist_ajax?action=remove_video&redirect=false&playlist_id=' + encodeURIComponent(plid) +
+        '&set_video_id=' + encodeURIComponent(row.dataset.removeIndex);
+    function failed() {
+        playlist_mutating = false;
+        buttons.forEach(function (button) { button.disabled = false; });
+        status.textContent = watch_ui.queue_remove_error;
+        if (oldHandler) {
+            player.on('ended', oldHandler);
+            if (player.ended && player.ended()) oldHandler();
+        }
+    }
+    helpers.xhr('POST', url, { payload: new URLSearchParams({ csrf_token: video_data.csrf_token }).toString() }, {
+        on200: function () {
+            var currentIndex = Number(video_data.index);
+            if (removedIndex < currentIndex) currentIndex--;
+            else if (removedIndex === currentIndex) video_data.playlist_current_removed = true;
+            video_data.index = Math.max(0, currentIndex);
+            var currentUrl = new URL(location.href);
+            currentUrl.searchParams.set('index', String(video_data.index));
+            if (video_data.playlist_current_removed) currentUrl.searchParams.set('playlist_current_removed', '1');
+            history.replaceState(null, '', currentUrl.pathname + currentUrl.search + currentUrl.hash);
+            playlist_mutating = false;
+            get_playlist(plid, true, removedIndex);
+        },
+        onNon200: failed,
+        onError: failed,
+        onTimeout: failed
     });
 }
 

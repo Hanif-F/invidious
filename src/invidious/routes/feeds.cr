@@ -58,6 +58,7 @@ module Invidious::Routes::Feeds
       return error_template(500, ex)
     end
 
+    trending = Frontend::BlockedChannels.filter(trending, Frontend::BlockedChannels.ids(env))
     templated "feeds/trending"
   end
 

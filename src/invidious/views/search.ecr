@@ -9,7 +9,7 @@
 <% end %>
 
 <!-- Search redirection and filtering UI -->
-<%= Invidious::Frontend::SearchFilters.generate(query.filters, query.text, query.page, locale) %>
+<%= Invidious::Frontend::SearchFilters.generate(query.filters, query.text, query.page, locale, query.include_blocked, !!env.get?("user")) %>
 <div class="active-filters">
 <% query.filters.to_iv_params.each do |key, value| %>
     <% value.split(",").each do |option| %>
@@ -30,11 +30,17 @@
 <%- if items.empty? -%>
 <div class="h-box no-results-error">
     <div>
+        <% if blocked_results %>
+        <p><%= I18n.translate(locale, "Blocked channels hid these results") %></p>
+        <% unblocked_query = query.to_http_params; unblocked_query["include_blocked"] = "1" %>
+        <a href="/search?<%= HTML.escape(unblocked_query.to_s) %>"><%= I18n.translate(locale, "Include blocked channels") %></a>
+        <% end %>
         <%= I18n.translate(locale, "search_message_no_results") %><br/><br/>
         <%= I18n.translate(locale, "search_message_change_filters_or_query") %><br/><br/>
         <%= I18n.translate(locale, "search_message_use_another_instance", redirect_url) %>
     </div>
 </div>
+    <%= page_nav_html %>
 <%- else -%>
     <%= rendered "components/items_paginated" %>
 <%- end -%>

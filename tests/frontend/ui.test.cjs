@@ -92,7 +92,7 @@ async function pageFor(engine, options = {}) {
         }
         return route.fulfill({ contentType: 'application/json', body: '{}' });
     });
-    await page.goto('https://invidious.test/' + (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture.startsWith('preferences') ? 'preferences' : 'feed/popular'));
+    await page.goto('https://invidious.test/' + (options.route || (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture.startsWith('preferences') ? 'preferences' : fixture.startsWith('search') ? 'search?q=light' : 'feed/popular')));
     return { page, context, errors, requests, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls };
 }
 
@@ -373,6 +373,7 @@ for (const engine of engines) {
         await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 3);
         await page.waitForFunction(() => player.userActive());
         await page.locator('.vjs-touch-overlay.show-play-toggle').waitFor({ state: 'attached' });
+        await page.locator('.mobile-operations-bar').waitFor({ state: 'visible' });
         assert.equal(await page.locator('.mobile-operations-bar').isVisible(), true);
         await page.touchscreen.tap(box.x + box.width / 4, box.y + box.height / 3);
         await page.waitForFunction(() => !player.userActive());
@@ -566,3 +567,343 @@ test('Theme preview images stay below the 24KB compressed budget', () => {
     }
     assert.ok(delta <= 24 * 1024, `${delta} preview bytes added`);
 });
+
+for (const engine of engines) {
+    test(`${engine}: video menus support keyboard dismissal and signed-out sign-in links`, async () => {
+        const { page, context, errors } = await pageFor(engine, { fixture: 'browse-dark' });
+        const menu = page.locator('.video-context').first();
+        await menu.locator('summary').focus();
+        await page.keyboard.press('ArrowDown');
+        assert.equal(await menu.getAttribute('open'), '');
+        await page.waitForFunction(() => document.querySelector('.video-context[open] .video-context-actions a') === document.activeElement);
+        assert.equal(await menu.locator('a').first().evaluate(el => el === document.activeElement), true);
+        assert.match(await menu.locator('a').first().getAttribute('href'), /^\/login\?referer=/);
+        await page.keyboard.press('Escape');
+        assert.equal(await menu.getAttribute('open'), null);
+        assert.equal(await menu.locator('summary').evaluate(el => el === document.activeElement), true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: block removes discovery cards only after success and Undo restores them`, async () => {
+        const { page, context } = await pageFor(engine, { fixture: 'browse-signed-in' });
+        let fail = true;
+        const changes = [];
+        await page.route('**/blocked_channels?*', route => {
+            changes.push(new URLSearchParams(route.request().postData()));
+            return route.fulfill({ status: fail ? 500 : 200, contentType: 'application/json', body: '{}' });
+        });
+        const menu = page.locator('.video-context').first();
+        await menu.locator('summary').click();
+        await menu.locator('[data-video-action=block]').click();
+        await page.locator('#video-actions-notice').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.media-item:visible').count(), 12);
+        fail = false;
+        await menu.locator('summary').click();
+        await menu.locator('[data-video-action=block]').click();
+        await page.locator('#video-actions-undo').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.media-item:visible').count(), 0);
+        await page.locator('#video-actions-undo').click();
+        await page.locator('.media-item').first().waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.media-item:visible').count(), 12);
+        assert.deepEqual(changes.map(p => p.get('action')), ['block', 'block', 'unblock']);
+        assert.equal(changes[1].get('csrf_token'), 'fixture-token');
+        await context.close();
+    });
+
+    test(`${engine}: playlist creation retains the created playlist when adding fails`, async () => {
+        const { page, context, errors } = await pageFor(engine, { fixture: 'browse-signed-in', width: 390 });
+        await page.route('**/video_actions', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ playlists: [{ id: 'IVexisting', title: 'Existing' }], defaultPlaylist: 'IVexisting' }) }));
+        let creations = 0;
+        await page.route('**/create_playlist?*', route => {
+            creations++;
+            const body = new URLSearchParams(route.request().postData());
+            assert.equal(body.get('privacy'), 'Private');
+            return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ playlistId: 'IVnew', title: 'New playlist' }) });
+        });
+        let saves = 0;
+        await page.route('**/playlist_ajax?*', route => {
+            saves++;
+            assert.equal(new URL(route.request().url()).searchParams.get('playlist_id'), 'IVnew');
+            return route.fulfill({ status: saves === 1 ? 500 : 200, contentType: 'application/json', body: '{}' });
+        });
+        const menu = page.locator('.video-context').first();
+        await menu.locator('summary').click();
+        await menu.locator('[data-video-action=playlist]').click();
+        await page.waitForFunction(() => document.getElementById('video-playlist-select').value === 'IVexisting');
+        await page.locator('#video-playlist-create-details > summary').click();
+        await page.locator('#video-playlist-title').fill('New playlist');
+        await page.locator('#video-playlist-create button').click();
+        await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent.includes('retry'));
+        assert.equal(await page.locator('#video-playlist-select').inputValue(), 'IVnew');
+        await page.locator('#video-playlist-save [type=submit]').click();
+        await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent === document.getElementById('video-actions-config').dataset.saved);
+        assert.equal(creations, 1);
+        assert.equal(saves, 2);
+        const box = await page.locator('#video-playlist-dialog').boundingBox();
+        assert.ok(box.x >= 0 && box.x + box.width <= 390);
+        await page.keyboard.press('Escape');
+        assert.equal(await menu.locator('summary').evaluate(el => el === document.activeElement), true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: search Filters owns the override and filtered-empty pages retain pagination`, async () => {
+        const { page, context } = await pageFor(engine, { fixture: 'search-blocked' });
+        await page.locator('#filters-collapse > summary').click();
+        const toggle = page.locator('#filters input[name=include_blocked]');
+        assert.equal(await toggle.isChecked(), false);
+        assert.equal(await page.locator('#filters input[name=page]').inputValue(), '1');
+        assert.ok(await page.locator('a[href*="page=3"]').count() > 0);
+        assert.ok(await page.locator('.no-results-error a[href*="include_blocked=1"]').count() > 0);
+        await context.close();
+        const included = await pageFor(engine, { fixture: 'search-included' });
+        await included.page.locator('#filters-collapse > summary').click();
+        assert.equal(await included.page.locator('#filters input[name=include_blocked]').isChecked(), true);
+        assert.match(await included.page.locator('a[href*="page=3"]').first().getAttribute('href'), /include_blocked=1/);
+        await included.context.close();
+    });
+
+    test(`${engine}: blocking the next recommendation updates autoplay and Undo restores it`, async () => {
+        const { page, context, errors } = await pageFor(engine, { fixture: 'watch-actions' });
+        await page.route('**/blocked_channels?*', route => route.fulfill({ contentType: 'application/json', body: '{}' }));
+        const first = page.locator('.recommendation').first();
+        const videoId = await first.getAttribute('data-video-id');
+        const channelId = await first.getAttribute('data-channel-id');
+        const expected = await page.locator('.recommendation').evaluateAll((cards, channel) => cards.find(card => card.dataset.channelId !== channel)?.dataset.videoId || null, channelId);
+        await first.locator('.video-context > summary').click();
+        await first.locator('[data-video-action=block]').click();
+        await page.locator('#video-actions-undo').waitFor({ state: 'visible' });
+        assert.equal(await page.evaluate(() => video_data.next_video), expected);
+        await page.locator('#video-actions-undo').click();
+        await first.waitFor({ state: 'visible' });
+        assert.equal(await page.evaluate(() => video_data.next_video), videoId);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: blocking leaves subscribed and explicitly included search results visible`, async () => {
+        for (const routePath of ['feed/subscriptions', 'playlist?list=IVsaved', 'search?q=light&include_blocked=1']) {
+            const { page, context } = await pageFor(engine, { fixture: 'browse-signed-in', route: routePath });
+            await page.route('**/blocked_channels?*', route => route.fulfill({ contentType: 'application/json', body: '{}' }));
+            const menu = page.locator('.video-context').first();
+            await menu.locator('summary').click();
+            await menu.locator('[data-video-action=block]').click();
+            await page.locator('#video-actions-undo').waitFor({ state: 'visible' });
+            assert.equal(await page.locator('.media-item:visible').count(), 12);
+            assert.equal(await menu.locator('[data-video-action=unblock]').count(), 1);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: blocking the only remaining recommendation disables autoplay`, async () => {
+        const { page, context } = await pageFor(engine, { fixture: 'watch-actions' });
+        await page.route('**/blocked_channels?*', route => route.fulfill({ contentType: 'application/json', body: '{}' }));
+        await page.locator('.recommendation').evaluateAll(cards => cards.slice(1).forEach(card => card.remove()));
+        const menu = page.locator('.recommendation .video-context').first();
+        await menu.locator('summary').click();
+        await menu.locator('[data-video-action=block]').click();
+        await page.locator('#video-actions-undo').waitFor({ state: 'visible' });
+        assert.equal(await page.evaluate(() => video_data.next_video), null);
+        assert.equal(await page.evaluate(() => window.__ended.includes(next_video)), false);
+        await context.close();
+    });
+
+    test(`${engine}: video menus stay within mobile and compact viewports`, async () => {
+        for (const fixture of ['browse-compact', 'watch-dark']) {
+            const { page, context, errors } = await pageFor(engine, { fixture, width: 390 });
+            const menu = page.locator('.video-context').first();
+            await menu.locator('summary').click();
+            const panel = menu.locator('.video-context-actions');
+            await panel.waitFor({ state: 'visible' });
+            await page.waitForFunction(() => {
+                var panel = document.querySelector('.video-context[open] .video-context-actions');
+                if (!panel || panel.dataset.positioned !== 'true') return false;
+                var box = panel.getBoundingClientRect();
+                return box.x >= 0 && box.y >= 0 && box.right <= innerWidth && box.bottom <= innerHeight;
+            });
+            const box = await panel.boundingBox();
+            assert.deepEqual(errors, []);
+            assert.ok(box.x >= 0 && box.x + box.width <= 390 && box.y >= 0 && box.y + box.height <= 1000, JSON.stringify({ box, style: await panel.getAttribute('style'), viewport: await page.evaluate(() => [innerWidth, innerHeight]) }));
+            assert.deepEqual(await panel.evaluate(el => {
+                var box = el.getBoundingClientRect();
+                var overlaps = [];
+                for (var y = box.top + 10; y < box.bottom - 10; y += 10) {
+                    var hit = document.elementFromPoint(box.left + box.width / 2, y);
+                    if (!el.contains(hit)) overlaps.push(hit ? hit.outerHTML.slice(0, 150) : 'outside viewport');
+                }
+                return overlaps;
+            }), [], 'Thumbnail overlays must not cover the menu: ' + fixture);
+            await panel.screenshot({ path: path.join(artifacts, `${engine}-${fixture}-video-menu.png`) });
+            await context.close();
+        }
+    });
+
+    test(`${engine}: control-bar transparency preserves opaque controls on bright and dark video`, async () => {
+        const { page, context, errors } = await pageFor(engine, { realPlayer: true });
+        for (const color of ['#eeeeee', '#111111']) {
+            await page.evaluate(color => {
+                var video = document.querySelector('video');
+                player.hasStarted(true);
+                player.pause();
+                player.poster('');
+                video.style.opacity = '0';
+                player.el().style.backgroundColor = color;
+                player.userActive(true);
+                player.controlBar.el().style.opacity = '1';
+            }, color);
+            const bar = page.locator('.vjs-control-bar');
+            await bar.waitFor({ state: 'visible' });
+            assert.match(await bar.evaluate(el => getComputedStyle(el).backgroundColor), /0\.2\)/);
+            assert.equal(await page.locator('.vjs-fullscreen-control').evaluate(el => getComputedStyle(el).opacity), '1');
+            await page.locator('#player-container').screenshot({ path: path.join(artifacts, `${engine}-transparent-controls-${color.slice(1)}.png`) });
+        }
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: owned queue removes a specific occurrence and keeps playback running`, async () => {
+        for (const [removePosition, fixture, currentIndex, currentRemoved, nextIndex] of [
+            [0, 'queue-removed-before', 1, false, 2],
+            [2, 'queue-removed-current', 2, true, 2],
+            [3, 'queue-removed-next', 2, false, null]
+        ]) {
+            const initial = JSON.parse(fs.readFileSync(path.join(generated, 'queue-editable.json')));
+            const { page, context, errors } = await pageFor(engine, { fixture: 'watch-owned', queue: initial, route: 'watch?v=2isYuQZMbdU&list=IVfixture&index=2', width: 390 });
+            await page.locator('#queue-toggle').click();
+            await page.locator('.queue-remove').first().waitFor({ state: 'visible' });
+            if (removePosition === 2) await page.locator('#playlist-panel').screenshot({ path: path.join(artifacts, `${engine}-editable-watch-queue.png`) });
+            await page.evaluate(() => player.currentTime(123));
+            let posts = 0;
+            let fail = true;
+            const gets = [];
+            await page.route('**/api/v1/playlists/IVfixture?*', route => {
+                gets.push(new URL(route.request().url()));
+                return route.fulfill({ contentType: 'application/json', body: fs.readFileSync(path.join(generated, fixture + '.json'), 'utf8') });
+            });
+            await page.route('**/playlist_ajax?*', route => {
+                posts++;
+                const url = new URL(route.request().url());
+                assert.equal(url.searchParams.get('action'), 'remove_video');
+                assert.equal(url.searchParams.get('playlist_id'), 'IVfixture');
+                assert.equal(url.searchParams.get('set_video_id'), String(9007199254740993n + BigInt(removePosition)));
+                assert.equal(new URLSearchParams(route.request().postData()).get('csrf_token'), 'fixture-token');
+                return route.fulfill({ status: fail ? 500 : 200, contentType: 'application/json', body: '{}' });
+            });
+            await page.locator('.queue-row').nth(removePosition).locator('.queue-remove').click();
+            await page.waitForFunction(() => document.getElementById('queue-status').textContent === watch_ui.queue_remove_error);
+            assert.equal(await page.locator('.queue-row').count(), 4);
+            assert.equal(await page.evaluate(() => window.__ended.length), 1);
+            fail = false;
+            await page.locator('.queue-row').nth(removePosition).locator('.queue-remove').click();
+            await page.waitForFunction(() => document.querySelectorAll('.queue-row').length === 3);
+            assert.equal(posts, 2);
+            assert.equal(await page.evaluate(() => player.currentTime()), 123);
+            assert.equal(await page.evaluate(() => video_data.index), currentIndex);
+            assert.equal(await page.evaluate(() => video_data.playlist_current_removed), currentRemoved);
+            assert.equal(await page.locator('.queue-row [aria-current]').count(), currentRemoved ? 0 : 1);
+            assert.equal(gets[0].searchParams.get('current_removed'), currentRemoved ? '1' : null);
+            if (nextIndex === null) {
+                assert.equal(await page.locator('#queue-navigation [data-direction=next]').count(), 0);
+                assert.equal(await page.evaluate(() => window.__ended.length), 0);
+            } else {
+                assert.equal(new URL(await page.locator('#queue-navigation [data-direction=next]').getAttribute('href'), 'https://invidious.test').searchParams.get('index'), String(nextIndex));
+                assert.equal(await page.evaluate(() => window.__ended.length), 1);
+            }
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+        const readonly = await pageFor(engine);
+        await readonly.page.locator('.queue-row').first().waitFor();
+        assert.equal(await readonly.page.locator('.queue-remove').count(), 0);
+        await readonly.context.close();
+    });
+
+    test(`${engine}: mobile center play and control bars share visibility through play, pause, idle and seeking`, async () => {
+        const { page, context, errors } = await pageFor(engine, { realPlayer: true, touch: true, mobileUserAgent: true, width: 390, height: 844 });
+        await page.evaluate(() => { player.muted(true); player.loop(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.evaluate(() => { player.pause(); player.userActive(true); });
+        const center = page.locator('.vjs-touch-overlay .vjs-play-control');
+        await center.waitFor({ state: 'visible' });
+        await page.waitForFunction(() => getComputedStyle(document.querySelector('.vjs-touch-overlay .vjs-play-control')).opacity === '1');
+        // This is the reported bug: pressing the center Play button must not hide it alone.
+        await center.tap();
+        await page.waitForFunction(() => !player.paused());
+        await page.waitForFunction(() => player.currentTime() > 0.2);
+        async function sameVisibility(expected) {
+            await page.waitForFunction(expected => {
+                const nodes = [...document.querySelectorAll('.vjs-control-bar'), document.querySelector('.vjs-touch-overlay .vjs-play-control')];
+                return nodes.every(el => getComputedStyle(el).opacity === expected);
+            }, expected);
+        }
+        await sameVisibility('1');
+        await page.locator('#player-container').screenshot({ path: path.join(artifacts, `${engine}-mobile-controls-together.png`) });
+        const durations = await page.locator('.vjs-control-bar, .vjs-touch-overlay .vjs-play-control').evaluateAll(nodes => nodes.map(el => getComputedStyle(el).transition));
+        assert.equal(new Set(durations).size, 1);
+        // The plugin emits playing and removes its independent class; visibility stays tied.
+        await page.evaluate(() => player.trigger('playing'));
+        await sameVisibility('1');
+        await page.evaluate(() => { document.activeElement.blur(); player.userActive(false); });
+        await sameVisibility('0');
+        const box = await page.locator('#player').boundingBox();
+        await page.touchscreen.tap(box.x + box.width / 4, box.y + box.height / 3);
+        await sameVisibility('1');
+        await center.tap();
+        await page.waitForFunction(() => player.paused());
+        await sameVisibility('1');
+        await page.waitForFunction(() => !player.userActive(), null, { timeout: 6000 });
+        await sameVisibility('0');
+        await page.touchscreen.tap(box.x + box.width / 4, box.y + box.height / 3);
+        await sameVisibility('1');
+        await page.evaluate(() => player.getChild('TouchOverlay').handleDoubleTap({ changedTouches: [{ clientX: player.el().getBoundingClientRect().right - 10 }] }));
+        assert.equal(await page.locator('.vjs-touch-overlay').evaluate(el => getComputedStyle(el).animationName), 'none');
+        await sameVisibility('1');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: playback shortcuts work from page content and respect interactive controls`, async () => {
+        const { page, context, errors } = await pageFor(engine, { realPlayer: true });
+        await page.waitForFunction(() => typeof player !== 'undefined');
+        await page.evaluate(() => player.load());
+        await page.waitForFunction(() => player.readyState() >= 1);
+        await page.evaluate(() => {
+            player.pause();
+            player.volume(0.5);
+            document.activeElement.blur();
+        });
+        await page.keyboard.press('Space');
+        await page.waitForFunction(() => !player.paused());
+        await page.keyboard.press('Space');
+        await page.waitForFunction(() => player.paused());
+        await page.keyboard.press('ArrowUp');
+        assert.ok(Math.abs(await page.evaluate(() => player.volume()) - 0.6) < 0.01);
+        await page.keyboard.press('ArrowDown');
+        assert.ok(Math.abs(await page.evaluate(() => player.volume()) - 0.5) < 0.01);
+        await page.evaluate(() => player.currentTime(1));
+        await page.keyboard.press('ArrowRight');
+        await page.waitForFunction(() => Math.abs(player.currentTime() - Math.min(6, player.duration())) < 0.1);
+        await page.keyboard.press('ArrowLeft');
+        assert.ok(await page.evaluate(() => player.currentTime()) < 2);
+        const input = page.locator('input[name="q"]').first();
+        await input.focus();
+        await page.keyboard.press('Space');
+        await page.keyboard.press('ArrowUp');
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        assert.ok(Math.abs(await page.evaluate(() => player.volume()) - 0.5) < 0.01);
+        const menu = page.locator('.video-context').first();
+        await menu.locator('summary').focus();
+        await page.keyboard.press('ArrowDown');
+        await page.waitForFunction(() => document.activeElement.closest('.video-context-actions'));
+        assert.ok(Math.abs(await page.evaluate(() => player.volume()) - 0.5) < 0.01);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}

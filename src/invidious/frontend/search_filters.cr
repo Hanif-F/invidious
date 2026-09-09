@@ -2,7 +2,7 @@ module Invidious::Frontend::SearchFilters
   extend self
 
   # Generate the search filters collapsable widget.
-  def generate(filters : Search::Filters, query : String, page : Int, locale : String) : String
+  def generate(filters : Search::Filters, query : String, page : Int, locale : String, include_blocked : Bool = false, signed_in : Bool = false) : String
     return String.build(8000) do |str|
       str << "<div id='filters'>\n"
       str << "\t<details id='filters-collapse'>"
@@ -11,7 +11,7 @@ module Invidious::Frontend::SearchFilters
       str << "\t\t<div id='filters-box'><form action='/search' method='get'>\n"
 
       str << "\t\t\t<input type='hidden' name='q' value='" << HTML.escape(query) << "'>\n"
-      str << "\t\t\t<input type='hidden' name='page' value='" << page << "'>\n"
+      str << "\t\t\t<input type='hidden' name='page' value='" << 1 << "'>\n"
 
       str << "\t\t\t<div id='filters-flex'>"
 
@@ -22,6 +22,12 @@ module Invidious::Frontend::SearchFilters
       filter_wrapper(sort)
 
       str << "\t\t\t</div>\n"
+
+      if signed_in
+        str << "<label><input type='checkbox' name='include_blocked' value='1'"
+        str << " checked" if include_blocked
+        str << "> " << I18n.translate(locale, "Include blocked channels") << "</label>"
+      end
 
       str << "\t\t\t<div id='filters-apply'>"
       str << "<button type='submit' class=\"pure-button pure-button-primary\">"

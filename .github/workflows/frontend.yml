@@ -7,6 +7,8 @@ on:
       - 'src/**'
       - 'locales/**'
       - 'tests/frontend/**'
+      - 'tests/database/**'
+      - 'config/sql/**'
       - 'shard.*'
       - '.github/workflows/frontend.yml'
   pull_request:
@@ -15,6 +17,8 @@ on:
       - 'src/**'
       - 'locales/**'
       - 'tests/frontend/**'
+      - 'tests/database/**'
+      - 'config/sql/**'
       - 'shard.*'
       - '.github/workflows/frontend.yml'
 
@@ -54,3 +58,29 @@ jobs:
         with:
           name: frontend-snapshots
           path: tests/frontend/artifacts/
+
+  blocking-database-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: invidious_blocking_test
+          POSTGRES_PASSWORD: test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: crystal-lang/install-crystal@v1.9.2
+        with:
+          crystal: 1.19.2
+      - run: shards install --skip-postinstall --skip-executables
+      - name: Verify channel-block storage and migration
+        env:
+          BLOCKING_TEST_DATABASE_URL: postgres://postgres:test-password@localhost/invidious_blocking_test
+        run: crystal run tests/database/blocked_channels.cr

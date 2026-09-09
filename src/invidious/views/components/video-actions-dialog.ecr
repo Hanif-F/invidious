@@ -1,0 +1,32 @@
+<% if env.get?("user") %>
+<div id="video-actions-config" hidden data-csrf="<%= HTML.escape(env.get?("csrf_token").try &.as(String) || "") %>"
+    data-block="<%= I18n.translate(locale, "Block channel") %>" data-unblock="<%= I18n.translate(locale, "Unblock channel") %>"
+    data-blocked="<%= I18n.translate(locale, "Channel blocked") %>" data-unblocked="<%= I18n.translate(locale, "Channel unblocked") %>"
+    data-error="<%= I18n.translate(locale, "ui_save_error") %>" data-saved="<%= I18n.translate(locale, "ui_saved_playlist") %>"
+    data-loading="<%= I18n.translate(locale, "Loading playlists") %>" data-empty="<%= I18n.translate(locale, "No playlists available") %>"
+    data-created="<%= I18n.translate(locale, "Playlist created; retry saving the video") %>"></div>
+<dialog id="video-playlist-dialog" aria-labelledby="video-playlist-heading">
+    <form method="dialog"><button class="pure-button dialog-close" aria-label="<%= I18n.translate(locale, "Close") %>">×</button></form>
+    <h2 id="video-playlist-heading"><%= I18n.translate(locale, "Add to playlist") %></h2>
+    <form id="video-playlist-save" class="pure-form pure-form-stacked">
+        <label for="video-playlist-select"><%= I18n.translate(locale, "Playlist") %></label>
+        <select id="video-playlist-select" required></select>
+        <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Add to playlist") %></button>
+        <button type="button" id="video-playlist-reload" class="pure-button"><%= I18n.translate(locale, "Reload playlists") %></button>
+    </form>
+    <details id="video-playlist-create-details">
+        <summary><%= I18n.translate(locale, "Create playlist") %></summary>
+        <form id="video-playlist-create" class="pure-form pure-form-stacked">
+            <label for="video-playlist-title"><%= I18n.translate(locale, "Title") %></label>
+            <input id="video-playlist-title" name="title" required maxlength="150">
+            <label for="video-playlist-privacy"><%= I18n.translate(locale, "Playlist privacy") %></label>
+            <select id="video-playlist-privacy" name="privacy">
+                <% PlaylistPrivacy.names.each do |privacy| %><option value="<%= privacy %>" <%= "selected" if privacy == "Private" %>><%= I18n.translate(locale, privacy) %></option><% end %>
+            </select>
+            <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Create and save") %></button>
+        </form>
+    </details>
+    <p id="video-playlist-status" role="status"></p>
+</dialog>
+<div id="video-actions-notice" hidden><span role="status"></span> <button type="button" class="pure-button" id="video-actions-undo" hidden><%= I18n.translate(locale, "Undo") %></button></div>
+<% end %>

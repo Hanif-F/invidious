@@ -19,6 +19,7 @@ module Invidious::Database
     Invidious::Database.check_table("session_ids", SessionId)
     Invidious::Database.check_table("users", User)
     Invidious::Database.check_table("playback_positions")
+    Invidious::Database.check_table("blocked_channels")
     Invidious::Database.check_table("videos", Video)
 
     if cfg.cache_annotations

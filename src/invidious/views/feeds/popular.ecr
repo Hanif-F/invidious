@@ -12,7 +12,7 @@
 <%= rendered "components/feed_menu" %>
 
 <div class="pure-g media-grid">
-<% popular_videos.each_with_index do |item, item_position| %>
+<% Invidious::Frontend::BlockedChannels.filter(popular_videos, Invidious::Frontend::BlockedChannels.ids(env)).each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>

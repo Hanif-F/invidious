@@ -88,11 +88,17 @@ module Invidious::Routes::API::V1::Misc
     end
 
     if format == "html"
-      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode)
-      index, next_video = json_response["videos"].as_a.skip(1 + lookback).select { |video| !video["author"].as_s.empty? }[0]?.try { |v| {v["index"], v["videoId"]} } || {nil, nil}
+      env.response.headers["Cache-Control"] = "private, no-store"
+      editable = playlist.is_a?(InvidiousPlaylist) && playlist.author == user.try &.email
+      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode, editable)
+      # Removing the playing occurrence leaves a gap at offset; its successor
+      # now occupies that position and must not be skipped during advancement.
+      current_removed = playlist.is_a?(InvidiousPlaylist) && env.params.query["current_removed"]? == "1"
+      index, next_video = json_response["videos"].as_a.skip((current_removed ? 0 : 1) + lookback).select { |video| !video["author"].as_s.empty? }[0]?.try { |v| {v["index"], v["videoId"]} } || {nil, nil}
 
       response = {
         "playlistHtml" => playlist_html,
+        "currentIndex" => offset,
         "index"        => index,
         "nextVideo"    => next_video,
       }.to_json

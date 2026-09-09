@@ -39,13 +39,14 @@
 {
     "id" => video.id,
     "index" => continuation,
+    "playlist_current_removed" => env.params.query["playlist_current_removed"]? == "1",
     "plid" => plid,
     "length_seconds" => video.length_seconds.to_f,
     "playback_sync" => playback_sync,
     "playback_position" => playback_position,
     "csrf_token" => env.get?("csrf_token").try(&.as(String)) || "",
-    "play_next" => !video.related_videos.empty? && !plid && params.continue,
-    "next_video" => video.related_videos.select { |rv| rv["id"]? }[0]?.try &.["id"],
+    "play_next" => !related_videos.empty? && !plid && params.continue,
+    "next_video" => related_videos.select { |rv| rv["id"]? }[0]?.try &.["id"],
     "youtube_comments_text" => HTML.escape(I18n.translate(locale, "View YouTube comments")),
     "comments_youtube_disabled_text" => HTML.escape(I18n.translate(locale, "comments_youtube_disabled_text")),
     "comments_youtube_disabled_try_reddit" => HTML.escape(I18n.translate(locale, "comments_youtube_disabled_try_reddit")),
@@ -79,6 +80,9 @@
     "loading" => I18n.translate(locale, "ui_loading"),
     "retry" => I18n.translate(locale, "ui_retry"),
     "queue_error" => I18n.translate(locale, "ui_queue_error"),
+    "queue_remove" => I18n.translate(locale, "Remove from this playlist"),
+    "queue_removed" => I18n.translate(locale, "Video removed from playlist"),
+    "queue_remove_error" => I18n.translate(locale, "Could not remove video; try again"),
     "queue_empty" => I18n.translate(locale, "ui_queue_empty"),
     "queue_end" => I18n.translate(locale, "ui_queue_end"),
     "now_playing" => I18n.translate(locale, "ui_now_playing"),
@@ -352,13 +356,15 @@
         <% if params.related_videos %>
         <section class="recommendations panel" aria-labelledby="recommendations-heading">
             <h2 class="panel-heading" id="recommendations-heading"><%= I18n.translate(locale, "ui_recommended") %></h2>
-            <% if !plid && !video.related_videos.empty? %>
+            <% if !plid && !related_videos.empty? %>
             <div class="continue-control"><label for="continue"><%= I18n.translate(locale, "preferences_continue_label") %></label> <input id="continue" name="continue" type="checkbox" <%= "checked" if params.continue %>></div>
             <% end %>
-            <% video.related_videos.each do |rv| %>
+            <% related_videos.each do |rv| %>
                 <% if rv["id"]? %>
-                <article class="recommendation">
+                <article class="recommendation" data-video-id="<%= rv["id"] %>" data-channel-id="<%= HTML.escape(rv["ucid"]? || "") %>">
                     <div class="thumbnail">
+                        <% context_video_id = rv["id"]; context_channel_id = rv["ucid"]? || ""; context_channel_name = rv["author"]? || ""; endpoint_params = "?v=#{rv["id"]}" %>
+                        <%= rendered "components/video-context-buttons" %>
                         <% unless preferences.thin_mode %><a tabindex="-1" href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= rv["id"] %>/mqdefault.jpg" alt=""></a><% end %>
                         <% if (length = rv["length_seconds"]?.try &.to_i?) && length > 0 %><div class="bottom-right-overlay"><span class="length"><%= recode_length_seconds(length) %></span></div><% end %>
                     </div>

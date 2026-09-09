@@ -12,7 +12,7 @@
 }
 
 .video-js.player-style-youtube .vjs-control-bar {
-  background: linear-gradient(rgba(0,0,0,0.1), rgba(0, 0, 0,0.5));
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.2));
 }
 
 .video-js.player-style-youtube .vjs-slider {
@@ -142,7 +142,11 @@ ul.vjs-menu-content::-webkit-scrollbar {
   font-size: 18px;
 }
 
-.video-js .vjs-control-bar,
+.video-js .vjs-control-bar {
+  background-color: rgba(35, 35, 35, 0.2);
+  text-shadow: 0 1px 2px #000;
+}
+
 .vjs-menu-button-popup .vjs-menu .vjs-menu-content {
   background-color: rgba(35, 35, 35, 0.75);
 }
@@ -268,4 +272,37 @@ video.video-js {
   .vjs-modal-dialog-content {
     overflow-x: hidden;
   }
+}
+
+/* Center play/pause and both mobile bars share activity state and fade timing.
+   Ignore mobile-ui's show-play-toggle class, which it clears on `playing`. */
+body[data-page=watch] .video-js.vjs-has-started :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .2s, visibility .2s;
+}
+body[data-page=watch] .video-js.vjs-has-started:is(.vjs-user-active, .vjs-ended) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control),
+body[data-page=watch] .video-js.vjs-has-started:has(.vjs-control-bar :focus-visible, .vjs-touch-overlay .vjs-play-control:focus-visible, .vjs-menu.vjs-lock-showing) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+/* Animate the seek feedback separately so double-tap seeking cannot fade controls. */
+body[data-page=watch] .video-js .vjs-touch-overlay.skip {
+  opacity: 1;
+  animation: none;
+  -webkit-animation: none;
+  background-size: 0;
+}
+body[data-page=watch] .video-js .vjs-touch-overlay.skip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: inherit;
+  background-position: inherit;
+  background-repeat: no-repeat;
+  background-size: 10%;
+  animation: fadeAndScale .6s linear;
 }

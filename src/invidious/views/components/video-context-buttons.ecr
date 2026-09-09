@@ -1,21 +1,22 @@
-<div class="flex-right flexible">
-    <div class="icon-buttons">
-        <a title="<%=I18n.translate(locale, "videoinfo_watch_on_youTube")%>" rel="noreferrer noopener" href="https://www.youtube.com/watch<%=endpoint_params%>">
-            <i class="icon ion-logo-youtube"></i>
-        </a>
-        <a title="<%=I18n.translate(locale, "Audio mode")%>" href="/watch<%=endpoint_params%>&listen=1">
-            <i class="icon ion-md-headset"></i>
-        </a>
-
-        <% if env.get("preferences").as(Preferences).automatic_instance_redirect%>
-            <a title="<%=I18n.translate(locale, "Switch Invidious Instance")%>" href="/redirect?referer=%2Fwatch<%=URI.encode_www_form(endpoint_params)%>">
-                <i class="icon ion-md-jet"></i>
-            </a>
+<details class="video-context" data-video-id="<%= HTML.escape(context_video_id) %>" data-channel-id="<%= HTML.escape(context_channel_id) %>" data-channel-name="<%= HTML.escape(context_channel_name) %>">
+    <summary aria-label="<%= I18n.translate(locale, "Video actions") %>"><span aria-hidden="true">⋮</span></summary>
+    <div class="video-context-actions">
+        <% if env.get?("user") %>
+            <button type="button" data-video-action="playlist"><%= I18n.translate(locale, "Add to playlist") %></button>
+            <% unless context_channel_id.empty? %>
+            <% channel_blocked = Invidious::Frontend::BlockedChannels.ids(env).includes?(context_channel_id) %>
+            <button type="button" data-video-action="<%= channel_blocked ? "unblock" : "block" %>"><%= I18n.translate(locale, channel_blocked ? "Unblock channel" : "Block channel") %></button>
+            <% end %>
         <% else %>
-            <a title="<%=I18n.translate(locale, "Switch Invidious Instance")%>" href="https://redirect.invidious.io/watch<%=endpoint_params%>">
-                <i class="icon ion-md-jet"></i>
-            </a>
+            <a href="/login?referer=<%= URI.encode_www_form(env.request.resource) %>"><%= I18n.translate(locale, "Add to playlist") %></a>
+            <% unless context_channel_id.empty? %><a href="/login?referer=<%= URI.encode_www_form(env.request.resource) %>"><%= I18n.translate(locale, "Block channel") %></a><% end %>
         <% end %>
-
+        <a rel="noreferrer noopener" href="https://www.youtube.com/watch<%= HTML.escape(endpoint_params) %>"><%= I18n.translate(locale, "videoinfo_watch_on_youTube") %></a>
+        <a href="/watch<%= HTML.escape(endpoint_params) %>&listen=1"><%= I18n.translate(locale, "Audio mode") %></a>
+        <% if env.get("preferences").as(Preferences).automatic_instance_redirect %>
+            <a href="/redirect?referer=%2Fwatch<%= URI.encode_www_form(endpoint_params) %>"><%= I18n.translate(locale, "Switch Invidious Instance") %></a>
+        <% else %>
+            <a href="https://redirect.invidious.io/watch<%= HTML.escape(endpoint_params) %>"><%= I18n.translate(locale, "Switch Invidious Instance") %></a>
+        <% end %>
     </div>
-</div>
+</details>

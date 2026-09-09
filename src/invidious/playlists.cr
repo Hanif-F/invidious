@@ -541,12 +541,12 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
   return videos
 end
 
-def template_playlist(playlist, listen, thin_mode = false)
-  template_queue(playlist, listen, false, thin_mode)
+def template_playlist(playlist, listen, thin_mode = false, editable = false)
+  template_queue(playlist, listen, false, thin_mode, editable)
 end
 
 # The DOM carries occurrence indices; video IDs alone are not unique in playlists.
-def template_queue(playlist, listen, mix = false, thin_mode = false)
+def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false)
   plid = playlist[mix ? "mixId" : "playlistId"].as_s
   String.build do |html|
     html << %(<div class="queue-metadata" hidden data-title="#{HTML.escape(playlist["title"].as_s)}")
@@ -562,7 +562,12 @@ def template_queue(playlist, listen, mix = false, thin_mode = false)
       url = "/watch?v=#{URI.encode_www_form(id)}&list=#{URI.encode_www_form(plid)}"
       url += "&index=#{index}" unless mix
       url += "&listen=1" if listen
-      html << %(<li class="queue-row" data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}">)
+      html << %(<li class="queue-row" data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}")
+      if editable && !mix && (index_id = video["indexId"]?.try &.as_s?)
+        # Preserve full 64-bit occurrence IDs as strings in the browser.
+        html << %( data-remove-index="#{index_id.to_u64(16)}")
+      end
+      html << ">"
       html << %(<a href="#{HTML.escape(url)}"><span class="queue-number">#{index >= 0 ? (index + 1).to_s : ""}</span>)
       unless thin_mode
         html << %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)

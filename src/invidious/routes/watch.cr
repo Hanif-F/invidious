@@ -60,6 +60,8 @@ module Invidious::Routes::Watch
       return error_template(500, ex)
     end
 
+    related_videos = Frontend::BlockedChannels.recommendations(video.related_videos, Frontend::BlockedChannels.ids(env))
+
     if preferences.annotations_subscribed &&
        subscriptions.includes?(video.ucid) &&
        (env.params.query["iv_load_policy"]? || "1") == "1"

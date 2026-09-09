@@ -1,0 +1,14 @@
+<% content_for "header" do %><title><%= I18n.translate(locale, "Blocked channels") %> - Invidious</title><% end %>
+<h1><%= I18n.translate(locale, "Blocked channels") %></h1>
+<% if channels.empty? %><p><%= I18n.translate(locale, "No blocked channels") %></p><% end %>
+<% channels.each do |ucid, name| %>
+<div class="h-box">
+    <a href="/channel/<%= ucid %>"><%= HTML.escape(name) %></a>
+    <form action="/blocked_channels" method="post">
+        <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get("csrf_token").as(String)) %>">
+        <input type="hidden" name="ucid" value="<%= ucid %>">
+        <input type="hidden" name="action" value="unblock">
+        <button class="pure-button" type="submit"><%= I18n.translate(locale, "Unblock channel") %></button>
+    </form>
+</div>
+<% end %>

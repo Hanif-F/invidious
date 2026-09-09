@@ -11,3 +11,4 @@ psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/annotation
 psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/playlists.sql
 psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/playlist_videos.sql
 psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/playback_positions.sql
+psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/blocked_channels.sql

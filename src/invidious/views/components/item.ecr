@@ -4,7 +4,7 @@
   author_verified = item.responds_to?(:author_verified) && item.author_verified
 -%>
 
-<div class="pure-u-1 pure-u-md-1-4 media-item" data-kind="<%= item.is_a?(PlaylistVideo | MixVideo) ? "playlist-video" : (item.is_a?(SearchChannel) ? "channel" : (item.is_a?(SearchPlaylist | InvidiousPlaylist) ? "playlist" : "video")) %>">
+<div class="pure-u-1 pure-u-md-1-4 media-item" data-channel-id="<%= item.responds_to?(:ucid) ? HTML.escape(item.ucid.to_s) : "" %>" data-kind="<%= item.is_a?(PlaylistVideo | MixVideo) ? "playlist-video" : (item.is_a?(SearchChannel) ? "channel" : (item.is_a?(SearchPlaylist | InvidiousPlaylist) ? "playlist" : "video")) %>">
     <div class="h-box media-card">
         <% if item.is_a?(PlaylistVideo | MixVideo) %><span class="playlist-position"><%= item.is_a?(PlaylistVideo) && item.plid.starts_with?("IV") ? ((env.params.query["page"]?.try &.to_i? || 1) - 1) * 100 + item_position + 1 : item.index + 1 %></span><% end %>
         <% case item when %>
@@ -195,6 +195,7 @@
                     <% end %>
                 </div>
 
+                <% context_video_id = item.id; context_channel_id = item.ucid.to_s; context_channel_name = item.author %>
                 <%= rendered "components/video-context-buttons" %>
             </div>
 

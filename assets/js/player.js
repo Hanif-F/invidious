@@ -728,17 +728,11 @@ function toggle_caption_opacity() {
 }
 
 addEventListener('keydown', function (e) {
-    if (e.target.tagName.toLowerCase() === 'input') {
-        // Ignore input when focus is on certain elements, e.g. form fields.
-        return;
-    }
-    // See https://github.com/ctd1500/videojs-hotkeys/blob/bb4a158b2e214ccab87c2e7b95f42bc45c6bfd87/videojs.hotkeys.js#L310-L313
-    const isPlayerFocused = false
-        || e.target === document.querySelector('.video-js')
-        || e.target === document.querySelector('.vjs-tech')
-        || e.target === document.querySelector('.iframeblocker')
-        || e.target === document.querySelector('.vjs-control-bar')
-        ;
+    // Keep page-wide playback shortcuts available without stealing keyboard
+    // input from forms, links, player buttons, or open menus and dialogs.
+    if (e.defaultPrevented || e.isComposing || e.target.isContentEditable ||
+        e.target.closest('input, textarea, select, button, a, summary, [role="slider"], [role="menu"], dialog, [contenteditable="true"]') ||
+        document.querySelector('dialog[open], .video-context[open], .vjs-menu-button-popup.vjs-menu-button-active')) return;
     let action = null;
 
     const code = e.keyCode;
@@ -760,10 +754,10 @@ addEventListener('keydown', function (e) {
         case 'MediaStop':  action = stop; break;
 
         case 'ArrowUp':
-            if (isPlayerFocused) action = change_volume.bind(this, 0.1);
+            action = change_volume.bind(this, 0.1);
             break;
         case 'ArrowDown':
-            if (isPlayerFocused) action = change_volume.bind(this, -0.1);
+            action = change_volume.bind(this, -0.1);
             break;
 
         case 'm':

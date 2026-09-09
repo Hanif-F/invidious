@@ -76,13 +76,19 @@ module Invidious::Routes::Search
         return error_template(500, ex)
       end
 
+      upstream_count = items.size
+      unless query.include_blocked
+        items = Frontend::BlockedChannels.filter(items, Frontend::BlockedChannels.ids(env))
+      end
+      blocked_results = upstream_count > items.size
+
       redirect_url = Invidious::Frontend::Misc.redirect_url(env)
 
       # Pagination
       page_nav_html = Frontend::Pagination.nav_numeric(locale,
         base_url: "/search?#{query.to_http_params}",
         current_page: query.page,
-        show_next: (items.size >= 20)
+        show_next: (upstream_count >= 20)
       )
 
       if query.type == Invidious::Search::Query::Type::Channel
@@ -117,12 +123,15 @@ module Invidious::Routes::Search
       return error_template(500, ex)
     end
 
+    upstream_count = items.size
+    items = Frontend::BlockedChannels.filter(items, Frontend::BlockedChannels.ids(env))
+
     # Pagination
     hashtag_encoded = URI.encode_www_form(hashtag, space_to_plus: false)
     page_nav_html = Frontend::Pagination.nav_numeric(locale,
       base_url: "/hashtag/#{hashtag_encoded}",
       current_page: page,
-      show_next: (items.size >= 60)
+      show_next: (upstream_count >= 60)
     )
 
     templated "hashtag"

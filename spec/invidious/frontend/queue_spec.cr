@@ -34,3 +34,15 @@ Spectator.describe "Watch queue rendering" do
     expect(html).to_not contain("&amp;index=")
   end
 end
+
+Spectator.describe "Editable watch queues" do
+  it "exposes stable occurrence IDs only for editable playlists, without losing 64-bit precision" do
+    data = JSON.parse({playlistId: "IVtest", mixId: "RDtest", title: "Playlist", videoCount: 2, videos: [
+      {videoId: "repeat12345", index: 0, indexId: "20000000000001", title: "First", author: "Author", lengthSeconds: 90},
+      {videoId: "repeat12345", index: 1, indexId: "20000000000002", title: "Second", author: "Author", lengthSeconds: 90},
+    ]}.to_json)
+    expect(template_playlist(data, false)).to_not contain("data-remove-index")
+    expect(template_playlist(data, false, false, true)).to contain(%(data-remove-index="9007199254740993"), %(data-remove-index="9007199254740994"))
+    expect(template_queue(data, false, true, false, true)).to_not contain("data-remove-index")
+  end
+end

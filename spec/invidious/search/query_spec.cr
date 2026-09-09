@@ -240,3 +240,19 @@ Spectator.describe Invidious::Search::Query do
     end
   end
 end
+
+Spectator.describe "Blocked channel search override" do
+  it "excludes blocked channels unless explicitly included" do
+    query = Invidious::Search::Query.new(HTTP::Params.parse("q=cats"))
+    expect(query.include_blocked).to be_false
+    expect(query.to_http_params.has_key?("include_blocked")).to be_false
+  end
+
+  it "preserves the override alongside other filters in pagination parameters" do
+    query = Invidious::Search::Query.new(HTTP::Params.parse("q=cats&type=video&page=3&include_blocked=1"))
+    expect(query.include_blocked).to be_true
+    expect(query.to_http_params["include_blocked"]).to eq("1")
+    expect(query.to_http_params["type"]).to eq("video")
+    expect(query.page).to eq(3)
+  end
+end
