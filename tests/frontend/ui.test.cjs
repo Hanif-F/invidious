@@ -49,7 +49,15 @@ async function pageFor(engine, options = {}) {
         const url = new URL(route.request().url());
         requests.push(url.pathname + url.search);
         if (route.request().isNavigationRequest()) {
-            return route.fulfill({ contentType: 'text/html', body: fs.readFileSync(path.join(generated, fixture + '.html'), 'utf8') });
+            let body = fs.readFileSync(path.join(generated, fixture + '.html'), 'utf8');
+            if (options.videoData) {
+                body = body.replace(/(<script id="video_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => {
+                    const original = JSON.parse(data);
+                    const updated = { ...original, ...options.videoData, params: { ...original.params, ...options.videoData.params } };
+                    return start + JSON.stringify(updated).replace(/</g, '\\u003c') + end;
+                });
+            }
+            return route.fulfill({ contentType: 'text/html', body });
         }
         if (url.pathname.startsWith('/api/v1/dearrow/')) {
             if (options.dearrowError) return route.fulfill({ status: 503, body: '{}' });
@@ -133,6 +141,42 @@ for (const engine of engines) {
         assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
         await context.close();
     });
+    test(`${engine}: Cinematic selection submits without JavaScript and loads alone`, async () => {
+        const { page, context, requests } = await pageFor(engine, { fixture: 'preferences-cinematic', javascript: false, width: 390 });
+        const radio = page.getByRole('radio', { name: 'Cinematic', exact: true });
+        assert.equal(await radio.isChecked(), true);
+        for (const img of await page.locator('.theme-card img').all()) {
+            assert.equal(await img.evaluate(el => el.complete && el.naturalWidth > 0), true);
+        }
+        assert.ok(requests.some(url => url.startsWith('/themes/cinematic/theme.css')));
+        assert.ok(!requests.some(url => url.startsWith('/themes/modern-neon/theme.css')));
+        const posted = page.waitForRequest(request => request.method() === 'POST');
+        await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
+        assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'cinematic');
+        await context.close();
+    });
+    test(`${engine}: Cinematic responsive layouts`, async () => {
+        for (const width of [320, 390, 768, 1024, 1440, 1920]) {
+            for (const fixture of ['browse-cinematic-light', 'browse-cinematic-dark', 'browse-cinematic-compact', 'browse-cinematic-thin', 'watch-cinematic-light', 'watch-cinematic-dark', 'watch-cinematic-rtl', 'preferences-cinematic', 'search-cinematic', 'playlist-cinematic', 'history-cinematic', 'playlist-library-cinematic', 'login-cinematic', 'error-cinematic', 'channel-cinematic']) {
+                const { page, context, errors } = await pageFor(engine, { fixture, width });
+                await page.evaluate(() => document.fonts.ready);
+                assert.equal(await page.locator('body').getAttribute('data-theme'), 'cinematic', `${fixture} must exercise Cinematic`);
+                assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${fixture} overflows at ${width}`);
+                assert.deepEqual(errors, []);
+                if ([320, 1440].includes(width)) {
+                    await page.locator('img.thumbnail').evaluateAll(images => Promise.all(images.filter(img => img.getBoundingClientRect().top < innerHeight).map(img => img.decode())));
+                    await page.screenshot({ path: path.join(artifacts, `${engine}-${fixture}-${width}.png`) });
+                }
+                if (fixture === 'browse-cinematic-light' && width === 320) {
+                    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+                    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Cinematic enlarged text overflows: ' + JSON.stringify(await page.evaluate(() => [...document.querySelectorAll('body *')].filter(el => el.getBoundingClientRect().right > innerWidth + 1).slice(0, 12).map(el => [el.tagName, el.className, el.getBoundingClientRect().right]))));
+                    await page.keyboard.press('Tab');
+                    assert.equal(await page.locator('.skip-link').evaluate(el => el === document.activeElement), true);
+                }
+                await context.close();
+            }
+        }
+    });
     test(`${engine}: Diary selection submits without JavaScript and loads alone`, async () => {
         const { page, context, requests } = await pageFor(engine, { fixture: 'preferences-diary', javascript: false, width: 390 });
         const radio = page.getByRole('radio', { name: 'Diary', exact: true });
@@ -145,6 +189,40 @@ for (const engine of engines) {
         const posted = page.waitForRequest(request => request.method() === 'POST');
         await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
         assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'diary');
+        await context.close();
+    });
+    test(`${engine}: Cinematic palettes, mode toggle and keyboard selection`, async () => {
+        for (const [mode, systemTheme, expected] of [['light', 'dark', 'light'], ['dark', 'light', 'dark'], ['auto', 'dark', 'dark'], ['auto', 'light', 'light']]) {
+            const { page, context } = await pageFor(engine, { fixture: `browse-cinematic-${mode}`, systemTheme });
+            assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme), expected);
+            const ratios = await page.locator('body').evaluate(el => {
+                const style = getComputedStyle(el);
+                const luminance = token => {
+                    const hex = style.getPropertyValue(token).trim().replace('#', '');
+                    const expanded = hex.length === 3 ? [...hex].map(c => c + c).join('') : hex;
+                    return [0, 2, 4].map(i => parseInt(expanded.slice(i, i + 2), 16) / 255)
+                        .map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4)
+                        .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+                };
+                return [['--text', '--page'], ['--muted', '--page'], ['--accent', '--page'],
+                    ['--text', '--surface'], ['--muted', '--surface'], ['--accent', '--surface'],
+                    ['--accent-ink', '--accent']].map(([a, b]) => {
+                    const x = luminance(a), y = luminance(b);
+                    return (Math.max(x, y) + .05) / (Math.min(x, y) + .05);
+                });
+            });
+            assert.ok(ratios.every(ratio => ratio >= 4.5), `Cinematic ${expected} contrast: ${ratios}`);
+            assert.equal(await page.locator('.media-card .thumbnail').first().evaluate(el => getComputedStyle(el).transitionDuration), '0s');
+            await page.locator('#toggle_theme').click();
+            assert.equal(await page.locator('body').getAttribute('data-theme'), 'cinematic');
+            assert.equal(await page.locator('body').getAttribute('data-density'), 'balanced');
+            await context.close();
+        }
+        const { page, context } = await pageFor(engine, { fixture: 'preferences' });
+        await page.getByRole('radio', { name: 'Modern Neon' }).focus();
+        await page.keyboard.press('ArrowRight');
+        await page.keyboard.press('ArrowRight');
+        assert.equal(await page.getByRole('radio', { name: 'Cinematic', exact: true }).isChecked(), true);
         await context.close();
     });
     test(`${engine}: Diary palettes, mode toggle and keyboard selection`, async () => {
@@ -173,6 +251,27 @@ for (const engine of engines) {
         await page.emulateMedia({ forcedColors: 'active' });
         assert.equal(await page.locator('.media-card').first().evaluate(el => getComputedStyle(el, '::before').display), 'none');
         await context.close();
+    });
+    test(`${engine}: Cinematic preserves real player controls`, async () => {
+        for (const width of [390, 1440]) {
+            const { page, context, errors } = await pageFor(engine, { fixture: 'watch-cinematic-dark', realPlayer: true, width, touch: width === 390 });
+            await page.waitForFunction(() => window.player && typeof player.play === 'function');
+            await page.evaluate(() => { player.muted(true); player.play(); });
+            await page.waitForFunction(() => player.currentTime() > 0.1);
+            await page.evaluate(() => { player.pause(); player.currentTime(1); player.playbackRate(1.5); });
+            assert.equal(await page.evaluate(() => player.paused()), true);
+            assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
+            await page.waitForFunction(() => player.currentTime() >= 0.9);
+            if (width === 1440) {
+                const wasWide = await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide'));
+                await page.locator('.vjs-wide-control').click();
+                assert.equal(await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide')), !wasWide);
+                await page.locator('.vjs-wide-control').click();
+                assert.equal(await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide')), wasWide);
+            }
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
     });
     test(`${engine}: Diary preserves real player controls`, async () => {
         for (const width of [390, 1440]) {
@@ -461,6 +560,8 @@ for (const engine of engines) {
         await page.waitForFunction(() => document.getElementById('transcript-status').textContent.includes('Automatically'));
         await page.locator('#transcript-language').selectOption({ index: 0 });
         assert.equal(transcriptCalls(), 3);
+        assert.equal(await page.locator('#timestamp-panel').evaluate(panel => panel.open), false);
+        await page.locator('#timestamp-panel > summary').click();
         await page.locator('#timestamp-list a').nth(1).click();
         assert.equal(await page.evaluate(() => window.__time), 80);
         assert.deepEqual(errors, []);
@@ -568,23 +669,29 @@ test('library navigation survives custom feed settings without channel managemen
 test('UI asset additions stay below the 30KB compressed initial-load budget', () => {
     const baseline = require('./asset-baseline.json');
     let delta = 0;
+    const themeBytes = [];
     for (const [file, originalBytes] of Object.entries(baseline.gzipBytes)) {
         const current = fs.readFileSync(path.join(root, 'assets', file));
-        delta += gzipSync(current).length - originalBytes;
+        const added = gzipSync(current).length - originalBytes;
+        if (/^themes\/[^/]+\/theme\.css$/.test(file)) themeBytes.push(added);
+        else delta += added;
     }
+    // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
+    delta += Math.max(0, ...themeBytes);
     delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js/dearrow.js'))).length;
     assert.ok(delta <= 30 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
 
 // Picker previews are lazy-loaded on preferences, not part of the site-wide CSS/JS budget.
-test('Theme preview images stay below the 24KB compressed budget', () => {
+test('Theme preview images stay within the aggregate 12KB-per-theme budget', () => {
     const baseline = require('./asset-baseline.json');
     let delta = 0;
     for (const [file, originalBytes] of Object.entries(baseline.previewGzipBytes)) {
         delta += gzipSync(fs.readFileSync(path.join(root, 'assets', file))).length - originalBytes;
     }
-    assert.ok(delta <= 24 * 1024, `${delta} preview bytes added`);
+    const budget = Object.keys(baseline.previewGzipBytes).length * 12 * 1024;
+    assert.ok(delta <= budget, `${delta} preview bytes added (budget ${budget})`);
 });
 
 for (const engine of engines) {
@@ -1015,4 +1122,92 @@ for (const engine of engines) {
         assert.equal(body.has('dearrow_show_original'), false);
         await context.close();
     });
+}
+
+// Exercise the complete embed script without network or media dependencies.
+test('embed playlist requests identify the current video and preserve advancement settings', () => {
+    const vm = require('node:vm');
+    const data = {
+        id: 'abcdefghijk', index: null, plid: 'PLfixture',
+        preferences: { locale: 'en-US', listen: false, speed: 1, local: false },
+        params: { autoplay: true, listen: true, speed: 1.5, local: true }
+    };
+    let requested, ended, navigated;
+    const events = {};
+    vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/js/embed.js'), 'utf8'), {
+        URL,
+        document: { getElementById: () => ({ textContent: JSON.stringify(data) }) },
+        addEventListener: (name, callback) => { events[name] = callback; },
+        helpers: { xhr: (_, url, options, callbacks) => {
+            requested = new URL(url, 'https://invidious.test');
+            callbacks.on200({ nextVideo: 'nextvideo01', index: 4 });
+        } },
+        player: { on: (_, callback) => { ended = callback; } },
+        location: { assign: url => { navigated = new URL(url, 'https://invidious.test'); } }
+    });
+    events.load();
+    assert.equal(requested.searchParams.get('continuation'), data.id);
+    ended();
+    assert.equal(navigated.pathname, '/embed/nextvideo01');
+    for (const [key, value] of Object.entries({ list: data.plid, index: '4', autoplay: '1', listen: 'true', speed: '1.5', local: 'true' })) {
+        assert.equal(navigated.searchParams.get(key), value);
+    }
+});
+
+for (const engine of engines) {
+    test(`${engine}: synced playback restores progress after seeking back from completion`, async () => {
+        const { page, context, errors } = await pageFor(engine, {
+            fixture: 'watch-single', realPlayer: true,
+            videoData: { playback_sync: true, playback_position: 0, csrf_token: 'fixture-csrf', params: { save_player_pos: true } }
+        });
+        await page.waitForFunction(() => window.player && player.isReady_);
+        const updates = await page.evaluate(() => {
+            const updates = [];
+            helpers.xhr = (method, url, options) => {
+                if (url.startsWith('/watch_ajax')) updates.push({
+                    action: new URL(url, location.origin).searchParams.get('action'),
+                    position: new URLSearchParams(options.payload).get('position')
+                });
+            };
+            let time = 60;
+            // Keep the real player's event handlers; simulate a longer video's clock.
+            player.currentTime = () => time;
+            player.trigger('timeupdate');
+            time = video_data.length_seconds - 1;
+            player.trigger('timeupdate');
+            time = 60;
+            player.trigger('seeked');
+            time = video_data.length_seconds - 15 + 0.5;
+            player.trigger('timeupdate');
+            player.trigger('pause');
+            return updates;
+        });
+        assert.deepEqual(updates, [
+            { action: 'set_progress', position: '60' },
+            { action: 'clear_progress', position: null },
+            { action: 'set_progress', position: '60' },
+            { action: 'clear_progress', position: null }
+        ]);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: rejected progress beacon falls back to a keepalive request`, async () => {
+        const { page, context } = await pageFor(engine, { fixture: 'watch-single', realPlayer: true });
+        const request = await page.evaluate(async () => {
+            navigator.sendBeacon = () => false;
+            let captured = null;
+            window.fetch = async (url, options) => { captured = { url, ...options }; return { ok: true }; };
+            send_playback_position('set_progress', 123, true);
+            await Promise.resolve();
+            return captured && { url: captured.url, keepalive: captured.keepalive, method: captured.method,
+                position: new URLSearchParams(captured.body).get('position') };
+        });
+        assert.deepEqual(request, {
+            url: '/watch_ajax?action=set_progress&redirect=false&id=2isYuQZMbdU',
+            keepalive: true, method: 'POST', position: '123'
+        });
+        await context.close();
+    });
+
 }

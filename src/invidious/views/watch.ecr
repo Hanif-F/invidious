@@ -243,7 +243,10 @@
                     <summary><%= I18n.translate(locale, "ui_description") %></summary>
                     <div id="descriptionWrapper"><%= video.description_html %></div>
                 </details>
-                <section id="timestamp-panel" hidden><h3><%= I18n.translate(locale, "ui_timestamps") %></h3><ol id="timestamp-list" class="timestamp-list"></ol></section>
+                <details id="timestamp-panel" hidden>
+                    <summary><%= I18n.translate(locale, "ui_timestamps") %></summary>
+                    <ol id="timestamp-list" class="timestamp-list"></ol>
+                </details>
                 <% if !video.captions.empty? %>
                 <details id="transcript-panel" class="js-only">
                     <summary><%= I18n.translate(locale, "ui_transcript") %></summary>

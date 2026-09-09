@@ -13,8 +13,12 @@ end
 
 class Invidious::LogHandler < Kemal::BaseLogHandler
   def initialize(@io : IO = STDOUT, @level = LogLevel::Debug, use_color : Bool = true)
-    Colorize.enabled = use_color
-    Colorize.on_tty_only!
+    {% if Colorize.class.has_method?(:default_enabled?) %}
+      Colorize.enabled = use_color && Colorize.default_enabled?(STDOUT, STDERR)
+    {% else %}
+      Colorize.enabled = use_color
+      Colorize.on_tty_only!
+    {% end %}
   end
 
   def call(context : HTTP::Server::Context)

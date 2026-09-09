@@ -13,6 +13,13 @@ def check_theme_preferences
   env.set "preferences", diary
   Invidious::Routes::PreferencesRoute.update(env)
   raise "Diary cookie lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "diary"
+  cinematic = Preferences.from_json(%({"theme":"cinematic"}))
+  raise "Cinematic JSON lost" unless Preferences.from_json(cinematic.to_json).theme == "cinematic"
+  raise "Cinematic YAML lost" unless Preferences.from_yaml(cinematic.to_yaml).theme == "cinematic"
+  env = theme_post_env("theme=cinematic")
+  env.set "preferences", cinematic
+  Invidious::Routes::PreferencesRoute.update(env)
+  raise "Cinematic cookie lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "cinematic"
   prefs = Preferences.from_json(%({"theme":"fixture-theme","save_player_pos":true}))
   raise "JSON round trip failed" unless Preferences.from_json(prefs.to_json).theme == "fixture-theme"
   raise "YAML round trip failed" unless Preferences.from_yaml(prefs.to_yaml).theme == "fixture-theme"

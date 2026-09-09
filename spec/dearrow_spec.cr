@@ -8,7 +8,7 @@ end
 describe Invidious::DeArrow do
   it "validates IDs before fetching" do
     calls = 0
-    client = Invidious::DeArrow::Client.new(->(id : String) { calls += 1; Invidious::DeArrow::Result.new("title", 1.hour) })
+    client = Invidious::DeArrow::Client.new(->(_id : String) { calls += 1; Invidious::DeArrow::Result.new("title", 1.hour) })
     {"", "short", "abcdefghijk?", "../abcdefgh", "abcdefghij\n"}.each { |id| client.title(id).should be_nil }
     calls.should eq(0)
     Invidious::DeArrow.valid_id?("abc_DEF-12").should be_false
@@ -43,7 +43,7 @@ describe Invidious::DeArrow do
     {Invidious::DeArrow::Result.new("title", 1.hour), Invidious::DeArrow::Result.new(nil, 10.minutes)}.each do |result|
       calls = 0
       now = 0.seconds
-      client = Invidious::DeArrow::Client.new(->(id : String) { calls += 1; result }, -> { now })
+      client = Invidious::DeArrow::Client.new(->(_id : String) { calls += 1; result }, -> { now })
       2.times { client.title("abcdefghijk").should eq(result.title) }
       calls.should eq(1)
       now += result.ttl

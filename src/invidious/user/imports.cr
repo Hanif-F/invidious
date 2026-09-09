@@ -84,6 +84,30 @@ struct Invidious::User
     #  Invidious
     # -------------------
 
+    # Validate each entry independently so malformed progress cannot abort an import.
+    def parse_playback_positions(positions : Array(JSON::Any), now : Time = Time.utc)
+      cutoff = now - Invidious::Database::PlaybackPositions::RETENTION_PERIOD
+      valid_positions = positions.compact_map do |entry|
+        next unless item = entry.as_h?
+        video_id = item["video_id"]?.try &.as_s?
+        position = item["position"]?.try &.as_i64?
+        timestamp = item["updated_at"]?.try &.as_i64?
+
+        next unless video_id && video_id.match(/\A[a-zA-Z0-9_-]{11}\z/)
+        next unless position && 0 <= position <= Int32::MAX
+        next unless timestamp
+        # Clamp before conversion: even an Int64 timestamp can exceed Time's range.
+        updated_at = Time.unix(timestamp.clamp(cutoff.to_unix, now.to_unix))
+        next if timestamp < cutoff.to_unix || updated_at < cutoff
+
+        {video_id: video_id, position: position.to_i32, updated_at: updated_at}
+      end
+
+      valid_positions.sort_by!(&.[:updated_at]).reverse!
+      valid_positions.uniq!(&.[:video_id])
+      valid_positions.first(Invidious::Database::PlaybackPositions::MAX_POSITIONS_PER_USER)
+    end
+
     # Import from another invidious account
     def from_invidious(user : User, body : String)
       data = JSON.parse(body)
@@ -109,24 +133,7 @@ struct Invidious::User
       end
 
       if user.preferences.save_player_pos && (positions = data["playback_positions"]?.try &.as_a?)
-        cutoff = Time.utc - Invidious::Database::PlaybackPositions::RETENTION_PERIOD
-
-        valid_positions = positions.compact_map do |item|
-          video_id = item["video_id"]?.try &.as_s?
-          position = item["position"]?.try &.as_i?
-          updated_timestamp = item["updated_at"]?.try &.as_i?
-          updated_at = updated_timestamp.try { |timestamp| Time.unix(timestamp) }
-
-          next unless video_id && video_id.match(/^[a-zA-Z0-9_-]{11}$/)
-          next unless position && position >= 0 && position <= Int32::MAX
-          next unless updated_at && updated_at >= cutoff
-
-          updated_at = Time.utc if updated_at > Time.utc
-          {video_id: video_id, position: position.to_i32, updated_at: updated_at}
-        end
-
-        valid_positions.sort_by!(&.[:updated_at]).reverse!
-        valid_positions.first(Invidious::Database::PlaybackPositions::MAX_POSITIONS_PER_USER).each do |position|
+        parse_playback_positions(positions).each do |position|
           Invidious::Database::PlaybackPositions.upsert(
             user.email,
             position[:video_id],

@@ -7,6 +7,7 @@ module Invidious::Themes
   AVAILABLE = [
     Theme.new(DEFAULT, "Modern Neon", "/themes/modern-neon/theme.css", "/themes/modern-neon/preview.webp"),
     Theme.new("diary", "Diary", "/themes/diary/theme.css", "/themes/diary/preview.webp"),
+    Theme.new("cinematic", "Cinematic", "/themes/cinematic/theme.css", "/themes/cinematic/preview.webp"),
   ]
 
   def self.resolve(id : String) : Theme

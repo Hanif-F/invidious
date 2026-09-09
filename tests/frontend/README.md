@@ -30,6 +30,9 @@ ignored by Git.
 - Production Video.js controls, playback, pause, seeking and playback speed using
   a local clip, at desktop and touch viewport sizes. Includes paused auto-hide,
   mouse/touch wake-up, keyboard focus, speed menus and the in-player wide toggle.
+- Playback progress resets and restores correctly when seeking back from completion,
+  including fractional completion boundaries; rejected unload beacons use a keepalive
+  fallback. Embed playlist requests preserve the current video and advancement settings.
 - Horizontal branding and direct Library links, including customized feed menus.
 - Playlist occurrence selection, previous/next links, recommendation separation,
   retries, empty/end states and mobile queue placement.
@@ -43,8 +46,9 @@ ignored by Git.
   list layout. Mobile queue scrolling survives browser-toolbar height changes.
 - Initial CSS/JavaScript gzip growth against the recorded pre-redesign revision
   in `asset-baseline.json`. Unchanged player assets are excluded; transcript code
-  is fetched only on request. The 30 KiB cap also includes changed assets that do
-  not all load on the same page, making this a conservative asset budget.
+  is fetched only on request. The 30 KiB cap counts the largest selectable theme stylesheet plus shared
+  additions, since only one theme stylesheet loads per page. Other changed assets
+  are counted conservatively even when they do not all load on the same page.
 
 These checks do not establish compatibility on physical Android/iOS devices or
 validate live upstream YouTube responses, private playlist authorization, live
@@ -99,3 +103,11 @@ checks use the existing SQLite fixture harness and separate account objects to
 simulate sessions; they do not validate a deployed PostgreSQL login session.
 New strings include English and Indonesian, with the existing English fallback
 for other locales. Thumbnail URLs and existing video API metadata are unchanged.
+
+Cinematic adds a standalone amber/charcoal theme, preserving light/dark/system
+preferences and the existing default. Its fixtures cover the same six responsive
+widths, enlarged text, RTL, compact/thin modes, no-JavaScript selection, and real
+player controls. The picker preview is a reduced WebP capture of the dark browse
+fixture; screenshots use synthetic media rather than upstream thumbnails.
+Preview images share an aggregate allowance of 12 KiB per theme (36 KiB for
+three themes), preserving the previous 24 KiB allowance for two themes.

@@ -399,6 +399,7 @@ if (video_data.params.save_player_pos) {
             if (video_data.playback_sync && !positionCleared) {
                 clear_server_video_time(false);
                 positionCleared = true;
+                lastSyncedPosition = -1;
             }
             return;
         }
@@ -419,16 +420,19 @@ if (video_data.params.save_player_pos) {
 
     if (video_data.playback_sync) {
         const flushPosition = function (useBeacon) {
-            const time = Math.floor(player.currentTime());
-            if (!isFinite(time) || time < 0 || time === lastSyncedPosition)
+            const raw = player.currentTime();
+            const time = Math.floor(raw);
+            if (!isFinite(time) || time < 0)
                 return;
 
-            if (time > video_data.length_seconds - 15) {
+            if (raw > video_data.length_seconds - 15) {
                 if (!positionCleared) clear_server_video_time(useBeacon);
                 positionCleared = true;
-            } else {
+                lastSyncedPosition = -1;
+            } else if (time !== lastSyncedPosition) {
                 save_server_video_time(time, useBeacon);
                 lastSyncedPosition = time;
+                positionCleared = false;
             }
         };
 
@@ -437,6 +441,7 @@ if (video_data.params.save_player_pos) {
         player.on('ended', function () {
             clear_server_video_time(false);
             positionCleared = true;
+            lastSyncedPosition = -1;
         });
         window.addEventListener('pagehide', function () { flushPosition(true); });
     }
@@ -585,7 +590,15 @@ function send_playback_position(action, position, useBeacon) {
 
     if (useBeacon && navigator.sendBeacon) {
         const body = new Blob([payload], {type: 'application/x-www-form-urlencoded'});
-        navigator.sendBeacon(url, body);
+        try {
+            if (navigator.sendBeacon(url, body)) return;
+        } catch (_) { /* Fall back when the browser rejects the beacon. */ }
+    }
+    if (useBeacon && window.fetch) {
+        fetch(url, {
+            method: 'POST', body: payload, keepalive: true,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        }).catch(function () {});
     } else {
         helpers.xhr('POST', url, {payload: payload}, {});
     }

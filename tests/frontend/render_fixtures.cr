@@ -195,8 +195,8 @@ def history_fixture(visual_theme = "modern-neon")
   render "src/invidious/views/feeds/history.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_channel_fixture
-  env = fixture_env("/channel/UCfixture", "light", visual_theme: "diary")
+def diary_channel_fixture(visual_theme = "diary", mode = "light")
+  env = fixture_env("/channel/UCfixture", mode, visual_theme: visual_theme)
   locale = "en-US"
   user = nil
   subscriptions = [] of String
@@ -214,8 +214,8 @@ def diary_channel_fixture
   render "src/invidious/views/channel.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_login_fixture
-  env = fixture_env("/login", "light", visual_theme: "diary")
+def diary_login_fixture(visual_theme = "diary", mode = "light")
+  env = fixture_env("/login", mode, visual_theme: visual_theme)
   locale = "en-US"
   account_type = "invidious"
   referer = "/"
@@ -224,8 +224,8 @@ def diary_login_fixture
   render "src/invidious/views/user/login.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_error_fixture
-  env = fixture_env("/unavailable", "light", visual_theme: "diary")
+def diary_error_fixture(visual_theme = "diary", mode = "light")
+  env = fixture_env("/unavailable", mode, visual_theme: visual_theme)
   locale = "en-US"
   error_message = "<h1>This page is unavailable</h1><p>Please try again later.</p>"
   next_steps = "<a href=\"/\">Return home</a>"
@@ -233,8 +233,8 @@ def diary_error_fixture
   render "src/invidious/views/error.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_playlist_fixture
-  env = fixture_env("/playlist?list=PLfixture", "light", visual_theme: "diary")
+def diary_playlist_fixture(visual_theme = "diary", mode = "light")
+  env = fixture_env("/playlist?list=PLfixture", mode, visual_theme: visual_theme)
   locale = "en-US"
   items = (0...6).map do |i|
     PlaylistVideo.new({title: "A chapter in light and motion #{i + 1}", id: "fixture#{i}", author: "Studio North", ucid: "UCfixture", length_seconds: 720, published: Time.utc, plid: "PLfixture", index: i.to_i64, live_now: false})
@@ -286,6 +286,23 @@ File.write("#{output}/playlist-library-diary.html", playlist_library_fixture("di
 File.write("#{output}/channel-diary.html", diary_channel_fixture)
 File.write("#{output}/login-diary.html", diary_login_fixture)
 File.write("#{output}/error-diary.html", diary_error_fixture)
+# Render Cinematic through the same production templates and preference resolution.
+{"dark", "light", ""}.each do |mode|
+  suffix = mode.empty? ? "auto" : mode
+  File.write("#{output}/browse-cinematic-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", mode, visual_theme: "cinematic")))
+  File.write("#{output}/watch-cinematic-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode, visual_theme: "cinematic")))
+end
+File.write("#{output}/preferences-cinematic.html", preferences_fixture(fixture_env("/preferences", "light", visual_theme: "cinematic")))
+File.write("#{output}/browse-cinematic-compact.html", browse_fixture(fixture_env("/feed/popular", "light", false, "compact", visual_theme: "cinematic")))
+File.write("#{output}/browse-cinematic-thin.html", browse_fixture(fixture_env("/feed/popular", "light", true, visual_theme: "cinematic")))
+File.write("#{output}/watch-cinematic-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "light", false, "balanced", "ar", "cinematic")))
+File.write("#{output}/search-cinematic.html", browse_fixture(fixture_env("/search?q=light", "light", visual_theme: "cinematic")))
+File.write("#{output}/playlist-cinematic.html", diary_playlist_fixture("cinematic", "dark"))
+File.write("#{output}/history-cinematic.html", history_fixture("cinematic"))
+File.write("#{output}/playlist-library-cinematic.html", playlist_library_fixture("cinematic"))
+File.write("#{output}/channel-cinematic.html", diary_channel_fixture("cinematic", "dark"))
+File.write("#{output}/login-cinematic.html", diary_login_fixture("cinematic", "dark"))
+File.write("#{output}/error-cinematic.html", diary_error_fixture("cinematic", "dark"))
 # Register an alternative only inside this fixture process; never ship it as an option.
 Invidious::Themes::AVAILABLE << Invidious::Themes::Theme.new("fixture-theme", "Fixture Theme", "/themes/fixture-theme/theme.css", "/themes/modern-neon/preview.webp")
 begin

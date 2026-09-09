@@ -10,7 +10,7 @@ function get_playlist(plid) {
     } else {
         plid_url = '/api/v1/playlists/' + plid +
             '?index=' + video_data.index +
-            '&continuation' + video_data.id +
+            '&continuation=' + video_data.id +
             '&format=html&hl=' + video_data.preferences.locale;
     }
 
