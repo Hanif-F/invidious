@@ -57,8 +57,10 @@ async function pageFor(engine, options = {}) {
                     return start + JSON.stringify(updated).replace(/</g, '\\u003c') + end;
                 });
             }
+            if (options.sponsorblock) body = body.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => start + JSON.stringify({...JSON.parse(data), sponsorblock: {...JSON.parse(data).sponsorblock, ...options.sponsorblock}}).replace(/</g, '\\u003c') + end);
             return route.fulfill({ contentType: 'text/html', body });
         }
+        if (url.pathname.startsWith('/api/v1/sponsorblock/')) return route.fulfill({ status: options.sponsorblockError ? 503 : 200, contentType: 'application/json', body: JSON.stringify({segments: options.sponsorblockSegments || []}) });
         if (url.pathname.startsWith('/api/v1/dearrow/')) {
             if (options.dearrowError) return route.fulfill({ status: 503, body: '{}' });
             return route.fulfill({ contentType: 'application/json', body: JSON.stringify({title: options.dearrowMissing ? null : 'A clear title <img src=x onerror=alert(1)>'}) });
@@ -1343,3 +1345,139 @@ test('Cinematic bundled font transfer stays within its recorded allowance', () =
         console.log(`${file}: ${bytes} font bytes (separate from CSS/JS)`);
     }
 });
+
+for (const engine of engines) {
+    test(`${engine}: SponsorBlock modes, overlay, keyboard, ranges and replay`, async () => {
+        const segments = [
+            {id:'a', category:'sponsor', start:.5, end:1.5},
+            {id:'b', category:'intro', start:2, end:2.5},
+            {id:'c', category:'intro', start:2.5, end:3},
+            {id:'d', category:'filler', start:0, end:4},
+            {id:'e', category:'outro', start:3, end:3.8}
+        ];
+        const {page, context, errors} = await pageFor(engine, {realPlayer:true, sponsorblock: {enabled:true, modes:{sponsor:'manual', intro:'auto', filler:'disabled', outro:'marker'}}, sponsorblockSegments:segments});
+        await page.waitForFunction(() => window.player && typeof player.play === 'function');
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.duration() > 0 && document.querySelectorAll('.sb-range').length === 4);
+        await page.evaluate(() => { player.pause(); player.currentTime(.7); });
+        await page.waitForFunction(() => document.querySelector('.sb-overlay').classList.contains('sb-visible'));
+        await page.waitForFunction(() => document.querySelector('.sb-overlay').innerText.includes('Sponsor'));
+        assert.equal(await page.locator('.sb-range').first().evaluate(el => el.style.backgroundColor), 'rgb(76, 175, 80)');
+        await page.evaluate(() => {
+            const input = document.createElement('input'); input.id = 'sb-keyboard-test'; document.body.appendChild(input); input.focus();
+        });
+        await page.keyboard.press('Enter');
+        assert.ok(await page.evaluate(() => player.currentTime() < 1.5));
+        await page.evaluate(() => document.getElementById('sb-keyboard-test').remove());
+        await page.keyboard.press('Enter');
+        await page.waitForFunction(() => player.currentTime() >= 1.5);
+        await page.evaluate(() => player.currentTime(.8));
+        await page.waitForFunction(() => document.querySelector('.sb-overlay').classList.contains('sb-visible'));
+        await page.getByRole('button', {name:'Dismiss', exact:true}).click();
+        assert.equal(await page.locator('.sb-overlay.sb-visible').count(), 0);
+        await page.evaluate(() => player.trigger('timeupdate'));
+        assert.equal(await page.locator('.sb-overlay.sb-visible').count(), 0);
+        await page.evaluate(() => player.currentTime(1.8));
+        await page.waitForTimeout(100);
+        await page.evaluate(() => player.currentTime(.8));
+        await page.getByRole('button', {name:'Skip (Enter)', exact:true}).click();
+        await page.waitForFunction(() => player.currentTime() >= 1.5);
+        await page.evaluate(() => player.currentTime(2.1));
+        await page.waitForFunction(() => player.currentTime() >= 3);
+        assert.match(await page.locator('.sb-notice').innerText(), /Skipped Intro/);
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        await page.waitForTimeout(3200);
+        assert.equal(await page.locator('.sb-notice.sb-visible').count(), 0);
+        await page.evaluate(() => player.currentTime(2.1));
+        await page.waitForFunction(() => player.currentTime() >= 3);
+        await page.screenshot({path:path.join(artifacts, `${engine}-sponsorblock-notice.png`)});
+        await page.evaluate(() => player.currentTime(.8));
+        await page.waitForFunction(() => document.querySelector('.sb-overlay').classList.contains('sb-visible'));
+        await page.waitForFunction(() => document.querySelector('.sb-overlay').innerText.includes('Sponsor'));
+        await page.screenshot({path:path.join(artifacts, `${engine}-sponsorblock-manual.png`)});
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    test(`${engine}: SponsorBlock disabled avoids requests`, async () => {
+        const {context, requests, errors} = await pageFor(engine, {realPlayer:true, sponsorblock:{enabled:true,modes:{sponsor:'disabled'}}});
+        assert.equal(requests.some(url => url.startsWith('/api/v1/sponsorblock/')), false);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    test(`${engine}: preference Save remains visible throughout all themes`, async () => {
+        for (const fixture of ['preferences', 'preferences-cinematic', 'preferences-diary']) {
+            for (const width of [390, 1440]) {
+                const {page, context} = await pageFor(engine, {fixture, width, javascript:false});
+                const button = page.getByRole('button', {name:'Save preferences', exact:true});
+                for (const fraction of [0,.5,1]) {
+                    await page.evaluate(f => window.scrollTo(0, document.documentElement.scrollHeight * f), fraction);
+                    const box = await button.boundingBox();
+                    assert.ok(box && box.y >= 0 && box.y + box.height <= 1000 && box.x >= 0 && box.x + box.width <= width);
+                }
+                await page.screenshot({path:path.join(artifacts, `${engine}-${fixture}-save-${width}.png`)});
+                await context.close();
+            }
+        }
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: SponsorBlock overlap, end boundary and upstream failure`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer:true,
+            sponsorblock:{enabled:true,modes:{sponsor:'manual',intro:'manual'}},
+            sponsorblockSegments:[{id:'a',category:'sponsor',start:.5,end:1.8},{id:'b',category:'intro',start:.5,end:1.2}]});
+        await page.waitForFunction(() => window.player && typeof player.play === 'function');
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.duration() > 0);
+        await page.evaluate(() => { player.pause(); player.currentTime(.6); });
+        await page.waitForFunction(() => document.querySelector('.sb-overlay').innerText.includes('Intro'));
+        await page.getByRole('button', {name:'Skip (Enter)',exact:true}).click();
+        await page.waitForFunction(() => player.currentTime() >= 1.2 && document.querySelector('.sb-overlay').innerText.includes('Sponsor'));
+        await page.getByRole('button', {name:'Skip (Enter)',exact:true}).click();
+        await page.waitForFunction(() => player.currentTime() >= 1.8);
+        await page.waitForFunction(() => !document.querySelector('.sb-overlay').classList.contains('sb-visible'));
+        assert.deepEqual(errors, []);
+        await context.close();
+        for (const failure of [false,true]) {
+            const result = await pageFor(engine, {realPlayer:true,sponsorblock:{enabled:true},sponsorblockError:failure});
+            await result.page.waitForFunction(() => window.player && typeof player.play === 'function');
+            await result.page.evaluate(() => { player.muted(true); player.play(); });
+            await result.page.waitForFunction(() => player.currentTime() > .1);
+            assert.equal(await result.page.locator('.sb-range, .sb-overlay.sb-visible').count(),0);
+            assert.deepEqual(result.errors,[]);
+            await result.context.close();
+        }
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: SponsorBlock respects clip end and loop in audio mode`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer:true,
+            videoData:{params:{listen:true,video_end:2.5}},
+            sponsorblock:{enabled:true,modes:{sponsor:'auto'}},
+            sponsorblockSegments:[{id:'a',category:'sponsor',start:.5,end:3.8}]});
+        await page.waitForFunction(() => window.player && typeof player.play === 'function');
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > .1 && !player.seeking());
+        await page.evaluate(() => { player.pause(); player.currentTime(.7); });
+        await page.waitForFunction(() => player.currentTime() >= 2.49);
+        assert.ok(await page.evaluate(() => player.currentTime() < 2.6));
+        await page.evaluate(() => { player.loop(true); player.currentTime(.7); });
+        await page.waitForFunction(() => player.currentTime() < .5);
+        await page.evaluate(() => {
+            video_data.params.video_start = 1;
+            window.sbSeekCount = 0;
+            const currentTime = player.currentTime;
+            player.currentTime = function (value) {
+                if (value !== undefined) window.sbSeekCount++;
+                return currentTime.apply(this, arguments);
+            };
+            player.currentTime(.7);
+        });
+        await page.waitForFunction(() => player.currentTime() >= 1 && player.currentTime() < 1.1);
+        await page.evaluate(() => { for (let i = 0; i < 10; i++) player.trigger('timeupdate'); });
+        assert.ok(await page.evaluate(() => window.sbSeekCount <= 2));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}

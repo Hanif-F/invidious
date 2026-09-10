@@ -63,6 +63,13 @@ struct ConfigPreferences
   property save_player_pos : Bool = false
   @[YAML::Field(ignore: true)]
   property default_playlist : String? = nil
+  property sponsorblock_enabled : Bool = false
+  @[JSON::Field(converter: Invidious::SponsorBlock::Modes)]
+  @[YAML::Field(converter: Invidious::SponsorBlock::Modes)]
+  property sponsorblock_modes : Hash(String, String) = Invidious::SponsorBlock::Modes.normalize({} of String => String)
+  @[JSON::Field(converter: Invidious::SponsorBlock::Colors)]
+  @[YAML::Field(converter: Invidious::SponsorBlock::Colors)]
+  property sponsorblock_colors : Hash(String, String) = Invidious::SponsorBlock::Colors.normalize({} of String => String)
   property dearrow_enabled : Bool = false
   property dearrow_show_original : Bool = true
   property search_privacy : Bool = false

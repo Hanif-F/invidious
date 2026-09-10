@@ -208,6 +208,9 @@ module Invidious::Routes::PreferencesRoute
       save_player_pos:             save_player_pos,
       default_playlist:            default_playlist,
       search_privacy:              search_privacy,
+      sponsorblock_enabled:        env.params.body["sponsorblock_enabled"]? == "on",
+      sponsorblock_modes:          Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_mode_#{category}"]? || previous.sponsorblock_modes[category]} },
+      sponsorblock_colors:         Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_color_#{category}"]? || previous.sponsorblock_colors[category]} },
       dearrow_enabled:             env.params.body["dearrow_enabled"]? == "on",
       dearrow_show_original:       env.params.body["dearrow_show_original"]? == "on",
     }.to_json)

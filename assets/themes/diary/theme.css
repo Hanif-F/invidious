@@ -231,7 +231,7 @@ body .preferences-form legend { color: var(--text); padding: 0 8px; font-weight:
 body .pure-form-aligned .pure-control-group { margin-bottom: 16px; }
 body .pure-form-aligned .pure-control-group label { width: min(19em, 100%); text-align: start; }
 body .pure-form-aligned .pure-controls { margin: 24px 0; }
-.preferences-save { position: sticky; bottom: 12px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); z-index: 2; }
+.preferences-save { position: fixed; bottom: 12px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); z-index: 2; }
 #filters { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 8px; }
 body #filters-collapse > summary { display: list-item; margin: 0 16px; font-size: 1rem; }
 body #filters-collapse > summary::before { content: none; }

@@ -5,10 +5,33 @@
 <div class="h-box">
     <h1><%= I18n.translate(locale, "Preferences") %></h1>
     <nav class="preference-nav" aria-label="<%= I18n.translate(locale, "Preferences") %>">
-        <% {"appearance", "playback", "content"}.each do |section| %><a href="#preferences-<%= section %>"><%= I18n.translate(locale, "ui_#{section}") %></a><% end %>
+        <% {"appearance", "playback", "sponsorblock", "content"}.each do |section| %><a href="#preferences-<%= section %>"><%= I18n.translate(locale, "ui_#{section}") %></a><% end %>
         <% if env.get?("user") %><a href="#preferences-account"><%= I18n.translate(locale, "ui_account_data") %></a><% end %>
     </nav>
     <form class="pure-form pure-form-aligned preferences-form" action="/preferences?referer=<%= URI.encode_www_form(referer) %>" method="post">
+        <fieldset class="sponsorblock-preferences">
+            <legend id="preferences-sponsorblock">SponsorBlock</legend>
+            <p class="preference-description"><%= I18n.translate(locale, "sb_description") %> <a href="https://sponsor.ajay.app/" rel="noopener noreferrer">SponsorBlock</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>).</p>
+            <div class="pure-control-group">
+                <label for="sponsorblock_enabled"><%= I18n.translate(locale, "sb_enable") %></label>
+                <input type="checkbox" id="sponsorblock_enabled" name="sponsorblock_enabled" <% if preferences.sponsorblock_enabled %>checked<% end %>>
+            </div>
+            <div class="sponsorblock-categories">
+            <% Invidious::SponsorBlock::CATEGORIES.each do |category, color| %>
+                <div class="sponsorblock-category">
+                    <h3><%= I18n.translate(locale, "sb_category_#{category}") %></h3>
+                    <label for="sponsorblock_mode_<%= category %>"><%= I18n.translate(locale, "sb_mode") %></label>
+                    <select id="sponsorblock_mode_<%= category %>" name="sponsorblock_mode_<%= category %>">
+                    <% {"auto", "manual", "marker", "disabled"}.each do |mode| %>
+                        <option value="<%= mode %>" <% if preferences.sponsorblock_modes[category] == mode %>selected<% end %>><%= I18n.translate(locale, "sb_mode_#{mode}") %></option>
+                    <% end %>
+                    </select>
+                    <label for="sponsorblock_color_<%= category %>"><%= I18n.translate(locale, "sb_color") %></label>
+                    <input type="color" id="sponsorblock_color_<%= category %>" name="sponsorblock_color_<%= category %>" value="<%= preferences.sponsorblock_colors[category] %>">
+                </div>
+            <% end %>
+            </div>
+        </fieldset>
         <fieldset>
             <legend id="preferences-playback"><%= I18n.translate(locale, "ui_playback") %></legend>
             <p class="preference-description"><%= I18n.translate(locale, "ui_playback_hint") %></p>
@@ -434,9 +457,9 @@
                 </div>
             <% end %>
 
-            <div class="pure-controls preferences-save">
-                <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Save preferences") %></button>
-            </div>
         </fieldset>
+        <div class="pure-controls preferences-save">
+            <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Save preferences") %></button>
+        </div>
     </form>
 </div>

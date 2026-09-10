@@ -130,3 +130,13 @@ System follows browser-reported appearance live. Tests cover live media changes,
 real cross-tab storage events, Random selection without JavaScript, and no theme
 change on an open page after an elapsed interval. Physical Android/iOS, Windows,
 and Linux desktop appearance integration still requires device testing.
+
+SponsorBlock checks cover category markers, manual Enter/click skipping, keyboard
+focus guards, dismissal and replay, overlapping automatic and manual segments,
+notifications, empty/error responses, and request suppression when disabled.
+Preference fixtures verify defaults, validation, JSON/YAML, guest cookies,
+account/API storage, and export/import. The fixed Save action is checked at three
+scroll positions across all themes on desktop and mobile with JavaScript disabled.
+Run `crystal spec spec/sponsorblock_spec.cr` for parser and cache checks, or
+`node --test --test-name-pattern='SponsorBlock|preference Save remains' tests/frontend/ui.test.cjs`
+for the focused browser checks after rendering fixtures.

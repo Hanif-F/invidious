@@ -368,6 +368,8 @@ File.write("#{output}/queue-removed-next.json", editable_queue_fixture([3], 2))
 
 require "./dearrow_checks"
 check_dearrow_preferences
+require "./sponsorblock_checks"
+check_sponsorblock_preferences
 {true, false}.each do |show_original|
   env = fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2")
   prefs = env.get("preferences").as(Preferences)

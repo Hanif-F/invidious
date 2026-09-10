@@ -70,6 +70,13 @@ struct Preferences
   property volume : Int32 = CONFIG.default_user_preferences.volume
   property save_player_pos : Bool = CONFIG.default_user_preferences.save_player_pos
   property default_playlist : String? = nil
+  property sponsorblock_enabled : Bool = CONFIG.default_user_preferences.sponsorblock_enabled
+  @[JSON::Field(converter: Invidious::SponsorBlock::Modes)]
+  @[YAML::Field(converter: Invidious::SponsorBlock::Modes)]
+  property sponsorblock_modes : Hash(String, String) = CONFIG.default_user_preferences.sponsorblock_modes.dup
+  @[JSON::Field(converter: Invidious::SponsorBlock::Colors)]
+  @[YAML::Field(converter: Invidious::SponsorBlock::Colors)]
+  property sponsorblock_colors : Hash(String, String) = CONFIG.default_user_preferences.sponsorblock_colors.dup
   property dearrow_enabled : Bool = CONFIG.default_user_preferences.dearrow_enabled
   property dearrow_show_original : Bool = CONFIG.default_user_preferences.dearrow_show_original
   property search_privacy : Bool = CONFIG.default_user_preferences.search_privacy

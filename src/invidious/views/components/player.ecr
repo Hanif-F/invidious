@@ -89,6 +89,15 @@
 <script id="player_data" type="application/json">
 <%=
 {
+    "sponsorblock" => {
+        "enabled" => preferences.sponsorblock_enabled && !video.live_now,
+        "modes" => preferences.sponsorblock_modes,
+        "colors" => preferences.sponsorblock_colors,
+        "labels" => Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, I18n.translate(locale, "sb_category_#{category}")} },
+        "skip" => I18n.translate(locale, "sb_skip"),
+        "skipped" => I18n.translate(locale, "sb_skipped"),
+        "dismiss" => I18n.translate(locale, "sb_dismiss"),
+    },
     "aspect_ratio" => aspect_ratio,
     "title" => video.title,
     "description" => HTML.escape(video.short_description),
@@ -98,3 +107,5 @@
 %>
 </script>
 <script src="/js/player.js?v=<%= ASSET_COMMIT %>"></script>
+
+<script src="/js/sponsorblock.js?v=<%= ASSET_COMMIT %>"></script>
