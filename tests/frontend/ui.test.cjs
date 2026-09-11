@@ -1918,11 +1918,39 @@ for (const engine of engines) {
                 if (fullscreen) await page.evaluate(() => player.addClass('vjs-fullscreen'));
                 for (const youtube of [false, true]) {
                     await page.evaluate(value => player.el().classList.toggle('player-style-youtube', value), youtube);
-                    assert.equal(await page.locator('.vjs-control-bar').first().evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0.5)');
+                    assert.notEqual(await page.locator('.vjs-control-bar').first().evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0.5)');
                     assert.equal(await page.locator('.vjs-touch-overlay .vjs-play-control').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0.15)');
                 }
             }
-            await page.screenshot({path: path.join(artifacts, `${engine}-${fixture}-volume-controls.png`)});
+            await page.evaluate(() => { player.pause(); player.userActive(true); });
+            await page.locator('.vjs-mobile-settings').click();
+            const panel = page.locator('.mobile-player-settings');
+            async function checkSettingsSurface() {
+                assert.equal(await panel.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0.5)');
+                assert.equal(await panel.evaluate(el => getComputedStyle(el, '::backdrop').backgroundColor), 'rgba(0, 0, 0, 0)');
+                assert.equal(await panel.locator('header').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+                assert.equal(await panel.evaluate(el => getComputedStyle(el).opacity), '1');
+                assert.equal(await panel.locator('button').first().evaluate(el => getComputedStyle(el).opacity), '1');
+            }
+            await checkSettingsSurface();
+            for (const background of ['#eeeeee', '#111111']) {
+                await page.evaluate(color => {
+                    player.poster('');
+                    player.el().querySelector('video').style.opacity = '0';
+                    player.el().style.backgroundColor = color;
+                }, background);
+                await page.waitForTimeout(100);
+                await page.screenshot({path: path.join(artifacts, `${engine}-${fixture}-settings-${background.slice(1)}.png`)});
+            }
+            for (const name of [/^Quality/, /^Audio/, /^Captions/, /^Speed/]) {
+                const option = panel.getByRole('button', {name});
+                if (await option.count()) {
+                    await option.click();
+                    await checkSettingsSurface();
+                    await panel.getByRole('button', {name: 'Back', exact: true}).click();
+                }
+            }
+            await page.keyboard.press('Escape');
             assert.deepEqual(errors, []);
             await context.close();
         }

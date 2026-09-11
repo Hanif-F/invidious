@@ -316,10 +316,10 @@ video.video-js {
     position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh;
     max-width: none; max-height: none; margin: 0; border: 0; box-sizing: border-box;
     padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-    background: #181818; color: #fff; font: 16px/1.5 sans-serif; overflow: auto; overscroll-behavior: contain;
+    background: rgba(0, 0, 0, 0.5); color: #fff; font: 16px/1.5 sans-serif; overflow: auto; overscroll-behavior: contain;
 }
-.mobile-player-settings::backdrop { background: #181818; }
-.mobile-player-settings header { display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: #181818; z-index: 1; }
+.mobile-player-settings::backdrop { background: transparent; }
+.mobile-player-settings header { display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: transparent; z-index: 1; }
 .mobile-player-settings h2 { flex: 1; font-size: 20px; }
 .video-js .mobile-player-settings button { min-height: 48px; padding: 12px; color: inherit; cursor: pointer; text-align: start; border-bottom: 1px solid #555; }
 .mobile-player-settings > div > button { display: block; width: 100%; }
@@ -376,9 +376,6 @@ video.video-js {
 .player-stats header { position: sticky; top: -8px; z-index: 1; background: #171717; }
 
 /* Shared mobile surfaces remain neutral across themes, inline and fullscreen. */
-body .video-js.invidious-mobile .vjs-control-bar {
-    background: rgba(0, 0, 0, 0.5) !important;
-}
 body .video-js.invidious-mobile .vjs-touch-overlay .vjs-play-control,
 body .video-js.invidious-mobile .vjs-big-play-button {
     background: rgba(0, 0, 0, 0.15) !important;
