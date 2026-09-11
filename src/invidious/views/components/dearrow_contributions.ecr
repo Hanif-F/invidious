@@ -1,0 +1,54 @@
+<% dearrow_ready = Invidious::DeArrow::IdentityCipher.ready?(CONFIG.dearrow_identity_key) %>
+<div class="dearrow-entry js-only">
+    <% if user && dearrow_ready %>
+    <button type="button" id="dearrow-open" class="pure-button" aria-haspopup="dialog"><%= I18n.translate(locale, "dearrow_contribute") %></button>
+    <% else %>
+    <span tabindex="0" title="<%= I18n.translate(locale, user ? "dearrow_setup" : "dearrow_login") %>"><button type="button" class="pure-button" disabled><%= I18n.translate(locale, "dearrow_contribute") %></button></span>
+    <small><%= I18n.translate(locale, user ? "dearrow_setup" : "dearrow_login") %> <% unless user %><a href="/login?referer=<%= URI.encode_www_form("/watch?v=#{video.id}") %>"><%= I18n.translate(locale, "Sign In") %></a><% end %></small>
+    <% end %>
+</div>
+<% if user && dearrow_ready %>
+<dialog id="dearrow-dialog" aria-labelledby="dearrow-heading" data-video-id="<%= HTML.escape(video.id) %>">
+    <header class="dearrow-header"><h2 id="dearrow-heading"><%= I18n.translate(locale, "dearrow_contribute") %></h2><button type="button" id="dearrow-close" class="pure-button" autofocus><%= I18n.translate(locale, "dearrow_close") %></button></header>
+    <p id="dearrow-status" tabindex="-1" role="status" aria-live="polite"></p>
+    <section id="dearrow-editor">
+        <h3><%= I18n.translate(locale, "dearrow_original") %></h3>
+        <div id="dearrow-original" class="dearrow-row"><span dir="auto"><%= HTML.escape(video.title) %></span><div class="dearrow-votes"></div></div>
+        <form id="dearrow-draft-form">
+            <label for="dearrow-draft"><%= I18n.translate(locale, "dearrow_custom") %></label>
+            <input id="dearrow-draft" type="text" maxlength="110" required placeholder="<%= I18n.translate(locale, "dearrow_input") %>" autocomplete="off">
+            <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "dearrow_review") %></button>
+        </form>
+        <h3><%= I18n.translate(locale, "dearrow_titles") %></h3>
+        <div id="dearrow-titles"></div>
+        <button type="button" id="dearrow-refresh" class="pure-button"><%= I18n.translate(locale, "dearrow_refresh") %></button>
+    </section>
+    <form id="dearrow-confirm" hidden>
+        <p id="dearrow-preview" dir="auto"></p>
+        <label class="dearrow-ack"><input type="checkbox" required><span><%= I18n.translate(locale, "dearrow_ack1") %><small><%= I18n.translate(locale, "dearrow_ack1_detail") %></small></span></label>
+        <label class="dearrow-ack"><input type="checkbox" required><span><%= I18n.translate(locale, "dearrow_ack2") %><small><%= I18n.translate(locale, "dearrow_ack2_detail") %></small></span></label>
+        <label class="dearrow-ack"><input type="checkbox" required><span><%= I18n.translate(locale, "dearrow_ack3") %><small><%= I18n.translate(locale, "dearrow_ack3_detail") %></small></span></label>
+        <label class="dearrow-ack"><input type="checkbox" required><span><%= I18n.translate(locale, "dearrow_ack4") %><small><%= I18n.translate(locale, "dearrow_ack4_detail") %></small></span></label>
+        <p><%= I18n.translate(locale, "dearrow_check_all") %></p>
+        <div class="dearrow-confirm-actions"><button type="submit" id="dearrow-send" class="pure-button pure-button-primary" disabled><%= I18n.translate(locale, "dearrow_submit") %></button><button type="button" id="dearrow-edit" class="pure-button"><%= I18n.translate(locale, "dearrow_cancel") %></button></div>
+    </form>
+    <p><a href="https://wiki.sponsor.ajay.app/w/DeArrow/Guidelines" target="_blank" rel="noopener noreferrer"><%= I18n.translate(locale, "dearrow_guidelines") %></a></p>
+    <small><%= I18n.translate(locale, "dearrow_privacy") %></small>
+</dialog>
+<script id="dearrow-contribution-config" type="application/json"><%= {
+    "script" => "/js/dearrow-contributions.js?v=#{ASSET_COMMIT}",
+    "style" => "/css/dearrow-contributions.css?v=#{ASSET_COMMIT}",
+    "csrf" => env.get?("csrf_token").try(&.as(String)) || "",
+    "upvote" => I18n.translate(locale, "dearrow_upvote"),
+    "downvote" => I18n.translate(locale, "dearrow_downvote"),
+    "locked" => I18n.translate(locale, "dearrow_locked"),
+    "no_original" => I18n.translate(locale, "dearrow_no_original"),
+    "loading" => I18n.translate(locale, "dearrow_loading"),
+    "empty" => I18n.translate(locale, "dearrow_empty"),
+    "sending" => I18n.translate(locale, "dearrow_sending"),
+    "success" => I18n.translate(locale, "dearrow_success"),
+    "error" => I18n.translate(locale, "dearrow_error"),
+    "partial" => I18n.translate(locale, "dearrow_partial"),
+}.to_json.gsub("<", "\\u003c") %></script>
+<script src="/js/dearrow-loader.js?v=<%= ASSET_COMMIT %>" defer></script>
+<% end %>

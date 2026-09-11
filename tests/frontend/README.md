@@ -166,3 +166,5 @@ clipboard rejection, mobile/embed layout, and no extra requests after page settl
 Screenshots are saved as `*-stats-*.png`. Stream metadata is allowlisted when
 rendering production templates; codec strings are reported only when present.
 Physical Android/iOS and live upstream stream validation remain manual checks.
+
+Title suggestions and voting are documented in [DeArrow contributions](../../docs/dearrow-contributions.md). Their account identity storage requires migration 13 and a dedicated instance encryption key. Frontend fixtures cover CSRF, private ID imports, account isolation, title voting, confirmation, errors, and mobile layouts.

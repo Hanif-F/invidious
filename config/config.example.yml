@@ -1055,3 +1055,8 @@ default_user_preferences:
   ## Default: false
   ##
   #extend_desc: false
+
+# Dedicated persistent 32-byte hex secret for encrypted DeArrow contribution IDs.
+# Generate with: openssl rand -hex 32. Empty disables contributions.
+# See docs/dearrow-contributions.md before changing an existing key.
+dearrow_identity_key: ""

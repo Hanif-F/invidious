@@ -98,3 +98,32 @@ describe Invidious::DeArrow do
     peak.should eq(4)
   end
 end
+
+describe Invidious::DeArrow::Client do
+  it "does not recache a stale fetch after a contribution invalidates it" do
+    entered = Channel(Nil).new
+    release = Channel(Nil).new
+    done = Channel(String?).new
+    calls = 0
+    client = Invidious::DeArrow::Client.new(->(_id : String) {
+      calls += 1
+      if calls == 1
+        entered.send(nil)
+        release.receive
+        Invidious::DeArrow::Result.new("Old title", 1.hour)
+      else
+        Invidious::DeArrow::Result.new("New title", 1.hour)
+      end
+    })
+    spawn { done.send(client.title("abcdefghijk")) }
+    entered.receive
+    client.invalidate("abcdefghijk")
+    release.send(nil)
+    done.receive.should eq("Old title")
+    client.title("abcdefghijk").should eq("New title")
+    calls.should eq(2)
+    client.invalidate("abcdefghijk")
+    client.title("abcdefghijk").should eq("New title")
+    calls.should eq(3)
+  end
+end

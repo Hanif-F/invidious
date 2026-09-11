@@ -143,6 +143,8 @@ class Config
   property https_only : Bool?
   # HMAC signing key for CSRF tokens and verifying pubsub subscriptions
   property hmac_key : String = ""
+  # Persistent, dedicated 32-byte hex secret for DeArrow private identities.
+  property dearrow_identity_key : String = ""
   # Domain to be used for links to resources on the site where an absolute URL is required
   property domain : String?
   # Additional domain list that is going to be used for cookie domain validation

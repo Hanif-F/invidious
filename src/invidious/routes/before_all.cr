@@ -93,6 +93,8 @@ module Invidious::Routes::BeforeAll
           ":authorize_token",
           ":playlist_ajax",
           ":blocked_channels",
+          "POST:dearrow_submit",
+          "POST:dearrow_identity",
           ":create_playlist",
           ":signout",
           ":subscription_ajax",

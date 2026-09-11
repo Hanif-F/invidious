@@ -1,6 +1,7 @@
 require "http/client"
 require "json"
 require "digest/sha256"
+require "set"
 
 module Invidious::DeArrow
   record Result, title : String?, ttl : Time::Span
@@ -57,6 +58,7 @@ module Invidious::DeArrow
 
   class Client
     @cache = Hash(String, Entry).new
+    @invalidated = Set(String).new
     @pending = Hash(String, ::Channel(Nil)).new
     @mutex = Mutex.new
     @slots = ::Channel(Nil).new(4)
@@ -64,6 +66,13 @@ module Invidious::DeArrow
     def initialize(@fetcher : Proc(String, Result) = ->(id : String) { DeArrow.fetch(id) },
                    @clock : Proc(Time::Span) = -> { DeArrow.clock }, @capacity : Int32 = 10_000)
       4.times { @slots.send(nil) }
+    end
+
+    def invalidate(id : String)
+      @mutex.synchronize do
+        @cache.delete(id)
+        @invalidated.add(id) if @pending.has_key?(id)
+      end
     end
 
     def title(id : String) : String?
@@ -96,7 +105,9 @@ module Invidious::DeArrow
         end
         @mutex.synchronize do
           @cache.shift if @cache.size >= @capacity
-          @cache[id] = Entry.new(result.title, @clock.call + result.ttl)
+          unless @invalidated.delete(id)
+            @cache[id] = Entry.new(result.title, @clock.call + result.ttl)
+          end
           @pending.delete(id)
           signal.close
         end

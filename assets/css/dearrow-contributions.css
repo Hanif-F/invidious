@@ -1,0 +1,31 @@
+#dearrow-dialog { box-sizing: border-box; width: 580px; max-width: calc(100vw - 24px); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; padding: 20px; border: 1px solid var(--line, #777); border-radius: 14px; color: var(--text, #ddd); background: var(--surface, #232323); }
+#dearrow-dialog::backdrop { background: #0009; }
+#dearrow-dialog [hidden] { display: none !important; }
+#dearrow-dialog button { min-height: 44px; min-width: 44px; white-space: normal; }
+#dearrow-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+#dearrow-dialog :focus-visible { outline: 3px solid var(--accent, #4af); outline-offset: 3px; }
+.dearrow-header { position: sticky; top: -20px; z-index: 1; margin: -20px -20px 0; padding: 20px; background: var(--surface, #232323); display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+#dearrow-heading { margin: 0; font-size: 1.25rem; }
+#dearrow-status { min-height: 1.5em; overflow-wrap: anywhere; }
+.dearrow-row { display: flex; align-items: start; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line, #777); }
+.dearrow-row > span { min-width: 0; overflow-wrap: anywhere; }
+.dearrow-votes { display: flex; flex-shrink: 0; gap: 6px; }
+.dearrow-votes button { font-size: 1.2rem; }
+#dearrow-draft-form { margin: 20px 0; }
+#dearrow-draft { display: block; box-sizing: border-box; width: 100%; margin: 8px 0; padding: 12px; min-height: 44px; font: inherit; font-size: 16px; color: inherit; background: var(--surface-raised, #333); border: 1px solid var(--line, #777); border-radius: 4px; }
+#dearrow-preview { overflow-wrap: anywhere; font-size: 1.2rem; }
+.dearrow-ack { display: flex; align-items: start; gap: 14px; padding: 14px 0; cursor: pointer; }
+.dearrow-ack input { width: 24px; height: 24px; flex: 0 0 24px; margin-top: 4px; }
+.dearrow-ack small { display: block; margin-top: 6px; line-height: 1.5; }
+.dearrow-confirm-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+#dearrow-refresh { margin-top: 16px; }
+@media (max-width: 480px) {
+    #dearrow-dialog { padding: 16px; }
+    .dearrow-header { top: -16px; margin: -16px -16px 0; padding: 16px; }
+    .dearrow-row { flex-wrap: wrap; }
+    .dearrow-votes { margin-inline-start: auto; }
+    .dearrow-ack { gap: 12px; }
+    .dearrow-confirm-actions button { flex: 1 1 100%; }
+}
+
+#dearrow-dialog input, #dearrow-dialog button, #dearrow-status { scroll-margin-top: 100px; }

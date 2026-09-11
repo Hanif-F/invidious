@@ -61,6 +61,8 @@ module Invidious::Routing
 
     get "/blocked_channels", Routes::BlockedChannels, :index
     post "/blocked_channels", Routes::BlockedChannels, :update
+    post "/dearrow_submit", Routes::DeArrowContributions, :submit
+    post "/dearrow_identity", Routes::DeArrowContributions, :identity
     get "/video_actions", Routes::BlockedChannels, :video_actions
 
     # User preferences
@@ -250,6 +252,7 @@ module Invidious::Routing
       # Videos
       get "/api/v1/sponsorblock/:id", {{namespace}}::SponsorBlock, :segments
       get "/api/v1/dearrow/:id", {{namespace}}::DeArrow, :title
+      get "/api/v1/dearrow/:id/submissions", {{namespace}}::DeArrow, :submissions
       get "/api/v1/videos/:id", {{namespace}}::Videos, :videos
       get "/api/v1/storyboards/:id", {{namespace}}::Videos, :storyboards
       get "/api/v1/captions/:id", {{namespace}}::Videos, :captions

@@ -273,6 +273,18 @@
                 <label for="dearrow_show_original"><%= I18n.translate(locale, "preferences_dearrow_show_original_label") %></label>
                 <input name="dearrow_show_original" id="dearrow_show_original" type="checkbox" <% if preferences.dearrow_show_original %>checked<% end %>>
             </div>
+            <% if dearrow_user = env.get?("user").try(&.as(User)) %>
+            <% if Invidious::DeArrow::IdentityCipher.ready?(CONFIG.dearrow_identity_key) %>
+            <div class="pure-control-group">
+                <label for="dearrow-private-id"><%= I18n.translate(locale, "dearrow_identity") %></label>
+                <input form="dearrow-identity-form" id="dearrow-private-id" name="private_id" type="password" minlength="30" maxlength="256" autocomplete="off" spellcheck="false" autocapitalize="none" aria-describedby="dearrow-identity-hint">
+            </div>
+            <p id="dearrow-identity-hint" class="preference-description"><%= I18n.translate(locale, "dearrow_identity_hint") %></p>
+            <p class="preference-description"><%= I18n.translate(locale, Invidious::Database::DeArrowIdentities.configured?(dearrow_user.email) ? "dearrow_identity_configured" : "dearrow_identity_new") %></p>
+            <% if env.params.query["dearrow_saved"]? == "1" %><p role="status"><%= I18n.translate(locale, "dearrow_identity_saved") %></p><% end %>
+            <button form="dearrow-identity-form" type="submit" class="pure-button"><%= I18n.translate(locale, "dearrow_identity_import") %></button>
+            <% else %><p class="preference-description"><%= I18n.translate(locale, "dearrow_setup") %></p><% end %>
+            <% end %>
             <p class="preference-description"><%= I18n.translate(locale, "preferences_dearrow_attribution") %> <a href="https://dearrow.ajay.app/" rel="noopener noreferrer">DeArrow</a> / <a href="https://sponsor.ajay.app/" rel="noopener noreferrer">SponsorBlock</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>).</p>
 
             <p class="preference-description"><%= I18n.translate(locale, "ui_content_hint") %></p>
@@ -463,3 +475,9 @@
         </div>
     </form>
 </div>
+
+<% if env.get?("user") %>
+<form id="dearrow-identity-form" action="/dearrow_identity" method="post">
+    <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
+</form>
+<% end %>

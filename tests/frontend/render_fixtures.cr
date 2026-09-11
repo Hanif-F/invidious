@@ -87,7 +87,7 @@ def fixture_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
-def watch_fixture(env, plid : String? = "PLfixture", embed = false)
+def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   video = fixture_video
@@ -100,7 +100,7 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false)
   params.vr_mode = false
   playback_sync = false
   playback_position = nil
-  user = nil.as(Invidious::User?)
+  user = account ? env.get?("user").try(&.as(User)) : nil
   subscriptions = [] of String
   nojs = false
   comment_html = ""
@@ -387,3 +387,5 @@ check_sponsorblock_preferences
 end
 
 File.write("#{output}/embed-mobile.html", watch_fixture(fixture_env("/embed/2isYuQZMbdU"), nil, true))
+
+check_dearrow_contributions(output)

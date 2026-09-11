@@ -796,7 +796,7 @@ test('UI asset additions stay below the 30KB compressed initial-load budget', ()
     }
     // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
     delta += Math.max(0, ...themeBytes);
-    for (const file of ['dearrow.js', 'player-mobile.js', 'player-stats.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
+    for (const file of ['dearrow.js', 'player-mobile.js', 'player-stats.js', 'dearrow-loader.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
     assert.ok(delta <= 30 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
@@ -1738,6 +1738,119 @@ for (const engine of engines) {
             await page.locator('.player-stats button', {hasText:'Close',exact:true}).click();
             assert.equal(await page.locator('.player-stats').isVisible(),false);
             assert.deepEqual(errors,[]);
+            await context.close();
+        }
+    });
+}
+
+for (const engine of engines) {
+    for (const width of [320, 390, 1440]) {
+        test(`${engine}: DeArrow contributions at ${width}px`, async () => {
+            const {page, context, errors} = await pageFor(engine, {fixture: 'watch-dearrow-contributions', width, height: 844, touch: width < 500});
+            const votes = [];
+            let fail = false;
+            const submissions = [
+                {title: 'A <script>safe</script> title', original: false, votes: -1, locked: false, UUID: 'first'},
+                {title: 'A locked title', original: false, votes: 10, locked: true, UUID: 'second'}
+            ];
+            await page.route('**/api/v1/dearrow/*/submissions', route => route.fulfill({contentType: 'application/json', body: JSON.stringify({titles: submissions})}));
+            await page.route('**/dearrow_submit', async route => {
+                const body = new URLSearchParams(route.request().postData());
+                votes.push(Object.fromEntries(body));
+                if (fail) return route.fulfill({status: 429, contentType: 'application/json', body: JSON.stringify({error: 'Please wait and retry.'})});
+                if (body.get('action') === 'submit') submissions.push({title: body.get('title'), original: false, votes: -1, locked: false, UUID: 'own'});
+                await new Promise(resolve => setTimeout(resolve, 80));
+                return route.fulfill({contentType: 'application/json', body: '{"ok":true}'});
+            });
+            await page.locator('#dearrow-open').click();
+            await page.waitForFunction(() => document.querySelectorAll('#dearrow-titles .dearrow-row').length === 2);
+            const dialog = page.locator('#dearrow-dialog');
+            assert.equal(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
+            const box = await dialog.boundingBox();
+            assert.ok(box.x >= 0 && box.x + box.width <= width);
+            assert.equal(await page.locator('#dearrow-titles script').count(), 0);
+            assert.equal(await page.locator('#dearrow-original button').last().isDisabled(), true);
+            assert.equal(await page.locator('#dearrow-titles .dearrow-row').last().locator('button').last().isDisabled(), true);
+            const up = page.locator('#dearrow-titles .dearrow-row').first().locator('button').first();
+            assert.ok((await up.boundingBox()).height >= 44);
+            assert.notEqual(await up.locator('i').evaluate(el => getComputedStyle(el, '::before').content), 'none');
+            await up.click();
+            await page.waitForFunction(() => document.querySelector('#dearrow-status').textContent.includes('Accepted'));
+            assert.equal(votes.length, 1);
+            assert.equal(votes[0].action, 'upvote');
+            assert.equal(votes[0].uuid, 'first');
+            assert.equal(votes[0].userID, undefined);
+            await page.locator('#dearrow-draft').fill('My own clear title');
+            await page.locator('#dearrow-draft-form button').click();
+            const checks = page.locator('#dearrow-confirm input[type=checkbox]');
+            assert.equal(await checks.count(), 4);
+            for (let i = 0; i < 3; i++) await checks.nth(i).check();
+            assert.equal(await page.locator('#dearrow-send').isDisabled(), true);
+            await checks.nth(3).check();
+            assert.equal(await page.locator('#dearrow-send').isEnabled(), true);
+            await page.locator('#dearrow-edit').click();
+            await page.locator('#dearrow-draft-form button').click();
+            assert.equal(await page.locator('#dearrow-confirm input:checked').count(), 0);
+            for (let i = 0; i < 4; i++) await checks.nth(i).check();
+            await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-confirm-${width}.png`)});
+            if (width < 500) await page.setViewportSize({width, height: 430});
+            assert.equal(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
+            fail = true;
+            await page.locator('#dearrow-send').click();
+            await page.waitForFunction(() => document.querySelector('#dearrow-status').textContent.includes('Please wait'));
+            assert.equal(await page.locator('#dearrow-draft').inputValue(), 'My own clear title');
+            assert.equal(await page.locator('#dearrow-confirm').isVisible(), true);
+            fail = false;
+            await page.locator('#dearrow-send').click();
+            await page.waitForFunction(() => document.querySelectorAll('#dearrow-titles .dearrow-row').length === 3);
+            assert.equal(await page.locator('#dearrow-draft').inputValue(), '');
+            assert.equal(votes.at(-1).confirmed, 'true');
+            assert.equal(votes.at(-1).title, 'My own clear title');
+            if (width < 500) await page.setViewportSize({width, height: 844});
+            await dialog.evaluate(el => el.scrollTop = 0);
+            await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-contributions-${width}.png`)});
+            await page.keyboard.press('Escape');
+            assert.equal(await dialog.isVisible(), false);
+            assert.equal(await page.locator('#dearrow-open').evaluate(el => el === document.activeElement), true);
+            assert.deepEqual(errors, []);
+            await context.close();
+        });
+    }
+    test(`${engine}: DeArrow identity import stays outside ordinary preferences`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'preferences-dearrow-contributions', width: 390});
+        const input = page.locator('#dearrow-private-id');
+        assert.equal(await input.getAttribute('type'), 'password');
+        assert.equal(await input.inputValue(), '');
+        await input.fill('a'.repeat(64));
+        const forms = await input.evaluate(el => ({
+            target: el.form.action,
+            ordinary: new FormData(document.querySelector('form[action^="/preferences"]')).has('private_id')
+        }));
+        assert.ok(forms.target.endsWith('/dearrow_identity'));
+        assert.equal(forms.ordinary, false);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: DeArrow contribution themes, empty results and loading errors`, async () => {
+        for (const theme of ['light', 'diary', 'cinematic']) {
+            const {page, context, errors} = await pageFor(engine, {fixture: 'watch-dearrow-contributions-' + theme, width: 390, height: 844});
+            let fail = true;
+            await page.route('**/api/v1/dearrow/*/submissions', route => route.fulfill({status: fail ? 503 : 200, contentType: 'application/json', body: fail ? '{"error":"Temporary failure"}' : '{"titles":[]}'}));
+            await page.locator('#dearrow-open').click();
+            await page.waitForFunction(() => document.querySelector('#dearrow-status').textContent.includes('Temporary failure'));
+            fail = false;
+            await page.locator('#dearrow-refresh').click();
+            await page.waitForFunction(() => document.querySelector('#dearrow-titles').textContent.includes('No community'));
+            assert.equal(await page.locator('#dearrow-original button').first().isEnabled(), true);
+            assert.equal(await page.locator('#dearrow-original button').last().isDisabled(), true);
+            await page.locator('#dearrow-dialog').evaluate(el => { el.style.fontSize = '24px'; el.dir = 'rtl'; });
+            assert.equal(await page.locator('#dearrow-dialog').evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
+            await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-${theme}.png`)});
+            await page.locator('#dearrow-close').click();
+            assert.deepEqual(errors, []);
             await context.close();
         }
     });

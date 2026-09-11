@@ -26,3 +26,7 @@ body .video-context-actions a:hover, body .video-context-actions button:hover { 
 /* Hide the open panel until its viewport placement has been measured. */
 .js-video-context .video-context-actions { visibility: hidden; }
 .js-video-context[open] .video-context-actions[data-positioned=true] { visibility: visible; }
+
+/* DeArrow's full contribution dialog is loaded only when opened. */
+.dearrow-entry button { min-height: 44px; white-space: normal; }
+.dearrow-entry small { display: block; margin-block: 8px; }

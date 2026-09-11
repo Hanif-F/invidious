@@ -107,6 +107,7 @@
     <div class="watch-primary">
         <header class="watch-heading">
             <h1 dir="auto" data-dearrow-id="<%= HTML.escape(video.id) %>" data-dearrow-watch><%= title %></h1>
+            <%= rendered "components/dearrow_contributions" %>
     <% if !video.is_listed %>
         <h3>
             <i class="icon ion-ios-unlock"></i> <%= I18n.translate(locale, "Unlisted") %>
