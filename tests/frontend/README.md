@@ -168,3 +168,18 @@ rendering production templates; codec strings are reported only when present.
 Physical Android/iOS and live upstream stream validation remain manual checks.
 
 Title suggestions and voting are documented in [DeArrow contributions](../../docs/dearrow-contributions.md). Their account identity storage requires migration 13 and a dedicated instance encryption key. Frontend fixtures cover CSRF, private ID imports, account isolation, title voting, confirmation, errors, and mobile layouts.
+
+## Browser volume and playlist cards
+
+Desktop volume is stored in same-origin localStorage, independent of account
+preferences and volume URL parameters. New browsers default to 100%; mute is
+not persisted. Coarse-pointer mobile players use 100% website volume, omit
+volume controls, and leave sound adjustment to the device. Playback-speed
+preference persistence is unchanged. Old JSON/YAML volume fields are ignored.
+
+Playlist publication dates are read only from the existing playlist response;
+missing or unrecognized dates remain hidden without fetching video details.
+The fixture checks cover initial and continuation responses, false date matches,
+and unchanged database columns. Channel playlists share the library grid across
+all three registered themes. Browser checks compare responsive card dimensions
+and verify neutral translucent mobile controls in watch and embed players.

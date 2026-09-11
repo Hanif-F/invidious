@@ -103,14 +103,6 @@
             <% end %>
 
             <div class="pure-control-group">
-                <label for="volume"><%= I18n.translate(locale, "preferences_volume_label") %></label>
-                <input name="volume" id="volume" data-onrange="update_volume_value" type="range" min="0" max="100" step="5" value="<%= preferences.volume %>">
-                <span class="pure-form-message-inline" id="volume-value"><%= preferences.volume %></span>
-            </div>
-
-
-
-            <div class="pure-control-group">
                 <label for="captions[0]"><%= I18n.translate(locale, "preferences_captions_label") %></label>
                 <% preferences.captions.each_with_index do |caption, index| %>
                     <select class="pure-u-1-6" name="captions[<%= index %>]" id="captions[<%= index %>]">

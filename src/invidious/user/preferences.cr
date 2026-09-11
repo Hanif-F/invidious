@@ -67,7 +67,6 @@ struct Preferences
   property unseen_only : Bool = CONFIG.default_user_preferences.unseen_only
   property video_loop : Bool = CONFIG.default_user_preferences.video_loop
   property extend_desc : Bool = CONFIG.default_user_preferences.extend_desc
-  property volume : Int32 = CONFIG.default_user_preferences.volume
   property save_player_pos : Bool = CONFIG.default_user_preferences.save_player_pos
   property default_playlist : String? = nil
   property sponsorblock_enabled : Bool = CONFIG.default_user_preferences.sponsorblock_enabled

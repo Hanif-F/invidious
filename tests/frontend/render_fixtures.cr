@@ -205,7 +205,7 @@ def history_fixture(visual_theme = "modern-neon")
   render "src/invidious/views/feeds/history.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_channel_fixture(visual_theme = "diary", mode = "light")
+def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = false)
   env = fixture_env("/channel/UCfixture", mode, visual_theme: visual_theme)
   locale = "en-US"
   user = nil
@@ -215,11 +215,16 @@ def diary_channel_fixture(visual_theme = "diary", mode = "light")
     description: "Collecting the small details of everyday life.", description_html: "Collecting the small details of everyday life.",
     total_views: 123456_i64, sub_count: 1200, joined: Time.utc, is_family_friendly: true, pronouns: nil,
     allowed_regions: [] of String, tabs: ["videos", "shorts", "playlists"], tags: [] of String, verified: true, is_age_gated: false)
-  selected_tab = Invidious::Frontend::ChannelPage::TabsAvailable::Videos
+  selected_tab = playlists ? Invidious::Frontend::ChannelPage::TabsAvailable::Playlists : Invidious::Frontend::ChannelPage::TabsAvailable::Videos
   continuation = next_continuation = nil
   sort_options = ["newest", "oldest", "popular"]
   sort_by = "newest"
   items = [SearchVideo.new({title: "The art of noticing", id: "fixture0", author: "Studio North", ucid: "UCfixture", published: Time.utc, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})]
+  if playlists
+    items = (0...4).map do |i|
+      SearchPlaylist.new({title: "Light and motion #{i + 1}", id: "PLfixture#{i}", author: "Studio North", ucid: "UCfixture", video_count: 12, videos: [] of SearchPlaylistVideo, thumbnail: "/vi/2isYuQZMbdU/mqdefault.jpg", author_verified: false})
+    end
+  end
   navbar_search = true
   render "src/invidious/views/channel.ecr", "src/invidious/views/template.ecr"
 end
@@ -389,3 +394,10 @@ end
 File.write("#{output}/embed-mobile.html", watch_fixture(fixture_env("/embed/2isYuQZMbdU"), nil, true))
 
 check_dearrow_contributions(output)
+
+require "./playlist_volume_checks"
+check_playlist_volume
+Invidious::Themes::AVAILABLE.each do |theme|
+  File.write("#{output}/channel-playlists-#{theme.id}.html", diary_channel_fixture(theme.id, "dark", true))
+  File.write("#{output}/library-#{theme.id}.html", playlist_library_fixture(theme.id))
+end

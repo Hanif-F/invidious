@@ -66,8 +66,6 @@ module Invidious::Routes::PreferencesRoute
     quality_dash = env.params.body["quality_dash"]?.try &.as(String)
     quality_dash ||= CONFIG.default_user_preferences.quality_dash
 
-    volume = env.params.body["volume"]?.try &.as(String).to_i?
-    volume ||= CONFIG.default_user_preferences.volume
 
     extend_desc = env.params.body["extend_desc"]?.try &.as(String)
     extend_desc ||= "off"
@@ -201,7 +199,6 @@ module Invidious::Routes::PreferencesRoute
       ui_density:                  ui_density,
       unseen_only:                 unseen_only,
       video_loop:                  video_loop,
-      volume:                      volume,
       extend_desc:                 extend_desc,
       vr_mode:                     vr_mode,
       show_nick:                   show_nick,

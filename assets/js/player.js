@@ -250,7 +250,17 @@ if (video_data.params.video_start > 0 || video_data.params.video_end > 0) {
     player.currentTime(video_data.params.video_start);
 }
 
-player.volume(video_data.params.volume / 100);
+// Volume belongs to this browser, never to PREFS or the account.
+var volumeStorageKey = 'invidious_player_volume';
+var initialVolume = 1;
+if (!isMobile()) {
+    try {
+        var savedVolume = localStorage.getItem(volumeStorageKey);
+        var parsedVolume = savedVolume === null || savedVolume.trim() === '' ? NaN : Number(savedVolume);
+        if (Number.isFinite(parsedVolume) && parsedVolume >= 0 && parsedVolume <= 1) initialVolume = parsedVolume;
+    } catch (error) { /* Playback still works when storage is unavailable. */ }
+}
+player.volume(initialVolume);
 player.playbackRate(video_data.params.speed);
 
 /**
@@ -270,11 +280,9 @@ function getCookieValue(name) {
 /**
  * Method for updating the 'PREFS' cookie (or creating it if missing)
  *
- * @param {number} newVolume New volume defined (null if unchanged)
  * @param {number} newSpeed New speed defined (null if unchanged)
  */
-function updateCookie(newVolume, newSpeed) {
-    var volumeValue = newVolume !== null ? newVolume : video_data.params.volume;
+function updateCookie(newSpeed) {
     var speedValue = newSpeed !== null ? newSpeed : video_data.params.speed;
 
     var cookieValue = getCookieValue('PREFS');
@@ -282,11 +290,11 @@ function updateCookie(newVolume, newSpeed) {
 
     if (cookieValue !== null) {
         var cookieJson = JSON.parse(decodeURIComponent(cookieValue));
-        cookieJson.volume = volumeValue;
+        delete cookieJson.volume;
         cookieJson.speed = speedValue;
         cookieData = encodeURIComponent(JSON.stringify(cookieJson));
     } else {
-        cookieData = encodeURIComponent(JSON.stringify({ 'volume': volumeValue, 'speed': speedValue }));
+        cookieData = encodeURIComponent(JSON.stringify({ 'speed': speedValue }));
     }
 
     // Set expiration in 2 year
@@ -305,16 +313,22 @@ function updateCookie(newVolume, newSpeed) {
     document.cookie = 'PREFS=' + cookieData + '; SameSite=Lax; path=/; domain=' +
         domainUsed + '; expires=' + date.toGMTString() + ';' + secure;
 
-    video_data.params.volume = volumeValue;
     video_data.params.speed = speedValue;
 }
 
 player.on('ratechange', function () {
-    updateCookie(null, player.playbackRate());
+    updateCookie(player.playbackRate());
 });
 
+var lastPlayerVolume = initialVolume;
 player.on('volumechange', function () {
-    updateCookie(Math.ceil(player.volume() * 100), null);
+    if (isMobile()) return;
+    var volume = player.volume();
+    // Muting also emits volumechange; it must not overwrite another tab's level.
+    if (volume === lastPlayerVolume) return;
+    lastPlayerVolume = volume;
+    try { localStorage.setItem(volumeStorageKey, String(volume)); }
+    catch (error) { /* Storage may be blocked or full. */ }
 });
 
 player.on('waiting', function () {
@@ -504,6 +518,7 @@ if (!video_data.params.listen && video_data.params.annotations) {
 }
 
 function change_volume(delta) {
+    if (isMobile()) return;
     const curVolume = player.volume();
     let newVolume = curVolume + delta;
     newVolume = helpers.clamp(newVolume, 0, 1);
@@ -511,6 +526,7 @@ function change_volume(delta) {
 }
 
 function toggle_muted() {
+    if (isMobile()) return;
     player.muted(!player.muted());
 }
 
@@ -817,7 +833,7 @@ addEventListener('keydown', function (e) {
 
     function mouseScroll(event) {
         // When controls are disabled, hotkeys will be disabled as well
-        if (!player.controls() || !volumeHover) return;
+        if (isMobile() || !player.controls() || !volumeHover) return;
 
         event.preventDefault();
         var wheelMove = event.wheelDelta || -event.detail;

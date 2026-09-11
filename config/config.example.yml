@@ -932,14 +932,6 @@ default_user_preferences:
   #speed: 1.0
 
   ##
-  ## Default volume.
-  ##
-  ## Accepted values: 0-100
-  ## Default: 100
-  ##
-  #volume: 100
-
-  ##
   ## Allow 360° videos to be played.
   ##
   ## Note: This feature requires a WebGL-enabled browser.

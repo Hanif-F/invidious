@@ -7,6 +7,9 @@ struct PlaylistVideo
   property ucid : String
   property length_seconds : Int32
   property published : Time
+  # Remote playlist responses may omit publication metadata; keep DB rows unchanged.
+  @[DB::Field(ignore: true)]
+  property published_known : Bool = true
   property plid : String
   property index : Int64
   property live_now : Bool
@@ -454,6 +457,25 @@ def get_playlist_videos(playlist : InvidiousPlaylist | Playlist, offset : Int32,
   end
 end
 
+# Only date-shaped, non-link metadata is eligible. View counts and channel names
+# must not be interpreted as years by decode_date's permissive year parser.
+def playlist_publication_date(metadata_rows : Array(JSON::Any)?) : Time?
+  metadata_rows.try &.each do |row|
+    row["metadataParts"]?.try(&.as_a?).try &.each do |part|
+      next if part["icon"]? || part.dig?("text", "commandRuns")
+      text = part.dig?("text", "content").try(&.as_s?).try &.strip
+      next unless text
+      next unless text.matches?(/\A(?:(?:Streamed|Premiered) )?(?:\d+\s*(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?|s|mi?n|h|d|w|mo|y) ago|today|yesterday|[A-Z][a-z]{2} \d{1,2}, \d{4}|\d{4})\z/)
+      begin
+        return decode_date(text.sub(/\A(?:Streamed|Premiered) /, ""))
+      rescue
+        # Optional metadata must never discard the playlist video.
+      end
+    end
+  end
+  nil
+end
+
 # TODO (2026-06-24): Migrate this function to use parsers instead, as it uses,
 # the same LockupViewModel used in Channel videos and Youtube playlists that
 # appears on searches (Invidious /search endpoint).
@@ -478,7 +500,8 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
         .try &.["appendContinuationItemsAction"]["continuationItems"].as_a
     end
   else
-    contents = initial_data["response"]?.try &.["continuationContents"]["playlistVideoListContinuation"]["contents"].as_a
+    contents = initial_data.dig?("onResponseReceivedActions", 0, "appendContinuationItemsAction", "continuationItems").try &.as_a
+    contents ||= initial_data["response"]?.try &.["continuationContents"]["playlistVideoListContinuation"]["contents"].as_a
   end
 
   contents.try &.each do |item|
@@ -522,17 +545,20 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
         length_seconds = 0
       end
 
-      videos << PlaylistVideo.new({
+      published = playlist_publication_date(metadata_rows)
+      video = PlaylistVideo.new({
         title:          title || "",
         id:             video_id || "",
         author:         author || "",
         ucid:           ucid || "",
         length_seconds: length_seconds,
-        published:      Time.utc,
+        published:      published || Time.utc,
         plid:           plid,
         live_now:       live,
         index:          index || -1_i64,
       })
+      video.published_known = !published.nil?
+      videos << video
     end
   rescue ex
     videos << ProblematicTimelineItem.new(parse_exception: ex)

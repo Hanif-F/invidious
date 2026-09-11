@@ -353,8 +353,8 @@ body .searchbar .pure-form input[type=search] { border: 0 !important; }
 
 /* The playlist library is a card grid; individual playlist entries remain rows. */
 @media (min-width: 768px) {
-  body[data-page=playlist] .playlist-library { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); max-width: none; }
-  body[data-page=playlist][data-density=compact] .playlist-library { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  body .media-grid.playlist-library { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); max-width: none; }
+  body[data-density=compact] .media-grid.playlist-library { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 }
 @media (max-width: 1099px) {
   body .queue-toggle { width: calc(100% - 32px); margin: 0 16px 12px; text-align: center; font-size: .85rem; }

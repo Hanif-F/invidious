@@ -145,8 +145,8 @@ body[data-page=search] .media-grid, body[data-page=playlist] .media-grid { grid-
 [data-page=playlist] .media-grid { counter-reset: playlist-row; }
 [data-page=playlist] .media-item[data-kind=playlist-video] { counter-increment: playlist-row; position: relative; }
 .playlist-position { position: absolute; inset-block-start: 24px; inset-inline-start: 4px; background: #111110; color: white; padding: 2px 8px; z-index: 1; font-variant-numeric: tabular-nums; }
-body[data-page=playlist] .playlist-library { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
-body[data-page=playlist][data-density=compact] .playlist-library { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+body .media-grid.playlist-library { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
+body[data-density=compact] .media-grid.playlist-library { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 .channel-banner { width: 100%; max-height: 280px; object-fit: cover; }
 .channel-profile { display: flex; align-items: center; gap: 12px; }
 .channel-profile img { width: 48px; height: 48px; border-radius: 50%; }
@@ -374,7 +374,7 @@ body .video-js.player-style-youtube .vjs-control-bar { background: linear-gradie
   body[data-theme=cinematic] .navbar .index-link { font-size: 30px; min-width: 0; overflow-wrap: anywhere; gap: 8px; }
   .brand-mark { width: 22px; height: 28px; font-size: 12px; }
   .app-layout { padding: 20px 16px; }
-  .media-grid, [data-density=compact] .media-grid, body[data-page=playlist] .playlist-library { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; }
+  .media-grid, [data-density=compact] .media-grid, body .media-grid.playlist-library { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; }
   .media-card .video-card-row > a > p { font-size: 1.5rem; }
   .media-card .video-data { font-size: .75rem; }
   .watch-channel { gap: 12px; }
@@ -396,7 +396,7 @@ body .video-js.player-style-youtube .vjs-control-bar { background: linear-gradie
   footer { padding: 24px 16px; }
 }
 @media (max-width: 599px) {
-  .media-grid, [data-density=compact] .media-grid, body[data-page=playlist] .playlist-library { grid-template-columns: minmax(0, 1fr); }
+  .media-grid, [data-density=compact] .media-grid, body .media-grid.playlist-library { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 479px) {
   .recommendation { grid-template-columns: 120px minmax(0, 1fr) 40px; gap: 10px; }

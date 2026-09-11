@@ -25,7 +25,6 @@ module Invidious::Videos
     property video_loop : Bool
     property extend_desc : Bool
     property video_start : Float64 | Int32
-    property volume : Int32
     property vr_mode : Bool
     property save_player_pos : Bool
   end
@@ -48,7 +47,6 @@ module Invidious::Videos
     speed = query["speed"]?.try &.rchop("x").to_f?
     video_loop = query["loop"]?.try { |q| (q == "true" || q == "1").to_unsafe }
     extend_desc = query["extend_desc"]?.try { |q| (q == "true" || q == "1").to_unsafe }
-    volume = query["volume"]?.try &.to_i?
     vr_mode = query["vr_mode"]?.try { |q| (q == "true" || q == "1").to_unsafe }
     save_player_pos = query["save_player_pos"]?.try { |q| (q == "true" || q == "1").to_unsafe }
 
@@ -70,7 +68,6 @@ module Invidious::Videos
       speed ||= preferences.speed
       video_loop ||= preferences.video_loop.to_unsafe
       extend_desc ||= preferences.extend_desc.to_unsafe
-      volume ||= preferences.volume
       vr_mode ||= preferences.vr_mode.to_unsafe
       save_player_pos ||= preferences.save_player_pos.to_unsafe
     end
@@ -91,7 +88,6 @@ module Invidious::Videos
     speed ||= CONFIG.default_user_preferences.speed
     video_loop ||= CONFIG.default_user_preferences.video_loop.to_unsafe
     extend_desc ||= CONFIG.default_user_preferences.extend_desc.to_unsafe
-    volume ||= CONFIG.default_user_preferences.volume
     vr_mode ||= CONFIG.default_user_preferences.vr_mode.to_unsafe
     save_player_pos ||= CONFIG.default_user_preferences.save_player_pos.to_unsafe
 
@@ -156,7 +152,6 @@ module Invidious::Videos
       video_loop:         video_loop,
       extend_desc:        extend_desc,
       video_start:        video_start,
-      volume:             volume,
       vr_mode:            vr_mode,
       save_player_pos:    save_player_pos,
     })

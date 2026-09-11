@@ -203,7 +203,7 @@
                 <div class="flex-left">
                     <% if item.responds_to?(:premiere_timestamp) && item.premiere_timestamp.try &.> Time.utc %>
                         <p class="video-data" dir="auto"><%= I18n.translate(locale, "Premieres in `x`", recode_date((item.premiere_timestamp.as(Time) - Time.utc).ago, locale)) %></p>
-                    <% elsif item.responds_to?(:published) && (Time.utc - item.published) > 1.minute %>
+                    <% elsif item.responds_to?(:published) && (!item.is_a?(PlaylistVideo) || item.published_known) && (Time.utc - item.published) > 1.minute %>
                         <p class="video-data" dir="auto"><%= I18n.translate(locale, "Shared `x` ago", recode_date(item.published, locale)) %></p>
                     <% end %>
                 </div>

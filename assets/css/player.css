@@ -374,3 +374,20 @@ video.video-js {
 .video-js .vjs-stats-control { order: 6; }
 .player-stats footer { display: flex; gap: 8px; flex-wrap: wrap; }
 .player-stats header { position: sticky; top: -8px; z-index: 1; background: #171717; }
+
+/* Shared mobile surfaces remain neutral across themes, inline and fullscreen. */
+body .video-js.invidious-mobile .vjs-control-bar {
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+body .video-js.invidious-mobile .vjs-touch-overlay .vjs-play-control,
+body .video-js.invidious-mobile .vjs-big-play-button {
+    background: rgba(0, 0, 0, 0.15) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: white !important;
+}
+body .video-js.invidious-mobile .vjs-touch-overlay .vjs-play-control {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+}

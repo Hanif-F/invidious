@@ -76,15 +76,6 @@
         el.onclick = function () { Notification.requestPermission(); };
     });
 
-    document.querySelectorAll('[data-onrange="update_volume_value"]').forEach(function (el) {
-        function update_volume_value() {
-            document.getElementById('volume-value').textContent = el.value;
-        }
-        el.oninput = update_volume_value;
-        el.onchange = update_volume_value;
-    });
-
-
     function revoke_token(target) {
         var row = target.parentNode.parentNode.parentNode.parentNode.parentNode;
         row.style.display = 'none';

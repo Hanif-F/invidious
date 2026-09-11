@@ -174,10 +174,10 @@ def check_random_themes
   snapshot = Invidious::Database::Users.preference_json(email)
   changed = initialized
   changed.theme = "cinematic"
-  changed.volume = 42
+  changed.speed = 1.5
   raise "CAS failed" unless Invidious::Database::Users.compare_and_set_preferences(email, snapshot, changed)
   raise "Stale update succeeded" if Invidious::Database::Users.compare_and_set_preferences(email, snapshot, initialized)
-  raise "Concurrent change lost" unless Preferences.from_json(Invidious::Database::Users.preference_json(email)).volume == 42
+  raise "Concurrent change lost" unless Preferences.from_json(Invidious::Database::Users.preference_json(email)).speed == 1.5
 
   {"/watch", "/preferences", "/channel/abc/videos"}.each do |path|
     request = HTTP::Request.new("GET", path, HTTP::Headers{"Accept" => "text/html"})

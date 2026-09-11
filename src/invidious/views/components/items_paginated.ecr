@@ -1,6 +1,6 @@
 <%= page_nav_html %>
 
-<div class="pure-g media-grid">
+<div class="pure-g media-grid<%= env.get?("playlist_library") == true ? " playlist-library" : "" %>">
     <%- items.each_with_index do |item, item_position| -%>
         <%= rendered "components/item" %>
     <%- end -%>

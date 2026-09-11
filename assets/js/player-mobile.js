@@ -111,13 +111,6 @@
             row(labels.speed, player.playbackRate() + 'x', function () {
                 choices(labels.speed, player.options_.playbackRates.map(function (rate) { return {label: rate + 'x', selected: rate === player.playbackRate(), select: function () { player.playbackRate(rate); }}; }));
             });
-            row(labels.volume, Math.round(player.muted() ? 0 : player.volume() * 100) + '%', function () {
-                view(labels.volume);
-                var slider = document.createElement('input'); slider.type = 'range'; slider.min = 0; slider.max = 100;
-                slider.value = player.muted() ? 0 : player.volume() * 100; slider.setAttribute('aria-label', labels.volume);
-                slider.addEventListener('input', function () { player.muted(false); player.volume(Number(slider.value) / 100); });
-                content.appendChild(slider); slider.focus();
-            });
             if (player.statsForNerds) row(player_data.stats_labels.title, '', function () {
                 panel.close(); player.statsForNerds.toggle(gear.el());
             });
@@ -150,13 +143,13 @@
             panel.addEventListener(type, function (event) { event.stopPropagation(); });
         });
         function refresh() {
-            if (panel.open && !borrowed && heading.textContent !== labels.volume) {
+            if (panel.open && !borrowed) {
                 var index = Array.from(content.children).indexOf(document.activeElement);
                 overview();
                 if (content.children[index]) content.children[index].focus();
             }
         }
-        player.on(['loadedmetadata', 'playerSourcesChanged', 'ratechange', 'volumechange'], refresh);
+        player.on(['loadedmetadata', 'playerSourcesChanged', 'ratechange'], refresh);
         var lists = [player.audioTracks(), player.textTracks()];
         if (typeof player.qualityLevels === 'function') lists.push(player.qualityLevels());
         lists.forEach(function (list) { list.on(['change', 'addtrack', 'removetrack', 'addqualitylevel', 'removequalitylevel'], refresh); });

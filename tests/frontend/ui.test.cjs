@@ -38,6 +38,7 @@ async function pageFor(engine, options = {}) {
         hasTouch: Boolean(options.touch),
         ...(options.mobileUserAgent ? { userAgent: 'Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36' } : {})
     });
+    if (options.initScript) await context.addInitScript(options.initScript);
     const page = await context.newPage();
     const errors = [];
     const requests = [];
@@ -1116,7 +1117,9 @@ for (const engine of engines) {
 
 for (const engine of engines) {
     test(`${engine}: playback shortcuts work from page content and respect interactive controls`, async () => {
-        const { page, context, errors } = await pageFor(engine, { realPlayer: true });
+        // Seeking to the end must not navigate to a playlist entry during this shortcut test.
+        const { page, context, errors } = await pageFor(engine, { realPlayer: true, fixture: 'watch-single',
+            route: 'watch?v=2isYuQZMbdU', videoData: {params: {continue: false}} });
         await page.waitForFunction(() => typeof player !== 'undefined');
         await page.evaluate(() => player.load());
         await page.waitForFunction(() => player.readyState() >= 1);
@@ -1852,6 +1855,99 @@ for (const engine of engines) {
             await page.locator('#dearrow-close').click();
             assert.deepEqual(errors, []);
             await context.close();
+        }
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: browser volume is local, ignores legacy values and preserves speed`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer: true,
+            videoData: {params: {volume: 12}}, route: 'watch?v=2isYuQZMbdU&volume=8',
+            initScript: () => { if (!localStorage.getItem('seeded')) { localStorage.setItem('seeded', '1'); localStorage.setItem('invidious_player_volume', '0'); document.cookie = 'PREFS=' + encodeURIComponent(JSON.stringify({volume: 7, speed: 1})) + '; path=/; domain=.invidious.test'; } }});
+        await page.waitForFunction(() => window.player && player.volume);
+        assert.equal(await page.evaluate(() => player.volume()), 0);
+        await page.evaluate(() => { player.muted(true); return player.play(); });
+        await page.waitForFunction(() => player.readyState() >= 1);
+        await page.evaluate(() => { player.pause(); player.volume(.37); player.playbackRate(1.5); });
+        await page.waitForFunction(() => localStorage.getItem('invidious_player_volume') === '0.37');
+        await page.waitForFunction(() => JSON.parse(decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('PREFS=')).slice(6))).speed === 1.5);
+        assert.deepEqual(await page.evaluate(() => JSON.parse(decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('PREFS=')).slice(6)))), {speed: 1.5});
+        await page.reload();
+        await page.waitForFunction(() => window.player && player.volume);
+        assert.equal(await page.evaluate(() => player.volume()), .37);
+        await page.evaluate(() => player.muted(true));
+        assert.equal(await page.evaluate(() => localStorage.getItem('invidious_player_volume')), '0.37');
+        await page.evaluate(() => { localStorage.setItem('invidious_player_volume', '.62'); player.muted(false); });
+        assert.equal(await page.evaluate(() => localStorage.getItem('invidious_player_volume')), '.62');
+        for (const value of ['garbage', '2', '-1', '', 'NaN']) {
+            await page.evaluate(value => localStorage.setItem('invidious_player_volume', value), value);
+            await page.reload();
+            await page.waitForFunction(() => window.player && player.volume);
+            assert.equal(await page.evaluate(() => player.volume()), 1);
+        }
+        assert.deepEqual(errors, []);
+        await context.close();
+        const blocked = await pageFor(engine, {realPlayer: true, initScript: () => {
+            const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
+            Storage.prototype.getItem = function (key) { if (key === 'invidious_player_volume') throw new Error('Storage blocked'); return get.call(this, key); };
+            Storage.prototype.setItem = function (key, value) { if (key === 'invidious_player_volume') throw new Error('Storage blocked'); return set.call(this, key, value); };
+        }});
+        await blocked.page.waitForFunction(() => window.player && player.volume);
+        assert.equal(await blocked.page.evaluate(() => player.volume()), 1);
+        await blocked.page.evaluate(() => player.volume(.5));
+        assert.deepEqual(blocked.errors, []);
+        await blocked.context.close();
+    });
+
+    test(`${engine}: mobile volume stays device controlled with neutral translucent controls`, async () => {
+        for (const fixture of ['watch-dark', 'watch-light', 'watch-diary-dark', 'watch-diary-light', 'watch-cinematic-dark', 'watch-cinematic-light', 'embed-mobile']) {
+            const {page, context, errors} = await pageFor(engine, {fixture, realPlayer: true, touch: true, width: 390, height: 844,
+                initScript: () => localStorage.setItem('invidious_player_volume', '.25')});
+            await page.waitForFunction(() => window.player && player.volume);
+            assert.equal(await page.evaluate(() => player.volume()), 1);
+            await page.evaluate(() => { change_volume(-.5); toggle_muted(); });
+            assert.equal(await page.evaluate(() => player.volume()), 1);
+            assert.equal(await page.evaluate(() => localStorage.getItem('invidious_player_volume')), '.25');
+            assert.equal(await page.locator('.vjs-volume-panel').isVisible(), false);
+            await page.evaluate(() => { player.muted(true); return player.play(); });
+            await page.waitForFunction(() => player.currentTime() > .1);
+            await page.locator('.vjs-mobile-settings').click();
+            assert.equal(await page.locator('.mobile-player-settings').getByRole('button', {name: /Volume/}).count(), 0);
+            await page.keyboard.press('Escape');
+            for (const fullscreen of [false, true]) {
+                if (fullscreen) await page.evaluate(() => player.addClass('vjs-fullscreen'));
+                for (const youtube of [false, true]) {
+                    await page.evaluate(value => player.el().classList.toggle('player-style-youtube', value), youtube);
+                    assert.equal(await page.locator('.vjs-control-bar').first().evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0.5)');
+                    assert.equal(await page.locator('.vjs-touch-overlay .vjs-play-control').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0.15)');
+                }
+            }
+            await page.screenshot({path: path.join(artifacts, `${engine}-${fixture}-volume-controls.png`)});
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: channel playlists match library sizing in every theme`, async () => {
+        for (const theme of ['modern-neon', 'diary', 'cinematic']) {
+            const channel = await pageFor(engine, {fixture: `channel-playlists-${theme}`});
+            const library = await pageFor(engine, {fixture: `library-${theme}`});
+            for (const width of [390, 768, 1440]) {
+                for (const density of ['balanced', 'compact']) {
+                    const dimensions = [];
+                    for (const view of [channel, library]) {
+                        await view.page.setViewportSize({width, height: 1000});
+                        await view.page.evaluate(async d => { document.body.dataset.density = d; await document.fonts.ready; }, density);
+                        await view.page.waitForTimeout(100);
+                        dimensions.push(await view.page.locator('.playlist-library img').first().evaluate(el => ({width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height})));
+                    }
+                    for (const axis of ['width', 'height']) assert.ok(Math.abs(dimensions[0][axis] - dimensions[1][axis]) < .1, `${theme} ${width} ${density} ${axis}`);
+                }
+            }
+            await channel.page.screenshot({path: path.join(artifacts, `${engine}-${theme}-channel-playlists.png`)});
+            assert.deepEqual(channel.errors, []);
+            assert.deepEqual(library.errors, []);
+            await channel.context.close(); await library.context.close();
         }
     });
 }
