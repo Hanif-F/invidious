@@ -149,3 +149,20 @@ Browser checks cover playback-state restoration, cancellation, boundaries,
 settings selection, portrait/landscape sizing, and embedded fullscreen. The seek
 accumulation test uses a deterministic synthetic timeline with real input events;
 quality tests use synthetic renditions through the installed Video.js APIs.
+
+## Stats for nerds
+
+The shared watch/embed diagnostics are opt-in from the desktop control bar or
+mobile settings. The mobile Details sheet scrolls inside the player; Close returns
+to the compact overlay, and Disable stats stops observation. Copy diagnostics
+exports an allowlisted local JSON snapshot, with a selectable-text fallback.
+No diagnostics request or upload is made. Native fullscreen and picture-in-picture
+cannot show the HTML panel; return to inline playback to inspect it.
+
+Diagnostics tests use the real Video.js UI with controlled media measurements:
+buffer gaps, zero frames, missing network stats, initial versus measured bandwidth,
+active rendition changes, buffering exclusions, source resets, stopped observation,
+clipboard rejection, mobile/embed layout, and no extra requests after page settling.
+Screenshots are saved as `*-stats-*.png`. Stream metadata is allowlisted when
+rendering production templates; codec strings are reported only when present.
+Physical Android/iOS and live upstream stream validation remain manual checks.

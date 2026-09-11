@@ -118,6 +118,9 @@
                 slider.addEventListener('input', function () { player.muted(false); player.volume(Number(slider.value) / 100); });
                 content.appendChild(slider); slider.focus();
             });
+            if (player.statsForNerds) row(player_data.stats_labels.title, '', function () {
+                panel.close(); player.statsForNerds.toggle(gear.el());
+            });
             var sharing = player.getChild('ShareOverlay');
             if (sharing) row(labels.share, '', function () {
                 view(labels.share); sharing._createModal(); mount(sharing.modal, true);

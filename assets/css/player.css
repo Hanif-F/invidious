@@ -348,3 +348,29 @@ video.video-js {
 .video-js .mobile-player-settings .vjs-text-track-settings fieldset span { display: block; }
 .video-js .mobile-player-settings select { min-height: 44px; width: 100%; max-width: none; margin: 0 0 8px; padding: 8px; background: #303030; color: white; border: 1px solid #777; border-radius: 4px; }
 .video-js .mobile-player-settings .vjs-track-settings-controls button { background: #303030; color: white; margin: 8px; }
+
+/* Local, read-only playback diagnostics. */
+.video-js .vjs-stats-control .vjs-icon-placeholder::before { content: '▥'; font-size: 22px; }
+.invidious-mobile .vjs-stats-control { display: none; }
+.video-js .player-stats { position: absolute; inset-block-start: 8px; inset-inline-start: 8px; z-index: 10; width: min(540px, calc(100% - 16px)); max-height: calc(100% - 72px); overflow: auto; box-sizing: border-box; background: rgb(15 15 15 / 92%); color: #fff; padding: 8px; font: 12px/1.4 monospace; text-align: start; overscroll-behavior: contain; }
+.video-js .player-stats[hidden], .player-stats [hidden], .player-stats:not(.stats-expanded) .stats-extra { display: none; }
+.player-stats header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.player-stats header strong { flex: 1; }
+.video-js .player-stats button { min-height: 44px; min-width: 44px; padding: 6px; cursor: pointer; border: 1px solid #777; border-radius: 3px; }
+.player-stats :focus-visible { outline: 2px solid #7cc7ff; outline-offset: -2px; }
+.player-stats dl { margin: 4px 0; }
+.player-stats dl > div { display: grid; grid-template-columns: minmax(100px, 42%) 1fr; gap: 8px; border-bottom: 1px solid #444; padding: 3px 0; }
+.player-stats dd { margin: 0; overflow-wrap: anywhere; }
+.player-stats svg { display: block; width: 100%; height: 40px; }
+.player-stats polyline { stroke: #7cc7ff; stroke-width: 2; fill: none; }
+.player-stats summary { cursor: pointer; min-height: 44px; }
+.player-stats textarea { width: 100%; min-height: 100px; color: #fff; background: #222; }
+@media (max-width: 600px) {
+    .video-js .player-stats { font-size: 11px; padding: 4px; }
+    .player-stats:not(.stats-expanded) dl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .player-stats:not(.stats-expanded) dl > div { display: block; }
+    .video-js .player-stats.stats-expanded { inset: 0 0 56px; width: 100%; max-height: none; padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left)); }
+}
+.video-js .vjs-stats-control { order: 6; }
+.player-stats footer { display: flex; gap: 8px; flex-wrap: wrap; }
+.player-stats header { position: sticky; top: -8px; z-index: 1; background: #171717; }

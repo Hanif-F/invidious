@@ -99,6 +99,8 @@
         "dismiss" => I18n.translate(locale, "sb_dismiss"),
     },
     "mobile_labels" => %w(settings quality audio captions speed volume share back close off appearance).to_h { |key| {key, I18n.translate(locale, "mobile_player_#{key}")} },
+    "stats_labels" => %w(identity title close details copy disable unavailable waiting resolution viewport quality codecs fps bitrate frames buffer bandwidth bytes requests state stalls live help copied fallback).to_h { |key| {key, I18n.translate(locale, "stats_#{key}")} },
+    "stats_formats" => (fmt_stream + adaptive_fmts + audio_streams).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate).includes?(key) } },
     "aspect_ratio" => aspect_ratio,
     "title" => video.title,
     "description" => HTML.escape(video.short_description),
@@ -111,4 +113,5 @@
 
 <script src="/js/sponsorblock.js?v=<%= ASSET_COMMIT %>"></script>
 
+<script src="/js/player-stats.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/player-mobile.js?v=<%= ASSET_COMMIT %>"></script>

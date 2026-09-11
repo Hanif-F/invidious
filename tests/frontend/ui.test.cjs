@@ -796,7 +796,7 @@ test('UI asset additions stay below the 30KB compressed initial-load budget', ()
     }
     // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
     delta += Math.max(0, ...themeBytes);
-    for (const file of ['dearrow.js', 'player-mobile.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
+    for (const file of ['dearrow.js', 'player-mobile.js', 'player-stats.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
     assert.ok(delta <= 30 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
@@ -1634,5 +1634,111 @@ for (const engine of engines) {
         assert.equal(await page.evaluate(() => Array.from(player.textTracks()).find(track => track.mode === 'showing').label), 'English');
         assert.deepEqual(errors, []);
         await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: diagnostics are local, accessible and sanitize snapshots`, async () => {
+        const {page, context, requests, errors} = await pageFor(engine, {realPlayer: true});
+        await page.waitForFunction(() => !!player.statsForNerds);
+        await page.evaluate(() => { player.hasStarted(true); player.userActive(true); });
+        const result = await page.evaluate(() => {
+            const video = player.el().querySelector('video');
+            Object.defineProperty(video, 'readyState', {configurable:true, get:() => 4});
+            video.getVideoPlaybackQuality = () => ({droppedVideoFrames:0,totalVideoFrames:0});
+            player.currentTime = () => 5;
+            player.buffered = () => ({length:2,start:i => [0,10][i],end:i => [4,20][i]});
+            const gap = player.statsForNerds.snapshot();
+            player.currentTime = () => 12;
+            const ahead = player.statsForNerds.snapshot();
+            const tech = player.tech({IWillNotUseThisInPlugins:true});
+            tech.vhs = {stats:{bandwidth:9000000, mediaBytesTransferred:0,mediaTransferDuration:0}, playlists:{media:() => ({attributes:{NAME:'137',CODECS:'avc1.test',RESOLUTION:{width:1920,height:1080}}})}};
+            const initial = player.statsForNerds.snapshot();
+            tech.vhs.stats.mediaBytesTransferred = 1000; tech.vhs.stats.mediaTransferDuration = 10;
+            const measured = player.statsForNerds.snapshot();
+            tech.vhs.playlists.media = () => ({attributes:{NAME:'136',RESOLUTION:{width:1280,height:720}}});
+            const switched = player.statsForNerds.snapshot();
+            delete tech.vhs;
+            video.getVideoPlaybackQuality = undefined;
+            const originalSource = player.currentSource;
+            player.currentSource = () => ({type:'application/x-mpegURL'});
+            video_data.live_now = true;
+            player.seekable = () => ({length:1,start:() => 0,end:() => 20});
+            const native = player.statsForNerds.snapshot();
+            video_data.live_now = false; video_data.params.listen = true;
+            const audio = player.statsForNerds.snapshot();
+            video_data.params.listen = false; player.currentSource = originalSource;
+            return {gap,ahead,initial,measured,switched,native,audio};
+        });
+        assert.equal(result.gap.metrics.buffer, 0);
+        assert.equal(result.ahead.metrics.buffer, 8);
+        assert.equal(result.gap.metrics.frames, '0 / 0 (0%)');
+        assert.equal(result.gap.metrics.bandwidth, null);
+        assert.equal(result.initial.metrics.bandwidth, null);
+        assert.equal(result.measured.metrics.bandwidth, 9);
+        assert.equal(result.switched.metrics.quality, '1280 × 720');
+        assert.equal(result.switched.metrics.codecs, null);
+        assert.equal(result.native.metrics.frames, null);
+        assert.equal(result.native.metrics.bandwidth, null);
+        assert.equal(result.native.metrics.live, 8);
+        assert.equal(result.native.mode, 'HLS');
+        assert.equal(result.audio.mode, 'audio-only');
+        assert.ok(!JSON.stringify(result).includes('https://'));
+        await page.waitForLoadState('networkidle');
+        const before = requests.length;
+        await page.locator('.vjs-stats-control').click();
+        const buffering = await page.evaluate(() => {
+            player.paused = () => false; player.seeking = () => false;
+            player.trigger('waiting');
+            const initial = player.statsForNerds.snapshot().metrics.stalls;
+            player.trigger('playing'); player.trigger('seeking'); player.trigger('waiting');
+            const seeking = player.statsForNerds.snapshot().metrics.stalls;
+            player.trigger('playing'); player.trigger('waiting');
+            const stalled = player.statsForNerds.snapshot().metrics.stalls;
+            player.trigger('pause'); player.trigger('waiting');
+            const paused = player.statsForNerds.snapshot().metrics.stalls;
+            player.trigger('loadstart');
+            return {initial,seeking,stalled,paused,reset:player.statsForNerds.snapshot().metrics.stalls};
+        });
+        assert.ok(buffering.initial.startsWith('0 /'));
+        assert.ok(buffering.seeking.startsWith('0 /'));
+        assert.ok(buffering.stalled.startsWith('1 /'));
+        assert.ok(buffering.paused.startsWith('1 /'));
+        assert.ok(buffering.reset.startsWith('0 /'));
+        await page.locator('.player-stats button', {hasText:'Details'}).click();
+        await page.waitForTimeout(1100);
+        assert.equal(await page.locator('.player-stats svg').count(), 2);
+        await page.screenshot({path:path.join(artifacts, engine + '-stats-desktop.png')});
+        await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {configurable:true,value:{writeText:() => Promise.reject(new Error('Denied'))}}));
+        await page.locator('.player-stats button', {hasText:'Copy diagnostics'}).click();
+        const copied = JSON.parse(await page.locator('.player-stats textarea').inputValue());
+        assert.deepEqual(Object.keys(copied).sort(), ['availabilityReasons','metrics','mode','observationSeconds','playerVersion','version','videoId'].sort());
+        await page.evaluate(() => player.statsForNerds.hide());
+        const seconds = await page.evaluate(() => player.statsForNerds.snapshot().observationSeconds);
+        await page.waitForTimeout(1100);
+        assert.equal(await page.evaluate(() => player.statsForNerds.snapshot().observationSeconds), seconds);
+        assert.equal(requests.length, before, JSON.stringify(requests.slice(before)));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    test(`${engine}: mobile and embed diagnostics fit and return to compact view`, async () => {
+        for (const fixture of ['watch-single','embed-mobile']) {
+            const {page,context,errors} = await pageFor(engine,{fixture,realPlayer:true,touch:true,width:390,height:844});
+            await page.waitForFunction(() => !!player.statsForNerds);
+        await page.evaluate(() => { player.hasStarted(true); player.userActive(true); });
+            await page.locator('.vjs-mobile-settings').click();
+            await page.locator('.mobile-player-settings button', {hasText:'Stats for nerds'}).click();
+            assert.equal(await page.locator('.mobile-player-settings').isVisible(),false);
+            await page.locator('.player-stats button', {hasText:'Details'}).click();
+            assert.equal(await page.locator('.player-stats').evaluate(el => el.scrollWidth <= el.clientWidth + 1),true);
+            await page.screenshot({path:path.join(artifacts, engine + '-stats-' + fixture + '.png')});
+            await page.locator('.player-stats button', {hasText:'Close',exact:true}).click();
+            assert.equal(await page.locator('.player-stats').isVisible(),true);
+            assert.equal(await page.locator('.player-stats').evaluate(el => el.classList.contains('stats-expanded')),false);
+            await page.locator('.player-stats button', {hasText:'Close',exact:true}).click();
+            assert.equal(await page.locator('.player-stats').isVisible(),false);
+            assert.deepEqual(errors,[]);
+            await context.close();
+        }
     });
 }
