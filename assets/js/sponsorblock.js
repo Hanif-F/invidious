@@ -9,6 +9,7 @@
     var label = document.createElement('span');
     var skip = document.createElement('button');
     skip.type = 'button'; skip.textContent = config.skip;
+    skip.className = 'sb-skip'; skip.setAttribute('aria-label', config.skip);
     var remaining = document.createElement('span');
     var close = document.createElement('button');
     close.type = 'button'; close.textContent = '×'; close.setAttribute('aria-label', config.dismiss);

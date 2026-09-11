@@ -87,7 +87,7 @@ def fixture_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
-def watch_fixture(env, plid : String? = "PLfixture")
+def watch_fixture(env, plid : String? = "PLfixture", embed = false)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   video = fixture_video
@@ -115,7 +115,12 @@ def watch_fixture(env, plid : String? = "PLfixture")
   preferred_captions = [] of Invidious::Videos::Captions::Metadata
   video_assets = Invidious::Frontend::WatchPage::VideoAssets.new(fmt_stream, video_streams, audio_streams, captions)
   navbar_search = true
-  render "src/invidious/views/watch.ecr", "src/invidious/views/template.ecr"
+  if embed
+    video_series = nil.as(String?)
+    render "src/invidious/views/embed.ecr"
+  else
+    render "src/invidious/views/watch.ecr", "src/invidious/views/template.ecr"
+  end
 end
 
 def browse_fixture(env, editorial = false)
@@ -380,3 +385,5 @@ check_sponsorblock_preferences
   File.write("#{output}/watch-#{suffix}.html", watch_fixture(env))
   File.write("#{output}/browse-#{suffix}.html", browse_fixture(env))
 end
+
+File.write("#{output}/embed-mobile.html", watch_fixture(fixture_env("/embed/2isYuQZMbdU"), nil, true))

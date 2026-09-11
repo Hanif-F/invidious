@@ -495,5 +495,16 @@
     "timeline_parse_error_placeholder_heading": "Tidak dapat mengurai item",
     "timeline_parse_error_placeholder_message": "Invidious mengalami kesalahan saat mencoba mengurai item ini. Untuk informasi lebih lanjut, lihat di bawah:",
     "timeline_parse_error_show_technical_details": "Tampilkan detail teknis",
-    "dmca_content": "Video ini tidak dapat diunduh di instance ini karena adanya surat DMCA/pelanggaran hak cipta yang dikirim kepada administrator instance."
+    "dmca_content": "Video ini tidak dapat diunduh di instance ini karena adanya surat DMCA/pelanggaran hak cipta yang dikirim kepada administrator instance.",
+    "mobile_player_settings": "Setelan",
+    "mobile_player_quality": "Kualitas",
+    "mobile_player_audio": "Audio",
+    "mobile_player_captions": "Subtitle",
+    "mobile_player_speed": "Kecepatan pemutaran",
+    "mobile_player_volume": "Volume",
+    "mobile_player_share": "Bagikan",
+    "mobile_player_back": "Kembali",
+    "mobile_player_close": "Tutup",
+    "mobile_player_off": "Nonaktif",
+    "mobile_player_appearance": "Tampilan subtitle"
 }

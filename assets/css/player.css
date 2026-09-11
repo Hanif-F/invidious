@@ -152,7 +152,7 @@ ul.vjs-menu-content::-webkit-scrollbar {
 }
 
 /* Keep hover-open menus flush with the enlarged watch-page control bar. */
-body[data-page=watch] .video-js .vjs-menu-button-popup .vjs-menu .vjs-menu-content {
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile) .vjs-menu-button-popup .vjs-menu .vjs-menu-content {
   bottom: 0;
 }
 
@@ -247,21 +247,6 @@ video.video-js {
   height: 0;
 }
 
-.mobile-operations-bar {
-  display: flex;
-  position: absolute;
-  top: 0;
-  right: 1px !important;
-  left: initial !important;
-  width: initial !important;
-}
-
-.mobile-operations-bar ul {
-  position: absolute !important;
-  bottom: unset !important;
-  top: 1.5em;
-}
-
 @media screen and (max-width: 700px) {
   .video-js .vjs-share {
     justify-content: unset;
@@ -276,26 +261,26 @@ video.video-js {
 
 /* Center play/pause and both mobile bars share activity state and fade timing.
    Ignore mobile-ui's show-play-toggle class, which it clears on `playing`. */
-body[data-page=watch] .video-js.vjs-has-started :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition: opacity .2s, visibility .2s;
 }
-body[data-page=watch] .video-js.vjs-has-started:is(.vjs-user-active, .vjs-ended) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control),
-body[data-page=watch] .video-js.vjs-has-started:has(.vjs-control-bar :focus-visible, .vjs-touch-overlay .vjs-play-control:focus-visible, .vjs-menu.vjs-lock-showing) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started:is(.vjs-user-active, .vjs-ended) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control),
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started:has(.vjs-control-bar :focus-visible, .vjs-touch-overlay .vjs-play-control:focus-visible, .vjs-menu.vjs-lock-showing) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
 }
 /* Animate the seek feedback separately so double-tap seeking cannot fade controls. */
-body[data-page=watch] .video-js .vjs-touch-overlay.skip {
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile) .vjs-touch-overlay.skip {
   opacity: 1;
   animation: none;
   -webkit-animation: none;
   background-size: 0;
 }
-body[data-page=watch] .video-js .vjs-touch-overlay.skip::before {
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile) .vjs-touch-overlay.skip::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -322,3 +307,44 @@ body[data-page=watch] .video-js .vjs-touch-overlay.skip::before {
 .video-js .sb-overlay button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 .video-js .sb-notice { bottom: 130px; }
 @media (prefers-reduced-motion: reduce) { .video-js .sb-overlay { transition: none; } }
+
+/* Mobile uses one settings entry point; playback components still own their state. */
+.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-captions-button, .vjs-audio-button, .vjs-quality-selector, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-wide-control) { display: none; }
+.video-js .vjs-mobile-settings { order: 6; min-width: 44px; min-height: 44px; align-self: center; }
+.vjs-mobile-settings .vjs-icon-placeholder::before { content: '⚙'; font: 26px/44px sans-serif; }
+.video-js .mobile-player-settings {
+    position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh;
+    max-width: none; max-height: none; margin: 0; border: 0; box-sizing: border-box;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    background: #181818; color: #fff; font: 16px/1.5 sans-serif; overflow: auto; overscroll-behavior: contain;
+}
+.mobile-player-settings::backdrop { background: #181818; }
+.mobile-player-settings header { display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: #181818; z-index: 1; }
+.mobile-player-settings h2 { flex: 1; font-size: 20px; }
+.video-js .mobile-player-settings button { min-height: 48px; padding: 12px; color: inherit; cursor: pointer; text-align: start; border-bottom: 1px solid #555; }
+.mobile-player-settings > div > button { display: block; width: 100%; }
+.mobile-player-settings button[aria-pressed=true]::after { content: ' ✓'; }
+.mobile-player-settings :focus-visible { outline: 2px solid #7cc7ff; outline-offset: -2px; }
+.mobile-player-settings input { width: 100%; min-height: 44px; box-sizing: border-box; }
+.mobile-player-settings .vjs-modal-dialog { position: relative; display: block; height: auto; min-height: 300px; }
+.mobile-player-settings .vjs-modal-dialog-content { position: relative; }
+.mobile-settings-open .sb-overlay { visibility: hidden !important; pointer-events: none !important; }
+.invidious-mobile .sb-overlay:not(.sb-notice) { padding: 0; gap: 4px; flex-wrap: nowrap; }
+.invidious-mobile .sb-overlay:not(.sb-notice) > span { display: none; }
+.invidious-mobile .sb-overlay button { min-width: 44px; min-height: 44px; }
+.invidious-mobile .sb-skip { font-size: 0; }
+.invidious-mobile .sb-skip::before { content: ''; display: block; width: 24px; height: 24px; margin: auto; background: currentColor;
+    mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath d="M4 5v14l10-7zM16 5h3v14h-3z"/%3E%3C/svg%3E') center / contain no-repeat;
+}
+.mobile-seek-feedback { position: absolute; top: 35%; pointer-events: none; z-index: 30; font: bold 22px/1.5 sans-serif; color: white; background: #000b; border-radius: 24px; padding: 12px; }
+.mobile-seek-feedback:empty { display: none; }
+.mobile-seek-feedback[data-direction=left] { left: 8%; }
+.mobile-seek-feedback[data-direction=right] { right: 8%; }
+.video-js .mobile-player-settings .vjs-close-button { display: none; }
+.video-js .mobile-player-settings .vjs-text-track-settings { background: transparent; }
+.video-js .mobile-player-settings .vjs-text-track-settings .vjs-modal-dialog-content { display: block; padding: 0; overflow: visible; }
+.video-js .mobile-player-settings :is(.vjs-track-settings-colors, .vjs-track-settings-font, .vjs-track-settings-controls) { display: block; }
+.video-js .mobile-player-settings .vjs-text-track-settings fieldset { margin: 0 0 16px; }
+.video-js .mobile-player-settings .vjs-text-track-settings fieldset span { display: block; }
+.video-js .mobile-player-settings select { min-height: 44px; width: 100%; max-width: none; margin: 0 0 8px; padding: 8px; background: #303030; color: white; border: 1px solid #777; border-radius: 4px; }
+.video-js .mobile-player-settings .vjs-track-settings-controls button { background: #303030; color: white; margin: 8px; }

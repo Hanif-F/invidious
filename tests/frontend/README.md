@@ -140,3 +140,12 @@ scroll positions across all themes on desktop and mobile with JavaScript disable
 Run `crystal spec spec/sponsorblock_spec.cr` for parser and cache checks, or
 `node --test --test-name-pattern='SponsorBlock|preference Save remains' tests/frontend/ui.test.cjs`
 for the focused browser checks after rendering fixtures.
+
+Mobile players use a full-viewport settings dialog on watch and embed pages,
+with shared quality/audio/caption APIs and a compact SponsorBlock skip icon.
+Double tapping an outer third queues 10 seconds; additional side taps accumulate
+signed steps while paused, and one seek commits after 500 ms of inactivity.
+Browser checks cover playback-state restoration, cancellation, boundaries,
+settings selection, portrait/landscape sizing, and embedded fullscreen. The seek
+accumulation test uses a deterministic synthetic timeline with real input events;
+quality tests use synthetic renditions through the installed Video.js APIs.

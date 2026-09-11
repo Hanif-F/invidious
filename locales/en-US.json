@@ -612,5 +612,16 @@
     "sb_category_outro": "Outro",
     "sb_category_preview": "Recap",
     "sb_category_music_offtopic": "Music Offtopic",
-    "sb_category_filler": "Filler"
+    "sb_category_filler": "Filler",
+    "mobile_player_settings": "Settings",
+    "mobile_player_quality": "Quality",
+    "mobile_player_audio": "Audio",
+    "mobile_player_captions": "Captions",
+    "mobile_player_speed": "Playback speed",
+    "mobile_player_volume": "Volume",
+    "mobile_player_share": "Share",
+    "mobile_player_back": "Back",
+    "mobile_player_close": "Close",
+    "mobile_player_off": "Off",
+    "mobile_player_appearance": "Caption appearance"
 }

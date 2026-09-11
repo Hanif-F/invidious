@@ -211,53 +211,12 @@ if (location.pathname.startsWith('/embed/')) {
     });
 }
 
-// Detect mobile users and initialize mobileUi for better UX
-// Detection code taken from https://stackoverflow.com/a/20293441
-
+// Use the primary input rather than TouchEvent support (also exposed on desktops).
 function isMobile() {
-  try{ document.createEvent('TouchEvent'); return true; }
-  catch(e){ return false; }
+    return window.matchMedia('(pointer: coarse)').matches;
 }
-
-if (isMobile()) {
-    player.mobileUi({ touchControls: { seekSeconds: 5 * player.playbackRate() } });
-
-    var buttons = ['playToggle', 'volumePanel', 'captionsButton'];
-
-    if (!video_data.params.listen && video_data.params.quality === 'dash') buttons.push('audioTrackButton');
-    if (video_data.params.listen || video_data.params.quality !== 'dash') buttons.push('qualitySelector');
-
-    // Create new control bar object for operation buttons
-    const ControlBar = videojs.getComponent('controlBar');
-    let operations_bar = new ControlBar(player, {
-      children: [],
-      playbackRates: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
-    });
-    buttons.slice(1).forEach(function (child) {operations_bar.addChild(child);});
-
-    // Remove operation buttons from primary control bar
-    var primary_control_bar = player.getChild('controlBar');
-    buttons.forEach(function (child) {primary_control_bar.removeChild(child);});
-
-    var operations_bar_element = operations_bar.el();
-    operations_bar_element.classList.add('mobile-operations-bar');
-    player.addChild(operations_bar);
-
-    // Playback menu doesn't work when it's initialized outside of the primary control bar
-    var playback_element = document.getElementsByClassName('vjs-playback-rate')[0];
-    operations_bar_element.append(playback_element);
-
-    // The share and http source selector element can't be fetched till the players ready.
-    player.one('playing', function () {
-        var share_element = document.getElementsByClassName('vjs-share-control')[0];
-        operations_bar_element.append(share_element);
-
-        if (!video_data.params.listen && video_data.params.quality === 'dash') {
-            var http_source_selector = document.getElementsByClassName('vjs-http-source-selector vjs-menu-button')[0];
-            operations_bar_element.append(http_source_selector);
-        }
-    });
-}
+// The plugin's override bypasses its UA gate after our primary-pointer check.
+if (isMobile()) player.mobileUi({ forceForTesting: true, fullscreen: { enterOnRotate: false, exitOnRotate: false }, touchControls: { seekSeconds: 10 } });
 
 // Enable VR video support
 if (!video_data.params.listen && video_data.vr && video_data.params.vr_mode) {
@@ -352,9 +311,6 @@ function updateCookie(newVolume, newSpeed) {
 
 player.on('ratechange', function () {
     updateCookie(null, player.playbackRate());
-    if (isMobile()) {
-        player.mobileUi({ touchControls: { seekSeconds: 5 * player.playbackRate() } });
-    }
 });
 
 player.on('volumechange', function () {

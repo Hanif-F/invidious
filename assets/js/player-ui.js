@@ -45,36 +45,6 @@
         player.on('dispose', function () { resize.disconnect(); });
     }
 
-    // Use Video.js activity as the single source of visibility. The mobile
-    // plugin's independent `playing` handler must not hide only the center button.
-    var TouchOverlay = videojs.getComponent('TouchOverlay');
-    if (TouchOverlay && !TouchOverlay.prototype.invidiousTogglesControls_) {
-        TouchOverlay.prototype.handleSingleTap = function () {
-            this.removeClass('skip');
-            var wasActive = typeof this.invidiousTapWasActive_ === 'boolean' ? this.invidiousTapWasActive_ : this.player().userActive();
-            delete this.invidiousTapWasActive_;
-            var active = !wasActive;
-            this.player().userActive(active);
-            if (active) this.player().reportUserActivity();
-            this.toggleClass('show-play-toggle', active);
-        };
-        TouchOverlay.prototype.invidiousTogglesControls_ = true;
-    }
-    // Capture before Component reports touch activity and the plugin waits to
-    // distinguish single from double taps. Reading it after that delay is too late.
-    function captureTapState(event) {
-        var overlay = player.getChild('TouchOverlay');
-        if (overlay && event.target === overlay.el()) overlay.invidiousTapWasActive_ = player.userActive();
-    }
-    player.el().addEventListener('touchstart', captureTapState, { capture: true, passive: true });
-    player.on('dispose', function () { player.el().removeEventListener('touchstart', captureTapState, true); });
-    function syncTouchControl() {
-        var overlay = player.getChild('TouchOverlay');
-        if (overlay) overlay.toggleClass('show-play-toggle', player.userActive());
-    }
-    player.on(['useractive', 'userinactive', 'playing'], syncTouchControl);
-    syncTouchControl();
-
     // Reveal controls when pausing; the existing Video.js idle timer hides them again.
     player.on('pause', function () {
         player.userActive(true);

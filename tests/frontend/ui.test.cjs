@@ -57,6 +57,7 @@ async function pageFor(engine, options = {}) {
                     return start + JSON.stringify(updated).replace(/</g, '\\u003c') + end;
                 });
             }
+            if (options.extraQuality) body = body.replace('</video>', '<source src="/latest_version?id=2isYuQZMbdU&itag=44" type="video/webm" label="high"></video>');
             if (options.sponsorblock) body = body.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => start + JSON.stringify({...JSON.parse(data), sponsorblock: {...JSON.parse(data).sponsorblock, ...options.sponsorblock}}).replace(/</g, '\\u003c') + end);
             return route.fulfill({ contentType: 'text/html', body });
         }
@@ -503,36 +504,30 @@ for (const engine of engines) {
         await page.waitForFunction(() => player.currentTime() > 0.1);
         await page.evaluate(() => player.pause());
         await page.waitForFunction(() => !player.userActive(), null, { timeout: 6000 });
-        await page.locator('.mobile-operations-bar').waitFor({ state: 'hidden' });
+        await page.locator('.vjs-mobile-settings').waitFor({ state: 'hidden' });
         const box = await page.locator('#player').boundingBox();
         await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
         await page.waitForFunction(() => player.userActive());
-        await page.locator('.mobile-operations-bar').waitFor({ state: 'visible' });
-        assert.equal(await page.locator('.mobile-operations-bar').isVisible(), true);
+        await page.locator('.vjs-mobile-settings').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.vjs-mobile-settings').isVisible(), true);
         assert.equal(await page.evaluate(() => player.paused()), true);
-        await page.locator('button.vjs-playback-rate').tap();
-        const menu = page.locator('.vjs-playback-rate .vjs-menu');
-        await menu.locator('.vjs-menu-content').waitFor({ state: 'visible', timeout: 3000 });
-        await page.evaluate(() => player.userActive(false));
-        assert.equal(await menu.locator('.vjs-menu-content').isVisible(), true);
-        const menuBox = await menu.locator('.vjs-menu-content').boundingBox();
-        assert.ok(menuBox.x >= box.x && menuBox.x + menuBox.width <= box.x + box.width + 1);
-        assert.ok(menuBox.y + menuBox.height <= box.y + box.height + 1);
-        await page.screenshot({ path: path.join(artifacts, `${engine}-player-mobile-menu.png`) });
-        await menu.getByText('1.5x', { exact: true }).tap();
-        await page.waitForFunction(() => player.playbackRate() === 1.5, null, { timeout: 3000 });
-        await menu.locator('.vjs-menu-content').waitFor({ state: 'hidden' });
+        await page.locator('.vjs-mobile-settings').tap();
+        assert.deepEqual(errors, []);
+        const panel = page.locator('.mobile-player-settings');
+        await panel.waitFor({state: 'visible'});
+        const panelBox = await panel.boundingBox();
+        assert.equal(panelBox.width, 390);
+        assert.equal(panelBox.height, 844);
+        await panel.getByRole('button', {name: /Playback speed/}).tap();
+        await panel.getByRole('button', {name: '1.5x', exact: true}).tap();
+        await page.waitForFunction(() => player.playbackRate() === 1.5);
         assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
         assert.equal(await page.evaluate(() => player.paused()), true);
-        await page.setViewportSize({ width: 320, height: 700 });
-        await page.locator('button.vjs-playback-rate').tap();
-        await menu.locator('.vjs-menu-content').waitFor({ state: 'visible' });
-        const smallPlayer = await page.locator('#player').boundingBox();
-        const smallMenu = await menu.locator('.vjs-menu-content').boundingBox();
-        assert.ok(smallMenu.y + smallMenu.height <= smallPlayer.y + smallPlayer.height + 1);
-        await menu.getByText('1.5x', { exact: true }).tap();
-        await menu.locator('.vjs-menu-content').waitFor({ state: 'hidden' });
-        assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
+        await page.setViewportSize({width: 844, height: 390});
+        await page.waitForFunction(() => document.querySelector('.mobile-player-settings').getBoundingClientRect().height === 390);
+        await page.screenshot({path: path.join(artifacts, `${engine}-player-mobile-menu.png`)});
+        await panel.getByRole('button', {name: 'Close', exact: true}).tap();
+        await panel.waitFor({state: 'hidden'});
         assert.deepEqual(errors, []);
         await context.close();
     });
@@ -546,11 +541,11 @@ for (const engine of engines) {
         await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 3);
         await page.waitForFunction(() => player.userActive());
         await page.locator('.vjs-touch-overlay.show-play-toggle').waitFor({ state: 'attached' });
-        await page.locator('.mobile-operations-bar').waitFor({ state: 'visible' });
-        assert.equal(await page.locator('.mobile-operations-bar').isVisible(), true);
+        await page.locator('.vjs-mobile-settings').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('.vjs-mobile-settings').isVisible(), true);
         await page.touchscreen.tap(box.x + box.width / 4, box.y + box.height / 3);
         await page.waitForFunction(() => !player.userActive());
-        await page.locator('.mobile-operations-bar').waitFor({ state: 'hidden' });
+        await page.locator('.vjs-mobile-settings').waitFor({ state: 'hidden' });
         await page.waitForFunction(() => getComputedStyle(document.querySelector('.vjs-touch-overlay .vjs-play-control')).opacity === '0');
         assert.deepEqual(errors, []);
         await context.close();
@@ -801,7 +796,7 @@ test('UI asset additions stay below the 30KB compressed initial-load budget', ()
     }
     // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
     delta += Math.max(0, ...themeBytes);
-    delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js/dearrow.js'))).length;
+    for (const file of ['dearrow.js', 'player-mobile.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
     assert.ok(delta <= 30 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
@@ -1109,7 +1104,9 @@ for (const engine of engines) {
         await sameVisibility('0');
         await page.touchscreen.tap(box.x + box.width / 4, box.y + box.height / 3);
         await sameVisibility('1');
-        await page.evaluate(() => player.getChild('TouchOverlay').handleDoubleTap({ changedTouches: [{ clientX: player.el().getBoundingClientRect().right - 10 }] }));
+        await page.touchscreen.tap(box.x + box.width * .85, box.y + box.height / 3);
+        await page.touchscreen.tap(box.x + box.width * .85, box.y + box.height / 3);
+        await page.locator('.mobile-seek-feedback').waitFor({state: 'visible'});
         assert.equal(await page.locator('.vjs-touch-overlay').evaluate(el => getComputedStyle(el).animationName), 'none');
         await sameVisibility('1');
         assert.deepEqual(errors, []);
@@ -1477,6 +1474,164 @@ for (const engine of engines) {
         await page.waitForFunction(() => player.currentTime() >= 1 && player.currentTime() < 1.1);
         await page.evaluate(() => { for (let i = 0; i < 10; i++) player.trigger('timeupdate'); });
         assert.ok(await page.evaluate(() => window.sbSeekCount <= 2));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: mobile accumulated seeking commits once and restores playback`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer: true, touch: true, width: 390, height: 844});
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > .1 && player.getChild('TouchOverlay'));
+        // Keep the real input surface and player event system, with a deterministic
+        // long timeline so timing assertions do not depend on the four-second clip.
+        await page.evaluate(() => {
+            player.pause();
+            window.seekState = {position: 40, playing: true, writes: []};
+            player.currentTime = function (value) {
+                if (value !== undefined) { seekState.position = value; seekState.writes.push(value); player.trigger('seeking'); }
+                return seekState.position;
+            };
+            player.seekable = () => ({length: 1, start: () => 0, end: () => 120});
+            player.paused = () => !seekState.playing;
+            player.pause = () => { seekState.playing = false; player.trigger('pause'); };
+            player.play = () => { seekState.playing = true; player.trigger('play'); return Promise.resolve(); };
+        });
+        const box = await page.locator('.vjs-touch-overlay').boundingBox();
+        const tap = direction => page.touchscreen.tap(box.x + box.width * (direction === 'left' ? .15 : .85), box.y + box.height * .3);
+        await tap('right'); await tap('right');
+        assert.equal(await page.locator('.mobile-seek-feedback').textContent(), '+10 s');
+        await tap('right');
+        assert.equal(await page.locator('.mobile-seek-feedback').textContent(), '+20 s');
+        assert.deepEqual(await page.evaluate(() => [seekState.playing, seekState.writes]), [false, []]);
+        await tap('left');
+        assert.equal(await page.locator('.mobile-seek-feedback').textContent(), '+10 s');
+        await page.waitForFunction(() => seekState.writes.length === 1);
+        assert.deepEqual(await page.evaluate(() => [seekState.position, seekState.playing]), [50, true]);
+        await page.evaluate(() => { seekState.playing = false; seekState.position = 5; seekState.writes = []; });
+        await tap('left'); await tap('left');
+        assert.equal(await page.locator('.mobile-seek-feedback').textContent(), '−5 s');
+        await page.waitForFunction(() => seekState.writes.length === 1);
+        assert.deepEqual(await page.evaluate(() => [seekState.position, seekState.playing]), [0, false]);
+        await page.evaluate(() => { seekState.position = 40; seekState.writes = []; });
+        await tap('right'); await tap('right'); await tap('left');
+        assert.equal(await page.locator('.mobile-seek-feedback').textContent(), '+0 s');
+        await page.waitForTimeout(600);
+        assert.deepEqual(await page.evaluate(() => seekState.writes), []);
+        await page.evaluate(() => { seekState.position = 40; seekState.writes = []; player.userActive(true); });
+        await tap('right'); await tap('right');
+        await page.locator('.vjs-mobile-settings').tap();
+        await page.waitForTimeout(600);
+        assert.deepEqual(await page.evaluate(() => seekState.writes), []);
+        assert.equal(await page.locator('.mobile-seek-feedback').textContent(), '');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: mobile settings preserve playing, captions, sharing and SponsorBlock`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer: true, touch: true, width: 390, height: 844,
+            sponsorblock: {enabled: true, modes: {sponsor: 'manual'}},
+            sponsorblockSegments: [{id: 'mobile', category: 'sponsor', start: 0, end: 3.8}]});
+        await page.evaluate(() => { player.muted(true); player.loop(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > .1);
+        const skip = page.locator('.sb-skip');
+        await skip.waitFor({state: 'visible'});
+        assert.match(await skip.getAttribute('aria-label'), /^Skip/);
+        assert.ok((await skip.boundingBox()).width >= 44);
+        assert.equal(await page.locator('.sb-overlay > span').first().isVisible(), false);
+        await page.locator('.vjs-mobile-settings').tap();
+        const panel = page.locator('.mobile-player-settings');
+        assert.equal(await page.evaluate(() => player.paused()), false);
+        assert.equal(await skip.isVisible(), false);
+        await panel.getByRole('button', {name: /^Captions/}).tap();
+        await panel.getByRole('button', {name: 'Caption appearance'}).tap();
+        await page.screenshot({path: path.join(artifacts, `${engine}-mobile-caption-appearance.png`)});
+        await panel.getByRole('button', {name: 'Back', exact: true}).focus();
+        await page.keyboard.press('Shift+Tab');
+        assert.equal(await panel.evaluate(el => el.contains(document.activeElement)), true);
+        assert.equal(await page.evaluate(() => player.paused()), false);
+        await panel.getByRole('button', {name: 'Back', exact: true}).tap();
+        await panel.getByRole('button', {name: 'Share', exact: true}).tap();
+        assert.ok(await panel.locator('input').count() > 0);
+        await page.screenshot({path: path.join(artifacts, `${engine}-mobile-sharing.png`)});
+        assert.equal(await page.evaluate(() => player.paused()), false);
+        await page.keyboard.press('Escape');
+        await panel.waitFor({state: 'hidden'});
+        assert.equal(await page.locator('.vjs-mobile-settings').evaluate(el => el === document.activeElement), true);
+        await page.evaluate(() => { player.pause(); player.currentTime(.5); });
+        await skip.waitFor({state: 'visible'});
+        await skip.tap();
+        await page.waitForFunction(() => player.currentTime() >= 3.8);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    test(`${engine}: embed mobile settings fill viewport and fullscreen`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'embed-mobile', realPlayer: true, touch: true, width: 390, height: 844});
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > .1);
+        await page.locator('.vjs-mobile-settings').tap();
+        const panel = page.locator('.mobile-player-settings');
+        await panel.waitFor({state: 'visible'});
+        assert.equal((await panel.boundingBox()).height, 844);
+        await panel.getByRole('button', {name: 'Close', exact: true}).tap();
+        await page.locator('.vjs-fullscreen-control').tap();
+        await page.waitForFunction(() => player.isFullscreen());
+        await page.locator('.vjs-mobile-settings').tap();
+        await panel.waitFor({state: 'visible'});
+        assert.equal(await panel.evaluate(el => Math.abs(el.getBoundingClientRect().height - innerHeight) < 1), true);
+        await page.screenshot({path: path.join(artifacts, `${engine}-embed-mobile-settings.png`)});
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: mobile quality and track settings follow available options`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer: true, touch: true, width: 390, height: 844, extraQuality: true});
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > .1);
+        await page.evaluate(() => { player.pause(); player.currentTime(1); player.userActive(true); });
+        await page.waitForFunction(() => player.currentTime() >= .9 && !player.seeking());
+        await page.locator('.vjs-mobile-settings').tap();
+        const initialPanel = page.locator('.mobile-player-settings');
+        await initialPanel.getByRole('button', {name: /^Quality/}).tap();
+        await initialPanel.getByRole('button', {name: 'high', exact: true}).tap();
+        await page.waitForFunction(() => player.currentTime() >= .9 && !player.seeking());
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        await page.evaluate(() => player.play());
+        await initialPanel.getByRole('button', {name: /^Quality/}).tap();
+        await initialPanel.getByRole('button', {name: 'medium', exact: true}).tap();
+        await page.waitForFunction(() => !player.paused() && player.currentTime() >= .9);
+        await initialPanel.getByRole('button', {name: 'Close', exact: true}).tap();
+        await page.evaluate(() => {
+            player.pause(); player.userActive(true);
+            // Synthetic renditions exercise the installed quality-level API without upstream DASH.
+            video_data.params.quality = 'dash';
+            [360, 720].forEach(height => {
+                let enabled = true;
+                player.qualityLevels().addQualityLevel({id: String(height), height, bitrate: height * 1000,
+                    enabled: value => value === undefined ? enabled : (enabled = value)});
+            });
+            player.audioTracks().addTrack(new videojs.AudioTrack({id: 'en', kind: 'main', label: 'English', language: 'en', enabled: true}));
+            player.audioTracks().addTrack(new videojs.AudioTrack({id: 'id', kind: 'alternative', label: 'Indonesian', language: 'id'}));
+        });
+        await page.locator('.vjs-mobile-settings').tap();
+        const panel = page.locator('.mobile-player-settings');
+        await panel.getByRole('button', {name: /^Quality/}).tap();
+        await panel.getByRole('button', {name: '720p', exact: true}).tap();
+        assert.deepEqual(await page.evaluate(() => Array.from(player.qualityLevels()).map(level => level.enabled)), [false, true]);
+        await panel.getByRole('button', {name: /^Quality/}).tap();
+        await panel.getByRole('button', {name: 'Auto', exact: true}).tap();
+        assert.deepEqual(await page.evaluate(() => Array.from(player.qualityLevels()).map(level => level.enabled)), [true, true]);
+        await panel.getByRole('button', {name: /^Audio/}).tap();
+        await panel.getByRole('button', {name: /Indonesian/}).tap();
+        assert.equal(await page.evaluate(() => Array.from(player.audioTracks()).find(track => track.enabled).language), 'id');
+        await panel.getByRole('button', {name: /^Captions/}).tap();
+        await panel.getByRole('button', {name: 'English', exact: true}).tap();
+        assert.equal(await page.evaluate(() => Array.from(player.textTracks()).find(track => track.mode === 'showing').label), 'English');
         assert.deepEqual(errors, []);
         await context.close();
     });
