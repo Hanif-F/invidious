@@ -135,6 +135,9 @@ and Linux desktop appearance integration still requires device testing.
 SponsorBlock checks cover category markers, manual Enter/click skipping, keyboard
 focus guards, dismissal and replay, overlapping automatic and manual segments,
 notifications, empty/error responses, and request suppression when disabled.
+Automatic segments skip once per loaded player, then use the manual controls on
+replay. Checks cover independent and combined segments, loop persistence, reload
+reset, and isolation between tabs in the same browser context.
 Preference fixtures verify defaults, validation, JSON/YAML, guest cookies,
 account/API storage, and export/import. The fixed Save action is checked at three
 scroll positions across all themes on desktop and mobile with JavaScript disabled.

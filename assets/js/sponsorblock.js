@@ -3,6 +3,8 @@
     var config = JSON.parse(document.getElementById('player_data').textContent).sponsorblock;
     if (!config || !config.enabled || !Object.keys(config.modes).some(function (key) { return config.modes[key] !== 'disabled'; })) return;
     var segments = [], active = null, dismissed = new Set(), bypassedAuto = new Set(), timer, disposed = false, seeking = false;
+    // Page-local history: replayed automatic segments use the manual controls.
+    var skippedAuto = new Set();
     var root = player.el();
     var overlay = document.createElement('div');
     overlay.className = 'sb-overlay';
@@ -73,16 +75,18 @@
         if (!endLimit || time >= endLimit) { hide(); return; }
         segments.forEach(function (s) { if (time < s.start || time >= s.end) { dismissed.delete(s.id); bypassedAuto.delete(s.id); } });
         var current = segments.filter(function (s) { return s.start <= time && time < s.end; });
-        var autos = current.filter(function (s) { return config.modes[s.category] === 'auto' && !bypassedAuto.has(s.id); });
+        var autos = current.filter(function (s) { return config.modes[s.category] === 'auto' && !bypassedAuto.has(s.id) && !skippedAuto.has(s.id); });
         if (autos.length) {
             var end = Math.max.apply(null, autos.map(function (s) { return s.end; }));
             var names = new Set(autos.map(function (s) { return config.labels[s.category]; }));
+            var skipped = new Set(autos.map(function (s) { return s.id; }));
             // Expand through all touching/overlapping automatic ranges.
             var changed = true;
             while (changed) {
                 changed = false;
                 segments.forEach(function (s) {
-                    if (config.modes[s.category] === 'auto' && !bypassedAuto.has(s.id) && s.start <= end && s.end > time) {
+                    if (config.modes[s.category] === 'auto' && !bypassedAuto.has(s.id) && !skippedAuto.has(s.id) && s.start <= end && s.start < endLimit && s.end > time) {
+                        skipped.add(s.id);
                         names.add(config.labels[s.category]);
                         if (s.end > end) { end = s.end; changed = true; }
                     }
@@ -90,6 +94,7 @@
             }
             end = Math.min(end, endLimit);
             if (end > time) {
+                skipped.forEach(function (id) { skippedAuto.add(id); });
                 seek(end);
                 notice.textContent = config.skipped + ' ' + Array.from(names).join(', ');
                 notice.classList.add('sb-visible'); clearTimeout(timer);
@@ -97,7 +102,8 @@
             }
             return;
         }
-        active = current.filter(function (s) { return config.modes[s.category] === 'manual' && !dismissed.has(s.id); })
+        active = current.filter(function (s) { return (config.modes[s.category] === 'manual' ||
+            (config.modes[s.category] === 'auto' && skippedAuto.has(s.id))) && !dismissed.has(s.id); })
             .sort(function (a, b) { return a.end - b.end || a.start - b.start; })[0] || null;
         if (!active) { hide(); return; }
         label.textContent = config.labels[active.category];
