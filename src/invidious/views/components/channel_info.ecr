@@ -45,6 +45,18 @@
         <% end %>
     </div>
 </div>
+<div class="h-box channel-search">
+    <form class="pure-form" action="/channel/<%= ucid %>/search" method="<%= env.get("preferences").as(Preferences).search_privacy ? "post" : "get" %>" role="search" aria-label="<%= I18n.translate(locale, "channel_search_label") %>">
+        <label for="channel-search"><%= I18n.translate(locale, "channel_search_label") %></label>
+        <div class="channel-search-controls">
+            <input type="search" id="channel-search" name="q" placeholder="<%= I18n.translate(locale, "channel_search_label") %>" value="<%= HTML.escape(env.get?("channel_search_query").try(&.as(String)) || "") %>">
+            <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "search") %></button>
+            <% if selected_tab.search? %>
+                <a href="/channel/<%= ucid %>"><%= I18n.translate(locale, "channel_search_clear") %></a>
+            <% end %>
+        </div>
+    </form>
+</div>
 <details><summary><%= I18n.translate(locale, "ui_more_tools") %></summary>
     <p><a href="<%= youtube_url %>"><%= I18n.translate(locale, "View channel on YouTube") %></a></p>
     <p><a href="<%= redirect_url %>"><%= I18n.translate(locale, "Switch Invidious Instance") %></a></p>

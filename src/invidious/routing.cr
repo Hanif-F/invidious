@@ -123,6 +123,8 @@ module Invidious::Routing
     get "/channel/:ucid", Routes::Channels, :home
     get "/channel/:ucid/home", Routes::Channels, :home
     get "/channel/:ucid/videos", Routes::Channels, :videos
+    get "/channel/:ucid/search", Routes::Channels, :search
+    post "/channel/:ucid/search", Routes::Channels, :search
     get "/channel/:ucid/shorts", Routes::Channels, :shorts
     get "/channel/:ucid/streams", Routes::Channels, :streams
     get "/channel/:ucid/podcasts", Routes::Channels, :podcasts

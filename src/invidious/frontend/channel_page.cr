@@ -11,6 +11,7 @@ module Invidious::Frontend::ChannelPage
     Playlists
     Posts
     Channels
+    Search
   end
 
   def generate_tabs_links(locale : String, channel : AboutChannel, selected_tab : TabsAvailable)
@@ -23,7 +24,7 @@ module Invidious::Frontend::ChannelPage
 
         tab_name = tab.to_s.downcase
 
-        if channel.tabs.includes? tab_name
+        if tab.search? ? selected_tab.search? : channel.tabs.includes?(tab_name)
           str << %(<div class="pure-u-1 pure-md-1-3">\n)
 
           if tab == selected_tab

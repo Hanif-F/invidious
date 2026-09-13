@@ -63,6 +63,40 @@ module Invidious::Routes::Channels
     templated "channel"
   end
 
+  def self.search(env)
+    data = self.fetch_basic_information(env)
+    return data if !data.is_a?(Tuple)
+
+    locale, user, subscriptions, continuation, ucid, channel = data
+    preferences = env.get("preferences").as(Preferences)
+    params = env.request.method == "POST" ? env.params.body : env.params.query
+    query = Invidious::Search::Query.new(params, :channel, preferences.region)
+    query.channel = channel.ucid
+    query.page = Math.max(1, query.page)
+
+    if query.empty? || query.text.strip.empty?
+      return env.redirect "/channel/#{channel.ucid}"
+    end
+
+    begin
+      results = query.process
+      upstream_count = results.size
+      items = results.select(SearchVideo)
+    rescue ex : ChannelSearchException
+      return error_template(404, ex)
+    rescue ex
+      return error_template(500, ex)
+    end
+
+    env.set "channel_search_query", query.text
+    env.set "search", "channel:#{channel.ucid} #{query.text}"
+    selected_tab = Frontend::ChannelPage::TabsAvailable::Search
+    sort_by = ""
+    sort_options = [] of String
+
+    templated "channel_search"
+  end
+
   def self.shorts(env)
     data = self.fetch_basic_information(env)
     return data if !data.is_a?(Tuple)
@@ -332,7 +366,7 @@ module Invidious::Routes::Channels
   private KNOWN_TABS = {
     "home", "videos", "shorts", "streams", "podcasts",
     "releases", "courses", "playlists", "community", "channels", "about",
-    "posts",
+    "posts", "search",
   }
 
   # Redirects brand url channels to a normal /channel/:ucid route
@@ -435,7 +469,7 @@ module Invidious::Routes::Channels
     begin
       channel = get_about_info(ucid)
     rescue ex : ChannelRedirect
-      return env.redirect env.request.resource.gsub(ucid, ex.channel_id)
+      return env.redirect env.request.resource.gsub(ucid, ex.channel_id), (env.request.method == "POST" ? 307 : 302)
     rescue ex : NotFoundException
       return error_template(404, ex)
     rescue ex

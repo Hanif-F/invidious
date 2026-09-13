@@ -2153,3 +2153,49 @@ for (const engine of engines) {
         }
     });
 }
+
+for (const engine of engines) {
+    test(`${engine}: channel search preserves scope, query, and numeric pagination`, async () => {
+        const query = '<cats> & "dogs" + café';
+        for (const [width, javascript] of [[390, false], [1440, false], [390, true], [1440, true]]) {
+            const {page, context} = await pageFor(engine, {fixture: 'channel-search', route: 'channel/UCfixture/search', width, javascript});
+            assert.equal(await page.getByRole('searchbox', {name: 'Search this channel', exact: true}).isVisible(), true);
+            assert.equal(await page.locator('#channel-search').inputValue(), query);
+            assert.equal(await page.locator('.channel-tabs [aria-current="page"]').textContent(), 'Search');
+            assert.equal(await page.locator('.channel-sort a').count(), 0);
+            assert.equal(await page.getByRole('link', {name: 'Back to channel videos'}).getAttribute('href'), '/channel/UCfixture');
+            for (const [selector, number] of [['.page-next-container a', '3'], ['.page-prev-container a', '1']]) {
+                const url = new URL(await page.locator(selector).first().getAttribute('href'), page.url());
+                assert.equal(url.pathname, '/channel/UCfixture/search');
+                assert.equal(url.searchParams.get('q'), query);
+                assert.equal(url.searchParams.get('page'), number);
+            }
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+            await page.locator('#channel-search').focus();
+            const requestPromise = page.waitForRequest(request => request.isNavigationRequest());
+            await page.keyboard.press('Enter');
+            const request = await requestPromise;
+            assert.equal(request.method(), 'GET');
+            assert.equal(new URL(request.url()).searchParams.get('q'), query);
+            await page.screenshot({path: path.join(artifacts, `${engine}-channel-search-${width}.png`)});
+            await context.close();
+        }
+    });
+
+    test(`${engine}: channel search privacy and empty results work without JavaScript`, async () => {
+        const {page, context} = await pageFor(engine, {fixture: 'channel-search-private', route: 'channel/UCfixture/search', javascript: false});
+        await page.locator('#channel-search').fill('linux & audio');
+        const requestPromise = page.waitForRequest(request => request.isNavigationRequest());
+        await page.locator('.channel-search button').click();
+        const request = await requestPromise;
+        assert.equal(request.method(), 'POST');
+        assert.equal(new URL(request.url()).search, '');
+        assert.equal(new URLSearchParams(request.postData()).get('q'), 'linux & audio');
+        await context.close();
+        const empty = await pageFor(engine, {fixture: 'channel-search-empty', route: 'channel/UCfixture/search', javascript: false});
+        assert.equal(await empty.page.locator('.no-results-error').isVisible(), true);
+        assert.equal(await empty.page.locator('.page-next-container a').count(), 0);
+        assert.equal(await empty.page.locator('.page-prev-container a').count(), 2);
+        await empty.context.close();
+    });
+}

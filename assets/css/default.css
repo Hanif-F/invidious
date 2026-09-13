@@ -943,3 +943,21 @@ h1, h2, h3, h4, h5, p,
 .sponsorblock-category select { width: 100%; }
 .sponsorblock-category input[type="color"] { width: 64px; height: 36px; padding: 2px; }
 .sponsorblock-preferences .preference-description { display: block; width: auto; max-width: 70ch; padding-left: 0; }
+
+.channel-search {
+  margin-block: 1em;
+}
+
+.channel-search-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.channel-search-controls input[type="search"] {
+  flex: 1 1 15em;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}

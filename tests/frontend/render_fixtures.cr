@@ -205,7 +205,7 @@ def history_fixture(visual_theme = "modern-neon")
   render "src/invidious/views/feeds/history.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = false)
+def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = false, search = false, privacy = false, empty = false)
   env = fixture_env("/channel/UCfixture", mode, visual_theme: visual_theme)
   locale = "en-US"
   user = nil
@@ -226,7 +226,21 @@ def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = fa
     end
   end
   navbar_search = true
-  render "src/invidious/views/channel.ecr", "src/invidious/views/template.ecr"
+  if search
+    preferences = env.get("preferences").as(Preferences)
+    preferences.search_privacy = privacy
+    env.set "preferences", preferences
+    query = Invidious::Search::Query.new(HTTP::Params{"q" => %(<cats> & "dogs" + café), "page" => "2"}, :channel)
+    query.channel = channel.ucid
+    env.set "channel_search_query", query.text
+    selected_tab = Invidious::Frontend::ChannelPage::TabsAvailable::Search
+    sort_options = [] of String
+    items = [] of SearchVideo if empty
+    upstream_count = empty ? 0 : 30
+    render "src/invidious/views/channel_search.ecr", "src/invidious/views/template.ecr"
+  else
+    render "src/invidious/views/channel.ecr", "src/invidious/views/template.ecr"
+  end
 end
 
 def diary_login_fixture(visual_theme = "diary", mode = "light")
@@ -401,3 +415,7 @@ Invidious::Themes::AVAILABLE.each do |theme|
   File.write("#{output}/channel-playlists-#{theme.id}.html", diary_channel_fixture(theme.id, "dark", true))
   File.write("#{output}/library-#{theme.id}.html", playlist_library_fixture(theme.id))
 end
+
+File.write("#{output}/channel-search.html", diary_channel_fixture(search: true))
+File.write("#{output}/channel-search-private.html", diary_channel_fixture(search: true, privacy: true))
+File.write("#{output}/channel-search-empty.html", diary_channel_fixture(search: true, empty: true))

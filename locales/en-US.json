@@ -694,5 +694,8 @@
     "dearrow_identity_configured": "A private contribution identity is saved for this account.",
     "dearrow_identity_new": "An identity will be created on your first contribution.",
     "dearrow_identity_saved": "Private identity settings saved.",
+    "channel_search_label": "Search this channel",
+    "channel_search_clear": "Back to channel videos",
+    "channel_tab_search_label": "Search",
     "dearrow_privacy": "Your title and votes are sent to DeArrow when you submit. Contributions are public. No license key is required."
 }

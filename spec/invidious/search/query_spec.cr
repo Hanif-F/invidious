@@ -145,6 +145,34 @@ Spectator.describe Invidious::Search::Query do
   end
 
   describe Type::Channel do
+    it "keeps the route channel when query parameters and operators name other channels" do
+      query = described_class.new(
+        HTTP::Params{"q" => "channel:UCother user:another tutorial", "channel" => "UCoverride", "page" => "2"},
+        :channel
+      )
+      query.channel = "UCcurrent"
+
+      expect(query.channel).to eq("UCcurrent")
+      expect(query.text).to eq("tutorial")
+      expect(query.page).to eq(2)
+      expect(query.type).to eq(Invidious::Search::Query::Type::Channel)
+    end
+
+    it "preserves special characters through channel search pagination parameters" do
+      text = %(<cats> & "dogs" + café)
+      query = described_class.new(HTTP::Params{"q" => text}, :channel)
+      query.channel = "UCcurrent"
+      params = HTTP::Params.parse(query.to_http_params.to_s)
+
+      expect(params["q"]).to eq(text)
+      expect(params["channel"]).to eq("UCcurrent")
+    end
+
+    it "recognizes whitespace-only channel searches as empty" do
+      query = described_class.new(HTTP::Params{"q" => "  \t  "}, :channel)
+      expect(query.empty?).to be_true
+    end
+
     it "ignores extra parameters" do
       query = described_class.new(
         HTTP::Params.parse("q=Take+on+me+channel%3AUC12345679&type=video&date=year"),

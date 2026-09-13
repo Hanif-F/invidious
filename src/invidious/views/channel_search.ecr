@@ -1,0 +1,25 @@
+<%-
+  ucid = channel.ucid
+  author = HTML.escape(channel.author)
+  channel_profile_pic = URI.parse(channel.author_thumbnail).request_target
+  relative_url = "/channel/#{ucid}/search"
+  youtube_url = "https://www.youtube.com#{relative_url}?query=#{URI.encode_www_form(query.text)}"
+  redirect_url = Invidious::Frontend::Misc.redirect_url(env)
+
+  page_nav_html = IV::Frontend::Pagination.nav_numeric(locale,
+    base_url: "#{relative_url}?#{URI::Params{ "q" => query.text }}",
+    current_page: query.page,
+    show_next: upstream_count >= 20,
+  )
+%>
+
+<% content_for "header" do %>
+<title><%= I18n.translate(locale, "search") %> - <%= author %> - Invidious</title>
+<% end %>
+
+<%= rendered "components/channel_info" %>
+
+<% if items.empty? %>
+    <p class="h-box no-results-error"><%= I18n.translate(locale, "search_message_no_results") %></p>
+<% end %>
+<%= rendered "components/items_paginated" %>
