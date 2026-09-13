@@ -1708,18 +1708,40 @@ for (const engine of engines) {
                 new videojs.AudioTrack({id:'regular', kind:'main', label:'English original', language:'en', enabled:true}),
                 new videojs.AudioTrack({id:'stable', kind:'alternative', label:'English Stable Volume', language:'en'})
             ]});
+            const uncertain = InvidiousStreamMenus.audioOptions({audioTracks: () => [
+                new videojs.AudioTrack({id:'unknown-high', kind:'main', label:'Original A', language:'zz'}),
+                new videojs.AudioTrack({id:'unknown-active', kind:'main', label:'Original B', language:'zz', enabled:true})
+            ]});
+            const genericTracks = [
+                new videojs.AudioTrack({id:'generic-regular', kind:'main', label:'Original', language:'en', enabled:true}),
+                new videojs.AudioTrack({id:'generic-stable', kind:'alternative', label:'Stable Volume', language:'en'})
+            ];
+            const generic = InvidiousStreamMenus.audioOptions({
+                audioTracks: () => genericTracks,
+                tech: () => ({vhs:{playlists:{master:{mediaGroups:{AUDIO:{main:{
+                    Original:{playlists:[{attributes:{NAME:'oa-h'}}]},
+                    'Stable Volume':{playlists:[{attributes:{NAME:'os-h'}}]}
+                }}}}}}})
+            });
             return {
                 quality: quality.map(option => [option.primary, option.secondary]),
                 rankedQuality: InvidiousStreamMenus.rankedQualityLevels(player).map(entry => entry.level.id),
                 desktopQuality: player.getChild('controlBar').getChild('richQualityButton').items.map(item => item.options_.primary),
                 audio: audio.map(option => option.divider ? `--${option.primary}--` : option.primary),
                 stableOnly: stableOnly.map(option => option.divider ? `--${option.primary}--` : option.primary),
+                stableSecondary: stableOnly.map(option => option.secondary),
+                uncertain: uncertain.map(option => [option.primary, option.secondary, option.selected]),
+                generic: generic.map(option => [option.primary, option.secondary]),
                 controlClasses: controls.map(control => control.el().className),
                 controlOrders: controls.map(control => Number(getComputedStyle(control.el()).order)),
+                controlIconSizes: controls.slice(1, 3).map(control => getComputedStyle(control.el(), '::before').fontSize),
+                controlFontSizes: controls.slice(1, 3).map(control => getComputedStyle(control.el()).fontSize),
                 spacerOrder: Number(getComputedStyle(bar.el().querySelector('.vjs-spacer')).order),
                 controlPositions: controls.map(control => control.el().getBoundingClientRect().left),
                 formatting: [InvidiousStreamMenus.formatBytes(999), InvidiousStreamMenus.formatBytes(1200),
-                    InvidiousStreamMenus.formatBytes(1e9), InvidiousStreamMenus.formatBitrate(128000)]
+                    InvidiousStreamMenus.formatBytes(1e9), InvidiousStreamMenus.formatBitrate(128000),
+                    InvidiousStreamMenus.formatBytes(0), InvidiousStreamMenus.formatBitrate(0),
+                    InvidiousStreamMenus.formatBitrate(-1), InvidiousStreamMenus.formatBitrate('unknown')]
             };
         });
         assert.deepEqual(desktopResult.quality, [
@@ -1728,16 +1750,24 @@ for (const engine of engines) {
         ]);
         assert.deepEqual(desktopResult.desktopQuality, desktopResult.quality.map(option => option[0]));
         assert.deepEqual(desktopResult.rankedQuality, ['2-','6-','5-','0-','3-','1-','4-']);
-        assert.deepEqual(desktopResult.formatting, ['999 B','1.2 kB','1 GB','128 kbps']);
+        assert.deepEqual(desktopResult.formatting, ['999 B','1.2 kB','1 GB','128 kbps','','','','']);
         assert.deepEqual(desktopResult.audio, [
             'English original · High Bitrate', 'English original', 'English original · Low Bitrate',
             'English original · Stable Volume · High Bitrate', 'English original · Stable Volume · Low Bitrate',
             '--Dubbed Audio--', 'French'
         ]);
-        assert.deepEqual(desktopResult.stableOnly, ['English original', 'English Stable Volume · Original Audio · Stable Volume']);
+        assert.deepEqual(desktopResult.stableOnly, ['English original', 'English · Original Audio · Stable Volume']);
+        assert.deepEqual(desktopResult.stableSecondary, ['', '']);
+        assert.deepEqual(desktopResult.uncertain, [['Original B', '', true]]);
+        assert.deepEqual(desktopResult.generic, [
+            ['English original', '12.8 MB · 128 kbps'],
+            ['English original · Stable Volume', '12 MB · 120 kbps']
+        ]);
         assert.match(desktopResult.controlClasses[1], /\bvjs-rich-audio\b/);
         assert.match(desktopResult.controlClasses[2], /\bvjs-rich-quality\b/);
         assert.deepEqual(desktopResult.controlOrders, [2, 3, 4, 5]);
+        assert.deepEqual(desktopResult.controlIconSizes, ['24px', '24px']);
+        assert.deepEqual(desktopResult.controlFontSizes, ['10px', '10px']);
         assert.ok(desktopResult.spacerOrder < desktopResult.controlOrders[1]);
         assert.ok(desktopResult.controlPositions[1] < desktopResult.controlPositions[2]);
         assert.ok(desktopResult.controlPositions[2] < desktopResult.controlPositions[3]);
@@ -1752,6 +1782,7 @@ for (const engine of engines) {
             'English original · Stable Volume · High Bitrate', 'English original · Stable Volume · Low Bitrate',
             '--Dubbed Audio--', 'French'
         ]);
+        await desktop.page.screenshot({path:path.join(artifacts, `${engine}-rich-stream-controls.png`)});
         assert.deepEqual(desktop.errors, []);
         await desktop.context.close();
 

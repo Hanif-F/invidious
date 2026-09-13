@@ -13,12 +13,17 @@
         return Number.isFinite(value) && value >= 0 ? value : null;
     }
 
+    function positiveNumber(value) {
+        value = number(value);
+        return value !== null && value > 0 ? value : null;
+    }
+
     function formatDecimal(value, digits) {
         return value.toFixed(digits).replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');
     }
 
     function formatBytes(value) {
-        value = number(value);
+        value = positiveNumber(value);
         if (value === null) return '';
         if (value >= 1e9) return formatDecimal(value / 1e9, 1) + ' GB';
         if (value >= 1e6) return formatDecimal(value / 1e6, 1) + ' MB';
@@ -27,7 +32,7 @@
     }
 
     function formatBitrate(value) {
-        value = number(value);
+        value = positiveNumber(value);
         if (value === null) return '';
         if (value >= 1e6) return formatDecimal(value / 1e6, 2) + ' Mbps';
         if (value >= 1e3) return formatDecimal(value / 1e3, 1) + ' kbps';
@@ -143,59 +148,165 @@
         return options;
     }
 
-    function audioFormat(track) {
-        var trackLabel = track.label || '';
-        var audioFormats = formats.filter(function (format) { return format.audioTrack && !format.height; });
-        var named = audioFormats.filter(function (format) {
-            return format.audioTrack.displayName && trackLabel.indexOf(format.audioTrack.displayName) >= 0;
-        });
-        var bitrateMatch = trackLabel.match(/\[(\d+)k\]/);
-        if (bitrateMatch) {
-            var stableHint = /(?:stable volume|\bdrc\b)/i.test(trackLabel);
-            var exact = named.find(function (format) { return String(format.bitrate) === bitrateMatch[1] && (format.isDrc === true) === stableHint; });
-            exact = exact || named.find(function (format) { return String(format.bitrate) === bitrateMatch[1]; });
-            if (exact) return exact;
-        }
-        return named.length === 1 ? named[0] : {};
+    function audioRepresentationItags(player, track) {
+        var itags = [];
+        try {
+            var tech = player.tech({IWillNotUseThisInPlugins: true});
+            var vhs = tech && tech.vhs;
+            var master = vhs && vhs.playlists && vhs.playlists.master;
+            master = master || (vhs && vhs.masterPlaylistController_ &&
+                vhs.masterPlaylistController_.masterPlaylistLoader_ &&
+                vhs.masterPlaylistController_.masterPlaylistLoader_.master);
+            var groups = master && master.mediaGroups && master.mediaGroups.AUDIO;
+            Object.keys(groups || {}).forEach(function (groupId) {
+                var group = groups[groupId];
+                var properties = group && (group[track.label] || group[track.id]);
+                if (!properties) return;
+                (properties.playlists || [properties]).forEach(function (playlist) {
+                    var name = playlist && playlist.attributes && playlist.attributes.NAME;
+                    if (name != null && itags.indexOf(String(name)) < 0) itags.push(String(name));
+                });
+            });
+        } catch (_) {}
+        return itags;
     }
 
-    function audioInfo(track, originalIndex) {
-        var format = audioFormat(track);
+    function normalizedAudioName(value) {
+        return String(value || '')
+            .replace(/\[\s*\d+(?:\.\d+)?k\s*\]/ig, ' ')
+            .replace(/(?:stable volume|\bdrc\b)/ig, ' ')
+            .replace(/\boriginal audio\b|\boriginal\b/ig, ' ')
+            .replace(/[·|]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLocaleLowerCase();
+    }
+
+    function formatIsStable(format) {
+        return format.isDrc === true || /(?:stable volume|\bdrc\b)/i.test(
+            ((format.audioTrack && format.audioTrack.displayName) || '') + ' ' + (format.itag || '')
+        );
+    }
+
+    function audioFormat(player, track) {
+        var trackLabel = track.label || '';
+        var audioFormats = formats.filter(function (format) { return format.audioTrack && !format.height; });
+        var representationItags = audioRepresentationItags(player, track);
+        var exact = audioFormats.find(function (format) {
+            return format.itag != null && (representationItags.indexOf(String(format.itag)) >= 0 ||
+                String(format.itag) === String(track.id));
+        });
+        if (exact) return exact;
+
+        var stableHint = /(?:stable volume|\bdrc\b)/i.test(trackLabel);
+        var candidates = audioFormats.filter(function (format) { return formatIsStable(format) === stableHint; });
+        var bitrateMatch = trackLabel.match(/\[(\d+)k\]/);
+        if (bitrateMatch) {
+            exact = candidates.find(function (format) {
+                var bitrate = positiveNumber(format.bitrate);
+                return bitrate !== null && (bitrate === Number(bitrateMatch[1]) ||
+                    Math.round(bitrate / 1000) === Number(bitrateMatch[1]));
+            });
+            if (exact) return exact;
+        }
+
+        var trackName = normalizedAudioName(trackLabel);
+        var named = candidates.filter(function (format) {
+            var formatName = normalizedAudioName(format.audioTrack.displayName);
+            return trackName && formatName && (trackName === formatName ||
+                trackName.indexOf(formatName) >= 0 || formatName.indexOf(trackName) >= 0);
+        });
+        if (named.length === 1) return named[0];
+
+        var language = String(track.language || '').toLocaleLowerCase();
+        var byLanguage = candidates.filter(function (format) {
+            var identity = String(format.audioTrack.id || '').toLocaleLowerCase();
+            return language && (identity === language || identity.indexOf(language + '.') === 0 ||
+                identity.indexOf(language + '-') === 0);
+        });
+        return byLanguage.length === 1 ? byLanguage[0] : {};
+    }
+
+    function audioInfo(player, track, originalIndex) {
+        var format = audioFormat(player, track);
         var audioTrack = format.audioTrack || {};
         var name = audioTrack.displayName || track.label || track.language || 'Unknown';
-        var stable = format.isDrc === true || /(?:stable volume|\bdrc\b)/i.test(name + ' ' + (track.label || ''));
+        var stable = formatIsStable(format) || /(?:stable volume|\bdrc\b)/i.test(name + ' ' + (track.label || ''));
         var original = audioTrack.audioIsDefault === true || /\boriginal\b/i.test(name);
         if (!format.audioTrack && track.kind === 'main') original = true;
         return {
             track: track, format: format, name: name, stable: stable, original: original,
             identity: audioTrack.id || track.language || name,
-            bitrate: number(format.bitrate) || 0, originalIndex: originalIndex
+            bitrate: positiveNumber(format.bitrate) || 0, originalIndex: originalIndex
+        };
+    }
+
+    function stripAudioQualifiers(value, stable) {
+        value = String(value || '').replace(/\[\s*\d+(?:\.\d+)?k\s*\]/ig, ' ');
+        if (stable) {
+            var stableLabel = labels.stable_volume || 'Stable Volume';
+            value = value.replace(new RegExp(stableLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ')
+                .replace(/\bstable volume\b|\bdrc\b/ig, ' ');
+        }
+        return value.replace(/\s*[·|]+\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function includesAudioQualifier(value, qualifier) {
+        return String(value || '').toLocaleLowerCase().indexOf(String(qualifier || '').toLocaleLowerCase()) >= 0;
+    }
+
+    function audioPrimary(entry, stable, tier) {
+        var originalLabel = labels.original_audio || 'Original Audio';
+        var stableLabel = labels.stable_volume || 'Stable Volume';
+        var base = stripAudioQualifiers(entry.name, stable);
+        var parts = [];
+        if (base) parts.push(base);
+        if (entry.original && !/\boriginal\b/i.test(base) && !includesAudioQualifier(base, originalLabel)) {
+            parts.push(originalLabel);
+        }
+        if (stable && !includesAudioQualifier(base, stableLabel)) parts.push(stableLabel);
+        if (tier) parts.push(tier);
+        return parts.filter(function (part, index, all) {
+            var normalized = String(part).trim().toLocaleLowerCase();
+            return normalized && all.findIndex(function (candidate) {
+                return String(candidate).trim().toLocaleLowerCase() === normalized;
+            }) === index;
+        }).join(' · ');
+    }
+
+    function audioOption(entry, stable, tier) {
+        return {
+            primary: audioPrimary(entry, stable, tier),
+            secondary: secondary(entry.format, entry.bitrate), selected: entry.track.enabled,
+            select: function () { entry.track.enabled = true; }, track: entry.track
         };
     }
 
     function audioTierOptions(entries, stable) {
         entries.sort(function (a, b) { return b.bitrate - a.bitrate || a.originalIndex - b.originalIndex; });
-        var kept = retainedIndexes(entries.length, 2).map(function (index) { return entries[index]; });
+        if (!entries.length) return [];
         var active = entries.find(function (entry) { return entry.track.enabled; });
+        var known = entries.filter(function (entry) { return entry.bitrate > 0; });
+        var distinctBitrates = Array.from(new Set(known.map(function (entry) { return entry.bitrate; })));
+        if (distinctBitrates.length < 2) {
+            return [audioOption(active || known[0] || entries[0], stable, '')];
+        }
+
+        var high = known[0];
+        var low = known.slice().reverse().find(function (entry) { return entry.bitrate < high.bitrate; });
+        var kept = [high, low];
         if (active && kept.indexOf(active) < 0) kept.splice(1, 0, active);
         return kept.map(function (entry) {
-            var sourceIndex = entries.indexOf(entry);
-            var tier = kept.length === 1 ? '' : sourceIndex === 0 ? (labels.high_bitrate || 'High Bitrate') :
-                sourceIndex === entries.length - 1 ? (labels.low_bitrate || 'Low Bitrate') : '';
-            var qualifiers = [];
-            if (!/\boriginal\b/i.test(entry.name)) qualifiers.push(labels.original_audio || 'Original Audio');
-            if (stable) qualifiers.push(labels.stable_volume || 'Stable Volume');
-            if (tier) qualifiers.push(tier);
-            return {
-                primary: entry.name + (qualifiers.length ? ' · ' + qualifiers.join(' · ') : ''),
-                secondary: secondary(entry.format, entry.bitrate), selected: entry.track.enabled,
-                select: function () { entry.track.enabled = true; }, track: entry.track
-            };
+            var tier = entry === high ? (labels.high_bitrate || 'High Bitrate') :
+                entry === low ? (labels.low_bitrate || 'Low Bitrate') : '';
+            return audioOption(entry, stable, tier);
         });
     }
 
     function audioOptions(player) {
-        var entries = Array.from(player.audioTracks ? player.audioTracks() : []).map(audioInfo);
+        var entries = Array.from(player.audioTracks ? player.audioTracks() : []).map(function (track, index) {
+            return audioInfo(player, track, index);
+        });
         if (!entries.length) return [];
         var originals = entries.filter(function (entry) { return entry.original; });
         entries.forEach(function (entry) {
