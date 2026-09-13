@@ -184,3 +184,10 @@ The fixture checks cover initial and continuation responses, false date matches,
 and unchanged database columns. Channel playlists share the library grid across
 all three registered themes. Browser checks compare responsive card dimensions
 and verify neutral translucent mobile controls in watch and embed players.
+
+Channel SponsorBlock checks cover account preference roundtrips and export/import,
+global-form preservation, per-category inheritance, enablement overrides in watch
+and embed players, invalid IDs, lookup failure, CSRF rejection, saving and resetting.
+The channel editor is checked at mobile and desktop widths without JavaScript.
+Rich stream-menu checks also verify that audio/quality icons sit inside centered
+buttons and selected rows use neutral, high-contrast colors.

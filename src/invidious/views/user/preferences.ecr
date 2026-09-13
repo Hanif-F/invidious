@@ -11,6 +11,7 @@
     <form class="pure-form pure-form-aligned preferences-form" action="/preferences?referer=<%= URI.encode_www_form(referer) %>" method="post">
         <fieldset class="sponsorblock-preferences">
             <legend id="preferences-sponsorblock">SponsorBlock</legend>
+            <p><a href="/preferences/sponsorblock/channels"><%= I18n.translate(locale, "sb_channels") %></a></p>
             <p class="preference-description"><%= I18n.translate(locale, "sb_description") %> <a href="https://sponsor.ajay.app/" rel="noopener noreferrer">SponsorBlock</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>).</p>
             <div class="pure-control-group">
                 <label for="sponsorblock_enabled"><%= I18n.translate(locale, "sb_enable") %></label>

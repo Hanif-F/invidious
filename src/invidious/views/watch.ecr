@@ -142,6 +142,7 @@
                 <% if !video.author_thumbnail.empty? %><img width="48" height="48" src="/ggpht<%= URI.parse(video.author_thumbnail).request_target %>" alt=""><% end %>
                 <span class="channel-name" dir="auto"><%= author %><% if video.author_verified %> <i class="icon ion-md-checkmark-circle" title="<%= I18n.translate(locale, "ui_verified") %>"></i><% end %></span>
             </a>
+            <a href="/preferences/sponsorblock/channels?channel=<%= video.ucid %>"><%= I18n.translate(locale, "sb_channel_settings") %></a>
             <div><% sub_count_text = video.sub_count_text %><%= rendered "components/subscribe_widget" %></div>
         </div>
         <div class="watch-actions">

@@ -1,5 +1,6 @@
 require "http/client"
 require "json"
+require "yaml"
 require "digest/sha256"
 
 module Invidious::SponsorBlock
@@ -198,5 +199,69 @@ module Invidious::SponsorBlock::Colors
 
   def self.to_yaml(value : Hash(String, String), yaml : YAML::Nodes::Builder)
     normalize(value).to_yaml(yaml)
+  end
+end
+
+module Invidious::SponsorBlock
+  struct ChannelOverride
+    include JSON::Serializable
+    include YAML::Serializable
+    property name : String
+    property enabled : Bool?
+    property modes : Hash(String, String)
+
+    def initialize(@name : String, @enabled : Bool?, @modes : Hash(String, String))
+    end
+  end
+
+  def self.channel_id(input : String) : String?
+    value = input.strip
+    return value if value.matches?(/\AUC[A-Za-z0-9_-]{22}\z/)
+    path = URI.parse(value).path
+    path.match(/\A\/channel\/(UC[A-Za-z0-9_-]{22})\/?\z/).try &.[1]
+  rescue URI::Error
+    nil
+  end
+
+  module ChannelOverrides
+    def self.normalize(raw : JSON::Any) : Hash(String, ChannelOverride)
+      result = {} of String => ChannelOverride
+      raw.as_h?.try &.each do |id, value|
+        next unless id.matches?(/\AUC[A-Za-z0-9_-]{22}\z/)
+        next unless fields = value.as_h?
+        modes = {} of String => String
+        fields["modes"]?.try(&.as_h?).try &.each do |category, mode|
+          text = mode.as_s?
+          if CATEGORIES.has_key?(category) && {"auto", "manual", "marker", "disabled"}.includes?(text)
+            modes[category] = text.not_nil!
+          end
+        end
+        enabled = fields["enabled"]?.try &.as_bool?
+        next if enabled.nil? && modes.empty?
+        result[id] = ChannelOverride.new(fields["name"]?.try(&.as_s?) || id, enabled, modes)
+      end
+      result
+    end
+
+    def self.from_json(parser : JSON::PullParser)
+      normalize(JSON::Any.new(parser))
+    end
+
+    def self.to_json(value, json : JSON::Builder)
+      value.to_json(json)
+    end
+
+    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      normalize(JSON.parse(YAML::Any.new(ctx, node).to_json))
+    end
+
+    def self.to_yaml(value, yaml : YAML::Nodes::Builder)
+      value.to_yaml(yaml)
+    end
+  end
+
+  def self.effective(enabled : Bool, modes : Hash(String, String), override : ChannelOverride?)
+    return {enabled, modes} unless override
+    {override.enabled.nil? ? enabled : override.enabled.not_nil!, modes.merge(override.modes)}
   end
 end

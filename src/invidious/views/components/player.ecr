@@ -1,3 +1,4 @@
+<% sb_enabled, sb_modes = Invidious::SponsorBlock.effective(preferences.sponsorblock_enabled, preferences.sponsorblock_modes, env.get?("user") ? preferences.sponsorblock_channel_overrides[video.ucid]? : nil) %>
 <%
     invidious_companion_check_id = invidious_companion_encrypt(video.id) if invidious_companion
 %>
@@ -90,8 +91,8 @@
 <%=
 {
     "sponsorblock" => {
-        "enabled" => preferences.sponsorblock_enabled && !video.live_now,
-        "modes" => preferences.sponsorblock_modes,
+        "enabled" => sb_enabled && !video.live_now,
+        "modes" => sb_modes,
         "colors" => preferences.sponsorblock_colors,
         "labels" => Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, I18n.translate(locale, "sb_category_#{category}")} },
         "skip" => I18n.translate(locale, "sb_skip"),

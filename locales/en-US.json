@@ -713,5 +713,19 @@
     "history_search_placeholder": "Title or channel name",
     "history_clear_search": "Clear search",
     "history_no_matches": "No videos match your search.",
-    "history_empty": "No watch history yet."
+    "history_empty": "No watch history yet.",
+    "sb_channels": "Channel SponsorBlock settings",
+    "sb_global_settings": "Global SponsorBlock settings",
+    "sb_channels_sign_in": "Sign in to save channel-specific SponsorBlock settings.",
+    "sb_channels_hint": "Channel settings override global settings. Categories set to Use global follow future global changes. Colors remain global.",
+    "sb_channel_input": "Channel ID or /channel/UC… URL",
+    "sb_channel_edit": "Edit channel settings",
+    "sb_use_global": "Use global",
+    "sb_enabled": "Enabled",
+    "sb_channel_reset": "Reset to global",
+    "sb_configured_channels": "Configured channels",
+    "sb_channels_empty": "No channel overrides yet.",
+    "sb_channel_invalid": "Enter a valid channel ID or /channel/UC… URL.",
+    "sb_channel_lookup_failed": "Could not load this channel. Please try again.",
+    "sb_channel_settings": "SponsorBlock settings"
 }

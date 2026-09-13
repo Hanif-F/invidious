@@ -93,3 +93,38 @@ describe Invidious::SponsorBlock::Client do
     calls.should eq(4)
   end
 end
+
+describe "Channel SponsorBlock overrides" do
+  id = "UC" + "a" * 22
+  it "accepts channel IDs and channel URLs without resolving arbitrary URLs" do
+    Invidious::SponsorBlock.channel_id(id).should eq(id)
+    Invidious::SponsorBlock.channel_id("https://youtube.com/channel/#{id}").should eq(id)
+    Invidious::SponsorBlock.channel_id("/channel/#{id}").should eq(id)
+    Invidious::SponsorBlock.channel_id("https://example.com/other").should be_nil
+    Invidious::SponsorBlock.channel_id("UCinvalid").should be_nil
+  end
+  it "drops malformed overrides and preserves explicit false and valid modes" do
+    raw = JSON.parse({id => {name: "Channel", enabled: false, modes: {sponsor: "auto", intro: "wrong", unknown: "auto"}}, "invalid" => {enabled: true}}.to_json)
+    overrides = Invidious::SponsorBlock::ChannelOverrides.normalize(raw)
+    overrides.size.should eq(1)
+    overrides[id].enabled.should eq(false)
+    overrides[id].modes.should eq({"sponsor" => "auto"})
+    Invidious::SponsorBlock::ChannelOverrides.normalize(JSON.parse({id => {enabled: "wrong", modes: {intro: 42}}}.to_json)).should be_empty
+  end
+  it "inherits categories without changing global modes and overrides enablement both ways" do
+    modes = Invidious::SponsorBlock::Modes.normalize({"sponsor" => "manual"})
+    {"auto", "manual", "marker", "disabled"}.each do |mode|
+      entry = Invidious::SponsorBlock::ChannelOverride.new("Channel", true, {"sponsor" => mode})
+      enabled, effective = Invidious::SponsorBlock.effective(false, modes, entry)
+      enabled.should be_true
+      effective["sponsor"].should eq(mode)
+      effective["intro"].should eq("manual")
+      modes["sponsor"].should eq("manual")
+    end
+    entry = Invidious::SponsorBlock::ChannelOverride.new("Channel", false, {} of String => String)
+    Invidious::SponsorBlock.effective(true, modes, entry)[0].should be_false
+    entry.enabled = nil
+    Invidious::SponsorBlock.effective(true, modes, entry)[0].should be_true
+    Invidious::SponsorBlock.effective(false, modes, nil).should eq({false, modes})
+  end
+end

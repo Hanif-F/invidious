@@ -383,11 +383,12 @@
     videojs.registerComponent('RichStreamMenuItem', RichStreamMenuItem);
 
     var MenuButton = videojs.getComponent('MenuButton');
-    function registerButton(name, className, controlText, source) {
+    function registerButton(name, className, iconClass, controlText, source) {
         var Button = videojs.extend(MenuButton, {
             constructor: function (player, options) {
                 MenuButton.call(this, player, options);
                 className.split(/\s+/).forEach(function (name) { if (name) this.addClass(name); }, this);
+                this.el().querySelector('.vjs-icon-placeholder').classList.add(iconClass);
                 var list = source === qualityOptions ? player.qualityLevels() : player.audioTracks();
                 this.streamList_ = list;
                 this.streamUpdate_ = videojs.bind(this, this.update);
@@ -401,8 +402,8 @@
         });
         videojs.registerComponent(name, Button);
     }
-    registerButton('RichQualityButton', 'vjs-rich-quality vjs-icon-cog', (data.mobile_labels || {}).quality || 'Quality', qualityOptions);
-    registerButton('RichAudioButton', 'vjs-rich-audio vjs-icon-audio', (data.mobile_labels || {}).audio || 'Audio', audioOptions);
+    registerButton('RichQualityButton', 'vjs-rich-quality', 'vjs-icon-cog', (data.mobile_labels || {}).quality || 'Quality', qualityOptions);
+    registerButton('RichAudioButton', 'vjs-rich-audio', 'vjs-icon-audio', (data.mobile_labels || {}).audio || 'Audio', audioOptions);
 
     window.InvidiousStreamMenus = {
         qualityOptions: qualityOptions,

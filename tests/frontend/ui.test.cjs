@@ -1776,7 +1776,7 @@ for (const engine of engines) {
                 generic: generic.map(option => [option.primary, option.secondary]),
                 controlClasses: controls.map(control => control.el().className),
                 controlOrders: controls.map(control => Number(getComputedStyle(control.el()).order)),
-                controlIconSizes: controls.slice(1, 3).map(control => getComputedStyle(control.el(), '::before').fontSize),
+                controlIconSizes: controls.slice(1, 3).map(control => getComputedStyle(control.el().querySelector('.vjs-icon-placeholder'), '::before').fontSize),
                 controlFontSizes: controls.slice(1, 3).map(control => getComputedStyle(control.el()).fontSize),
                 spacerOrder: Number(getComputedStyle(bar.el().querySelector('.vjs-spacer')).order),
                 controlPositions: controls.map(control => control.el().getBoundingClientRect().left),
@@ -1808,6 +1808,25 @@ for (const engine of engines) {
         assert.match(desktopResult.controlClasses[1], /\bvjs-rich-audio\b/);
         assert.match(desktopResult.controlClasses[2], /\bvjs-rich-quality\b/);
         assert.deepEqual(desktopResult.controlOrders, [2, 3, 4, 5]);
+        const iconGeometry = await desktop.page.evaluate(() => ['.vjs-rich-audio', '.vjs-rich-quality'].map(selector => {
+            const control = document.querySelector(selector);
+            const button = control.querySelector('button');
+            const icon = button.querySelector('.vjs-icon-placeholder');
+            const a = control.getBoundingClientRect(), b = button.getBoundingClientRect();
+            return {inside: Boolean(icon), dx: Math.abs(a.x + a.width / 2 - b.x - b.width / 2),
+                dy: Math.abs(a.y + a.height / 2 - b.y - b.height / 2)};
+        }));
+        for (const icon of iconGeometry) {
+            assert.ok(icon.inside);
+            assert.ok(icon.dx < 1 && icon.dy < 1, JSON.stringify(icon));
+        }
+        const selection = await desktop.page.evaluate(() => {
+            const selected = document.querySelector('.vjs-rich-quality .vjs-selected');
+            const style = getComputedStyle(selected);
+            return [style.backgroundColor, style.color, style.textShadow];
+        });
+        assert.deepEqual(selection, ['rgb(214, 214, 214)', 'rgb(32, 32, 32)', 'none']);
+
         assert.deepEqual(desktopResult.controlIconSizes, ['24px', '24px']);
         assert.deepEqual(desktopResult.controlFontSizes, ['10px', '10px']);
         assert.ok(desktopResult.spacerOrder < desktopResult.controlOrders[1]);
@@ -2239,5 +2258,26 @@ for (const engine of engines) {
         assert.equal(await empty.page.locator('.page-next-container a').count(), 0);
         assert.equal(await empty.page.locator('.page-prev-container a').count(), 2);
         await empty.context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: channel SponsorBlock editor supports mobile and no-JavaScript forms`, async () => {
+        for (const width of [390, 1440]) {
+            const {page, context, errors} = await pageFor(engine, {fixture:'sponsorblock-channels', width, javascript:false});
+            assert.equal(await page.locator('#mode_sponsor').inputValue(), 'auto');
+            assert.equal(await page.locator('#mode_intro').inputValue(), 'inherit');
+            assert.match(await page.locator('#mode_intro option:checked').textContent(), /Use global/);
+            await page.locator('#mode_sponsor').selectOption('marker');
+            const requestPromise = page.waitForRequest(request => request.isNavigationRequest());
+            await page.locator('button[value="save"]').click();
+            const request = await requestPromise;
+            assert.equal(request.method(), 'POST');
+            assert.equal(new URLSearchParams(request.postData()).get('mode_sponsor'), 'marker');
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            await page.screenshot({path:path.join(artifacts, `${engine}-sponsorblock-channels-${width}.png`)});
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
     });
 }

@@ -1,0 +1,53 @@
+<% content_for "header" do %>
+<title><%= I18n.translate(locale, "sb_channels") %> - Invidious</title>
+<% end %>
+<div class="h-box">
+    <h1><%= I18n.translate(locale, "sb_channels") %></h1>
+    <p><a href="/preferences#preferences-sponsorblock"><%= I18n.translate(locale, "sb_global_settings") %></a></p>
+    <% if !user %>
+        <p><%= I18n.translate(locale, "sb_channels_sign_in") %> <a href="/login?referer=%2Fpreferences%2Fsponsorblock%2Fchannels"><%= I18n.translate(locale, "Log in") %></a></p>
+    <% else %>
+        <p><%= I18n.translate(locale, "sb_channels_hint") %></p>
+        <form class="pure-form pure-form-stacked" method="get" action="/preferences/sponsorblock/channels">
+            <label for="channel"><%= I18n.translate(locale, "sb_channel_input") %></label>
+            <input id="channel" name="channel" type="text" required>
+            <button class="pure-button" type="submit"><%= I18n.translate(locale, "sb_channel_edit") %></button>
+        </form>
+        <% if channel_id %>
+            <h2><a href="/channel/<%= channel_id %>" dir="auto"><%= HTML.escape(entry.name) %></a></h2>
+            <form class="pure-form pure-form-stacked" method="post" action="/preferences/sponsorblock/channels">
+                <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
+                <input type="hidden" name="channel" value="<%= channel_id %>">
+                <label for="enabled"><%= I18n.translate(locale, "sb_enable") %></label>
+                <select id="enabled" name="enabled">
+                    <option value="inherit" <% if entry.enabled.nil? %>selected<% end %>><%= I18n.translate(locale, "sb_use_global") %> (<%= I18n.translate(locale, preferences.sponsorblock_enabled ? "sb_enabled" : "sb_mode_disabled") %>)</option>
+                    <option value="true" <% if entry.enabled == true %>selected<% end %>><%= I18n.translate(locale, "sb_enabled") %></option>
+                    <option value="false" <% if entry.enabled == false %>selected<% end %>><%= I18n.translate(locale, "sb_mode_disabled") %></option>
+                </select>
+                <% Invidious::SponsorBlock::CATEGORIES.each_key do |category| %>
+                    <label for="mode_<%= category %>"><%= I18n.translate(locale, "sb_category_#{category}") %></label>
+                    <select id="mode_<%= category %>" name="mode_<%= category %>">
+                        <option value="inherit" <% unless entry.modes.has_key?(category) %>selected<% end %>><%= I18n.translate(locale, "sb_use_global") %> (<%= I18n.translate(locale, "sb_mode_#{preferences.sponsorblock_modes[category]}") %>)</option>
+                        <% {"auto", "manual", "marker", "disabled"}.each do |mode| %>
+                            <option value="<%= mode %>" <% if entry.modes[category]? == mode %>selected<% end %>><%= I18n.translate(locale, "sb_mode_#{mode}") %></option>
+                        <% end %>
+                    </select>
+                <% end %>
+                <button class="pure-button pure-button-primary" type="submit" name="action" value="save"><%= I18n.translate(locale, "Save preferences") %></button>
+                <button class="pure-button" type="submit" name="action" value="reset"><%= I18n.translate(locale, "sb_channel_reset") %></button>
+            </form>
+        <% end %>
+        <h2><%= I18n.translate(locale, "sb_configured_channels") %></h2>
+        <% if preferences.sponsorblock_channel_overrides.empty? %><p><%= I18n.translate(locale, "sb_channels_empty") %></p><% end %>
+        <% preferences.sponsorblock_channel_overrides.to_a.sort_by { |id, saved| saved.name.downcase }.each do |id, saved| %>
+            <div class="h-box">
+                <p><a href="/channel/<%= id %>" dir="auto"><%= HTML.escape(saved.name) %></a> · <a href="/preferences/sponsorblock/channels?channel=<%= id %>"><%= I18n.translate(locale, "sb_channel_edit") %></a></p>
+                <form method="post" action="/preferences/sponsorblock/channels">
+                    <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
+                    <input type="hidden" name="channel" value="<%= id %>">
+                    <button class="pure-button" type="submit" name="action" value="reset"><%= I18n.translate(locale, "sb_channel_reset") %></button>
+                </form>
+            </div>
+        <% end %>
+    <% end %>
+</div>

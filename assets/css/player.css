@@ -150,8 +150,13 @@ ul.vjs-menu-content::-webkit-scrollbar {
   font-size: 10px;
 }
 
-.video-js:not(.invidious-mobile) .vjs-control-bar > :is(.vjs-rich-quality, .vjs-rich-audio)::before {
+.video-js:not(.invidious-mobile) .vjs-control-bar > :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-icon-placeholder::before {
   font-size: 24px;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 
@@ -422,4 +427,27 @@ body .video-js.invidious-mobile .vjs-touch-overlay .vjs-play-control {
     width: 72px;
     height: 72px;
     border-radius: 50%;
+}
+
+/* Shared neutral selections override theme accents in every player menu. */
+body .video-js .vjs-menu li.vjs-menu-item.vjs-selected,
+body .video-js .mobile-player-settings button[aria-pressed="true"] {
+  background: #d6d6d6;
+  color: #202020;
+  text-shadow: none;
+}
+body .video-js .vjs-menu li.vjs-selected .stream-option-secondary,
+body .video-js .mobile-player-settings button[aria-pressed="true"] .stream-option-secondary {
+  color: inherit;
+  opacity: 1;
+}
+body .video-js .vjs-menu li.vjs-menu-item:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+.video-js :is(.vjs-rich-quality, .vjs-rich-audio) > .vjs-menu-button {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }

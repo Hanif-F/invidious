@@ -12,7 +12,7 @@ def create_user(sid, email, password)
     notifications:     [] of String,
     subscriptions:     [] of String,
     email:             email,
-    preferences:       Preferences.new(CONFIG.default_user_preferences.to_tuple),
+    preferences:       Preferences.new(CONFIG.default_user_preferences.to_tuple.merge({sponsorblock_channel_overrides: {} of String => Invidious::SponsorBlock::ChannelOverride})),
     password:          password.to_s,
     token:             token,
     watched:           [] of String,

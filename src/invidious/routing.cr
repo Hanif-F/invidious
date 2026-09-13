@@ -65,6 +65,9 @@ module Invidious::Routing
     post "/dearrow_identity", Routes::DeArrowContributions, :identity
     get "/video_actions", Routes::BlockedChannels, :video_actions
 
+    get "/preferences/sponsorblock/channels", Routes::SponsorBlockPreferences, :show
+    post "/preferences/sponsorblock/channels", Routes::SponsorBlockPreferences, :update
+
     # User preferences
     get "/preferences", Routes::PreferencesRoute, :show
     post "/preferences", Routes::PreferencesRoute, :update
