@@ -442,26 +442,21 @@ if (!video_data.params.listen && video_data.params.quality === 'dash') {
     if (video_data.params.quality_dash !== 'auto') {
         player.ready(function () {
             player.on('loadedmetadata', function () {
-                const qualityLevels = Array.from(player.qualityLevels()).sort(function (a, b) {return a.height - b.height;});
-                let targetQualityLevel;
+                const qualityLevels = InvidiousStreamMenus.rankedQualityLevels(player);
+                if (!qualityLevels.length) return;
+                let targetQualityLevel = qualityLevels[0];
                 switch (video_data.params.quality_dash) {
                     case 'best':
-                        targetQualityLevel = qualityLevels.length - 1;
                         break;
                     case 'worst':
-                        targetQualityLevel = 0;
+                        targetQualityLevel = qualityLevels[qualityLevels.length - 1];
                         break;
                     default:
                         const targetHeight = parseInt(video_data.params.quality_dash);
-                        for (let i = 0; i < qualityLevels.length; i++) {
-                            if (qualityLevels[i].height <= targetHeight)
-                                targetQualityLevel = i;
-                            else
-                                break;
-                        }
+                        targetQualityLevel = qualityLevels.find(function (entry) { return entry.height <= targetHeight; }) || qualityLevels[qualityLevels.length - 1];
                 }
-                qualityLevels.forEach(function (level, index) {
-                    level.enabled = (index === targetQualityLevel);
+                qualityLevels.forEach(function (entry) {
+                    entry.level.enabled = (entry === targetQualityLevel);
                 });
             });
         });

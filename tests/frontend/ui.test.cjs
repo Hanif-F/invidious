@@ -1646,6 +1646,12 @@ for (const engine of engines) {
     });
 }
 
+test('DASH player source keeps the complete rendition manifest', () => {
+    const playerTemplate = fs.readFileSync(path.join(root, 'src/invidious/views/components/player.ecr'), 'utf8');
+    assert.doesNotMatch(playerTemplate, /unique_res=1/);
+    assert.match(playerTemplate, /\/api\/manifest\/dash\/id\/.*\?local=true/);
+});
+
 for (const engine of engines) {
     test(`${engine}: rich stream menus rank video and audio variants consistently`, async () => {
         const videoFormats = [
@@ -1669,11 +1675,16 @@ for (const engine of engines) {
         const setup = async page => {
             await page.evaluate(() => {
                 [
-                    ['v3',1080,3000000], ['v60',720,4000000], ['v8',1080,8000000], ['v1',1080,1000000],
-                    ['v30',720,2000000], ['v5',1080,5000000], ['v6',1080,6000000]
-                ].forEach(([id,height,bitrate]) => {
+                    ['0-','v3',1080,3000000], ['1-','v60',720,4000000], ['2-','v8',1080,8000000], ['3-','v1',1080,1000000],
+                    ['4-','v30',720,2000000], ['5-','v5',1080,5000000], ['6-','v6',1080,6000000]
+                ].forEach(([id,itag,height,bitrate]) => {
                     let enabled = true;
-                    player.qualityLevels().addQualityLevel({id, height, bitrate,
+                    const tech = player.tech({IWillNotUseThisInPlugins:true});
+                    tech.vhs = tech.vhs || {};
+                    tech.vhs._testRepresentations = tech.vhs._testRepresentations || [];
+                    tech.vhs._testRepresentations.push({id, playlist:{attributes:{NAME:itag}}});
+                    tech.vhs.representations = () => tech.vhs._testRepresentations;
+                    player.qualityLevels().addQualityLevel({id, height, bandwidth:bitrate,
                         enabled: value => value === undefined ? enabled : (enabled = value)});
                 });
                 [
@@ -1681,36 +1692,57 @@ for (const engine of engines) {
                     ['oa-l','English original [64000k]',false], ['os-h','English original [120000k] Stable Volume',false],
                     ['os-l','English original [60000k] Stable Volume',false], ['fr-h','French [100000k]',false],
                     ['fr-l','French [50000k]',false]
-                ].forEach(([id,label,enabled]) => player.audioTracks().addTrack(new videojs.AudioTrack({id, kind:id.startsWith('fr') ? 'alternative' : 'main', label, language:id.startsWith('fr') ? 'fr' : 'en', enabled})));
+                ].forEach(([id,label,enabled]) => player.audioTracks().addTrack(new videojs.AudioTrack({id, kind:id.startsWith('fr') || id.startsWith('os') ? 'alternative' : 'main', label, language:id.startsWith('fr') ? 'fr' : 'en', enabled})));
             });
         };
 
         const desktop = await pageFor(engine, {realPlayer:true, videoData:{params:{quality:'dash'}}, playerData:{stats_formats:videoFormats.concat(audioFormats)}});
         await setup(desktop.page);
         const desktopResult = await desktop.page.evaluate(() => {
+            player.hasStarted(true); player.userActive(true);
             const quality = InvidiousStreamMenus.qualityOptions(player);
             const audio = InvidiousStreamMenus.audioOptions(player);
+            const bar = player.getChild('controlBar');
+            const controls = ['captionsButton','richAudioButton','richQualityButton','playbackRateMenuButton'].map(name => bar.getChild(name));
+            const stableOnly = InvidiousStreamMenus.audioOptions({audioTracks: () => [
+                new videojs.AudioTrack({id:'regular', kind:'main', label:'English original', language:'en', enabled:true}),
+                new videojs.AudioTrack({id:'stable', kind:'alternative', label:'English Stable Volume', language:'en'})
+            ]});
             return {
                 quality: quality.map(option => [option.primary, option.secondary]),
+                rankedQuality: InvidiousStreamMenus.rankedQualityLevels(player).map(entry => entry.level.id),
                 desktopQuality: player.getChild('controlBar').getChild('richQualityButton').items.map(item => item.options_.primary),
                 audio: audio.map(option => option.divider ? `--${option.primary}--` : option.primary),
+                stableOnly: stableOnly.map(option => option.divider ? `--${option.primary}--` : option.primary),
+                controlClasses: controls.map(control => control.el().className),
+                controlOrders: controls.map(control => Number(getComputedStyle(control.el()).order)),
+                spacerOrder: Number(getComputedStyle(bar.el().querySelector('.vjs-spacer')).order),
+                controlPositions: controls.map(control => control.el().getBoundingClientRect().left),
                 formatting: [InvidiousStreamMenus.formatBytes(999), InvidiousStreamMenus.formatBytes(1200),
                     InvidiousStreamMenus.formatBytes(1e9), InvidiousStreamMenus.formatBitrate(128000)]
             };
         });
         assert.deepEqual(desktopResult.quality, [
-            ['Auto',''], ['1080p High Bitrate','800 MB · 8 Mbps'], ['1080p Medium Bitrate','500 MB · 5 Mbps'],
-            ['1080p Low Bitrate','100 MB · 1 Mbps'], ['720p60','350 MB · 4 Mbps'], ['720p','2 Mbps']
+            ['Auto',''], ['1080p30 High Bitrate','800 MB · 8 Mbps'], ['1080p30 Medium Bitrate','500 MB · 5 Mbps'],
+            ['1080p30 Low Bitrate','100 MB · 1 Mbps'], ['720p60','350 MB · 4 Mbps'], ['720p30','2 Mbps']
         ]);
         assert.deepEqual(desktopResult.desktopQuality, desktopResult.quality.map(option => option[0]));
+        assert.deepEqual(desktopResult.rankedQuality, ['2-','6-','5-','0-','3-','1-','4-']);
         assert.deepEqual(desktopResult.formatting, ['999 B','1.2 kB','1 GB','128 kbps']);
         assert.deepEqual(desktopResult.audio, [
             'English original · High Bitrate', 'English original', 'English original · Low Bitrate',
             'English original · Stable Volume · High Bitrate', 'English original · Stable Volume · Low Bitrate',
             '--Dubbed Audio--', 'French'
         ]);
+        assert.deepEqual(desktopResult.stableOnly, ['English original', 'English Stable Volume · Original Audio · Stable Volume']);
+        assert.match(desktopResult.controlClasses[1], /\bvjs-rich-audio\b/);
+        assert.match(desktopResult.controlClasses[2], /\bvjs-rich-quality\b/);
+        assert.deepEqual(desktopResult.controlOrders, [2, 3, 4, 5]);
+        assert.ok(desktopResult.spacerOrder < desktopResult.controlOrders[1]);
+        assert.ok(desktopResult.controlPositions[1] < desktopResult.controlPositions[2]);
+        assert.ok(desktopResult.controlPositions[2] < desktopResult.controlPositions[3]);
         await desktop.page.evaluate(() => InvidiousStreamMenus.qualityOptions(player)[2].select());
-        assert.equal(await desktop.page.evaluate(() => InvidiousStreamMenus.selectedText(InvidiousStreamMenus.qualityOptions(player))), '1080p Medium Bitrate');
+        assert.equal(await desktop.page.evaluate(() => InvidiousStreamMenus.selectedText(InvidiousStreamMenus.qualityOptions(player))), '1080p30 Medium Bitrate');
         assert.deepEqual(await desktop.page.evaluate(() => Array.from(player.qualityLevels()).map(level => level.enabled)), [false,false,false,false,false,true,false]);
         await desktop.page.evaluate(() => InvidiousStreamMenus.qualityOptions(player)[0].select());
         assert.equal(await desktop.page.evaluate(() => Array.from(player.qualityLevels()).every(level => level.enabled)), true);
@@ -1735,6 +1767,19 @@ for (const engine of engines) {
         assert.deepEqual(await mobile.page.locator('.mobile-player-settings .stream-option-primary').allTextContents(), desktopResult.quality.map(option => option[0]));
         assert.deepEqual(mobile.errors, []);
         await mobile.context.close();
+
+        const preferred = await pageFor(engine, {realPlayer:true, videoData:{params:{quality:'dash', quality_dash:'720p'}}, playerData:{stats_formats:videoFormats}});
+        await setup(preferred.page);
+        const selectedFor = async preference => preferred.page.evaluate(value => {
+            video_data.params.quality_dash = value;
+            player.trigger('loadedmetadata');
+            return Array.from(player.qualityLevels()).find(level => level.enabled).id;
+        }, preference);
+        assert.equal(await selectedFor('720p'), '1-');
+        assert.equal(await selectedFor('best'), '2-');
+        assert.equal(await selectedFor('worst'), '4-');
+        assert.deepEqual(preferred.errors, []);
+        await preferred.context.close();
     });
 }
 

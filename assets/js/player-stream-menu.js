@@ -43,9 +43,34 @@
         return parts.join(' · ');
     }
 
-    function formatForLevel(level) {
+    function representationItag(player, level) {
+        try {
+            var tech = player.tech({IWillNotUseThisInPlugins: true});
+            var vhs = tech && tech.vhs;
+            var representation = vhs && vhs.representations && vhs.representations().find(function (entry) {
+                return String(entry.id) === String(level.id);
+            });
+            return representation && representation.playlist && representation.playlist.attributes && representation.playlist.attributes.NAME;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function formatForLevel(player, level) {
+        var itag = representationItag(player, level);
+        var exact = formats.find(function (format) {
+            return itag != null && format.itag != null && String(format.itag) === String(itag) && format.height;
+        });
+        if (exact) return exact;
+        // QualityLevel IDs are VHS playlist IDs in production, but tests and
+        // non-VHS integrations may expose the representation ID directly.
+        exact = formats.find(function (format) {
+            return level.id != null && format.itag != null && String(format.itag) === String(level.id) && format.height;
+        });
+        if (exact) return exact;
         return formats.find(function (format) {
-            return level.id != null && format.itag != null && String(format.itag) === String(level.id);
+            return format.height && Number(format.height) === Number(level.height) &&
+                Number(format.bitrate) === Number(level.bitrate);
         }) || {};
     }
 
@@ -62,8 +87,30 @@
         return [0, Math.floor((length - 1) / 2), length - 1];
     }
 
-    function qualityOptions(player) {
+    function qualityEntries(player) {
         var levels = Array.from(player.qualityLevels ? player.qualityLevels() : []);
+        return levels.map(function (level, originalIndex) {
+            var format = formatForLevel(player, level);
+            return {
+                level: level,
+                format: format,
+                height: number(level.height != null ? level.height : format.height) || 0,
+                fps: number(format.fps != null ? format.fps : (level.frameRate || level.fps)) || 0,
+                bitrate: number(level.bitrate != null ? level.bitrate : format.bitrate) || 0,
+                originalIndex: originalIndex
+            };
+        });
+    }
+
+    function rankedQualityLevels(player) {
+        return qualityEntries(player).sort(function (a, b) {
+            return b.height - a.height || b.fps - a.fps || b.bitrate - a.bitrate || a.originalIndex - b.originalIndex;
+        });
+    }
+
+    function qualityOptions(player) {
+        var entries = qualityEntries(player);
+        var levels = entries.map(function (entry) { return entry.level; });
         if (!levels.length) return [];
         var allEnabled = levels.every(function (level) { return level.enabled; });
         var options = [{
@@ -71,14 +118,12 @@
             select: function () { levels.forEach(function (level) { level.enabled = true; }); }
         }];
         var groups = new Map();
-        levels.forEach(function (level, originalIndex) {
-            var format = formatForLevel(level);
-            var height = number(level.height != null ? level.height : format.height) || 0;
-            var fps = number(format.fps != null ? format.fps : (level.frameRate || level.fps)) || 0;
-            var shownFps = fps > 30 ? Math.round(fps) : 0;
+        entries.forEach(function (entry) {
+            var shownFps = entry.fps ? Math.round(entry.fps) : 0;
+            var height = entry.height;
             var key = height + '/' + shownFps;
             if (!groups.has(key)) groups.set(key, {height: height, fps: shownFps, entries: []});
-            groups.get(key).entries.push({level: level, format: format, bitrate: number(level.bitrate != null ? level.bitrate : format.bitrate) || 0, originalIndex: originalIndex});
+            groups.get(key).entries.push(entry);
         });
         Array.from(groups.values()).sort(function (a, b) { return b.height - a.height || b.fps - a.fps; }).forEach(function (group) {
             group.entries.sort(function (a, b) { return b.bitrate - a.bitrate || a.originalIndex - b.originalIndex; });
@@ -120,7 +165,7 @@
         var name = audioTrack.displayName || track.label || track.language || 'Unknown';
         var stable = format.isDrc === true || /(?:stable volume|\bdrc\b)/i.test(name + ' ' + (track.label || ''));
         var original = audioTrack.audioIsDefault === true || /\boriginal\b/i.test(name);
-        if (!format.audioTrack && track.kind === 'main' && !stable) original = true;
+        if (!format.audioTrack && track.kind === 'main') original = true;
         return {
             track: track, format: format, name: name, stable: stable, original: original,
             identity: audioTrack.id || track.language || name,
@@ -152,6 +197,14 @@
     function audioOptions(player) {
         var entries = Array.from(player.audioTracks ? player.audioTracks() : []).map(audioInfo);
         if (!entries.length) return [];
+        var originals = entries.filter(function (entry) { return entry.original; });
+        entries.forEach(function (entry) {
+            if (!entry.stable || entry.original) return;
+            entry.original = originals.some(function (original) {
+                return entry.identity === original.identity ||
+                    (entry.track.language && entry.track.language === original.track.language);
+            });
+        });
         var regular = entries.filter(function (entry) { return entry.original && !entry.stable; });
         var stable = entries.filter(function (entry) { return entry.original && entry.stable; });
         var dubs = entries.filter(function (entry) { return !entry.original; });
@@ -223,6 +276,7 @@
         var Button = videojs.extend(MenuButton, {
             constructor: function (player, options) {
                 MenuButton.call(this, player, options);
+                className.split(/\s+/).forEach(function (name) { if (name) this.addClass(name); }, this);
                 var list = source === qualityOptions ? player.qualityLevels() : player.audioTracks();
                 this.streamList_ = list;
                 this.streamUpdate_ = videojs.bind(this, this.update);
@@ -230,18 +284,18 @@
                 this.on('dispose', function () { list.off(['change', 'addqualitylevel', 'removequalitylevel', 'addtrack', 'removetrack'], this.streamUpdate_); });
                 this.controlText(controlText);
             },
-            buildCSSClass: function () { return className + ' vjs-icon-cog ' + MenuButton.prototype.buildCSSClass.call(this); },
             createItems: function () {
                 return source(this.player()).map(function (option) { return new RichStreamMenuItem(this.player(), option); }, this);
             }
         });
         videojs.registerComponent(name, Button);
     }
-    registerButton('RichQualityButton', 'vjs-rich-quality', (data.mobile_labels || {}).quality || 'Quality', qualityOptions);
+    registerButton('RichQualityButton', 'vjs-rich-quality vjs-icon-cog', (data.mobile_labels || {}).quality || 'Quality', qualityOptions);
     registerButton('RichAudioButton', 'vjs-rich-audio vjs-icon-audio', (data.mobile_labels || {}).audio || 'Audio', audioOptions);
 
     window.InvidiousStreamMenus = {
         qualityOptions: qualityOptions,
+        rankedQualityLevels: rankedQualityLevels,
         audioOptions: audioOptions,
         selectedText: selectedText,
         formatBytes: formatBytes,
