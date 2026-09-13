@@ -107,8 +107,13 @@ ul.vjs-menu-content::-webkit-scrollbar {
   order: 3;
 }
 
+.vjs-rich-audio {
+  order: 3;
+}
+
 .vjs-quality-selector,
-.video-js .vjs-http-source-selector {
+.video-js .vjs-http-source-selector,
+.vjs-rich-quality {
   order: 4;
 }
 
@@ -166,6 +171,22 @@ ul.vjs-menu-content::-webkit-scrollbar {
 .vjs-menu li.vjs-selected:focus,
 .vjs-menu li.vjs-selected:hover {
   background-color: rgba(0, 182, 240, 0.75);
+}
+
+.video-js :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-menu-content {
+  width: max-content;
+  min-width: 15em;
+  max-width: min(28em, 90vw);
+  max-height: min(70vh, 34em);
+}
+.video-js :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-menu-item { text-align: start; }
+.stream-option-primary, .stream-option-secondary { display: block; }
+.stream-option-primary { font-weight: 600; }
+.stream-option-secondary { margin-top: 2px; font-size: .82em; opacity: .72; }
+.video-js .stream-option-divider,
+.mobile-player-settings .stream-option-divider {
+  margin-top: 6px; padding: 8px 12px 4px; border-top: 1px solid #777;
+  color: #ddd; font-size: .82em; font-weight: 600; text-transform: uppercase;
 }
 
 /* Progress Bar */
@@ -309,7 +330,7 @@ video.video-js {
 @media (prefers-reduced-motion: reduce) { .video-js .sb-overlay { transition: none; } }
 
 /* Mobile uses one settings entry point; playback components still own their state. */
-.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-captions-button, .vjs-audio-button, .vjs-quality-selector, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-wide-control) { display: none; }
+.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-captions-button, .vjs-audio-button, .vjs-rich-audio, .vjs-quality-selector, .vjs-rich-quality, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-wide-control) { display: none; }
 .video-js .vjs-mobile-settings { order: 6; min-width: 44px; min-height: 44px; align-self: center; }
 .vjs-mobile-settings .vjs-icon-placeholder::before { content: '⚙'; font: 26px/44px sans-serif; }
 .video-js .mobile-player-settings {
@@ -322,7 +343,13 @@ video.video-js {
 .mobile-player-settings header { display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: transparent; z-index: 1; }
 .mobile-player-settings h2 { flex: 1; font-size: 20px; }
 .video-js .mobile-player-settings button { min-height: 48px; padding: 12px; color: inherit; cursor: pointer; text-align: start; border-bottom: 1px solid #555; }
-.mobile-player-settings > div > button { display: block; width: 100%; }
+.mobile-player-settings > div > button { display: flex; width: 100%; min-width: 0; flex-direction: column; }
+.mobile-player-settings > div > button.mobile-setting-row { flex-direction: row; align-items: center; gap: 12px; }
+.mobile-player-settings .mobile-setting-title { flex: none; }
+.mobile-player-settings .mobile-setting-value {
+    display: block; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; color: #ccc; font-size: .88em; text-align: end;
+}
 .mobile-player-settings button[aria-pressed=true]::after { content: ' ✓'; }
 .mobile-player-settings :focus-visible { outline: 2px solid #7cc7ff; outline-offset: -2px; }
 .mobile-player-settings input { width: 100%; min-height: 44px; box-sizing: border-box; }

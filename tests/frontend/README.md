@@ -46,9 +46,10 @@ ignored by Git.
   list layout. Mobile queue scrolling survives browser-toolbar height changes.
 - Initial CSS/JavaScript gzip growth against the recorded pre-redesign revision
   in `asset-baseline.json`. Unchanged player assets are excluded; transcript code
-  is fetched only on request. The 30 KiB cap counts the largest selectable theme stylesheet plus shared
+  is fetched only on request. The 35 KiB cap counts the largest selectable theme stylesheet plus shared
   additions, since only one theme stylesheet loads per page. Other changed assets
-  are counted conservatively even when they do not all load on the same page.
+  are counted conservatively even when they do not all load on the same page. The
+  cap is 35 KiB, including the shared rich stream-menu logic.
 
 These checks do not establish compatibility on physical Android/iOS devices or
 validate live upstream YouTube responses, private playlist authorization, live
@@ -66,7 +67,7 @@ preference export/import using in-memory SQLite tables. An additional theme is r
 only in the fixture process to check asset isolation and keyboard selection.
 Diary fixtures cover light/dark/system modes, compact/thin layouts, RTL, enlarged
 text, search and playlist rows, channels, history, login, errors and preferences.
-Its CSS and doodles count toward the 30 KiB asset cap; lazy-loaded screenshot
+Its CSS and doodles count toward the 35 KiB asset cap; lazy-loaded screenshot
 previews use the separate budget below.
 Diary also serves two theme-local fonts with `font-display: swap`: Dudu Calligraphy
 (73,684 bytes) and Helvetica Punk (319,064 bytes), totaling 392,748 bytes
@@ -77,7 +78,7 @@ before measuring Diary layouts and verify forced-colors decoration removal.
 The picker submits without JavaScript. See [theming](../../docs/theming.md).
 
 Lazy-loaded theme preview images have a separate 24 KiB compressed budget; the
-shared CSS/JavaScript budget remains 30 KiB. Modern Neon and Diary previews use
+shared CSS/JavaScript budget remains 35 KiB. Modern Neon and Diary previews use
 the same 1280×720 browse framing, downsampled to 640×360 WebP screenshots.
 
 ## DeArrow

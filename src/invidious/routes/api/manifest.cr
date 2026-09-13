@@ -73,6 +73,10 @@ module Invidious::Routes::API::Manifest
               is_default = audio_track.has_key?("audioIsDefault") ? audio_track["audioIsDefault"].as_bool : i == 0
               displayname = audio_track["displayName"]?.try &.as_s || "Unknown"
               bitrate = fmt["bitrate"]
+              stable_volume = fmt["isDrc"]?.try &.as_bool ||
+                              displayname.downcase.includes?("stable volume") ||
+                              URI.decode_www_form(fmt["url"].as_s).includes?("acont=drc")
+              displayname += " Stable Volume" if stable_volume && !displayname.downcase.includes?("stable volume")
 
               # Different representations of the same audio should be groupped into one AdaptationSet.
               # However, most players don't support auto quality switching, so we have to trick them

@@ -506,5 +506,12 @@
     "mobile_player_back": "Kembali",
     "mobile_player_close": "Tutup",
     "mobile_player_off": "Nonaktif",
-    "mobile_player_appearance": "Tampilan subtitle"
+    "mobile_player_appearance": "Tampilan subtitle",
+    "player_stream_auto": "Otomatis",
+    "player_stream_high_bitrate": "Bitrate Tinggi",
+    "player_stream_medium_bitrate": "Bitrate Sedang",
+    "player_stream_low_bitrate": "Bitrate Rendah",
+    "player_stream_stable_volume": "Volume Stabil",
+    "player_stream_original_audio": "Audio Asli",
+    "player_stream_dubbed_audio": "Audio Sulih Suara"
 }

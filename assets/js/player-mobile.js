@@ -52,12 +52,33 @@
         function choices(title, items) {
             view(title);
             items.forEach(function (item) {
-                var el = button(item.label, function () { item.select(); overview(); });
+                if (item.divider) {
+                    var divider = document.createElement('div');
+                    divider.className = 'stream-option-divider'; divider.setAttribute('role', 'separator');
+                    divider.textContent = item.primary; content.appendChild(divider); return;
+                }
+                var el = button('', function () { item.select(); overview(); });
+                var primary = document.createElement('span'); primary.className = 'stream-option-primary';
+                primary.textContent = item.primary || item.label; el.appendChild(primary);
+                if (item.secondary) {
+                    var secondary = document.createElement('span'); secondary.className = 'stream-option-secondary';
+                    secondary.textContent = item.secondary; el.appendChild(secondary);
+                }
+                el.setAttribute('aria-label', [item.primary || item.label, item.secondary].filter(Boolean).join(', '));
                 el.setAttribute('aria-pressed', String(!!item.selected));
             });
             content.querySelector('button').focus();
         }
-        function row(title, value, action) { button(title + (value ? ' · ' + value : ''), action); }
+        function row(title, value, action) {
+            var el = button('', action), titleEl = document.createElement('span');
+            el.classList.add('mobile-setting-row');
+            titleEl.className = 'mobile-setting-title'; titleEl.textContent = title; el.appendChild(titleEl);
+            if (value) {
+                var valueEl = document.createElement('span'); valueEl.className = 'mobile-setting-value';
+                valueEl.textContent = value; valueEl.title = value; el.appendChild(valueEl);
+            }
+            el.setAttribute('aria-label', title + (value ? ', ' + value : ''));
+        }
         function componentChoices(name, title) {
             var component = bar.getChild(name);
             if (!component || !component.items || !component.items.length) return;
@@ -78,21 +99,18 @@
                 }));
             });
         }
-        function qualityLabel(level) { return level.height ? level.height + 'p' : Math.round(level.bitrate / 1000) + ' kbps'; }
         function overview() {
             view(labels.settings);
             if (video_data.params.quality === 'dash' && !video_data.params.listen) {
-                var levels = Array.from(player.qualityLevels());
-                if (levels.length) {
-                    var enabled = levels.filter(function (level) { return level.enabled; });
-                    row(labels.quality, enabled.length === levels.length ? gear.localize('Auto') : enabled.map(function (level) { return qualityLabel(level); }).join(', '), function () {
-                        choices(labels.quality, [{label: gear.localize('Auto'), selected: enabled.length === levels.length, select: function () { levels.forEach(function (level) { level.enabled = true; }); }}].concat(levels.map(function (level) {
-                            return {label: qualityLabel(level), selected: enabled.length === 1 && level.enabled, select: function () { levels.forEach(function (other) { other.enabled = other === level; }); }};
-                        })));
-                    });
-                }
+                var qualityOptions = InvidiousStreamMenus.qualityOptions(player);
+                if (qualityOptions.length) row(labels.quality, InvidiousStreamMenus.selectedText(qualityOptions), function () { choices(labels.quality, qualityOptions); });
             } else componentChoices('qualitySelector', labels.quality);
-            componentChoices('audioTrackButton', labels.audio);
+            if (video_data.params.quality === 'dash' && !video_data.params.listen) {
+                var audioOptions = InvidiousStreamMenus.audioOptions(player);
+                if (audioOptions.some(function (option) { return !option.divider; })) {
+                    row(labels.audio, InvidiousStreamMenus.selectedText(audioOptions), function () { choices(labels.audio, audioOptions); });
+                }
+            } else componentChoices('audioTrackButton', labels.audio);
             var tracks = Array.from(player.textTracks()).filter(function (track) { return track.kind === 'captions' || track.kind === 'subtitles'; });
             if (tracks.length) {
                 var selected = tracks.find(function (track) { return track.mode === 'showing'; });

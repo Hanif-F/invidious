@@ -21,8 +21,8 @@ var options = {
             'remainingTimeDisplay',
             'Spacer',
             'captionsButton',
-            'audioTrackButton',
-            'qualitySelector',
+            video_data.params.quality === 'dash' && !video_data.params.listen ? 'richAudioButton' : 'audioTrackButton',
+            video_data.params.quality === 'dash' && !video_data.params.listen ? 'richQualityButton' : 'qualitySelector',
             'playbackRateMenuButton',
             'fullscreenToggle'
         ]
@@ -439,8 +439,6 @@ if (video_data.params.autoplay) {
 }
 
 if (!video_data.params.listen && video_data.params.quality === 'dash') {
-    player.httpSourceSelector();
-
     if (video_data.params.quality_dash !== 'auto') {
         player.ready(function () {
             player.on('loadedmetadata', function () {

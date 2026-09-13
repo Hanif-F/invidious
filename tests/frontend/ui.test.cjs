@@ -58,6 +58,12 @@ async function pageFor(engine, options = {}) {
                     return start + JSON.stringify(updated).replace(/</g, '\\u003c') + end;
                 });
             }
+            if (options.playerData) {
+                body = body.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => {
+                    const original = JSON.parse(data);
+                    return start + JSON.stringify({...original, ...options.playerData}).replace(/</g, '\\u003c') + end;
+                });
+            }
             if (options.extraQuality) body = body.replace('</video>', '<source src="/latest_version?id=2isYuQZMbdU&itag=44" type="video/webm" label="high"></video>');
             if (options.sponsorblock) body = body.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => start + JSON.stringify({...JSON.parse(data), sponsorblock: {...JSON.parse(data).sponsorblock, ...options.sponsorblock}}).replace(/</g, '\\u003c') + end);
             return route.fulfill({ contentType: 'text/html', body });
@@ -785,7 +791,7 @@ test('library navigation survives custom feed settings without channel managemen
     assert.ok(!html.includes('<img'));
 });
 
-test('UI asset additions stay below the 30KB compressed initial-load budget', () => {
+test('UI asset additions stay below the 35KB compressed initial-load budget', () => {
     const baseline = require('./asset-baseline.json');
     let delta = 0;
     const themeBytes = [];
@@ -797,8 +803,8 @@ test('UI asset additions stay below the 30KB compressed initial-load budget', ()
     }
     // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
     delta += Math.max(0, ...themeBytes);
-    for (const file of ['dearrow.js', 'player-mobile.js', 'player-stats.js', 'dearrow-loader.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
-    assert.ok(delta <= 30 * 1024, `${delta} bytes added`);
+    for (const file of ['dearrow.js', 'player-mobile.js', 'player-stats.js', 'player-stream-menu.js', 'dearrow-loader.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
+    assert.ok(delta <= 35 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
 
@@ -1624,7 +1630,7 @@ for (const engine of engines) {
         await page.locator('.vjs-mobile-settings').tap();
         const panel = page.locator('.mobile-player-settings');
         await panel.getByRole('button', {name: /^Quality/}).tap();
-        await panel.getByRole('button', {name: '720p', exact: true}).tap();
+        await panel.getByRole('button', {name: /^720p/}).tap();
         assert.deepEqual(await page.evaluate(() => Array.from(player.qualityLevels()).map(level => level.enabled)), [false, true]);
         await panel.getByRole('button', {name: /^Quality/}).tap();
         await panel.getByRole('button', {name: 'Auto', exact: true}).tap();
@@ -1637,6 +1643,98 @@ for (const engine of engines) {
         assert.equal(await page.evaluate(() => Array.from(player.textTracks()).find(track => track.mode === 'showing').label), 'English');
         assert.deepEqual(errors, []);
         await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: rich stream menus rank video and audio variants consistently`, async () => {
+        const videoFormats = [
+            {itag:'v8', height:1080, fps:30, bitrate:8000000, contentLength:'800000000'},
+            {itag:'v6', height:1080, fps:30, bitrate:6000000, contentLength:'600000000'},
+            {itag:'v5', height:1080, fps:30, bitrate:5000000, contentLength:'500000000'},
+            {itag:'v3', height:1080, fps:30, bitrate:3000000, contentLength:'300000000'},
+            {itag:'v1', height:1080, fps:30, bitrate:1000000, contentLength:'100000000'},
+            {itag:'v60', height:720, fps:60, bitrate:4000000, contentLength:'350000000'},
+            {itag:'v30', height:720, fps:30, bitrate:2000000}
+        ];
+        const audioFormats = [
+            {itag:'oa-h', bitrate:128000, contentLength:'12800000', audioTrack:{id:'en.4', displayName:'English original', audioIsDefault:true}},
+            {itag:'oa-m', bitrate:96000, contentLength:'9600000', audioTrack:{id:'en.4', displayName:'English original', audioIsDefault:true}},
+            {itag:'oa-l', bitrate:64000, contentLength:'6400000', audioTrack:{id:'en.4', displayName:'English original', audioIsDefault:true}},
+            {itag:'os-h', bitrate:120000, contentLength:'12000000', isDrc:true, audioTrack:{id:'en.4', displayName:'English original', audioIsDefault:true}},
+            {itag:'os-l', bitrate:60000, contentLength:'6000000', isDrc:true, audioTrack:{id:'en.4', displayName:'English original', audioIsDefault:true}},
+            {itag:'fr-h', bitrate:100000, contentLength:'10000000', audioTrack:{id:'fr.3', displayName:'French', audioIsDefault:false}},
+            {itag:'fr-l', bitrate:50000, contentLength:'5000000', audioTrack:{id:'fr.3', displayName:'French', audioIsDefault:false}}
+        ];
+        const setup = async page => {
+            await page.evaluate(() => {
+                [
+                    ['v3',1080,3000000], ['v60',720,4000000], ['v8',1080,8000000], ['v1',1080,1000000],
+                    ['v30',720,2000000], ['v5',1080,5000000], ['v6',1080,6000000]
+                ].forEach(([id,height,bitrate]) => {
+                    let enabled = true;
+                    player.qualityLevels().addQualityLevel({id, height, bitrate,
+                        enabled: value => value === undefined ? enabled : (enabled = value)});
+                });
+                [
+                    ['oa-h','English original [128000k]',false], ['oa-m','English original [96000k]',true],
+                    ['oa-l','English original [64000k]',false], ['os-h','English original [120000k] Stable Volume',false],
+                    ['os-l','English original [60000k] Stable Volume',false], ['fr-h','French [100000k]',false],
+                    ['fr-l','French [50000k]',false]
+                ].forEach(([id,label,enabled]) => player.audioTracks().addTrack(new videojs.AudioTrack({id, kind:id.startsWith('fr') ? 'alternative' : 'main', label, language:id.startsWith('fr') ? 'fr' : 'en', enabled})));
+            });
+        };
+
+        const desktop = await pageFor(engine, {realPlayer:true, videoData:{params:{quality:'dash'}}, playerData:{stats_formats:videoFormats.concat(audioFormats)}});
+        await setup(desktop.page);
+        const desktopResult = await desktop.page.evaluate(() => {
+            const quality = InvidiousStreamMenus.qualityOptions(player);
+            const audio = InvidiousStreamMenus.audioOptions(player);
+            return {
+                quality: quality.map(option => [option.primary, option.secondary]),
+                desktopQuality: player.getChild('controlBar').getChild('richQualityButton').items.map(item => item.options_.primary),
+                audio: audio.map(option => option.divider ? `--${option.primary}--` : option.primary),
+                formatting: [InvidiousStreamMenus.formatBytes(999), InvidiousStreamMenus.formatBytes(1200),
+                    InvidiousStreamMenus.formatBytes(1e9), InvidiousStreamMenus.formatBitrate(128000)]
+            };
+        });
+        assert.deepEqual(desktopResult.quality, [
+            ['Auto',''], ['1080p High Bitrate','800 MB · 8 Mbps'], ['1080p Medium Bitrate','500 MB · 5 Mbps'],
+            ['1080p Low Bitrate','100 MB · 1 Mbps'], ['720p60','350 MB · 4 Mbps'], ['720p','2 Mbps']
+        ]);
+        assert.deepEqual(desktopResult.desktopQuality, desktopResult.quality.map(option => option[0]));
+        assert.deepEqual(desktopResult.formatting, ['999 B','1.2 kB','1 GB','128 kbps']);
+        assert.deepEqual(desktopResult.audio, [
+            'English original · High Bitrate', 'English original', 'English original · Low Bitrate',
+            'English original · Stable Volume · High Bitrate', 'English original · Stable Volume · Low Bitrate',
+            '--Dubbed Audio--', 'French'
+        ]);
+        await desktop.page.evaluate(() => InvidiousStreamMenus.qualityOptions(player)[2].select());
+        assert.equal(await desktop.page.evaluate(() => InvidiousStreamMenus.selectedText(InvidiousStreamMenus.qualityOptions(player))), '1080p Medium Bitrate');
+        assert.deepEqual(await desktop.page.evaluate(() => Array.from(player.qualityLevels()).map(level => level.enabled)), [false,false,false,false,false,true,false]);
+        await desktop.page.evaluate(() => InvidiousStreamMenus.qualityOptions(player)[0].select());
+        assert.equal(await desktop.page.evaluate(() => Array.from(player.qualityLevels()).every(level => level.enabled)), true);
+        await desktop.page.evaluate(() => InvidiousStreamMenus.audioOptions(player)[0].select());
+        assert.deepEqual(await desktop.page.evaluate(() => InvidiousStreamMenus.audioOptions(player).map(option => option.divider ? `--${option.primary}--` : option.primary)), [
+            'English original · High Bitrate', 'English original · Low Bitrate',
+            'English original · Stable Volume · High Bitrate', 'English original · Stable Volume · Low Bitrate',
+            '--Dubbed Audio--', 'French'
+        ]);
+        assert.deepEqual(desktop.errors, []);
+        await desktop.context.close();
+
+        const mobile = await pageFor(engine, {realPlayer:true, touch:true, width:320, height:700, videoData:{params:{quality:'dash'}}, playerData:{stats_formats:videoFormats.concat(audioFormats)}});
+        await setup(mobile.page);
+        await mobile.page.evaluate(() => { player.hasStarted(true); player.userActive(true); });
+        await mobile.page.locator('.vjs-mobile-settings').tap();
+        const audioRow = mobile.page.locator('.mobile-player-settings .mobile-setting-row').filter({hasText:'Audio'});
+        assert.match(await audioRow.getAttribute('aria-label'), /^Audio, English original/);
+        assert.equal(await audioRow.locator('.mobile-setting-value').getAttribute('title'), 'English original');
+        assert.equal(await audioRow.locator('.mobile-setting-value').evaluate(el => getComputedStyle(el).textOverflow), 'ellipsis');
+        await mobile.page.locator('.mobile-player-settings').getByRole('button', {name:/^Quality/}).tap();
+        assert.deepEqual(await mobile.page.locator('.mobile-player-settings .stream-option-primary').allTextContents(), desktopResult.quality.map(option => option[0]));
+        assert.deepEqual(mobile.errors, []);
+        await mobile.context.close();
     });
 }
 
