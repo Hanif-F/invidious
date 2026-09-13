@@ -9,6 +9,7 @@ struct Invidious::User
         json.object do
           json.field "subscriptions", user.subscriptions
           json.field "watch_history", user.watched
+          json.field "watch_history_details", Invidious::Database::WatchHistory.entries(user)
           json.field "preferences", user.preferences
           json.field "playback_positions" do
             json.array do

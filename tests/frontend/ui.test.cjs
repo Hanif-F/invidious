@@ -486,16 +486,58 @@ for (const engine of engines) {
         await context.close();
     });
 
+    test(`${engine}: history search by title or channel`, async () => {
+        const result = await pageFor(engine, { fixture: 'history-search', javascript: false });
+        assert.equal(await result.page.locator('.media-card').count(), 1);
+        assert.match(await result.page.locator('.media-card').textContent(), /Studio North/);
+        assert.equal(await result.page.locator('#history-search').inputValue(), 'STUDIO north');
+        assert.equal(await result.page.getByRole('link', { name: 'Clear search', exact: true }).getAttribute('href'), '/feed/history');
+        await result.page.locator('#history-search').fill('Light & color');
+        await Promise.all([
+            result.page.waitForURL(url => url.pathname === '/feed/history' && url.searchParams.get('q') === 'Light & color'),
+            result.page.locator('form[aria-label="Search history"] button').click()
+        ]);
+        assert.equal(new URL(result.page.url()).searchParams.has('page'), false);
+        assert.equal(result.requests.some(url => url.startsWith('/api/v1/videos/')), false);
+        assert.deepEqual(result.errors, []);
+        await result.context.close();
+        const empty = await pageFor(engine, { fixture: 'history-no-matches', width: 390 });
+        assert.equal(await empty.page.locator('.media-card').count(), 0);
+        assert.equal(await empty.page.locator('.history-group').count(), 0);
+        assert.equal(await empty.page.getByText('No videos match your search.', { exact: true }).isVisible(), true);
+        assert.equal(await empty.page.locator('#history-search').inputValue(), '<unmatched>');
+        assert.deepEqual(empty.errors, []);
+        await empty.context.close();
+    });
+
     test(`${engine}: cached history titles and compact desktop playlist library`, async () => {
         const history = await pageFor(engine, { fixture: 'history' });
         const cards = history.page.locator('.media-card');
         assert.match(await cards.nth(0).textContent(), /A journey through light/);
         assert.match(await cards.nth(1).textContent(), /Light <study> & color/);
-        assert.equal(await cards.nth(2).locator('p').count(), 0);
+        assert.match(await cards.nth(2).textContent(), /Watch date unknown/);
+        assert.equal(await cards.nth(0).locator('a[href="/channel/UCfixture"]').count(), 1);
+        assert.match(await cards.nth(0).textContent(), /2026-08-01/);
+        assert.deepEqual(await history.page.locator('.history-group h2').allTextContents(), ['Today', 'Yesterday', 'Older']);
         assert.equal(await cards.nth(2).locator('img').count(), 1);
         assert.equal(history.requests.some(url => url.startsWith('/api/v1/videos/')), false);
         assert.deepEqual(history.errors, []);
+        await history.page.screenshot({ path: path.join(artifacts, `history-${engine}.png`), fullPage: true });
+        await history.page.route('**/watch_ajax?**', route => route.fulfill({ status: 500, body: '{}' }));
+        await cards.nth(0).locator('[data-onclick="mark_unwatched"]').click();
+        await history.page.waitForFunction(() => document.querySelector('.history-group').style.display === '');
+        assert.equal(await history.page.locator('.history-group').first().isVisible(), true);
+        await history.page.route('**/watch_ajax?**', route => route.fulfill({ status: 200, body: '{}' }));
+        await cards.nth(0).locator('[data-onclick="mark_unwatched"]').click();
+        assert.equal(await history.page.locator('.history-group').first().isVisible(), false);
         await history.context.close();
+        for (const fixture of ['history-empty', 'history-thin']) {
+            const variant = await pageFor(engine, { fixture, width: 390, javascript: false });
+            assert.equal(await variant.page.locator('.media-card img').count(), 0);
+            assert.equal(await variant.page.locator('.history-group').count(), fixture === 'history-empty' ? 0 : 3);
+            assert.deepEqual(variant.errors, []);
+            await variant.context.close();
+        }
         const library = await pageFor(engine, { fixture: 'playlist-library' });
         const image = library.page.locator('.playlist-library img').first();
         assert.ok((await image.boundingBox()).width < 420);

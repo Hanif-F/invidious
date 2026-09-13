@@ -70,7 +70,7 @@ module Invidious::Routes::Watch
     env.params.query.delete_all("iv_load_policy")
 
     if watched && preferences.watch_history
-      Invidious::Database::Users.mark_watched(user.as(User), id)
+      Invidious::Database::Users.mark_watched(user.as(User), id, video)
     end
 
     playback_sync = !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now

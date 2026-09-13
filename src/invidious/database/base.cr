@@ -18,6 +18,7 @@ module Invidious::Database
     Invidious::Database.check_table("nonces", Nonce)
     Invidious::Database.check_table("session_ids", SessionId)
     Invidious::Database.check_table("users", User)
+    Invidious::Database.check_table("watch_history")
     Invidious::Database.check_table("playback_positions")
     Invidious::Database.check_table("blocked_channels")
     Invidious::Database.check_table("dearrow_identities")

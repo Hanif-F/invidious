@@ -68,6 +68,7 @@ module Invidious::Routing
     # User preferences
     get "/preferences", Routes::PreferencesRoute, :show
     post "/preferences", Routes::PreferencesRoute, :update
+    post "/preferences/timezone", Routes::PreferencesRoute, :detect_timezone
     get "/toggle_theme", Routes::PreferencesRoute, :toggle_theme
     get "/data_control", Routes::PreferencesRoute, :data_control
     post "/data_control", Routes::PreferencesRoute, :update_data_control

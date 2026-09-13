@@ -126,6 +126,10 @@ struct Invidious::User
         Invidious::Database::Users.update_watch_history(user)
       end
 
+      if details = data["watch_history_details"]?.try(&.as_a?)
+        Invidious::Database::WatchHistory.import(user, details)
+      end
+
       if data["preferences"]?
         user.preferences = Invidious::Themes.prepare_schedule(user.preferences, Preferences.from_json(data["preferences"].to_json))
         Invidious::Database::Users.update_preferences(user)

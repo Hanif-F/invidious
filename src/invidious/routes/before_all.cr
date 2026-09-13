@@ -100,6 +100,7 @@ module Invidious::Routes::BeforeAll
           ":subscription_ajax",
           ":token_ajax",
           ":watch_ajax",
+          ":preferences/timezone",
         }, HMAC_KEY, 1.week)
 
         preferences = user.preferences

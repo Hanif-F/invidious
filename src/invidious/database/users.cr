@@ -40,43 +40,32 @@ module Invidious::Database::Users
   # -------------------
 
   def update_watch_history(user : User)
-    request = <<-SQL
-      UPDATE users
-      SET watched = $1
-      WHERE email = $2
-    SQL
-
-    PG_DB.exec(request, user.watched, user.email)
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      current = conn.query_one("SELECT watched FROM users WHERE email = $1 FOR UPDATE", user.email, as: Array(String))
+      merged = (current + user.watched).reverse.uniq.reverse
+      conn.exec("UPDATE users SET watched = $1 WHERE email = $2", merged, user.email)
+    end
   end
 
-  def mark_watched(user : User, vid : String)
-    request = <<-SQL
-      UPDATE users
-      SET watched = array_append(array_remove(watched, $1), $1)
-      WHERE email = $2
-    SQL
-
-    PG_DB.exec(request, vid, user.email)
+  def mark_watched(user : User, vid : String, video : Video? = nil)
+    WatchHistory.record(user, vid, video)
   end
 
   def mark_unwatched(user : User, vid : String)
-    request = <<-SQL
-      UPDATE users
-      SET watched = array_remove(watched, $1)
-      WHERE email = $2
-    SQL
-
-    PG_DB.exec(request, vid, user.email)
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      conn.exec("UPDATE users SET watched = array_remove(watched, $1) WHERE email = $2", vid, user.email)
+      conn.exec("DELETE FROM watch_history WHERE email = $1 AND video_id = $2", user.email, vid)
+    end
   end
 
   def clear_watch_history(user : User)
-    request = <<-SQL
-      UPDATE users
-      SET watched = '{}'
-      WHERE email = $1
-    SQL
-
-    PG_DB.exec(request, user.email)
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      conn.exec("UPDATE users SET watched = '{}' WHERE email = $1", user.email)
+      conn.exec("DELETE FROM watch_history WHERE email = $1", user.email)
+    end
   end
 
   # -------------------

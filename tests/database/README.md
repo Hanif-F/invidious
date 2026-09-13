@@ -13,3 +13,11 @@ DEARROW_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_dearrow_test c
 ```
 
 It verifies migration 13 and fresh-install SQL, simultaneous first-use identity creation, imports, account isolation, and cascading deletion. The database name is enforced before writes.
+
+History integration checks require a disposable database named `invidious_history_test`:
+
+```sh
+HISTORY_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_history_test crystal run tests/database/watch_history.cr
+```
+
+This checks both migration 14 and the fresh schema, account dates, repeat/concurrent watches, archived dates, missing metadata, cache backfill and eviction, import/export, and cascading account deletion.

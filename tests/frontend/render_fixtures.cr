@@ -188,15 +188,25 @@ def navigation_fixture
   render "src/invidious/views/components/navigation.ecr"
 end
 
-def history_fixture(visual_theme = "modern-neon")
+def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "")
   env = signed_in_env("/feed/history")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = visual_theme
+  preferences.thin_mode = thin
   env.set "preferences", preferences
   user = env.get("user").as(User)
   user.watched = ["2isYuQZMbdU", "previous001", "nextvideo01"]
-  watched = user.watched
-  history_titles = {"2isYuQZMbdU" => "A journey through light, color, and motion", "previous001" => "Light <study> & color"}
+  history_today = "2026-09-13"
+  watched = [
+    Invidious::Database::WatchHistory::Entry.new("2isYuQZMbdU", "A journey through light, color, and motion", "Studio North", "UCfixture", "2026-08-01", "2026-09-13"),
+    Invidious::Database::WatchHistory::Entry.new("previous001", "Light <study> & color", "A channel", nil, nil, "2026-09-12"),
+    Invidious::Database::WatchHistory::Entry.new("nextvideo01"),
+  ]
+  watched.select! { |entry| Invidious::History.matches?(entry.title, entry.channel_name, history_query) }
+  watched.clear if empty
+  user.watched.clear if empty
+  history_count = watched.size
+  history_clear_url = "/feed/history"
   locale = user.preferences.locale
   page = 1
   max_results = 20
@@ -297,6 +307,10 @@ File.write("#{output}/queue-thin.json", queue_fixture(true))
 File.write("#{output}/browse-signed-in.html", browse_fixture(signed_in_env("/feed/popular")))
 File.write("#{output}/navigation-subscribed.html", navigation_fixture)
 File.write("#{output}/history.html", history_fixture)
+File.write("#{output}/history-empty.html", history_fixture(empty: true))
+File.write("#{output}/history-search.html", history_fixture(history_query: "STUDIO north"))
+File.write("#{output}/history-no-matches.html", history_fixture(history_query: "<unmatched>"))
+File.write("#{output}/history-thin.html", history_fixture(thin: true))
 File.write("#{output}/playlist-library.html", playlist_library_fixture)
 # Render Diary through the same production templates and preference resolution.
 {"dark", "light", ""}.each do |mode|

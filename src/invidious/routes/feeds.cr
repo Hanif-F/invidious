@@ -130,15 +130,31 @@ module Invidious::Routes::Feeds
     max_results ||= user.preferences.max_results
     max_results ||= CONFIG.default_user_preferences.max_results
 
-    if user.watched[(page - 1) * max_results]?
-      watched = user.watched.reverse[(page - 1) * max_results, max_results]
+    page = page.clamp(1, Int32::MAX)
+    history_today = Invidious::History.today(user.preferences.timezone)
+    history_query = (env.params.query["q"]? || "").strip
+    history_entries = IV::Database::WatchHistory.entries(user)
+    history_entries.select! { |entry| Invidious::History.matches?(entry.title, entry.channel_name, history_query) }
+    history_count = history_entries.size
+    recency = user.watched.reverse.each_with_index.to_h
+    groups = %w(history_today history_yesterday history_last_7_days history_last_30_days history_older)
+    history_entries.sort_by! do |entry|
+      # Future calendar dates (after changing timezone) belong in Older too.
+      {groups.index(Invidious::History.group(entry.latest_watched, history_today)).not_nil!,
+       entry.latest_watched.nil? ? 1 : 0,
+       -(entry.latest_watched || "0000-00-00").delete('-').to_i64,
+       recency[entry.video_id]? || Int32::MAX}
     end
-    watched ||= [] of String
-    history_titles = IV::Database::Videos.select_titles(watched)
+    watched = history_entries.skip((page.to_i64 - 1) * max_results).first(max_results)
 
     # Used for pagination links
+    history_params = URI::Params.new
+    history_params["max_results"] = max_results.to_s if env.params.query.has_key?("max_results")
+    history_clear_url = "/feed/history"
+    history_clear_url += "?#{history_params}" unless history_params.empty?
+    history_params["q"] = history_query unless history_query.empty?
     base_url = "/feed/history"
-    base_url += "?max_results=#{max_results}" if env.params.query.has_key?("max_results")
+    base_url += "?#{history_params}" unless history_params.empty?
 
     templated "feeds/history"
   end

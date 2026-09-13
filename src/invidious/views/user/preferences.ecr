@@ -314,6 +314,13 @@
                 <h2><%= I18n.translate(locale, "preferences_category_subscription") %></h2>
 
                 <div class="pure-control-group">
+                    <label for="timezone"><%= I18n.translate(locale, "history_timezone") %></label>
+                    <input id="timezone" name="timezone" list="timezones" value="<%= HTML.escape(preferences.timezone || "") %>" placeholder="UTC">
+                    <datalist id="timezones">
+                        <% Invidious::History.timezones.each do |zone| %>
+                        <option value="<%= HTML.escape(zone) %>"></option>
+                        <% end %>
+                    </datalist>
                     <label for="watch_history"><%= I18n.translate(locale, "preferences_watch_history_label") %></label>
                     <input name="watch_history" id="watch_history" type="checkbox" <% if preferences.watch_history %>checked<% end %>>
                 </div>

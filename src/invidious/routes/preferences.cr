@@ -1,6 +1,28 @@
 {% skip_file if flag?(:api_only) %}
 
 module Invidious::Routes::PreferencesRoute
+  def self.detect_timezone(env)
+    user = env.get?("user").try &.as(User)
+    return error_json(403, "No such user") unless user
+    begin
+      validate_request(env.params.body["csrf_token"]?, env.get("sid").as(String), env.request, HMAC_KEY, user.preferences.locale)
+    rescue ex
+      return error_json(403, "Invalid CSRF token")
+    end
+    zone = Invidious::History.timezone(env.params.body["timezone"]?)
+    return error_json(400, "Invalid timezone") unless zone
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      raw = conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", user.email, as: String)
+      preferences = Preferences.from_json(raw)
+      unless preferences.timezone
+        preferences.timezone = zone
+        conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", preferences.to_json, user.email)
+      end
+    end
+    env.response.status_code = 204
+  end
+
   def self.show(env)
     preferences = env.get("preferences").as(Preferences)
     locale = preferences.locale
@@ -13,6 +35,11 @@ module Invidious::Routes::PreferencesRoute
   def self.update(env)
     locale = env.get("preferences").as(Preferences).locale
     referer = get_referer(env)
+    if zone = env.params.body["timezone"]?
+      unless zone.empty? || Invidious::History.timezone(zone)
+        return error_template(400, "Invalid timezone")
+      end
+    end
 
     video_loop = env.params.body["video_loop"]?.try &.as(String)
     video_loop ||= "off"
@@ -65,7 +92,6 @@ module Invidious::Routes::PreferencesRoute
 
     quality_dash = env.params.body["quality_dash"]?.try &.as(String)
     quality_dash ||= CONFIG.default_user_preferences.quality_dash
-
 
     extend_desc = env.params.body["extend_desc"]?.try &.as(String)
     extend_desc ||= "off"
@@ -192,6 +218,7 @@ module Invidious::Routes::PreferencesRoute
       feed_menu:                   feed_menu,
       automatic_instance_redirect: automatic_instance_redirect,
       region:                      region,
+      timezone:                    Invidious::History.timezone(env.params.body["timezone"]? || previous.timezone),
       related_videos:              related_videos,
       sort:                        sort,
       speed:                       speed,

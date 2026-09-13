@@ -187,6 +187,10 @@
     <script src="/js/video-actions.js?v=<%= ASSET_COMMIT %>" defer></script>
     <script src="/js/handlers.js?v=<%= ASSET_COMMIT %>"></script>
     <script src="/js/themes.js?v=<%= ASSET_COMMIT %>"></script>
+    <% if env.get?("user") && !env.get("user").as(Invidious::User).preferences.timezone %>
+    <script id="timezone_data" type="application/json"><%= {"csrf_token" => env.get?("csrf_token").try(&.as(String))}.to_json %></script>
+    <script src="/js/timezone.js?v=<%= ASSET_COMMIT %>" defer></script>
+    <% end %>
     <script src="/js/interface.js?v=<%= ASSET_COMMIT %>" defer></script>
     <% if env.get? "user" %>
         <script src="/js/sse.js?v=<%= ASSET_COMMIT %>"></script>

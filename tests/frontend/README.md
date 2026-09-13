@@ -41,7 +41,7 @@ ignored by Git.
 - Theme switching, system theme, thin mode, keyboard interaction and no-JavaScript
   navigation. Responsive checks at 320, 390, 768, 1024, 1440 and 1920 pixels,
   including RTL and enlarged text.
-- History renders escaped locally cached titles, with thumbnail-only fallback;
+- History renders escaped saved metadata, linked channels, release/watch dates, grouped headings, and unknown-date fallbacks; removal failures restore cards and headings. Empty and thin-mode history also work without JavaScript;
   playlist-library thumbnails use desktop cards while playlist entries keep their
   list layout. Mobile queue scrolling survives browser-toolbar height changes.
 - Initial CSS/JavaScript gzip growth against the recorded pre-redesign revision

@@ -19,16 +19,27 @@ function mark_watched(target) {
 function mark_unwatched(target) {
     var tile = target.closest('.media-item') || target.parentNode.parentNode.parentNode.parentNode.parentNode;
     tile.style.display = 'none';
+    var group = tile.closest('.history-group');
+    if (group && !Array.prototype.some.call(group.querySelectorAll('.media-item'), function (item) { return item.style.display !== 'none'; })) {
+        group.style.display = 'none';
+    }
     var count = document.getElementById('count');
     count.textContent--;
 
     var url = '/watch_ajax?action=mark_unwatched&redirect=false' +
         '&id=' + target.getAttribute('data-id');
 
+    var restored = false;
+    function restore() {
+        if (restored) return;
+        restored = true;
+        count.textContent++;
+        tile.style.display = '';
+        if (group) group.style.display = '';
+    }
     helpers.xhr('POST', url, {payload: payload}, {
-        onNon200: function (xhr) {
-            count.textContent++;
-            tile.style.display = '';
-        }
+        onNon200: restore,
+        onError: restore,
+        onTimeout: restore
     });
 }

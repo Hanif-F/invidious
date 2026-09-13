@@ -697,5 +697,21 @@
     "channel_search_label": "Search this channel",
     "channel_search_clear": "Back to channel videos",
     "channel_tab_search_label": "Search",
-    "dearrow_privacy": "Your title and votes are sent to DeArrow when you submit. Contributions are public. No license key is required."
+    "dearrow_privacy": "Your title and votes are sent to DeArrow when you submit. Contributions are public. No license key is required.",
+    "history_today": "Today",
+    "history_yesterday": "Yesterday",
+    "history_last_7_days": "Last 7 days",
+    "history_last_30_days": "Last 30 days",
+    "history_older": "Older",
+    "history_timezone": "Account timezone",
+    "history_channel_unknown": "Channel unavailable",
+    "history_released": "Released",
+    "history_date_unknown": "Date unknown",
+    "history_watched": "Watched",
+    "history_watch_date_unknown": "Watch date unknown",
+    "history_search": "Search history",
+    "history_search_placeholder": "Title or channel name",
+    "history_clear_search": "Clear search",
+    "history_no_matches": "No videos match your search.",
+    "history_empty": "No watch history yet."
 }

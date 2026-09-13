@@ -42,6 +42,19 @@ struct Preferences
   property locale : String = CONFIG.default_user_preferences.locale
   property region : String? = CONFIG.default_user_preferences.region
 
+  @[JSON::Field(converter: Preferences::TimezoneConverter)]
+  property timezone : String? = nil
+
+  module TimezoneConverter
+    def self.from_json(pull : JSON::PullParser) : String?
+      Invidious::History.timezone(pull.read_string_or_null)
+    end
+
+    def self.to_json(value : String?, json : JSON::Builder)
+      value.to_json(json)
+    end
+  end
+
   @[JSON::Field(converter: Preferences::ClampInt)]
   property max_results : Int32 = CONFIG.default_user_preferences.max_results
   property notifications_only : Bool = CONFIG.default_user_preferences.notifications_only
