@@ -20,4 +20,4 @@ History integration checks require a disposable database named `invidious_histor
 HISTORY_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_history_test crystal run tests/database/watch_history.cr
 ```
 
-This checks both migration 14 and the fresh schema, account dates, repeat/concurrent watches, archived dates, missing metadata, cache backfill and eviction, import/export, and cascading account deletion.
+This checks migrations 14/16 and the fresh schema, account dates, repeat/concurrent watches, archived dates, missing metadata, cache backfill and eviction, video duration recovery/preservation, old and invalid duration imports, import/export, and cascading account deletion.

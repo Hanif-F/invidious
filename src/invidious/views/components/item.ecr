@@ -126,19 +126,20 @@
               end
             -%>
 
-            <div class="thumbnail">
+            <div class="thumbnail video-thumbnail">
                 <%- if !thin_mode -%>
                     <a tabindex="-1" href="<%= link_url %>">
                         <img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= item.id %>/mqdefault.jpg" alt="" />
 
-                        <div class="watched-indicator" hidden data-length="<%= item.length_seconds %>" data-id="<%= item.id %>" data-watched="<%= item_watched %>"></div>
                         <% if item_watched %>
                             <div class="watched-overlay"></div>
                         <% end %>
                     </a>
                 <%- else -%>
-                    <div class="thumbnail-placeholder"></div>
+                    <div class="thumbnail-placeholder video-placeholder"></div>
                 <%- end -%>
+
+                <%= Invidious::Frontend::WatchedIndicator.render(item.id, item.length_seconds, !!item_watched) %>
 
                 <div class="top-left-overlay">
                     <%- if env.get? "show_watched" -%>

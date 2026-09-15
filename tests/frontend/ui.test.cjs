@@ -2521,3 +2521,84 @@ test('manual chapter template serializes titles safely for watch and embed', () 
     const embed = fs.readFileSync(path.join(generated, 'embed-mobile.html'), 'utf8');
     assert.equal(JSON.parse(embed.match(/<script id="player_data"[^>]*>([\s\S]*?)<\/script>/)[1]).chapters.length, 3);
 });
+
+for (const engine of engines) {
+    for (const width of [390, 1440]) {
+        test(`${engine}: production thumbnail progress spans history, all card types and thin layouts at ${width}px`, async () => {
+            for (const theme of ['modern-neon', 'diary', 'cinematic']) {
+                for (const thin of [false, true]) {
+                    const suffix = theme + '-' + (thin ? 'thin' : 'normal');
+                    const history = await pageFor(engine, {fixture: 'history-progress-' + suffix, route: 'feed/history', width,
+                        playback: {positions: {'2isYuQZMbdU': 492, nextvideo01: 100}, watched: ['2isYuQZMbdU', 'previous001', 'nextvideo01']}});
+                    const partial = history.page.locator('.watched-indicator[data-id="2isYuQZMbdU"]');
+                    await partial.waitFor({state: 'visible'});
+                    assert.equal(await partial.evaluate(el => el.style.width), '49%');
+                    assert.equal(await history.page.locator('.watched-indicator[data-id="previous001"]').evaluate(el => el.style.width), '100%');
+                    assert.equal(await history.page.locator('.watched-indicator[data-id="nextvideo01"]').isVisible(), false);
+                    assert.equal(history.requests.filter(url => url === '/api/v1/auth/playback').length, 1);
+                    assert.equal(history.requests.some(url => url.startsWith('/api/v1/videos/')), false);
+                    if (thin) {
+                        assert.equal(await history.page.locator('.media-card img').count(), 0);
+                        const remove = await history.page.locator('.media-card button').first().boundingBox();
+                        const bar = await partial.boundingBox();
+                        assert.ok(remove.y + remove.height <= bar.y, 'History actions must not cover the thin-mode progress bar');
+                    }
+                    assert.equal(await history.page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+                    if (theme === 'modern-neon') await history.page.screenshot({path: path.join(artifacts, `${engine}-history-progress-${width}-${thin}.png`), fullPage: true});
+                    assert.deepEqual(history.errors, []);
+                    await history.context.close();
+
+                    const cards = await pageFor(engine, {fixture: 'cards-progress-' + suffix, route: 'playlist?list=PLfixture', width,
+                        playback: {positions: {progress001: 492}, watched: ['progress001']}});
+                    const indicators = cards.page.locator('.watched-indicator');
+                    await indicators.first().waitFor({state: 'visible'});
+                    assert.deepEqual(await indicators.evaluateAll(els => els.map(el => el.style.width)), ['49%', '49%', '49%', '49%']);
+                    for (const indicator of await indicators.all()) assert.equal(await indicator.isVisible(), true);
+                    if (thin) assert.equal(await cards.page.locator('.media-card img').count(), 0);
+                    assert.deepEqual(cards.errors, []);
+                    await cards.context.close();
+                }
+            }
+        });
+
+        test(`${engine}: production queue and recommendation progress survives thin mode and refresh at ${width}px`, async () => {
+            for (const thin of [false, true]) {
+                const suffix = 'modern-neon-' + (thin ? 'thin' : 'normal');
+                const response = thin ? JSON.parse(fs.readFileSync(path.join(generated, 'queue-thin.json'))) : queue;
+                const session = await pageFor(engine, {fixture: 'watch-progress-' + suffix, width, queue: response,
+                    playback: {positions: {'2isYuQZMbdU': 120}, watched: []}});
+                if (width < 768) await session.page.locator('#queue-toggle').click();
+                const duplicates = session.page.locator('.queue-row .watched-indicator[data-id="2isYuQZMbdU"]');
+                await duplicates.first().waitFor({state: 'visible'});
+                assert.deepEqual(await duplicates.evaluateAll(els => els.map(el => el.style.width)), ['50%', '13%']);
+                const recommendation = session.page.locator('.recommendation .watched-indicator[data-length]:not([data-length="0"])').first();
+                const metadata = await recommendation.evaluate(el => ({id: el.dataset.id, length: Number(el.dataset.length)}));
+                await session.page.route('**/api/v1/auth/playback', route => route.fulfill({contentType: 'application/json', body: JSON.stringify({positions: {[metadata.id]: metadata.length / 2, '2isYuQZMbdU': 60}, watched: []})}));
+                await session.page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted: true})));
+                await recommendation.waitFor({state: 'visible'});
+                assert.equal(await recommendation.evaluate(el => el.style.width), '50%');
+                await session.page.waitForFunction(() => document.querySelector('.queue-row .watched-indicator[data-id="2isYuQZMbdU"]').style.width === '25%');
+                if (thin) assert.equal(await session.page.locator('.queue-row img, .recommendation img').count(), 0);
+                assert.deepEqual(session.errors, []);
+                await session.context.close();
+            }
+        });
+    }
+
+    test(`${engine}: history search and browser-local progress use existing saved positions`, async () => {
+        const search = await pageFor(engine, {fixture: 'history-progress-search', route: 'feed/history?q=STUDIO+north', playback: {positions: {'2isYuQZMbdU': 492}, watched: []}});
+        const indicator = search.page.locator('.watched-indicator');
+        await indicator.waitFor({state: 'visible'});
+        assert.equal(await indicator.evaluate(el => el.style.width), '49%');
+        await search.context.close();
+        const local = await pageFor(engine, {fixture: 'history', route: 'feed/history', initScript: "localStorage.setItem('save_player_pos', JSON.stringify({'2isYuQZMbdU':492}));"});
+        const partial = local.page.locator('.watched-indicator[data-id="2isYuQZMbdU"]');
+        await partial.waitFor({state: 'visible'});
+        assert.equal(await partial.evaluate(el => el.style.width), '49%');
+        assert.equal(local.requests.some(url => url === '/api/v1/auth/playback'), false);
+        await local.page.evaluate(() => {localStorage.setItem('save_player_pos', JSON.stringify({'2isYuQZMbdU':250})); window.dispatchEvent(new StorageEvent('storage'));});
+        assert.equal(await partial.evaluate(el => el.style.width), '25%');
+        assert.deepEqual(local.errors, []);
+        await local.context.close();
+    });
+}

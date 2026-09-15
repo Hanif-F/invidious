@@ -12,8 +12,24 @@ module Invidious::Database::WatchHistory
     property release_date : String?
     property latest_watched : String?
     property archived_dates : Array(String) = [] of String
+    @[JSON::Field(converter: Invidious::Database::WatchHistory::Duration)]
+    property length_seconds : Int32? = nil
 
-    def initialize(@video_id, @title = nil, @channel_name = nil, @channel_id = nil, @release_date = nil, @latest_watched = nil, @archived_dates = [] of String)
+    def initialize(@video_id, @title = nil, @channel_name = nil, @channel_id = nil, @release_date = nil, @latest_watched = nil, @archived_dates = [] of String, @length_seconds = nil)
+    end
+  end
+
+  module Duration
+    def self.normalize(value : Int?) : Int32?
+      value.to_i32 if value && 0 < value <= Int32::MAX
+    end
+
+    def self.from_json(pull : JSON::PullParser) : Int32?
+      normalize(JSON::Any.new(pull).as_i64?)
+    end
+
+    def self.to_json(value : Int32?, json : JSON::Builder)
+      normalize(value).to_json(json)
     end
   end
 
@@ -21,16 +37,17 @@ module Invidious::Database::WatchHistory
   def cached(ids : Array(String)) : Hash(String, Entry)
     result = {} of String => Entry
     return result if ids.empty?
-    PG_DB.query_all(<<-SQL, ids, as: {String, String?, String?, String?, String?}).each do |id, title, author, ucid, published|
-      SELECT id, title, author, ucid, to_char(published AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+    PG_DB.query_all(<<-SQL, ids, as: {String, String?, String?, String?, String?, String?}).each do |id, title, author, ucid, published, duration|
+      SELECT id, title, author, ucid, to_char(published AT TIME ZONE 'UTC', 'YYYY-MM-DD'), length_seconds::text
       FROM channel_videos WHERE id = ANY($1)
       UNION ALL
-      SELECT id, info::json->>'title', info::json->>'author', info::json->>'ucid', info::json->>'published'
+      SELECT id, info::json->>'title', info::json->>'author', info::json->>'ucid', info::json->>'published', info::json->>'lengthSeconds'
       FROM videos WHERE id = ANY($1)
       SQL
       old = result[id]? || Entry.new(id)
       result[id] = Entry.new(id, present(title) || old.title, present(author) || old.channel_name,
-        present(ucid) || old.channel_id, History.date(published) || old.release_date)
+        present(ucid) || old.channel_id, History.date(published) || old.release_date,
+        length_seconds: Duration.normalize(duration.try(&.to_i64?)) || old.length_seconds)
     end
     result
   end
@@ -40,14 +57,15 @@ module Invidious::Database::WatchHistory
   end
 
   def select_all(email : String, conn = PG_DB) : Array(Entry)
-    conn.query_all("SELECT row_to_json(h)::text FROM (SELECT video_id, title, channel_name, channel_id, release_date, latest_watched, archived_dates FROM watch_history WHERE email = $1) h", email, as: String).map { |json| Entry.from_json(json) }
+    conn.query_all("SELECT row_to_json(h)::text FROM (SELECT video_id, title, channel_name, channel_id, release_date, latest_watched, archived_dates, length_seconds FROM watch_history WHERE email = $1) h", email, as: String).map { |json| Entry.from_json(json) }
   end
 
   def save(conn : DB::Connection, email : String, entry : Entry)
-    conn.exec <<-SQL, email, entry.video_id, present(entry.title), present(entry.channel_name), present(entry.channel_id), History.date(entry.release_date), History.date(entry.latest_watched), entry.archived_dates.compact_map { |d| History.date(d) }.reject { |d| d == History.date(entry.latest_watched) }.uniq.sort
-      INSERT INTO watch_history AS h (email, video_id, title, channel_name, channel_id, release_date, latest_watched, archived_dates)
-      VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8::date[])
+    conn.exec <<-SQL, email, entry.video_id, present(entry.title), present(entry.channel_name), present(entry.channel_id), History.date(entry.release_date), History.date(entry.latest_watched), entry.archived_dates.compact_map { |d| History.date(d) }.reject { |d| d == History.date(entry.latest_watched) }.uniq.sort, Duration.normalize(entry.length_seconds)
+      INSERT INTO watch_history AS h (email, video_id, title, channel_name, channel_id, release_date, latest_watched, archived_dates, length_seconds)
+      VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8::date[], $9)
       ON CONFLICT (email, video_id) DO UPDATE SET
+        length_seconds = COALESCE(EXCLUDED.length_seconds, h.length_seconds),
         title = COALESCE(EXCLUDED.title, h.title),
         channel_name = COALESCE(EXCLUDED.channel_name, h.channel_name),
         channel_id = COALESCE(EXCLUDED.channel_id, h.channel_id),
@@ -61,6 +79,7 @@ module Invidious::Database::WatchHistory
   def record(user : User, id : String, video : Video? = nil)
     entry = cached([id])[id]? || Entry.new(id)
     if video
+      entry.length_seconds = Duration.normalize(video.length_seconds) || entry.length_seconds
       entry.title = present(video.title) || entry.title
       entry.channel_name = present(video.author) || entry.channel_name
       entry.channel_id = present(video.ucid) || entry.channel_id
@@ -79,7 +98,7 @@ module Invidious::Database::WatchHistory
   def entries(user : User) : Array(Entry)
     return [] of Entry if user.watched.empty?
     existing = select_all(user.email).to_h { |entry| {entry.video_id, entry} }
-    missing = user.watched.select { |id| !(entry = existing[id]?) || !entry.title || !entry.channel_name || !entry.channel_id || !entry.release_date }
+    missing = user.watched.select { |id| !(entry = existing[id]?) || !entry.title || !entry.channel_name || !entry.channel_id || !entry.release_date || !entry.length_seconds }
     cached_entries = cached(missing)
     result = [] of Entry
     PG_DB.transaction do |tx|
@@ -93,6 +112,7 @@ module Invidious::Database::WatchHistory
           entry.channel_name ||= fallback.channel_name
           entry.channel_id ||= fallback.channel_id
           entry.release_date ||= fallback.release_date
+          entry.length_seconds ||= fallback.length_seconds
         end
         save(conn, user.email, entry) unless saved[id]?.try(&.to_json) == entry.to_json
         result << entry

@@ -190,7 +190,7 @@ def navigation_fixture
   render "src/invidious/views/components/navigation.ecr"
 end
 
-def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "")
+def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "", sync = false)
   env = signed_in_env("/feed/history")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = visual_theme
@@ -198,10 +198,14 @@ def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, h
   env.set "preferences", preferences
   user = env.get("user").as(User)
   user.watched = ["2isYuQZMbdU", "previous001", "nextvideo01"]
+  preferences.save_player_pos = sync
+  user.preferences = preferences
+  env.set "preferences", preferences
+  env.set "user", user
   history_today = "2026-09-13"
   watched = [
-    Invidious::Database::WatchHistory::Entry.new("2isYuQZMbdU", "A journey through light, color, and motion", "Studio North", "UCfixture", "2026-08-01", "2026-09-13"),
-    Invidious::Database::WatchHistory::Entry.new("previous001", "Light <study> & color", "A channel", nil, nil, "2026-09-12"),
+    Invidious::Database::WatchHistory::Entry.new("2isYuQZMbdU", "A journey through light, color, and motion", "Studio North", "UCfixture", "2026-08-01", "2026-09-13", length_seconds: 1000),
+    Invidious::Database::WatchHistory::Entry.new("previous001", "Light <study> & color", "A channel", nil, nil, "2026-09-12", length_seconds: 1000),
     Invidious::Database::WatchHistory::Entry.new("nextvideo01"),
   ]
   watched.select! { |entry| Invidious::History.matches?(entry.title, entry.channel_name, history_query) }
@@ -446,3 +450,14 @@ File.write("#{output}/search-members-hidden.html", member_search_fixture(false))
 File.write("#{output}/search-members-shown.html", member_search_fixture(true))
 File.write("#{output}/search-members-empty.html", member_search_fixture(false, true))
 check_member_extraction
+
+require "./progress_fixtures"
+{"modern-neon", "diary", "cinematic"}.each do |theme|
+  {false, true}.each do |thin|
+    suffix = "#{theme}-#{thin ? "thin" : "normal"}"
+    File.write("#{output}/history-progress-#{suffix}.html", history_fixture(theme, thin: thin, sync: true))
+    File.write("#{output}/cards-progress-#{suffix}.html", progress_cards_fixture(theme, thin))
+    File.write("#{output}/watch-progress-#{suffix}.html", watch_fixture(progress_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", theme, thin)))
+  end
+end
+File.write("#{output}/history-progress-search.html", history_fixture(history_query: "STUDIO north", sync: true))

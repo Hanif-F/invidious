@@ -83,6 +83,6 @@ def fetch_mix(rdid, video_id, cookies = nil, locale = nil)
   })
 end
 
-def template_mix(mix, listen, thin_mode = false)
-  template_queue(mix, listen, true, thin_mode)
+def template_mix(mix, listen, thin_mode = false, watched = [] of String)
+  template_queue(mix, listen, true, thin_mode, watched: watched)
 end

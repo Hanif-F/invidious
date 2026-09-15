@@ -243,3 +243,13 @@ an `isMember` flag; HTML queues and browsing cards respect the preference.
 Migration 15 adds membership columns and schedules subscription-view refreshes.
 Unknown membership stays visible until normal upstream refresh supplies a marker;
 no per-video classification requests are made.
+
+Thumbnail progress uses one markup helper for history, browse/channel/feed/search
+cards, playlists, mixes, recommendations, and dynamic queues. Thin-mode video
+placeholders remain visible across all themes. The existing synced/local playback
+stores and percentage rules are unchanged. History migration 16 adds nullable
+`length_seconds`; recording and local-cache recovery persist positive durations,
+including through history import/export. Unknown durations remain unknown and do
+not trigger per-video upstream requests. Browser regressions cover matching
+percentages, partial/full/unknown states, history search, duplicate queue entries,
+page restoration, local storage updates, and desktop/mobile layouts.

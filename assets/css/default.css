@@ -234,6 +234,8 @@ div.watched-overlay {
 
 .queue-thumbnail { position: relative; display: inline-block; flex-shrink: 0; }
 .queue-thumbnail img { display: block; }
+.video-placeholder { display: block; min-height: 64px; }
+.queue-thumbnail .video-placeholder { width: 88px; min-height: 50px; }
 
 body .watched-indicator {
   position: absolute;

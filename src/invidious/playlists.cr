@@ -1,3 +1,5 @@
+require "./frontend/watched_indicator"
+
 struct PlaylistVideo
   include DB::Serializable
 
@@ -570,12 +572,12 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
   return videos
 end
 
-def template_playlist(playlist, listen, thin_mode = false, editable = false)
-  template_queue(playlist, listen, false, thin_mode, editable)
+def template_playlist(playlist, listen, thin_mode = false, editable = false, watched = [] of String)
+  template_queue(playlist, listen, false, thin_mode, editable, watched)
 end
 
 # The DOM carries occurrence indices; video IDs alone are not unique in playlists.
-def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false)
+def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false, watched = [] of String)
   plid = playlist[mix ? "mixId" : "playlistId"].as_s
   String.build do |html|
     html << %(<div class="queue-metadata" hidden data-title="#{HTML.escape(playlist["title"].as_s)}")
@@ -598,9 +600,14 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       end
       html << ">"
       html << %(<a href="#{HTML.escape(url)}"><span class="queue-number">#{index >= 0 ? (index + 1).to_s : ""}</span>)
-      unless thin_mode
-        html << %(<span class="queue-thumbnail"><span class="watched-indicator" hidden data-id="#{HTML.escape(id)}" data-length="#{video["lengthSeconds"].as_i}"></span><img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt=""></span>)
+      html << %(<span class="queue-thumbnail">)
+      if thin_mode
+        html << %(<span class="thumbnail-placeholder video-placeholder"></span>)
+      else
+        html << %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
       end
+      html << Invidious::Frontend::WatchedIndicator.render(id, video["lengthSeconds"].as_i, watched.includes?(id))
+      html << "</span>"
       html << %(<span><span class="queue-title" dir="auto"><span data-dearrow-id="#{HTML.escape(id)}">#{title}</span></span><span class="queue-meta" dir="auto">#{author})
       length = video["lengthSeconds"].as_i
       html << " · #{recode_length_seconds(length)}" if length > 0
