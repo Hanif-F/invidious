@@ -233,3 +233,13 @@ Run `crystal spec spec/chapters_spec.cr spec/sponsorblock_spec.cr` and
 after generating fixtures. Coverage includes safe template serialization, overlapping
 SponsorBlock ranges, duration changes, both player styles, embeds, fullscreen,
 thumbnail coexistence, and simulated touch input in Chromium and Firefox.
+
+Members-only filtering checks cover the default-hidden preference, anonymous and
+account form/API/import/export round trips, browser-local search overrides,
+no-JavaScript controls, filtered-empty search pagination, and cached/playlist
+membership metadata. Search choices use separate host-only cookies and never
+enter account preferences. Public playlist/mix JSON remains unfiltered and adds
+an `isMember` flag; HTML queues and browsing cards respect the preference.
+Migration 15 adds membership columns and schedules subscription-view refreshes.
+Unknown membership stays visible until normal upstream refresh supplies a marker;
+no per-video classification requests are made.

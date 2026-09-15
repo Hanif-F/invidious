@@ -13,6 +13,7 @@ struct PlaylistVideo
   property plid : String
   property index : Int64
   property live_now : Bool
+  property members_only : Bool = false
 
   def to_xml(xml : XML::Builder)
     xml.element("entry") do
@@ -77,6 +78,7 @@ struct PlaylistVideo
 
       json.field "lengthSeconds", self.length_seconds
       json.field "liveNow", self.live_now
+      json.field "isMember", self.members_only
     end
   end
 
@@ -535,7 +537,7 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
           .try &.as_s
       end
 
-      length = thumbnail_view_model.try &.dig?("overlays", 0, "thumbnailBottomOverlayViewModel", "badges", 0, "thumbnailBadgeViewModel", "text").try &.as_s
+      length = Invidious::Videos::Membership.thumbnail_duration(thumbnail_view_model)
       length_seconds = decode_length_seconds(length) if length
 
       live = false
@@ -555,6 +557,7 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
         published:      published || Time.utc,
         plid:           plid,
         live_now:       live,
+        members_only:   Invidious::Videos::Membership.detected?(i),
         index:          index || -1_i64,
       })
       video.published_known = !published.nil?

@@ -60,6 +60,7 @@ CURRENT_COMMIT       = "fixture"
 CURRENT_VERSION      = "fixture"
 CURRENT_TAG          = ""
 ASSET_COMMIT         = "fixture"
+SOFTWARE             = {"version" => "fixture", "branch" => "fixture"}
 OUTPUT               = File.open(File::NULL, "w")
 LOGGER               = Invidious::LogHandler.new(OUTPUT, LogLevel::Off)
 YT_POOL              = YoutubeConnectionPool.new(URI.parse("https://www.youtube.com"), capacity: 1)
@@ -277,7 +278,7 @@ def diary_playlist_fixture(visual_theme = "diary", mode = "light")
   env = fixture_env("/playlist?list=PLfixture", mode, visual_theme: visual_theme)
   locale = "en-US"
   items = (0...6).map do |i|
-    PlaylistVideo.new({title: "A chapter in light and motion #{i + 1}", id: "fixture#{i}", author: "Studio North", ucid: "UCfixture", length_seconds: 720, published: Time.utc, plid: "PLfixture", index: i.to_i64, live_now: false})
+    PlaylistVideo.new({title: "A chapter in light and motion #{i + 1}", id: "fixture#{i}", author: "Studio North", ucid: "UCfixture", length_seconds: 720, published: Time.utc, plid: "PLfixture", index: i.to_i64, live_now: false, members_only: false})
   end
   navbar_search = true
   page_nav_html = ""
@@ -379,6 +380,7 @@ def search_blocked_fixture(include_blocked = false)
   query = Invidious::Search::Query.new(HTTP::Params.parse("q=light&page=2&type=video&include_blocked=#{include_blocked ? 1 : 0}"))
   items = [] of SearchVideo
   blocked_results = !include_blocked
+  member_results = false
   redirect_url = "/"
   page_nav_html = Invidious::Frontend::Pagination.nav_numeric(locale, base_url: "/search?#{query.to_http_params}", current_page: 2, show_next: true)
   navbar_search = true
@@ -437,3 +439,10 @@ File.write("#{output}/channel-search-private.html", diary_channel_fixture(search
 File.write("#{output}/channel-search-empty.html", diary_channel_fixture(search: true, empty: true))
 
 File.write("#{output}/watch-chapters.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), chapter_description: "0:00 </script><script>alert(1)</script>\n0:02 日本語 & details"))
+
+require "./member_checks"
+check_member_preferences
+File.write("#{output}/search-members-hidden.html", member_search_fixture(false))
+File.write("#{output}/search-members-shown.html", member_search_fixture(true))
+File.write("#{output}/search-members-empty.html", member_search_fixture(false, true))
+check_member_extraction

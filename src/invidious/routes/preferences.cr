@@ -219,6 +219,7 @@ module Invidious::Routes::PreferencesRoute
       automatic_instance_redirect: automatic_instance_redirect,
       region:                      region,
       timezone:                    Invidious::History.timezone(env.params.body["timezone"]? || previous.timezone),
+      show_member_videos:          env.params.body["show_member_videos"]? == "on",
       related_videos:              related_videos,
       sort:                        sort,
       speed:                       speed,

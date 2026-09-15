@@ -17,6 +17,8 @@ module Invidious::Search
 
     property filters : Filters = Filters.new
     property include_blocked : Bool = false
+    property show_member_videos : Bool? = nil
+    @include_blocked_explicit : Bool = false
     property page : Int32
     property region : String?
     property channel : String = ""
@@ -69,6 +71,12 @@ module Invidious::Search
       # Get the page number (also common to all search types)
       @page = params["page"]?.try &.to_i? || 1
       @include_blocked = params["include_blocked"]? == "1"
+      @include_blocked_explicit = {"0", "1"}.includes?(params["include_blocked"]?)
+      @show_member_videos = case params["show_member_videos"]?
+                            when "1" then true
+                            when "0" then false
+                            else          nil
+                            end
 
       # Stop here if raw query is empty
       # NOTE: maybe raise in the future?
@@ -144,7 +152,8 @@ module Invidious::Search
     def to_http_params : HTTP::Params
       params = @filters.to_iv_params
 
-      params["include_blocked"] = "1" if @include_blocked
+      params["include_blocked"] = @include_blocked ? "1" : "0" if @include_blocked_explicit || @include_blocked
+      params["show_member_videos"] = @show_member_videos ? "1" : "0" unless @show_member_videos.nil?
       params["q"] = @query
       params["channel"] = @channel if !@channel.empty?
 

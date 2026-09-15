@@ -8,6 +8,7 @@ struct MixVideo
   property length_seconds : Int32
   property index : Int32
   property rdid : String
+  property members_only : Bool = false
 end
 
 struct Mix
@@ -64,6 +65,7 @@ def fetch_mix(rdid, video_id, cookies = nil, locale = nil)
       length_seconds: length_seconds,
       index:          index,
       rdid:           rdid,
+      members_only:   Invidious::Videos::Membership.detected?(item),
     })
   end
 

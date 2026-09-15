@@ -833,6 +833,9 @@ default_user_preferences:
   ## Accepted values: true, false
   ## Default: true
   ##
+  # Show confirmed members-only videos in browsing lists.
+  #show_member_videos: false
+
   #related_videos: true
 
   # -----------------------------

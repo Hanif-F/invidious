@@ -363,6 +363,7 @@ module Invidious::Routes::Playlists
         published:      video.published,
         plid:           playlist_id,
         live_now:       video.live_now,
+        members_only:   video.members_only,
         index:          Random::Secure.rand(0_i64..Int64::MAX),
       })
 

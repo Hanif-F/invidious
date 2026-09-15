@@ -90,11 +90,14 @@ module Invidious::Routes::API::V1::Misc
     if format == "html"
       env.response.headers["Cache-Control"] = "private, no-store"
       editable = playlist.is_a?(InvidiousPlaylist) && playlist.author == user.try &.email
-      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode, editable)
+      show_members = env.get("preferences").as(Preferences).show_member_videos
       # Removing the playing occurrence leaves a gap at offset; its successor
       # now occupies that position and must not be skipped during advancement.
       current_removed = playlist.is_a?(InvidiousPlaylist) && env.params.query["current_removed"]? == "1"
-      index, next_video = json_response["videos"].as_a.skip((current_removed ? 0 : 1) + lookback).select { |video| !video["author"].as_s.empty? }[0]?.try { |v| {v["index"], v["videoId"]} } || {nil, nil}
+      index, next_video = Frontend::MemberVideos.queue_videos(json_response["videos"].as_a.skip((current_removed ? 0 : 1) + lookback), show_members).select { |video| !video["author"].as_s.empty? }[0]?.try { |v| {v["index"], v["videoId"]} } || {nil, nil}
+
+      json_response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(json_response["videos"].as_a, show_members))
+      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode, editable)
 
       response = {
         "playlistHtml" => playlist_html,
@@ -158,6 +161,7 @@ module Invidious::Routes::API::V1::Misc
 
                 json.field "index", video.index
                 json.field "lengthSeconds", video.length_seconds
+                json.field "isMember", video.members_only
               end
             end
           end
@@ -166,7 +170,9 @@ module Invidious::Routes::API::V1::Misc
     end
 
     if format == "html"
+      env.response.headers["Cache-Control"] = "private, no-store"
       response = JSON.parse(response)
+      response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(response["videos"].as_a, env.get("preferences").as(Preferences).show_member_videos))
       playlist_html = template_mix(response, listen, env.get("preferences").as(Preferences).thin_mode)
       next_video = response["videos"].as_a.select { |video| !video["author"].as_s.empty? }[0]?.try &.["videoId"]
 

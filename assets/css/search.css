@@ -68,6 +68,19 @@
 .filter-options label { margin: 0 10px; }
 
 
+.search-visibility-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75em 1.25em;
+    margin: 0.75em 0;
+}
+.search-visibility-controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+}
+
 #filters-apply {
 	text-align: right; /* IE11 only */
 	text-align: end;   /* Override for compatible browsers */

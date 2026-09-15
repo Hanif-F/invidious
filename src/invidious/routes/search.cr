@@ -47,6 +47,12 @@ module Invidious::Routes::Search
       uri_params = env.params.body
     end
 
+    reset_members = uri_params["reset_member_videos"]? == "1"
+    show_members = Frontend::SearchPreferences.apply(env, uri_params, preferences.show_member_videos, !!(Kemal.config.ssl || CONFIG.https_only))
+    env.set "show_member_videos", show_members
+    env.response.headers["Cache-Control"] = "private, no-store"
+    return env.redirect("/search?#{uri_params}") if reset_members
+
     region = uri_params["region"]? || preferences.region
 
     query = Invidious::Search::Query.new(uri_params, :regular, region)
@@ -81,6 +87,9 @@ module Invidious::Routes::Search
         items = Frontend::BlockedChannels.filter(items, Frontend::BlockedChannels.ids(env))
       end
       blocked_results = upstream_count > items.size
+      before_members = items.size
+      items = Frontend::MemberVideos.filter(items, show_members)
+      member_results = before_members > items.size
 
       redirect_url = Invidious::Frontend::Misc.redirect_url(env)
 

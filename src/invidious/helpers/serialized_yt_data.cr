@@ -9,6 +9,7 @@ enum VideoBadges
   VR180
   VR360
   ClosedCaptions
+  MembersOnly
 end
 
 struct SearchVideo
@@ -26,6 +27,10 @@ struct SearchVideo
   property author_verified : Bool
   property author_thumbnail : String?
   property badges : VideoBadges
+
+  def members_only : Bool
+    badges.members_only?
+  end
 
   def to_xml(auto_generated, query_params, xml : XML::Builder)
     query_params["v"] = self.id

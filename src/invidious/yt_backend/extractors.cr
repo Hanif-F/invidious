@@ -168,7 +168,7 @@ private module Parsers
         premiere_timestamp: premiere_timestamp,
         author_verified:    author_verified,
         author_thumbnail:   author_thumbnail,
-        badges:             badges,
+        badges:             badges | (Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None),
       })
     end
 
@@ -621,7 +621,7 @@ private module Parsers
         premiere_timestamp: Time.unix(0),
         author_verified:    false,
         author_thumbnail:   nil,
-        badges:             VideoBadges::None,
+        badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
       })
     end
 
@@ -671,7 +671,7 @@ private module Parsers
 
         view_count = short_text_to_number(view_count_text || "0")
 
-        length = thumbnail_view_model.dig("overlays", 0, "thumbnailBottomOverlayViewModel", "badges", 0, "thumbnailBadgeViewModel", "text").try &.as_s
+        length = Invidious::Videos::Membership.thumbnail_duration(thumbnail_view_model)
 
         length_seconds = decode_length_seconds(length) if length
 
@@ -687,7 +687,7 @@ private module Parsers
           premiere_timestamp: Time.unix(0),
           author_verified:    false,
           author_thumbnail:   nil,
-          badges:             VideoBadges::None,
+          badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
         })
         # If it's a playlist, it's content_type would be "LOCKUP_CONTENT_TYPE_PLAYLIST"
         # If it's a podcast, it's content_type would be "LOCKUP_CONTENT_TYPE_PODCAST"
@@ -884,7 +884,7 @@ private module Parsers
         premiere_timestamp: Time.unix(0),
         author_verified:    false,
         author_thumbnail:   nil,
-        badges:             VideoBadges::None,
+        badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
       })
     end
 

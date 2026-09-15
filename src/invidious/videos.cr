@@ -87,6 +87,10 @@ struct Video
     end
   end
 
+  def members_only : Bool
+    info["membersOnly"]?.try(&.as_bool?) || false
+  end
+
   def related_videos
     info["relatedVideos"]?.try &.as_a.map { |h| h.as_h.transform_values &.as_s } || [] of Hash(String, String)
   end

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.playlist_videos
     plid text references playlists(id),
     index int8,
     live_now boolean,
+    members_only boolean NOT NULL DEFAULT false,
     PRIMARY KEY (index,plid)
 );
 

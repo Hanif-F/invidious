@@ -2,7 +2,7 @@ module Invidious::Frontend::SearchFilters
   extend self
 
   # Generate the search filters collapsable widget.
-  def generate(filters : Search::Filters, query : String, page : Int, locale : String, include_blocked : Bool = false, signed_in : Bool = false) : String
+  def generate(filters : Search::Filters, query : String, page : Int, locale : String, include_blocked : Bool = false, signed_in : Bool = false, show_member_videos : Bool = false, member_reset_url : String = "/search?reset_member_videos=1") : String
     return String.build(8000) do |str|
       str << "<div id='filters'>\n"
       str << "\t<details id='filters-collapse'>"
@@ -23,11 +23,21 @@ module Invidious::Frontend::SearchFilters
 
       str << "\t\t\t</div>\n"
 
+      str << "<div class='search-visibility-controls'>"
       if signed_in
+        str << "<input type='hidden' name='include_blocked' value='0'>"
         str << "<label><input type='checkbox' name='include_blocked' value='1'"
         str << " checked" if include_blocked
         str << "> " << I18n.translate(locale, "Include blocked channels") << "</label>"
       end
+
+      str << "<input type='hidden' name='show_member_videos' value='0'>"
+      str << "<label><input type='checkbox' name='show_member_videos' value='1'"
+      str << " checked" if show_member_videos
+      str << "> " << I18n.translate(locale, "Show members-only videos") << "</label> "
+      str << "<a href='" << HTML.escape(member_reset_url) << "'>" << I18n.translate(locale, "Use preference") << "</a>"
+
+      str << "</div>"
 
       str << "\t\t\t<div id='filters-apply'>"
       str << "<button type='submit' class=\"pure-button pure-button-primary\">"

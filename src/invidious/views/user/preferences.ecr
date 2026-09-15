@@ -292,6 +292,11 @@
                 <% end %>
             </div>
             <div class="pure-control-group">
+                <label for="show_member_videos"><%= I18n.translate(locale, "Show members-only videos") %></label>
+                <input name="show_member_videos" id="show_member_videos" type="checkbox" <% if preferences.show_member_videos %>checked<% end %>>
+            </div>
+
+            <div class="pure-control-group">
                 <label for="related_videos"><%= I18n.translate(locale, "preferences_related_videos_label") %></label>
                 <input name="related_videos" id="related_videos" type="checkbox" <% if preferences.related_videos %>checked<% end %>>
             </div>

@@ -44,6 +44,7 @@ module Invidious::Videos::Parser
     # TODO: when refactoring video types, make a struct for related videos
     # or reuse an existing type, if that fits.
     return {
+      "members_only"     => JSON::Any.new(Invidious::Videos::Membership.detected?(related).to_s),
       "id"               => related["videoId"],
       "title"            => related["title"]["simpleText"],
       "author"           => author || JSON::Any.new(""),
@@ -431,6 +432,7 @@ module Invidious::Videos::Parser
       "allowedRegions"   => JSON::Any.new(allowed_regions.map { |v| JSON::Any.new(v) }),
       "allowRatings"     => JSON::Any.new(allow_ratings || false),
       "isFamilyFriendly" => JSON::Any.new(family_friendly || false),
+      "membersOnly"      => JSON::Any.new(video_primary_renderer.try { |renderer| Invidious::Videos::Membership.detected?(renderer) } || false),
       "isListed"         => JSON::Any.new(is_listed || false),
       "isUpcoming"       => JSON::Any.new(is_upcoming || false),
       "commentsEnabled"  => JSON::Any.new(comments_enabled),

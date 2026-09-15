@@ -390,6 +390,7 @@ module Invidious::Routes::API::V1::Authenticated
       published:      video.published,
       plid:           plid,
       live_now:       video.live_now,
+      members_only:   video.members_only,
       index:          Random::Secure.rand(0_i64..Int64::MAX),
     })
 

@@ -946,7 +946,7 @@ for (const engine of engines) {
     test(`${engine}: search Filters owns the override and filtered-empty pages retain pagination`, async () => {
         const { page, context } = await pageFor(engine, { fixture: 'search-blocked' });
         await page.locator('#filters-collapse > summary').click();
-        const toggle = page.locator('#filters input[name=include_blocked]');
+        const toggle = page.locator('#filters input[type=checkbox][name=include_blocked]');
         assert.equal(await toggle.isChecked(), false);
         assert.equal(await page.locator('#filters input[name=page]').inputValue(), '1');
         assert.ok(await page.locator('a[href*="page=3"]').count() > 0);
@@ -954,9 +954,42 @@ for (const engine of engines) {
         await context.close();
         const included = await pageFor(engine, { fixture: 'search-included' });
         await included.page.locator('#filters-collapse > summary').click();
-        assert.equal(await included.page.locator('#filters input[name=include_blocked]').isChecked(), true);
+        assert.equal(await included.page.locator('#filters input[type=checkbox][name=include_blocked]').isChecked(), true);
         assert.match(await included.page.locator('a[href*="page=3"]').first().getAttribute('href'), /include_blocked=1/);
         await included.context.close();
+    });
+
+    test(`${engine}: members-only search controls work without JavaScript and retain pagination`, async () => {
+        for (const javascript of [true, false]) {
+            const { page, context, errors } = await pageFor(engine, { fixture: 'search-members-hidden', javascript });
+            assert.equal(await page.locator('.media-item').count(), 1);
+            assert.match(await page.locator('.media-item').innerText(), /Public video/);
+            await page.locator('#filters-collapse > summary').click();
+            const toggle = page.locator('#filters input[type=checkbox][name=show_member_videos]');
+            assert.equal(await toggle.isChecked(), false);
+            assert.equal(await page.locator('#filters input[type=checkbox][name=include_blocked]').isChecked(), true);
+            assert.match(await page.locator('a[href*="page=3"]').first().getAttribute('href'), /show_member_videos=0/);
+            const reset = page.locator('#filters a[href*="reset_member_videos=1"]');
+            assert.doesNotMatch(await reset.getAttribute('href'), /[?&]show_member_videos=/);
+            await toggle.check();
+            await page.locator('#filters-apply button').click();
+            assert.deepEqual(new URL(page.url()).searchParams.getAll('show_member_videos'), ['0', '1']);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+        const shown = await pageFor(engine, { fixture: 'search-members-shown' });
+        assert.equal(await shown.page.locator('.media-item').count(), 2);
+        assert.equal(await shown.page.locator('#filters input[type=checkbox][name=show_member_videos]').isChecked(), true);
+        await shown.page.locator('#filters-collapse > summary').click();
+        await shown.page.screenshot({ path: path.join(artifacts, engine + '-members-search.png') });
+        await shown.page.setViewportSize({ width: 390, height: 844 });
+        assert.equal(await shown.page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+        await shown.context.close();
+        const empty = await pageFor(engine, { fixture: 'search-members-empty', javascript: false });
+        assert.match(await empty.page.locator('.no-results-error').innerText(), /Members-only videos were hidden/);
+        assert.ok(await empty.page.locator('.no-results-error a[href*="show_member_videos=1"]').count());
+        assert.ok(await empty.page.locator('a[href*="page=3"]').count());
+        await empty.context.close();
     });
 
     test(`${engine}: blocking the next recommendation updates autoplay and Undo restores it`, async () => {

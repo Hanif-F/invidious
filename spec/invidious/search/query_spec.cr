@@ -284,3 +284,17 @@ Spectator.describe "Blocked channel search override" do
     expect(query.page).to eq(3)
   end
 end
+
+Spectator.describe Invidious::Search::Query do
+  it "preserves both explicit member choices and the unchecked blocked override" do
+    {"0", "1"}.each do |value|
+      query = described_class.new(HTTP::Params.parse("q=cats&show_member_videos=#{value}&include_blocked=0"))
+      expect(query.show_member_videos).to eq(value == "1")
+      expect(query.to_http_params["show_member_videos"]).to eq(value)
+      expect(query.to_http_params["include_blocked"]).to eq("0")
+    end
+    query = described_class.new(HTTP::Params.parse("q=cats"))
+    expect(query.show_member_videos).to be_nil
+    expect(query.to_http_params.has_key?("show_member_videos")).to be_false
+  end
+end

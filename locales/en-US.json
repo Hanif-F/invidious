@@ -727,5 +727,8 @@
     "sb_channels_empty": "No channel overrides yet.",
     "sb_channel_invalid": "Enter a valid channel ID or /channel/UC… URL.",
     "sb_channel_lookup_failed": "Could not load this channel. Please try again.",
-    "sb_channel_settings": "SponsorBlock settings"
+    "sb_channel_settings": "SponsorBlock settings",
+    "Show members-only videos": "Show members-only videos",
+    "Use preference": "Use preference",
+    "Members-only videos hid these results": "Members-only videos were hidden from these results."
 }

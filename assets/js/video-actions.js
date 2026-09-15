@@ -81,8 +81,10 @@
     var hiddenCards = new Map();
     var busyChannels = new Set();
     var query = new URLSearchParams(location.search);
+    var blockedToggle = document.querySelector('#filters input[type=checkbox][name=include_blocked]');
+    var includeBlocked = blockedToggle ? blockedToggle.checked : query.get('include_blocked') === '1';
     var discovery = ['/feed/popular', '/feed/trending', '/'].indexOf(location.pathname) !== -1 ||
-        location.pathname.startsWith('/hashtag/') || (location.pathname === '/search' && query.get('include_blocked') !== '1');
+        location.pathname.startsWith('/hashtag/') || (location.pathname === '/search' && !includeBlocked);
 
     async function request(url, data) {
         var options = { credentials: 'same-origin', headers: { 'Accept': 'application/json' } };

@@ -459,6 +459,7 @@ module Invidious::Routes::Feeds
           author:             author,
           length_seconds:     video.length_seconds,
           live_now:           video.live_now,
+          members_only:       video.members_only,
           premiere_timestamp: video.premiere_timestamp,
           views:              video.views,
         })

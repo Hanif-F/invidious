@@ -61,6 +61,7 @@ module Invidious::Routes::Watch
     end
 
     related_videos = Frontend::BlockedChannels.recommendations(video.related_videos, Frontend::BlockedChannels.ids(env))
+    related_videos = Frontend::MemberVideos.recommendations(related_videos, env.get("preferences").as(Preferences).show_member_videos)
 
     if preferences.annotations_subscribed &&
        subscriptions.includes?(video.ucid) &&

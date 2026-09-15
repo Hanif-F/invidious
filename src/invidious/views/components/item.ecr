@@ -1,3 +1,4 @@
+<% if Invidious::Frontend::MemberVideos.visible?(item, Invidious::Frontend::MemberVideos.show?(env)) %>
 <%-
   thin_mode = env.get("preferences").as(Preferences).thin_mode
   item_watched = !item.is_a?(SearchChannel | SearchHashtag | SearchPlaylist | InvidiousPlaylist | Category | ProblematicTimelineItem) && env.get?("user").try &.as(User).watched.index(item.id) != nil
@@ -217,3 +218,5 @@
         <% end %>
     </div>
 </div>
+
+<% end %>
