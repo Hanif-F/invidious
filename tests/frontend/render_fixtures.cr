@@ -87,10 +87,11 @@ def fixture_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
-def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false)
+def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   video = fixture_video
+  video.info["shortDescription"] = JSON::Any.new(chapter_description) if chapter_description
   related_videos = video.related_videos
   id = video.id
   continuation = 2
@@ -434,3 +435,5 @@ end
 File.write("#{output}/channel-search.html", diary_channel_fixture(search: true))
 File.write("#{output}/channel-search-private.html", diary_channel_fixture(search: true, privacy: true))
 File.write("#{output}/channel-search-empty.html", diary_channel_fixture(search: true, empty: true))
+
+File.write("#{output}/watch-chapters.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), chapter_description: "0:00 </script><script>alert(1)</script>\n0:02 日本語 & details"))

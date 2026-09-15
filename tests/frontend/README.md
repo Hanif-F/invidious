@@ -218,3 +218,18 @@ reopen the tab. Compare the restored position with the last successful progress
 request. Hidden-page delivery improves this path but cannot guarantee delivery
 when the OS terminates execution or networking. The tests simulate lifecycle
 signals; they do not establish behavior under actual Android memory pressure.
+
+## Manual chapters
+
+The watch and embed players derive chapter boundaries only from labeled description
+lines (`M:SS Title` or `H:MM:SS Title`, optionally with a spaced bullet or title
+separator). Two distinct valid timestamps are enough; zero starts and ten-second
+sections are not required. Automatic YouTube chapters and comment timestamps are
+never used. SponsorBlock colors appear above chapter ticks, and enabled category
+labels precede the chapter title on hover, touch scrubbing, and keyboard seeking.
+
+Run `crystal spec spec/chapters_spec.cr spec/sponsorblock_spec.cr` and
+`node --test --test-name-pattern='manual chapter|SponsorBlock|UI asset additions' tests/frontend/ui.test.cjs`
+after generating fixtures. Coverage includes safe template serialization, overlapping
+SponsorBlock ranges, duration changes, both player styles, embeds, fullscreen,
+thumbnail coexistence, and simulated touch input in Chromium and Firefox.

@@ -103,17 +103,19 @@
     "stream_labels" => %w(auto high_bitrate medium_bitrate low_bitrate stable_volume original_audio dubbed_audio).to_h { |key| {key, I18n.translate(locale, "player_stream_#{key}")} },
     "stats_labels" => %w(identity title close details copy disable unavailable waiting resolution viewport quality codecs fps bitrate frames buffer bandwidth bytes requests state stalls live help copied fallback).to_h { |key| {key, I18n.translate(locale, "stats_#{key}")} },
     "stats_formats" => (fmt_stream + adaptive_fmts).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate contentLength audioQuality isDrc audioTrack).includes?(key) } },
+    "chapters" => Invidious::Videos::Chapters.parse(video.short_description, video.live_now ? 0 : video.length_seconds),
     "aspect_ratio" => aspect_ratio,
     "title" => video.title,
     "description" => HTML.escape(video.short_description),
     "thumbnail" => thumbnail,
     "preferred_caption_found" => !preferred_captions.empty?
-}.to_pretty_json
+}.to_pretty_json.gsub("<", "\\u003c")
 %>
 </script>
 <script src="/js/player-stream-menu.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/player.js?v=<%= ASSET_COMMIT %>"></script>
 
+<script src="/js/player-chapters.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/sponsorblock.js?v=<%= ASSET_COMMIT %>"></script>
 
 <script src="/js/player-stats.js?v=<%= ASSET_COMMIT %>"></script>

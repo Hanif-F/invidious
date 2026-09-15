@@ -122,6 +122,7 @@
                 return Object.prototype.hasOwnProperty.call(config.modes, s.category) && config.modes[s.category] !== 'disabled' &&
                     Number.isFinite(s.start) && Number.isFinite(s.end) && s.start >= 0 && s.end > s.start;
             });
+            player.trigger({type: 'sponsorblocksegments', segments: segments});
             render(); update();
         }
     });

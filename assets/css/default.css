@@ -235,13 +235,13 @@ div.watched-overlay {
 .queue-thumbnail { position: relative; display: inline-block; flex-shrink: 0; }
 .queue-thumbnail img { display: block; }
 
-.watched-indicator {
+body .watched-indicator {
   position: absolute;
   left: 0;
   bottom: 0;
   height: 4px;
   width: 100%;
-  background-color: red;
+  background-color: #f00;
 }
 
 div.thumbnail > .top-left-overlay,

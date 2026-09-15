@@ -106,6 +106,7 @@ async function pageFor(engine, options = {}) {
             }
             return route.fulfill({ contentType: 'video/webm', headers: { 'accept-ranges': 'bytes' }, body });
         }
+        if (options.storyboards && url.pathname.startsWith('/api/v1/storyboards/')) return route.fulfill({contentType:'text/vtt', body:'WEBVTT\n\n00:00.000 --> 00:04.000\nhttps://invidious.test/vi/fixture/preview.jpg#xywh=0,0,160,90\n'});
         if (url.pathname.startsWith('/api/v1/captions/')) return route.fulfill({ contentType: 'text/vtt', body: 'WEBVTT\n\n00:00.000 --> 00:04.000\nFixture captions\n' });
         if (url.pathname === '/themes/fixture-theme/theme.css') return route.fulfill({ contentType: 'text/css', body: 'body { --fixture-theme: active; }' });
         if (options.fontFailure && url.pathname === '/themes/cinematic/Oswald.woff2') return route.abort();
@@ -846,7 +847,7 @@ test('UI asset additions stay below the 35KB compressed initial-load budget', ()
     }
     // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
     delta += Math.max(0, ...themeBytes);
-    for (const file of ['dearrow.js', 'player-mobile.js', 'player-stats.js', 'player-stream-menu.js', 'dearrow-loader.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
+    for (const file of ['dearrow.js', 'player-mobile.js', 'player-stats.js', 'player-stream-menu.js', 'dearrow-loader.js', 'player-chapters.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
     assert.ok(delta <= 35 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
@@ -2365,8 +2366,13 @@ for (const engine of engines) {
                     }
                 };
             });
+            await page.addStyleTag({path: path.join(root, 'assets/css/default.css')});
             await page.addScriptTag({path: path.join(root, 'assets/js/watched_indicator.js')});
             assert.equal(await page.locator('[data-id="partial"]').evaluate(el => el.style.width), '49%');
+            assert.deepEqual(await page.locator('[data-id="partial"]').evaluate(el => {
+                const style = getComputedStyle(el);
+                return {color: style.backgroundColor, height: style.height};
+            }), {color: 'rgb(255, 0, 0)', height: '4px'});
             assert.equal(await page.locator('[data-id="full"]').evaluate(el => el.style.width), '100%');
             assert.equal(await page.locator('[data-id="new"]').evaluate(el => el.hidden), true);
             await page.evaluate(() => document.body.insertAdjacentHTML('beforeend',
@@ -2381,3 +2387,104 @@ for (const engine of engines) {
         });
     }
 }
+
+for (const engine of engines) {
+    test(`${engine}: manual chapter markers and SponsorBlock hover priority`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer:true,
+            playerData:{chapters:[{start:0.5,title:'Intro <img src=x>'},{start:2,title:'日本語 & details'}]},
+            sponsorblock:{enabled:true,modes:{sponsor:'marker',intro:'disabled'}},
+            sponsorblockSegments:[{id:'a',category:'sponsor',start:1,end:1.8},{id:'b',category:'sponsor',start:1.1,end:1.9}]});
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => document.querySelectorAll('.chapter-marker').length === 2 && document.querySelectorAll('.sb-range').length === 2);
+        await page.evaluate(() => { player.pause(); player.userActive(true); });
+        const bar = page.locator('.vjs-progress-holder');
+        const bounds = await bar.boundingBox();
+        const duration = await page.evaluate(() => player.duration());
+        const hover = async time => page.mouse.move(bounds.x + bounds.width * time / duration, bounds.y + bounds.height / 2);
+        await hover(1.3);
+        assert.equal(await page.locator('.chapter-tooltip > :first-child').innerText(), 'Sponsor');
+        assert.equal(await page.locator('.chapter-tooltip > div').nth(1).innerText(), 'Intro <img src=x>');
+        assert.equal(await page.locator('.chapter-tooltip img').count(), 0);
+        await hover(2.5);
+        assert.equal(await page.locator('.chapter-tooltip > div').nth(1).innerText(), '日本語 & details');
+        assert.equal(await page.locator('.chapter-tooltip > :first-child').isVisible(), false);
+        await hover(0.1);
+        assert.equal(await page.locator('.chapter-tooltip').isVisible(), false);
+        await bar.focus();
+        await page.evaluate(() => { player.currentTime(2.5); });
+        await page.mouse.move(0, 0);
+        await page.waitForFunction(() => !document.querySelector('.chapter-tooltip').hidden);
+        assert.equal(await page.locator('.chapter-tooltip > div').nth(1).innerText(), '日本語 & details');
+        await page.evaluate(() => { player.duration(1.5); });
+        assert.equal(await page.locator('.chapter-marker').count(), 0);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    test(`${engine}: manual chapters survive disabled and failed SponsorBlock`, async () => {
+        for (const enabled of [false, true]) {
+            const {page, context, errors} = await pageFor(engine, {realPlayer:true, width:390, touch:true,
+                playerData:{chapters:[{start:0,title:'Start'},{start:2,title:'Finish'}]},
+                sponsorblock:{enabled}, sponsorblockError:true});
+            await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => document.querySelectorAll('.chapter-marker').length === 2);
+            await page.evaluate(() => {
+                player.pause(); player.currentTime(2.5);
+                var bar = document.querySelector('.vjs-progress-holder'), rect = bar.getBoundingClientRect();
+                var event = new Event('touchstart');
+                Object.defineProperty(event, 'touches', {value:[{clientX:rect.left + rect.width * 2.5 / player.duration()}]});
+                bar.dispatchEvent(event);
+            });
+            assert.equal(await page.locator('.chapter-tooltip > div').nth(1).innerText(), 'Finish');
+            const tip = await page.locator('.chapter-tooltip').boundingBox();
+            const playerBox = await page.locator('.video-js').boundingBox();
+            assert.ok(tip.x >= playerBox.x && tip.x + tip.width <= playerBox.x + playerBox.width);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: manual chapters in embeds, player styles and thumbnail previews`, async () => {
+        for (const style of ['youtube', 'invidious']) {
+            const {page, context, errors} = await pageFor(engine, {realPlayer:true, fixture:'embed-mobile', route:'embed/2isYuQZMbdU', storyboards:true,
+                playerData:{chapters:[{start:0,title:'Start'},{start:2,title:'Final section'}]}});
+            await page.evaluate(style => { player.el().classList.remove('player-style-youtube', 'player-style-invidious'); player.el().classList.add('player-style-' + style); player.muted(true); player.play(); }, style);
+            await page.waitForFunction(() => document.querySelectorAll('.chapter-marker').length === 2);
+            await page.evaluate(() => { player.pause(); player.userActive(true); });
+            const bar = page.locator('.vjs-progress-holder');
+            const bounds = await bar.boundingBox();
+            await page.mouse.move(bounds.x + bounds.width * .65, bounds.y + bounds.height / 2);
+            await page.waitForFunction(() => !document.querySelector('.chapter-tooltip').hidden);
+            assert.equal(await page.locator('.chapter-tooltip > div').nth(1).innerText(), 'Final section');
+            const preview = page.locator('.vjs-vtt-thumbnail-display');
+            await preview.waitFor({state:'visible',timeout:3000});
+            // A second move also exercises the preview's normal hover update.
+            await page.mouse.move(bounds.x + bounds.width * .66, bounds.y + bounds.height / 2);
+            await page.waitForFunction(() => {
+                const tip = document.querySelector('.chapter-tooltip').getBoundingClientRect();
+                const thumb = document.querySelector('.vjs-vtt-thumbnail-display').getBoundingClientRect();
+                return tip.bottom <= thumb.top;
+            });
+            await bar.click({position:{x:bounds.width * .65,y:bounds.height / 2}});
+            assert.ok(await page.evaluate(() => player.currentTime() > 2));
+            await page.locator('.vjs-fullscreen-control').click();
+            await page.waitForFunction(() => player.isFullscreen());
+            await bar.focus();
+            await page.keyboard.press('ArrowLeft');
+            assert.ok(await page.evaluate(() => player.currentTime() < 2));
+            await page.screenshot({path:path.join(artifacts, `${engine}-chapters-${style}.png`)});
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+}
+
+test('manual chapter template serializes titles safely for watch and embed', () => {
+    const html = fs.readFileSync(path.join(generated, 'watch-chapters.html'), 'utf8');
+    const payload = html.match(/<script id="player_data"[^>]*>([\s\S]*?)<\/script>/)[1];
+    assert.equal(payload.includes('</script>'), false);
+    assert.deepEqual(JSON.parse(payload).chapters, [{start:0,title:'</script><script>alert(1)</script>'},{start:2,title:'日本語 & details'}]);
+    const embed = fs.readFileSync(path.join(generated, 'embed-mobile.html'), 'utf8');
+    assert.equal(JSON.parse(embed.match(/<script id="player_data"[^>]*>([\s\S]*?)<\/script>/)[1]).chapters.length, 3);
+});

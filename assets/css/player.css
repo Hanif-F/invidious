@@ -451,3 +451,9 @@ body .video-js .vjs-menu li.vjs-menu-item:focus-visible {
   margin: 0;
   padding: 0;
 }
+
+.chapter-markers { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.chapter-marker { position: absolute; top: 0; height: 100%; width: 2px; background: rgba(0,0,0,.65); transform: translateX(-1px); }
+.video-js .chapter-tooltip { position: absolute; z-index: 30; pointer-events: none; max-width: min(320px, calc(100% - 8px)); box-sizing: border-box; padding: 6px 9px; border-radius: 4px; background: rgba(20,20,20,.95); color: white; font: 13px/1.4 sans-serif; overflow-wrap: anywhere; text-align: center; }
+.video-js .chapter-tooltip[hidden] { display: none; }
+.chapter-tooltip > :first-child { font-weight: bold; }
