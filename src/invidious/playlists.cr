@@ -596,7 +596,7 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       html << ">"
       html << %(<a href="#{HTML.escape(url)}"><span class="queue-number">#{index >= 0 ? (index + 1).to_s : ""}</span>)
       unless thin_mode
-        html << %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
+        html << %(<span class="queue-thumbnail"><span class="watched-indicator" hidden data-id="#{HTML.escape(id)}" data-length="#{video["lengthSeconds"].as_i}"></span><img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt=""></span>)
       end
       html << %(<span><span class="queue-title" dir="auto"><span data-dearrow-id="#{HTML.escape(id)}">#{title}</span></span><span class="queue-meta" dir="auto">#{author})
       length = video["lengthSeconds"].as_i

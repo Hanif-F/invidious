@@ -73,6 +73,7 @@ async function pageFor(engine, options = {}) {
             if (options.dearrowError) return route.fulfill({ status: 503, body: '{}' });
             return route.fulfill({ contentType: 'application/json', body: JSON.stringify({title: options.dearrowMissing ? null : 'A clear title <img src=x onerror=alert(1)>'}) });
         }
+        if (url.pathname === '/api/v1/auth/playback') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(options.playback || {positions: {}, watched: []}) });
         if (url.pathname === '/api/v1/auth/subscriptions') return route.fulfill({ contentType: 'application/json', body: '[]' });
         if (url.pathname === '/api/v1/auth/notifications') return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
         if (/^\/api\/v1\/(playlists|mixes)\//.test(url.pathname)) {
@@ -1334,15 +1335,18 @@ for (const engine of engines) {
         await page.waitForFunction(() => window.player && player.isReady_);
         const updates = await page.evaluate(() => {
             const updates = [];
-            helpers.xhr = (method, url, options) => {
+            helpers.xhr = (method, url, options, callbacks) => {
                 if (url.startsWith('/watch_ajax')) updates.push({
                     action: new URL(url, location.origin).searchParams.get('action'),
                     position: new URLSearchParams(options.payload).get('position')
                 });
+                if (callbacks.on200) callbacks.on200({});
             };
             let time = 60;
             // Keep the real player's event handlers; simulate a longer video's clock.
             player.currentTime = () => time;
+            player.ended = () => false;
+            player.trigger('playing');
             player.trigger('timeupdate');
             time = video_data.length_seconds - 1;
             player.trigger('timeupdate');
@@ -2341,4 +2345,39 @@ for (const engine of engines) {
             await context.close();
         }
     });
+}
+
+for (const engine of engines) {
+    for (const width of [390, 1440]) {
+        test(`${engine}: account thumbnail bars ignore local progress and update dynamic queues at ${width}px`, async () => {
+            const page = await browsers[engine].newPage({viewport: {width, height: 900}});
+            await page.setContent(`<script id="watched-config" type="application/json">{"sync":true}</script>
+                <div class="watched-indicator" data-id="partial" data-length="1000" hidden></div>
+                <div class="watched-indicator" data-id="full" data-length="1000" hidden></div>
+                <div class="watched-indicator" data-id="new" data-length="1000" hidden></div>`);
+            await page.evaluate(() => {
+                window.calls = 0;
+                window.helpers = {
+                    storage: {get: () => { throw new Error('Account bars must not read local storage'); }},
+                    xhr: (method, url, options, callbacks) => {
+                        window.calls++;
+                        callbacks.on200({positions: {partial: 492, early: 1, late: 950}, watched: ['partial', 'full']});
+                    }
+                };
+            });
+            await page.addScriptTag({path: path.join(root, 'assets/js/watched_indicator.js')});
+            assert.equal(await page.locator('[data-id="partial"]').evaluate(el => el.style.width), '49%');
+            assert.equal(await page.locator('[data-id="full"]').evaluate(el => el.style.width), '100%');
+            assert.equal(await page.locator('[data-id="new"]').evaluate(el => el.hidden), true);
+            await page.evaluate(() => document.body.insertAdjacentHTML('beforeend',
+                '<span class="watched-indicator" data-id="partial" data-length="1000" hidden></span>' +
+                '<span class="watched-indicator" data-id="early" data-length="1000" hidden></span>' +
+                '<span class="watched-indicator" data-id="late" data-length="1000" hidden></span>'));
+            await page.waitForFunction(() => document.querySelector('[data-id="early"]').style.width === '5%');
+            assert.equal(await page.locator('[data-id="late"]').evaluate(el => el.style.width), '100%');
+            assert.deepEqual(await page.locator('[data-id="partial"]').evaluateAll(els => els.map(el => el.style.width)), ['49%', '49%']);
+            assert.equal(await page.evaluate(() => calls), 1);
+            await page.close();
+        });
+    }
 }

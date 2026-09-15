@@ -194,3 +194,27 @@ and embed players, invalid IDs, lookup failure, CSRF rejection, saving and reset
 The channel editor is checked at mobile and desktop widths without JavaScript.
 Rich stream-menu checks also verify that audio/quality icons sit inside centered
 buttons and selected rows use neutral, high-contrast colors.
+
+## Playback sync
+
+`playback-sync.test.cjs` runs without a browser and covers restoration at 8:12,
+continued playback, acknowledged versus failed saves, serialized normal requests,
+background delivery during an outstanding request, completion retries, and the
+unchanged 15-second periodic interval. Browser tests cover completion/seek-back,
+beacon fallback, and account-backed thumbnail bars at desktop and mobile widths,
+including duplicate video IDs inserted by a dynamic queue.
+
+Thumbnail progress uses one authenticated `GET /api/v1/auth/playback` request per
+page load (refreshed when returning to the page). The uncached JSON response has
+`positions`, a video-ID-to-seconds object, and `watched`, an array of video IDs.
+It uses the existing account retention limits. Account bars never read browser
+local progress; without account sync, the existing local storage and watched
+fallback remain available. Missing or invalid durations cannot display partial
+progress. Sync-enabled watch/embed HTML is also served with `private, no-store`.
+
+Physical Firefox/Android process termination remains a manual check: resume a
+video at 8:12, play several minutes, switch apps, let Android unload Firefox, and
+reopen the tab. Compare the restored position with the last successful progress
+request. Hidden-page delivery improves this path but cannot guarantee delivery
+when the OS terminates execution or networking. The tests simulate lifecycle
+signals; they do not establish behavior under actual Android memory pressure.

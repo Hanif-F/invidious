@@ -313,6 +313,7 @@ module Invidious::Routing
       delete "/api/v1/auth/history/:id", {{namespace}}::Authenticated, :mark_unwatched
       delete "/api/v1/auth/history", {{namespace}}::Authenticated, :clear_history
 
+      get "/api/v1/auth/playback", {{namespace}}::Authenticated, :get_playback_positions
       get "/api/v1/auth/playback/:id", {{namespace}}::Authenticated, :get_playback_position
       put "/api/v1/auth/playback/:id", {{namespace}}::Authenticated, :set_playback_position
       delete "/api/v1/auth/playback/:id", {{namespace}}::Authenticated, :delete_playback_position

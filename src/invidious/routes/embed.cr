@@ -141,6 +141,7 @@ module Invidious::Routes::Embed
     end
 
     playback_sync = !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now
+    env.response.headers["Cache-Control"] = "private, no-store" if playback_sync
     playback_position = playback_sync ? Invidious::Database::PlaybackPositions.select(user.not_nil!.email, id).try(&.[:position_seconds]) : nil
 
     if preferences.annotations_subscribed &&

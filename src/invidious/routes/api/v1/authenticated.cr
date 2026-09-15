@@ -115,6 +115,14 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.status_code = 204
   end
 
+  def self.get_playback_positions(env)
+    env.response.content_type = "application/json"
+    env.response.headers["Cache-Control"] = "private, no-store"
+    user = env.get("user").as(User)
+    positions = Invidious::Database::PlaybackPositions.select_all(user.email)
+    {positions: positions.to_h { |entry| {entry[:video_id], entry[:position_seconds]} }, watched: user.watched}.to_json
+  end
+
   def self.get_playback_position(env)
     env.response.content_type = "application/json"
     user = env.get("user").as(User)

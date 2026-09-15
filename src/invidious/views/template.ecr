@@ -184,6 +184,8 @@
         <script id="dearrow-config" type="application/json"><%= {"showOriginal" => preferences.dearrow_show_original}.to_json.gsub("<", "\\u003c") %></script>
         <script src="/js/dearrow.js?v=<%= ASSET_COMMIT %>" defer></script>
     <% end %>
+    <script id="watched-config" type="application/json"><%= {"sync" => !!env.get?("user") && env.get("user").as(Invidious::User).preferences.save_player_pos}.to_json %></script>
+    <script src="/js/watched_indicator.js?v=<%= ASSET_COMMIT %>" defer></script>
     <script src="/js/video-actions.js?v=<%= ASSET_COMMIT %>" defer></script>
     <script src="/js/handlers.js?v=<%= ASSET_COMMIT %>"></script>
     <script src="/js/themes.js?v=<%= ASSET_COMMIT %>"></script>

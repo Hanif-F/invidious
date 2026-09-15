@@ -347,73 +347,74 @@ if (video_data.params.save_player_pos) {
     const hasTimeParam = url.searchParams.has('t') || url.searchParams.has('start') || url.searchParams.has('time_continue');
     const rememberedTime = video_data.playback_sync ? (video_data.playback_position || 0) : get_video_time();
     let lastUpdated = 0;
-    let lastSyncedAt = 0;
-    let lastSyncedPosition = -1;
-    let positionCleared = false;
+    let lastAttemptAt = 0;
+    let lastAttemptPosition;
+    let acknowledged;
+    let inFlight = false;
+    let pending = false;
+    let started = false;
 
-    if(!hasTimeParam) {
-      if (rememberedTime >= video_data.length_seconds - 20) {
-        set_seconds_after_start(0);
-        if (video_data.playback_sync && rememberedTime > 0)
-          clear_server_video_time(false);
-      } else {
-        set_seconds_after_start(rememberedTime);
-      }
+    if (!hasTimeParam) {
+        set_seconds_after_start(rememberedTime >= video_data.length_seconds - 20 ? 0 : rememberedTime);
+    }
+
+    // Startup seeks, pauses and source changes must not overwrite account progress.
+    player.on('playing', function () { started = true; });
+
+    function currentPosition() {
+        const raw = player.currentTime();
+        if (!isFinite(raw) || raw < 0) return undefined;
+        return player.ended() || raw > video_data.length_seconds - 15 ? null : Math.floor(raw);
+    }
+
+    function flushPosition(useBeacon) {
+        if (!started) return;
+        const position = currentPosition();
+        if (position === undefined || (position === acknowledged && !inFlight)) return;
+        // Background delivery must still run if a normal request is in flight.
+        if (useBeacon) {
+            send_playback_position(position === null ? 'clear_progress' : 'set_progress',
+                position === null ? undefined : position, true);
+            return;
+        }
+        if (inFlight) { pending = true; return; }
+        inFlight = true;
+        lastAttemptAt = Date.now();
+        lastAttemptPosition = position;
+        send_playback_position(position === null ? 'clear_progress' : 'set_progress',
+            position === null ? undefined : position, false, function (success) {
+                inFlight = false;
+                if (success) acknowledged = position;
+                const followUp = pending;
+                pending = false;
+                // Retry failures at the next save opportunity, not in a tight loop.
+                if (success && followUp) flushPosition(false);
+            });
     }
 
     player.on('timeupdate', function () {
-        const raw = player.currentTime();
-        const time = Math.floor(raw);
-
-        if (raw > video_data.length_seconds - 15) {
-            if (video_data.playback_sync && !positionCleared) {
-                clear_server_video_time(false);
-                positionCleared = true;
-                lastSyncedPosition = -1;
-            }
-            return;
-        }
-
-        positionCleared = false;
         if (video_data.playback_sync) {
-            const now = Date.now();
-            if (time !== lastSyncedPosition && now - lastSyncedAt >= 15000) {
-                save_server_video_time(time, false);
-                lastSyncedAt = now;
-                lastSyncedPosition = time;
+            if ((currentPosition() === null && lastAttemptPosition !== null) || Date.now() - lastAttemptAt >= 15000) flushPosition(false);
+        } else {
+            const raw = player.currentTime();
+            const time = Math.floor(raw);
+            if (raw <= video_data.length_seconds - 15 && lastUpdated !== time) {
+                save_video_time(time);
+                lastUpdated = time;
             }
-        } else if(lastUpdated !== time) {
-          save_video_time(time);
-          lastUpdated = time;
         }
     });
 
     if (video_data.playback_sync) {
-        const flushPosition = function (useBeacon) {
-            const raw = player.currentTime();
-            const time = Math.floor(raw);
-            if (!isFinite(time) || time < 0)
-                return;
-
-            if (raw > video_data.length_seconds - 15) {
-                if (!positionCleared) clear_server_video_time(useBeacon);
-                positionCleared = true;
-                lastSyncedPosition = -1;
-            } else if (time !== lastSyncedPosition) {
-                save_server_video_time(time, useBeacon);
-                lastSyncedPosition = time;
-                positionCleared = false;
-            }
-        };
-
         player.on('pause', function () { flushPosition(false); });
         player.on('seeked', function () { flushPosition(false); });
-        player.on('ended', function () {
-            clear_server_video_time(false);
-            positionCleared = true;
-            lastSyncedPosition = -1;
-        });
+        player.on('ended', function () { flushPosition(false); });
         window.addEventListener('pagehide', function () { flushPosition(true); });
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') flushPosition(true);
+            else flushPosition(false);
+        });
+        window.addEventListener('online', function () { flushPosition(false); });
     }
 }
 else remove_all_video_times();
@@ -549,7 +550,7 @@ function playback_position_payload(position) {
     return payload;
 }
 
-function send_playback_position(action, position, useBeacon) {
+function send_playback_position(action, position, useBeacon, done) {
     const url = '/watch_ajax?action=' + action + '&redirect=false&id=' + encodeURIComponent(video_data.id);
     const payload = playback_position_payload(position);
 
@@ -565,7 +566,12 @@ function send_playback_position(action, position, useBeacon) {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         }).catch(function () {});
     } else {
-        helpers.xhr('POST', url, {payload: payload}, {});
+        helpers.xhr('POST', url, {payload: payload}, {
+            on200: function () { if (done) done(true); },
+            onNon200: function () { if (done) done(false); },
+            onError: function () { if (done) done(false); },
+            onTimeout: function () { if (done) done(false); }
+        });
     }
 }
 
