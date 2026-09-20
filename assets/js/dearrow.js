@@ -35,29 +35,52 @@
     }
 
     function originalOnInteraction(element, original, replacement) {
-        var trigger = element.closest('a') || element;
-        var addedTabIndex = !trigger.hasAttribute('tabindex') && trigger.tagName !== 'A';
-        if (addedTabIndex) trigger.tabIndex = 0;
-        var hovered = element.matches(':hover');
-        var focused = document.activeElement === trigger && trigger.matches(':focus-visible');
+        var row = element.closest('[data-dearrow-row]');
+        if (!row) return;
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'dearrow-reveal';
+        button.setAttribute('aria-label', config.originalLabel || 'Show original title');
+        button.setAttribute('aria-pressed', 'false');
+        var hovered = false;
+        var focused = false;
+        var toggled = false;
+        var touch = false;
         function update() {
-            element.textContent = hovered || focused ? original : replacement;
+            var showing = hovered || focused || toggled;
+            element.textContent = showing ? original : replacement;
+            button.setAttribute('aria-pressed', String(showing));
         }
-        function enter() { hovered = true; update(); }
-        function leave() { hovered = false; update(); }
-        function focus() { focused = trigger.matches(':focus-visible'); update(); }
-        function blur() { focused = false; update(); }
-        element.addEventListener('mouseenter', enter);
-        element.addEventListener('mouseleave', leave);
-        trigger.addEventListener('focus', focus);
-        trigger.addEventListener('blur', blur);
-        // Undo can reinsert the same card. Remove listeners before restoring it.
+        button.addEventListener('pointerenter', function (event) {
+            if (event.pointerType !== 'mouse') return;
+            touch = false;
+            hovered = true;
+            update();
+        });
+        button.addEventListener('pointerleave', function () { hovered = false; update(); });
+        button.addEventListener('pointerdown', function (event) {
+            touch = event.pointerType !== 'mouse';
+            focused = false;
+        });
+        button.addEventListener('focus', function () {
+            focused = !touch && button.matches(':focus-visible');
+            update();
+        });
+        button.addEventListener('blur', function () { focused = false; touch = false; update(); });
+        button.addEventListener('keydown', function () { touch = false; focused = true; update(); });
+        button.addEventListener('click', function () {
+            if (touch) {
+                toggled = !toggled;
+                hovered = focused = false;
+            }
+            update();
+        });
+        row.classList.add('dearrow-title-row');
+        row.appendChild(button);
+        // Undo can reinsert the same card. Remove the old control before restoring it.
         element.dearrowCleanup = function () {
-            element.removeEventListener('mouseenter', enter);
-            element.removeEventListener('mouseleave', leave);
-            trigger.removeEventListener('focus', focus);
-            trigger.removeEventListener('blur', blur);
-            if (addedTabIndex) trigger.removeAttribute('tabindex');
+            button.remove();
+            row.classList.remove('dearrow-title-row');
         };
         update();
     }

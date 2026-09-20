@@ -76,7 +76,7 @@
                     </form>
                     </div></div>
                 </div>
-                <p><a href="/watch?v=<%= HTML.escape(item) %>" dir="auto" data-dearrow-id="<%= HTML.escape(item) %>"><%= HTML.escape(entry.title || "#{I18n.translate(locale, "ui_open_video")} (#{item})") %></a></p>
+                <p data-dearrow-row><a href="/watch?v=<%= HTML.escape(item) %>" dir="auto" data-dearrow-id="<%= HTML.escape(item) %>"><%= HTML.escape(entry.title || "#{I18n.translate(locale, "ui_open_video")} (#{item})") %></a></p>
                 <p dir="auto">
                     <% if channel_id = entry.channel_id %>
                     <a href="/channel/<%= URI.encode_www_form(channel_id) %>"><%= HTML.escape(entry.channel_name || channel_id) %></a>

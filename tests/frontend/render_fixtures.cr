@@ -190,7 +190,7 @@ def navigation_fixture
   render "src/invidious/views/components/navigation.ecr"
 end
 
-def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "", sync = false)
+def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "", sync = false, dearrow = false)
   env = signed_in_env("/feed/history")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = visual_theme
@@ -199,6 +199,7 @@ def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, h
   user = env.get("user").as(User)
   user.watched = ["2isYuQZMbdU", "previous001", "nextvideo01"]
   preferences.save_player_pos = sync
+  preferences.dearrow_enabled = dearrow
   user.preferences = preferences
   env.set "preferences", preferences
   env.set "user", user
@@ -313,6 +314,7 @@ File.write("#{output}/queue-thin.json", queue_fixture(true))
 File.write("#{output}/browse-signed-in.html", browse_fixture(signed_in_env("/feed/popular")))
 File.write("#{output}/navigation-subscribed.html", navigation_fixture)
 File.write("#{output}/history.html", history_fixture)
+File.write("#{output}/history-dearrow.html", history_fixture(dearrow: true))
 File.write("#{output}/history-empty.html", history_fixture(empty: true))
 File.write("#{output}/history-search.html", history_fixture(history_query: "STUDIO north"))
 File.write("#{output}/history-no-matches.html", history_fixture(history_query: "<unmatched>"))

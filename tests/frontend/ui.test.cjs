@@ -64,6 +64,7 @@ async function pageFor(engine, options = {}) {
                     return start + JSON.stringify({...original, ...options.playerData}).replace(/</g, '\\u003c') + end;
                 });
             }
+            if (options.dearrowOriginal) body = body.replace(/(<[^>]+data-dearrow-id=[^>]+>)[^<]*(<\/)/g, (_, start, end) => start + options.dearrowOriginal + end);
             if (options.extraQuality) body = body.replace('</video>', '<source src="/latest_version?id=2isYuQZMbdU&itag=44" type="video/webm" label="high"></video>');
             if (options.sponsorblock) body = body.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => start + JSON.stringify({...JSON.parse(data), sponsorblock: {...JSON.parse(data).sponsorblock, ...options.sponsorblock}}).replace(/</g, '\\u003c') + end);
             return route.fulfill({ contentType: 'text/html', body });
@@ -71,7 +72,7 @@ async function pageFor(engine, options = {}) {
         if (url.pathname.startsWith('/api/v1/sponsorblock/')) return route.fulfill({ status: options.sponsorblockError ? 503 : 200, contentType: 'application/json', body: JSON.stringify({segments: options.sponsorblockSegments || []}) });
         if (url.pathname.startsWith('/api/v1/dearrow/')) {
             if (options.dearrowError) return route.fulfill({ status: 503, body: '{}' });
-            return route.fulfill({ contentType: 'application/json', body: JSON.stringify({title: options.dearrowMissing ? null : 'A clear title <img src=x onerror=alert(1)>'}) });
+            return route.fulfill({ contentType: 'application/json', body: JSON.stringify({title: options.dearrowMissing ? null : (options.dearrowTitle ?? 'A clear title <img src=x onerror=alert(1)>')}) });
         }
         if (url.pathname === '/api/v1/auth/playback') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(options.playback || {positions: {}, watched: []}) });
         if (url.pathname === '/api/v1/auth/subscriptions') return route.fulfill({ contentType: 'application/json', body: '[]' });
@@ -79,7 +80,8 @@ async function pageFor(engine, options = {}) {
         if (/^\/api\/v1\/(playlists|mixes)\//.test(url.pathname)) {
             queueCalls++;
             if (options.queueError && queueCalls <= options.queueError) return route.fulfill({ status: 500, body: '{}' });
-            const response = options.queue || (fixture === 'watch-thin' ? JSON.parse(fs.readFileSync(path.join(generated, 'queue-thin.json'))) : queue);
+            let response = options.queue || (fixture === 'watch-thin' ? JSON.parse(fs.readFileSync(path.join(generated, 'queue-thin.json'))) : queue);
+            if (options.dearrowOriginal) response = {...response, playlistHtml: response.playlistHtml.replace(/(<[^>]+data-dearrow-id=[^>]+>)[^<]*(<\/)/g, (_, start, end) => start + options.dearrowOriginal + end)};
             return route.fulfill({ contentType: 'application/json', body: JSON.stringify(response) });
         }
         if (url.pathname.startsWith('/api/v1/transcripts/')) {
@@ -848,6 +850,7 @@ test('UI asset additions stay below the 35KB compressed initial-load budget', ()
     // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
     delta += Math.max(0, ...themeBytes);
     for (const file of ['dearrow.js', 'player-mobile.js', 'player-stats.js', 'player-stream-menu.js', 'dearrow-loader.js', 'player-chapters.js']) delta += gzipSync(fs.readFileSync(path.join(root, 'assets/js', file))).length;
+    delta += gzipSync(fs.readFileSync(path.join(root, 'assets/css/dearrow.css'))).length;
     assert.ok(delta <= 35 * 1024, `${delta} bytes added`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
@@ -1249,14 +1252,19 @@ for (const engine of engines) {
         assert.equal(await page.locator('[data-dearrow-watch] img').count(), 0);
         const heading = page.locator('[data-dearrow-watch]');
         const original = 'A journey through light, color, and motion';
+        const reveal = heading.locator('..').locator('.dearrow-reveal');
         await heading.hover();
+        assert.equal(await heading.textContent(), replacement);
+        const bounds = await reveal.boundingBox();
+        await reveal.hover();
         assert.equal(await heading.textContent(), original);
+        assert.deepEqual(await reveal.boundingBox(), bounds);
         assert.equal(await page.locator('.dearrow-tooltip').count(), 0);
         await page.mouse.move(0, 0);
         assert.equal(await heading.textContent(), replacement);
-        await heading.focus();
+        await reveal.focus();
         assert.equal(await heading.textContent(), original);
-        await heading.evaluate(el => el.blur());
+        await reveal.evaluate(el => el.blur());
         assert.equal(await heading.textContent(), replacement);
         assert.equal(await page.title(), replacement + ' - Invidious');
         await page.locator('.queue-row').first().waitFor();
@@ -1281,12 +1289,106 @@ for (const engine of engines) {
         await restored.scrollIntoViewIfNeeded();
         await page.waitForFunction(() => window.removedRecommendation.querySelector('[data-dearrow-id]').textContent.startsWith('A clear title'));
         const restoredTitle = restored.locator('[data-dearrow-id]');
-        await restoredTitle.hover();
+        assert.equal(await restored.locator('..').locator('.dearrow-reveal').count(), 1);
+        await restored.locator('..').locator('.dearrow-reveal').hover();
         assert.equal(await restoredTitle.textContent(), await restoredTitle.getAttribute('data-dearrow-original'));
         await page.mouse.move(0, 0);
         assert.equal(await restoredTitle.textContent(), replacement);
+        await heading.scrollIntoViewIfNeeded();
         await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-desktop.png`)});
         await context.close();
+    });
+
+    test(`${engine}: DeArrow icon stays fixed with wrapping, RTL, themes, and touch`, async () => {
+        for (const theme of ['modern-neon', 'diary', 'cinematic']) {
+            const {page, context, errors} = await pageFor(engine, {fixture: 'browse-dearrow', width: 390, touch: true});
+            await page.waitForSelector('.dearrow-reveal');
+            await page.evaluate(async theme => {
+                document.body.dataset.theme = theme;
+                const stylesheet = document.querySelector('link[href*="/themes/"]');
+                await new Promise(resolve => { stylesheet.onload = resolve; stylesheet.href = '/themes/' + theme + '/theme.css'; });
+                await document.fonts.ready;
+            }, theme);
+            const title = page.locator('[data-dearrow-id]').first();
+            const row = title.locator('xpath=ancestor::*[@data-dearrow-row][1]');
+            const button = row.locator('.dearrow-reveal');
+            const replacement = await title.textContent();
+            const original = await title.getAttribute('data-dearrow-original');
+            assert.equal(await button.evaluate(el => !!el.closest('a')), false);
+            const url = page.url();
+            for (const direction of ['ltr', 'rtl']) {
+                await page.evaluate(dir => document.documentElement.dir = dir, direction);
+                await row.evaluate(el => el.style.fontSize = '24px');
+                await button.scrollIntoViewIfNeeded();
+                const before = await button.boundingBox();
+                await button.tap();
+                assert.equal(await title.textContent(), original);
+                assert.equal(await button.getAttribute('aria-pressed'), 'true');
+                assert.deepEqual(await button.boundingBox(), before);
+                await button.tap();
+                assert.equal(await title.textContent(), replacement);
+                assert.deepEqual(await button.boundingBox(), before);
+                assert.equal(page.url(), url);
+                assert.equal(await row.evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
+            }
+            await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-${theme}-touch.png`)});
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: DeArrow targets stay fixed across title lengths and page layouts`, async () => {
+        for (const fixture of ['watch-dearrow', 'history-dearrow']) {
+            const longTitle = 'An original title with many more words to wrap across multiple lines. '.repeat(4);
+            const {page, context, errors} = await pageFor(engine, {fixture, dearrowOriginal: longTitle, dearrowTitle: 'Short'});
+            const selectors = fixture === 'watch-dearrow'
+                ? ['[data-dearrow-watch]', '#queue-current [data-dearrow-id]', '.queue-row [data-dearrow-id]', '.recommendation [data-dearrow-id]']
+                : ['[data-dearrow-id]'];
+            for (const selector of selectors) {
+                const title = page.locator(selector).first();
+                await title.scrollIntoViewIfNeeded();
+                await page.waitForFunction(selector => document.querySelector(selector).dataset.dearrowOriginal !== undefined, selector);
+                const row = title.locator('xpath=ancestor::*[@data-dearrow-row][1]');
+                const button = row.locator('.dearrow-reveal');
+                assert.equal(await button.evaluate(el => !!el.closest('a')), false);
+                // A removable queue row has a separate action at its trailing edge.
+                if (selector.startsWith('.queue-row')) await row.evaluate(el => {
+                    const remove = document.createElement('button');
+                    remove.className = 'queue-remove';
+                    remove.textContent = '×';
+                    el.appendChild(remove);
+                });
+                for (const direction of ['ltr', 'rtl']) {
+                    await page.evaluate(dir => document.documentElement.dir = dir, direction);
+                    await button.scrollIntoViewIfNeeded();
+                    const before = await button.boundingBox();
+                    await button.hover();
+                    assert.equal(await title.textContent(), await title.getAttribute('data-dearrow-original'));
+                    assert.deepEqual(await button.boundingBox(), before);
+                    const url = page.url();
+                    await button.click();
+                    assert.equal(page.url(), url);
+                    await page.mouse.move(0, 0);
+                    assert.equal(await title.textContent(), 'Short');
+                    assert.deepEqual(await button.boundingBox(), before);
+                    const link = row.locator('a').first();
+                    if (await link.count()) {
+                        await link.focus();
+                        assert.equal(await title.textContent(), 'Short');
+                        await page.keyboard.press('Tab');
+                    } else {
+                        await page.keyboard.press('Tab');
+                        await button.focus();
+                    }
+                    assert.equal(await button.evaluate(el => el === document.activeElement), true);
+                    assert.equal(await title.textContent(), await title.getAttribute('data-dearrow-original'));
+                    await page.keyboard.press('Tab');
+                    assert.equal(await title.textContent(), 'Short');
+                }
+            }
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
     });
 
     test(`${engine}: DeArrow keeps replacements on hover when original display is disabled`, async () => {
@@ -1294,6 +1396,7 @@ for (const engine of engines) {
         await page.waitForFunction(() => Array.from(document.querySelectorAll('[data-dearrow-id]')).some(el => el.textContent.startsWith('A clear title')));
         assert.equal(await page.locator('.dearrow-tooltip').count(), 0);
         assert.equal(await page.locator('[data-dearrow-id] img').count(), 0);
+        assert.equal(await page.locator('.dearrow-reveal').count(), 0);
         const cardTitle = page.locator('[data-dearrow-id]').first();
         await cardTitle.hover();
         assert.equal(await cardTitle.textContent(), 'A clear title <img src=x onerror=alert(1)>');
@@ -1307,6 +1410,7 @@ for (const engine of engines) {
         for (const options of [{fixture: 'watch-dark'}, {fixture: 'watch-dearrow', javascript: false}, {fixture: 'watch-dearrow', dearrowError: true}, {fixture: 'watch-dearrow', dearrowMissing: true}]) {
             const {page, context, requests, errors} = await pageFor(engine, options);
             await page.waitForLoadState('networkidle');
+            assert.equal(await page.locator('.dearrow-reveal').count(), 0);
             assert.equal(await page.locator('h1').first().textContent(), 'A journey through light, color, and motion');
             assert.equal(await page.locator('.dearrow-tooltip').count(), 0);
             if (options.fixture === 'watch-dark' || options.javascript === false) assert.ok(!requests.some(url => url.startsWith('/api/v1/dearrow/')));
