@@ -3,6 +3,7 @@
     if (!player.el) return;
     var root = player.el(), bar = root.querySelector('.vjs-progress-holder');
     if (!bar) return;
+    var progress = bar.closest('.vjs-progress-control') || bar;
     var chapters = [], segments = [], labels = player_data.sponsorblock.labels;
     function element(parent, name) {
         var node = document.createElement('div');
@@ -59,14 +60,17 @@
     }
     function leave() { pointerTime = null; hide(); if (focused) refresh(); }
     function receive(e) { segments = e.segments; refresh(); }
-    var listeners = {mousemove: move, mouseleave: leave, focus: function () { focused = true; refresh(); }, blur: function () { focused = false; leave(); },
+    var mouseListeners = {mousemove: move, mouseleave: leave};
+    var barListeners = {focus: function () { focused = true; refresh(); }, blur: function () { focused = false; leave(); },
         touchstart: move, touchmove: move, touchend: leave, touchcancel: leave};
-    Object.keys(listeners).forEach((name) => bar.addEventListener(name, listeners[name]));
+    Object.keys(mouseListeners).forEach((name) => progress.addEventListener(name, mouseListeners[name]));
+    Object.keys(barListeners).forEach((name) => bar.addEventListener(name, barListeners[name]));
     var events = {sponsorblocksegments: receive, loadedmetadata: render, durationchange: render,
         timeupdate: refresh, seeked: refresh, playerresize: refresh};
     Object.keys(events).forEach((name) => player.on(name, events[name]));
     player.on('dispose', function () {
-        Object.keys(listeners).forEach((name) => bar.removeEventListener(name, listeners[name]));
+        Object.keys(mouseListeners).forEach((name) => progress.removeEventListener(name, mouseListeners[name]));
+        Object.keys(barListeners).forEach((name) => bar.removeEventListener(name, barListeners[name]));
         Object.keys(events).forEach((name) => player.off(name, events[name]));
     });
     render();

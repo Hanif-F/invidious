@@ -2441,6 +2441,15 @@ for (const engine of engines) {
         await hover(2.5);
         assert.equal(await page.locator('.chapter-tooltip > div').nth(1).innerText(), '日本語 & details');
         assert.equal(await page.locator('.chapter-tooltip > :first-child').isVisible(), false);
+        const progress = await page.locator('.vjs-progress-control').boundingBox();
+        const nearbyY = bounds.y - progress.y > 2
+            ? (progress.y + bounds.y) / 2
+            : (bounds.y + bounds.height + progress.y + progress.height) / 2;
+        assert.ok(nearbyY >= progress.y && nearbyY <= progress.y + progress.height);
+        assert.ok(nearbyY < bounds.y || nearbyY > bounds.y + bounds.height);
+        await page.mouse.move(bounds.x + bounds.width * 2.5 / duration, nearbyY);
+        await page.waitForFunction(() => !document.querySelector('.chapter-tooltip').hidden);
+        assert.equal(await page.locator('.chapter-tooltip > div').nth(1).innerText(), '日本語 & details');
         await hover(0.1);
         assert.equal(await page.locator('.chapter-tooltip').isVisible(), false);
         await bar.focus();
