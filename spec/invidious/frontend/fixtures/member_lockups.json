@@ -1,0 +1,132 @@
+[
+  {
+    "lockupViewModel": {
+      "contentId": "fnUEt8IZy1U",
+      "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+      "contentImage": {
+        "thumbnailViewModel": {
+          "image": {
+            "sources": [
+              {
+                "url": "https://i.ytimg.com/vi/fnUEt8IZy1U/hqdefault.jpg"
+              }
+            ]
+          },
+          "overlays": [
+            {
+              "thumbnailBottomOverlayViewModel": {
+                "badges": [
+                  {
+                    "thumbnailBadgeViewModel": {
+                      "text": "15:18"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "lockupMetadataViewModel": {
+          "title": {
+            "content": "Overexplaining - The Overengineered Commuter Backpack -  British Millerain"
+          },
+          "metadata": {
+            "contentMetadataViewModel": {
+              "metadataRows": [
+                {
+                  "metadataParts": [
+                    {
+                      "text": {
+                        "content": "2d ago"
+                      },
+                      "accessibilityLabel": "2 days ago"
+                    }
+                  ]
+                },
+                {
+                  "badges": [
+                    {
+                      "badgeViewModel": {
+                        "badgeText": "Members only",
+                        "badgeStyle": "BADGE_MEMBERS_ONLY",
+                        "iconName": "SPONSORSHIP_STAR"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "delimiter": " "
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "lockupViewModel": {
+      "contentId": "P82XPloDtMc",
+      "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+      "contentImage": {
+        "thumbnailViewModel": {
+          "image": {
+            "sources": [
+              {
+                "url": "https://i.ytimg.com/vi/P82XPloDtMc/hqdefault.jpg"
+              }
+            ]
+          },
+          "overlays": [
+            {
+              "thumbnailBottomOverlayViewModel": {
+                "badges": [
+                  {
+                    "thumbnailBadgeViewModel": {
+                      "text": "18:25"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "lockupMetadataViewModel": {
+          "title": {
+            "content": "Adding Recoil to My Mouse was a lot Harder than I Thought..."
+          },
+          "metadata": {
+            "contentMetadataViewModel": {
+              "metadataRows": [
+                {
+                  "metadataParts": [
+                    {
+                      "text": {
+                        "content": "4d ago"
+                      },
+                      "accessibilityLabel": "4 days ago"
+                    }
+                  ]
+                },
+                {
+                  "badges": [
+                    {
+                      "badgeViewModel": {
+                        "badgeText": "Members only",
+                        "badgeStyle": "BADGE_MEMBERS_ONLY",
+                        "iconName": "SPONSORSHIP_STAR"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "delimiter": " "
+            }
+          }
+        }
+      }
+    }
+  }
+]

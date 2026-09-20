@@ -92,6 +92,19 @@ def member_search_fixture(show : Bool, empty = false)
 end
 
 def check_member_extraction
+  # Reduced live channel lockups for the two reported Linus Tech Tips videos.
+  member_lockups = JSON.parse(File.read("#{__DIR__}/../../spec/invidious/frontend/fixtures/member_lockups.json")).as_a
+  member_lockups.each do |lockup|
+    video = parse_item(lockup, "Linus Tech Tips", "UCXuqSBlHAE6Xw-yeJA0Tunw").as(SearchVideo)
+    raise "Modern metadata badge lost for #{video.id}" unless video.members_only
+    raise "Member video visible with preference disabled" unless Invidious::Frontend::MemberVideos.filter([video], false).empty?
+    raise "Member video hidden with preference enabled" unless Invidious::Frontend::MemberVideos.filter([video], true) == [video]
+
+    lockup["lockupViewModel"]["metadata"]["lockupMetadataViewModel"]["metadata"]["contentMetadataViewModel"]["metadataRows"].as_a.pop
+    public_video = parse_item(lockup, "Linus Tech Tips", "UCXuqSBlHAE6Xw-yeJA0Tunw").as(SearchVideo)
+    raise "Unclassified video hidden" unless Invidious::Frontend::MemberVideos.filter([public_video], false) == [public_video]
+  end
+
   regular = JSON.parse(%({"videoRenderer":{"videoId":"members0001","title":{"simpleText":"Member video"},"badges":[{"metadataBadgeRenderer":{"style":"BADGE_STYLE_TYPE_MEMBERS_ONLY","label":"Members only"}}]}}))
   extracted = parse_item(regular).as(SearchVideo)
   raise "Renderer discarded membership" unless extracted.members_only

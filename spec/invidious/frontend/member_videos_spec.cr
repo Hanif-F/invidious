@@ -7,6 +7,22 @@ private record MembershipItem, id : String, members_only : Bool
 private record UnknownMembershipItem, id : String
 
 Spectator.describe Invidious::Videos::Membership do
+  it "recognizes the reported LTT metadata-row badges" do
+    JSON.parse(File.read("#{__DIR__}/fixtures/member_lockups.json")).as_a.each do |item|
+      expect(described_class.detected?(item["lockupViewModel"])).to be_true
+    end
+  end
+
+  it "recognizes modern badge styles with translated text and text-only fallback" do
+    [
+      %({"badgeStyle":"BADGE_MEMBERS_ONLY","badgeText":"Solo miembros"}),
+      %({"badgeText":"Members only"}),
+    ].each do |badge|
+      video = JSON.parse(%({"metadata":{"metadataRows":[{"badges":[{"badgeViewModel":#{badge}}]}]}}))
+      expect(described_class.detected?(video)).to be_true
+    end
+  end
+
   it "recognizes membership badge styles without relying on translated labels" do
     video = JSON.parse(%({"badges":[{"metadataBadgeRenderer":{"style":"BADGE_STYLE_TYPE_MEMBERS_ONLY","label":"Solo miembros"}}]}))
     expect(described_class.detected?(video)).to be_true
@@ -26,6 +42,8 @@ Spectator.describe Invidious::Videos::Membership do
     [
       %({}), %({"badges":null}),
       %({"badges":[{"metadataBadgeRenderer":{"label":"Premium"}}]}),
+      %({"metadata":{"metadataRows":[{"badges":[{"badgeViewModel":{"badgeStyle":"BADGE_PREMIUM","badgeText":"Premium"}}]}]}}),
+      %({"title":{"badgeViewModel":{"badgeText":"Members only"}},"description":{"badgeViewModel":{"badgeStyle":"BADGE_MEMBERS_ONLY"}}}),
       %({"title":"Members only","membershipButton":{"label":"Join"}}),
       %({"metadata":{"metadataRows":[{"metadataParts":[{"text":{"content":"Members only","commandRuns":[{}]}}]}]}}),
       %({"metadata":{"lockupMetadataViewModel":{"title":{"content":"Members only"}}}}),

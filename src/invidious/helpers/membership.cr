@@ -30,6 +30,10 @@ module Invidious::Videos::Membership
       return false if metadata && object["commandRuns"]?
       style = object["style"]?.try &.as_s?
       return true if {"BADGE_STYLE_TYPE_MEMBERS_ONLY", "BADGE_STYLE_TYPE_MEMBER_ONLY"}.includes?(style)
+      if badge = object["badgeViewModel"]?.try &.as_h?
+        return true if badge["badgeStyle"]?.try(&.as_s?) == "BADGE_MEMBERS_ONLY"
+        return true if member_label?(badge["badgeText"]?.try &.as_s?)
+      end
       {"label", "text", "accessibilityText"}.each do |key|
         return true if member_label?(object[key]?.try &.as_s?)
       end
