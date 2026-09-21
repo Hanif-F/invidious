@@ -91,6 +91,8 @@ def must_fail(message, &)
   check(failed, message)
 end
 
+require "./security_checks"
+
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
   PG_DB.exec("CREATE TABLE invidious_migrations (id bigserial PRIMARY KEY, version bigint NOT NULL)")
@@ -214,7 +216,7 @@ begin
   get = context
   html = Invidious::Routes::Login.login_page(get).not_nil!
   check(html.includes?("autocomplete=\"current-password\"") && !html.includes?("Sign In/Register"), "Login form regression")
-  check(get.response.headers["Cache-Control"] == "no-store", "Credential page cached")
+  check(get.response.headers["Cache-Control"] == "private, no-store", "Credential page cached")
   # Signup and login execute distinct production handlers, with no reflected secrets.
   signup_get = context("GET", "/signup")
   signup_token = Invidious::Authentication.form_token(signup_get, "signup")
@@ -268,6 +270,8 @@ begin
   disabled = context
   Invidious::Routes::Login.login_page(disabled)
   check(disabled.response.status_code == 403, "Login switch ignored")
+  check_public_security
+
   # Verify migration failure rolls back DDL rather than dropping/merging conflicts.
   PG_DB.exec("DROP SCHEMA public CASCADE")
   PG_DB.exec("CREATE SCHEMA public")

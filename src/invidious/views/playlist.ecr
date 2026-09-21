@@ -29,9 +29,12 @@
         <%- else -%>
             <div class="pure-u">
                 <%- if IV::Database::Playlists.exists?(playlist.id) -%>
-                    <a class="pure-button pure-button-secondary low-profile" dir="auto" href="/subscribe_playlist?list=<%= plid %>">
-                        <i class="icon ion-md-add"></i>&nbsp;<%= I18n.translate(locale, "Subscribe") %>
-                    </a>
+                    <form action="/subscribe_playlist?list=<%= plid %>" method="post">
+                        <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
+                        <button type="submit" class="pure-button pure-button-secondary low-profile" dir="auto">
+                            <i class="icon ion-md-add"></i>&nbsp;<%= I18n.translate(locale, "Subscribe") %>
+                        </button>
+                    </form>
                 <%- else -%>
                     <a class="pure-button pure-button-secondary low-profile" dir="auto" href="/delete_playlist?list=<%= plid %>">
                         <i class="icon ion-md-trash"></i>&nbsp;<%= I18n.translate(locale, "Unsubscribe") %>

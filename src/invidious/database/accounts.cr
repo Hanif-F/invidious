@@ -68,6 +68,8 @@ module Invidious::Database::Accounts
       if user && active && Credentials.verify(user.password, user.credential_version, password)
         conn.exec("DELETE FROM session_ids WHERE email = $1", email)
         conn.exec("DROP MATERIALIZED VIEW IF EXISTS subscriptions_#{sha256(email)}")
+        conn.exec("DELETE FROM playlist_videos WHERE plid IN (SELECT id FROM playlists WHERE author = $1)", email)
+        conn.exec("DELETE FROM playlists WHERE author = $1", email)
         conn.exec("DELETE FROM users WHERE email = $1", email)
         deleted = true
       end

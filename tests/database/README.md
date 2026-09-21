@@ -35,3 +35,8 @@ changes, failed signup rollback, browser/API session behavior, throttling, CSRF,
 nonce consumption, cookies, form rendering, migration conflict rollback and fresh SQL.
 The harness validates the database name and emptiness before writing, and recreates
 its public schema to test rollback and fresh installation. Destroy it after use.
+
+The account harness also runs `security_checks.cr` against production middleware
+and routes. It covers private playlist embeds, API/browser identity precedence,
+restricted-token listings, cross-user revocation, CSRF-protected API/forms/imports,
+cache headers, log redaction and playlist deletion/rollback with two users.

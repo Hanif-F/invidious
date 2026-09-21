@@ -68,6 +68,7 @@ module Invidious::Routes::Playlists
   end
 
   def self.subscribe(env)
+    return error_template(403, "Invalid CSRF token") unless Authentication.valid_session_csrf?(env)
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"

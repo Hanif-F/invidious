@@ -76,7 +76,7 @@ module Invidious::Routing
     get "/preferences", Routes::PreferencesRoute, :show
     post "/preferences", Routes::PreferencesRoute, :update
     post "/preferences/timezone", Routes::PreferencesRoute, :detect_timezone
-    get "/toggle_theme", Routes::PreferencesRoute, :toggle_theme
+    post "/toggle_theme", Routes::PreferencesRoute, :toggle_theme
     get "/data_control", Routes::PreferencesRoute, :data_control
     post "/data_control", Routes::PreferencesRoute, :update_data_control
 
@@ -98,7 +98,7 @@ module Invidious::Routing
   def register_iv_playlist_routes
     get "/create_playlist", Routes::Playlists, :new
     post "/create_playlist", Routes::Playlists, :create
-    get "/subscribe_playlist", Routes::Playlists, :subscribe
+    post "/subscribe_playlist", Routes::Playlists, :subscribe
     get "/delete_playlist", Routes::Playlists, :delete_page
     post "/delete_playlist", Routes::Playlists, :delete
     get "/edit_playlist", Routes::Playlists, :edit
@@ -306,6 +306,7 @@ module Invidious::Routing
 
       # Authenticated
 
+      get "/api/v1/auth/csrf", {{namespace}}::Authenticated, :get_csrf
       get "/api/v1/auth/preferences", {{namespace}}::Authenticated, :get_preferences
       post "/api/v1/auth/preferences", {{namespace}}::Authenticated, :set_preferences
 

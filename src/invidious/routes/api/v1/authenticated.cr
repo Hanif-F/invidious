@@ -11,6 +11,14 @@ module Invidious::Routes::API::V1::Authenticated
   #   Helpers.create_notification_stream(env, topics, connection_channel)
   # end
 
+  # Cookie clients obtain a session-bound token before mutating API requests.
+  def self.get_csrf(env)
+    env.response.content_type = "application/json"
+    return error_json(403, "A browser session is required.") if env.request.headers.has_key?("Authorization")
+    session = env.get("session").as(String)
+    {csrfToken: generate_response(session, {"POST;PUT;PATCH;DELETE:*"}, HMAC_KEY, 1.hour)}.to_json
+  end
+
   def self.get_preferences(env)
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
@@ -442,7 +450,7 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
 
-    tokens = Invidious::Database::SessionIDs.select_all(user.email)
+    tokens = Invidious::Database::SessionIDs.select_all(user.email).select { |token| token[:session].starts_with?("v1:") }
 
     JSON.build do |json|
       json.array do
@@ -533,9 +541,9 @@ module Invidious::Routes::API::V1::Authenticated
 
     # Allow tokens to revoke other tokens with correct scope
     if session == env.get("session").as(String)
-      Invidious::Database::SessionIDs.delete(sid: session)
+      Invidious::Database::SessionIDs.delete(sid: session, email: env.get("user").as(User).email)
     elsif scopes_include_scope(scopes, "GET:tokens")
-      Invidious::Database::SessionIDs.delete(sid: session)
+      Invidious::Database::SessionIDs.delete(sid: session, email: env.get("user").as(User).email)
     else
       return error_json(400, "Cannot revoke session #{session}")
     end

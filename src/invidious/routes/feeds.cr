@@ -422,12 +422,11 @@ module Invidious::Routes::Feeds
   def self.push_notifications_post(env)
     locale = env.get("preferences").as(Preferences).locale
 
-    token = env.params.url["token"]
     body = env.request.body.not_nil!.gets_to_end
     signature = env.request.headers["X-Hub-Signature"].lchop("sha1=")
 
     if signature != OpenSSL::HMAC.hexdigest(:sha1, HMAC_KEY, body)
-      LOGGER.error("/feed/webhook/#{token} : Invalid signature")
+      LOGGER.error("/feed/webhook/[REDACTED] : Invalid signature")
       haltf env, status_code: 200
     end
 

@@ -9,6 +9,7 @@
         <% if env.get?("user") %><a href="#preferences-account"><%= I18n.translate(locale, "ui_account_data") %></a><% end %>
     </nav>
     <form class="pure-form pure-form-aligned preferences-form" action="/preferences?referer=<%= URI.encode_www_form(referer) %>" method="post">
+        <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
         <fieldset class="sponsorblock-preferences">
             <legend id="preferences-sponsorblock">SponsorBlock</legend>
             <p><a href="/preferences/sponsorblock/channels"><%= I18n.translate(locale, "sb_channels") %></a></p>

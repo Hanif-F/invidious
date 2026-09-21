@@ -33,6 +33,9 @@ module Invidious::Routes::PreferencesRoute
   end
 
   def self.update(env)
+    if env.get?("user") && !Authentication.valid_session_csrf?(env)
+      return error_template(403, "Invalid CSRF token")
+    end
     locale = env.get("preferences").as(Preferences).locale
     referer = get_referer(env)
     if zone = env.params.body["timezone"]?
@@ -191,54 +194,54 @@ module Invidious::Routes::PreferencesRoute
 
     # Convert to JSON and back again to take advantage of converters used for compatibility
     preferences = Preferences.from_json({
-      annotations:                 annotations,
-      annotations_subscribed:      annotations_subscribed,
-      preload:                     preload,
-      autoplay:                    autoplay,
-      captions:                    captions,
-      comments:                    comments,
-      continue:                    continue,
-      continue_autoplay:           continue_autoplay,
-      dark_mode:                   dark_mode,
-      theme:                       theme,
-      theme_random:                theme_random,
-      theme_random_interval_hours: theme_random_interval_hours,
-      theme_random_next_at:        theme_random_next_at,
-      latest_only:                 latest_only,
-      listen:                      listen,
-      local:                       local,
-      watch_history:               watch_history,
-      locale:                      locale,
-      max_results:                 max_results,
-      notifications_only:          notifications_only,
-      player_style:                player_style,
-      quality:                     quality,
-      quality_dash:                quality_dash,
-      default_home:                default_home,
-      feed_menu:                   feed_menu,
-      automatic_instance_redirect: automatic_instance_redirect,
-      region:                      region,
-      timezone:                    Invidious::History.timezone(env.params.body["timezone"]? || previous.timezone),
-      show_member_videos:          env.params.body["show_member_videos"]? == "on",
-      related_videos:              related_videos,
-      sort:                        sort,
-      speed:                       speed,
-      thin_mode:                   thin_mode,
-      ui_density:                  ui_density,
-      unseen_only:                 unseen_only,
-      video_loop:                  video_loop,
-      extend_desc:                 extend_desc,
-      vr_mode:                     vr_mode,
-      show_nick:                   show_nick,
-      save_player_pos:             save_player_pos,
-      default_playlist:            default_playlist,
-      search_privacy:              search_privacy,
+      annotations:                    annotations,
+      annotations_subscribed:         annotations_subscribed,
+      preload:                        preload,
+      autoplay:                       autoplay,
+      captions:                       captions,
+      comments:                       comments,
+      continue:                       continue,
+      continue_autoplay:              continue_autoplay,
+      dark_mode:                      dark_mode,
+      theme:                          theme,
+      theme_random:                   theme_random,
+      theme_random_interval_hours:    theme_random_interval_hours,
+      theme_random_next_at:           theme_random_next_at,
+      latest_only:                    latest_only,
+      listen:                         listen,
+      local:                          local,
+      watch_history:                  watch_history,
+      locale:                         locale,
+      max_results:                    max_results,
+      notifications_only:             notifications_only,
+      player_style:                   player_style,
+      quality:                        quality,
+      quality_dash:                   quality_dash,
+      default_home:                   default_home,
+      feed_menu:                      feed_menu,
+      automatic_instance_redirect:    automatic_instance_redirect,
+      region:                         region,
+      timezone:                       Invidious::History.timezone(env.params.body["timezone"]? || previous.timezone),
+      show_member_videos:             env.params.body["show_member_videos"]? == "on",
+      related_videos:                 related_videos,
+      sort:                           sort,
+      speed:                          speed,
+      thin_mode:                      thin_mode,
+      ui_density:                     ui_density,
+      unseen_only:                    unseen_only,
+      video_loop:                     video_loop,
+      extend_desc:                    extend_desc,
+      vr_mode:                        vr_mode,
+      show_nick:                      show_nick,
+      save_player_pos:                save_player_pos,
+      default_playlist:               default_playlist,
+      search_privacy:                 search_privacy,
       sponsorblock_channel_overrides: previous.sponsorblock_channel_overrides,
-      sponsorblock_enabled:        env.params.body["sponsorblock_enabled"]? == "on",
-      sponsorblock_modes:          Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_mode_#{category}"]? || previous.sponsorblock_modes[category]} },
-      sponsorblock_colors:         Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_color_#{category}"]? || previous.sponsorblock_colors[category]} },
-      dearrow_enabled:             env.params.body["dearrow_enabled"]? == "on",
-      dearrow_show_original:       env.params.body["dearrow_show_original"]? == "on",
+      sponsorblock_enabled:           env.params.body["sponsorblock_enabled"]? == "on",
+      sponsorblock_modes:             Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_mode_#{category}"]? || previous.sponsorblock_modes[category]} },
+      sponsorblock_colors:            Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_color_#{category}"]? || previous.sponsorblock_colors[category]} },
+      dearrow_enabled:                env.params.body["dearrow_enabled"]? == "on",
+      dearrow_show_original:          env.params.body["dearrow_show_original"]? == "on",
     }.to_json)
 
     if user = env.get? "user"
@@ -296,6 +299,9 @@ module Invidious::Routes::PreferencesRoute
   end
 
   def self.toggle_theme(env)
+    if env.get?("user") && !Authentication.valid_session_csrf?(env)
+      return error_template(403, "Invalid CSRF token")
+    end
     locale = env.get("preferences").as(Preferences).locale
     referer = get_referer(env, unroll: false)
 
@@ -358,7 +364,16 @@ module Invidious::Routes::PreferencesRoute
 
       # TODO: Find a way to prevent browser timeout
 
+      csrf_valid = Authentication.valid_session_csrf?(env, env.request.headers["X-CSRF-Token"]?)
       HTTP::FormData.parse(env.request) do |part|
+        unless csrf_valid
+          # The form emits CSRF first so no file is processed before authorization.
+          return error_template(403, "Invalid CSRF token") unless part.name == "csrf_token"
+          csrf_valid = Authentication.valid_session_csrf?(env, part.body.gets_to_end)
+          return error_template(403, "Invalid CSRF token") unless csrf_valid
+          next
+        end
+        next if part.name == "csrf_token"
         body = part.body.gets_to_end
         type = part.headers["Content-Type"]
 

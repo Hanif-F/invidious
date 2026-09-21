@@ -4,6 +4,7 @@
 
 <div class="h-box">
     <form class="pure-form pure-form-aligned" enctype="multipart/form-data" action="/data_control?referer=<%= URI.encode_www_form(referer) %>" method="post">
+        <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
         <fieldset>
             <legend><%= I18n.translate(locale, "Import") %></legend>
 

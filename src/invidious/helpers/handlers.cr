@@ -79,6 +79,7 @@ class AuthHandler < Kemal::Handler
   def call(env)
     return call_next env unless only_match? env
 
+    Invidious::Authentication.no_store(env)
     begin
       if token = env.request.headers["Authorization"]?
         token = JSON.parse(URI.decode_www_form(token.lchop("Bearer ")))
@@ -95,6 +96,10 @@ class AuthHandler < Kemal::Handler
 
         if email = Invidious::Database::SessionIDs.select_email(sid)
           user = Invidious::Database::Users.select!(email: email)
+        end
+
+        if !{"GET", "HEAD", "OPTIONS"}.includes?(env.request.method) && !Invidious::Authentication.valid_session_csrf?(env)
+          raise "Invalid CSRF token"
         end
 
         scopes = [":*"]

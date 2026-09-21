@@ -12,6 +12,9 @@ module Invidious::Routes::BeforeAll
   private COMPANION_CSP = CompanionCSP.new
 
   def self.handle(env)
+    if env.request.cookies.has_key?("SID") || env.request.cookies.has_key?("PREFS") || env.request.headers.has_key?("Authorization") || env.request.path == "/feed/private"
+      Authentication.no_store(env)
+    end
     preferences = Preferences.from_json("{}")
 
     begin
@@ -80,7 +83,11 @@ module Invidious::Routes::BeforeAll
                 "/companion/",
               }.any? { |r| env.request.resource.starts_with? r }
 
-    if env.request.cookies.has_key? "SID"
+    # AuthHandler has already authenticated bearer requests. Never replace that
+    # identity with an unrelated browser cookie on the same request.
+    if env.request.path.starts_with?("/api/v1/auth/") && env.request.headers.has_key?("Authorization")
+      preferences = env.get("user").as(User).preferences
+    elsif env.request.cookies.has_key? "SID"
       sid = env.request.cookies["SID"].value
 
       if sid.starts_with? "v1:"
@@ -101,6 +108,12 @@ module Invidious::Routes::BeforeAll
           ":token_ajax",
           ":watch_ajax",
           ":preferences/timezone",
+          "POST:preferences",
+          "POST:data_control",
+          "POST:subscribe_playlist",
+          "POST:toggle_theme",
+          "POST:notifications",
+          "POST:tokens/register",
         }, HMAC_KEY, 1.week)
 
         preferences = user.preferences

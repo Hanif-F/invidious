@@ -25,21 +25,17 @@ class Invidious::LogHandler < Kemal::BaseLogHandler
     elapsed_time = Time.measure { call_next(context) }
     elapsed_text = elapsed_text(elapsed_time)
 
-    # Default: full path with parameters
-    requested_url = context.request.resource
-
-    # Try not to log search queries passed as GET parameters during normal use
-    # (They will still be logged if log level is 'Debug' or 'Trace')
-    if @level > LogLevel::Debug && (
-         requested_url.downcase.includes?("search") || requested_url.downcase.includes?("q=")
-       )
-      # Log only the path
-      requested_url = context.request.path
-    end
+    requested_url = self.class.redacted_path(context.request.resource)
 
     info("#{context.response.status_code} #{context.request.method} #{requested_url} #{elapsed_text}")
 
     context
+  end
+
+  def self.redacted_path(resource : String) : String
+    # Drop the entire query: it can contain secrets even inside callback URLs.
+    path = resource.split('?', 2).first
+    path.starts_with?("/feed/webhook/") ? "/feed/webhook/[REDACTED]" : path
   end
 
   def write(message : String)

@@ -74,6 +74,8 @@ def theme_post_env(body : String, content_type = "application/x-www-form-urlenco
   env = HTTP::Server::Context.new(HTTP::Request.new("POST", "/preferences?referer=%2F", HTTP::Headers{"Content-Type" => content_type}, body), HTTP::Server::Response.new(IO::Memory.new))
   env.set "preferences", Preferences.from_json("{}")
   env.set "header_x-forwarded-host", "invidious.test"
+  env.set "sid", "fixture-session"
+  env.request.headers["X-CSRF-Token"] = generate_response("fixture-session", {"POST:preferences"}, HMAC_KEY)
   env
 end
 
@@ -191,7 +193,7 @@ def check_random_themes
   raise "Fetch advances theme" if Invidious::Themes.document_request?(request)
 
   {"", "light", "dark"}.each do |mode|
-    env = HTTP::Server::Context.new(HTTP::Request.new("GET", "/toggle_theme?redirect=false&mode=#{mode}"), HTTP::Server::Response.new(IO::Memory.new))
+    env = HTTP::Server::Context.new(HTTP::Request.new("POST", "/toggle_theme?redirect=false&mode=#{mode}"), HTTP::Server::Response.new(IO::Memory.new))
     env.set "preferences", initialized
     env.set "header_x-forwarded-host", "invidious.test"
     Invidious::Routes::PreferencesRoute.toggle_theme(env)
@@ -210,7 +212,7 @@ def check_random_themes
     CONFIG.default_user_preferences.dark_mode = original
   end
   {"" => "light", "light" => "dark", "dark" => ""}.each do |mode, expected|
-    env = HTTP::Server::Context.new(HTTP::Request.new("GET", "/toggle_theme?redirect=false"), HTTP::Server::Response.new(IO::Memory.new))
+    env = HTTP::Server::Context.new(HTTP::Request.new("POST", "/toggle_theme?redirect=false"), HTTP::Server::Response.new(IO::Memory.new))
     current = initialized
     current.dark_mode = mode
     env.set "preferences", current

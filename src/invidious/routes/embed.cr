@@ -6,6 +6,9 @@ module Invidious::Routes::Embed
     if plid = env.params.query["list"]?.try &.gsub(/[^a-zA-Z0-9_-]/, "")
       begin
         playlist = get_playlist(plid)
+        if playlist.privacy.private? && playlist.author != env.get?("user").try(&.as(User).email)
+          return error_template(404, "Playlist does not exist.")
+        end
         offset = env.params.query["index"]?.try &.to_i? || 0
         videos = get_playlist_videos(playlist, offset: offset)
         if videos.empty?
@@ -67,6 +70,9 @@ module Invidious::Routes::Embed
       if plid
         begin
           playlist = get_playlist(plid)
+          if playlist.privacy.private? && playlist.author != env.get?("user").try(&.as(User).email)
+            return error_template(404, "Playlist does not exist.")
+          end
           offset = env.params.query["index"]?.try &.to_i? || 0
           videos = get_playlist_videos(playlist, offset: offset)
           if videos.empty?

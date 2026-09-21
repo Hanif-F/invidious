@@ -24,7 +24,7 @@ if (toggle_theme) {
         var next = colorMode === '' ? THEME_LIGHT : colorMode === THEME_LIGHT ? THEME_DARK : '';
         setTheme(next);
         helpers.storage.set(STORAGE_KEY_THEME, next);
-        helpers.xhr('GET', '/toggle_theme?redirect=false&mode=' + encodeURIComponent(next), {}, {});
+        helpers.xhr('POST', '/toggle_theme?redirect=false&mode=' + encodeURIComponent(next), {payload: 'csrf_token=' + encodeURIComponent(toggle_theme.form.elements.csrf_token.value)}, {});
     });
 }
 

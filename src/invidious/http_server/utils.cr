@@ -4,6 +4,18 @@ module Invidious::HttpServer
   module Utils
     extend self
 
+    # Match the whole hostname, not a URL containing an allowed hostname.
+    def video_host?(host : String) : Bool
+      host.bytesize <= 253 && host.matches?(/\A[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.(?:googlevideo|c\.youtube)\.com\z/)
+    end
+
+    def video_uri?(url : URI) : Bool
+      host = url.host
+      !!(host && video_host?(host) && url.scheme == "https" &&
+        url.user.nil? && url.password.nil? && url.fragment.nil? &&
+        (url.port.nil? || url.port == 443))
+    end
+
     def proxy_video_url(raw_url : String, *, region : String? = nil, absolute : Bool = false)
       url = URI.parse(raw_url)
 

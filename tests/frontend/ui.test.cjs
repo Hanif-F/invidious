@@ -768,6 +768,19 @@ for (const engine of engines) {
         }
     });
 
+    test(`${engine}: signed-in theme controls submit CSRF by POST with and without JavaScript`, async () => {
+        for (const javascript of [true, false]) {
+            const { page, context, errors } = await pageFor(engine, { fixture: 'browse-signed-in', javascript });
+            const request = page.waitForRequest(req => new URL(req.url()).pathname === '/toggle_theme');
+            await page.locator('#toggle_theme').click();
+            const sent = await request;
+            assert.equal(sent.method(), 'POST');
+            assert.equal(new URLSearchParams(sent.postData()).get('csrf_token'), 'fixture-token');
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
     test(`${engine}: theme switching preserves density and page layout`, async () => {
         const { page, context, errors } = await pageFor(engine, { fixture: 'browse-compact' });
         await page.locator('#toggle_theme').click();

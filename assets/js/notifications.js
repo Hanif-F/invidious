@@ -25,7 +25,7 @@ function create_notification_stream(subscriptions) {
         '/api/v1/auth/notifications', {
             withCredentials: true,
             payload: 'topics=' + subscriptions.map(function (subscription) { return subscription.authorId; }).join(','),
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': notification_data.csrf_token }
         });
     delivered = [];
 

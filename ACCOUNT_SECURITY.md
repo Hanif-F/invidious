@@ -73,3 +73,42 @@ The harness writes test accounts and schemas; never point it at production.
 It checks legacy migration, linked data preservation, case-insensitive collisions,
 transaction rollback, password/session changes, throttling, CSRF, cookies and forms.
 Destroy the disposable database after the run.
+
+## Public-access hardening
+
+Private playlist embeds now require the owner, including redirects and indexed
+video-series requests. API token listings exclude browser session credentials,
+and API revocation always checks the authenticated owner. Bearer authentication
+retains its identity even when another account's browser cookie is also sent.
+Account deletion removes owned playlists and their videos in the same transaction
+as the account. No schema migration is needed for these changes; data orphaned by
+an older release is not automatically removed.
+
+Cookie-authenticated API writes now require a session-bound CSRF token. Obtain
+one with `GET /api/v1/auth/csrf` using the browser session cookie, then send the
+returned `csrfToken` in `X-CSRF-Token` on POST/PUT/PATCH/DELETE requests. Tokens
+expire after one hour; fetch a new token after expiry or login/session changes.
+Bearer-only API clients keep their existing scope-based flow and do not need this
+CSRF endpoint. Browser session management remains available at `/token_manager`.
+
+Authenticated preference forms and imports also require CSRF. Multipart imports
+must send `csrf_token` as their **first part**, or use `X-CSRF-Token`; files are
+never processed before validation. `/subscribe_playlist` and `/toggle_theme`
+now accept POST instead of GET. Update old scripts and bookmarks accordingly.
+The shipped forms, theme JavaScript, and notification client handle this flow.
+
+Personalized responses and authenticated API errors are marked
+`Cache-Control: private, no-store`. Request logging omits all query strings at
+every log level and redacts webhook credentials in paths. Reverse-proxy/CDN logs
+need their own equivalent configuration. Previously retained logs are unchanged.
+
+The media proxy accepts only complete Google media hostnames and HTTPS redirect
+destinations without credentials, fragments, or nonstandard ports. Redirects and
+DNS-error fallback hosts are revalidated before use.
+
+`tests/database/accounts.cr` now includes `security_checks.cr`: two-account and
+anonymous route checks for embed privacy, bearer/cookie identity precedence,
+restricted-token listings, cross-account revocation, CSRF rejection without
+writes, valid form/import/API flows, no-store headers, credential redaction, and
+transactional playlist deletion. See [SECURITY_READINESS.md](SECURITY_READINESS.md)
+for the deployment release gate.

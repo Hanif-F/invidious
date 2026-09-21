@@ -19,11 +19,11 @@ module Invidious::Routes::VideoPlayback
       host = query_params["host"]
       query_params.delete("host")
     else
-      host = "r#{fvip}---#{mns.pop}.googlevideo.com"
+      host = "r#{fvip}---#{mns.pop?}.googlevideo.com"
     end
 
     # Sanity check, to avoid being used as an open proxy
-    if !host.matches?(/[\w-]+\.(?:googlevideo|c\.youtube)\.com/)
+    if !Invidious::HttpServer::Utils.video_host?(host)
       return error_template(400, "Invalid \"host\" parameter.")
     end
 
@@ -53,7 +53,11 @@ module Invidious::Routes::VideoPlayback
         response = client.head(url, headers)
 
         if response.headers["Location"]?
-          location = URI.parse(response.headers["Location"])
+          location = URI.parse(host).resolve(response.headers["Location"])
+          unless Invidious::HttpServer::Utils.video_uri?(location)
+            client.close
+            return error_template(502, "Invalid media redirect.")
+          end
           env.response.headers["Access-Control-Allow-Origin"] = "*"
 
           new_host = "#{location.scheme}://#{location.host}"
@@ -73,11 +77,22 @@ module Invidious::Routes::VideoPlayback
         end
         fvip = "3"
 
-        host = "https://r#{fvip}---#{mn}.googlevideo.com"
+        fallback_host = "r#{fvip}---#{mn}.googlevideo.com"
+        unless Invidious::HttpServer::Utils.video_host?(fallback_host)
+          client.close
+          return error_template(400, "Invalid media host.")
+        end
+        host = "https://#{fallback_host}"
+        client.close
         client = make_client(URI.parse(host), region, force_resolve: true)
       rescue ex
         error = ex.message
       end
+    end
+
+    if response.status_code >= 300 && response.status_code < 400
+      client.close
+      return error_template(502, "Too many media redirects.")
     end
 
     # Remove the Range header added previously.
@@ -109,7 +124,12 @@ module Invidious::Routes::VideoPlayback
           env.response.headers["Access-Control-Allow-Origin"] = "*"
 
           if location = resp.headers["Location"]?
-            url = Invidious::HttpServer::Utils.proxy_video_url(location, region: region)
+            destination = URI.parse(host).resolve(location)
+            unless Invidious::HttpServer::Utils.video_uri?(destination)
+              env.response.headers.delete("Location")
+              haltf env, status_code: 502
+            end
+            url = Invidious::HttpServer::Utils.proxy_video_url(destination.to_s, region: region)
             return env.redirect url
           end
 
@@ -167,7 +187,12 @@ module Invidious::Routes::VideoPlayback
               env.response.headers["Access-Control-Allow-Origin"] = "*"
 
               if location = resp.headers["Location"]?
-                url = Invidious::HttpServer::Utils.proxy_video_url(location, region: region)
+                destination = URI.parse(host).resolve(location)
+                unless Invidious::HttpServer::Utils.video_uri?(destination)
+                  env.response.headers.delete("Location")
+                  haltf env, status_code: 502
+                end
+                url = Invidious::HttpServer::Utils.proxy_video_url(destination.to_s, region: region)
 
                 if title = query_params["title"]?
                   url = "#{url}&title=#{URI.encode_www_form(title)}"
@@ -211,7 +236,8 @@ module Invidious::Routes::VideoPlayback
         first_chunk = false
       end
     end
-    client.close
+  ensure
+    client.try &.close
   end
 
   # /videoplayback/*

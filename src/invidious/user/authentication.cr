@@ -4,8 +4,24 @@ module Invidious::Authentication
   extend self
 
   def no_store(env)
-    env.response.headers["Cache-Control"] = "no-store"
+    env.response.headers["Cache-Control"] = "private, no-store"
     env.response.headers["Pragma"] = "no-cache"
+  end
+
+  # Pass an explicit token when streaming multipart data; do not consume its body here.
+  def valid_session_csrf?(env, token : String?) : Bool
+    sid = env.get?("sid").try(&.as(String)) || env.request.cookies["SID"]?.try(&.value)
+    return false unless sid && !sid.starts_with?("v1:")
+    validate_request(token, sid, env.request, HMAC_KEY)
+    true
+  rescue
+    false
+  end
+
+  def valid_session_csrf?(env) : Bool
+    token = env.request.headers["X-CSRF-Token"]?
+    token ||= env.params.body["csrf_token"]? if env.request.headers["Content-Type"]?.try(&.starts_with?("application/x-www-form-urlencoded"))
+    valid_session_csrf?(env, token)
   end
 
   def cookie_domain(env) : String?
