@@ -4,19 +4,21 @@ require "crypto/bcrypt/password"
 MATERIALIZED_VIEW_SQL = ->(email : String) { "SELECT cv.* FROM channel_videos cv WHERE EXISTS (SELECT subscriptions FROM users u WHERE cv.ucid = ANY (u.subscriptions) AND u.email = E'#{email.gsub({'\'' => "\\'", '\\' => "\\\\"})}') ORDER BY published DESC" }
 
 def create_user(sid, email, password)
-  password = Crypto::Bcrypt::Password.create(password, cost: 10)
+  password = Invidious::Credentials.hash(password)
   token = Base64.urlsafe_encode(Random::Secure.random_bytes(32))
 
   user = Invidious::User.new({
-    updated:           Time.utc,
-    notifications:     [] of String,
-    subscriptions:     [] of String,
-    email:             email,
-    preferences:       Preferences.new(CONFIG.default_user_preferences.to_tuple.merge({sponsorblock_channel_overrides: {} of String => Invidious::SponsorBlock::ChannelOverride})),
-    password:          password.to_s,
-    token:             token,
-    watched:           [] of String,
-    feed_needs_update: true,
+    updated:            Time.utc,
+    notifications:      [] of String,
+    subscriptions:      [] of String,
+    email:              email,
+    preferences:        Preferences.new(CONFIG.default_user_preferences.to_tuple.merge({sponsorblock_channel_overrides: {} of String => Invidious::SponsorBlock::ChannelOverride})),
+    password:           password.to_s,
+    token:              token,
+    watched:            [] of String,
+    feed_needs_update:  true,
+    username:           email,
+    credential_version: 2,
   })
 
   return user, sid

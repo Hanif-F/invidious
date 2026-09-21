@@ -7,15 +7,15 @@ module Invidious::Database::SessionIDs
   #  Insert
   # -------------------
 
-  def insert(sid : String, email : String, handle_conflicts : Bool = false)
+  def insert(sid : String, email : String, handle_conflicts : Bool = false, conn = PG_DB)
     request = <<-SQL
-      INSERT INTO session_ids
-      VALUES ($1, $2, now())
+      INSERT INTO session_ids (id, email, issued, expires_at)
+      VALUES ($1, $2, now(), $3)
     SQL
 
     request += " ON CONFLICT (id) DO NOTHING" if handle_conflicts
 
-    PG_DB.exec(request, sid, email)
+    conn.exec(request, sid, email, sid.starts_with?("v1:") ? nil : Time.utc + 30.days)
   end
 
   # -------------------
@@ -56,7 +56,7 @@ module Invidious::Database::SessionIDs
   def select_email(sid : String) : String?
     request = <<-SQL
       SELECT email FROM session_ids
-      WHERE id = $1
+      WHERE id = $1 AND (expires_at > now() OR (expires_at IS NULL AND id LIKE 'v1:%'))
     SQL
 
     PG_DB.query_one?(request, sid, as: String)

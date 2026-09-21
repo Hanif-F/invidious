@@ -18,6 +18,7 @@ module Invidious::Database
     Invidious::Database.check_table("nonces", Nonce)
     Invidious::Database.check_table("session_ids", SessionId)
     Invidious::Database.check_table("users", User)
+    Invidious::Database.check_table("auth_rate_limits")
     Invidious::Database.check_table("watch_history")
     Invidious::Database.check_table("playback_positions")
     Invidious::Database.check_table("blocked_channels")
@@ -55,6 +56,17 @@ module Invidious::Database
       PG_DB.using_connection do |conn|
         conn.as(PG::Connection).exec_all(File.read("config/sql/#{table_name}.sql"))
       end
+    end
+
+    # Authentication columns must only change through the transactional migration.
+    # Never run the legacy column rotation/drop logic on account data.
+    if table_name == "users" || table_name == "session_ids"
+      expected = table_name == "users" ? ["username", "credential_version"] : ["expires_at"]
+      columns = get_column_array(PG_DB, table_name)
+      unless expected.all? { |column| columns.includes?(column) }
+        raise "Account schema needs migration. Back up the database, stop all instances, and run --migrate before starting."
+      end
+      return
     end
 
     return if !struct_type

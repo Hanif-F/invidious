@@ -7,12 +7,12 @@ module Invidious::Database::Users
   #  Insert / delete
   # -------------------
 
-  def insert(user : User, update_on_conflict : Bool = false)
+  def insert(user : User, update_on_conflict : Bool = false, conn = PG_DB)
     user_array = user.to_a
     user_array[4] = user_array[4].to_json # User preferences
 
     request = <<-SQL
-      INSERT INTO users
+      INSERT INTO users (updated, notifications, subscriptions, email, preferences, password, token, watched, feed_needs_update, username, credential_version)
       VALUES (#{arg_array(user_array)})
     SQL
 
@@ -23,7 +23,7 @@ module Invidious::Database::Users
       SQL
     end
 
-    PG_DB.exec(request, args: user_array)
+    conn.exec(request, args: user_array)
   end
 
   def delete(user : User)
@@ -193,6 +193,10 @@ module Invidious::Database::Users
     SQL
 
     return PG_DB.query_one?(request, email, as: User)
+  end
+
+  def display_name(email : String) : String
+    PG_DB.query_one?("SELECT username FROM users WHERE email = $1", email, as: String) || email
   end
 
   # Same as select, but can raise an exception

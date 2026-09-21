@@ -51,6 +51,7 @@
                 <% end %>
                 <div class="user-field">
                     <% if env.get? "user" %>
+                        <a href="/account" class="pure-menu-heading"><%= I18n.translate(locale, "Account settings") %></a>
                         <div class="pure-u-1-4">
                             <a id="toggle_theme" href="/toggle_theme?referer=<%= env.get?("current_page") %>" class="pure-menu-heading" data-mode-system="<%= I18n.translate(locale, "preferences_color_system") %>" data-mode-light="<%= I18n.translate(locale, "light") %>" data-mode-dark="<%= I18n.translate(locale, "dark") %>" title="<%= I18n.translate(locale, "preferences_color_mode_label") %> <%= I18n.translate(locale, dark_mode.empty? ? "preferences_color_system" : dark_mode) %>">
                                 <% if dark_mode.empty? %>
@@ -74,7 +75,7 @@
                         </div>
                         <% if env.get("preferences").as(Preferences).show_nick %>
                             <div class="pure-u-1-4" style="overflow: hidden; white-space: nowrap;">
-                                <span id="user_name"><%= HTML.escape(env.get("user").as(Invidious::User).email) %></span>
+                                <a id="user_name" href="/account"><%= HTML.escape(env.get("user").as(Invidious::User).username) %></a>
                             </div>
                         <% end %>
                         <div class="pure-u-1-4">

@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS public.users
   token text,
   watched text[],
   feed_needs_update boolean,
+  username text NOT NULL,
+  credential_version integer NOT NULL DEFAULT 1,
   CONSTRAINT users_email_key UNIQUE (email)
 );
 
@@ -27,3 +29,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS email_unique_idx
   USING btree
   (lower(email) COLLATE pg_catalog."default");
 
+CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique_idx ON public.users (lower(username));

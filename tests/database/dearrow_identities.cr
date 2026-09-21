@@ -17,7 +17,7 @@ begin
   migrator.migrate
   migrator.migrate
   2.times do |iteration|
-    PG_DB.exec("INSERT INTO users (email) VALUES ('alice@test'), ('bob@test')")
+    PG_DB.exec("INSERT INTO users (email, username) VALUES ('alice@test', 'alice@test'), ('bob@test', 'bob@test')")
     store = Invidious::Database::DeArrowIdentities
     key = "ab" * 32
     identities = Channel(String).new(8)

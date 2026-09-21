@@ -1,5 +1,5 @@
 <% title = HTML.escape(playlist.title) %>
-<% author = HTML.escape(playlist.author) %>
+<% author = HTML.escape(playlist.is_a?(InvidiousPlaylist) ? playlist.display_author : playlist.author) %>
 
 <% content_for "header" do %>
 <title><%= title %> - Invidious</title>

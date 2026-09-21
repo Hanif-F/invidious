@@ -55,7 +55,7 @@ struct Invidious::User
 
       return {
         question: image,
-        tokens:   {generate_response(answer, {":login"}, key, use_nonce: true)},
+        tokens:   {generate_response(answer, {"POST:signup"}, key, use_nonce: true)},
       }
     end
   end

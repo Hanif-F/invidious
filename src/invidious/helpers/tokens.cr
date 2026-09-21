@@ -1,8 +1,14 @@
 require "crypto/subtle"
 
-def generate_token(email, scopes, expire, key)
+def generate_token(email, scopes, expire, key, parent_session : String)
   session = "v1:#{Base64.urlsafe_encode(Random::Secure.random_bytes(32))}"
-  Invidious::Database::SessionIDs.insert(session, email)
+  PG_DB.transaction do |tx|
+    conn = tx.connection
+    conn.query_one("SELECT email FROM users WHERE email = $1 FOR UPDATE", email, as: String)
+    active = conn.query_one?("SELECT true FROM session_ids WHERE id = $1 AND email = $2 AND (expires_at > now() OR (expires_at IS NULL AND id LIKE 'v1:%'))", parent_session, email, as: Bool)
+    raise InfoException.new("Session expired. Please sign in again.") unless active
+    Invidious::Database::SessionIDs.insert(session, email, conn: conn)
+  end
 
   token = {
     "session" => session,
@@ -95,12 +101,8 @@ def validate_request(token, session, request, key, locale = nil)
     raise InfoException.new("Invalid signature")
   end
 
-  if token["nonce"]? && (nonce = Invidious::Database::Nonces.select(token["nonce"].as_s))
-    if nonce[1] > Time.utc
-      Invidious::Database::Nonces.update_set_expired(nonce[0])
-    else
-      raise InfoException.new("Erroneous token")
-    end
+  if nonce = token["nonce"]?
+    raise InfoException.new("Erroneous token") unless Invidious::Database::Nonces.consume(nonce.as_s)
   end
 
   return {scopes, expire, token["signature"].as_s}

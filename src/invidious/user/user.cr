@@ -14,6 +14,8 @@ struct Invidious::User
   property token : String
   property watched : Array(String)
   property feed_needs_update : Bool?
+  property username : String = ""
+  property credential_version : Int32 = 1
 
   module PreferencesConverter
     def self.from_rs(rs)

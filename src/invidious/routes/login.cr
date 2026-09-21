@@ -2,152 +2,80 @@
 
 module Invidious::Routes::Login
   def self.login_page(env)
+    render_form(env, false)
+  end
+
+  def self.signup_page(env)
+    render_form(env, true)
+  end
+
+  def self.render_form(env, signup : Bool, error : String? = nil, username = "")
     locale = env.get("preferences").as(Preferences).locale
-
-    user = env.get? "user"
-
     referer = get_referer(env, "/feed/subscriptions")
-
-    return env.redirect referer if user
-
-    if !CONFIG.login_enabled
-      return error_template(400, "Login has been disabled by administrator.")
-    end
-
-    email = nil
-    password = nil
-    captcha = nil
-
-    account_type = env.params.query["type"]?
-    account_type ||= "invidious"
-
+    Authentication.no_store(env)
+    return env.redirect referer if env.get?("user")
+    return error_template(403, "Login has been disabled by administrator.") unless CONFIG.login_enabled
+    return error_template(403, "Registration has been disabled by administrator.") if signup && !CONFIG.registration_enabled
+    csrf_token = Authentication.form_token(env, signup ? "signup" : "login")
+    captcha = signup && CONFIG.captcha_enabled ? User::Captcha.generate_image(HMAC_KEY) : nil
     templated "user/login"
   end
 
   def self.login(env)
+    submit(env, false)
+  end
+
+  def self.signup(env)
+    submit(env, true)
+  end
+
+  def self.submit(env, signup : Bool)
     locale = env.get("preferences").as(Preferences).locale
-    host = env.get("header_x-forwarded-host")
-
-    referer = get_referer(env, "/feed/subscriptions")
-
-    if !CONFIG.login_enabled
-      return error_template(403, "Login has been disabled by administrator.")
+    Authentication.no_store(env)
+    return error_template(403, "Login has been disabled by administrator.") unless CONFIG.login_enabled
+    return error_template(403, "Registration has been disabled by administrator.") if signup && !CONFIG.registration_enabled
+    username = env.params.body["username"]? || env.params.body["email"]? || ""
+    password = env.params.body["password"]? || ""
+    begin
+      Authentication.validate_form(env)
+    rescue ex : InfoException | JSON::ParseException | KeyError | TypeCastError | ArgumentError
+      env.response.status_code = 400
+      return render_form(env, signup, "Invalid form. Please try again.", username.byte_slice(0, 254))
     end
-
-    # https://stackoverflow.com/a/574698
-    email = env.params.body["email"]?.try &.downcase.byte_slice(0, 254)
-    password = env.params.body["password"]?
-
-    account_type = env.params.query["type"]?
-    account_type ||= "invidious"
-
-    case account_type
-    when "invidious"
-      if email.nil? || email.empty?
-        return error_template(401, "User ID is a required field")
-      end
-
-      if password.nil? || password.empty?
-        return error_template(401, "Password is a required field")
-      end
-
-      user = Invidious::Database::Users.select(email: email)
-
-      if user
-        if Crypto::Bcrypt::Password.new(user.password.not_nil!).verify(password.byte_slice(0, 55))
-          sid = Base64.urlsafe_encode(Random::Secure.random_bytes(32))
-          Invidious::Database::SessionIDs.insert(sid, email)
-
-          if alt = CONFIG.alternative_domains.index(host)
-            env.response.cookies["SID"] = Invidious::User::Cookies.sid(CONFIG.alternative_domains[alt], sid)
-          else
-            env.response.cookies["SID"] = Invidious::User::Cookies.sid(CONFIG.domain, sid)
-          end
-        else
-          return error_template(401, "Wrong username or password")
-        end
-
-        # Since this user has already registered, we don't want to overwrite their preferences
-        if env.request.cookies["PREFS"]?
-          cookie = env.request.cookies["PREFS"]
-          cookie.expires = Time.utc(1990, 1, 1)
-          env.response.cookies << cookie
-        end
-      else
-        if !CONFIG.registration_enabled
-          return error_template(400, "Registration has been disabled by administrator.")
-        end
-
-        if password.empty?
-          return error_template(401, "Password cannot be empty")
-        end
-
-        # See https://security.stackexchange.com/a/39851
-        if password.bytesize > 55
-          return error_template(400, "Password cannot be longer than 55 characters")
-        end
-
-        password = password.byte_slice(0, 55)
-
-        if CONFIG.captcha_enabled
-          answer = env.params.body["answer"]?
-
-          account_type = "invidious"
-          captcha = Invidious::User::Captcha.generate_image(HMAC_KEY)
-
-          tokens = env.params.body.select { |k, _| k.match(/^token\[\d+\]$/) }.map { |_, v| v }
-
-          if answer
-            answer = answer.lstrip('0')
-            answer = OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, answer)
-
-            begin
-              validate_request(tokens[0], answer, env.request, HMAC_KEY, locale)
-            rescue ex : InfoException
-              return error_template(400, InfoException.new("Erroneous CAPTCHA"))
-            rescue ex
-              return error_template(400, ex)
-            end
-          else
-            return templated "user/login"
-          end
-        end
-
-        sid = Base64.urlsafe_encode(Random::Secure.random_bytes(32))
-        user, sid = create_user(sid, email, password)
-
-        if language_header = env.request.headers["Accept-Language"]?
-          if language = ANG.language_negotiator.best(language_header, I18n::LOCALES.keys)
-            user.preferences.locale = language.header
-          end
-        end
-
-        Invidious::Database::Users.insert(user)
-        Invidious::Database::SessionIDs.insert(sid, email)
-
-        view_name = "subscriptions_#{sha256(user.email)}"
-        PG_DB.exec("CREATE MATERIALIZED VIEW #{view_name} AS #{MATERIALIZED_VIEW_SQL.call(user.email)}")
-
-        if alt = CONFIG.alternative_domains.index(host)
-          env.response.cookies["SID"] = Invidious::User::Cookies.sid(CONFIG.alternative_domains[alt], sid)
-        else
-          env.response.cookies["SID"] = Invidious::User::Cookies.sid(CONFIG.domain, sid)
-        end
-
-        if env.request.cookies["PREFS"]?
-          user.preferences = env.get("preferences").as(Preferences)
-          Invidious::Database::Users.update_preferences(user)
-
-          cookie = env.request.cookies["PREFS"]
-          cookie.expires = Time.utc(1990, 1, 1)
-          env.response.cookies << cookie
+    if Authentication.throttle(env, username.byte_slice(0, 254), signup)
+      return render_form(env, signup, "Too many attempts. Please try again later.", username.byte_slice(0, 254))
+    end
+    error = nil
+    sid = nil
+    if signup
+      error = Credentials.username_error(username) || Credentials.password_error(password)
+      error ||= "New passwords must match" unless password == env.params.body["password_confirmation"]?
+      if !error && CONFIG.captcha_enabled
+        begin
+          answer = OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, (env.params.body["answer"]? || "").lstrip('0'))
+          validate_request(env.params.body["token[0]"]?, answer, env.request, HMAC_KEY, locale)
+        rescue
+          error = "Erroneous CAPTCHA"
         end
       end
-
-      env.redirect referer
+      unless error
+        begin
+          sid = Database::Accounts.register(username, password, env.get("preferences").as(Preferences))
+        rescue ex : PQ::PQError
+          raise ex unless ex.field_message(:code) == "23505"
+          error = "Username is already taken."
+        end
+      end
     else
-      env.redirect referer
+      sid = Database::Accounts.authenticate(username, password) if username.bytesize <= 254 && password.bytesize <= 4096
+      error = "Wrong username or password" unless sid
     end
+    if sid
+      Authentication.set_session(env, sid)
+      return env.redirect get_referer(env, "/feed/subscriptions")
+    end
+    env.response.status_code = signup ? 400 : 401
+    render_form(env, signup, error, username.byte_slice(0, 254))
   end
 
   def self.signout(env)

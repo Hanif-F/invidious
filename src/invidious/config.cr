@@ -154,6 +154,8 @@ class Config
   property use_pubsub_feeds : Bool | Int32 = false
   property popular_enabled : Bool = true
   property captcha_enabled : Bool = true
+  property auth_trusted_proxies : Array(String) = [] of String
+
   property login_enabled : Bool = true
   property registration_enabled : Bool = true
   property statistics_enabled : Bool = false

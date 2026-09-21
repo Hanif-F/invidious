@@ -21,3 +21,17 @@ HISTORY_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_history_test c
 ```
 
 This checks migrations 14/16 and the fresh schema, account dates, repeat/concurrent watches, archived dates, missing metadata, cache backfill and eviction, video duration recovery/preservation, old and invalid duration imports, import/export, and cascading account deletion.
+
+Account security checks use an **empty** disposable database named
+`invidious_accounts_test`:
+
+```sh
+ACCOUNT_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_accounts_test crystal run tests/database/accounts.cr
+```
+
+This runs the production migration, database services, and account routes. It checks
+legacy credentials and linked-data preservation, concurrent signup and credential
+changes, failed signup rollback, browser/API session behavior, throttling, CSRF,
+nonce consumption, cookies, form rendering, migration conflict rollback and fresh SQL.
+The harness validates the database name and emptiness before writing, and recreates
+its public schema to test rollback and fresh installation. Destroy it after use.

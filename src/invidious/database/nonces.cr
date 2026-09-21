@@ -44,6 +44,10 @@ module Invidious::Database::Nonces
   #  Select
   # -------------------
 
+  def consume(nonce : String) : Bool
+    PG_DB.exec("DELETE FROM nonces WHERE nonce = $1 AND expire > now()", nonce).rows_affected == 1
+  end
+
   def select(nonce : String) : Tuple(String, Time)?
     request = <<-SQL
       SELECT * FROM nonces

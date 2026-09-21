@@ -3,79 +3,65 @@
 module Invidious::Routes::Account
   extend self
 
-  # -------------------
-  #  Password update
-  # -------------------
-
-  # Show the password change interface (GET request)
-  def get_change_password(env)
+  def get_account(env, error : String? = nil)
+    Authentication.no_store(env)
     locale = env.get("preferences").as(Preferences).locale
-
-    user = env.get? "user"
-    sid = env.get? "sid"
-    referer = get_referer(env)
-
-    if !user
-      return env.redirect referer
-    end
-
-    user = user.as(User)
-    sid = sid.as(String)
-    csrf_token = generate_response(sid, {":change_password"}, HMAC_KEY)
-
-    templated "user/change_password"
+    return env.redirect "/login?referer=%2Faccount" unless env.get?("user")
+    user = env.get("user").as(User)
+    sid = env.get("sid").as(String)
+    username_token = generate_response(sid, {"POST:account/username"}, HMAC_KEY, 1.hour)
+    password_token = generate_response(sid, {"POST:change_password"}, HMAC_KEY, 1.hour)
+    templated "user/account"
   end
 
-  # Handle the password change (POST request)
+  def get_change_password(env)
+    get_account(env)
+  end
+
+  def post_username(env)
+    change_credentials(env, true)
+  end
+
   def post_change_password(env)
-    locale = env.get("preferences").as(Preferences).locale
+    change_credentials(env, false)
+  end
 
-    user = env.get? "user"
-    sid = env.get? "sid"
-    referer = get_referer(env)
-
-    if !user
-      return env.redirect referer
-    end
-
-    user = user.as(User)
-    sid = sid.as(String)
-    token = env.params.body["csrf_token"]?
-
+  def change_credentials(env, rename : Bool)
+    Authentication.no_store(env)
+    return env.redirect "/login?referer=%2Faccount" unless env.get?("user")
+    user = env.get("user").as(User)
+    sid = env.get("sid").as(String)
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
-    rescue ex
-      return error_template(400, ex)
+      validate_request(env.params.body["csrf_token"]?, sid, env.request, HMAC_KEY)
+    rescue
+      env.response.status_code = 400
+      return get_account(env, "Invalid form. Please try again.")
     end
-
-    password = env.params.body["password"]?
-    if password.nil? || password.empty?
-      return error_template(401, "Password is a required field")
+    if Authentication.throttle(env, user.username)
+      return get_account(env, "Too many attempts. Please try again later.")
     end
-
-    new_passwords = env.params.body.select { |k, _| k.match(/^new_password\[\d+\]$/) }.map { |_, v| v }
-
-    if new_passwords.size <= 1 || new_passwords.uniq.size != 1
-      return error_template(400, "New passwords must match")
+    password = env.params.body["password"]? || ""
+    username = rename ? (env.params.body["username"]? || "") : nil
+    new_password = rename ? nil : (env.params.body["new_password[0]"]? || "")
+    error = username.try { |value| Credentials.username_error(value) }
+    if new_password
+      error ||= Credentials.password_error(new_password)
+      error ||= "New passwords must match" unless new_password == env.params.body["new_password[1]"]?
     end
-
-    new_password = new_passwords.uniq[0]
-    if new_password.empty?
-      return error_template(401, "Password cannot be empty")
+    unless error
+      begin
+        if new_sid = Database::Accounts.change(user.email, sid, password, username, new_password)
+          Authentication.set_session(env, new_sid)
+          return env.redirect "/account?updated=true"
+        end
+        error = "Incorrect password"
+      rescue ex : PQ::PQError
+        raise ex unless ex.field_message(:code) == "23505"
+        error = "Username is already taken."
+      end
     end
-
-    if new_password.bytesize > 55
-      return error_template(400, "Password cannot be longer than 55 characters")
-    end
-
-    if !Crypto::Bcrypt::Password.new(user.password.not_nil!).verify(password.byte_slice(0, 55))
-      return error_template(401, "Incorrect password")
-    end
-
-    new_password = Crypto::Bcrypt::Password.create(new_password, cost: 10)
-    Invidious::Database::Users.update_password(user, new_password.to_s)
-
-    env.redirect referer
+    env.response.status_code = 400
+    get_account(env, error)
   end
 
   # -------------------
@@ -84,6 +70,7 @@ module Invidious::Routes::Account
 
   # Show the account deletion confirmation prompt (GET request)
   def get_delete(env)
+    Authentication.no_store(env)
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -103,6 +90,7 @@ module Invidious::Routes::Account
 
   # Handle the account deletion (POST request)
   def post_delete(env)
+    Authentication.no_store(env)
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -123,10 +111,12 @@ module Invidious::Routes::Account
       return error_template(400, ex)
     end
 
-    view_name = "subscriptions_#{sha256(user.email)}"
-    Invidious::Database::Users.delete(user)
-    Invidious::Database::SessionIDs.delete(email: user.email)
-    PG_DB.exec("DROP MATERIALIZED VIEW #{view_name}")
+    if Authentication.throttle(env, user.username)
+      return error_template(429, "Too many attempts. Please try again later.")
+    end
+    unless Database::Accounts.delete(user.email, sid, env.params.body["password"]? || "")
+      return error_template(401, "Incorrect password")
+    end
 
     env.request.cookies.each do |cookie|
       cookie.expires = Time.utc(1990, 1, 1)
@@ -192,6 +182,7 @@ module Invidious::Routes::Account
 
   # Show the "authorize token?" confirmation prompt (GET request)
   def get_authorize_token(env)
+    Authentication.no_store(env)
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -221,6 +212,7 @@ module Invidious::Routes::Account
 
   # Handle token authorization (POST request)
   def post_authorize_token(env)
+    Authentication.no_store(env)
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -245,7 +237,7 @@ module Invidious::Routes::Account
     callback_url = env.params.body["callbackUrl"]?
     expire = env.params.body["expire"]?.try &.to_i?
 
-    access_token = generate_token(user.email, scopes, expire, HMAC_KEY)
+    access_token = generate_token(user.email, scopes, expire, HMAC_KEY, sid)
 
     if callback_url
       access_token = URI.encode_www_form(access_token)
@@ -258,7 +250,7 @@ module Invidious::Routes::Account
       end
 
       query["token"] = access_token
-      query["username"] = URI.encode_path_segment(user.email)
+      query["username"] = user.username
       url.query = query.to_s
 
       env.redirect url.to_s
@@ -275,6 +267,7 @@ module Invidious::Routes::Account
 
   # Show the token manager page (GET request)
   def token_manager(env)
+    Authentication.no_store(env)
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"

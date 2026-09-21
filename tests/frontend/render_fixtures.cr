@@ -175,7 +175,7 @@ end
 
 def signed_in_env(path)
   env = fixture_env(path)
-  user = Invidious::User.new({updated: Time.utc, notifications: [] of String, subscriptions: [] of String, email: "viewer@example.test", preferences: env.get("preferences").as(Preferences), password: nil, token: "fixture", watched: [] of String, feed_needs_update: false})
+  user = Invidious::User.new({updated: Time.utc, notifications: [] of String, subscriptions: [] of String, email: "viewer@example.test", username: "viewer@example.test", credential_version: 1, preferences: env.get("preferences").as(Preferences), password: nil, token: "fixture", watched: [] of String, feed_needs_update: false})
   env.set "user", user
   env.set "csrf_token", "fixture-token"
   env.set "blocked_channels", [] of String
@@ -260,12 +260,13 @@ def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = fa
   end
 end
 
-def diary_login_fixture(visual_theme = "diary", mode = "light")
+def diary_login_fixture(visual_theme = "diary", mode = "light", signup = false)
   env = fixture_env("/login", mode, visual_theme: visual_theme)
   locale = "en-US"
-  account_type = "invidious"
+  username = ""
+  error = captcha = nil
+  csrf_token = "fixture-csrf"
   referer = "/"
-  email = password = captcha = nil
   navbar_search = true
   render "src/invidious/views/user/login.ecr", "src/invidious/views/template.ecr"
 end
@@ -463,3 +464,12 @@ require "./progress_fixtures"
   end
 end
 File.write("#{output}/history-progress-search.html", history_fixture(history_query: "STUDIO north", sync: true))
+
+File.write("#{output}/signup-account.html", diary_login_fixture("modern-neon", "dark", true))
+env = signed_in_env("/account")
+locale = "en-US"
+user = env.get("user").as(User)
+error = nil
+username_token = password_token = "fixture-csrf"
+navbar_search = true
+File.write("#{output}/account-settings.html", render "src/invidious/views/user/account.ecr", "src/invidious/views/template.ecr")

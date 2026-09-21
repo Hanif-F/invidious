@@ -1055,3 +1055,8 @@ default_user_preferences:
 # Generate with: openssl rand -hex 32. Empty disables contributions.
 # See docs/dearrow-contributions.md before changing an existing key.
 dearrow_identity_key: ""
+
+# Only these reverse-proxy networks may supply X-Forwarded-For for account
+# rate limits. Leave empty for direct connections. Configure the proxy to
+# replace/append X-Forwarded-For correctly; never trust arbitrary clients.
+# auth_trusted_proxies: ["127.0.0.1/32", "::1/128"]

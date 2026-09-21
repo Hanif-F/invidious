@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS public.session_ids
   id text NOT NULL,
   email text,
   issued timestamp with time zone,
+  expires_at timestamp with time zone,
   CONSTRAINT session_ids_pkey PRIMARY KEY (id)
 );
 

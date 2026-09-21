@@ -33,6 +33,7 @@ COPY ./shard.lock ./shard.lock
 RUN shards install --production
 
 COPY ./src/ ./src/
+COPY ./config/security/ ./config/security/
 # TODO: .git folder is required for building – this is destructive.
 # See definition of CURRENT_BRANCH, CURRENT_COMMIT and CURRENT_VERSION.
 COPY ./.git/ ./.git/
@@ -82,6 +83,7 @@ COPY --chown=invidious ./config/config.* ./config/
 RUN mv -n config/config.example.yml config/config.yml
 RUN sed -i 's/host: \(127.0.0.1\|localhost\)/host: invidious-db/' config/config.yml
 COPY ./config/sql/ ./config/sql/
+COPY ./config/security/LICENSE.passwords ./config/security/LICENSE.passwords
 COPY ./locales/ ./locales/
 COPY --from=builder /invidious/assets ./assets/
 COPY --from=builder /invidious/invidious .

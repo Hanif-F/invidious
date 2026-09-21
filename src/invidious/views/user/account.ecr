@@ -1,0 +1,39 @@
+<% content_for "header" do %>
+<title><%= I18n.translate(locale, "Account settings") %> - Invidious</title>
+<% end %>
+<div class="pure-g">
+  <div class="pure-u-1 pure-u-lg-1-5"></div>
+  <div class="pure-u-1 pure-u-lg-3-5"><div class="h-box">
+    <h1><%= I18n.translate(locale, "Account settings") %></h1>
+    <% if error %><p role="alert"><%= HTML.escape(I18n.translate(locale, error)) %></p><% end %>
+    <% if env.params.query["updated"]? == "true" %><p role="status"><%= I18n.translate(locale, "Account updated. Other sessions and API tokens have been revoked.") %></p><% end %>
+    <p><%= I18n.translate(locale, "Changing your username or password signs out other sessions and revokes API tokens.") %></p>
+    <form class="pure-form pure-form-stacked" action="/account/username" method="post">
+      <fieldset>
+        <legend><%= I18n.translate(locale, "Change username") %></legend>
+        <input type="hidden" name="csrf_token" value="<%= HTML.escape(username_token) %>">
+        <label for="username"><%= I18n.translate(locale, "Username") %></label>
+        <input id="username" name="username" class="pure-input-1" value="<%= HTML.escape(user.username) %>" autocomplete="username" autocapitalize="none" spellcheck="false" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9_.\-]{3,32}" aria-describedby="username-help">
+        <p id="username-help"><%= I18n.translate(locale, "Use 3–32 letters, numbers, underscores, dots, or hyphens.") %></p>
+        <label for="rename-password"><%= I18n.translate(locale, "Current password") %></label>
+        <input id="rename-password" name="password" class="pure-input-1" type="password" autocomplete="current-password" required>
+        <button class="pure-button pure-button-primary" type="submit"><%= I18n.translate(locale, "Change username") %></button>
+      </fieldset>
+    </form>
+    <form class="pure-form pure-form-stacked" action="/change_password" method="post">
+      <fieldset>
+        <legend><%= I18n.translate(locale, "Change password") %></legend>
+        <input type="hidden" name="csrf_token" value="<%= HTML.escape(password_token) %>">
+        <input type="hidden" name="username" autocomplete="username" value="<%= HTML.escape(user.username) %>">
+        <label for="current-password"><%= I18n.translate(locale, "Current password") %></label>
+        <input id="current-password" name="password" class="pure-input-1" type="password" autocomplete="current-password" required>
+        <label for="new-password"><%= I18n.translate(locale, "New password") %></label>
+        <input id="new-password" name="new_password[0]" class="pure-input-1" type="password" autocomplete="new-password" aria-describedby="password-help" required>
+        <p id="password-help"><%= I18n.translate(locale, "Use at least 15 characters and at most 72 UTF-8 bytes.") %></p>
+        <label for="confirm-password"><%= I18n.translate(locale, "Confirm password") %></label>
+        <input id="confirm-password" name="new_password[1]" class="pure-input-1" type="password" autocomplete="new-password" required>
+        <button class="pure-button pure-button-primary" type="submit"><%= I18n.translate(locale, "Change password") %></button>
+      </fieldset>
+    </form>
+  </div></div>
+</div>

@@ -20,7 +20,7 @@ begin
   migrator = Invidious::Database::Migrator.new(PG_DB)
   migrator.migrate
   migrator.migrate
-  PG_DB.exec("INSERT INTO users (email) VALUES ('a@test'), ('b@test')")
+  PG_DB.exec("INSERT INTO users (email, username) VALUES ('a@test', 'a@test'), ('b@test', 'b@test')")
   check_playback_positions
   blocked = Invidious::Database::BlockedChannels
   channel = "UCaaaaaaaaaaaaaaaaaaaaaa"
@@ -47,7 +47,7 @@ begin
   check(blocked.ids("a@test").empty?, "Fresh-install schema must support the same queries")
   PG_DB.exec("DROP TABLE playback_positions")
   PG_DB.using_connection { |conn| conn.as(PG::Connection).exec_all(File.read("config/sql/playback_positions.sql")) }
-  PG_DB.exec("INSERT INTO users (email) VALUES ('a@test'), ('b@test')")
+  PG_DB.exec("INSERT INTO users (email, username) VALUES ('a@test', 'a@test'), ('b@test', 'b@test')")
   check_playback_positions
   puts "Blocked-channel migration, isolation, idempotency, deletion, and fresh-install checks passed"
 ensure

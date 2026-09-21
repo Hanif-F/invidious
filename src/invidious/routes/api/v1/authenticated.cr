@@ -502,7 +502,7 @@ module Invidious::Routes::API::V1::Authenticated
         end
       end
 
-      access_token = generate_token(user.email, authorized_scopes, expire, HMAC_KEY)
+      access_token = generate_token(user.email, authorized_scopes, expire, HMAC_KEY, env.get("session").as(String))
 
       if callback_url
         access_token = URI.encode_www_form(access_token)

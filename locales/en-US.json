@@ -731,5 +731,19 @@
     "sb_channel_settings": "SponsorBlock settings",
     "Show members-only videos": "Show members-only videos",
     "Use preference": "Use preference",
-    "Members-only videos hid these results": "Members-only videos were hidden from these results."
+    "Members-only videos hid these results": "Members-only videos were hidden from these results.",
+    "Account settings": "Account settings",
+    "Username": "Username",
+    "Current password": "Current password",
+    "Confirm password": "Confirm password",
+    "Change username": "Change username",
+    "CAPTCHA clock": "CAPTCHA clock",
+    "Use 3–32 letters, numbers, underscores, dots, or hyphens.": "Use 3–32 letters, numbers, underscores, dots, or hyphens.",
+    "Use at least 15 characters and at most 72 UTF-8 bytes.": "Use at least 15 characters and at most 72 UTF-8 bytes.",
+    "Choose a less common password.": "Choose a less common password.",
+    "Username is already taken.": "Username is already taken.",
+    "Invalid form. Please try again.": "Invalid form. Please try again.",
+    "Too many attempts. Please try again later.": "Too many attempts. Please try again later.",
+    "Account updated. Other sessions and API tokens have been revoked.": "Account updated. Other sessions and API tokens have been revoked.",
+    "Changing your username or password signs out other sessions and revokes API tokens.": "Changing your username or password signs out other sessions and revokes API tokens."
 }

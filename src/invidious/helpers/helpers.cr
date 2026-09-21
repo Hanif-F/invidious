@@ -13,6 +13,7 @@ struct SessionId
   property id : String
   property email : String
   property issued : String
+  property expires_at : Time? = nil
 end
 
 struct Annotation

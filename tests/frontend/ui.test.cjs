@@ -2715,3 +2715,34 @@ for (const engine of engines) {
         await local.context.close();
     });
 }
+
+for (const engine of engines) {
+    test(`${engine}: account forms are accessible and responsive`, async () => {
+        for (const width of [360, 1280]) {
+            for (const fixture of ['login-diary', 'signup-account', 'account-settings']) {
+                const session = await pageFor(engine, {fixture, width, javascript: false});
+                const page = session.page;
+                assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${fixture} overflows at ${width}`);
+                for (const input of await page.locator('input:not([type=hidden])').all()) {
+                    const id = await input.getAttribute('id');
+                    if (await input.getAttribute('name') === 'q') continue;
+                    assert.ok(id && await page.locator(`label[for="${id}"]`).count(), 'Input needs an associated label');
+                }
+                assert.equal(await page.locator('input[type=password][value]').count(), 0);
+                if (fixture === 'signup-account') {
+                    await page.locator('#username').fill('valid.name-1');
+                    assert.equal(await page.locator('#username').evaluate(el => el.checkValidity()), true);
+                    await page.locator('#username').fill('invalid name');
+                    assert.equal(await page.locator('#username').evaluate(el => el.checkValidity()), false);
+                }
+                if (fixture === 'account-settings') {
+                    assert.equal(await page.locator('input[autocomplete=current-password]').count(), 2);
+                    assert.equal(await page.locator('input[autocomplete=new-password]').count(), 2);
+                }
+                await page.screenshot({path: path.join(artifacts, `${engine}-${fixture}-${width}.png`), fullPage: true});
+                assert.deepEqual(session.errors, []);
+                await session.context.close();
+            }
+        }
+    });
+}

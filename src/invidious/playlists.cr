@@ -195,13 +195,17 @@ struct InvidiousPlaylist
     end
   end
 
+  def display_author : String
+    Invidious::Database::Users.display_name(author)
+  end
+
   def to_json(offset, json : JSON::Builder, video_id : String? = nil)
     json.object do
       json.field "type", "invidiousPlaylist"
       json.field "title", self.title
       json.field "playlistId", self.id
 
-      json.field "author", self.author
+      json.field "author", display_author
       json.field "authorId", self.ucid
       json.field "authorUrl", nil
       json.field "authorThumbnails", [] of String
