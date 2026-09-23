@@ -476,6 +476,63 @@ for (const engine of engines) {
         await context.close();
     });
 
+    test(`${engine}: account link lives in Preferences and the mobile header stays visible`, async () => {
+        const signedIn = await pageFor(engine, {fixture: 'preferences-signed-in', javascript: false});
+        assert.equal(await signedIn.page.locator('header a[href="/account"]').count(), 1);
+        assert.equal(await signedIn.page.locator('#preferences-library a[href^="/account?referer="]').textContent(), 'Account settings');
+        assert.equal(await signedIn.page.locator('header .pure-menu-heading[href="/account"]').count(), 0);
+        assert.equal(await signedIn.page.locator('#user_name').isVisible(), true);
+        assert.equal(await signedIn.page.locator('#user_name').getAttribute('href'), '/account');
+        await signedIn.page.setViewportSize({width: 390, height: 844});
+        assert.equal(await signedIn.page.locator('#user_name').isVisible(), false);
+        await signedIn.context.close();
+
+        const noNick = await pageFor(engine, {fixture: 'preferences-signed-in-no-nick', javascript: false});
+        assert.equal(await noNick.page.locator('header a[href="/account"]').count(), 0);
+        await noNick.context.close();
+
+        for (const fixture of ['preferences', 'preferences-diary', 'preferences-cinematic', 'preferences-rtl', 'preferences-signed-in']) {
+            for (const [width, javascript] of [[320, false], [390, true]]) {
+            const {page, context, errors} = await pageFor(engine, {fixture, width, height: 640, javascript});
+            const header = page.locator('.navbar');
+            assert.equal(await header.evaluate(el => getComputedStyle(el).position), 'sticky');
+            assert.notEqual(await header.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+            await page.evaluate(() => scrollTo(0, 700));
+            await page.waitForFunction(() => scrollY > 300);
+            assert.ok(Math.abs((await header.boundingBox()).y) <= 1, `${fixture}: header did not stick`);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `${fixture}: horizontal overflow`);
+            const search = page.locator('.navbar input[type=search]');
+            await search.fill('light');
+            assert.equal(await search.inputValue(), 'light');
+            await page.locator('.navigation-menu > summary').click();
+            assert.equal(await page.locator('.navigation-menu nav').isVisible(), true);
+            const firstLink = await page.locator('.navigation-menu nav a').first().boundingBox();
+            assert.equal(await page.evaluate(({x, y}) => document.elementFromPoint(x, y)?.closest('.navigation-menu') !== null, {x: firstLink.x + 10, y: firstLink.y + 10}), true);
+            await page.locator('.navigation-menu > summary').focus();
+            await page.keyboard.press('Enter');
+            assert.equal(await page.locator('.navigation-menu nav').isVisible(), false);
+            if (width === 390) {
+                await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `${fixture}: enlarged text overflows`);
+            }
+            const target = fixture === 'preferences-signed-in' ? 'preferences-library' : 'preferences-playback';
+            await page.locator(`.preference-nav a[href="#${target}"]`).click();
+            await page.waitForFunction(id => location.hash === `#${id}`, target);
+            const targetBox = await page.locator(`#${target}`).boundingBox();
+            const headerBox = await header.boundingBox();
+            assert.ok(targetBox.y >= headerBox.y + headerBox.height - 2, `${fixture} at ${width}: section hidden by header`);
+            assert.deepEqual(errors, []);
+            await context.close();
+            }
+        }
+
+        for (const width of [768, 1440]) {
+            const {page, context} = await pageFor(engine, {fixture: 'preferences', width, javascript: false});
+            assert.notEqual(await page.locator('.navbar').evaluate(el => getComputedStyle(el).position), 'sticky');
+            await context.close();
+        }
+    });
+
     test(`${engine}: player wide control, paused idle state and keyboard access`, async () => {
         const { page, context, errors } = await pageFor(engine, { realPlayer: true });
         await page.evaluate(() => { player.muted(true); player.play(); });
