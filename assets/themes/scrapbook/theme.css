@@ -187,8 +187,8 @@ body #descriptionWrapper { max-height: none; overflow: visible; }
 .preference-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 24px; }
 .preference-nav a { border: 1px solid var(--line); border-radius: 20px; padding: 8px 16px; min-height: 44px; }
 .preferences-form { max-width: 1000px; }
-.preferences-form fieldset { background: var(--surface); border: 1px solid var(--line); padding: 24px; border-radius: var(--radius); margin-block: 20px; min-width: 0; }
-body .preferences-form legend { color: var(--text); padding: 0 8px; font-weight: 700; font-size: 1.1rem; }
+.preferences-form > .preferences-section { background: var(--surface); border: 1px solid var(--line); padding: 24px; border-radius: var(--radius); margin-block: 20px; min-width: 0; }
+body .preferences-form > .preferences-section > legend { color: var(--text); padding: 0 8px; font-weight: 700; font-size: 1.1rem; }
 .preference-description { color: var(--muted); font-size: .875rem; }
 body .pure-form-aligned .pure-control-group { margin-bottom: 16px; }
 body .pure-form-aligned .pure-control-group label { width: min(19em, 100%); text-align: start; }
@@ -253,7 +253,7 @@ body #filters-box { background: var(--surface); margin: 0; }
   [data-page=search] .media-card > .thumbnail, [data-page=playlist] .media-item[data-kind=playlist-video] .media-card > .thumbnail { width: 140px; margin-inline-end: 12px; }
   [data-page=search] .media-card, [data-page=playlist] .media-item[data-kind=playlist-video] .media-card { padding: 10px; }
   .channel-profile .channel-name { font-size: 1rem; }
-  .preferences-form fieldset { padding: 16px; }
+  .preferences-form > .preferences-section { padding: 16px; }
   body .pure-form-aligned .pure-control-group label { display: block; margin-bottom: 6px; }
   body .pure-form-aligned .pure-control-group input[type=checkbox] { margin: 12px 0; }
   .comments .pure-u-23-24 { width: 100%; }
@@ -471,7 +471,7 @@ body .pure-button, body a.pure-button { font-family: var(--hand); font-size: 1.1
 body .pure-button-primary, body a.pure-button-primary { background: var(--selected); color: var(--text); border-color: var(--line); }
 body .pure-form input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]), body .pure-form select, body .pure-form textarea { font-family: var(--reading); font-size: 1rem; border-radius: 1px; border: 0; border-bottom: 1px dashed var(--line); background: var(--mount); }
 body .pure-form input:focus, body .pure-form textarea:focus, body .pure-form select:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
-.panel, .comments, .preferences-form fieldset, #filters { background: var(--mount); border: 1px solid var(--line); border-radius: 2px; box-shadow: 2px 4px 9px var(--shadow); }
+.panel, .comments, .preferences-form > .preferences-section, #filters { background: var(--mount); border: 1px solid var(--line); border-radius: 2px; box-shadow: 2px 4px 9px var(--shadow); }
 .panel-heading { background: var(--surface-raised); border-bottom: 1px dashed var(--line); font-size: 1.45rem; font-weight: 400; }
 .watch-heading { padding: 18px 0 8px; }
 .watch-heading h1 { text-decoration: underline; text-decoration-color: var(--tape); text-underline-offset: 6px; text-decoration-thickness: 5px; }
@@ -494,8 +494,11 @@ body .pure-form input:focus, body .pure-form textarea:focus, body .pure-form sel
 body #player-container { border-radius: 1px; }
 .channel-tabs a, .channel-tabs [aria-current], .preference-nav a { background: var(--surface-raised); border-radius: 2px 6px 0 0; }
 .channel-tabs [aria-current] { background: var(--selected); border-color: var(--focus); }
-.preferences-form legend { background: var(--surface); padding: 4px 12px; font: 400 1.5rem var(--hand); }
+.preferences-form > .preferences-section > legend { background: var(--surface); padding: 4px 12px; font: 400 1.5rem var(--hand); }
 .preferences-save { background: var(--surface); }
+.preferences-page .preference-nav a { color: var(--text); }
+.preferences-form .preference-subgroup h2 { color: var(--accent); font-family: var(--hand); }
+.preferences-form .sponsorblock-category, .preferences-form .preference-link a { background: var(--mount); border-radius: 2px; box-shadow: 2px 3px 0 var(--shadow); }
 footer { margin-top: 12px; border: 0; padding: 16px 8px 28px; font-family: var(--reading); }
 [data-page=search] .media-card, [data-page=playlist] .media-item[data-kind=playlist-video] .media-card { background: var(--mount); border: 0; border-radius: 2px; padding: 14px; transform: none; }
 [data-page=search] .media-card::before, [data-page=playlist] .media-item[data-kind=playlist-video] .media-card::before { inset-inline-start: auto; inset-inline-end: 22px; width: 40px; }
@@ -635,12 +638,12 @@ main > .h-box > h1, .watch-heading h1 { transform: rotate(-.6deg); transform-ori
 .comments .comment-replies { background: var(--mount); margin-inline-start: 14px; padding-inline-start: 12px; }
 .queue-panel { margin-top: 8px; border-top-color: var(--adhesive-blue); background: var(--paper-butter); }
 .recommendations .panel-heading { transform: rotate(-1deg); color: var(--ink-green); text-decoration: underline wavy var(--adhesive-sage); text-underline-offset: 5px; }
-.preferences-form fieldset { background: var(--paper-blue); border-top: 3px solid var(--adhesive-amber); }
-.preferences-form fieldset:has(> #preferences-appearance) { background: var(--paper-sage); border-top-color: var(--adhesive-pink); }
-.preferences-form fieldset:has(> #preferences-playback) { background: var(--paper-peach); border-top-color: var(--adhesive-sage); }
-.preferences-form fieldset:has(> #preferences-content) { background: var(--paper-lilac); border-top-color: var(--adhesive-blue); }
+.preferences-form > .preferences-section { background: var(--paper-blue); border-top: 3px solid var(--adhesive-amber); }
+#preferences-appearance { background: var(--paper-sage); border-top-color: var(--adhesive-pink); }
+#preferences-playback { background: var(--paper-peach); border-top-color: var(--adhesive-sage); }
+#preferences-browsing { background: var(--paper-lilac); border-top-color: var(--adhesive-blue); }
 .preferences-form .theme-picker { background: var(--mount); border: 1px dashed var(--line); }
-.preferences-form legend { transform: rotate(-.8deg); background: var(--paper-butter); }
+.preferences-form > .preferences-section > legend { transform: rotate(-.8deg); background: var(--paper-butter); }
 .page-navigation .pure-button { transform: rotate(-1.1deg); background: var(--paper-butter); }
 .watch-actions > .pure-button { transform: rotate(.8deg); }
 /* Washes have broken boundaries rather than perfect radial circles. */

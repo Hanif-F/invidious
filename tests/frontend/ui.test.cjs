@@ -124,6 +124,59 @@ async function pageFor(engine, options = {}) {
 }
 
 for (const engine of engines) {
+    test(`${engine}: preferences sections, labels, and form fields`, async () => {
+        const base = ['preferences-appearance', 'preferences-playback', 'preferences-browsing', 'preferences-enhancements'];
+        const cases = [
+            ['preferences', base],
+            ['preferences-signed-in', [...base, 'preferences-library']],
+            ['preferences-admin', [...base, 'preferences-library', 'preferences-administration']]
+        ];
+        for (const [fixture, expected] of cases) {
+            const {page, context, errors} = await pageFor(engine, {fixture, width: 390, javascript: false});
+            const sections = await page.locator('.preferences-section').evaluateAll(nodes => nodes.map(node => node.id));
+            const links = await page.locator('.preference-nav a').evaluateAll(nodes => nodes.map(node => node.hash.slice(1)));
+            assert.deepEqual(sections, expected);
+            assert.deepEqual(links, expected);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `${fixture} overflows`);
+            for (const id of await page.locator('.preferences-form input:not([type=hidden]), .preferences-form select').evaluateAll(nodes => nodes.map(node => node.id))) {
+                assert.ok(id, `${fixture}: control has no id`);
+                assert.equal(await page.locator(`label[for="${id}"]`).count(), 1, `${fixture}: ${id} needs one label`);
+            }
+            assert.equal(await page.locator('#timezone').count(), fixture === 'preferences' ? 0 : 1);
+            if (fixture !== 'preferences') {
+                assert.equal(await page.locator('#timezone').locator('..').locator('#watch_history').count(), 0);
+            }
+            await page.screenshot({path: path.join(artifacts, `${engine}-${fixture}-reorganized-390.png`), fullPage: true});
+            const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
+            await page.locator('#video_loop').check();
+            await page.locator('#dearrow_enabled').check();
+            await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
+            const data = new URLSearchParams((await posted).postData());
+            assert.equal(data.get('video_loop'), 'on');
+            assert.equal(data.get('dearrow_enabled'), 'on');
+            assert.ok(data.has('captions[1]') && data.has('comments[1]') && data.has('feed_menu[1]'));
+            assert.equal(data.has('default_playlist'), fixture !== 'preferences');
+            assert.equal(data.has('admin_default_home'), fixture === 'preferences-admin');
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+        for (const fixture of ['preferences', 'preferences-diary', 'preferences-cinematic', 'preferences-scrapbook', 'preferences-rtl']) {
+            for (const width of [320, 1440]) {
+                const {page, context, errors} = await pageFor(engine, {fixture, width, javascript: false});
+                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `${fixture} overflows at ${width}`);
+                const save = await page.locator('.preferences-save button').boundingBox();
+                assert.ok(save && save.x >= 0 && save.x + save.width <= width, `${fixture}: Save is clipped`);
+                if (width === 320 && fixture !== 'preferences-rtl') {
+                    await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+                    const pageWidth = await page.locator('.preferences-page').evaluate(el => ({client: el.clientWidth, scroll: el.scrollWidth}));
+                    assert.ok(pageWidth.scroll <= pageWidth.client + 1, `${fixture} overflows at enlarged text: ${JSON.stringify(pageWidth)}`);
+                }
+                await page.screenshot({path: path.join(artifacts, `${engine}-${fixture}-reorganized-${width}.png`), fullPage: true});
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+    });
     test(`${engine}: theme cards render and submit without JavaScript`, async () => {
         const { page, context } = await pageFor(engine, { fixture: 'preferences', javascript: false, width: 390 });
         const radio = page.getByRole('radio', { name: 'Modern Neon' });

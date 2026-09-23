@@ -492,3 +492,14 @@ navbar_search = true
 File.write("#{output}/account-settings.html", render "src/invidious/views/user/account.ecr", "src/invidious/views/template.ecr")
 
 File.write("#{output}/browse-scrapbook-long.html", browse_fixture(fixture_env("/feed/popular", "light", visual_theme: "scrapbook"), false, 48, true))
+
+# Preferences states use the same template and form names as the live page.
+PG_DB.exec("INSERT INTO playlists (title, id, author) VALUES (?, ?, ?)", "Fixture playlist", "IVpreferences", "viewer@example.test")
+File.write("#{output}/preferences-signed-in.html", preferences_fixture(signed_in_env("/preferences")))
+CONFIG.admins << "viewer@example.test"
+begin
+  File.write("#{output}/preferences-admin.html", preferences_fixture(signed_in_env("/preferences")))
+ensure
+  CONFIG.admins.delete("viewer@example.test")
+end
+File.write("#{output}/preferences-rtl.html", preferences_fixture(fixture_env("/preferences", "dark", locale: "ar")))

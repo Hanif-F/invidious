@@ -949,6 +949,60 @@ h1, h2, h3, h4, h5, p,
 .sponsorblock-category input[type="color"] { width: 64px; height: 36px; padding: 2px; }
 .sponsorblock-preferences .preference-description { display: block; width: auto; max-width: 70ch; padding-left: 0; }
 
+/* Preferences has its own layout; keep the global Pure form rules off these rows. */
+.preferences-page { max-width: 1280px; margin-inline: auto; min-width: 0; }
+.preferences-header { margin-block: 8px 20px; }
+.preferences-header h1 { margin: 0 0 6px; }
+.preferences-header p { margin: 0; color: var(--muted); max-width: 68ch; }
+.preferences-page .preference-nav {
+  display: flex; flex-wrap: nowrap; gap: 8px; max-width: 100%; overflow-x: auto;
+  padding: 0 2px 12px; margin: 0 0 24px; scrollbar-width: thin;
+}
+.preferences-page .preference-nav a { display: inline-flex; align-items: center; flex: 0 0 auto; white-space: nowrap; }
+.preferences-page .preferences-form { max-width: none; padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+.preferences-form > .preferences-section { min-width: 0; margin-block: 0 24px; scroll-margin-block-start: 24px; }
+.preferences-form > .preferences-section > legend { width: auto; max-width: 100%; margin-bottom: 0; }
+.preferences-form .preference-section-intro { width: auto; max-width: 70ch; margin: 4px 0 26px; padding: 0; color: var(--muted); }
+.preferences-form .preference-subgroup { min-width: 0; }
+.preferences-form .preference-subgroup + .preference-subgroup { border-block-start: 1px solid var(--line); margin-block-start: 26px; padding-block-start: 22px; }
+.preferences-form .preference-subgroup h2 { font-size: 1.05rem; margin: 0 0 12px; }
+body .preferences-form .pure-control-group {
+  display: grid; grid-template-columns: minmax(150px, 31%) minmax(0, 1fr);
+  align-items: center; gap: 8px 24px; padding-block: 10px; margin: 0;
+}
+body .preferences-form .pure-control-group > label,
+body .preferences-form .pure-control-group > .preference-row-label {
+  display: block; width: auto; margin: 0; text-align: start; font-weight: 600; overflow-wrap: anywhere;
+}
+.preferences-form .pure-control-group > input[type=checkbox] { justify-self: start; margin: 0; }
+.preferences-form .pure-control-group > input:not([type=checkbox]),
+.preferences-form .pure-control-group > select { justify-self: start; width: min(100%, 26rem); min-width: 0; }
+.preferences-form #theme_random_interval_hours { width: min(100%, 8rem); }
+.preferences-form .pure-control-group > input[type=color] { width: 64px; }
+.preferences-form .preference-description { width: auto; max-width: 70ch; padding: 0; margin: 0; display: block; }
+.preferences-form .pure-control-group > .preference-description { grid-column: 2; }
+.preferences-form .theme-picker { min-width: 0; margin: 0 0 12px; padding: 0; border: 0; background: transparent; }
+.preferences-form .theme-picker > legend { width: auto; margin: 0 0 6px; font-size: 1rem; }
+.preferences-form .theme-picker > .preference-description { margin-bottom: 16px; }
+.preferences-form .theme-options { grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 12px; }
+.preferences-form .preference-multi-options { display: flex; flex-wrap: wrap; gap: 10px; min-width: 0; }
+.preferences-form .preference-option { display: grid; gap: 4px; flex: 1 1 130px; min-width: 0; max-width: 210px; }
+body .preferences-form .preference-option label { display: block; width: auto; margin: 0; text-align: start; color: var(--muted); font-size: .8rem; }
+body .preferences-form .preference-option select { display: block; width: 100%; max-width: none; }
+.preferences-form .sponsorblock-categories { gap: 12px; }
+.preferences-form .sponsorblock-category { padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); }
+.preferences-form .sponsorblock-category h3 { margin: 0 0 8px; }
+.preferences-form .preference-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 8px; }
+.preferences-form .preference-link a { display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); }
+.preferences-form .preference-link a:hover { border-color: var(--accent); }
+body .pure-form.preferences-form .preferences-save { bottom: calc(12px + env(safe-area-inset-bottom)); }
+@media (max-width: 680px) {
+  body .preferences-form .pure-control-group { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .preferences-form .pure-control-group > .preference-description { grid-column: 1; }
+  .preferences-form .preference-option { flex-basis: 110px; }
+  .preferences-form .theme-options { grid-template-columns: repeat(auto-fill, minmax(min(100%, 145px), 1fr)); }
+}
+
 .channel-search {
   margin-block: 1em;
 }

@@ -2,42 +2,89 @@
 <title><%= I18n.translate(locale, "Preferences") %> - Invidious</title>
 <% end %>
 
-<div class="h-box">
-    <h1><%= I18n.translate(locale, "Preferences") %></h1>
+<div class="h-box preferences-page">
+    <header class="preferences-header">
+        <h1><%= I18n.translate(locale, "Preferences") %></h1>
+        <p><%= I18n.translate(locale, "ui_preferences_intro") %></p>
+    </header>
     <nav class="preference-nav" aria-label="<%= I18n.translate(locale, "Preferences") %>">
-        <% {"appearance", "playback", "sponsorblock", "content"}.each do |section| %><a href="#preferences-<%= section %>"><%= I18n.translate(locale, "ui_#{section}") %></a><% end %>
-        <% if env.get?("user") %><a href="#preferences-account"><%= I18n.translate(locale, "ui_account_data") %></a><% end %>
+        <a href="#preferences-appearance"><%= I18n.translate(locale, "ui_appearance") %></a>
+        <a href="#preferences-playback"><%= I18n.translate(locale, "ui_playback") %></a>
+        <a href="#preferences-browsing"><%= I18n.translate(locale, "ui_browsing_feeds") %></a>
+        <a href="#preferences-enhancements"><%= I18n.translate(locale, "ui_enhancements") %></a>
+        <% if env.get?("user") %><a href="#preferences-library"><%= I18n.translate(locale, "ui_library_account") %></a><% end %>
+        <% if env.get?("user") && CONFIG.admins.includes?(env.get?("user").as(Invidious::User).email) %><a href="#preferences-administration"><%= I18n.translate(locale, "ui_administration") %></a><% end %>
     </nav>
     <form class="pure-form pure-form-aligned preferences-form" action="/preferences?referer=<%= URI.encode_www_form(referer) %>" method="post">
         <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
-        <fieldset class="sponsorblock-preferences">
-            <legend id="preferences-sponsorblock">SponsorBlock</legend>
-            <p><a href="/preferences/sponsorblock/channels"><%= I18n.translate(locale, "sb_channels") %></a></p>
-            <p class="preference-description"><%= I18n.translate(locale, "sb_description") %> <a href="https://sponsor.ajay.app/" rel="noopener noreferrer">SponsorBlock</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>).</p>
-            <div class="pure-control-group">
-                <label for="sponsorblock_enabled"><%= I18n.translate(locale, "sb_enable") %></label>
-                <input type="checkbox" id="sponsorblock_enabled" name="sponsorblock_enabled" <% if preferences.sponsorblock_enabled %>checked<% end %>>
-            </div>
-            <div class="sponsorblock-categories">
-            <% Invidious::SponsorBlock::CATEGORIES.each do |category, color| %>
-                <div class="sponsorblock-category">
-                    <h3><%= I18n.translate(locale, "sb_category_#{category}") %></h3>
-                    <label for="sponsorblock_mode_<%= category %>"><%= I18n.translate(locale, "sb_mode") %></label>
-                    <select id="sponsorblock_mode_<%= category %>" name="sponsorblock_mode_<%= category %>">
-                    <% {"auto", "manual", "marker", "disabled"}.each do |mode| %>
-                        <option value="<%= mode %>" <% if preferences.sponsorblock_modes[category] == mode %>selected<% end %>><%= I18n.translate(locale, "sb_mode_#{mode}") %></option>
+        <fieldset class="preferences-section" id="preferences-appearance">
+            <legend><%= I18n.translate(locale, "ui_appearance") %></legend>
+            <p class="preference-section-intro"><%= I18n.translate(locale, "ui_appearance_hint") %></p>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_theme_and_color") %></h2>
+            <fieldset class="theme-picker" aria-describedby="theme-hint">
+                <legend><%= I18n.translate(locale, "preferences_theme_label") %></legend>
+                <p id="theme-hint" class="preference-description"><%= I18n.translate(locale, "preferences_theme_hint") %></p>
+                <div class="theme-options">
+                    <label class="theme-option" for="theme-random">
+                        <input type="radio" name="theme" id="theme-random" value="random" <%= "checked" if preferences.theme_random %>>
+                        <span class="theme-card">
+                            <span class="theme-random-preview" aria-hidden="true"><svg viewBox="0 0 64 64" width="96" height="96" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16h8c12 0 20 32 32 32h8m-10-10 10 10-10 10M8 48h8c5 0 9-5 13-11m6-10c4-6 8-11 13-11h8M46 6l10 10-10 10"/></svg></span>
+                            <span class="theme-card-name"><%= I18n.translate(locale, "preferences_theme_random") %></span>
+                            <span class="theme-card-selected" aria-hidden="true"><%= I18n.translate(locale, "preferences_theme_selected") %></span>
+                        </span>
+                    </label>
+                    <% Invidious::Themes::AVAILABLE.each do |theme| %>
+                        <label class="theme-option" for="theme-<%= theme.id %>">
+                            <input type="radio" name="theme" id="theme-<%= theme.id %>" value="<%= theme.id %>" <%= "checked" if !preferences.theme_random && Invidious::Themes.normalize(preferences.theme) == theme.id %>>
+                            <span class="theme-card">
+                                <img src="<%= theme.preview %>?v=<%= ASSET_COMMIT %>" alt="" width="640" height="360" loading="lazy">
+                                <span class="theme-card-name"><%= HTML.escape(theme.name) %></span>
+                                <span class="theme-card-selected" aria-hidden="true"><%= I18n.translate(locale, "preferences_theme_selected") %></span>
+                            </span>
+                        </label>
                     <% end %>
-                    </select>
-                    <label for="sponsorblock_color_<%= category %>"><%= I18n.translate(locale, "sb_color") %></label>
-                    <input type="color" id="sponsorblock_color_<%= category %>" name="sponsorblock_color_<%= category %>" value="<%= preferences.sponsorblock_colors[category] %>">
                 </div>
-            <% end %>
+            </fieldset>
+            <div class="pure-control-group">
+                <label for="theme_random_interval_hours"><%= I18n.translate(locale, "preferences_theme_random_interval") %></label>
+                <input type="number" id="theme_random_interval_hours" name="theme_random_interval_hours" min="1" max="168" step="1" required value="<%= preferences.theme_random_interval_hours %>" aria-describedby="theme-random-hint">
+                <p id="theme-random-hint" class="preference-description"><%= I18n.translate(locale, "preferences_theme_random_hint") %></p>
+            </div>
+            <div class="pure-control-group">
+                <label for="dark_mode"><%= I18n.translate(locale, "preferences_color_mode_label") %></label>
+                <select name="dark_mode" id="dark_mode">
+                    <% {"", "light", "dark"}.each do |option| %>
+                        <option value="<%= option %>" <% if preferences.dark_mode == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "preferences_color_system" : option) %></option>
+                    <% end %>
+                </select>
+            </div>
+            </div>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_display_and_language") %></h2>
+            <div class="pure-control-group">
+                <label for="ui_density"><%= I18n.translate(locale, "ui_density") %></label>
+                <select name="ui_density" id="ui_density"><% {"balanced", "compact"}.each do |density| %><option value="<%= density %>" <%= "selected" if preferences.ui_density == density %>><%= I18n.translate(locale, "ui_density_#{density}") %></option><% end %></select>
+            </div>
+            <div class="pure-control-group">
+                <label for="thin_mode"><%= I18n.translate(locale, "preferences_thin_mode_label") %></label>
+                <input name="thin_mode" id="thin_mode" type="checkbox" <% if preferences.thin_mode %>checked<% end %>>
+            </div>
+            <div class="pure-control-group">
+                <label for="locale"><%= I18n.translate(locale, "preferences_locale_label") %></label>
+                <select name="locale" id="locale">
+                    <% I18n::LOCALES_LIST.each do |iso_name, full_name| %>
+                        <option value="<%= iso_name %>" <% if preferences.locale == iso_name %> selected <% end %>><%= HTML.escape(full_name) %></option>
+                    <% end %>
+                </select>
+            </div>
             </div>
         </fieldset>
-        <fieldset>
-            <legend id="preferences-playback"><%= I18n.translate(locale, "ui_playback") %></legend>
-            <p class="preference-description"><%= I18n.translate(locale, "ui_playback_hint") %></p>
-
+        <fieldset class="preferences-section" id="preferences-playback">
+            <legend><%= I18n.translate(locale, "ui_playback") %></legend>
+            <p class="preference-section-intro"><%= I18n.translate(locale, "ui_playback_hint") %></p>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_playback_behavior") %></h2>
             <div class="pure-control-group">
                 <label for="video_loop"><%= I18n.translate(locale, "preferences_video_loop_label") %></label>
                 <input name="video_loop" id="video_loop" type="checkbox" <% if preferences.video_loop %>checked<% end %>>
@@ -74,6 +121,21 @@
             </div>
 
             <div class="pure-control-group">
+                <label for="save_player_pos"><%= I18n.translate(locale, "preferences_save_player_pos_label") %></label>
+                <input name="save_player_pos" id="save_player_pos" type="checkbox" <% if preferences.save_player_pos %>checked<% end %>>
+            </div>
+            </div>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_player_and_media") %></h2>
+            <div class="pure-control-group">
+                <label for="player_style"><%= I18n.translate(locale, "preferences_player_style_label") %></label>
+                <select name="player_style" id="player_style">
+                    <% {"invidious", "youtube"}.each do |option| %>
+                        <option value="<%= option %>" <% if preferences.player_style == option %> selected <% end %>><%= I18n.translate(locale, option) %></option>
+                    <% end %>
+                </select>
+            </div>
+            <div class="pure-control-group">
                 <label for="speed"><%= I18n.translate(locale, "preferences_speed_label") %></label>
                 <select name="speed" id="speed">
                     <% {2.0, 1.75, 1.5, 1.25, 1.0, 0.75, 0.5, 0.25}.each do |option| %>
@@ -103,128 +165,36 @@
                     </select>
                 </div>
             <% end %>
-
-            <div class="pure-control-group">
-                <label for="captions[0]"><%= I18n.translate(locale, "preferences_captions_label") %></label>
+            <div class="pure-control-group preference-multi-row">
+                <span class="preference-row-label"><%= I18n.translate(locale, "preferences_captions_label") %></span>
+                <div class="preference-multi-options">
                 <% preferences.captions.each_with_index do |caption, index| %>
+                    <div class="preference-option">
+                    <label for="captions[<%= index %>]"><%= I18n.translate(locale, "ui_preference_priority") %> <%= index + 1 %></label>
                     <select class="pure-u-1-6" name="captions[<%= index %>]" id="captions[<%= index %>]">
                         <% Invidious::Videos::Captions::LANGUAGES.each do |option| %>
                             <option value="<%= option %>" <% if preferences.captions[index] == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "none" : option) %></option>
                         <% end %>
                     </select>
+                    </div>
                 <% end %>
+                </div>
             </div>
-
-
-
             <div class="pure-control-group">
                 <label for="annotations"><%= I18n.translate(locale, "preferences_annotations_label") %></label>
                 <input name="annotations" id="annotations" type="checkbox" <% if preferences.annotations %>checked<% end %>>
             </div>
-
-
-
             <div class="pure-control-group">
                 <label for="vr_mode"><%= I18n.translate(locale, "preferences_vr_mode_label") %></label>
                 <input name="vr_mode" id="vr_mode" type="checkbox" <% if preferences.vr_mode %>checked<% end %>>
             </div>
-
-            <div class="pure-control-group">
-                <label for="save_player_pos"><%= I18n.translate(locale, "preferences_save_player_pos_label") %></label>
-                <input name="save_player_pos" id="save_player_pos" type="checkbox" <% if preferences.save_player_pos %>checked<% end %>>
             </div>
-
-            <% if user = env.get?("user").try &.as(User) %>
-                <% playlists = Invidious::Database::Playlists.select_user_created_playlists(user.email) %>
-                <div class="pure-control-group">
-                    <label for="default_playlist"><%= I18n.translate(locale, "preferences_default_playlist") %></label>
-                    <select name="default_playlist" id="default_playlist">
-                        <option value=""><%= I18n.translate(locale, "preferences_default_playlist_none") %></option>
-                        <% playlists.each do |plid, playlist_title| %>
-                            <option value="<%= plid %>" <%= "selected" if user.preferences.default_playlist == plid %>><%= HTML.escape(playlist_title) %></option>
-                        <% end %>
-                    </select>
-                </div>
-            <% end %>
-
-            </fieldset><fieldset>
-            <legend id="preferences-appearance"><%= I18n.translate(locale, "ui_appearance") %></legend>
-            <p class="preference-description"><%= I18n.translate(locale, "ui_appearance_hint") %></p>
-            <div class="pure-control-group">
-                <label for="theme_random_interval_hours"><%= I18n.translate(locale, "preferences_theme_random_interval") %></label>
-                <input type="number" id="theme_random_interval_hours" name="theme_random_interval_hours" min="1" max="168" step="1" required value="<%= preferences.theme_random_interval_hours %>" aria-describedby="theme-random-hint">
-                <p id="theme-random-hint" class="preference-description"><%= I18n.translate(locale, "preferences_theme_random_hint") %></p>
-            </div>
-            <fieldset class="theme-picker" aria-describedby="theme-hint">
-                <legend><%= I18n.translate(locale, "preferences_theme_label") %></legend>
-                <p id="theme-hint" class="preference-description"><%= I18n.translate(locale, "preferences_theme_hint") %></p>
-                <div class="theme-options">
-                    <label class="theme-option" for="theme-random">
-                        <input type="radio" name="theme" id="theme-random" value="random" <%= "checked" if preferences.theme_random %>>
-                        <span class="theme-card">
-                            <span class="theme-random-preview" aria-hidden="true"><svg viewBox="0 0 64 64" width="96" height="96" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16h8c12 0 20 32 32 32h8m-10-10 10 10-10 10M8 48h8c5 0 9-5 13-11m6-10c4-6 8-11 13-11h8M46 6l10 10-10 10"/></svg></span>
-                            <span class="theme-card-name"><%= I18n.translate(locale, "preferences_theme_random") %></span>
-                            <span class="theme-card-selected" aria-hidden="true"><%= I18n.translate(locale, "preferences_theme_selected") %></span>
-                        </span>
-                    </label>
-                    <% Invidious::Themes::AVAILABLE.each do |theme| %>
-                        <label class="theme-option" for="theme-<%= theme.id %>">
-                            <input type="radio" name="theme" id="theme-<%= theme.id %>" value="<%= theme.id %>" <%= "checked" if !preferences.theme_random && Invidious::Themes.normalize(preferences.theme) == theme.id %>>
-                            <span class="theme-card">
-                                <img src="<%= theme.preview %>?v=<%= ASSET_COMMIT %>" alt="" width="640" height="360" loading="lazy">
-                                <span class="theme-card-name"><%= HTML.escape(theme.name) %></span>
-                                <span class="theme-card-selected" aria-hidden="true"><%= I18n.translate(locale, "preferences_theme_selected") %></span>
-                            </span>
-                        </label>
-                    <% end %>
-                </div>
-            </fieldset>
-            <div class="pure-control-group">
-                <label for="ui_density"><%= I18n.translate(locale, "ui_density") %></label>
-                <select name="ui_density" id="ui_density"><% {"balanced", "compact"}.each do |density| %><option value="<%= density %>" <%= "selected" if preferences.ui_density == density %>><%= I18n.translate(locale, "ui_density_#{density}") %></option><% end %></select>
-            </div>
-
-            <div class="pure-control-group">
-                <label for="locale"><%= I18n.translate(locale, "preferences_locale_label") %></label>
-                <select name="locale" id="locale">
-                    <% I18n::LOCALES_LIST.each do |iso_name, full_name| %>
-                        <option value="<%= iso_name %>" <% if preferences.locale == iso_name %> selected <% end %>><%= HTML.escape(full_name) %></option>
-                    <% end %>
-                </select>
-            </div>
-
-            <div class="pure-control-group">
-                <label for="region"><%= I18n.translate(locale, "preferences_region_label") %></label>
-                <select name="region" id="region">
-                    <% I18n::CONTENT_REGIONS.each do |option| %>
-                        <option value="<%= option %>" <% if preferences.region == option %> selected <% end %>><%= option %></option>
-                    <% end %>
-                </select>
-            </div>
-
-            <div class="pure-control-group">
-                <label for="player_style"><%= I18n.translate(locale, "preferences_player_style_label") %></label>
-                <select name="player_style" id="player_style">
-                    <% {"invidious", "youtube"}.each do |option| %>
-                        <option value="<%= option %>" <% if preferences.player_style == option %> selected <% end %>><%= I18n.translate(locale, option) %></option>
-                    <% end %>
-                </select>
-            </div>
-
-            <div class="pure-control-group">
-                <label for="dark_mode"><%= I18n.translate(locale, "preferences_color_mode_label") %></label>
-                <select name="dark_mode" id="dark_mode">
-                    <% {"", "light", "dark"}.each do |option| %>
-                        <option value="<%= option %>" <% if preferences.dark_mode == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "preferences_color_system" : option) %></option>
-                    <% end %>
-                </select>
-            </div>
-
-            <div class="pure-control-group">
-                <label for="thin_mode"><%= I18n.translate(locale, "preferences_thin_mode_label") %></label>
-                <input name="thin_mode" id="thin_mode" type="checkbox" <% if preferences.thin_mode %>checked<% end %>>
-            </div>
-
+        </fieldset>
+        <fieldset class="preferences-section" id="preferences-browsing">
+            <legend><%= I18n.translate(locale, "ui_browsing_feeds") %></legend>
+            <p class="preference-section-intro"><%= I18n.translate(locale, "ui_browsing_feeds_hint") %></p>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_home_and_feeds") %></h2>
             <% if env.get?("user") %>
                 <% feed_options = {"", "Popular", "Trending", "Subscriptions", "Playlists"} %>
             <% else %>
@@ -239,26 +209,104 @@
                     <% end %>
                 </select>
             </div>
-
-            <div class="pure-control-group">
-                <label for="feed_menu"><%= I18n.translate(locale, "preferences_feed_menu_label") %></label>
+            <div class="pure-control-group preference-multi-row">
+                <span class="preference-row-label"><%= I18n.translate(locale, "preferences_feed_menu_label") %></span>
+                <div class="preference-multi-options">
                 <% (feed_options.size - 1).times do |index| %>
+                    <div class="preference-option">
+                    <label for="feed_menu[<%= index %>]"><%= I18n.translate(locale, "ui_preference_priority") %> <%= index + 1 %></label>
                     <select name="feed_menu[<%= index %>]" id="feed_menu[<%= index %>]">
                         <% feed_options.each do |option| %>
                             <option value="<%= option %>" <% if preferences.feed_menu[index]? == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "Search" : option) %></option>
                         <% end %>
                     </select>
+                    </div>
                 <% end %>
+                </div>
             </div>
-            <% if env.get? "user" %>
-                <div class="pure-control-group">
-                    <label for="show_nick"><%= I18n.translate(locale, "preferences_show_nick_label") %></label>
-                    <input name="show_nick" id="show_nick" type="checkbox" <% if preferences.show_nick %>checked<% end %>>
+            <div class="pure-control-group">
+                <label for="region"><%= I18n.translate(locale, "preferences_region_label") %></label>
+                <select name="region" id="region">
+                    <% I18n::CONTENT_REGIONS.each do |option| %>
+                        <option value="<%= option %>" <% if preferences.region == option %> selected <% end %>><%= option %></option>
+                    <% end %>
+                </select>
+            </div>
+            </div>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_video_pages") %></h2>
+            <div class="pure-control-group preference-multi-row">
+                <span class="preference-row-label"><%= I18n.translate(locale, "preferences_comments_label") %></span>
+                <div class="preference-multi-options">
+                <% preferences.comments.each_with_index do |comments, index| %>
+                    <div class="preference-option">
+                    <label for="comments[<%= index %>]"><%= I18n.translate(locale, "ui_preference_priority") %> <%= index + 1 %></label>
+                    <select name="comments[<%= index %>]" id="comments[<%= index %>]">
+                        <% {"", "youtube", "reddit"}.each do |option| %>
+                            <option value="<%= option %>" <% if preferences.comments[index] == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "none" : option) %></option>
+                        <% end %>
+                    </select>
+                    </div>
+                <% end %>
+                </div>
+            </div>
+            <div class="pure-control-group">
+                <label for="show_member_videos"><%= I18n.translate(locale, "Show members-only videos") %></label>
+                <input name="show_member_videos" id="show_member_videos" type="checkbox" <% if preferences.show_member_videos %>checked<% end %>>
+            </div>
+
+            <div class="pure-control-group">
+                <label for="related_videos"><%= I18n.translate(locale, "preferences_related_videos_label") %></label>
+                <input name="related_videos" id="related_videos" type="checkbox" <% if preferences.related_videos %>checked<% end %>>
+            </div>
+            <div class="pure-control-group">
+                <label for="extend_desc"><%= I18n.translate(locale, "preferences_extend_desc_label") %></label>
+                <input name="extend_desc" id="extend_desc" type="checkbox" <% if preferences.extend_desc %>checked<% end %>>
+            </div>
+            </div>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_discovery_privacy") %></h2>
+            <div class="pure-control-group">
+                <label for="automatic_instance_redirect"><%= I18n.translate(locale, "preferences_automatic_instance_redirect_label") %></label>
+                <input name="automatic_instance_redirect" id="automatic_instance_redirect" type="checkbox" <% if preferences.automatic_instance_redirect %>checked<% end %>>
+            </div>
+
+            <div class="pure-control-group">
+                <label for="search_privacy"><%= I18n.translate(locale, "preferences_search_privacy_label") %></label>
+                <input name="search_privacy" id="search_privacy" type="checkbox" <% if preferences.search_privacy %>checked<% end %>>
+                <span class="preference-description"><%= I18n.translate(locale, "preferences_search_privacy_description") %></span>
+            </div>
+            </div>
+        </fieldset>
+        <fieldset class="preferences-section" id="preferences-enhancements">
+            <legend><%= I18n.translate(locale, "ui_enhancements") %></legend>
+            <p class="preference-section-intro"><%= I18n.translate(locale, "ui_enhancements_hint") %></p>
+            <div class="preference-subgroup sponsorblock-preferences">
+                <h2>SponsorBlock</h2>
+            <p><a href="/preferences/sponsorblock/channels"><%= I18n.translate(locale, "sb_channels") %></a></p>
+            <p class="preference-description"><%= I18n.translate(locale, "sb_description") %> <a href="https://sponsor.ajay.app/" rel="noopener noreferrer">SponsorBlock</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>).</p>
+            <div class="pure-control-group">
+                <label for="sponsorblock_enabled"><%= I18n.translate(locale, "sb_enable") %></label>
+                <input type="checkbox" id="sponsorblock_enabled" name="sponsorblock_enabled" <% if preferences.sponsorblock_enabled %>checked<% end %>>
+            </div>
+            <div class="sponsorblock-categories">
+            <% Invidious::SponsorBlock::CATEGORIES.each do |category, color| %>
+                <div class="sponsorblock-category">
+                    <h3><%= I18n.translate(locale, "sb_category_#{category}") %></h3>
+                    <label for="sponsorblock_mode_<%= category %>"><%= I18n.translate(locale, "sb_mode") %></label>
+                    <select id="sponsorblock_mode_<%= category %>" name="sponsorblock_mode_<%= category %>">
+                    <% {"auto", "manual", "marker", "disabled"}.each do |mode| %>
+                        <option value="<%= mode %>" <% if preferences.sponsorblock_modes[category] == mode %>selected<% end %>><%= I18n.translate(locale, "sb_mode_#{mode}") %></option>
+                    <% end %>
+                    </select>
+                    <label for="sponsorblock_color_<%= category %>"><%= I18n.translate(locale, "sb_color") %></label>
+                    <input type="color" id="sponsorblock_color_<%= category %>" name="sponsorblock_color_<%= category %>" value="<%= preferences.sponsorblock_colors[category] %>">
                 </div>
             <% end %>
-
-            </fieldset><fieldset>
-            <legend id="preferences-content"><%= I18n.translate(locale, "ui_content") %></legend>
+            </div>
+            </div>
+            <div class="preference-subgroup">
+                <h2>DeArrow</h2>
             <div class="pure-control-group">
                 <label for="dearrow_enabled"><%= I18n.translate(locale, "preferences_dearrow_enabled_label") %></label>
                 <input name="dearrow_enabled" id="dearrow_enabled" type="checkbox" <% if preferences.dearrow_enabled %>checked<% end %>>
@@ -280,58 +328,14 @@
             <% else %><p class="preference-description"><%= I18n.translate(locale, "dearrow_setup") %></p><% end %>
             <% end %>
             <p class="preference-description"><%= I18n.translate(locale, "preferences_dearrow_attribution") %> <a href="https://dearrow.ajay.app/" rel="noopener noreferrer">DeArrow</a> / <a href="https://sponsor.ajay.app/" rel="noopener noreferrer">SponsorBlock</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>).</p>
-
-            <p class="preference-description"><%= I18n.translate(locale, "ui_content_hint") %></p>
-            <div class="pure-control-group">
-                <label for="comments[0]"><%= I18n.translate(locale, "preferences_comments_label") %></label>
-                <% preferences.comments.each_with_index do |comments, index| %>
-                    <select name="comments[<%= index %>]" id="comments[<%= index %>]">
-                        <% {"", "youtube", "reddit"}.each do |option| %>
-                            <option value="<%= option %>" <% if preferences.comments[index] == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "none" : option) %></option>
-                        <% end %>
-                    </select>
-                <% end %>
             </div>
-            <div class="pure-control-group">
-                <label for="show_member_videos"><%= I18n.translate(locale, "Show members-only videos") %></label>
-                <input name="show_member_videos" id="show_member_videos" type="checkbox" <% if preferences.show_member_videos %>checked<% end %>>
-            </div>
-
-            <div class="pure-control-group">
-                <label for="related_videos"><%= I18n.translate(locale, "preferences_related_videos_label") %></label>
-                <input name="related_videos" id="related_videos" type="checkbox" <% if preferences.related_videos %>checked<% end %>>
-            </div>
-            <div class="pure-control-group">
-                <label for="extend_desc"><%= I18n.translate(locale, "preferences_extend_desc_label") %></label>
-                <input name="extend_desc" id="extend_desc" type="checkbox" <% if preferences.extend_desc %>checked<% end %>>
-            </div>
-
-            <div class="pure-control-group">
-                <label for="automatic_instance_redirect"><%= I18n.translate(locale, "preferences_automatic_instance_redirect_label") %></label>
-                <input name="automatic_instance_redirect" id="automatic_instance_redirect" type="checkbox" <% if preferences.automatic_instance_redirect %>checked<% end %>>
-            </div>
-
-            <div class="pure-control-group">
-                <label for="search_privacy"><%= I18n.translate(locale, "preferences_search_privacy_label") %></label>
-                <input name="search_privacy" id="search_privacy" type="checkbox" <% if preferences.search_privacy %>checked<% end %>>
-                <span class="preference-description"><%= I18n.translate(locale, "preferences_search_privacy_description") %></span>
-            </div>
-
-            <% if env.get? "user" %>
-                <h2><%= I18n.translate(locale, "preferences_category_subscription") %></h2>
-
-                <div class="pure-control-group">
-                    <label for="timezone"><%= I18n.translate(locale, "history_timezone") %></label>
-                    <input id="timezone" name="timezone" list="timezones" value="<%= HTML.escape(preferences.timezone || "") %>" placeholder="UTC">
-                    <datalist id="timezones">
-                        <% Invidious::History.timezones.each do |zone| %>
-                        <option value="<%= HTML.escape(zone) %>"></option>
-                        <% end %>
-                    </datalist>
-                    <label for="watch_history"><%= I18n.translate(locale, "preferences_watch_history_label") %></label>
-                    <input name="watch_history" id="watch_history" type="checkbox" <% if preferences.watch_history %>checked<% end %>>
-                </div>
-
+        </fieldset>
+        <% if user = env.get?("user").try &.as(User) %>
+        <fieldset class="preferences-section" id="preferences-library">
+            <legend><%= I18n.translate(locale, "ui_library_account") %></legend>
+            <p class="preference-section-intro"><%= I18n.translate(locale, "ui_library_account_hint") %></p>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_subscription_feed") %></h2>
                 <div class="pure-control-group">
                     <label for="annotations_subscribed"><%= I18n.translate(locale, "preferences_annotations_subscribed_label") %></label>
                     <input name="annotations_subscribed" id="annotations_subscribed" type="checkbox" <% if preferences.annotations_subscribed %>checked<% end %>>
@@ -378,11 +382,85 @@
                     </div>
                 <% end %>
                 <% end %>
-            <% end %>
+            </div>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_history_and_playlists") %></h2>
+                <% playlists = Invidious::Database::Playlists.select_user_created_playlists(user.email) %>
+                <div class="pure-control-group">
+                    <label for="default_playlist"><%= I18n.translate(locale, "preferences_default_playlist") %></label>
+                    <select name="default_playlist" id="default_playlist">
+                        <option value=""><%= I18n.translate(locale, "preferences_default_playlist_none") %></option>
+                        <% playlists.each do |plid, playlist_title| %>
+                            <option value="<%= plid %>" <%= "selected" if user.preferences.default_playlist == plid %>><%= HTML.escape(playlist_title) %></option>
+                        <% end %>
+                    </select>
+                </div>
+                <div class="pure-control-group">
+                    <label for="timezone"><%= I18n.translate(locale, "history_timezone") %></label>
+                    <input id="timezone" name="timezone" list="timezones" value="<%= HTML.escape(preferences.timezone || "") %>" placeholder="UTC">
+                    <datalist id="timezones">
+                        <% Invidious::History.timezones.each do |zone| %>
+                        <option value="<%= HTML.escape(zone) %>"></option>
+                        <% end %>
+                    </datalist>
+                </div>
+                <div class="pure-control-group">
+                    <label for="watch_history"><%= I18n.translate(locale, "preferences_watch_history_label") %></label>
+                    <input name="watch_history" id="watch_history" type="checkbox" <% if preferences.watch_history %>checked<% end %>>
+                </div>
+            </div>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_account_links") %></h2>
+                <div class="pure-control-group">
+                    <label for="show_nick"><%= I18n.translate(locale, "preferences_show_nick_label") %></label>
+                    <input name="show_nick" id="show_nick" type="checkbox" <% if preferences.show_nick %>checked<% end %>>
+                </div>
+            <div class="preference-links">
+                <div class="preference-link">
+                    <a href="/clear_watch_history?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Clear watch history") %></a>
+                </div>
 
-            <% if env.get?("user") && CONFIG.admins.includes? env.get?("user").as(Invidious::User).email %>
-                <h2><%= I18n.translate(locale, "preferences_category_admin") %></h2>
+                <div class="preference-link">
+                    <a href="/account?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Account settings") %></a>
+                </div>
 
+                <div class="preference-link">
+                    <a href="/blocked_channels"><%= I18n.translate(locale, "Blocked channels") %></a>
+                </div>
+
+                <div class="preference-link">
+                    <a href="/data_control?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Import/export data") %></a>
+                </div>
+
+                <div class="preference-link">
+                    <a href="/subscription_manager"><%= I18n.translate(locale, "Manage subscriptions") %></a>
+                </div>
+
+                <div class="preference-link">
+                    <a href="/token_manager"><%= I18n.translate(locale, "Manage tokens") %></a>
+                </div>
+
+                <div class="preference-link">
+                    <a href="/feed/playlists"><%= I18n.translate(locale, "View all playlists") %></a>
+                </div>
+
+                <div class="preference-link">
+                    <a href="/feed/history"><%= I18n.translate(locale, "Watch history") %></a>
+                </div>
+
+                <div class="preference-link">
+                    <a href="/delete_account?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Delete account") %></a>
+                </div>
+            </div>
+            </div>
+        </fieldset>
+        <% end %>
+        <% if env.get?("user") && CONFIG.admins.includes?(env.get?("user").as(Invidious::User).email) %>
+        <fieldset class="preferences-section" id="preferences-administration">
+            <legend><%= I18n.translate(locale, "ui_administration") %></legend>
+            <p class="preference-section-intro"><%= I18n.translate(locale, "ui_administration_hint") %></p>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_instance_defaults") %></h2>
                 <div class="pure-control-group">
                     <label for="admin_default_home"><%= I18n.translate(locale, "preferences_default_home_label") %></label>
                     <select name="admin_default_home" id="admin_default_home">
@@ -392,17 +470,24 @@
                     </select>
                 </div>
 
-                <div class="pure-control-group">
-                    <label for="admin_feed_menu"><%= I18n.translate(locale, "preferences_feed_menu_label") %></label>
+                <div class="pure-control-group preference-multi-row">
+                    <span class="preference-row-label"><%= I18n.translate(locale, "preferences_feed_menu_label") %></span>
+                    <div class="preference-multi-options">
                     <% (feed_options.size - 1).times do |index| %>
+                        <div class="preference-option">
+                        <label for="admin_feed_menu[<%= index %>]"><%= I18n.translate(locale, "ui_preference_priority") %> <%= index + 1 %></label>
                         <select name="admin_feed_menu[<%= index %>]" id="admin_feed_menu[<%= index %>]">
                             <% feed_options.each do |option| %>
                                 <option value="<%= option %>" <% if CONFIG.default_user_preferences.feed_menu[index]? == option %> selected <% end %>><%= I18n.translate(locale, option.blank? ? "none" : option) %></option>
                             <% end %>
                         </select>
+                        </div>
                     <% end %>
+                    </div>
                 </div>
-
+            </div>
+            <div class="preference-subgroup">
+                <h2><%= I18n.translate(locale, "ui_instance_access") %></h2>
                 <div class="pure-control-group">
                     <label for="popular_enabled"><%= I18n.translate(locale, "Popular enabled: ") %></label>
                     <input name="popular_enabled" id="popular_enabled" type="checkbox" <% if CONFIG.popular_enabled %>checked<% end %>>
@@ -433,49 +518,9 @@
                     <label for="modified_source_code_url"><%= I18n.translate(locale, "adminprefs_modified_source_code_url_label") %></label>
                     <input name="modified_source_code_url" id="modified_source_code_url" type="url" value="<%= CONFIG.modified_source_code_url %>">
                 </div>
-            <% end %>
-
-            <% if env.get? "user" %>
-                <h2 id="preferences-account"><%= I18n.translate(locale, "ui_account_data") %></h2>
-
-                <div class="pure-control-group">
-                    <a href="/clear_watch_history?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Clear watch history") %></a>
-                </div>
-
-                <div class="pure-control-group">
-                    <a href="/account?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Account settings") %></a>
-                </div>
-
-                <div class="pure-control-group">
-                    <a href="/blocked_channels"><%= I18n.translate(locale, "Blocked channels") %></a>
-                </div>
-
-                <div class="pure-control-group">
-                    <a href="/data_control?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Import/export data") %></a>
-                </div>
-
-                <div class="pure-control-group">
-                    <a href="/subscription_manager"><%= I18n.translate(locale, "Manage subscriptions") %></a>
-                </div>
-
-                <div class="pure-control-group">
-                    <a href="/token_manager"><%= I18n.translate(locale, "Manage tokens") %></a>
-                </div>
-
-                <div class="pure-control-group">
-                    <a href="/feed/playlists"><%= I18n.translate(locale, "View all playlists") %></a>
-                </div>
-
-                <div class="pure-control-group">
-                    <a href="/feed/history"><%= I18n.translate(locale, "Watch history") %></a>
-                </div>
-
-                <div class="pure-control-group">
-                    <a href="/delete_account?referer=<%= URI.encode_www_form(referer) %>"><%= I18n.translate(locale, "Delete account") %></a>
-                </div>
-            <% end %>
-
+            </div>
         </fieldset>
+        <% end %>
         <div class="pure-controls preferences-save">
             <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Save preferences") %></button>
         </div>
