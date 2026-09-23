@@ -477,6 +477,13 @@ File.write("#{output}/account-settings.html", render "src/invidious/views/user/a
 # Preferences states use the same template and form names as the live page.
 PG_DB.exec("INSERT INTO playlists (title, id, author) VALUES (?, ?, ?)", "Fixture playlist", "IVpreferences", "viewer@example.test")
 File.write("#{output}/preferences-signed-in.html", preferences_fixture(signed_in_env("/preferences")))
+{"diary", "cinematic"}.each do |theme|
+  env = signed_in_env("/preferences")
+  preferences = env.get("preferences").as(Preferences)
+  preferences.theme = theme
+  env.set "preferences", preferences
+  File.write("#{output}/preferences-#{theme}-signed-in.html", preferences_fixture(env))
+end
 env = signed_in_env("/preferences")
 preferences = env.get("preferences").as(Preferences)
 preferences.show_nick = false

@@ -491,7 +491,7 @@ for (const engine of engines) {
         assert.equal(await noNick.page.locator('header a[href="/account"]').count(), 0);
         await noNick.context.close();
 
-        for (const fixture of ['preferences', 'preferences-diary', 'preferences-cinematic', 'preferences-rtl', 'preferences-signed-in']) {
+        for (const fixture of ['preferences', 'preferences-diary', 'preferences-cinematic', 'preferences-rtl', 'preferences-signed-in', 'preferences-diary-signed-in', 'preferences-cinematic-signed-in']) {
             for (const [width, javascript] of [[320, false], [390, true]]) {
             const {page, context, errors} = await pageFor(engine, {fixture, width, height: 640, javascript});
             const header = page.locator('.navbar');
@@ -513,22 +513,63 @@ for (const engine of engines) {
             assert.equal(await page.locator('.navigation-menu nav').isVisible(), false);
             if (width === 390) {
                 await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
-                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `${fixture}: enlarged text overflows`);
+                const overflow = await page.evaluate(() => ({viewport: innerWidth, content: document.documentElement.scrollWidth}));
+                assert.ok(overflow.content <= overflow.viewport + 1, `${fixture}: enlarged text overflows ${JSON.stringify(overflow)}`);
             }
-            const target = fixture === 'preferences-signed-in' ? 'preferences-library' : 'preferences-playback';
+            const target = fixture.endsWith('-signed-in') ? 'preferences-library' : 'preferences-playback';
             await page.locator(`.preference-nav a[href="#${target}"]`).click();
             await page.waitForFunction(id => location.hash === `#${id}`, target);
             const targetBox = await page.locator(`#${target}`).boundingBox();
             const headerBox = await header.boundingBox();
-            assert.ok(targetBox.y >= headerBox.y + headerBox.height - 2, `${fixture} at ${width}: section hidden by header`);
+            assert.ok(targetBox.y >= headerBox.y + headerBox.height - 2, `${fixture} at ${width}: section hidden by header (target ${targetBox.y}, header ${headerBox.height})`);
             assert.deepEqual(errors, []);
             await context.close();
             }
         }
 
-        for (const width of [768, 1440]) {
-            const {page, context} = await pageFor(engine, {fixture: 'preferences', width, javascript: false});
-            assert.notEqual(await page.locator('.navbar').evaluate(el => getComputedStyle(el).position), 'sticky');
+    });
+
+    test(`${engine}: header stays visible on tablet and desktop pages`, async () => {
+        const cases = [
+            ...['preferences', 'preferences-diary', 'preferences-cinematic', 'preferences-signed-in', 'preferences-diary-signed-in', 'preferences-cinematic-signed-in'].flatMap(fixture => [768, 1024, 1440].map(width => [fixture, width])),
+            ...['watch-dark', 'watch-diary-light', 'watch-cinematic-light'].flatMap(fixture => [1024, 1440].map(width => [fixture, width])),
+            ['preferences-rtl', 1440], ['browse-signed-in', 1920]
+        ];
+        for (const [fixture, width] of cases) {
+            const {page, context, errors} = await pageFor(engine, {fixture, width, height: 640, javascript: false});
+            const header = page.locator('.navbar');
+            assert.equal(await header.evaluate(el => getComputedStyle(el).position), 'sticky');
+            assert.notEqual(await header.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+            if (width === 1440 && fixture.startsWith('preferences') && fixture !== 'preferences-rtl') {
+                await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+            }
+            await page.evaluate(() => scrollTo(0, 700));
+            await page.waitForFunction(() => scrollY > 300);
+            const headerBox = await header.boundingBox();
+            assert.ok(Math.abs(headerBox.y) <= 1, `${fixture} at ${width}: header did not stick`);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `${fixture} at ${width}: horizontal overflow`);
+            const search = page.locator('.navbar input[type=search]');
+            await search.fill('light');
+            assert.equal(await search.inputValue(), 'light');
+            if (fixture.startsWith('preferences')) {
+                await page.locator('.preference-nav a[href="#preferences-playback"]').click();
+                await page.waitForFunction(() => location.hash === '#preferences-playback');
+                const targetBox = await page.locator('#preferences-playback').boundingBox();
+                assert.ok(targetBox.y >= (await header.boundingBox()).height - 2, `${fixture} at ${width}: section hidden by header`);
+                if (width >= 1100 && !fixture.includes('cinematic')) {
+                    await page.evaluate(() => scrollTo(0, 700));
+                    const railBox = await page.locator('.navigation-rail').boundingBox();
+                    const currentHeader = await header.boundingBox();
+                    assert.ok(railBox.y >= currentHeader.y + currentHeader.height, `${fixture}: rail overlaps header`);
+                    assert.ok(railBox.y + railBox.height <= 640 + 1, `${fixture}: rail exceeds viewport`);
+                }
+            } else {
+                await page.evaluate(() => { location.hash = '#main-content'; });
+                await page.waitForFunction(() => location.hash === '#main-content');
+                const mainBox = await page.locator('#main-content').boundingBox();
+                assert.ok(mainBox.y >= (await header.boundingBox()).height - 2, `${fixture} at ${width}: main content hidden by header`);
+            }
+            assert.deepEqual(errors, []);
             await context.close();
         }
     });
