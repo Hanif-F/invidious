@@ -174,37 +174,3 @@ CSS/JS target; report size and growth without failing solely on that threshold.
 [Theme preference checks](../tests/frontend/theme_checks.cr) cover shared selection
 and persistence behavior. Extend relevant fixtures and coverage for a new theme;
 test-only theme alternatives belong in fixtures rather than the shipped registry.
-
-## Scrapbook
-
-Scrapbook (`scrapbook`) is an independent handwritten journal theme. Its desktop
-chapter tabs sit above a bounded paper canvas; watercolor margins, a binding
-crease, taped Polaroid mounts and original botanical/pencil doodles supply the
-collage treatment. Tablet and mobile use a single leaf and the shared navigation
-menu. Compact, thin, search and playlist-row layouts keep cards upright.
-
-Light mode uses cream paper and sepia ink; dark mode uses warm charcoal paper.
-Dudu Calligraphy covers titles and prose, including descriptions and comments.
-Dense metadata, inputs and player controls use system fonts. Helvetica Punk is
-restricted to the small brand wordmark. Both fonts are bundled independently in
-Scrapbook's directory with swap/fallback behavior (392,748 bytes combined, before
-HTTP compression). There are no external asset requests or theme-specific scripts.
-
-The theme uses existing routes, preferences and player hooks, including Random.
-Its picker preview is captured from the light browse fixture with synthetic media.
-
-Scrapbook's collage variations are derived from SHA-256 of a stable item identity
-and its collection occurrence. Independent digest bytes select paper, tape,
-attachment, edge, angle, offset, spacing, doodle, ink and mark placement. Shared
-card/history/recommendation renderers and asynchronous queue HTML emit numeric
-`data-scrap-*` presentation attributes; only Scrapbook consumes them. No client
-randomization, database fields, or feed reordering is involved. Repeated identities
-at different positions can look different; unchanged identities/positions retain
-their appearance on reload. Filtering/reordering may assign a new occurrence.
-
-Six colored papers accompany warm-white mounts, with independent colored tape and
-individual original sketches. Some items intentionally have no tape or doodle.
-Desktop offsets are at most 18px and rotations at most 2 degrees; small screens use
-4px and 0.6 degrees. Compact and row-oriented views keep alignment. Expanded menus
-and keyboard focus stack above decorations. Long-feed fixtures test 48 items with
-repeated videos, stable reloads, material variety, contrast and card collisions.

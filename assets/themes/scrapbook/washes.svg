@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 440">
-<defs><filter id="bleed"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="3" seed="9" result="grain"/><feDisplacementMap in="SourceGraphic" in2="grain" scale="32"/><feGaussianBlur stdDeviation="5"/></filter></defs>
-<g filter="url(#bleed)"><path fill="#df7860" opacity=".17" d="M295 4Q438-36 455 72t-25 119Q315 240 276 130T295 4"/><path fill="#ecaa63" opacity=".13" d="M345 7Q427 10 432 79t-60 70Q279 88 345 7"/><path fill="#b57491" opacity=".1" d="M411 80q69 27 37 145t-67 59q-29-91 30-204"/><path fill="#67a886" opacity=".12" d="M230 246q-63-70-97 13t38 97q84-17 59-110"/></g>
-</svg>

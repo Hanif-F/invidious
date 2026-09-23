@@ -116,8 +116,8 @@ The picker preview is a 640×360 WebP capture of the dark browse fixture with
 synthetic test thumbnails. `Oswald.woff2` is bundled locally, retaining its full
 character set and variable weights; its 72,104-byte transfer and 96 KiB allowance
 are recorded separately in `asset-baseline.json`. No external font request occurs.
-Preview images share an aggregate allowance of 12 KiB per theme (48 KiB for
-four themes).
+Preview images share an aggregate allowance of 12 KiB per theme (36 KiB for
+three themes).
 
 Random themes use the existing preference storage: `theme` remains the active
 registered style, `theme_random` enables selection, `theme_random_interval_hours`
@@ -254,25 +254,3 @@ including through history import/export. Unknown durations remain unknown and do
 not trigger per-video upstream requests. Browser regressions cover matching
 percentages, partial/full/unknown states, history search, duplicate queue entries,
 page restoration, local storage updates, and desktop/mobile layouts.
-
-### Scrapbook
-
-Scrapbook fixtures cover all existing page families, six viewport widths from
-320 to 1920px, light/dark/system, compact/thin, RTL and enlarged text. Dedicated
-checks exercise local fonts and failure fallbacks, live system changes, forced
-colors, keyboard entry, preference submission without JavaScript, independent
-assets, real playback/seeking/speed and wide mode. Existing cross-theme media
-and dialog matrices also include Scrapbook. Screenshots include a 1280×720 light
-browse capture used to produce the 640×360 picker preview.
-
-Its independent copies of Dudu Calligraphy and Helvetica Punk total 392,748 bytes;
-the exact sizes are recorded separately in `asset-baseline.json`. The initial
-CSS/JS advisory target remains 35 KiB; preview allowance is 12 KiB per registered preview
-(48 KiB aggregate for four themes).
-
-Scrapbook's 48-item collage fixture includes repeated video identities. Tests
-verify independent material dimensions, stable reloads, nonoverlapping card
-bounds at all six widths, reading contrast in light/dark modes and deterministic
-asynchronous queue markup. The asset report includes compressed growth and the
-35 KiB target difference without rejecting intentional design weight. Inventory,
-local asset existence, font sizes and preview accounting remain checked.

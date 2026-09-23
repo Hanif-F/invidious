@@ -597,7 +597,7 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       url = "/watch?v=#{URI.encode_www_form(id)}&list=#{URI.encode_www_form(plid)}"
       url += "&index=#{index}" unless mix
       url += "&listen=1" if listen
-      html << %(<li#{Invidious::Frontend::Scrapbook.attributes(id, index)} class="queue-row" data-dearrow-row data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}")
+      html << %(<li class="queue-row" data-dearrow-row data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}")
       if editable && !mix && (index_id = video["indexId"]?.try &.as_s?)
         # Preserve full 64-bit occurrence IDs as strings in the browser.
         html << %( data-remove-index="#{index_id.to_u64(16)}")

@@ -20,13 +20,13 @@ def check_theme_preferences
   env.set "preferences", cinematic
   Invidious::Routes::PreferencesRoute.update(env)
   raise "Cinematic cookie lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "cinematic"
-  scrapbook = Preferences.from_json(%({"theme":"scrapbook"}))
-  raise "Scrapbook JSON lost" unless Preferences.from_json(scrapbook.to_json).theme == "scrapbook"
-  raise "Scrapbook YAML lost" unless Preferences.from_yaml(scrapbook.to_yaml).theme == "scrapbook"
+  raise "Removed theme remained in registry" if Invidious::Themes::AVAILABLE.any? { |theme| theme.id == "scrapbook" }
+  raise "Removed JSON theme did not fall back" unless Preferences.from_json(%({"theme":"scrapbook"})).theme == "modern-neon"
+  raise "Removed YAML theme did not fall back" unless Preferences.from_yaml("theme: scrapbook").theme == "modern-neon"
   env = theme_post_env("theme=scrapbook")
-  env.set "preferences", scrapbook
+  env.set "preferences", diary
   Invidious::Routes::PreferencesRoute.update(env)
-  raise "Scrapbook cookie lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "scrapbook"
+  raise "Removed theme form did not fall back" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "modern-neon"
   prefs = Preferences.from_json(%({"theme":"fixture-theme","save_player_pos":true}))
   raise "JSON round trip failed" unless Preferences.from_json(prefs.to_json).theme == "fixture-theme"
   raise "YAML round trip failed" unless Preferences.from_yaml(prefs.to_yaml).theme == "fixture-theme"

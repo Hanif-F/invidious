@@ -125,11 +125,11 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
   end
 end
 
-def browse_fixture(env, editorial = false, count = 12, repeats = false)
+def browse_fixture(env, editorial = false)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
-  items = (0...count).map do |i|
-    SearchVideo.new({title: ["The art of noticing", "An ordinary day, beautifully observed", "Finding color in unexpected places"][i % 3], id: preferences.dearrow_enabled ? i.to_s.rjust(11, '0') : "fixture#{repeats ? i % 13 : i}", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})
+  items = (0...12).map do |i|
+    SearchVideo.new({title: ["The art of noticing", "An ordinary day, beautifully observed", "Finding color in unexpected places"][i % 3], id: preferences.dearrow_enabled ? i.to_s.rjust(11, '0') : "fixture#{i}", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})
   end
   navbar_search = true
   page_nav_html = "<nav class=page-navigation><a class=pure-button href=?page=2>Next page</a></nav>"
@@ -338,23 +338,6 @@ File.write("#{output}/playlist-library-diary.html", playlist_library_fixture("di
 File.write("#{output}/channel-diary.html", diary_channel_fixture)
 File.write("#{output}/login-diary.html", diary_login_fixture)
 File.write("#{output}/error-diary.html", diary_error_fixture)
-# Render Scrapbook through the same production templates and preference resolution.
-{"dark", "light", ""}.each do |mode|
-  suffix = mode.empty? ? "auto" : mode
-  File.write("#{output}/browse-scrapbook-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", mode, visual_theme: "scrapbook")))
-  File.write("#{output}/watch-scrapbook-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode, visual_theme: "scrapbook")))
-end
-File.write("#{output}/preferences-scrapbook.html", preferences_fixture(fixture_env("/preferences", "light", visual_theme: "scrapbook")))
-File.write("#{output}/browse-scrapbook-compact.html", browse_fixture(fixture_env("/feed/popular", "light", false, "compact", visual_theme: "scrapbook")))
-File.write("#{output}/browse-scrapbook-thin.html", browse_fixture(fixture_env("/feed/popular", "light", true, visual_theme: "scrapbook")))
-File.write("#{output}/watch-scrapbook-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "light", false, "balanced", "ar", "scrapbook")))
-File.write("#{output}/search-scrapbook.html", browse_fixture(fixture_env("/search?q=light", "light", visual_theme: "scrapbook")))
-File.write("#{output}/playlist-scrapbook.html", diary_playlist_fixture("scrapbook"))
-File.write("#{output}/history-scrapbook.html", history_fixture("scrapbook"))
-File.write("#{output}/playlist-library-scrapbook.html", playlist_library_fixture("scrapbook"))
-File.write("#{output}/channel-scrapbook.html", diary_channel_fixture("scrapbook"))
-File.write("#{output}/login-scrapbook.html", diary_login_fixture("scrapbook"))
-File.write("#{output}/error-scrapbook.html", diary_error_fixture("scrapbook"))
 # Render Cinematic through the same production templates and preference resolution.
 {"dark", "light", ""}.each do |mode|
   suffix = mode.empty? ? "auto" : mode
@@ -472,7 +455,7 @@ File.write("#{output}/search-members-empty.html", member_search_fixture(false, t
 check_member_extraction
 
 require "./progress_fixtures"
-{"modern-neon", "diary", "cinematic", "scrapbook"}.each do |theme|
+{"modern-neon", "diary", "cinematic"}.each do |theme|
   {false, true}.each do |thin|
     suffix = "#{theme}-#{thin ? "thin" : "normal"}"
     File.write("#{output}/history-progress-#{suffix}.html", history_fixture(theme, thin: thin, sync: true))
@@ -490,8 +473,6 @@ error = nil
 username_token = password_token = "fixture-csrf"
 navbar_search = true
 File.write("#{output}/account-settings.html", render "src/invidious/views/user/account.ecr", "src/invidious/views/template.ecr")
-
-File.write("#{output}/browse-scrapbook-long.html", browse_fixture(fixture_env("/feed/popular", "light", visual_theme: "scrapbook"), false, 48, true))
 
 # Preferences states use the same template and form names as the live page.
 PG_DB.exec("INSERT INTO playlists (title, id, author) VALUES (?, ?, ?)", "Fixture playlist", "IVpreferences", "viewer@example.test")

@@ -364,9 +364,9 @@
             <% if !plid && !related_videos.empty? %>
             <div class="continue-control"><label for="continue"><%= I18n.translate(locale, "preferences_continue_label") %></label> <input id="continue" name="continue" type="checkbox" <%= "checked" if params.continue %>></div>
             <% end %>
-            <% related_videos.each_with_index do |rv, item_position| %>
+            <% related_videos.each do |rv| %>
                 <% if rv["id"]? %>
-                <article<%= Invidious::Frontend::Scrapbook.attributes(rv["id"], item_position) %> class="recommendation" data-video-id="<%= rv["id"] %>" data-channel-id="<%= HTML.escape(rv["ucid"]? || "") %>">
+                <article class="recommendation" data-video-id="<%= rv["id"] %>" data-channel-id="<%= HTML.escape(rv["ucid"]? || "") %>">
                     <div class="thumbnail video-thumbnail">
                         <% unless preferences.thin_mode %><a tabindex="-1" href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= rv["id"] %>/mqdefault.jpg" alt=""></a><% else %><div class="thumbnail-placeholder video-placeholder"></div><% end %>
                         <%= Invidious::Frontend::WatchedIndicator.render(rv["id"], rv["length_seconds"]?.try(&.to_i?), !!env.get?("user").try(&.as(User).watched.includes?(rv["id"]))) %>
