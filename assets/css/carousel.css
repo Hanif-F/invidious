@@ -95,7 +95,7 @@ DEALINGS IN THE SOFTWARE.
     opacity: .8;
     text-decoration: none;
     width: 50%;
-    z-index: 1;
+    z-index: 250;
 }
 
 .light-theme .slider-nav {

@@ -284,7 +284,7 @@ div.thumbnail > .bottom-right-overlay {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 150;
   background-color: var(--page, #fff);
 }
 

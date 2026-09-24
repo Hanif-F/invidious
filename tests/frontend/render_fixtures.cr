@@ -280,8 +280,9 @@ def diary_error_fixture(visual_theme = "diary", mode = "light")
   render "src/invidious/views/error.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_playlist_fixture(visual_theme = "diary", mode = "light")
+def diary_playlist_fixture(visual_theme = "diary", mode = "light", editable = false)
   env = fixture_env("/playlist?list=PLfixture", mode, visual_theme: visual_theme)
+  env.set "remove_playlist_items", "PLfixture" if editable
   locale = "en-US"
   items = (0...6).map do |i|
     PlaylistVideo.new({title: "A chapter in light and motion #{i + 1}", id: "fixture#{i}", author: "Studio North", ucid: "UCfixture", length_seconds: 720, published: Time.utc, plid: "PLfixture", index: i.to_i64, live_now: false, members_only: false})
@@ -333,6 +334,7 @@ File.write("#{output}/browse-diary-thin.html", browse_fixture(fixture_env("/feed
 File.write("#{output}/watch-diary-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "light", false, "balanced", "ar", "diary")))
 File.write("#{output}/search-diary.html", browse_fixture(fixture_env("/search?q=light", "light", visual_theme: "diary")))
 File.write("#{output}/playlist-diary.html", diary_playlist_fixture)
+File.write("#{output}/playlist-diary-editable.html", diary_playlist_fixture(editable: true))
 File.write("#{output}/history-diary.html", history_fixture("diary"))
 File.write("#{output}/playlist-library-diary.html", playlist_library_fixture("diary"))
 File.write("#{output}/channel-diary.html", diary_channel_fixture)

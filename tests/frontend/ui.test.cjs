@@ -574,6 +574,61 @@ for (const engine of engines) {
         }
     });
 
+    test(`${engine}: sticky header covers thumbnails while video menus can overlap it`, async () => {
+        const cases = [
+            ['browse-diary-light', '.media-item[data-kind=video] .bottom-right-overlay .length'],
+            ['playlist-diary-editable', '.media-item[data-kind=playlist-video] .top-left-overlay .ion-md-trash'],
+            ['browse-diary-thin', '.media-item[data-kind=video] .video-placeholder']
+        ];
+        for (const [fixture, selector] of cases) {
+            const {page, context, errors} = await pageFor(engine, {fixture, width: 1280, height: 500, javascript: false});
+            const overlap = await page.locator(selector).first().evaluate(element => {
+                const header = document.querySelector('.navbar');
+                const before = element.getBoundingClientRect();
+                scrollBy(0, before.top + before.height / 2 - header.getBoundingClientRect().height / 2);
+                const target = element.getBoundingClientRect();
+                const bar = header.getBoundingClientRect();
+                const x = target.left + target.width / 2;
+                const y = target.top + target.height / 2;
+                return {intersects: y > bar.top && y < bar.bottom, headerOnTop: header.contains(document.elementFromPoint(x, y))};
+            });
+            assert.equal(overlap.intersects, true, `${fixture}: control did not reach the sticky header`);
+            assert.equal(overlap.headerOnTop, true, `${fixture}: control painted above the sticky header`);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+
+        const {page, context, errors} = await pageFor(engine, {fixture: 'browse-diary-light', width: 1280, height: 500});
+        await page.keyboard.press('Tab');
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+        const skipLink = await page.locator('.skip-link').evaluate(element => {
+            const box = element.getBoundingClientRect();
+            return document.activeElement === element && element === document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        });
+        assert.equal(skipLink, true, 'Focused skip link must be above the header');
+
+        const menu = page.locator('.video-context').first();
+        await menu.locator('summary').click();
+        const panel = menu.locator('.video-context-actions');
+        await panel.waitFor({state: 'visible'});
+        await page.evaluate(() => scrollBy(0, 450));
+        await page.waitForFunction(() => {
+            const bar = document.querySelector('.navbar').getBoundingClientRect();
+            const panel = document.querySelector('.video-context[open] .video-context-actions');
+            const box = panel?.getBoundingClientRect();
+            return box && panel.dataset.positioned === 'true' && box.top < bar.bottom && box.bottom > bar.top;
+        });
+        assert.equal(await panel.evaluate(element => {
+            const box = element.getBoundingClientRect();
+            const bar = document.querySelector('.navbar').getBoundingClientRect();
+            const x = box.left + box.width / 2;
+            const y = Math.max(box.top, bar.top) + (Math.min(box.bottom, bar.bottom) - Math.max(box.top, bar.top)) / 2;
+            return element.contains(document.elementFromPoint(x, y));
+        }), true, 'Open video menu must appear above the header');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
     test(`${engine}: player wide control, paused idle state and keyboard access`, async () => {
         const { page, context, errors } = await pageFor(engine, { realPlayer: true });
         await page.evaluate(() => { player.muted(true); player.play(); });
