@@ -64,6 +64,160 @@ if (CONFIG.videojs.max_goal_buffer_length) {
 }
 
 var player = videojs('player', options);
+if (video_data.params.controls) player.addClass('vjs-buffer-refreshable');
+
+// Setting a source again disposes Video.js's previous source handler and its
+// buffered media. load() alone can keep the old DASH segments around.
+var cancelBufferRefreshRestore;
+var automaticReloadTimer;
+player.refreshBuffer = function () {
+    var currentSource = player.currentSource();
+    if (!currentSource || !currentSource.src) return;
+
+    clearTimeout(automaticReloadTimer);
+    if (cancelBufferRefreshRestore) cancelBufferRefreshRestore();
+
+    var source = currentSource.src;
+    var sources = player.currentSources().map(function (entry) {
+        return Object.assign({}, entry, {selected: entry.src === source});
+    });
+    var position = player.currentTime();
+    var isLive = !!video_data.live_now || player.duration() === Infinity ||
+        (player.liveTracker && player.liveTracker.isLive());
+    var wasPlaying = !player.paused() || !!player.error();
+    var hadStarted = player.hasStarted();
+    var rate = player.playbackRate();
+    var volume = player.volume();
+    var muted = player.muted();
+    var oldLevels = Array.from(player.qualityLevels ? player.qualityLevels() : []);
+    var quality = oldLevels.length ? {
+        auto: oldLevels.every(function (level) { return level.enabled; }),
+        selected: oldLevels.filter(function (level) { return level.enabled; }).map(function (level) {
+            return {id: level.id, height: level.height, bitrate: level.bitrate};
+        })
+    } : null;
+    var audio = Array.from(player.audioTracks()).find(function (track) { return track.enabled; });
+    var selectedAudio = audio && {id: audio.id, label: audio.label, language: audio.language};
+    var caption = Array.from(player.textTracks()).find(function (track) {
+        return (track.kind === 'captions' || track.kind === 'subtitles') && track.mode === 'showing';
+    });
+    var selectedCaption = caption && {id: caption.id, label: caption.label, language: caption.language};
+    var levels = player.qualityLevels ? player.qualityLevels() : null;
+    var audioTracks = player.audioTracks();
+    var textTracks = player.textTracks();
+    var metadataLoaded = false;
+    var qualityRestored = !quality;
+    var audioRestored = !selectedAudio;
+    var captionsRestored = !selectedCaption;
+    var timeout;
+
+    function matches(track, selected) {
+        if (selected.id && track.id) return track.id === selected.id;
+        return track.label === selected.label && track.language === selected.language;
+    }
+
+    function restoreQuality() {
+        if (!quality || !levels || !levels.length) return;
+        var available = Array.from(levels);
+        if (quality.auto) {
+            available.forEach(function (level) { level.enabled = true; });
+            qualityRestored = true;
+            return;
+        }
+        var matching = available.filter(function (level) {
+            return quality.selected.some(function (wanted) {
+                return wanted.id != null && level.id === wanted.id ||
+                    level.height === wanted.height && level.bitrate === wanted.bitrate;
+            });
+        });
+        if (!matching.length) return;
+        available.forEach(function (level) { level.enabled = matching.includes(level); });
+        qualityRestored = true;
+    }
+
+    function restoreAudio() {
+        if (audioRestored) return;
+        var replacement = Array.from(audioTracks).find(function (track) { return matches(track, selectedAudio); });
+        if (!replacement) return;
+        replacement.enabled = true;
+        audioRestored = true;
+    }
+
+    function restoreCaptions() {
+        if (captionsRestored) return;
+        var replacement = Array.from(textTracks).find(function (track) { return matches(track, selectedCaption); });
+        if (!replacement) return;
+        replacement.mode = 'showing';
+        captionsRestored = true;
+    }
+
+    function cleanup() {
+        player.off('loadedmetadata', onMetadata);
+        player.off('error', cleanup);
+        player.off('dispose', cleanup);
+        if (levels) levels.off('addqualitylevel', onQualityLevel);
+        audioTracks.off('addtrack', onAudioTrack);
+        textTracks.off('addtrack', onTextTrack);
+        clearTimeout(timeout);
+        if (cancelBufferRefreshRestore === cleanup) cancelBufferRefreshRestore = null;
+    }
+
+    function finish() {
+        if (metadataLoaded && qualityRestored && audioRestored && captionsRestored) cleanup();
+    }
+
+    function onQualityLevel() { restoreQuality(); finish(); }
+    function onAudioTrack() { restoreAudio(); finish(); }
+    function onTextTrack() { restoreCaptions(); finish(); }
+    function onMetadata() {
+        metadataLoaded = true;
+        if (hadStarted) player.hasStarted(true);
+        var seekable = player.seekable();
+        if (isLive && player.liveTracker && seekable.length && Number.isFinite(seekable.end(seekable.length - 1))) {
+            player.liveTracker.seekToLiveEdge();
+        } else if (!isLive && Number.isFinite(position) && position >= 0) {
+            var duration = player.duration();
+            player.currentTime(Number.isFinite(duration) ? Math.min(position, Math.max(0, duration - 0.25)) : position);
+        }
+        player.playbackRate(rate);
+        player.volume(volume);
+        player.muted(muted);
+        restoreQuality();
+        restoreAudio();
+        restoreCaptions();
+        if (!selectedCaption) Array.from(textTracks).forEach(function (track) {
+            if (track.kind === 'captions' || track.kind === 'subtitles') track.mode = 'disabled';
+        });
+        if (!wasPlaying) player.pause();
+        finish();
+    }
+
+    cancelBufferRefreshRestore = cleanup;
+    player.on('loadedmetadata', onMetadata);
+    player.on('error', cleanup);
+    player.on('dispose', cleanup);
+    if (levels) levels.on('addqualitylevel', onQualityLevel);
+    audioTracks.on('addtrack', onAudioTrack);
+    textTracks.on('addtrack', onTextTrack);
+    timeout = setTimeout(cleanup, 15000);
+
+    player.error(null);
+    player.src(sources);
+    if (wasPlaying) {
+        var attempt = player.play();
+        if (attempt) attempt.catch(function () {});
+    } else {
+        // Explicitly start loading when preload="none" and playback is paused.
+        player.ready(function () { player.load(); });
+    }
+};
+
+var refreshButton = new (videojs.getComponent('Button'))(player);
+refreshButton.addClass('vjs-refresh-buffer');
+refreshButton.controlText(player_data.refresh_buffer);
+refreshButton.on('click', player.refreshBuffer);
+var controlBar = player.getChild('controlBar');
+controlBar.addChild(refreshButton, {}, controlBar.children().indexOf(controlBar.getChild('captionsButton')));
 
 player.on('error', function () {
     if (video_data.params.quality === 'dash') return;
@@ -83,7 +237,8 @@ player.on('error', function () {
             return source;
         }));
     } else if (reloadMakesSense) {
-        setTimeout(function () {
+        automaticReloadTimer = setTimeout(function () {
+            automaticReloadTimer = null;
             console.warn('An error occurred in the player, reloading...');
 
             // After load() all parameters are reset. Save them

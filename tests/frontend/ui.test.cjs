@@ -457,6 +457,157 @@ for (const engine of engines) {
         }
     });
 
+    test(`${engine}: buffer refresh reloads the selected source and restores playback`, async () => {
+        for (const fixture of ['watch-single', 'embed-mobile']) {
+            const {page, context, errors, requests} = await pageFor(engine, {
+                fixture, realPlayer: true, extraQuality: true,
+                route: fixture === 'embed-mobile' ? 'embed/2isYuQZMbdU' : undefined
+            });
+            const refresh = page.locator('.vjs-refresh-buffer');
+            assert.equal(await refresh.getAttribute('title'), 'Refresh video buffer');
+            assert.equal(await page.evaluate(() => {
+                const controls = player.getChild('controlBar').children();
+                return controls.findIndex(control => control.hasClass('vjs-refresh-buffer')) + 1 ===
+                    controls.findIndex(control => control.hasClass('vjs-captions-button'));
+            }), true);
+
+            await page.evaluate(() => {
+                player.muted(true); player.volume(.4); player.play();
+            });
+            await page.waitForFunction(() => player.currentTime() > .1);
+            await page.evaluate(() => {
+                player.pause(); player.currentTime(1);
+                const selector = player.getChild('controlBar').getChild('qualitySelector');
+                selector.items.find(item => item.source.label === 'high').handleClick();
+                player.ready(() => player.load());
+            });
+            await page.waitForFunction(() => player.currentSource().label === 'high' && player.currentTime() >= .9, null, {timeout: 10000}).catch(async () => {
+                throw new Error(JSON.stringify(await page.evaluate(() => ({
+                    source: player.currentSource(), time: player.currentTime(), paused: player.paused(),
+                    ready: player.readyState(), error: player.error()
+                }))));
+            });
+            await page.evaluate(() => {
+                player.playbackRate(1.5);
+                player.hasStarted(true);
+                const caption = Array.from(player.textTracks()).find(track => track.kind === 'captions');
+                if (caption) caption.mode = 'showing';
+            });
+            const before = requests.filter(path => path.startsWith('/latest_version')).length;
+            const source = await page.evaluate(() => player.currentSrc());
+            await page.evaluate(() => { window.refreshEmptied = []; player.on('emptied', () => {
+                window.refreshEmptied.push(player.tech({IWillNotUseThisInPlugins: true}).el().buffered.length);
+            }); player.userActive(true); });
+            const mediaRequest = page.waitForRequest(request => new URL(request.url()).pathname === '/latest_version');
+            await refresh.click();
+            await mediaRequest;
+            await page.waitForFunction(() => window.refreshEmptied.length && player.currentTime() >= .9 && player.readyState() >= 1);
+            assert.equal(await page.evaluate(() => player.currentSrc()), source);
+            assert.equal(await page.evaluate(() => player.currentSource().label), 'high');
+            assert.ok(requests.filter(path => path.startsWith('/latest_version')).length > before);
+            assert.ok((await page.evaluate(() => window.refreshEmptied)).includes(0));
+            assert.equal(await page.evaluate(() => player.paused()), true);
+            assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
+            assert.equal(await page.evaluate(() => player.volume()), .4);
+            assert.equal(await page.evaluate(() => player.muted()), true);
+            assert.equal(await page.evaluate(() => Array.from(player.textTracks()).find(track => track.mode === 'showing').label), 'English');
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: mobile refresh is in settings on watch and embed players`, async () => {
+        for (const fixture of ['watch-single', 'embed-mobile']) {
+            const {page, context, requests, errors} = await pageFor(engine, {
+                fixture, realPlayer: true, touch: true, width: 390, height: 844,
+                route: fixture === 'embed-mobile' ? 'embed/2isYuQZMbdU' : undefined
+            });
+            assert.equal(await page.locator('.vjs-refresh-buffer').isVisible(), false);
+            await page.evaluate(() => { player.muted(true); player.play(); });
+            await page.waitForFunction(() => player.currentTime() > .1);
+            const source = await page.evaluate(() => player.currentSrc());
+            const before = requests.filter(path => path.startsWith('/latest_version')).length;
+            await page.locator('.vjs-mobile-settings').tap();
+            const panel = page.locator('.mobile-player-settings');
+            const mediaRequest = page.waitForRequest(request => new URL(request.url()).pathname === '/latest_version');
+            await panel.getByRole('button', {name: 'Refresh video buffer'}).tap();
+            await mediaRequest;
+            await panel.waitFor({state: 'hidden'});
+            await page.waitForFunction(() => player.currentTime() > .1 && !player.paused());
+            assert.equal(await page.evaluate(() => player.currentSrc()), source);
+            assert.ok(requests.filter(path => path.startsWith('/latest_version')).length > before);
+            if (fixture === 'watch-single') {
+                await page.evaluate(() => { video_data.local_disabled = true; player.error({code: MediaError.MEDIA_ERR_DECODE}); player.userActive(true); });
+                await page.locator('.vjs-mobile-settings').tap();
+                const retry = page.waitForRequest(request => new URL(request.url()).pathname === '/latest_version');
+                await page.locator('.mobile-player-settings').getByRole('button', {name: 'Refresh video buffer'}).tap();
+                await retry;
+                await page.waitForFunction(() => !player.error() && !player.paused());
+            }
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: refresh can retry a player error and then refresh again`, async () => {
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: 'watch-single', realPlayer: true});
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > .1);
+        await page.evaluate(() => { video_data.local_disabled = true; player.error({code: MediaError.MEDIA_ERR_DECODE}); player.userActive(true); });
+        assert.equal(await page.evaluate(() => player.error().code), 3);
+        const refresh = page.locator('.vjs-refresh-buffer');
+        assert.equal(await refresh.isVisible(), true);
+        const before = requests.filter(path => path.startsWith('/latest_version')).length;
+        const firstRequest = page.waitForRequest(request => new URL(request.url()).pathname === '/latest_version', {timeout: 5000}).then(() => true, () => false);
+        await refresh.click({timeout: 5000});
+        assert.ok(await firstRequest);
+        await page.waitForFunction(() => !player.error() && !player.paused() && player.currentTime() > .1);
+        assert.ok(requests.filter(path => path.startsWith('/latest_version')).length > before);
+        const secondRequest = page.waitForRequest(request => new URL(request.url()).pathname === '/latest_version');
+        await refresh.click();
+        await secondRequest;
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: refresh restores DASH quality and audio after tracks are recreated`, async () => {
+        const {page, context, errors} = await pageFor(engine, {
+            fixture: 'watch-single', realPlayer: true, videoData: {params: {quality: 'dash'}}
+        });
+        await page.evaluate(() => {
+            player.muted(true); player.play();
+        });
+        await page.waitForFunction(() => player.currentTime() > .1);
+        await page.evaluate(() => {
+            const levels = player.qualityLevels();
+            [360, 720].forEach(height => {
+                let enabled = height === 720;
+                levels.addQualityLevel({id: String(height), height, bitrate: height * 1000,
+                    enabled: value => value === undefined ? enabled : (enabled = value)});
+            });
+            player.audioTracks().addTrack(new videojs.AudioTrack({id: 'en', kind: 'main', label: 'English', language: 'en'}));
+            player.audioTracks().addTrack(new videojs.AudioTrack({id: 'id', kind: 'alternative', label: 'Indonesian', language: 'id', enabled: true}));
+            player.one('loadstart', () => {
+                Array.from(levels).forEach(level => levels.removeQualityLevel(level));
+                [360, 720].forEach(height => {
+                    let enabled = true;
+                    levels.addQualityLevel({id: String(height), height, bitrate: height * 1000,
+                        enabled: value => value === undefined ? enabled : (enabled = value)});
+                });
+                player.audioTracks().addTrack(new videojs.AudioTrack({id: 'en', kind: 'main', label: 'English', language: 'en', enabled: true}));
+                player.audioTracks().addTrack(new videojs.AudioTrack({id: 'id', kind: 'alternative', label: 'Indonesian', language: 'id'}));
+            });
+            player.refreshBuffer();
+        });
+        await page.waitForFunction(() => player.readyState() >= 1 &&
+            Array.from(player.qualityLevels()).length === 2 &&
+            Array.from(player.qualityLevels()).find(level => level.height === 720).enabled &&
+            !Array.from(player.qualityLevels()).find(level => level.height === 360).enabled &&
+            Array.from(player.audioTracks()).some(track => track.id === 'id' && track.enabled));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
     test(`${engine}: header is horizontal and Library navigation is always available`, async () => {
         const { page, context, errors } = await pageFor(engine, { fixture: 'browse-dark' });
         const rail = page.locator('.navigation-rail');

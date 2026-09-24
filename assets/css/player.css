@@ -99,8 +99,20 @@ ul.vjs-menu-content::-webkit-scrollbar {
   order: 1;
 }
 
+.vjs-refresh-buffer,
 .vjs-captions-button {
   order: 2;
+}
+
+.video-js .vjs-refresh-buffer .vjs-icon-placeholder::before {
+  content: '\21bb';
+  font: 30px/1 sans-serif;
+}
+
+/* Video.js hides the entire bar on errors; leave recovery accessible. */
+.video-js.vjs-error.vjs-buffer-refreshable .vjs-control-bar {
+  display: flex !important;
+  z-index: 3;
 }
 
 .vjs-audio-button {
@@ -343,7 +355,7 @@ video.video-js {
 @media (prefers-reduced-motion: reduce) { .video-js .sb-overlay { transition: none; } }
 
 /* Mobile uses one settings entry point; playback components still own their state. */
-.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-captions-button, .vjs-audio-button, .vjs-rich-audio, .vjs-quality-selector, .vjs-rich-quality, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-wide-control) { display: none; }
+.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-refresh-buffer, .vjs-captions-button, .vjs-audio-button, .vjs-rich-audio, .vjs-quality-selector, .vjs-rich-quality, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-wide-control) { display: none; }
 .video-js .vjs-mobile-settings { order: 6; min-width: 44px; min-height: 44px; align-self: center; }
 .vjs-mobile-settings .vjs-icon-placeholder::before { content: '⚙'; font: 26px/44px sans-serif; }
 .video-js .mobile-player-settings {

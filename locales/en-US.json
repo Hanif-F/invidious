@@ -647,6 +647,7 @@
     "mobile_player_close": "Close",
     "mobile_player_off": "Off",
     "mobile_player_appearance": "Caption appearance",
+    "player_refresh_buffer": "Refresh video buffer",
     "player_stream_auto": "Auto",
     "player_stream_high_bitrate": "High Bitrate",
     "player_stream_medium_bitrate": "Medium Bitrate",
