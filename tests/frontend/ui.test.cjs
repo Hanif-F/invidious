@@ -1139,6 +1139,34 @@ for (const engine of engines) {
         await context.close();
     });
 
+    test(`${engine}: block notice disappears after five seconds and a new status resets the timer`, async () => {
+        for (const undoBeforeExpiry of [false, true]) {
+            const {page, context, errors} = await pageFor(engine, {fixture: 'browse-signed-in'});
+            await page.clock.install();
+            await page.route('**/blocked_channels?*', route => route.fulfill({contentType: 'application/json', body: '{}'}));
+            const menu = page.locator('.video-context').first();
+            await menu.locator('summary').click();
+            await menu.locator('[data-video-action=block]').click();
+            const notice = page.locator('#video-actions-notice');
+            await page.locator('#video-actions-undo').waitFor({state: 'visible'});
+            await page.clock.fastForward(4500);
+            assert.equal(await notice.isVisible(), true, 'Undo must remain available before five seconds');
+
+            if (undoBeforeExpiry) {
+                await page.locator('#video-actions-undo').click();
+                await page.waitForFunction(() => document.querySelector('#video-actions-notice span').textContent === document.getElementById('video-actions-config').dataset.unblocked);
+                await page.clock.fastForward(600);
+                assert.equal(await notice.isVisible(), true, 'Previous timer must not hide the new status');
+                await page.clock.fastForward(4600);
+            } else {
+                await page.clock.fastForward(600);
+            }
+            await notice.waitFor({state: 'hidden'});
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
     test(`${engine}: playlist creation retains the created playlist when adding fails`, async () => {
         const { page, context, errors } = await pageFor(engine, { fixture: 'browse-signed-in', width: 390 });
         await page.route('**/video_actions', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ playlists: [{ id: 'IVexisting', title: 'Existing' }], defaultPlaylist: 'IVexisting' }) }));

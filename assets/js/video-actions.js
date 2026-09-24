@@ -74,6 +74,7 @@
     var createForm = document.getElementById('video-playlist-create');
     var notice = document.getElementById('video-actions-notice');
     var undo = document.getElementById('video-actions-undo');
+    var noticeTimeout;
     var selectedVideo = '';
     var returnFocus;
     var pending = false;
@@ -102,9 +103,11 @@
         } finally { clearTimeout(timeout); }
     }
     function message(text, allowUndo) {
+        clearTimeout(noticeTimeout);
         notice.hidden = false;
         notice.querySelector('span').textContent = text;
         undo.hidden = !allowUndo;
+        noticeTimeout = setTimeout(function () { notice.hidden = true; }, 5000);
     }
     function updateAutoplay() {
         if (typeof video_data === 'undefined' || video_data.plid) return;
