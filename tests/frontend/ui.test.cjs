@@ -2850,6 +2850,97 @@ for (const engine of engines) {
 }
 
 for (const engine of engines) {
+    test(`${engine}: current chapter beside duration follows playback and seeking`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer:true,
+            playerData:{chapters:[{start:0.5,title:'Intro <img src=x>'},{start:2,title:'日本語 & details'}]}});
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => document.querySelectorAll('.chapter-marker').length === 2);
+        await page.evaluate(() => { player.pause(); player.userActive(true); player.currentTime(0.1); });
+        const current = page.locator('.current-chapter');
+        assert.equal(await current.isVisible(), false);
+        assert.equal(await page.locator('.video-js').evaluate(el => el.classList.contains('has-chapters')), true);
+        await page.evaluate(() => player.currentTime(0.7));
+        await page.waitForFunction(() => document.querySelector('.current-chapter').textContent === 'Intro <img src=x>');
+        assert.equal(await current.isVisible(), true);
+        assert.equal(await current.getAttribute('title'), 'Intro <img src=x>');
+        assert.equal(await page.locator('.current-chapter img').count(), 0);
+        assert.equal(await page.locator('.vjs-duration').evaluate(el => el.nextElementSibling.classList.contains('current-chapter')), true);
+        const durationBox = await page.locator('.vjs-duration').boundingBox();
+        const titleBox = await current.boundingBox();
+        assert.ok(durationBox.width > 0 && titleBox.x >= durationBox.x + durationBox.width);
+        await page.evaluate(() => player.currentTime(2.5));
+        await page.waitForFunction(() => document.querySelector('.current-chapter').textContent === '日本語 & details');
+        await page.evaluate(() => player.currentTime(0.1));
+        await page.waitForFunction(() => document.querySelector('.current-chapter').hidden);
+        await page.evaluate(() => player.duration(1.5));
+        assert.equal(await page.locator('.video-js').evaluate(el => el.classList.contains('has-chapters')), false);
+        assert.equal(await current.isVisible(), false);
+        assert.deepEqual(errors, []);
+        await context.close();
+
+        const empty = await pageFor(engine, {realPlayer:true, playerData:{chapters:[]}});
+        assert.equal(await empty.page.locator('.current-chapter').isVisible(), false);
+        assert.equal(await empty.page.locator('.video-js').evaluate(el => el.classList.contains('has-chapters')), false);
+        assert.deepEqual(empty.errors, []);
+        await empty.context.close();
+    });
+
+    test(`${engine}: chapter title fits mobile watch and embed controls`, async () => {
+        const longTitle = 'A long chapter title that should be truncated before it covers any playback control';
+        for (const [width, style, embed] of [[320, 'youtube', false], [320, 'invidious', true],
+            [390, 'invidious', false], [390, 'youtube', true]]) {
+            const {page, context, errors} = await pageFor(engine, {realPlayer:true, width, touch:true,
+                fixture:embed ? 'embed-mobile' : 'watch-dark', route:embed ? 'embed/2isYuQZMbdU' : undefined,
+                playerData:{chapters:[{start:0,title:'Start'},{start:2,title:longTitle}]}});
+            await page.evaluate(style => {
+                player.el().classList.remove('player-style-youtube', 'player-style-invidious');
+                player.el().classList.add('player-style-' + style);
+                player.muted(true); player.play();
+            }, style);
+            await page.waitForFunction(() => document.querySelectorAll('.chapter-marker').length === 2);
+            await page.evaluate(() => { player.pause(); player.currentTime(2.5); player.userActive(true); });
+            await page.waitForFunction(title => document.querySelector('.current-chapter').textContent === title, longTitle);
+            const layout = await page.evaluate(() => {
+                const title = document.querySelector('.current-chapter');
+                const duration = document.querySelector('.vjs-duration');
+                const controls = ['.vjs-mobile-settings', '.vjs-fullscreen-control']
+                    .map(selector => document.querySelector(selector));
+                const box = el => el.getBoundingClientRect();
+                const overlaps = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+                return {title:box(title), duration:box(duration), controls:controls.map(box),
+                    overlap:controls.some(el => overlaps(box(title), box(el))),
+                    titleAttribute:title.title, titleOverflow:getComputedStyle(title).textOverflow,
+                    titleScrollWidth:title.scrollWidth,
+                    rootWidth:player.el().clientWidth, rootScrollWidth:player.el().scrollWidth};
+            });
+            assert.ok(layout.duration.width > 0 && layout.title.width >= 40, `${width}px ${style}: time and title readable`);
+            assert.ok(layout.duration.right <= layout.title.left + 1, `${width}px ${style}: title follows duration`);
+            assert.equal(layout.overlap, false, `${width}px ${style}: playback controls remain clear`);
+            assert.ok(layout.controls.every(box => box.width > 0), `${width}px ${style}: playback controls visible`);
+            assert.equal(layout.titleAttribute, longTitle);
+            assert.equal(layout.titleOverflow, 'ellipsis');
+            assert.ok(layout.titleScrollWidth > layout.title.width, `${width}px ${style}: long title is truncated`);
+            assert.ok(layout.rootScrollWidth <= layout.rootWidth + 1, `${width}px ${style}: no horizontal overflow`);
+            if (!embed && width === 320) {
+                await page.evaluate(() => player.userActive(false));
+                await page.waitForFunction(() => getComputedStyle(document.querySelector('.vjs-control-bar')).visibility === 'hidden');
+                assert.equal(await page.locator('.current-chapter').isVisible(), false);
+                await page.evaluate(() => player.userActive(true));
+                await page.locator('.current-chapter').waitFor({state:'visible'});
+                assert.equal(await page.locator('.current-chapter').isVisible(), true);
+            }
+            if (embed && width === 320) {
+                await page.evaluate(() => player.currentTime(0.5));
+                const track = page.locator('.vjs-progress-holder');
+                const bounds = await track.boundingBox();
+                await track.tap({position:{x:bounds.width * .75, y:bounds.height / 2}});
+                await page.waitForFunction(() => player.currentTime() > 2);
+            }
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
     test(`${engine}: manual chapter markers and SponsorBlock hover priority`, async () => {
         const {page, context, errors} = await pageFor(engine, {realPlayer:true,
             playerData:{chapters:[{start:0.5,title:'Intro <img src=x>'},{start:2,title:'日本語 & details'}]},

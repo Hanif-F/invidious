@@ -2,7 +2,8 @@
 (function () {
     if (!player.el) return;
     var root = player.el(), bar = root.querySelector('.vjs-progress-holder');
-    if (!bar) return;
+    var durationDisplay = root.querySelector('.vjs-control-bar .vjs-duration');
+    if (!bar || !durationDisplay) return;
     var progress = bar.closest('.vjs-progress-control') || bar;
     var chapters = [], segments = [], labels = player_data.sponsorblock.labels;
     function element(parent, name) {
@@ -11,6 +12,11 @@
     }
     var ticks = element(bar, 'chapter-markers'), tooltip = element(root, 'chapter-tooltip');
     var sponsor = element(tooltip, ''), title = element(tooltip, '');
+    var currentTitle = document.createElement('span');
+    currentTitle.className = 'current-chapter';
+    currentTitle.dir = 'auto';
+    currentTitle.hidden = true;
+    durationDisplay.after(currentTitle);
     title.dir = 'auto';
     var pointerTime = null, focused = false;
     tooltip.id = 'chapter-tooltip';
@@ -37,6 +43,10 @@
         tooltip.style.left = Math.max(4, Math.min(bounds.width - tooltip.offsetWidth - 4, center - tooltip.offsetWidth / 2)) + 'px';
     }
     function refresh() {
+        var current = chapters.findLast((c) => c.start <= player.currentTime());
+        currentTitle.hidden = !current;
+        currentTitle.textContent = current ? current.title : '';
+        currentTitle.title = current ? current.title : '';
         if (pointerTime !== null) show(pointerTime);
         else if (focused) show(player.currentTime());
     }
@@ -46,6 +56,7 @@
             return Number.isFinite(duration) && c.start >= 0 && c.start < duration;
         });
         if (chapters.length < 2) chapters = [];
+        root.classList.toggle('has-chapters', chapters.length > 0);
         ticks.textContent = '';
         chapters.forEach(function (c) {
             element(ticks, 'chapter-marker').style.left = 100 * c.start / duration + '%';
@@ -72,6 +83,7 @@
         Object.keys(mouseListeners).forEach((name) => progress.removeEventListener(name, mouseListeners[name]));
         Object.keys(barListeners).forEach((name) => bar.removeEventListener(name, barListeners[name]));
         Object.keys(events).forEach((name) => player.off(name, events[name]));
+        currentTitle.remove();
     });
     render();
 }());

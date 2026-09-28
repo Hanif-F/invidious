@@ -215,6 +215,8 @@ separator). Two distinct valid timestamps are enough; zero starts and ten-second
 sections are not required. Automatic YouTube chapters and comment timestamps are
 never used. SponsorBlock colors appear above chapter ticks, and enabled category
 labels precede the chapter title on hover, touch scrubbing, and keyboard seeking.
+The current chapter title also appears beside total video length while player
+controls are visible, including on mobile.
 
 Run `crystal spec spec/chapters_spec.cr spec/sponsorblock_spec.cr` and
 `node --test --test-name-pattern='manual chapter|SponsorBlock|UI asset additions' tests/frontend/ui.test.cjs`
