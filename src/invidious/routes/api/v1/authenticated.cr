@@ -48,12 +48,25 @@ module Invidious::Routes::API::V1::Authenticated
       timestamps = data["chat_show_timestamps"]?.try(&.as_bool)
       font = data["chat_font_scale"]?.try(&.as_i)
       width = data["chat_width_px"]?.try(&.as_i)
+      overlay_mode = data["chat_overlay_mode"]?.try(&.as_bool)
+      overlay_opacity = data["chat_overlay_opacity"]?.try(&.as_i)
+      overlay_x = data["chat_overlay_x"]?.try(&.as_i)
+      overlay_y = data["chat_overlay_y"]?.try(&.as_i)
+      overlay_width = data["chat_overlay_width"]?.try(&.as_i)
+      overlay_height = data["chat_overlay_height"]?.try(&.as_i)
       users = data["chat_user_blacklist"]?.try(&.as_s)
       words = data["chat_word_blacklist"]?.try(&.as_s)
-      allowed = ["chat_show_timestamps", "chat_font_scale", "chat_width_px", "chat_user_blacklist", "chat_word_blacklist"]
+      allowed = ["chat_show_timestamps", "chat_font_scale", "chat_width_px", "chat_overlay_mode",
+                 "chat_overlay_opacity", "chat_overlay_x", "chat_overlay_y", "chat_overlay_width",
+                 "chat_overlay_height", "chat_user_blacklist", "chat_word_blacklist"]
       raise "Invalid chat settings" if data.empty? || data.keys.any? { |key| !allowed.includes?(key) } ||
                                        (font && !(75..150).includes?(font)) ||
                                        (width && !(280..640).includes?(width)) ||
+                                       (overlay_opacity && !(0..100).includes?(overlay_opacity)) ||
+                                       (overlay_x && !(0..1000).includes?(overlay_x)) ||
+                                       (overlay_y && !(0..1000).includes?(overlay_y)) ||
+                                       (overlay_width && !(1..1000).includes?(overlay_width)) ||
+                                       (overlay_height && !(1..1000).includes?(overlay_height)) ||
                                        (users && users.bytesize > 1024) ||
                                        (words && words.bytesize > 1024)
     rescue
@@ -64,9 +77,18 @@ module Invidious::Routes::API::V1::Authenticated
     4.times do
       raw = Invidious::Database::Users.preference_json(user.email)
       preferences = Preferences.from_json(raw)
+      return error_json(400, "Invalid chat settings") if
+        (overlay_x || preferences.chat_overlay_x) + (overlay_width || preferences.chat_overlay_width) > 1000 ||
+        (overlay_y || preferences.chat_overlay_y) + (overlay_height || preferences.chat_overlay_height) > 1000
       preferences.chat_show_timestamps = timestamps unless timestamps.nil?
       preferences.chat_font_scale = font if font
       preferences.chat_width_px = width if width
+      preferences.chat_overlay_mode = overlay_mode unless overlay_mode.nil?
+      preferences.chat_overlay_opacity = overlay_opacity unless overlay_opacity.nil?
+      preferences.chat_overlay_x = overlay_x unless overlay_x.nil?
+      preferences.chat_overlay_y = overlay_y unless overlay_y.nil?
+      preferences.chat_overlay_width = overlay_width unless overlay_width.nil?
+      preferences.chat_overlay_height = overlay_height unless overlay_height.nil?
       preferences.chat_user_blacklist = users if users
       preferences.chat_word_blacklist = words if words
       if Invidious::Database::Users.compare_and_set_preferences(user.email, raw, preferences)

@@ -99,6 +99,12 @@ struct Preferences
   property chat_show_timestamps : Bool = true
   property chat_font_scale : Int32 = 100
   property chat_width_px : Int32 = 440
+  property chat_overlay_mode : Bool = false
+  property chat_overlay_opacity : Int32 = 75
+  property chat_overlay_x : Int32 = 560
+  property chat_overlay_y : Int32 = 50
+  property chat_overlay_width : Int32 = 400
+  property chat_overlay_height : Int32 = 750
   property chat_user_blacklist : String = ""
   property chat_word_blacklist : String = ""
 

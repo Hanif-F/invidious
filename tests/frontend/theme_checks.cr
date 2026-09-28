@@ -63,24 +63,37 @@ def check_theme_preferences
   chat_env = HTTP::Server::Context.new(HTTP::Request.new("PATCH", "/api/v1/auth/chat_preferences",
     HTTP::Headers{"Content-Type" => "application/json"},
     {chat_show_timestamps: false, chat_font_scale: 125, chat_width_px: 520,
+     chat_overlay_mode: true, chat_overlay_opacity: 0,
+     chat_overlay_x: 500, chat_overlay_y: 100, chat_overlay_width: 400, chat_overlay_height: 700,
      chat_user_blacklist: "UCblocked", chat_word_blacklist: "/spam/"}.to_json), HTTP::Server::Response.new(IO::Memory.new))
   chat_env.set "user", user
   Invidious::Routes::API::V1::Authenticated.set_chat_preferences(chat_env)
   chat_prefs = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
   raise "Account chat settings lost" unless !chat_prefs.chat_show_timestamps && chat_prefs.chat_font_scale == 125 &&
                                             chat_prefs.chat_width_px == 520 && chat_prefs.chat_user_blacklist == "UCblocked" &&
-                                            chat_prefs.chat_word_blacklist == "/spam/" && chat_prefs.theme == "fixture-theme"
+                                            chat_prefs.chat_word_blacklist == "/spam/" && chat_prefs.theme == "fixture-theme" &&
+                                            chat_prefs.chat_overlay_mode && chat_prefs.chat_overlay_opacity == 0 &&
+                                            chat_prefs.chat_overlay_x == 500 && chat_prefs.chat_overlay_y == 100 &&
+                                            chat_prefs.chat_overlay_width == 400 && chat_prefs.chat_overlay_height == 700
   partial_chat_env = HTTP::Server::Context.new(HTTP::Request.new("PATCH", "/api/v1/auth/chat_preferences",
     HTTP::Headers{"Content-Type" => "application/json"}, {chat_show_timestamps: true}.to_json), HTTP::Server::Response.new(IO::Memory.new))
   partial_chat_env.set "user", user
   Invidious::Routes::API::V1::Authenticated.set_chat_preferences(partial_chat_env)
   chat_prefs = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
-  raise "Partial chat settings erased existing values" unless chat_prefs.chat_show_timestamps && chat_prefs.chat_width_px == 520 && chat_prefs.chat_word_blacklist == "/spam/"
+  raise "Partial chat settings erased existing values" unless chat_prefs.chat_show_timestamps && chat_prefs.chat_width_px == 520 && chat_prefs.chat_word_blacklist == "/spam/" &&
+                                                             chat_prefs.chat_overlay_mode && chat_prefs.chat_overlay_opacity == 0 && chat_prefs.chat_overlay_x == 500
+  invalid_overlay_env = HTTP::Server::Context.new(HTTP::Request.new("PATCH", "/api/v1/auth/chat_preferences",
+    HTTP::Headers{"Content-Type" => "application/json"}, {chat_overlay_x: 800}.to_json), HTTP::Server::Response.new(IO::Memory.new))
+  invalid_overlay_env.set "user", user
+  Invidious::Routes::API::V1::Authenticated.set_chat_preferences(invalid_overlay_env)
+  raise "Invalid overlay rectangle accepted" unless invalid_overlay_env.response.status_code == 400
   env = theme_post_env("theme=fixture-theme&save_player_pos=on")
   env.set "preferences", chat_prefs
   env.set "user", user
   Invidious::Routes::PreferencesRoute.update(env)
-  raise "Preferences form erased chat settings" unless Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)).chat_width_px == 520
+  preserved_chat = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
+  raise "Preferences form erased chat settings" unless preserved_chat.chat_width_px == 520 && preserved_chat.chat_overlay_mode &&
+                                                     preserved_chat.chat_overlay_opacity == 0 && preserved_chat.chat_overlay_x == 500
 
   env = theme_post_env(prefs.to_json, "application/json")
   env.set "user", user

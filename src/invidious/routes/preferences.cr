@@ -245,6 +245,12 @@ module Invidious::Routes::PreferencesRoute
       chat_show_timestamps:           previous.chat_show_timestamps,
       chat_font_scale:                previous.chat_font_scale,
       chat_width_px:                  previous.chat_width_px,
+      chat_overlay_mode:              previous.chat_overlay_mode,
+      chat_overlay_opacity:           previous.chat_overlay_opacity,
+      chat_overlay_x:                 previous.chat_overlay_x,
+      chat_overlay_y:                 previous.chat_overlay_y,
+      chat_overlay_width:             previous.chat_overlay_width,
+      chat_overlay_height:            previous.chat_overlay_height,
       chat_user_blacklist:            previous.chat_user_blacklist,
       chat_word_blacklist:            previous.chat_word_blacklist,
     }.to_json)

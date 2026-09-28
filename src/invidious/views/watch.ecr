@@ -123,10 +123,18 @@
                     <summary aria-label="<%= I18n.translate(locale, "ui_chat_settings") %>" title="<%= I18n.translate(locale, "ui_chat_settings") %>">⚙</summary>
                     <div class="chat-settings-menu pure-form pure-form-stacked">
                         <label><input id="chat-show-timestamps" type="checkbox"> <%= I18n.translate(locale, "ui_chat_show_timestamps") %></label>
+                        <label><input id="chat-overlay-mode" type="checkbox"> <%= I18n.translate(locale, "ui_chat_overlay_mode") %></label>
+                        <div id="chat-overlay-options" hidden>
+                            <button id="chat-modify-overlay" class="pure-button" type="button"><%= I18n.translate(locale, "ui_chat_modify_overlay") %></button>
+                            <label for="chat-overlay-opacity"><%= I18n.translate(locale, "ui_chat_overlay_opacity") %> <output id="chat-overlay-opacity-output"></output></label>
+                            <input id="chat-overlay-opacity" type="range" min="0" max="100" step="1" value="75">
+                        </div>
                         <label for="chat-font-scale"><%= I18n.translate(locale, "ui_chat_font_size") %> <output id="chat-font-output"></output></label>
                         <input id="chat-font-scale" type="range" min="75" max="150" step="5" value="100">
-                        <label for="chat-width"><%= I18n.translate(locale, "ui_chat_size") %> <output id="chat-width-output"></output></label>
-                        <input id="chat-width" type="range" min="280" max="640" step="20" value="440">
+                        <div id="chat-docked-size">
+                            <label for="chat-width"><%= I18n.translate(locale, "ui_chat_size") %> <output id="chat-width-output"></output></label>
+                            <input id="chat-width" type="range" min="280" max="640" step="20" value="440">
+                        </div>
                         <label for="chat-user-blacklist"><%= I18n.translate(locale, "ui_chat_user_blacklist") %></label>
                         <input id="chat-user-blacklist" type="text" autocomplete="off" placeholder="UC… @handle">
                         <label for="chat-word-blacklist"><%= I18n.translate(locale, "ui_chat_word_blacklist") %></label>
@@ -137,6 +145,14 @@
                     </div>
                 </details>
             </header>
+            <div class="chat-overlay-editor js-only" id="chat-overlay-editor" hidden>
+                <button id="chat-overlay-move" class="chat-overlay-handle chat-overlay-move" type="button"><%= I18n.translate(locale, "ui_chat_move_overlay") %></button>
+                <div class="chat-overlay-actions">
+                    <button id="chat-overlay-save" class="pure-button" type="button"><%= I18n.translate(locale, "generic_button_save") %></button>
+                    <button id="chat-overlay-cancel" class="pure-button" type="button"><%= I18n.translate(locale, "generic_button_cancel") %></button>
+                </div>
+                <button id="chat-overlay-resize" class="chat-overlay-handle chat-overlay-resize" type="button"><%= I18n.translate(locale, "ui_chat_resize_overlay") %></button>
+            </div>
             <div class="chat-scroll-area js-only">
                 <div class="chat-messages" id="chat-messages" role="log" aria-live="off"></div>
                 <button id="chat-sync" class="chat-sync pure-button" type="button" aria-controls="chat-messages" hidden><%= I18n.translate(locale, "ui_sync_chat") %></button>
