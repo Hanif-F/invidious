@@ -40,6 +40,66 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.status_code = 204
   end
 
+  def self.set_chat_preferences(env)
+    env.response.content_type = "application/json"
+    user = env.get("user").as(User)
+    begin
+      data = JSON.parse(env.request.body.try(&.gets_to_end) || "{}").as_h
+      timestamps = data["chat_show_timestamps"]?.try(&.as_bool)
+      font = data["chat_font_scale"]?.try(&.as_i)
+      width = data["chat_width_px"]?.try(&.as_i)
+      users = data["chat_user_blacklist"]?.try(&.as_s)
+      words = data["chat_word_blacklist"]?.try(&.as_s)
+      allowed = ["chat_show_timestamps", "chat_font_scale", "chat_width_px", "chat_user_blacklist", "chat_word_blacklist"]
+      raise "Invalid chat settings" if data.empty? || data.keys.any? { |key| !allowed.includes?(key) } ||
+                                       (font && !(75..150).includes?(font)) ||
+                                       (width && !(280..640).includes?(width)) ||
+                                       (users && users.bytesize > 1024) ||
+                                       (words && words.bytesize > 1024)
+    rescue
+      return error_json(400, "Invalid chat settings")
+    end
+
+    saved = false
+    4.times do
+      raw = Invidious::Database::Users.preference_json(user.email)
+      preferences = Preferences.from_json(raw)
+      preferences.chat_show_timestamps = timestamps unless timestamps.nil?
+      preferences.chat_font_scale = font if font
+      preferences.chat_width_px = width if width
+      preferences.chat_user_blacklist = users if users
+      preferences.chat_word_blacklist = words if words
+      if Invidious::Database::Users.compare_and_set_preferences(user.email, raw, preferences)
+        user.preferences = preferences
+        saved = true
+        break
+      end
+    end
+    return error_json(409, "Chat settings changed; try again") unless saved
+    user.preferences.to_json
+  end
+
+  def self.get_chat_timing(env)
+    env.response.content_type = "application/json"
+    id = env.params.url["id"]
+    return error_json(400, "Invalid video id") unless validate_video_id(id)
+    {offsetMs: Invidious::Database::ChatTimingOffsets.select(env.get("user").as(User).email, id)}.to_json
+  end
+
+  def self.set_chat_timing(env)
+    env.response.content_type = "application/json"
+    id = env.params.url["id"]
+    return error_json(400, "Invalid video id") unless validate_video_id(id)
+    begin
+      offset = JSON.parse(env.request.body.try(&.gets_to_end) || "{}")["offsetMs"].as_i
+      raise "Invalid timing" unless (-3_600_000..3_600_000).includes?(offset)
+    rescue
+      return error_json(400, "Invalid timing")
+    end
+    Invidious::Database::ChatTimingOffsets.upsert(env.get("user").as(User).email, id, offset)
+    {offsetMs: offset}.to_json
+  end
+
   def self.export_invidious(env)
     env.response.content_type = "application/json"
     user = env.get("user").as(User)

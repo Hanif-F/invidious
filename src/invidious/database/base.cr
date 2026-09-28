@@ -21,6 +21,7 @@ module Invidious::Database
     Invidious::Database.check_table("auth_rate_limits")
     Invidious::Database.check_table("watch_history")
     Invidious::Database.check_table("playback_positions")
+    Invidious::Database.check_table("chat_timing_offsets")
     Invidious::Database.check_table("blocked_channels")
     Invidious::Database.check_table("dearrow_identities")
     Invidious::Database.check_table("videos", Video)

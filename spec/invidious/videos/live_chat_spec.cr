@@ -27,12 +27,13 @@ Spectator.describe Invidious::Videos::LiveChat do
   end
 
   it "parses replay messages, removals, and continuation" do
-    data = JSON.parse(%({"continuationContents":{"liveChatContinuation":{"actions":[{"replayChatItemAction":{"videoOffsetTimeMsec":"1200","actions":[{"addChatItemAction":{"item":{"liveChatTextMessageRenderer":{"id":"a","authorName":{"simpleText":"Viewer <b>"},"message":{"runs":[{"text":"Hello "},{"emoji":{"shortcuts":[":wave:"]}}]}}}}}]}},{"replayChatItemAction":{"videoOffsetTimeMsec":"1500","actions":[{"addChatItemAction":{"item":{"liveChatPaidMessageRenderer":{"id":"b","authorName":{"simpleText":"Supporter"},"purchaseAmountText":{"simpleText":"$5"},"message":{"simpleText":"Great stream"}}}}}]}},{"replayChatItemAction":{"videoOffsetTimeMsec":"1600","actions":[{"removeChatItemAction":{"targetItemId":"a"}}]}}],"continuations":[{"liveChatReplayContinuationData":{"continuation":"next"}}]}}})).as_h
+    data = JSON.parse(%({"continuationContents":{"liveChatContinuation":{"actions":[{"replayChatItemAction":{"videoOffsetTimeMsec":"1200","actions":[{"addChatItemAction":{"item":{"liveChatTextMessageRenderer":{"id":"a","authorExternalChannelId":"UCfullidentifier123","authorName":{"simpleText":"Viewer <b>"},"message":{"runs":[{"text":"Hello "},{"emoji":{"shortcuts":[":wave:"]}}]}}}}}]}},{"replayChatItemAction":{"videoOffsetTimeMsec":"1500","actions":[{"addChatItemAction":{"item":{"liveChatPaidMessageRenderer":{"id":"b","authorName":{"simpleText":"Supporter"},"purchaseAmountText":{"simpleText":"$5"},"message":{"simpleText":"Great stream"}}}}}]}},{"replayChatItemAction":{"videoOffsetTimeMsec":"1600","actions":[{"removeChatItemAction":{"targetItemId":"a"}}]}}],"continuations":[{"liveChatReplayContinuationData":{"continuation":"next"}}]}}})).as_h
     chunk = described_class.parse_chunk(data)
     expect(chunk[:messages].size).to eq(2)
     expect(chunk[:messages][0]["offsetMs"].as_i64).to eq(1200_i64)
     expect(chunk[:messages][0]["text"].as_s).to eq("Hello :wave:")
     expect(chunk[:messages][0]["author"].as_s).to eq("Viewer <b>")
+    expect(chunk[:messages][0]["authorChannelId"].as_s).to eq("UCfullidentifier123")
     expect(chunk[:messages][1]["kind"].as_s).to eq("paid")
     expect(chunk[:messages][1]["amount"].as_s).to eq("$5")
     expect(chunk[:removed_ids]).to eq(["a"])
@@ -41,5 +42,10 @@ Spectator.describe Invidious::Videos::LiveChat do
 
   it "raises on an unrecognized replay response" do
     expect { described_class.parse_chunk({} of String => JSON::Any) }.to raise_error(BrokenTubeException)
+  end
+
+  it "extracts a handle supplied in the author's browse link" do
+    data = JSON.parse(%({"continuationContents":{"liveChatContinuation":{"actions":[{"replayChatItemAction":{"videoOffsetTimeMsec":"0","actions":[{"addChatItemAction":{"item":{"liveChatTextMessageRenderer":{"id":"handle","authorName":{"runs":[{"text":"Viewer","navigationEndpoint":{"browseEndpoint":{"canonicalBaseUrl":"/@viewer"}}}]},"message":{"simpleText":"Hello"}}}}}]}}]}}})).as_h
+    expect(described_class.parse_chunk(data)[:messages][0]["authorHandle"].as_s).to eq("@viewer")
   end
 end

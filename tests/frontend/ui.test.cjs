@@ -46,6 +46,7 @@ async function pageFor(engine, options = {}) {
     let queueCalls = 0;
     let transcriptCalls = 0;
     let chatCalls = 0;
+    const chatWrites = [];
     const fixture = options.fixture || 'watch-dark';
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
@@ -109,6 +110,11 @@ async function pageFor(engine, options = {}) {
             ];
             return route.fulfill({contentType: 'application/json', body: JSON.stringify({messages, removedIds: [], continuation: second ? null : 'next'})});
         }
+        if (url.pathname === '/api/v1/auth/csrf') return route.fulfill({contentType: 'application/json', body: '{"csrfToken":"fixture-token"}'});
+        if (url.pathname === '/api/v1/auth/chat_preferences' || url.pathname.startsWith('/api/v1/auth/chat_timing/')) {
+            chatWrites.push({path: url.pathname, method: route.request().method(), body: JSON.parse(route.request().postData() || '{}')});
+            return route.fulfill({contentType: 'application/json', body: '{}'});
+        }
         if (url.pathname === '/js/silvermine-videojs-quality-selector.min.js' && !options.realPlayer) return route.fulfill({ contentType: 'application/javascript', body: '' });
         if (url.pathname === '/js/player.js' && !options.realPlayer) return route.fulfill({ contentType: 'application/javascript', body: playerStub });
         if (url.pathname.startsWith('/videojs/') && !options.realPlayer) return route.fulfill({ contentType: url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript', body: '' });
@@ -135,7 +141,7 @@ async function pageFor(engine, options = {}) {
         return route.fulfill({ contentType: 'application/json', body: '{}' });
     });
     await page.goto('https://invidious.test/' + (options.route || (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture.startsWith('preferences') ? 'preferences' : fixture.startsWith('search') ? 'search?q=light' : 'feed/popular')));
-    return { page, context, errors, requests, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls, chatCalls: () => chatCalls };
+    return { page, context, errors, requests, chatWrites, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls, chatCalls: () => chatCalls };
 }
 
 for (const engine of engines) {
@@ -191,14 +197,16 @@ for (const engine of engines) {
         const chatBox = await toggle.boundingBox();
         const shareBox = await share.boundingBox();
         const wideBox = await wide.boundingBox();
+        const videoBefore = await page.locator('#player .vjs-tech').first().boundingBox();
         assert.ok(chatBox.x >= shareBox.x + shareBox.width - 4);
         assert.ok(wideBox.x >= chatBox.x + chatBox.width - 4);
         await toggle.click();
         assert.equal(await page.locator('#chat-panel').isVisible(), false);
+        await page.waitForFunction(before => document.querySelector('#player .vjs-tech').getBoundingClientRect().width > before, videoBefore.width);
         assert.equal(await toggle.getAttribute('title'), 'Show chat');
         assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
         assert.equal(await page.locator('#watch-layout').evaluate(el => el.classList.contains('watch-without-sidebar')), true);
-        assert.equal(await page.locator('.watch-sidebar').isVisible(), false);
+        assert.equal(await page.locator('.watch-sidebar').count(), 0);
         const calls = chatCalls();
         await page.evaluate(() => player.currentTime(2.7));
         await page.waitForTimeout(950);
@@ -206,8 +214,8 @@ for (const engine of engines) {
         await toggle.click();
         await page.getByText('Great stream', {exact: true}).waitFor();
         assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
-        assert.equal(await page.locator('#watch-layout').evaluate(el => el.classList.contains('watch-without-sidebar')), false);
-        assert.equal(await page.locator('.watch-sidebar').isVisible(), true);
+        assert.equal(await page.locator('#watch-layout').evaluate(el => el.classList.contains('watch-without-sidebar')), true);
+        assert.equal(await page.locator('.watch-sidebar').count(), 0);
         assert.ok(requests.some(url => url.startsWith('/api/v1/live_chat/') && Number(new URL(url, 'https://invidious.test').searchParams.get('offset_ms')) >= 2500));
         assert.deepEqual(errors, []);
         await context.close();
@@ -288,6 +296,152 @@ for (const engine of engines) {
         const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatUnavailable: true});
         await page.getByText('Chat replay is unavailable for this video.').waitFor();
         assert.equal(await page.locator('#chat-retry').isVisible(), false);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: chat is beside the video in normal, wide, and fullscreen modes`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, width: 1440, height: 900});
+        await page.locator('.chat-message').first().waitFor();
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.evaluate(() => { player.pause(); player.userActive(true); });
+        async function positions() {
+            return {video: await page.locator('#player .vjs-tech').first().boundingBox(), chat: await page.locator('#chat-panel').boundingBox()};
+        }
+        assert.equal(await page.locator('#chat-panel').evaluate(el => el.parentElement.id), 'player');
+        const wide = await positions();
+        assert.ok(Math.abs(wide.chat.x - (wide.video.x + wide.video.width)) <= 3);
+        assert.ok(Math.abs(wide.chat.y - wide.video.y) <= 3);
+        for (const selector of ['.watch-primary', '.watch-sidebar']) {
+            const box = await page.locator(selector).boundingBox();
+            assert.ok(box.y >= wide.chat.y + wide.chat.height - 3, `${selector} overlaps the wide player`);
+        }
+        await page.locator('.vjs-wide-control').click();
+        const normal = await positions();
+        assert.ok(Math.abs(normal.chat.x - (normal.video.x + normal.video.width)) <= 3);
+        assert.ok(wide.video.width >= normal.video.width);
+        for (const selector of ['.watch-primary', '.watch-sidebar']) {
+            const box = await page.locator(selector).boundingBox();
+            assert.ok(box.y >= normal.chat.y + normal.chat.height - 3, `${selector} overlaps the normal player`);
+        }
+        await page.locator('.vjs-fullscreen-control').click();
+        await page.waitForFunction(() => player.isFullscreen());
+        const full = await positions();
+        assert.ok(Math.abs(full.chat.x - (full.video.x + full.video.width)) <= 3);
+        assert.ok(await page.locator('#chat-panel').isVisible());
+        await page.evaluate(() => { player.exitFullscreen(); });
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: mobile chat stays below video in portrait and landscape fullscreen`, async () => {
+        for (const [width, height] of [[390, 844], [844, 390]]) {
+            const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, touch: true, mobileUserAgent: true, width, height});
+            await page.locator('.chat-message').first().waitFor();
+            await page.evaluate(() => { player.hasStarted(true); player.userActive(true); });
+            const video = await page.locator('#player .vjs-tech').first().boundingBox();
+            const chat = await page.locator('#chat-panel').boundingBox();
+            assert.ok(chat.y >= video.y + video.height - 3);
+            assert.ok(Math.abs(chat.x - video.x) <= 3);
+            await page.locator('.vjs-fullscreen-control').click();
+            await page.waitForFunction(() => player.isFullscreen());
+            try {
+                await page.waitForFunction(() => {
+                    const video = document.querySelector('#player .vjs-tech').getBoundingClientRect();
+                    const chat = document.getElementById('chat-panel').getBoundingClientRect();
+                    return chat.top >= video.bottom - 3 && chat.height > 80;
+                }, null, {timeout: 5000});
+            } catch (error) {
+                const geometry = await page.evaluate(() => {
+                    const video = document.querySelector('#player .vjs-tech').getBoundingClientRect();
+                    const chat = document.getElementById('chat-panel').getBoundingClientRect();
+                    return {video: video.toJSON(), chat: chat.toJSON(), viewport: [innerWidth, innerHeight], fullscreen: player.isFullscreen(), element: !!document.fullscreenElement, playerStyle: document.getElementById('player').getAttribute('style'), techStyle: document.querySelector('#player .vjs-tech').getAttribute('style'), chatStyle: document.getElementById('chat-panel').getAttribute('style')};
+                });
+                throw new Error(JSON.stringify(geometry));
+            }
+            assert.ok(await page.locator('#chat-panel').isVisible());
+            await page.locator('#chat-settings summary').click();
+            assert.ok(await page.locator('.chat-settings-menu').isVisible());
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: chat settings filter messages and persist for guests`, async () => {
+        const chatMessages = [
+            {id: 'keep', offsetMs: 0, author: 'Reader', authorChannelId: 'UCFullIdentifierThatMustWrapWithoutTruncation1234567890123456789012345678901234567890', text: 'Hello', kind: 'text', amount: ''},
+            {id: 'blocked', offsetMs: 0, author: 'Blocked', authorChannelId: 'UCBlockedViewer', text: 'Welcome', kind: 'text', amount: ''},
+            {id: 'handle', offsetMs: 0, author: 'Hidden', authorChannelId: 'UCOtherViewer', authorHandle: '@hidden', text: 'Welcome', kind: 'text', amount: ''},
+            {id: 'spam', offsetMs: 0, author: 'Other', authorChannelId: 'UCOther', text: 'SpAm message', kind: 'text', amount: ''}
+        ];
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatMessages});
+        await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 4);
+        assert.equal(await page.locator('.chat-author-id').first().textContent(), chatMessages[0].authorChannelId);
+        assert.ok(await page.locator('.chat-author-id').first().evaluate(el => el.scrollWidth <= el.clientWidth));
+        await page.locator('#chat-settings summary').click();
+        await page.locator('#chat-show-timestamps').uncheck();
+        await page.locator('#chat-font-scale').evaluate(el => { el.value = '150'; el.dispatchEvent(new Event('input', {bubbles: true})); });
+        await page.locator('#chat-width').evaluate(el => { el.value = '640'; el.dispatchEvent(new Event('input', {bubbles: true})); });
+        await page.locator('#chat-user-blacklist').fill('UCBlockedViewer @hidden');
+        await page.locator('#chat-user-blacklist').press('Tab');
+        await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 2);
+        assert.equal(await page.locator('#chat-panel').evaluate(el => Math.round(parseFloat(getComputedStyle(el).fontSize))), 27);
+        assert.equal(Math.round((await page.locator('#chat-panel').boundingBox()).width), 640);
+        await page.locator('#chat-word-blacklist').fill('SPAM');
+        await page.locator('#chat-word-blacklist').press('Tab');
+        await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 1);
+        await page.locator('#chat-word-blacklist').fill('/sp.m/');
+        await page.locator('#chat-word-blacklist').press('Tab');
+        await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 1);
+        assert.equal(await page.locator('.chat-time').first().isVisible(), false);
+        assert.equal(await page.locator('#chat-font-output').textContent(), '150%');
+        await page.locator('#chat-word-blacklist').fill('/[/');
+        await page.locator('#chat-word-blacklist').press('Tab');
+        await page.getByText('Invalid regular expression').waitFor();
+        await page.locator('#chat-timing').fill('-1');
+        await page.locator('#chat-timing').press('Tab');
+        await page.reload();
+        await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 1);
+        assert.equal(await page.locator('#chat-font-scale').inputValue(), '150');
+        assert.equal(await page.locator('#chat-width').inputValue(), '640');
+        assert.equal(await page.locator('#chat-timing').inputValue(), '-1');
+        assert.equal(await page.locator('.chat-time').first().isVisible(), false);
+        assert.equal(await page.evaluate(() => localStorage.getItem('chat-timing-v1-other')), null);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: custom chat timing shifts messages and account changes are saved`, async () => {
+        const chatMessages = [{id: 'timed', offsetMs: 500, author: 'Reader', authorChannelId: 'UCReader', text: 'Timed message', kind: 'text', amount: ''}];
+        const {page, context, chatWrites, errors} = await pageFor(engine, {fixture: 'watch-chat-account', realPlayer: true, chatMessages,
+            initScript: "localStorage.setItem('chat-settings-v1', JSON.stringify({chat_show_timestamps:false}))"});
+        assert.equal(await page.locator('#chat-show-timestamps').isChecked(), true);
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.evaluate(() => { player.pause(); player.currentTime(0); });
+        await page.locator('#chat-settings summary').click();
+        const timingRequest = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/chat_timing/2isYuQZMbdU'));
+        await page.locator('#chat-timing').fill('1');
+        await page.locator('#chat-timing').press('Tab');
+        await timingRequest;
+        assert.equal(await page.locator('.chat-message').count(), 0);
+        await page.evaluate(() => player.currentTime(1.6));
+        await page.locator('.chat-message').first().waitFor();
+        assert.ok(chatWrites.some(write => write.path.endsWith('/2isYuQZMbdU') && write.body.offsetMs === 1000));
+        await page.evaluate(() => player.currentTime(0));
+        await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 0);
+        const earlyRequest = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/chat_timing/2isYuQZMbdU'));
+        await page.locator('#chat-timing').fill('-1');
+        await page.locator('#chat-timing').press('Tab');
+        await earlyRequest;
+        await page.evaluate(() => { player.currentTime(0); });
+        await page.locator('.chat-message').first().waitFor();
+        assert.ok(chatWrites.some(write => write.path.endsWith('/2isYuQZMbdU') && write.body.offsetMs === -1000));
+        const settingsRequest = page.waitForResponse(response => new URL(response.url()).pathname === '/api/v1/auth/chat_preferences');
+        await page.locator('#chat-show-timestamps').uncheck();
+        await settingsRequest;
+        assert.ok(chatWrites.some(write => write.path === '/api/v1/auth/chat_preferences' && write.body.chat_show_timestamps === false));
         assert.deepEqual(errors, []);
         await context.close();
     });

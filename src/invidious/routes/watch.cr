@@ -71,6 +71,7 @@ module Invidious::Routes::Watch
     playback_sync = !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now
     env.response.headers["Cache-Control"] = "private, no-store" if playback_sync
     playback_position = playback_sync ? Invidious::Database::PlaybackPositions.select(user.not_nil!.email, id).try(&.[:position_seconds]) : nil
+    chat_timing_ms = user && video.live_chat_replay? ? Invidious::Database::ChatTimingOffsets.select(user.email, id) : 0
 
     if CONFIG.enable_user_notifications && notifications && notifications.includes? id
       Invidious::Database::Users.remove_notification(user.as(User), id)

@@ -104,6 +104,7 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
   params.vr_mode = false
   playback_sync = false
   playback_position = nil
+  chat_timing_ms = 0
   user = account ? env.get?("user").try(&.as(User)) : nil
   subscriptions = [] of String
   nojs = false
@@ -363,6 +364,7 @@ puts "Rendered frontend fixtures to #{output}"
 
 # Account menus on recommendation cards without a PostgreSQL dependency.
 File.write("#{output}/watch-actions.html", watch_fixture(signed_in_env("/watch?v=2isYuQZMbdU"), nil))
+File.write("#{output}/watch-chat-account.html", watch_fixture(signed_in_env("/watch?v=2isYuQZMbdU"), nil, account: true, chat: true))
 
 def search_blocked_fixture(include_blocked = false)
   env = signed_in_env("/search?q=light")

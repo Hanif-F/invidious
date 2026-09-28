@@ -137,6 +137,15 @@ struct Invidious::User
         Invidious::Database::PlaybackPositions.clear(user.email) unless user.preferences.save_player_pos
       end
 
+      if offsets = data["chat_timing_offsets"]?.try(&.as_a?)
+        offsets.each do |entry|
+          video_id = entry["video_id"]?.try(&.as_s?)
+          offset = entry["offset_ms"]?.try(&.as_i?)
+          next unless video_id && validate_video_id(video_id) && offset && (-3_600_000..3_600_000).includes?(offset)
+          Invidious::Database::ChatTimingOffsets.upsert(user.email, video_id, offset)
+        end
+      end
+
       if user.preferences.save_player_pos && (positions = data["playback_positions"]?.try &.as_a?)
         parse_playback_positions(positions).each do |position|
           Invidious::Database::PlaybackPositions.upsert(

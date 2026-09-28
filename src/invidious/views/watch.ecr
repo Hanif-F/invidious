@@ -64,7 +64,9 @@
     "projection_type" => video.projection_type,
     "local_disabled" => CONFIG.disabled?("local"),
     "support_reddit" => true,
-    "live_now" => video.live_now
+    "live_now" => video.live_now,
+    "chat_account" => !!user,
+    "chat_timing_ms" => chat_timing_ms
 }.to_pretty_json
 %>
 </script>
@@ -105,11 +107,48 @@
     "chat_empty" => I18n.translate(locale, "ui_chat_empty"),
     "show_chat" => I18n.translate(locale, "ui_show_chat"),
     "hide_chat" => I18n.translate(locale, "ui_hide_chat"),
+    "chat_settings" => I18n.translate(locale, "ui_chat_settings"),
+    "chat_invalid_pattern" => I18n.translate(locale, "ui_chat_invalid_pattern"),
+    "chat_save_error" => I18n.translate(locale, "ui_chat_save_error"),
 }.to_json
 %></script>
-<div class="watch-layout watch-wide<%= " watch-without-sidebar" unless params.related_videos || plid || video.live_chat_replay? %>" id="watch-layout">
+<div class="watch-layout watch-wide<%= " watch-without-sidebar" unless params.related_videos || plid %><%= " watch-has-chat" if video.live_chat_replay? %>" id="watch-layout">
     <div class="watch-player">
-        <div id="player-container"><%= rendered "components/player" %></div>
+        <div id="player-container"><%= rendered "components/player" %>
+        <% if video.live_chat_replay? %>
+        <section class="chat-panel panel" id="chat-panel" aria-labelledby="chat-heading">
+            <header class="chat-heading">
+                <h2 id="chat-heading"><%= I18n.translate(locale, "ui_chat_replay") %></h2>
+                <details class="chat-settings js-only" id="chat-settings">
+                    <summary aria-label="<%= I18n.translate(locale, "ui_chat_settings") %>" title="<%= I18n.translate(locale, "ui_chat_settings") %>">⚙</summary>
+                    <div class="chat-settings-menu pure-form pure-form-stacked">
+                        <label><input id="chat-show-timestamps" type="checkbox"> <%= I18n.translate(locale, "ui_chat_show_timestamps") %></label>
+                        <label for="chat-font-scale"><%= I18n.translate(locale, "ui_chat_font_size") %> <output id="chat-font-output"></output></label>
+                        <input id="chat-font-scale" type="range" min="75" max="150" step="5" value="100">
+                        <label for="chat-width"><%= I18n.translate(locale, "ui_chat_size") %> <output id="chat-width-output"></output></label>
+                        <input id="chat-width" type="range" min="280" max="640" step="20" value="440">
+                        <label for="chat-user-blacklist"><%= I18n.translate(locale, "ui_chat_user_blacklist") %></label>
+                        <input id="chat-user-blacklist" type="text" autocomplete="off" placeholder="UC… @handle">
+                        <label for="chat-word-blacklist"><%= I18n.translate(locale, "ui_chat_word_blacklist") %></label>
+                        <input id="chat-word-blacklist" type="text" autocomplete="off" placeholder="word /pattern/">
+                        <label for="chat-timing"><%= I18n.translate(locale, "ui_chat_custom_timing") %></label>
+                        <input id="chat-timing" type="number" min="-3600" max="3600" step="0.1" value="0">
+                        <p id="chat-settings-status" role="status"></p>
+                    </div>
+                </details>
+            </header>
+            <div class="chat-scroll-area js-only">
+                <div class="chat-messages" id="chat-messages" role="log" aria-live="off"></div>
+                <button id="chat-sync" class="chat-sync pure-button" type="button" aria-controls="chat-messages" hidden><%= I18n.translate(locale, "ui_sync_chat") %></button>
+            </div>
+            <div class="chat-footer js-only">
+                <p id="chat-status" role="status"><%= I18n.translate(locale, "ui_chat_loading") %></p>
+                <button id="chat-retry" class="pure-button" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
+            </div>
+        </section>
+        <% end %>
+        </div>
+        <% if video.live_chat_replay? %><noscript><p class="chat-nojs"><%= I18n.translate(locale, "ui_chat_requires_js") %></p></noscript><% end %>
     </div>
     <div class="watch-primary">
         <header class="watch-heading">
@@ -349,7 +388,7 @@
                 <% end %>
             </div>
     </div>
-    <% if params.related_videos || plid || video.live_chat_replay? %>
+    <% if params.related_videos || plid %>
     <aside class="watch-sidebar">
         <% if plid %>
         <section class="queue-panel panel" id="playlist-panel">
@@ -363,20 +402,6 @@
             <button id="queue-retry" class="pure-button queue-retry" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
             <button id="queue-toggle" class="queue-toggle pure-button js-only" type="button" aria-expanded="false" aria-controls="playlist"><%= I18n.translate(locale, "ui_show_queue") %></button>
             <div id="playlist" class="queue-list"></div>
-        </section>
-        <% end %>
-        <% if video.live_chat_replay? %>
-        <section class="chat-panel panel" id="chat-panel" aria-labelledby="chat-heading">
-            <h2 class="panel-heading" id="chat-heading"><%= I18n.translate(locale, "ui_chat_replay") %></h2>
-            <div class="chat-scroll-area js-only">
-                <div class="chat-messages" id="chat-messages" role="log" aria-live="off"></div>
-                <button id="chat-sync" class="chat-sync pure-button" type="button" aria-controls="chat-messages" hidden><%= I18n.translate(locale, "ui_sync_chat") %></button>
-            </div>
-            <div class="chat-footer js-only">
-                <p id="chat-status" role="status"><%= I18n.translate(locale, "ui_chat_loading") %></p>
-                <button id="chat-retry" class="pure-button" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
-            </div>
-            <noscript><p class="chat-nojs"><%= I18n.translate(locale, "ui_chat_requires_js") %></p></noscript>
         </section>
         <% end %>
         <% if params.related_videos %>

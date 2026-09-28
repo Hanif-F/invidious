@@ -96,6 +96,11 @@ struct Preferences
   property dearrow_enabled : Bool = CONFIG.default_user_preferences.dearrow_enabled
   property dearrow_show_original : Bool = CONFIG.default_user_preferences.dearrow_show_original
   property search_privacy : Bool = CONFIG.default_user_preferences.search_privacy
+  property chat_show_timestamps : Bool = true
+  property chat_font_scale : Int32 = 100
+  property chat_width_px : Int32 = 440
+  property chat_user_blacklist : String = ""
+  property chat_word_blacklist : String = ""
 
   module ThemeDeadline
     def self.from_json(value : JSON::PullParser) : Int64?

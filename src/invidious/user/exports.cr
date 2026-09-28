@@ -11,6 +11,16 @@ struct Invidious::User
           json.field "watch_history", user.watched
           json.field "watch_history_details", Invidious::Database::WatchHistory.entries(user)
           json.field "preferences", user.preferences
+          json.field "chat_timing_offsets" do
+            json.array do
+              Invidious::Database::ChatTimingOffsets.select_all(user.email).each do |video_id, offset_ms|
+                json.object do
+                  json.field "video_id", video_id
+                  json.field "offset_ms", offset_ms
+                end
+              end
+            end
+          end
           json.field "playback_positions" do
             json.array do
               Invidious::Database::PlaybackPositions.select_all(user.email).each do |position|

@@ -8,10 +8,34 @@
     var status = document.getElementById('chat-status');
     var retry = document.getElementById('chat-retry');
     var sync = document.getElementById('chat-sync');
-    var sidebar = panel.closest('.watch-sidebar');
+    var container = document.getElementById('player-container');
     var layout = document.getElementById('watch-layout');
-    var chatOnly = !sidebar.querySelector('#playlist-panel, .recommendations');
     var labels = JSON.parse(document.getElementById('watch_ui_data').textContent);
+    var controls = {
+        timestamps: document.getElementById('chat-show-timestamps'),
+        font: document.getElementById('chat-font-scale'),
+        width: document.getElementById('chat-width'),
+        users: document.getElementById('chat-user-blacklist'),
+        words: document.getElementById('chat-word-blacklist'),
+        timing: document.getElementById('chat-timing')
+    };
+    var settingsStatus = document.getElementById('chat-settings-status');
+    var account = !!video_data.chat_account;
+    var defaults = {
+        chat_show_timestamps: true, chat_font_scale: 100, chat_width_px: 440,
+        chat_user_blacklist: '', chat_word_blacklist: ''
+    };
+    var savedSettings = account ? video_data.preferences : readLocal('chat-settings-v1', {});
+    var settings = Object.keys(defaults).reduce(function (result, key) {
+        result[key] = savedSettings && savedSettings[key] !== undefined ? savedSettings[key] : defaults[key];
+        return result;
+    }, {});
+    var timingMs = account ? (video_data.chat_timing_ms || 0) : Number(readLocal('chat-timing-v1-' + video_data.id, 0));
+    if (!Number.isFinite(timingMs) || Math.abs(timingMs) > 3600000) timingMs = 0;
+    var wordPatterns = [];
+    var userBlacklist = [];
+    var saveTimer;
+    var csrfToken;
     var queue = [];
     var seen = new Set();
     var removed = new Set();
@@ -24,6 +48,104 @@
     var controller;
     var nextRequestAt = 0;
     var autoScroll = true;
+    var mobileLayout = matchMedia('(max-width: 1099px)').matches || /\bMobile\b|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    function readLocal(key, fallback) {
+        try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+        catch (error) { return fallback; }
+    }
+
+    function writeLocal(key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch (error) { /* Private browsing can disable storage. */ }
+    }
+
+    function compilePatterns(raw) {
+        return raw.trim().split(/\s+/).filter(Boolean).map(function (token) {
+            if (token.length > 128) throw new Error(labels.chat_invalid_pattern);
+            if (token[0] === '/' && token[token.length - 1] === '/')
+                return new RegExp(token.slice(1, -1), 'i');
+            return {test: function (value) { return value.toLocaleLowerCase().includes(token.toLocaleLowerCase()); }};
+        });
+    }
+
+    function validMessage(message) {
+        var id = (message.authorChannelId || '').toLocaleLowerCase();
+        var handle = (message.authorHandle || '').toLocaleLowerCase().replace(/^@/, '');
+        if (userBlacklist.some(function (entry) { return entry === id || entry.replace(/^@/, '') === handle && !!handle; })) return false;
+        return !wordPatterns.some(function (pattern) { return pattern.test(message.text); });
+    }
+
+    function applySettings() {
+        settings.chat_font_scale = Math.max(75, Math.min(150, Number(settings.chat_font_scale) || 100));
+        settings.chat_width_px = Math.max(280, Math.min(640, Number(settings.chat_width_px) || 440));
+        controls.timestamps.checked = !!settings.chat_show_timestamps;
+        controls.font.value = String(settings.chat_font_scale);
+        controls.width.value = String(settings.chat_width_px);
+        controls.users.value = settings.chat_user_blacklist || '';
+        controls.words.value = settings.chat_word_blacklist || '';
+        controls.timing.value = String(timingMs / 1000);
+        document.getElementById('chat-font-output').value = settings.chat_font_scale + '%';
+        document.getElementById('chat-width-output').value = settings.chat_width_px + 'px';
+        panel.classList.toggle('chat-hide-timestamps', !settings.chat_show_timestamps);
+        panel.style.setProperty('--chat-font-scale', String(settings.chat_font_scale / 100));
+        player.el().style.setProperty('--chat-width', settings.chat_width_px + 'px');
+        userBlacklist = (settings.chat_user_blacklist || '').trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+        try { wordPatterns = compilePatterns(settings.chat_word_blacklist || ''); settingsStatus.textContent = ''; }
+        catch (error) { settingsStatus.textContent = labels.chat_invalid_pattern; return false; }
+        updateGeometry();
+        return true;
+    }
+
+    function updateGeometry() {
+        if (panel.hidden) return;
+        var fullscreen = player.isFullscreen();
+        var width = fullscreen ? innerWidth : container.clientWidth;
+        if (!width) return;
+        if (!fullscreen) mobileLayout = matchMedia('(max-width: 1099px)').matches || /\bMobile\b|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        var mobile = mobileLayout;
+        player.el().classList.toggle('chat-mobile', mobile);
+        var chatWidth = Math.min(settings.chat_width_px, Math.max(280, width - 480));
+        var videoWidth = mobile ? width : width - chatWidth;
+        var videoHeight = Math.round(videoWidth * 9 / 16);
+        if (fullscreen && mobile) videoHeight = Math.min(videoHeight, Math.round(innerHeight * .65));
+        else if (!fullscreen && !mobile && layout.classList.contains('watch-wide')) videoHeight = Math.min(videoHeight, Math.round(innerHeight * .78));
+        var chatHeight = mobile ? (fullscreen ? innerHeight - videoHeight : Math.max(240, Math.min(360, Math.round(innerHeight * .38)))) : 0;
+        player.el().style.setProperty('--chat-video-height', videoHeight + 'px', 'important');
+        var tech = player.el().querySelector('.vjs-tech');
+        if (mobile) {
+            if (tech) tech.style.setProperty('height', videoHeight + 'px', 'important');
+            panel.style.setProperty('top', videoHeight + 'px', 'important');
+            panel.style.setProperty('height', chatHeight + 'px', 'important');
+        } else {
+            if (tech) tech.style.removeProperty('height');
+            panel.style.removeProperty('top');
+            panel.style.removeProperty('height');
+        }
+        if (!fullscreen) container.style.setProperty('--chat-container-height', videoHeight + chatHeight + 'px');
+    }
+
+    function saveSettings() {
+        if (!account) { writeLocal('chat-settings-v1', settings); return; }
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(function () {
+            fetch('/api/v1/auth/csrf').then(function (response) { if (!response.ok) throw new Error(); return response.json(); })
+                .then(function (data) { csrfToken = data.csrfToken; return fetch('/api/v1/auth/chat_preferences', {
+                    method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
+                    body: JSON.stringify(settings)
+                }); }).then(function (response) { if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
+                .catch(function () { settingsStatus.textContent = labels.chat_save_error; });
+        }, 350);
+    }
+
+    function saveTiming() {
+        if (!account) { writeLocal('chat-timing-v1-' + video_data.id, timingMs); return; }
+        fetch('/api/v1/auth/csrf').then(function (response) { if (!response.ok) throw new Error(); return response.json(); })
+            .then(function (data) { return fetch('/api/v1/auth/chat_timing/' + encodeURIComponent(video_data.id), {
+                method: 'PUT', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': data.csrfToken},
+                body: JSON.stringify({offsetMs: timingMs})
+            }); }).then(function (response) { if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
+            .catch(function () { settingsStatus.textContent = labels.chat_save_error; });
+    }
 
     function nearBottom() {
         return list.scrollHeight - list.clientHeight - list.scrollTop <= 32;
@@ -54,6 +176,12 @@
         return Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds * 1000)) : 0;
     }
 
+    function duePositionMs() { return positionMs() - timingMs; }
+    function requestPositionMs() {
+        var duration = Number(video_data.length_seconds) * 1000;
+        return Math.max(0, Math.min(Number.isFinite(duration) && duration > 0 ? duration : Infinity, duePositionMs()));
+    }
+
     function timestamp(ms) {
         var seconds = Math.floor(ms / 1000);
         return (seconds >= 3600 ? Math.floor(seconds / 3600) + ':' : '') +
@@ -80,6 +208,12 @@
             author.textContent = message.author;
             meta.appendChild(author);
         }
+        if (message.authorChannelId) {
+            var authorId = document.createElement('span');
+            authorId.className = 'chat-author-id';
+            authorId.textContent = message.authorChannelId;
+            meta.appendChild(authorId);
+        }
         if (message.amount && message.amount !== message.text) {
             var amount = document.createElement('span');
             amount.className = 'chat-amount';
@@ -103,12 +237,12 @@
 
     function showDue() {
         if (panel.hidden) return;
-        var now = positionMs();
+        var now = duePositionMs();
         if (queue.length && queue[0].offsetMs <= now + 250) maintainScroll(function () {
             var removedHeight = 0;
             while (queue.length && queue[0].offsetMs <= now + 250) {
                 var message = queue.shift();
-                if (!removed.has(message.id)) removedHeight += append(message);
+                if (!removed.has(message.id) && validMessage(message)) removedHeight += append(message);
             }
             return removedHeight;
         });
@@ -123,7 +257,7 @@
         loading = true;
         var request = generation;
         var url = new URL('/api/v1/live_chat/' + encodeURIComponent(video_data.id), location.origin);
-        url.searchParams.set('offset_ms', String(initial ? positionMs() : highestOffset));
+        url.searchParams.set('offset_ms', String(initial ? requestPositionMs() : Math.max(0, highestOffset)));
         if (!initial && continuation) url.searchParams.set('continuation', continuation);
         controller = new AbortController();
         list.setAttribute('aria-busy', 'true');
@@ -185,7 +319,7 @@
         seen = new Set();
         removed = new Set();
         continuation = null;
-        highestOffset = positionMs();
+        highestOffset = requestPositionMs();
         hasMore = true;
         loading = false;
         failed = false;
@@ -200,9 +334,15 @@
     function setVisible(visible) {
         if (visible === !panel.hidden) return;
         panel.hidden = !visible;
-        if (chatOnly) {
-            sidebar.hidden = !visible;
-            layout.classList.toggle('watch-without-sidebar', !visible);
+        player.el().classList.toggle('chat-docked', visible);
+        container.classList.toggle('chat-docked', visible);
+        if (visible) updateGeometry();
+        else {
+            container.style.removeProperty('--chat-container-height');
+            var tech = player.el().querySelector('.vjs-tech');
+            if (tech) tech.style.removeProperty('height');
+            panel.style.removeProperty('top');
+            panel.style.removeProperty('height');
         }
         if (player.chatControl) {
             player.chatControl.controlText(visible ? labels.hide_chat : labels.show_chat);
@@ -223,6 +363,62 @@
         showLabel: labels.show_chat,
         hideLabel: labels.hide_chat
     };
+
+    // A child of Video.js's fullscreen element remains visible in page-element fullscreen.
+    player.el().appendChild(panel);
+    player.el().classList.add('chat-docked');
+    container.classList.add('chat-docked');
+    panel.addEventListener('click', function (event) { event.stopPropagation(); });
+    panel.addEventListener('keydown', function (event) { if (event.target.closest('input')) event.stopPropagation(); });
+    applySettings();
+    if (window.ResizeObserver) {
+        var geometryObserver = new ResizeObserver(updateGeometry);
+        geometryObserver.observe(container);
+        player.on('dispose', function () { geometryObserver.disconnect(); });
+    }
+    player.on('fullscreenchange', updateGeometry);
+    player.on('playerresize', updateGeometry);
+    window.addEventListener('resize', updateGeometry);
+
+    controls.timestamps.addEventListener('change', function () {
+        settings.chat_show_timestamps = controls.timestamps.checked;
+        if (applySettings()) saveSettings();
+    });
+    controls.font.addEventListener('input', function () {
+        settings.chat_font_scale = Number(controls.font.value);
+        if (applySettings()) saveSettings();
+    });
+    controls.width.addEventListener('input', function () {
+        settings.chat_width_px = Number(controls.width.value);
+        if (applySettings()) saveSettings();
+    });
+    controls.users.addEventListener('change', function () {
+        settings.chat_user_blacklist = controls.users.value.slice(0, 1024);
+        if (applySettings()) { reset(); saveSettings(); }
+    });
+    controls.words.addEventListener('change', function () {
+        var previous = settings.chat_word_blacklist;
+        settings.chat_word_blacklist = controls.words.value.slice(0, 1024);
+        if (applySettings()) { reset(); saveSettings(); }
+        else { settings.chat_word_blacklist = previous; }
+    });
+    controls.timing.addEventListener('change', function () {
+        var value = Number(controls.timing.value);
+        if (!Number.isFinite(value) || Math.abs(value) > 3600) { controls.timing.value = String(timingMs / 1000); return; }
+        timingMs = Math.round(value * 1000);
+        reset(); saveTiming();
+    });
+    document.addEventListener('click', function (event) {
+        var menu = document.getElementById('chat-settings');
+        if (menu.open && !menu.contains(event.target)) menu.open = false;
+    });
+    document.getElementById('chat-settings').addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            event.currentTarget.open = false;
+            event.currentTarget.querySelector('summary').focus();
+        }
+    });
 
     retry.onclick = reset;
     sync.onclick = function () {

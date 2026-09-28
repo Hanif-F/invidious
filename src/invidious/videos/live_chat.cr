@@ -56,6 +56,12 @@ module Invidious::Videos::LiveChat
           next if id.nil? || id.empty?
 
           author = text_of(renderer["authorName"]?)
+          author_channel_id = renderer["authorExternalChannelId"]?.try(&.as_s?) ||
+                              renderer.dig?("authorName", "runs", 0, "navigationEndpoint", "browseEndpoint", "browseId").try(&.as_s?) || ""
+          handle_path = renderer.dig?("authorName", "runs", 0, "navigationEndpoint", "browseEndpoint", "canonicalBaseUrl").try(&.as_s?) || ""
+          author_handle = renderer["authorHandle"]?.try(&.as_s?) ||
+                          (handle_path.starts_with?("/@") ? handle_path.lchop("/") : nil) ||
+                          (author.starts_with?("@") && !author.includes?(' ') ? author : "")
           message = text_of(renderer["message"]?)
           message = text_of(renderer["headerSubtext"]?) if message.empty?
           message = text_of(renderer["sticker"]?.try(&.dig?("accessibility", "accessibilityData", "label"))) if message.empty?
@@ -64,12 +70,14 @@ module Invidious::Videos::LiveChat
           next if message.empty?
 
           messages << {
-            "id"       => JSON::Any.new(id),
-            "offsetMs" => JSON::Any.new(offset),
-            "author"   => JSON::Any.new(author),
-            "text"     => JSON::Any.new(message),
-            "kind"     => JSON::Any.new(type),
-            "amount"   => JSON::Any.new(amount),
+            "id"              => JSON::Any.new(id),
+            "offsetMs"        => JSON::Any.new(offset),
+            "author"          => JSON::Any.new(author),
+            "authorChannelId" => JSON::Any.new(author_channel_id),
+            "authorHandle"    => JSON::Any.new(author_handle),
+            "text"            => JSON::Any.new(message),
+            "kind"            => JSON::Any.new(type),
+            "amount"          => JSON::Any.new(amount),
           }
         end
       end

@@ -60,6 +60,27 @@ def check_theme_preferences
   Invidious::Routes::PreferencesRoute.update(env)
   saved = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)
   raise "Account form theme lost" unless Preferences.from_json(saved).theme == "fixture-theme"
+  chat_env = HTTP::Server::Context.new(HTTP::Request.new("PATCH", "/api/v1/auth/chat_preferences",
+    HTTP::Headers{"Content-Type" => "application/json"},
+    {chat_show_timestamps: false, chat_font_scale: 125, chat_width_px: 520,
+     chat_user_blacklist: "UCblocked", chat_word_blacklist: "/spam/"}.to_json), HTTP::Server::Response.new(IO::Memory.new))
+  chat_env.set "user", user
+  Invidious::Routes::API::V1::Authenticated.set_chat_preferences(chat_env)
+  chat_prefs = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
+  raise "Account chat settings lost" unless !chat_prefs.chat_show_timestamps && chat_prefs.chat_font_scale == 125 &&
+                                            chat_prefs.chat_width_px == 520 && chat_prefs.chat_user_blacklist == "UCblocked" &&
+                                            chat_prefs.chat_word_blacklist == "/spam/" && chat_prefs.theme == "fixture-theme"
+  partial_chat_env = HTTP::Server::Context.new(HTTP::Request.new("PATCH", "/api/v1/auth/chat_preferences",
+    HTTP::Headers{"Content-Type" => "application/json"}, {chat_show_timestamps: true}.to_json), HTTP::Server::Response.new(IO::Memory.new))
+  partial_chat_env.set "user", user
+  Invidious::Routes::API::V1::Authenticated.set_chat_preferences(partial_chat_env)
+  chat_prefs = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
+  raise "Partial chat settings erased existing values" unless chat_prefs.chat_show_timestamps && chat_prefs.chat_width_px == 520 && chat_prefs.chat_word_blacklist == "/spam/"
+  env = theme_post_env("theme=fixture-theme&save_player_pos=on")
+  env.set "preferences", chat_prefs
+  env.set "user", user
+  Invidious::Routes::PreferencesRoute.update(env)
+  raise "Preferences form erased chat settings" unless Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)).chat_width_px == 520
 
   env = theme_post_env(prefs.to_json, "application/json")
   env.set "user", user
@@ -71,8 +92,23 @@ def check_theme_preferences
   # Empty supporting tables let the production exporter run without upstream calls.
   PG_DB.exec("CREATE TABLE playlists (title TEXT, id TEXT, author TEXT, description TEXT, video_count INTEGER, created TEXT, updated TEXT, privacy TEXT, \"index\" TEXT)")
   PG_DB.exec("CREATE TABLE playback_positions (email TEXT, video_id TEXT, position_seconds INTEGER, updated_at TEXT)")
+  PG_DB.exec("CREATE TABLE chat_timing_offsets (email TEXT, video_id TEXT, offset_ms INTEGER, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (email, video_id))")
+  timing_env = HTTP::Server::Context.new(HTTP::Request.new("PUT", "/api/v1/auth/chat_timing/2isYuQZMbdU",
+    HTTP::Headers{"Content-Type" => "application/json"}, {offsetMs: -1_000}.to_json), HTTP::Server::Response.new(IO::Memory.new))
+  timing_env.params.url["id"] = "2isYuQZMbdU"
+  timing_env.set "user", user
+  raise "Account timing endpoint response lost" unless JSON.parse(Invidious::Routes::API::V1::Authenticated.set_chat_timing(timing_env))["offsetMs"].as_i == -1_000
+  raise "Account chat timing lost" unless Invidious::Database::ChatTimingOffsets.select(user.email, "2isYuQZMbdU") == -1_000
+  get_timing_env = HTTP::Server::Context.new(HTTP::Request.new("GET", "/api/v1/auth/chat_timing/2isYuQZMbdU"), HTTP::Server::Response.new(IO::Memory.new))
+  get_timing_env.params.url["id"] = "2isYuQZMbdU"
+  get_timing_env.set "user", user
+  raise "Account timing endpoint read lost" unless JSON.parse(Invidious::Routes::API::V1::Authenticated.get_chat_timing(get_timing_env))["offsetMs"].as_i == -1_000
   exported = Invidious::User::Export.to_invidious(user)
   raise "Exported theme lost" unless JSON.parse(exported)["preferences"]["theme"] == "fixture-theme"
+  raise "Exported chat timing lost" unless JSON.parse(exported)["chat_timing_offsets"].as_a.first["offset_ms"].as_i == -1_000
+  Invidious::Database::ChatTimingOffsets.upsert(user.email, "2isYuQZMbdU", 0)
+  Invidious::User::Import.from_invidious(user, {chat_timing_offsets: JSON.parse(exported)["chat_timing_offsets"]}.to_json)
+  raise "Imported chat timing lost" unless Invidious::Database::ChatTimingOffsets.select(user.email, "2isYuQZMbdU") == -1_000
   Invidious::User::Import.from_invidious(user, {preferences: JSON.parse(exported)["preferences"]}.to_json)
   saved = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)
   raise "Imported theme lost" unless Preferences.from_json(saved).theme == "fixture-theme"

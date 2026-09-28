@@ -8,11 +8,18 @@ def create_user(sid, email, password)
   token = Base64.urlsafe_encode(Random::Secure.random_bytes(32))
 
   user = Invidious::User.new({
-    updated:            Time.utc,
-    notifications:      [] of String,
-    subscriptions:      [] of String,
-    email:              email,
-    preferences:        Preferences.new(CONFIG.default_user_preferences.to_tuple.merge({sponsorblock_channel_overrides: {} of String => Invidious::SponsorBlock::ChannelOverride})),
+    updated:       Time.utc,
+    notifications: [] of String,
+    subscriptions: [] of String,
+    email:         email,
+    preferences:   Preferences.new(CONFIG.default_user_preferences.to_tuple.merge({
+      sponsorblock_channel_overrides: {} of String => Invidious::SponsorBlock::ChannelOverride,
+      chat_show_timestamps:           true,
+      chat_font_scale:                100,
+      chat_width_px:                  440,
+      chat_user_blacklist:            "",
+      chat_word_blacklist:            "",
+    })),
     password:           password.to_s,
     token:              token,
     watched:            [] of String,

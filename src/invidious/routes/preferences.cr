@@ -242,6 +242,11 @@ module Invidious::Routes::PreferencesRoute
       sponsorblock_colors:            Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_color_#{category}"]? || previous.sponsorblock_colors[category]} },
       dearrow_enabled:                env.params.body["dearrow_enabled"]? == "on",
       dearrow_show_original:          env.params.body["dearrow_show_original"]? == "on",
+      chat_show_timestamps:           previous.chat_show_timestamps,
+      chat_font_scale:                previous.chat_font_scale,
+      chat_width_px:                  previous.chat_width_px,
+      chat_user_blacklist:            previous.chat_user_blacklist,
+      chat_word_blacklist:            previous.chat_word_blacklist,
     }.to_json)
 
     if user = env.get? "user"
