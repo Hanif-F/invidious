@@ -306,6 +306,7 @@ Dir.mkdir_p(output)
 end
 File.write("#{output}/watch-single.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil))
 File.write("#{output}/watch-chat.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil, chat: true))
+File.write("#{output}/watch-chat-diary.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU", "dark", visual_theme: "diary"), nil, chat: true))
 File.write("#{output}/watch-chat-only.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil, chat: true, chat_only: true))
 File.write("#{output}/watch-thin.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "dark", true)))
 File.write("#{output}/browse-compact.html", browse_fixture(fixture_env("/feed/popular", "dark", false, "compact")))

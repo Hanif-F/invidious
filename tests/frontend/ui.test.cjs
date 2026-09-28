@@ -332,6 +332,16 @@ for (const engine of engines) {
             const box = await page.locator(selector).boundingBox();
             assert.ok(box.y >= normal.chat.y + normal.chat.height - 3, `${selector} overlaps the normal player`);
         }
+        await page.locator('.vjs-chat-control').click();
+        await page.waitForFunction(() => !document.getElementById('watch-layout').classList.contains('watch-chat-docked'));
+        const hiddenVideo = await page.locator('#player-container').boundingBox();
+        const hiddenSidebar = await page.locator('.watch-sidebar').boundingBox();
+        assert.ok(Math.abs(hiddenVideo.y - hiddenSidebar.y) <= 3);
+        assert.ok(hiddenVideo.x + hiddenVideo.width <= hiddenSidebar.x - 10);
+        assert.ok(hiddenVideo.width > normal.video.width);
+        await page.evaluate(() => player.userActive(true));
+        await page.locator('.vjs-chat-control').click();
+        await page.waitForFunction(() => document.getElementById('watch-layout').classList.contains('watch-chat-docked'));
         await page.locator('.vjs-fullscreen-control').click();
         await page.waitForFunction(() => player.isFullscreen());
         const full = await positions();
@@ -342,37 +352,44 @@ for (const engine of engines) {
         await context.close();
     });
 
-    test(`${engine}: mobile chat stays below video in portrait and landscape fullscreen`, async () => {
-        for (const [width, height] of [[390, 844], [844, 390]]) {
-            const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, touch: true, mobileUserAgent: true, width, height});
-            await page.locator('.chat-message').first().waitFor();
-            await page.evaluate(() => { player.hasStarted(true); player.userActive(true); });
-            const video = await page.locator('#player .vjs-tech').first().boundingBox();
-            const chat = await page.locator('#chat-panel').boundingBox();
-            assert.ok(chat.y >= video.y + video.height - 3);
-            assert.ok(Math.abs(chat.x - video.x) <= 3);
-            await page.locator('.vjs-fullscreen-control').click();
-            await page.waitForFunction(() => player.isFullscreen());
-            try {
-                await page.waitForFunction(() => {
-                    const video = document.querySelector('#player .vjs-tech').getBoundingClientRect();
-                    const chat = document.getElementById('chat-panel').getBoundingClientRect();
-                    return chat.top >= video.bottom - 3 && chat.height > 80;
-                }, null, {timeout: 5000});
-            } catch (error) {
-                const geometry = await page.evaluate(() => {
-                    const video = document.querySelector('#player .vjs-tech').getBoundingClientRect();
-                    const chat = document.getElementById('chat-panel').getBoundingClientRect();
-                    return {video: video.toJSON(), chat: chat.toJSON(), viewport: [innerWidth, innerHeight], fullscreen: player.isFullscreen(), element: !!document.fullscreenElement, playerStyle: document.getElementById('player').getAttribute('style'), techStyle: document.querySelector('#player .vjs-tech').getAttribute('style'), chatStyle: document.getElementById('chat-panel').getAttribute('style')};
-                });
-                throw new Error(JSON.stringify(geometry));
-            }
-            assert.ok(await page.locator('#chat-panel').isVisible());
-            await page.locator('#chat-settings summary').click();
-            assert.ok(await page.locator('.chat-settings-menu').isVisible());
-            assert.deepEqual(errors, []);
-            await context.close();
+    test(`${engine}: mobile docked chat follows orientation in and out of fullscreen`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, touch: true,
+            mobileUserAgent: true, width: 390, height: 844});
+        await page.locator('.chat-message').first().waitFor();
+        async function assertPlacement(side) {
+            await page.waitForFunction(side => {
+                const video = document.querySelector('#player .vjs-tech').getBoundingClientRect();
+                const chat = document.getElementById('chat-panel').getBoundingClientRect();
+                return side === 'below' ? chat.top >= video.bottom - 3 && chat.height > 80 :
+                    Math.abs(chat.left - video.right) <= 3 && Math.abs(chat.top - video.top) <= 3 && chat.width > 150;
+            }, side);
         }
+        await assertPlacement('below');
+        await page.setViewportSize({width: 844, height: 390});
+        await assertPlacement('beside');
+        await page.setViewportSize({width: 390, height: 844});
+        await assertPlacement('below');
+        await page.evaluate(() => { player.hasStarted(true); player.userActive(true); });
+        await page.locator('.vjs-fullscreen-control').click();
+        await page.waitForFunction(() => player.isFullscreen());
+        await assertPlacement(await page.evaluate(() => matchMedia('(orientation: portrait)').matches ? 'below' : 'beside'));
+        if (engine === 'chromium') {
+            const client = await context.newCDPSession(page);
+            await client.send('Emulation.setDeviceMetricsOverride', {width: 844, height: 390,
+                deviceScaleFactor: 1, mobile: true, screenOrientation: {type: 'landscapePrimary', angle: 90}});
+            await assertPlacement('beside');
+            await client.send('Emulation.setDeviceMetricsOverride', {width: 390, height: 844,
+                deviceScaleFactor: 1, mobile: true, screenOrientation: {type: 'portraitPrimary', angle: 0}});
+            await assertPlacement('below');
+            await client.send('Emulation.clearDeviceMetricsOverride');
+        }
+        await page.locator('#chat-settings summary').click();
+        assert.ok(await page.locator('.chat-settings-menu').isVisible());
+        await page.evaluate(() => { player.exitFullscreen(); });
+        await page.waitForFunction(() => !player.isFullscreen());
+        await assertPlacement('below');
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 
     test(`${engine}: chat overlay can be edited, saved, and restored`, async () => {
@@ -383,6 +400,7 @@ for (const engine of engines) {
         await page.locator('#chat-width').evaluate(el => { el.value = '640'; el.dispatchEvent(new Event('input', {bubbles: true})); });
         await page.locator('#chat-overlay-mode').check();
         await page.waitForFunction(() => document.getElementById('player').classList.contains('chat-overlay'));
+        assert.equal(await page.locator('#watch-layout').evaluate(el => el.classList.contains('watch-chat-docked')), false);
         await page.waitForFunction(() => {
             const player = document.getElementById('player').getBoundingClientRect();
             const video = document.querySelector('#player .vjs-tech').getBoundingClientRect();
@@ -520,6 +538,8 @@ for (const engine of engines) {
         assert.equal(await page.locator('.chat-author-id').first().textContent(), chatMessages[0].authorChannelId);
         assert.ok(await page.locator('.chat-author-id').first().evaluate(el => el.scrollWidth <= el.clientWidth));
         await page.locator('#chat-settings summary').click();
+        await page.locator('#chat-hide-user-ids').check();
+        assert.equal(await page.locator('.chat-author-id').first().isVisible(), false);
         await page.locator('#chat-show-timestamps').uncheck();
         await page.locator('#chat-font-scale').evaluate(el => { el.value = '150'; el.dispatchEvent(new Event('input', {bubbles: true})); });
         await page.locator('#chat-width').evaluate(el => { el.value = '640'; el.dispatchEvent(new Event('input', {bubbles: true})); });
@@ -535,7 +555,7 @@ for (const engine of engines) {
         await page.locator('#chat-word-blacklist').press('Tab');
         await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 1);
         assert.equal(await page.locator('.chat-time').first().isVisible(), false);
-        assert.equal(await page.locator('#chat-font-output').textContent(), '150%');
+        assert.equal(await page.locator('#chat-font-value').inputValue(), '150');
         await page.locator('#chat-word-blacklist').fill('/[/');
         await page.locator('#chat-word-blacklist').press('Tab');
         await page.getByText('Invalid regular expression').waitFor();
@@ -546,8 +566,115 @@ for (const engine of engines) {
         assert.equal(await page.locator('#chat-font-scale').inputValue(), '150');
         assert.equal(await page.locator('#chat-width').inputValue(), '640');
         assert.equal(await page.locator('#chat-timing').inputValue(), '-1');
+        assert.equal(await page.locator('#chat-hide-user-ids').isChecked(), true);
+        assert.equal(await page.locator('.chat-author-id').first().isVisible(), false);
         assert.equal(await page.locator('.chat-time').first().isVisible(), false);
         assert.equal(await page.evaluate(() => localStorage.getItem('chat-timing-v1-other')), null);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: typed chat sizes extend the sliders and persist locally`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true});
+        await page.locator('.chat-message').first().waitFor();
+        await page.locator('#chat-settings summary').click();
+        await page.locator('#chat-font-value').fill('50');
+        await page.locator('#chat-font-value').press('Tab');
+        await page.locator('#chat-width-value').fill('700');
+        await page.locator('#chat-width-value').press('Tab');
+        assert.equal(await page.locator('#chat-font-scale').inputValue(), '75');
+        assert.equal(await page.locator('#chat-width').inputValue(), '640');
+        assert.equal(await page.locator('#chat-panel').evaluate(el => Math.round(parseFloat(getComputedStyle(el).fontSize))), 9);
+        assert.equal(Math.round((await page.locator('#chat-panel').boundingBox()).width), 700);
+        await page.locator('#chat-font-value').fill('301');
+        await page.locator('#chat-font-value').press('Tab');
+        await page.locator('#chat-width-value').fill('159');
+        await page.locator('#chat-width-value').press('Tab');
+        assert.equal(await page.locator('#chat-font-value').inputValue(), '50');
+        assert.equal(await page.locator('#chat-width-value').inputValue(), '700');
+        await page.reload();
+        assert.equal(await page.locator('#chat-font-value').inputValue(), '50');
+        assert.equal(await page.locator('#chat-width-value').inputValue(), '700');
+        assert.equal(await page.locator('#chat-font-scale').inputValue(), '75');
+        assert.equal(await page.locator('#chat-width').inputValue(), '640');
+        await page.locator('#chat-font-scale').evaluate(el => { el.value = '100'; el.dispatchEvent(new Event('input', {bubbles: true})); });
+        await page.locator('#chat-width').evaluate(el => { el.value = '440'; el.dispatchEvent(new Event('input', {bubbles: true})); });
+        assert.equal(await page.locator('#chat-font-value').inputValue(), '100');
+        assert.equal(await page.locator('#chat-width-value').inputValue(), '440');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: signed-in chat display settings are independent by browser`, async () => {
+        const fixture = fs.readFileSync(path.join(generated, 'watch-chat-account.html'), 'utf8');
+        const original = JSON.parse(fixture.match(/<script id="video_data"[^>]*>([\s\S]*?)<\/script>/)[1]).preferences;
+        const legacy = {...original, chat_font_scale: 150, chat_width_px: 640, chat_overlay_mode: true};
+        const first = await pageFor(engine, {fixture: 'watch-chat-account', realPlayer: true,
+            videoData: {preferences: legacy},
+            initScript: "if (!localStorage.getItem('chat-settings-v1')) localStorage.setItem('chat-settings-v1', JSON.stringify({chat_hide_user_ids:true, chat_font_scale:50, chat_width_px:200, chat_overlay_mode:false}))"});
+        const second = await pageFor(engine, {fixture: 'watch-chat-account', realPlayer: true,
+            videoData: {preferences: legacy}});
+        await first.page.locator('.chat-message').first().waitFor();
+        await second.page.locator('.chat-message').first().waitFor();
+        assert.equal(await first.page.locator('#chat-font-value').inputValue(), '50');
+        assert.equal(await first.page.locator('#chat-width-value').inputValue(), '200');
+        assert.equal(await first.page.locator('#chat-hide-user-ids').isChecked(), true);
+        assert.equal(await second.page.locator('#chat-font-value').inputValue(), '100');
+        assert.equal(await second.page.locator('#chat-width-value').inputValue(), '440');
+        assert.equal(await second.page.locator('#chat-overlay-mode').isChecked(), false);
+        assert.equal(await second.page.locator('#chat-hide-user-ids').isChecked(), false);
+        await first.page.locator('#chat-settings summary').click();
+        await first.page.locator('#chat-font-value').fill('225');
+        await first.page.locator('#chat-font-value').press('Tab');
+        await first.page.locator('#chat-width-value').fill('720');
+        await first.page.locator('#chat-width-value').press('Tab');
+        await first.page.locator('#chat-overlay-mode').check();
+        await first.page.locator('#chat-overlay-opacity').evaluate(el => { el.value = '40'; el.dispatchEvent(new Event('input', {bubbles: true})); });
+        await first.page.locator('#chat-modify-overlay').click();
+        await first.page.locator('#chat-overlay-move').focus();
+        await first.page.keyboard.press('ArrowLeft');
+        await first.page.locator('#chat-overlay-save').click();
+        const savedLocal = JSON.parse(await first.page.evaluate(() => localStorage.getItem('chat-settings-v1')));
+        assert.equal(savedLocal.chat_overlay_mode, true);
+        assert.equal(savedLocal.chat_overlay_opacity, 40);
+        assert.ok(savedLocal.chat_overlay_x < 560);
+        await first.page.reload();
+        assert.equal(await first.page.locator('#chat-font-value').inputValue(), '225');
+        assert.equal(await first.page.locator('#chat-width-value').inputValue(), '720');
+        assert.equal(await first.page.locator('#chat-overlay-mode').isChecked(), true);
+        assert.equal(await first.page.locator('#chat-overlay-opacity').inputValue(), '40');
+        assert.equal(await second.page.locator('#chat-font-value').inputValue(), '100');
+        assert.equal(await second.page.locator('#chat-overlay-mode').isChecked(), false);
+        assert.equal(first.chatWrites.filter(write => write.path === '/api/v1/auth/chat_preferences').length, 0);
+        assert.deepEqual(first.errors, []);
+        assert.deepEqual(second.errors, []);
+        await first.context.close();
+        await second.context.close();
+    });
+
+    test(`${engine}: Diary chat overlay has no frame or reserved heading band`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat-diary', realPlayer: true});
+        await page.locator('.chat-message').first().waitFor();
+        await page.locator('#chat-settings summary').click();
+        await page.locator('#chat-overlay-mode').check();
+        await page.waitForFunction(() => document.getElementById('player').classList.contains('chat-overlay'));
+        const geometry = await page.evaluate(() => {
+            const panel = document.getElementById('chat-panel');
+            const style = getComputedStyle(panel);
+            return {panel: panel.getBoundingClientRect().toJSON(),
+                scroll: panel.querySelector('.chat-scroll-area').getBoundingClientRect().toJSON(),
+                message: panel.querySelector('.chat-message').getBoundingClientRect().toJSON(),
+                borderRight: style.borderRightWidth, borderBottom: style.borderBottomWidth,
+                shadow: style.boxShadow};
+        });
+        assert.equal(geometry.borderRight, '0px');
+        assert.equal(geometry.borderBottom, '0px');
+        assert.equal(geometry.shadow, 'none');
+        assert.ok(Math.abs(geometry.scroll.top - geometry.panel.top) <= 2);
+        assert.ok(geometry.message.top <= geometry.panel.top + 35);
+        await page.locator('#chat-settings').evaluate(el => { el.open = false; });
+        await page.locator('#chat-settings summary').click();
+        assert.ok(await page.locator('.chat-settings-menu').isVisible());
         assert.deepEqual(errors, []);
         await context.close();
     });
@@ -582,12 +709,14 @@ for (const engine of engines) {
         await page.locator('#chat-show-timestamps').uncheck();
         await settingsRequest;
         assert.ok(chatWrites.some(write => write.path === '/api/v1/auth/chat_preferences' && write.body.chat_show_timestamps === false));
-        const overlayRequest = page.waitForResponse(response => new URL(response.url()).pathname === '/api/v1/auth/chat_preferences');
+        const accountWrites = chatWrites.filter(write => write.path === '/api/v1/auth/chat_preferences').length;
         await page.locator('#chat-overlay-mode').check();
         await page.locator('#chat-overlay-opacity').evaluate(el => { el.value = '0'; el.dispatchEvent(new Event('input', {bubbles: true})); });
-        await overlayRequest;
-        assert.ok(chatWrites.some(write => write.path === '/api/v1/auth/chat_preferences' &&
-            write.body.chat_overlay_mode === true && write.body.chat_overlay_opacity === 0));
+        assert.deepEqual(JSON.parse(await page.evaluate(() => localStorage.getItem('chat-settings-v1'))).chat_overlay_mode, true);
+        await page.waitForTimeout(500);
+        assert.equal(chatWrites.filter(write => write.path === '/api/v1/auth/chat_preferences').length, accountWrites);
+        assert.ok(chatWrites.filter(write => write.path === '/api/v1/auth/chat_preferences').every(write =>
+            Object.keys(write.body).every(key => ['chat_show_timestamps', 'chat_user_blacklist', 'chat_word_blacklist'].includes(key))));
         assert.deepEqual(errors, []);
         await context.close();
     });

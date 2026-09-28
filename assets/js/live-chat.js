@@ -13,10 +13,13 @@
     var labels = JSON.parse(document.getElementById('watch_ui_data').textContent);
     var controls = {
         timestamps: document.getElementById('chat-show-timestamps'),
+        hideUserIds: document.getElementById('chat-hide-user-ids'),
         overlay: document.getElementById('chat-overlay-mode'),
         opacity: document.getElementById('chat-overlay-opacity'),
         font: document.getElementById('chat-font-scale'),
+        fontValue: document.getElementById('chat-font-value'),
         width: document.getElementById('chat-width'),
+        widthValue: document.getElementById('chat-width-value'),
         users: document.getElementById('chat-user-blacklist'),
         words: document.getElementById('chat-word-blacklist'),
         timing: document.getElementById('chat-timing')
@@ -27,14 +30,18 @@
     var editRect = null;
     var account = !!video_data.chat_account;
     var defaults = {
-        chat_show_timestamps: true, chat_font_scale: 100, chat_width_px: 440,
+        chat_show_timestamps: true, chat_hide_user_ids: false, chat_font_scale: 100, chat_width_px: 440,
         chat_overlay_mode: false, chat_overlay_opacity: 75,
         chat_overlay_x: 560, chat_overlay_y: 50, chat_overlay_width: 400, chat_overlay_height: 750,
         chat_user_blacklist: '', chat_word_blacklist: ''
     };
-    var savedSettings = account ? video_data.preferences : readLocal('chat-settings-v1', {});
+    var localKeys = ['chat_hide_user_ids', 'chat_font_scale', 'chat_width_px', 'chat_overlay_mode', 'chat_overlay_opacity',
+        'chat_overlay_x', 'chat_overlay_y', 'chat_overlay_width', 'chat_overlay_height'];
+    var localSettings = readLocal('chat-settings-v1', {});
+    var savedSettings = account ? video_data.preferences : localSettings;
     var settings = Object.keys(defaults).reduce(function (result, key) {
-        result[key] = savedSettings && savedSettings[key] !== undefined ? savedSettings[key] : defaults[key];
+        var source = account && localKeys.includes(key) ? localSettings : savedSettings;
+        result[key] = source && source[key] !== undefined ? source[key] : defaults[key];
         return result;
     }, {});
     var timingMs = account ? (video_data.chat_timing_ms || 0) : Number(readLocal('chat-timing-v1-' + video_data.id, 0));
@@ -55,7 +62,6 @@
     var controller;
     var nextRequestAt = 0;
     var autoScroll = true;
-    var mobileLayout = matchMedia('(max-width: 1099px)').matches || /\bMobile\b|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     function readLocal(key, fallback) {
         try { return JSON.parse(localStorage.getItem(key)) || fallback; }
@@ -100,8 +106,8 @@
     }
 
     function applySettings() {
-        settings.chat_font_scale = Math.max(75, Math.min(150, Number(settings.chat_font_scale) || 100));
-        settings.chat_width_px = Math.max(280, Math.min(640, Number(settings.chat_width_px) || 440));
+        settings.chat_font_scale = clamp(settings.chat_font_scale, 25, 300, 100);
+        settings.chat_width_px = clamp(settings.chat_width_px, 160, 1000, 440);
         settings.chat_overlay_mode = settings.chat_overlay_mode === true;
         settings.chat_overlay_opacity = clamp(settings.chat_overlay_opacity, 0, 100, 75);
         settings.chat_overlay_width = clamp(settings.chat_overlay_width, 1, 1000, 400);
@@ -109,25 +115,28 @@
         settings.chat_overlay_x = clamp(settings.chat_overlay_x, 0, 1000 - settings.chat_overlay_width, 560);
         settings.chat_overlay_y = clamp(settings.chat_overlay_y, 0, 1000 - settings.chat_overlay_height, 50);
         controls.timestamps.checked = !!settings.chat_show_timestamps;
+        controls.hideUserIds.checked = !!settings.chat_hide_user_ids;
         controls.overlay.checked = settings.chat_overlay_mode;
         controls.opacity.value = String(settings.chat_overlay_opacity);
         document.getElementById('chat-overlay-opacity-output').value = settings.chat_overlay_opacity + '%';
         overlayOptions.hidden = !settings.chat_overlay_mode;
         document.getElementById('chat-docked-size').hidden = settings.chat_overlay_mode;
-        controls.font.value = String(settings.chat_font_scale);
-        controls.width.value = String(settings.chat_width_px);
+        controls.font.value = String(clamp(settings.chat_font_scale, 75, 150, 100));
+        controls.fontValue.value = String(settings.chat_font_scale);
+        controls.width.value = String(clamp(settings.chat_width_px, 280, 640, 440));
+        controls.widthValue.value = String(settings.chat_width_px);
         controls.users.value = settings.chat_user_blacklist || '';
         controls.words.value = settings.chat_word_blacklist || '';
         controls.timing.value = String(timingMs / 1000);
-        document.getElementById('chat-font-output').value = settings.chat_font_scale + '%';
-        document.getElementById('chat-width-output').value = settings.chat_width_px + 'px';
         panel.classList.toggle('chat-hide-timestamps', !settings.chat_show_timestamps);
+        panel.classList.toggle('chat-hide-user-ids', !!settings.chat_hide_user_ids);
         panel.style.setProperty('--chat-font-scale', String(settings.chat_font_scale / 100));
         panel.style.setProperty('--chat-overlay-opacity', String(settings.chat_overlay_opacity / 100));
         player.el().style.setProperty('--chat-width', settings.chat_width_px + 'px');
         player.el().classList.toggle('chat-overlay', settings.chat_overlay_mode && !panel.hidden);
         player.el().classList.toggle('chat-docked', !settings.chat_overlay_mode && !panel.hidden);
         container.classList.toggle('chat-docked', !settings.chat_overlay_mode && !panel.hidden);
+        layout.classList.toggle('watch-chat-docked', !settings.chat_overlay_mode && !panel.hidden);
         if (settings.chat_overlay_mode) {
             container.style.removeProperty('--chat-container-height');
             player.el().classList.remove('chat-mobile');
@@ -149,10 +158,11 @@
         var fullscreen = player.isFullscreen();
         var width = fullscreen ? innerWidth : container.clientWidth;
         if (!width) return;
-        if (!fullscreen) mobileLayout = matchMedia('(max-width: 1099px)').matches || /\bMobile\b|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        var mobile = mobileLayout;
+        var mobile = (matchMedia('(max-width: 1099px)').matches ||
+            /\bMobile\b|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) &&
+            matchMedia('(orientation: portrait)').matches;
         player.el().classList.toggle('chat-mobile', mobile);
-        var chatWidth = Math.min(settings.chat_width_px, Math.max(280, width - 480));
+        var chatWidth = Math.min(settings.chat_width_px, Math.max(160, width - 480));
         var videoWidth = mobile ? width : width - chatWidth;
         var videoHeight = Math.round(videoWidth * 9 / 16);
         if (fullscreen && mobile) videoHeight = Math.min(videoHeight, Math.round(innerHeight * .65));
@@ -221,14 +231,22 @@
         document.querySelector('#chat-settings summary').focus();
     }
 
-    function saveSettings() {
+    function saveSettings(scope) {
         if (!account) { writeLocal('chat-settings-v1', settings); return; }
+        if (scope === 'local') {
+            var local = Object.assign({}, readLocal('chat-settings-v1', {}));
+            localKeys.forEach(function (key) { local[key] = settings[key]; });
+            writeLocal('chat-settings-v1', local);
+            return;
+        }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () {
             fetch('/api/v1/auth/csrf').then(function (response) { if (!response.ok) throw new Error(); return response.json(); })
                 .then(function (data) { csrfToken = data.csrfToken; return fetch('/api/v1/auth/chat_preferences', {
                     method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
-                    body: JSON.stringify(settings)
+                    body: JSON.stringify({chat_show_timestamps: settings.chat_show_timestamps,
+                        chat_user_blacklist: settings.chat_user_blacklist,
+                        chat_word_blacklist: settings.chat_word_blacklist})
                 }); }).then(function (response) { if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
                 .catch(function () { settingsStatus.textContent = labels.chat_save_error; });
         }, 350);
@@ -435,6 +453,7 @@
         player.el().classList.toggle('chat-docked', visible && !settings.chat_overlay_mode);
         player.el().classList.toggle('chat-overlay', visible && settings.chat_overlay_mode);
         container.classList.toggle('chat-docked', visible && !settings.chat_overlay_mode);
+        layout.classList.toggle('watch-chat-docked', visible && !settings.chat_overlay_mode);
         if (visible) updateGeometry();
         else {
             container.style.removeProperty('--chat-container-height');
@@ -479,19 +498,23 @@
 
     controls.timestamps.addEventListener('change', function () {
         settings.chat_show_timestamps = controls.timestamps.checked;
-        if (applySettings()) saveSettings();
+        if (applySettings()) saveSettings('account');
+    });
+    controls.hideUserIds.addEventListener('change', function () {
+        settings.chat_hide_user_ids = controls.hideUserIds.checked;
+        if (applySettings()) saveSettings('local');
     });
     controls.overlay.addEventListener('change', function () {
         if (!controls.overlay.checked) cancelOverlayEdit();
         settings.chat_overlay_mode = controls.overlay.checked;
         if (applySettings()) {
             requestAnimationFrame(updateGeometry);
-            saveSettings();
+            saveSettings('local');
         }
     });
     controls.opacity.addEventListener('input', function () {
         settings.chat_overlay_opacity = Number(controls.opacity.value);
-        if (applySettings()) saveSettings();
+        if (applySettings()) saveSettings('local');
     });
     document.getElementById('chat-modify-overlay').addEventListener('click', function () {
         document.getElementById('chat-settings').open = false;
@@ -507,7 +530,7 @@
         overlayEditor.hidden = true;
         panel.classList.remove('chat-editing');
         renderOverlay();
-        saveSettings();
+        saveSettings('local');
         document.querySelector('#chat-settings summary').focus();
     });
     document.getElementById('chat-overlay-cancel').addEventListener('click', cancelOverlayEdit);
@@ -550,20 +573,32 @@
     });
     controls.font.addEventListener('input', function () {
         settings.chat_font_scale = Number(controls.font.value);
-        if (applySettings()) saveSettings();
+        if (applySettings()) saveSettings('local');
     });
     controls.width.addEventListener('input', function () {
         settings.chat_width_px = Number(controls.width.value);
-        if (applySettings()) saveSettings();
+        if (applySettings()) saveSettings('local');
+    });
+    [[controls.fontValue, 'chat_font_scale', 25, 300],
+        [controls.widthValue, 'chat_width_px', 160, 1000]].forEach(function (entry) {
+        entry[0].addEventListener('change', function () {
+            var value = Number(entry[0].value);
+            if (!Number.isInteger(value) || value < entry[2] || value > entry[3]) {
+                entry[0].value = String(settings[entry[1]]);
+                return;
+            }
+            settings[entry[1]] = value;
+            if (applySettings()) saveSettings('local');
+        });
     });
     controls.users.addEventListener('change', function () {
         settings.chat_user_blacklist = controls.users.value.slice(0, 1024);
-        if (applySettings()) { reset(); saveSettings(); }
+        if (applySettings()) { reset(); saveSettings('account'); }
     });
     controls.words.addEventListener('change', function () {
         var previous = settings.chat_word_blacklist;
         settings.chat_word_blacklist = controls.words.value.slice(0, 1024);
-        if (applySettings()) { reset(); saveSettings(); }
+        if (applySettings()) { reset(); saveSettings('account'); }
         else { settings.chat_word_blacklist = previous; }
     });
     controls.timing.addEventListener('change', function () {

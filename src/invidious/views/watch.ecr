@@ -123,16 +123,23 @@
                     <summary aria-label="<%= I18n.translate(locale, "ui_chat_settings") %>" title="<%= I18n.translate(locale, "ui_chat_settings") %>">⚙</summary>
                     <div class="chat-settings-menu pure-form pure-form-stacked">
                         <label><input id="chat-show-timestamps" type="checkbox"> <%= I18n.translate(locale, "ui_chat_show_timestamps") %></label>
+                        <label><input id="chat-hide-user-ids" type="checkbox"> <%= I18n.translate(locale, "ui_chat_hide_user_ids") %></label>
                         <label><input id="chat-overlay-mode" type="checkbox"> <%= I18n.translate(locale, "ui_chat_overlay_mode") %></label>
                         <div id="chat-overlay-options" hidden>
                             <button id="chat-modify-overlay" class="pure-button" type="button"><%= I18n.translate(locale, "ui_chat_modify_overlay") %></button>
                             <label for="chat-overlay-opacity"><%= I18n.translate(locale, "ui_chat_overlay_opacity") %> <output id="chat-overlay-opacity-output"></output></label>
                             <input id="chat-overlay-opacity" type="range" min="0" max="100" step="1" value="75">
                         </div>
-                        <label for="chat-font-scale"><%= I18n.translate(locale, "ui_chat_font_size") %> <output id="chat-font-output"></output></label>
+                        <div class="chat-setting-label">
+                            <label for="chat-font-scale"><%= I18n.translate(locale, "ui_chat_font_size") %></label>
+                            <span class="chat-setting-value"><input id="chat-font-value" type="number" min="25" max="300" step="1" inputmode="numeric" value="100" aria-label="<%= I18n.translate(locale, "ui_chat_font_size") %> (%)"><span aria-hidden="true">%</span></span>
+                        </div>
                         <input id="chat-font-scale" type="range" min="75" max="150" step="5" value="100">
                         <div id="chat-docked-size">
-                            <label for="chat-width"><%= I18n.translate(locale, "ui_chat_size") %> <output id="chat-width-output"></output></label>
+                            <div class="chat-setting-label">
+                                <label for="chat-width"><%= I18n.translate(locale, "ui_chat_size") %></label>
+                                <span class="chat-setting-value"><input id="chat-width-value" type="number" min="160" max="1000" step="1" inputmode="numeric" value="440" aria-label="<%= I18n.translate(locale, "ui_chat_size") %> (px)"><span aria-hidden="true">px</span></span>
+                            </div>
                             <input id="chat-width" type="range" min="280" max="640" step="20" value="440">
                         </div>
                         <label for="chat-user-blacklist"><%= I18n.translate(locale, "ui_chat_user_blacklist") %></label>
