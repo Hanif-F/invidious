@@ -438,6 +438,7 @@ module Invidious::Videos::Parser
       "commentsEnabled"  => JSON::Any.new(comments_enabled),
       "keywords"         => JSON::Any.new(keywords.map { |v| JSON::Any.new(v) }),
       "isPostLiveDvr"    => JSON::Any.new(post_live_dvr),
+      "liveChatReplay"   => JSON::Any.new(!live_now && !(is_upcoming || false) && !Invidious::Videos::LiveChat.initial_continuation(player_response).nil?),
       # Related videos
       "relatedVideos" => JSON::Any.new(related),
       # Description

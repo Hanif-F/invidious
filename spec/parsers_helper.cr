@@ -9,6 +9,7 @@ require "spectator"
 require "../src/invidious/exceptions"
 require "../src/invidious/helpers/macros"
 require "../src/invidious/helpers/logger"
+require "../src/invidious/helpers/membership"
 require "../src/invidious/helpers/utils"
 
 require "../src/invidious/videos"

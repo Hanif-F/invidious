@@ -560,6 +560,18 @@ module YoutubeAPI
     return self._post_json("/youtubei/v1/get_transcript", data, client_config)
   end
 
+  # Fetch one VOD chat replay chunk. YouTube uses the player offset to jump
+  # near a seek position while the continuation selects the replay stream.
+  def live_chat_replay(continuation : String, offset_ms : Int64)
+    data = {
+      "context"            => self.make_context(nil),
+      "continuation"       => continuation,
+      "currentPlayerState" => {"playerOffsetMs" => offset_ms.to_s},
+    }
+
+    return self._post_json("/youtubei/v1/live_chat/get_live_chat_replay", data, nil)
+  end
+
   ####################################################################
   # _post_json(endpoint, data, client_config?)
   #

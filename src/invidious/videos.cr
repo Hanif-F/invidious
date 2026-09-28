@@ -15,7 +15,7 @@ struct Video
   # NOTE: don't forget to bump this number if any change is made to
   # the `params` structure in videos/parser.cr!!!
   #
-  SCHEMA_VERSION = 3
+  SCHEMA_VERSION = 4
 
   property id : String
 
@@ -78,6 +78,10 @@ struct Video
 
   def post_live_dvr
     return info["isPostLiveDvr"].as_bool
+  end
+
+  def live_chat_replay? : Bool
+    info["liveChatReplay"]?.try(&.as_bool?) || false
   end
 
   def premiere_timestamp : Time?

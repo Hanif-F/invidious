@@ -13,6 +13,7 @@ Spectator.describe "parse_video_info" do
     expect(typeof(info)).to eq(Hash(String, JSON::Any))
 
     expect(info["videoType"].as_s).to eq("Scheduled")
+    expect(info["liveChatReplay"].as_bool).to be_false
 
     # Basic video infos
 

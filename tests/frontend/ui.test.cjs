@@ -45,6 +45,7 @@ async function pageFor(engine, options = {}) {
     page.on('pageerror', error => errors.push(error.message));
     let queueCalls = 0;
     let transcriptCalls = 0;
+    let chatCalls = 0;
     const fixture = options.fixture || 'watch-dark';
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
@@ -93,6 +94,20 @@ async function pageFor(engine, options = {}) {
                 { type: 'regular', startMs: 225000, line: 'Color in motion' }
             ] } }) });
         }
+        if (url.pathname.startsWith('/api/v1/live_chat/')) {
+            chatCalls++;
+            if (options.chatError && chatCalls <= options.chatError) return route.fulfill({status: 503, contentType: 'application/json', body: '{}'});
+            if (options.chatUnavailable) return route.fulfill({status: 404, contentType: 'application/json', body: '{}'});
+            const offset = Number(url.searchParams.get('offset_ms') || 0);
+            const second = Boolean(url.searchParams.get('continuation')) || offset >= 2000;
+            const messages = second ? [
+                {id: 'late', offsetMs: 2500, author: 'Supporter', text: 'Great stream', kind: 'paid', amount: '$5'}
+            ] : [
+                {id: 'early', offsetMs: 0, author: 'Viewer <img src=x onerror=alert(1)>', text: 'Hello <script>alert(1)</script>', kind: 'text', amount: ''},
+                {id: 'middle', offsetMs: 1000, author: 'Member', text: 'Here!', kind: 'membership', amount: ''}
+            ];
+            return route.fulfill({contentType: 'application/json', body: JSON.stringify({messages, removedIds: [], continuation: second ? null : 'next'})});
+        }
         if (url.pathname === '/js/silvermine-videojs-quality-selector.min.js' && !options.realPlayer) return route.fulfill({ contentType: 'application/javascript', body: '' });
         if (url.pathname === '/js/player.js' && !options.realPlayer) return route.fulfill({ contentType: 'application/javascript', body: playerStub });
         if (url.pathname.startsWith('/videojs/') && !options.realPlayer) return route.fulfill({ contentType: url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript', body: '' });
@@ -119,10 +134,65 @@ async function pageFor(engine, options = {}) {
         return route.fulfill({ contentType: 'application/json', body: '{}' });
     });
     await page.goto('https://invidious.test/' + (options.route || (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture.startsWith('preferences') ? 'preferences' : fixture.startsWith('search') ? 'search?q=light' : 'feed/popular')));
-    return { page, context, errors, requests, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls };
+    return { page, context, errors, requests, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls, chatCalls: () => chatCalls };
 }
 
 for (const engine of engines) {
+    test(`${engine}: chat replay follows playback and resyncs after seeking`, async () => {
+        const {page, context, errors, requests, chatCalls} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true});
+        await page.locator('.chat-message').first().waitFor();
+        assert.equal(await page.locator('.chat-message').count(), 1);
+        assert.match(await page.locator('.chat-message').first().textContent(), /Hello <script>alert\(1\)<\/script>/);
+        assert.equal(await page.locator('.chat-message script, .chat-message img').count(), 0);
+        await page.evaluate(() => player.play());
+        await page.waitForFunction(() => player.currentTime() >= 1.1);
+        await page.getByText('Here!', {exact: true}).waitFor();
+        await page.evaluate(() => player.pause());
+        const pausedCount = await page.locator('.chat-message').count();
+        await page.waitForTimeout(300);
+        assert.equal(await page.locator('.chat-message').count(), pausedCount);
+        await page.evaluate(() => player.currentTime(2.7));
+        await page.getByText('Great stream', {exact: true}).waitFor();
+        assert.equal(await page.getByText('Here!', {exact: true}).count(), 0);
+        assert.ok(requests.some(url => url.startsWith('/api/v1/live_chat/') && Number(new URL(url, 'https://invidious.test').searchParams.get('offset_ms')) >= 2000));
+        assert.ok(requests.some(url => url.startsWith('/api/v1/live_chat/') && new URL(url, 'https://invidious.test').searchParams.has('continuation')));
+        await page.evaluate(() => player.currentTime(0));
+        await page.getByText('Hello <script>alert(1)</script>', {exact: true}).waitFor();
+        assert.equal(await page.getByText('Great stream', {exact: true}).count(), 0);
+        assert.ok(chatCalls() >= 2);
+        await page.setViewportSize({width: 390, height: 844});
+        assert.equal(await page.locator('#chat-panel').isVisible(), true);
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: ordinary VOD does not load chat replay`, async () => {
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: 'watch-single'});
+        assert.equal(await page.locator('#chat-panel').count(), 0);
+        assert.equal(requests.some(url => url.startsWith('/api/v1/live_chat/')), false);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: chat replay errors can be retried`, async () => {
+        const {page, context, errors, chatCalls} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatError: 1});
+        await page.locator('#chat-retry').waitFor({state: 'visible'});
+        await page.locator('#chat-retry').click();
+        await page.locator('.chat-message').first().waitFor();
+        assert.equal(chatCalls(), 2);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: unavailable chat replay has a clear state`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatUnavailable: true});
+        await page.getByText('Chat replay is unavailable for this video.').waitFor();
+        assert.equal(await page.locator('#chat-retry').isVisible(), false);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
     test(`${engine}: preferences sections, labels, and form fields`, async () => {
         const base = ['preferences-appearance', 'preferences-playback', 'preferences-browsing', 'preferences-enhancements'];
         const cases = [

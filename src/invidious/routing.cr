@@ -270,6 +270,7 @@ module Invidious::Routing
       get "/api/v1/comments/:id", {{namespace}}::Videos, :comments
       get "/api/v1/clips/:id", {{namespace}}::Videos, :clips
       get "/api/v1/transcripts/:id", {{namespace}}::Videos, :transcripts
+      get "/api/v1/live_chat/:id", {{namespace}}::LiveChat, :replay
 
       # Feeds
       get "/api/v1/trending", {{namespace}}::Feeds, :trending

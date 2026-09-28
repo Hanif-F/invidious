@@ -28,6 +28,7 @@
 <meta name="twitter:player:height" content="720">
 <link rel="alternate" href="https://www.youtube.com/watch?v=<%= video.id %>">
 <%= rendered "components/player_sources" %>
+<% if video.live_chat_replay? %><link rel="stylesheet" href="/css/live-chat.css?v=<%= ASSET_COMMIT %>"><% end %>
 <title><%= title %> - Invidious</title>
 
 <noscript><style>.js-only, #try-reddit-comments-link { display: none !important }</style></noscript>
@@ -98,9 +99,13 @@
     "no_matches" => I18n.translate(locale, "ui_no_matches"),
     "auto_generated" => I18n.translate(locale, "ui_auto_generated"),
     "transcript_script" => "/js/transcript.js?v=#{ASSET_COMMIT}",
+    "chat_loading" => I18n.translate(locale, "ui_chat_loading"),
+    "chat_unavailable" => I18n.translate(locale, "ui_chat_unavailable"),
+    "chat_error" => I18n.translate(locale, "ui_chat_error"),
+    "chat_empty" => I18n.translate(locale, "ui_chat_empty"),
 }.to_json
 %></script>
-<div class="watch-layout watch-wide<%= " watch-without-sidebar" unless params.related_videos || plid %>" id="watch-layout">
+<div class="watch-layout watch-wide<%= " watch-without-sidebar" unless params.related_videos || plid || video.live_chat_replay? %>" id="watch-layout">
     <div class="watch-player">
         <div id="player-container"><%= rendered "components/player" %></div>
     </div>
@@ -342,7 +347,7 @@
                 <% end %>
             </div>
     </div>
-    <% if params.related_videos || plid %>
+    <% if params.related_videos || plid || video.live_chat_replay? %>
     <aside class="watch-sidebar">
         <% if plid %>
         <section class="queue-panel panel" id="playlist-panel">
@@ -356,6 +361,17 @@
             <button id="queue-retry" class="pure-button queue-retry" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
             <button id="queue-toggle" class="queue-toggle pure-button js-only" type="button" aria-expanded="false" aria-controls="playlist"><%= I18n.translate(locale, "ui_show_queue") %></button>
             <div id="playlist" class="queue-list"></div>
+        </section>
+        <% end %>
+        <% if video.live_chat_replay? %>
+        <section class="chat-panel panel" id="chat-panel" aria-labelledby="chat-heading">
+            <h2 class="panel-heading" id="chat-heading"><%= I18n.translate(locale, "ui_chat_replay") %></h2>
+            <div class="chat-messages js-only" id="chat-messages" role="log" aria-live="off"></div>
+            <div class="chat-footer js-only">
+                <p id="chat-status" role="status"><%= I18n.translate(locale, "ui_chat_loading") %></p>
+                <button id="chat-retry" class="pure-button" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
+            </div>
+            <noscript><p class="chat-nojs"><%= I18n.translate(locale, "ui_chat_requires_js") %></p></noscript>
         </section>
         <% end %>
         <% if params.related_videos %>
@@ -391,3 +407,4 @@
 <script src="/js/comments.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/watch.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/player-ui.js?v=<%= ASSET_COMMIT %>"></script>
+<% if video.live_chat_replay? %><script src="/js/live-chat.js?v=<%= ASSET_COMMIT %>"></script><% end %>

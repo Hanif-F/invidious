@@ -62,6 +62,7 @@ module Invidious::JSONify::APIv1
       json.field "rating", 0_i64
       json.field "isListed", video.is_listed
       json.field "liveNow", video.live_now
+      json.field "liveChatReplay", video.live_chat_replay?
       json.field "isPostLiveDvr", video.post_live_dvr
       json.field "isUpcoming", video.upcoming?
 
