@@ -130,7 +130,7 @@ def check_dearrow_contributions(output)
   CONFIG.dearrow_identity_key = saved_key
   env = signed_in_env("/watch?v=2isYuQZMbdU")
   File.write("#{output}/watch-dearrow-contributions.html", watch_fixture(env, account: true))
-  {"light", "diary", "cinematic"}.each do |theme|
+  {"light", "diary"}.each do |theme|
     env = signed_in_env("/watch?v=2isYuQZMbdU")
     prefs = env.get("preferences").as(Preferences)
     prefs.dark_mode = "light"

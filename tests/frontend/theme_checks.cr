@@ -13,13 +13,14 @@ def check_theme_preferences
   env.set "preferences", diary
   Invidious::Routes::PreferencesRoute.update(env)
   raise "Diary cookie lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "diary"
-  cinematic = Preferences.from_json(%({"theme":"cinematic"}))
-  raise "Cinematic JSON lost" unless Preferences.from_json(cinematic.to_json).theme == "cinematic"
-  raise "Cinematic YAML lost" unless Preferences.from_yaml(cinematic.to_yaml).theme == "cinematic"
+  # Previously saved Cinematic preferences resolve to the remaining default.
+  raise "Removed Cinematic remained in registry" if Invidious::Themes::AVAILABLE.any? { |theme| theme.id == "cinematic" }
+  raise "Removed Cinematic JSON did not fall back" unless Preferences.from_json(%({"theme":"cinematic"})).theme == "modern-neon"
+  raise "Removed Cinematic YAML did not fall back" unless Preferences.from_yaml("theme: cinematic").theme == "modern-neon"
   env = theme_post_env("theme=cinematic")
-  env.set "preferences", cinematic
+  env.set "preferences", diary
   Invidious::Routes::PreferencesRoute.update(env)
-  raise "Cinematic cookie lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "cinematic"
+  raise "Removed Cinematic form did not fall back" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).theme == "modern-neon"
   raise "Removed theme remained in registry" if Invidious::Themes::AVAILABLE.any? { |theme| theme.id == "scrapbook" }
   raise "Removed JSON theme did not fall back" unless Preferences.from_json(%({"theme":"scrapbook"})).theme == "modern-neon"
   raise "Removed YAML theme did not fall back" unless Preferences.from_yaml("theme: scrapbook").theme == "modern-neon"
@@ -122,14 +123,14 @@ def check_random_themes
   raise "Random YAML lost" unless Preferences.from_yaml(initialized.to_yaml) == initialized
   raise "Random config lost" unless ConfigPreferences.from_yaml("theme_random: true\ntheme_random_interval_hours: 24").theme_random_interval_hours == 24
 
-  {"theme=random" => true, "theme=cinematic" => false, "" => true}.each do |body, enabled|
+  {"theme=random" => true, "theme=modern-neon" => false, "" => true}.each do |body, enabled|
     env = theme_post_env(body)
     env.set "preferences", initialized
     Invidious::Routes::PreferencesRoute.update(env)
     saved = Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))
     raise "Random form mode lost" unless saved.theme_random == enabled
     raise "Unrelated save reset timer" if enabled && saved.theme_random_next_at != initialized.theme_random_next_at
-    raise "Manual selection not saved" if !enabled && (saved.theme != "cinematic" || saved.theme_random_next_at)
+    raise "Manual selection not saved" if !enabled && (saved.theme != "modern-neon" || saved.theme_random_next_at)
   end
   env = theme_post_env("theme=random&theme_random_interval_hours=2")
   env.set "preferences", initialized
@@ -182,7 +183,7 @@ def check_random_themes
   PG_DB.exec("UPDATE users SET preferences = ? WHERE email = ?", initialized.to_json, email)
   snapshot = Invidious::Database::Users.preference_json(email)
   changed = initialized
-  changed.theme = "cinematic"
+  changed.theme = "modern-neon"
   changed.speed = 1.5
   raise "CAS failed" unless Invidious::Database::Users.compare_and_set_preferences(email, snapshot, changed)
   raise "Stale update succeeded" if Invidious::Database::Users.compare_and_set_preferences(email, snapshot, initialized)

@@ -125,7 +125,7 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
   end
 end
 
-def browse_fixture(env, editorial = false)
+def browse_fixture(env)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   items = (0...12).map do |i|
@@ -133,12 +133,7 @@ def browse_fixture(env, editorial = false)
   end
   navbar_search = true
   page_nav_html = "<nav class=page-navigation><a class=pure-button href=?page=2>Next page</a></nav>"
-  if editorial
-    popular_videos = items
-    render "src/invidious/views/feeds/popular.ecr", "src/invidious/views/template.ecr"
-  else
-    render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
-  end
+  render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
 end
 
 def preferences_fixture(env)
@@ -340,23 +335,6 @@ File.write("#{output}/playlist-library-diary.html", playlist_library_fixture("di
 File.write("#{output}/channel-diary.html", diary_channel_fixture)
 File.write("#{output}/login-diary.html", diary_login_fixture)
 File.write("#{output}/error-diary.html", diary_error_fixture)
-# Render Cinematic through the same production templates and preference resolution.
-{"dark", "light", ""}.each do |mode|
-  suffix = mode.empty? ? "auto" : mode
-  File.write("#{output}/browse-cinematic-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", mode, visual_theme: "cinematic"), true))
-  File.write("#{output}/watch-cinematic-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode, visual_theme: "cinematic")))
-end
-File.write("#{output}/preferences-cinematic.html", preferences_fixture(fixture_env("/preferences", "light", visual_theme: "cinematic")))
-File.write("#{output}/browse-cinematic-compact.html", browse_fixture(fixture_env("/feed/popular", "light", false, "compact", visual_theme: "cinematic"), true))
-File.write("#{output}/browse-cinematic-thin.html", browse_fixture(fixture_env("/feed/popular", "light", true, visual_theme: "cinematic"), true))
-File.write("#{output}/watch-cinematic-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "light", false, "balanced", "ar", "cinematic")))
-File.write("#{output}/search-cinematic.html", browse_fixture(fixture_env("/search?q=light", "light", visual_theme: "cinematic")))
-File.write("#{output}/playlist-cinematic.html", diary_playlist_fixture("cinematic", "dark"))
-File.write("#{output}/history-cinematic.html", history_fixture("cinematic"))
-File.write("#{output}/playlist-library-cinematic.html", playlist_library_fixture("cinematic"))
-File.write("#{output}/channel-cinematic.html", diary_channel_fixture("cinematic", "dark"))
-File.write("#{output}/login-cinematic.html", diary_login_fixture("cinematic", "dark"))
-File.write("#{output}/error-cinematic.html", diary_error_fixture("cinematic", "dark"))
 random_env = fixture_env("/preferences", "")
 random_preferences = random_env.get("preferences").as(Preferences)
 random_preferences.theme_random = true
@@ -457,7 +435,7 @@ File.write("#{output}/search-members-empty.html", member_search_fixture(false, t
 check_member_extraction
 
 require "./progress_fixtures"
-{"modern-neon", "diary", "cinematic"}.each do |theme|
+{"modern-neon", "diary"}.each do |theme|
   {false, true}.each do |thin|
     suffix = "#{theme}-#{thin ? "thin" : "normal"}"
     File.write("#{output}/history-progress-#{suffix}.html", history_fixture(theme, thin: thin, sync: true))
@@ -479,7 +457,7 @@ File.write("#{output}/account-settings.html", render "src/invidious/views/user/a
 # Preferences states use the same template and form names as the live page.
 PG_DB.exec("INSERT INTO playlists (title, id, author) VALUES (?, ?, ?)", "Fixture playlist", "IVpreferences", "viewer@example.test")
 File.write("#{output}/preferences-signed-in.html", preferences_fixture(signed_in_env("/preferences")))
-{"diary", "cinematic"}.each do |theme|
+{"diary"}.each do |theme|
   env = signed_in_env("/preferences")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = theme

@@ -14,18 +14,10 @@
     "themes/diary/theme.css": 0,
     "themes/diary/doodles.svg": 0,
     "css/video-actions.css": 0,
-    "js/video-actions.js": 0,
-    "themes/cinematic/theme.css": 0
+    "js/video-actions.js": 0
   },
   "previewGzipBytes": {
     "themes/modern-neon/preview.webp": 0,
-    "themes/diary/preview.webp": 0,
-    "themes/cinematic/preview.webp": 0
-  },
-  "fontAssets": {
-    "themes/cinematic/Oswald.woff2": {
-      "bytes": 72104,
-      "maxBytes": 98304
-    }
+    "themes/diary/preview.webp": 0
   }
 }

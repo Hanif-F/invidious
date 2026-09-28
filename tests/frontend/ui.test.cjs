@@ -111,7 +111,6 @@ async function pageFor(engine, options = {}) {
         if (options.storyboards && url.pathname.startsWith('/api/v1/storyboards/')) return route.fulfill({contentType:'text/vtt', body:'WEBVTT\n\n00:00.000 --> 00:04.000\nhttps://invidious.test/vi/fixture/preview.jpg#xywh=0,0,160,90\n'});
         if (url.pathname.startsWith('/api/v1/captions/')) return route.fulfill({ contentType: 'text/vtt', body: 'WEBVTT\n\n00:00.000 --> 00:04.000\nFixture captions\n' });
         if (url.pathname === '/themes/fixture-theme/theme.css') return route.fulfill({ contentType: 'text/css', body: 'body { --fixture-theme: active; }' });
-        if (options.fontFailure && url.pathname === '/themes/cinematic/Oswald.woff2') return route.abort();
         if (/^\/(css|js|fonts|videojs|themes)\//.test(url.pathname)) {
             const file = path.join(root, 'assets', url.pathname);
             if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: '' });
@@ -160,7 +159,7 @@ for (const engine of engines) {
             assert.deepEqual(errors, []);
             await context.close();
         }
-        for (const fixture of ['preferences', 'preferences-diary', 'preferences-cinematic', 'preferences-rtl']) {
+        for (const fixture of ['preferences', 'preferences-diary', 'preferences-rtl']) {
             for (const width of [320, 1440]) {
                 const {page, context, errors} = await pageFor(engine, {fixture, width, javascript: false});
                 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `${fixture} overflows at ${width}`);
@@ -180,6 +179,7 @@ for (const engine of engines) {
     test(`${engine}: theme cards render and submit without JavaScript`, async () => {
         const { page, context } = await pageFor(engine, { fixture: 'preferences', javascript: false, width: 390 });
         assert.equal(await page.getByRole('radio', { name: 'Scrapbook' }).count(), 0);
+        assert.equal(await page.getByRole('radio', { name: 'Cinematic' }).count(), 0);
         const radio = page.getByRole('radio', { name: 'Modern Neon' });
         assert.equal(await radio.isChecked(), true);
         assert.equal(await page.locator('body').getAttribute('data-theme'), 'modern-neon');
@@ -210,87 +210,6 @@ for (const engine of engines) {
         assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
         await context.close();
     });
-    test(`${engine}: Cinematic selection submits without JavaScript and loads alone`, async () => {
-        const { page, context, requests } = await pageFor(engine, { fixture: 'preferences-cinematic', javascript: false, width: 390 });
-        const radio = page.getByRole('radio', { name: 'Cinematic', exact: true });
-        assert.equal(await radio.isChecked(), true);
-        for (const img of await page.locator('.theme-card img').all()) {
-            assert.equal(await img.evaluate(el => el.complete && el.naturalWidth > 0), true);
-        }
-        assert.ok(requests.some(url => url.startsWith('/themes/cinematic/theme.css')));
-        assert.ok(!requests.some(url => url.startsWith('/themes/modern-neon/theme.css')));
-        const posted = page.waitForRequest(request => request.method() === 'POST');
-        await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
-        assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'cinematic');
-        await context.close();
-    });
-    test(`${engine}: Cinematic editorial composition, font fallback, and feed order`, async () => {
-        for (const fontFailure of [false, true]) {
-            const { page, context, requests } = await pageFor(engine, { fixture: 'browse-cinematic-dark', fontFailure });
-            await page.evaluate(() => document.fonts.ready);
-            assert.ok(requests.some(url => url.startsWith('/themes/cinematic/Oswald.woff2')));
-            assert.ok(!requests.some(url => url.startsWith('/themes/diary/') || url.startsWith('/themes/modern-neon/')));
-            if (!fontFailure) assert.equal(await page.evaluate(() => document.fonts.check('600 56px Oswald')), true);
-            const cards = page.locator('.editorial-feed > .media-item');
-            const originalTitles = await cards.locator('[data-dearrow-id]').allTextContents();
-            const lead = await cards.first().boundingBox();
-            const second = await cards.nth(1).boundingBox();
-            assert.ok(lead.width > second.width * 2.5, 'Opening entry must span the catalog');
-            const frame = await cards.first().locator('.media-card > .thumbnail').boundingBox();
-            assert.ok(frame.width / lead.width > .6 && frame.width / lead.width < .7);
-            assert.ok(second.y > lead.y + lead.height - 1, 'Next entry must follow the opening entry');
-            const rail = await page.locator('.navigation-rail').boundingBox();
-            assert.ok(rail.width > 1200 && rail.height < 180, 'Navigation must be a horizontal index');
-            await cards.first().locator('[data-dearrow-id]').evaluate(el => el.textContent = 'A very long multilingual film title — '.repeat(10));
-            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
-            await cards.first().locator('[data-dearrow-id]').evaluate((el, title) => el.textContent = title, originalTitles[0]);
-            for (const [attribute, value] of [['data-density', 'compact'], ['data-thin', 'true']]) {
-                await page.locator('body').evaluate((el, [key, value]) => el.setAttribute(key, value), [attribute, value]);
-                const firstBox = await cards.first().boundingBox(), nextBox = await cards.nth(1).boundingBox();
-                assert.ok(Math.abs(firstBox.width - nextBox.width) < 2, `${attribute} must use equal entries`);
-                assert.deepEqual(await cards.locator('[data-dearrow-id]').allTextContents(), originalTitles);
-                await page.locator('body').evaluate((el, key) => el.setAttribute(key, key === 'data-density' ? 'balanced' : 'false'), attribute);
-            }
-            await page.emulateMedia({ forcedColors: 'active' });
-            await page.keyboard.press('Tab');
-            assert.equal(await page.locator('.skip-link').evaluate(el => el === document.activeElement), true);
-            assert.notEqual(await page.locator('.skip-link').evaluate(el => getComputedStyle(el).outlineStyle), 'none');
-            await cards.evaluateAll(items => items.slice(1).forEach(el => el.remove()));
-            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Single entry overflow');
-            await cards.first().evaluate(el => el.remove());
-            assert.equal(await page.locator('.navigation-rail').isVisible(), true);
-            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Empty feed overflow');
-            await context.close();
-        }
-        const { page, context } = await pageFor(engine, { fixture: 'browse-cinematic-auto', systemTheme: 'dark' });
-        await page.emulateMedia({ colorScheme: 'light' });
-        assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme), 'light');
-        await page.emulateMedia({ colorScheme: 'dark' });
-        assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme), 'dark');
-        await context.close();
-    });
-    test(`${engine}: Cinematic responsive layouts`, async () => {
-        for (const width of [320, 390, 768, 1024, 1440, 1920]) {
-            for (const fixture of ['browse-cinematic-light', 'browse-cinematic-dark', 'browse-cinematic-compact', 'browse-cinematic-thin', 'watch-cinematic-light', 'watch-cinematic-dark', 'watch-cinematic-rtl', 'preferences-cinematic', 'search-cinematic', 'playlist-cinematic', 'history-cinematic', 'playlist-library-cinematic', 'login-cinematic', 'error-cinematic', 'channel-cinematic']) {
-                const { page, context, errors } = await pageFor(engine, { fixture, width });
-                await page.evaluate(() => document.fonts.ready);
-                assert.equal(await page.locator('body').getAttribute('data-theme'), 'cinematic', `${fixture} must exercise Cinematic`);
-                assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${fixture} overflows at ${width}`);
-                assert.deepEqual(errors, []);
-                if ([320, 1440].includes(width)) {
-                    await page.locator('img.thumbnail').evaluateAll(images => Promise.all(images.filter(img => img.getBoundingClientRect().top < innerHeight).map(img => img.decode())));
-                    await page.screenshot({ path: path.join(artifacts, `${engine}-${fixture}-${width}.png`) });
-                }
-                if (fixture === 'browse-cinematic-light' && width === 320) {
-                    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
-                    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Cinematic enlarged text overflows: ' + JSON.stringify(await page.evaluate(() => [...document.querySelectorAll('body *')].filter(el => el.getBoundingClientRect().right > innerWidth + 1).slice(0, 12).map(el => [el.tagName, el.className, el.getBoundingClientRect().right]))));
-                    await page.keyboard.press('Tab');
-                    assert.equal(await page.locator('.skip-link').evaluate(el => el === document.activeElement), true);
-                }
-                await context.close();
-            }
-        }
-    });
     test(`${engine}: Diary selection submits without JavaScript and loads alone`, async () => {
         const { page, context, requests } = await pageFor(engine, { fixture: 'preferences-diary', javascript: false, width: 390 });
         const radio = page.getByRole('radio', { name: 'Diary', exact: true });
@@ -303,40 +222,6 @@ for (const engine of engines) {
         const posted = page.waitForRequest(request => request.method() === 'POST');
         await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
         assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'diary');
-        await context.close();
-    });
-    test(`${engine}: Cinematic palettes, mode toggle and keyboard selection`, async () => {
-        for (const [mode, systemTheme, expected] of [['light', 'dark', 'light'], ['dark', 'light', 'dark'], ['auto', 'dark', 'dark'], ['auto', 'light', 'light']]) {
-            const { page, context } = await pageFor(engine, { fixture: `browse-cinematic-${mode}`, systemTheme });
-            assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme), expected);
-            const ratios = await page.locator('body').evaluate(el => {
-                const style = getComputedStyle(el);
-                const luminance = token => {
-                    const hex = style.getPropertyValue(token).trim().replace('#', '');
-                    const expanded = hex.length === 3 ? [...hex].map(c => c + c).join('') : hex;
-                    return [0, 2, 4].map(i => parseInt(expanded.slice(i, i + 2), 16) / 255)
-                        .map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4)
-                        .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
-                };
-                return [['--text', '--page'], ['--muted', '--page'], ['--accent', '--page'],
-                    ['--text', '--surface'], ['--muted', '--surface'], ['--accent', '--surface'],
-                    ['--accent-ink', '--accent']].map(([a, b]) => {
-                    const x = luminance(a), y = luminance(b);
-                    return (Math.max(x, y) + .05) / (Math.min(x, y) + .05);
-                });
-            });
-            assert.ok(ratios.every(ratio => ratio >= 4.5), `Cinematic ${expected} contrast: ${ratios}`);
-            assert.equal(await page.locator('.media-card .thumbnail').first().evaluate(el => getComputedStyle(el).transitionDuration), '0s');
-            await page.locator('#toggle_theme').click();
-            assert.equal(await page.locator('body').getAttribute('data-theme'), 'cinematic');
-            assert.equal(await page.locator('body').getAttribute('data-density'), 'balanced');
-            await context.close();
-        }
-        const { page, context } = await pageFor(engine, { fixture: 'preferences' });
-        await page.getByRole('radio', { name: 'Modern Neon' }).focus();
-        await page.keyboard.press('ArrowRight');
-        await page.keyboard.press('ArrowRight');
-        assert.equal(await page.getByRole('radio', { name: 'Cinematic', exact: true }).isChecked(), true);
         await context.close();
     });
     test(`${engine}: Diary palettes, mode toggle and keyboard selection`, async () => {
@@ -365,35 +250,6 @@ for (const engine of engines) {
         await page.emulateMedia({ forcedColors: 'active' });
         assert.equal(await page.locator('.media-card').first().evaluate(el => getComputedStyle(el, '::before').display), 'none');
         await context.close();
-    });
-    test(`${engine}: Cinematic preserves real player controls`, async () => {
-        for (const width of [390, 1440]) {
-            const { page, context, errors } = await pageFor(engine, { fixture: 'watch-cinematic-dark', realPlayer: true, width, touch: width === 390 });
-            await page.waitForFunction(() => window.player && typeof player.play === 'function');
-            await page.evaluate(() => { player.muted(true); player.play(); });
-            await page.waitForFunction(() => player.currentTime() > 0.1);
-            await page.evaluate(() => { player.pause(); player.currentTime(1); player.playbackRate(1.5); });
-            assert.equal(await page.evaluate(() => player.paused()), true);
-            assert.equal(await page.evaluate(() => player.playbackRate()), 1.5);
-            await page.waitForFunction(() => player.currentTime() >= 0.9);
-            if (width === 1440) {
-                const checkGeometry = async () => {
-                    assert.equal(Math.round((await page.locator('.watch-sidebar').boundingBox()).width), 440);
-                    assert.equal(Math.round((await page.locator('.recommendation > .thumbnail').first().boundingBox()).width), 140);
-                };
-                await checkGeometry();
-                const wasWide = await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide'));
-                await page.locator('.vjs-wide-control').click();
-                await checkGeometry();
-                assert.equal(await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide')), !wasWide);
-                await page.screenshot({ path: path.join(artifacts, `${engine}-cinematic-player-alternate.png`) });
-                await page.locator('.vjs-wide-control').click();
-                await checkGeometry();
-                assert.equal(await page.locator('.watch-layout').evaluate(el => el.classList.contains('watch-wide')), wasWide);
-            }
-            assert.deepEqual(errors, []);
-            await context.close();
-        }
     });
     test(`${engine}: Diary preserves real player controls`, async () => {
         for (const width of [390, 1440]) {
@@ -642,7 +498,7 @@ for (const engine of engines) {
         assert.equal(await noNick.page.locator('header a[href="/account"]').count(), 0);
         await noNick.context.close();
 
-        for (const fixture of ['preferences', 'preferences-diary', 'preferences-cinematic', 'preferences-rtl', 'preferences-signed-in', 'preferences-diary-signed-in', 'preferences-cinematic-signed-in']) {
+        for (const fixture of ['preferences', 'preferences-diary', 'preferences-rtl', 'preferences-signed-in', 'preferences-diary-signed-in']) {
             for (const [width, javascript] of [[320, false], [390, true]]) {
             const {page, context, errors} = await pageFor(engine, {fixture, width, height: 640, javascript});
             const header = page.locator('.navbar');
@@ -682,8 +538,8 @@ for (const engine of engines) {
 
     test(`${engine}: header stays visible on tablet and desktop pages`, async () => {
         const cases = [
-            ...['preferences', 'preferences-diary', 'preferences-cinematic', 'preferences-signed-in', 'preferences-diary-signed-in', 'preferences-cinematic-signed-in'].flatMap(fixture => [768, 1024, 1440].map(width => [fixture, width])),
-            ...['watch-dark', 'watch-diary-light', 'watch-cinematic-light'].flatMap(fixture => [1024, 1440].map(width => [fixture, width])),
+            ...['preferences', 'preferences-diary', 'preferences-signed-in', 'preferences-diary-signed-in'].flatMap(fixture => [768, 1024, 1440].map(width => [fixture, width])),
+            ...['watch-dark', 'watch-diary-light'].flatMap(fixture => [1024, 1440].map(width => [fixture, width])),
             ['preferences-rtl', 1440], ['browse-signed-in', 1920]
         ];
         for (const [fixture, width] of cases) {
@@ -707,7 +563,7 @@ for (const engine of engines) {
                 await page.waitForFunction(() => location.hash === '#preferences-playback');
                 const targetBox = await page.locator('#preferences-playback').boundingBox();
                 assert.ok(targetBox.y >= (await header.boundingBox()).height - 2, `${fixture} at ${width}: section hidden by header`);
-                if (width >= 1100 && !fixture.includes('cinematic')) {
+                if (width >= 1100) {
                     await page.evaluate(() => scrollTo(0, 700));
                     const railBox = await page.locator('.navigation-rail').boundingBox();
                     const currentHeader = await header.boundingBox();
@@ -1092,7 +948,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: System follows live appearance changes and cycles independently of visual themes`, async () => {
-        for (const fixture of ['browse-auto', 'browse-diary-auto', 'browse-cinematic-auto']) {
+        for (const fixture of ['browse-auto', 'browse-diary-auto']) {
             const { page, context, requests, errors } = await pageFor(engine, { fixture, systemTheme: 'dark' });
             const activeTheme = await page.locator('body').getAttribute('data-theme');
             const scheme = () => page.locator('body').evaluate(el => getComputedStyle(el).colorScheme);
@@ -1709,7 +1565,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: DeArrow icon stays fixed with wrapping, RTL, themes, and touch`, async () => {
-        for (const theme of ['modern-neon', 'diary', 'cinematic']) {
+        for (const theme of ['modern-neon', 'diary']) {
             const {page, context, errors} = await pageFor(engine, {fixture: 'browse-dearrow', width: 390, touch: true});
             await page.waitForSelector('.dearrow-reveal');
             await page.evaluate(async theme => {
@@ -1934,17 +1790,6 @@ for (const engine of engines) {
 
 }
 
-// Font transfer is reported separately from the existing CSS/JS and preview budgets.
-test('Bundled font transfer stays within its recorded allowance', () => {
-    const inventory = require('./asset-baseline.json').fontAssets;
-    for (const [file, entry] of Object.entries(inventory)) {
-        const bytes = fs.statSync(path.join(root, 'assets', file)).size;
-        assert.equal(bytes, entry.bytes, `${file}: update the recorded transfer size`);
-        assert.ok(bytes <= entry.maxBytes, `${file}: ${bytes} font bytes`);
-        console.log(`${file}: ${bytes} font bytes (separate from CSS/JS)`);
-    }
-});
-
 for (const engine of engines) {
     test(`${engine}: SponsorBlock modes, overlay, keyboard, ranges and replay`, async () => {
         const segments = [
@@ -2060,7 +1905,7 @@ for (const engine of engines) {
         await context.close();
     });
     test(`${engine}: preference Save remains visible throughout all themes`, async () => {
-        for (const fixture of ['preferences', 'preferences-cinematic', 'preferences-diary']) {
+        for (const fixture of ['preferences', 'preferences-diary']) {
             for (const width of [390, 1440]) {
                 const {page, context} = await pageFor(engine, {fixture, width, javascript:false});
                 const button = page.getByRole('button', {name:'Save preferences', exact:true});
@@ -2685,7 +2530,7 @@ for (const engine of engines) {
 
 for (const engine of engines) {
     test(`${engine}: DeArrow contribution themes, empty results and loading errors`, async () => {
-        for (const theme of ['light', 'diary', 'cinematic']) {
+        for (const theme of ['light', 'diary']) {
             const {page, context, errors} = await pageFor(engine, {fixture: 'watch-dearrow-contributions-' + theme, width: 390, height: 844});
             let fail = true;
             await page.route('**/api/v1/dearrow/*/submissions', route => route.fulfill({status: fail ? 503 : 200, contentType: 'application/json', body: fail ? '{"error":"Temporary failure"}' : '{"titles":[]}'}));
@@ -2747,7 +2592,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: mobile volume stays device controlled with neutral translucent controls`, async () => {
-        for (const fixture of ['watch-dark', 'watch-light', 'watch-diary-dark', 'watch-diary-light', 'watch-cinematic-dark', 'watch-cinematic-light', 'embed-mobile']) {
+        for (const fixture of ['watch-dark', 'watch-light', 'watch-diary-dark', 'watch-diary-light', 'embed-mobile']) {
             const {page, context, errors} = await pageFor(engine, {fixture, realPlayer: true, touch: true, width: 390, height: 844,
                 initScript: () => localStorage.setItem('invidious_player_volume', '.25')});
             await page.waitForFunction(() => window.player && player.volume);
@@ -2804,7 +2649,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: channel playlists match library sizing in every theme`, async () => {
-        for (const theme of ['modern-neon', 'diary', 'cinematic']) {
+        for (const theme of ['modern-neon', 'diary']) {
             const channel = await pageFor(engine, {fixture: `channel-playlists-${theme}`});
             const library = await pageFor(engine, {fixture: `library-${theme}`});
             for (const width of [390, 768, 1440]) {
@@ -3047,7 +2892,7 @@ test('manual chapter template serializes titles safely for watch and embed', () 
 for (const engine of engines) {
     for (const width of [390, 1440]) {
         test(`${engine}: production thumbnail progress spans history, all card types and thin layouts at ${width}px`, async () => {
-            for (const theme of ['modern-neon', 'diary', 'cinematic']) {
+            for (const theme of ['modern-neon', 'diary']) {
                 for (const thin of [false, true]) {
                     const suffix = theme + '-' + (thin ? 'thin' : 'normal');
                     const history = await pageFor(engine, {fixture: 'history-progress-' + suffix, route: 'feed/history', width,
