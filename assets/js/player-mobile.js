@@ -137,6 +137,9 @@
             if (sharing) row(labels.share, '', function () {
                 view(labels.share); sharing._createModal(); mount(sharing.modal, true);
             });
+            if (window.invidiousChat) row(window.invidiousChat.isVisible() ? window.invidiousChat.hideLabel : window.invidiousChat.showLabel, '', function () {
+                panel.close(); window.invidiousChat.toggle();
+            });
             if (panel.open) content.querySelector('button').focus();
         }
         gear.handleClick = function () {

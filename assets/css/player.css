@@ -137,8 +137,12 @@ ul.vjs-menu-content::-webkit-scrollbar {
   order: 6;
 }
 
+.vjs-wide-control {
+  order: 8;
+}
+
 .vjs-fullscreen-control {
-  order: 7;
+  order: 9;
 }
 
 .vjs-playback-rate > .vjs-menu {

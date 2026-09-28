@@ -402,8 +402,8 @@ body[data-page=watch] .video-js .vjs-big-play-button {
   width: 76px; height: 76px; margin: -38px 0 0 -38px; line-height: 72px;
   background: #111c30db; border: 1px solid #80e7ff99; box-shadow: 0 4px 24px #0005;
 }
-body[data-page=watch] .video-js .vjs-wide-control { order: 7; }
-body[data-page=watch] .video-js .vjs-fullscreen-control { order: 8; }
+body[data-page=watch] .video-js .vjs-wide-control { order: 8; }
+body[data-page=watch] .video-js .vjs-fullscreen-control { order: 9; }
 .vjs-wide-control .vjs-icon-placeholder::before { content: ''; }
 .vjs-wide-control::before { content: ''; display: block; width: 24px; height: 15px; border: 2px solid currentColor; border-radius: 3px; margin: auto; }
 .vjs-wide-control[aria-pressed=true]::before { box-shadow: inset 4px 0 currentColor, inset -4px 0 currentColor; }

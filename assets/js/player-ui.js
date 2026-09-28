@@ -17,6 +17,18 @@
         player.trigger('playerresize');
     });
     bar.addChild(wide, {}, bar.children().indexOf(bar.getChild('fullscreenToggle')));
+    if (document.getElementById('chat-panel')) {
+        var chat = new Button(player);
+        chat.addClass('vjs-chat-control');
+        chat.controlText(labels.hide_chat);
+        chat.el().setAttribute('aria-pressed', 'true');
+        chat.el().setAttribute('aria-controls', 'chat-panel');
+        chat.on('click', function () {
+            if (window.invidiousChat) window.invidiousChat.toggle();
+        });
+        bar.addChild(chat, {}, bar.children().indexOf(wide));
+        player.chatControl = chat;
+    }
 
     // Match the other settings menus: tapping speed opens choices instead of cycling blindly.
     var rate = bar.getChild('playbackRateMenuButton');

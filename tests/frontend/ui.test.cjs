@@ -98,6 +98,7 @@ async function pageFor(engine, options = {}) {
             chatCalls++;
             if (options.chatError && chatCalls <= options.chatError) return route.fulfill({status: 503, contentType: 'application/json', body: '{}'});
             if (options.chatUnavailable) return route.fulfill({status: 404, contentType: 'application/json', body: '{}'});
+            if (options.chatMessages) return route.fulfill({contentType: 'application/json', body: JSON.stringify({messages: options.chatMessages, removedIds: [], continuation: null})});
             const offset = Number(url.searchParams.get('offset_ms') || 0);
             const second = Boolean(url.searchParams.get('continuation')) || offset >= 2000;
             const messages = second ? [
@@ -170,7 +171,105 @@ for (const engine of engines) {
     test(`${engine}: ordinary VOD does not load chat replay`, async () => {
         const {page, context, requests, errors} = await pageFor(engine, {fixture: 'watch-single'});
         assert.equal(await page.locator('#chat-panel').count(), 0);
+        assert.equal(await page.locator('.vjs-chat-control').count(), 0);
         assert.equal(requests.some(url => url.startsWith('/api/v1/live_chat/')), false);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: player chat control hides and restores replay`, async () => {
+        const {page, context, requests, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat-only', realPlayer: true});
+        await page.locator('.chat-message').first().waitFor();
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.evaluate(() => { player.pause(); player.userActive(true); });
+        const toggle = page.locator('.vjs-chat-control');
+        const share = page.locator('.vjs-share-control');
+        const wide = page.locator('.vjs-wide-control');
+        assert.equal(await toggle.getAttribute('title'), 'Hide chat');
+        assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
+        const chatBox = await toggle.boundingBox();
+        const shareBox = await share.boundingBox();
+        const wideBox = await wide.boundingBox();
+        assert.ok(chatBox.x >= shareBox.x + shareBox.width - 4);
+        assert.ok(wideBox.x >= chatBox.x + chatBox.width - 4);
+        await toggle.click();
+        assert.equal(await page.locator('#chat-panel').isVisible(), false);
+        assert.equal(await toggle.getAttribute('title'), 'Show chat');
+        assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
+        assert.equal(await page.locator('#watch-layout').evaluate(el => el.classList.contains('watch-without-sidebar')), true);
+        assert.equal(await page.locator('.watch-sidebar').isVisible(), false);
+        const calls = chatCalls();
+        await page.evaluate(() => player.currentTime(2.7));
+        await page.waitForTimeout(950);
+        assert.equal(chatCalls(), calls);
+        await toggle.click();
+        await page.getByText('Great stream', {exact: true}).waitFor();
+        assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
+        assert.equal(await page.locator('#watch-layout').evaluate(el => el.classList.contains('watch-without-sidebar')), false);
+        assert.equal(await page.locator('.watch-sidebar').isVisible(), true);
+        assert.ok(requests.some(url => url.startsWith('/api/v1/live_chat/') && Number(new URL(url, 'https://invidious.test').searchParams.get('offset_ms')) >= 2500));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: chat keeps 120 messages and lets readers resync scrolling`, async () => {
+        const chatMessages = Array.from({length: 151}, (_, index) => ({
+            id: `message-${index}`, offsetMs: index < 120 ? 0 : index < 150 ? 2500 : 3500,
+            author: `Viewer ${index}`, text: `Message ${index} with enough words to wrap in a narrow panel`, kind: 'text', amount: ''
+        }));
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatMessages});
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.evaluate(() => player.pause());
+        await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 120);
+        const list = page.locator('#chat-messages');
+        const author = page.locator('.chat-message').first().locator('.chat-author');
+        const body = page.locator('.chat-message').first().locator('.chat-text');
+        const authorBox = await author.boundingBox();
+        const bodyBox = await body.boundingBox();
+        assert.ok(Math.abs(authorBox.x - bodyBox.x) <= 1);
+        assert.ok(bodyBox.y >= authorBox.y + authorBox.height - 1);
+        await list.evaluate(el => { el.scrollTop = el.querySelector('[data-message-id="message-50"]').offsetTop - el.offsetTop; });
+        await page.locator('#chat-sync').waitFor({state: 'visible'});
+        const syncBox = await page.locator('#chat-sync').boundingBox();
+        const scrollBox = await list.boundingBox();
+        assert.ok(Math.abs(syncBox.x + syncBox.width / 2 - (scrollBox.x + scrollBox.width / 2)) <= 2);
+        const before = await page.locator('[data-message-id="message-50"]').boundingBox();
+        const beforeList = await list.boundingBox();
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() >= 2.7);
+        await page.waitForFunction(() => document.querySelector('[data-message-id="message-149"]'));
+        const after = await page.locator('[data-message-id="message-50"]').boundingBox();
+        const afterList = await list.boundingBox();
+        assert.ok(Math.abs((after.y - afterList.y) - (before.y - beforeList.y)) <= 2, JSON.stringify({before, after, beforeList, afterList, scrollTop: await list.evaluate(el => el.scrollTop)}));
+        assert.equal(await page.locator('.chat-message').count(), 120);
+        assert.equal(await page.locator('[data-message-id="message-0"]').count(), 0);
+        assert.equal(await page.locator('#chat-sync').isVisible(), true);
+        await page.locator('#chat-sync').click();
+        assert.equal(await page.locator('#chat-sync').isVisible(), false);
+        assert.equal(await list.evaluate(el => el.scrollHeight - el.clientHeight - el.scrollTop <= 32), true);
+        await page.waitForFunction(() => player.currentTime() >= 3.7);
+        await page.locator('[data-message-id="message-150"]').waitFor();
+        assert.equal(await page.locator('#chat-sync').isVisible(), false);
+        assert.equal(await list.evaluate(el => el.scrollHeight - el.clientHeight - el.scrollTop <= 32), true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: mobile player settings can hide and show chat`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, touch: true, mobileUserAgent: true, width: 390, height: 844});
+        await page.locator('.chat-message').first().waitFor();
+        assert.equal(await page.locator('.vjs-chat-control').isVisible(), false);
+        await page.evaluate(() => { player.muted(true); player.play(); player.userActive(true); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        await page.locator('.vjs-mobile-settings').tap();
+        const settings = page.locator('.mobile-player-settings');
+        await settings.getByRole('button', {name: 'Hide chat'}).tap();
+        assert.equal(await page.locator('#chat-panel').isVisible(), false);
+        await page.locator('.vjs-mobile-settings').tap();
+        await settings.getByRole('button', {name: 'Show chat'}).tap();
+        await page.locator('#chat-panel').waitFor({state: 'visible'});
         assert.deepEqual(errors, []);
         await context.close();
     });

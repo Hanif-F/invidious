@@ -103,6 +103,8 @@
     "chat_unavailable" => I18n.translate(locale, "ui_chat_unavailable"),
     "chat_error" => I18n.translate(locale, "ui_chat_error"),
     "chat_empty" => I18n.translate(locale, "ui_chat_empty"),
+    "show_chat" => I18n.translate(locale, "ui_show_chat"),
+    "hide_chat" => I18n.translate(locale, "ui_hide_chat"),
 }.to_json
 %></script>
 <div class="watch-layout watch-wide<%= " watch-without-sidebar" unless params.related_videos || plid || video.live_chat_replay? %>" id="watch-layout">
@@ -366,7 +368,10 @@
         <% if video.live_chat_replay? %>
         <section class="chat-panel panel" id="chat-panel" aria-labelledby="chat-heading">
             <h2 class="panel-heading" id="chat-heading"><%= I18n.translate(locale, "ui_chat_replay") %></h2>
-            <div class="chat-messages js-only" id="chat-messages" role="log" aria-live="off"></div>
+            <div class="chat-scroll-area js-only">
+                <div class="chat-messages" id="chat-messages" role="log" aria-live="off"></div>
+                <button id="chat-sync" class="chat-sync pure-button" type="button" aria-controls="chat-messages" hidden><%= I18n.translate(locale, "ui_sync_chat") %></button>
+            </div>
             <div class="chat-footer js-only">
                 <p id="chat-status" role="status"><%= I18n.translate(locale, "ui_chat_loading") %></p>
                 <button id="chat-retry" class="pure-button" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>

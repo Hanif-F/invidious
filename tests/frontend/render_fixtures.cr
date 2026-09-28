@@ -88,7 +88,7 @@ def fixture_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
-def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false)
+def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   video = fixture_video
@@ -98,6 +98,7 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
   id = video.id
   continuation = 2
   params = Invidious::Videos.process_video_params(URI::Params.new, preferences)
+  params.related_videos = false if chat_only
   params.comments = ["", ""]
   params.quality = "medium"
   params.vr_mode = false
@@ -304,6 +305,7 @@ Dir.mkdir_p(output)
 end
 File.write("#{output}/watch-single.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil))
 File.write("#{output}/watch-chat.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil, chat: true))
+File.write("#{output}/watch-chat-only.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil, chat: true, chat_only: true))
 File.write("#{output}/watch-thin.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "dark", true)))
 File.write("#{output}/browse-compact.html", browse_fixture(fixture_env("/feed/popular", "dark", false, "compact")))
 File.write("#{output}/watch-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "dark", false, "balanced", "ar")))
