@@ -50,18 +50,24 @@
     var userBlacklist = [];
     var saveTimer;
     var csrfToken;
-    var queue = [];
-    var seen = new Set();
+    var segments = [];
+    var activeSegment = null;
     var removed = new Set();
-    var continuation = null;
-    var highestOffset = 0;
-    var hasMore = true;
+    var cacheUse = 0;
+    var displayCursor = 0;
+    var lastPlaybackPosition = 0;
+    var seekStartPosition = null;
     var loading = false;
-    var failed = false;
     var generation = 0;
     var controller;
+    var prefetchTimer;
     var nextRequestAt = 0;
     var autoScroll = true;
+    var windowAtTail = true;
+    var MAX_CACHED_MESSAGES = 5000;
+    var MAX_SEGMENTS = 24;
+    var MAX_VISIBLE_MESSAGES = 120;
+    var PREFETCH_MS = 30000;
 
     function readLocal(key, fallback) {
         try { return JSON.parse(localStorage.getItem(key)) || fallback; }
@@ -304,10 +310,11 @@
             String(seconds % 60).padStart(2, '0');
     }
 
-    function append(message) {
+    function messageRow(message) {
         var row = document.createElement('div');
         row.className = 'chat-message';
         row.dataset.messageId = message.id;
+        row.dataset.offsetMs = String(message.offsetMs);
         row.dataset.kind = message.kind;
         var time = document.createElement('span');
         time.className = 'chat-time';
@@ -341,43 +348,131 @@
         text.textContent = message.text;
         content.appendChild(text);
         row.appendChild(content);
+        return row;
+    }
+
+    function append(message) {
         var removedHeight = 0;
-        list.appendChild(row);
-        while (list.children.length > 120) {
+        list.appendChild(messageRow(message));
+        while (list.children.length > MAX_VISIBLE_MESSAGES) {
             removedHeight += list.firstElementChild.getBoundingClientRect().height;
             list.firstElementChild.remove();
         }
         return removedHeight;
     }
 
-    function showDue() {
-        if (panel.hidden) return;
-        var now = duePositionMs();
-        if (queue.length && queue[0].offsetMs <= now + 250) maintainScroll(function () {
-            var removedHeight = 0;
-            while (queue.length && queue[0].offsetMs <= now + 250) {
-                var message = queue.shift();
-                if (!removed.has(message.id) && validMessage(message)) removedHeight += append(message);
-            }
-            return removedHeight;
-        });
-        if (!loading && !failed && hasMore && Date.now() >= nextRequestAt &&
-            (queue.length === 0 || highestOffset <= now + 15000)) load(false);
-        if (!loading && !hasMore && !list.children.length && !queue.length)
-            status.textContent = labels.chat_empty;
+    function videoEndMs() {
+        var duration = Number(video_data.length_seconds) * 1000;
+        return Number.isFinite(duration) && duration > 0 ? duration : Infinity;
     }
 
-    function load(initial) {
-        if (panel.hidden || loading || failed || (!initial && !hasMore)) return;
-        loading = true;
+    function touchSegment(segment) { segment.lastUsed = ++cacheUse; }
+
+    function trimCache() {
+        var total = segments.reduce(function (count, segment) { return count + segment.messages.length; }, 0);
+        while (segments.length > MAX_SEGMENTS || total > MAX_CACHED_MESSAGES) {
+            var inactive = segments.filter(function (segment) { return segment !== activeSegment; })
+                .sort(function (a, b) { return a.lastUsed - b.lastUsed; })[0];
+            if (!inactive) break;
+            total -= inactive.messages.length;
+            segments.splice(segments.indexOf(inactive), 1);
+        }
+        if (total > MAX_CACHED_MESSAGES && activeSegment) {
+            var excess = total - MAX_CACHED_MESSAGES;
+            activeSegment.messages.splice(0, excess).forEach(function (message) { activeSegment.ids.delete(message.id); });
+            activeSegment.start = activeSegment.messages.length ? activeSegment.messages[0].offsetMs : activeSegment.end;
+            displayCursor = Math.max(0, displayCursor - excess);
+        }
+    }
+
+    function segmentFor(position) {
+        var covered = segments.filter(function (segment) {
+            return position >= segment.start && (position <= segment.end || segment.complete);
+        }).sort(function (a, b) { return b.lastUsed - a.lastUsed; })[0];
+        if (covered) return covered;
+        if (activeSegment && position >= activeSegment.start &&
+            position <= activeSegment.end + PREFETCH_MS && !activeSegment.complete) return activeSegment;
+        return null;
+    }
+
+    function dueMessages() {
+        if (!activeSegment) return [];
+        var now = duePositionMs() + 250;
+        return activeSegment.messages.filter(function (message) {
+            return message.offsetMs <= now && validMessage(message);
+        });
+    }
+
+    function rebuildVisible() {
+        if (panel.hidden || !activeSegment) return;
+        var due = dueMessages();
+        list.textContent = '';
+        due.slice(-MAX_VISIBLE_MESSAGES).forEach(function (message) { list.appendChild(messageRow(message)); });
+        displayCursor = activeSegment.messages.findIndex(function (message) { return message.offsetMs > duePositionMs() + 250; });
+        if (displayCursor < 0) displayCursor = activeSegment.messages.length;
+        windowAtTail = true;
+        setAutoScroll(true);
+        list.scrollTop = list.scrollHeight;
+        if (activeSegment.complete && !due.length) status.textContent = labels.chat_empty;
+        else if (!activeSegment.failed) status.textContent = '';
+    }
+
+    function showOlder() {
+        if (autoScroll || !activeSegment || list.scrollTop > 48 || !list.firstElementChild) return;
+        var due = dueMessages();
+        var firstId = list.firstElementChild.dataset.messageId;
+        var first = due.findIndex(function (message) { return message.id === firstId; });
+        if (first <= 0) return;
+        var previous = due.slice(Math.max(0, first - 40), first);
+        var oldHeight = list.scrollHeight;
+        var fragment = document.createDocumentFragment();
+        previous.forEach(function (message) { fragment.appendChild(messageRow(message)); });
+        list.insertBefore(fragment, list.firstElementChild);
+        list.scrollTop += list.scrollHeight - oldHeight;
+        while (list.children.length > MAX_VISIBLE_MESSAGES) {
+            list.lastElementChild.remove();
+            windowAtTail = false;
+        }
+    }
+
+    function showDue() {
+        if (panel.hidden || !activeSegment) return;
+        var now = duePositionMs() + 250;
+        if (windowAtTail && activeSegment.messages[displayCursor] && activeSegment.messages[displayCursor].offsetMs <= now) {
+            maintainScroll(function () {
+                var removedHeight = 0;
+                while (activeSegment.messages[displayCursor] && activeSegment.messages[displayCursor].offsetMs <= now) {
+                    var message = activeSegment.messages[displayCursor++];
+                    if (validMessage(message)) removedHeight += append(message);
+                }
+                return removedHeight;
+            });
+        }
+        if (!autoScroll) sync.hidden = false;
+        maybePrefetch();
+    }
+
+    function maybePrefetch() {
+        clearTimeout(prefetchTimer);
+        if (panel.hidden || !activeSegment || loading || activeSegment.failed || activeSegment.complete ||
+            activeSegment.end > duePositionMs() + PREFETCH_MS) return;
+        var delay = Math.max(0, nextRequestAt - Date.now());
+        prefetchTimer = setTimeout(load, delay);
+    }
+
+    function load() {
+        if (panel.hidden || !activeSegment || loading || activeSegment.failed || activeSegment.complete) return;
+        var segment = activeSegment;
         var request = generation;
+        var initial = !segment.started;
         var url = new URL('/api/v1/live_chat/' + encodeURIComponent(video_data.id), location.origin);
-        url.searchParams.set('offset_ms', String(initial ? requestPositionMs() : Math.max(0, highestOffset)));
-        if (!initial && continuation) url.searchParams.set('continuation', continuation);
+        url.searchParams.set('offset_ms', String(initial ? segment.requestOffset : Math.max(segment.requestOffset, segment.end)));
+        if (!initial && segment.continuation) url.searchParams.set('continuation', segment.continuation);
+        loading = true;
         controller = new AbortController();
         list.setAttribute('aria-busy', 'true');
         retry.hidden = true;
-        if (initial) status.textContent = labels.chat_loading;
+        if (initial && !list.children.length) status.textContent = labels.chat_loading;
 
         fetch(url.pathname + url.search, {signal: controller.signal}).then(function (response) {
             if (response.status === 404) {
@@ -388,62 +483,87 @@
             if (!response.ok) throw new Error('request failed');
             return response.json();
         }).then(function (data) {
-            if (request !== generation) return;
+            if (request !== generation || segment !== activeSegment) return;
             if (!data || !Array.isArray(data.messages) || !Array.isArray(data.removedIds))
                 throw new Error('invalid chat response');
-            (data.removedIds || []).forEach(function (id) {
-                removed.add(id);
-                Array.from(list.children).forEach(function (row) {
-                    if (row.dataset.messageId === id) row.remove();
+            var removedInChunk = new Set(data.removedIds);
+            removedInChunk.forEach(function (id) { removed.add(id); });
+            if (removedInChunk.size) {
+                segments.forEach(function (cached) {
+                    cached.messages = cached.messages.filter(function (message) { return !removedInChunk.has(message.id); });
+                    removedInChunk.forEach(function (id) { cached.ids.delete(id); });
                 });
-                queue = queue.filter(function (message) { return message.id !== id; });
-            });
+            }
             data.messages.forEach(function (message) {
                 if (typeof message.id !== 'string' || typeof message.text !== 'string' ||
                     !Number.isFinite(message.offsetMs) || message.offsetMs < 0 ||
-                    seen.has(message.id) || removed.has(message.id)) return;
-                seen.add(message.id);
-                queue.push(message);
-                highestOffset = Math.max(highestOffset, message.offsetMs);
+                    segment.ids.has(message.id) || removed.has(message.id)) return;
+                segment.ids.add(message.id);
+                segment.messages.push(message);
+                segment.end = Math.max(segment.end, message.offsetMs);
             });
-            queue.sort(function (a, b) { return a.offsetMs - b.offsetMs; });
-            continuation = typeof data.continuation === 'string' && data.continuation ? data.continuation : null;
-            hasMore = !!continuation;
+            segment.messages.sort(function (a, b) { return a.offsetMs - b.offsetMs; });
+            segment.continuation = typeof data.continuation === 'string' && data.continuation ? data.continuation : null;
+            segment.started = true;
+            segment.complete = !segment.continuation;
+            if (segment.complete) segment.end = videoEndMs();
             loading = false;
+            controller = null;
             list.setAttribute('aria-busy', 'false');
             status.textContent = '';
             nextRequestAt = Date.now() + 800;
-            showDue();
-            if (hasMore && queue.length === 0)
-                setTimeout(function () { if (request === generation) showDue(); }, 850);
+            trimCache();
+            if (autoScroll || !list.children.length) rebuildVisible();
+            else {
+                Array.from(list.children).forEach(function (row) {
+                    if (removed.has(row.dataset.messageId)) row.remove();
+                });
+                if (windowAtTail) {
+                    var last = list.lastElementChild && list.lastElementChild.dataset.messageId;
+                    var lastIndex = segment.messages.findIndex(function (message) { return message.id === last; });
+                    if (lastIndex < 0) rebuildVisible();
+                    else {
+                        displayCursor = lastIndex + 1;
+                        showDue();
+                    }
+                }
+            }
+            maybePrefetch();
         }).catch(function (error) {
             if (request !== generation || error.name === 'AbortError') return;
             loading = false;
-            failed = true;
+            controller = null;
+            segment.failed = true;
             list.setAttribute('aria-busy', 'false');
             status.textContent = error.unavailable ? labels.chat_unavailable : labels.chat_error;
             retry.hidden = !!error.unavailable;
         });
     }
 
-    function reset() {
+    function selectPosition(force) {
         if (panel.hidden) return;
-        generation++;
-        if (controller) controller.abort();
-        queue = [];
-        seen = new Set();
-        removed = new Set();
-        continuation = null;
-        highestOffset = requestPositionMs();
-        hasMore = true;
-        loading = false;
-        failed = false;
-        nextRequestAt = 0;
-        list.textContent = '';
-        setAutoScroll(true);
-        status.textContent = labels.chat_loading;
-        retry.hidden = true;
-        load(true);
+        var position = requestPositionMs();
+        var segment = segmentFor(position);
+        if (!segment) {
+            segment = {requestOffset: position, start: Math.max(0, position - 15000), end: -1,
+                messages: [], ids: new Set(), continuation: null, started: false, complete: false,
+                failed: false, lastUsed: 0};
+            segments.push(segment);
+        }
+        if (segment !== activeSegment) {
+            generation++;
+            clearTimeout(prefetchTimer);
+            if (controller) controller.abort();
+            controller = null;
+            loading = false;
+            activeSegment = segment;
+            nextRequestAt = 0;
+            force = true;
+        }
+        touchSegment(segment);
+        trimCache();
+        if (force) rebuildVisible();
+        maybePrefetch();
     }
 
     function setVisible(visible) {
@@ -466,10 +586,12 @@
             player.chatControl.controlText(visible ? labels.hide_chat : labels.show_chat);
             player.chatControl.el().setAttribute('aria-pressed', String(visible));
         }
-        if (visible) reset();
+        if (visible) selectPosition(true);
         else {
             generation++;
+            clearTimeout(prefetchTimer);
             if (controller) controller.abort();
+            controller = null;
             loading = false;
             list.setAttribute('aria-busy', 'false');
         }
@@ -593,19 +715,19 @@
     });
     controls.users.addEventListener('change', function () {
         settings.chat_user_blacklist = controls.users.value.slice(0, 1024);
-        if (applySettings()) { reset(); saveSettings('account'); }
+        if (applySettings()) { rebuildVisible(); saveSettings('account'); }
     });
     controls.words.addEventListener('change', function () {
         var previous = settings.chat_word_blacklist;
         settings.chat_word_blacklist = controls.words.value.slice(0, 1024);
-        if (applySettings()) { reset(); saveSettings('account'); }
+        if (applySettings()) { rebuildVisible(); saveSettings('account'); }
         else { settings.chat_word_blacklist = previous; }
     });
     controls.timing.addEventListener('change', function () {
         var value = Number(controls.timing.value);
         if (!Number.isFinite(value) || Math.abs(value) > 3600) { controls.timing.value = String(timingMs / 1000); return; }
         timingMs = Math.round(value * 1000);
-        reset(); saveTiming();
+        selectPosition(true); saveTiming();
     });
     document.addEventListener('click', function (event) {
         var menu = document.getElementById('chat-settings');
@@ -619,16 +741,54 @@
         }
     });
 
-    retry.onclick = reset;
+    retry.onclick = function () {
+        if (!activeSegment) return;
+        activeSegment.failed = false;
+        status.textContent = labels.chat_loading;
+        nextRequestAt = 0;
+        maybePrefetch();
+    };
     sync.onclick = function () {
-        setAutoScroll(true);
-        list.scrollTop = list.scrollHeight;
+        rebuildVisible();
     };
     list.addEventListener('scroll', function () {
-        setAutoScroll(nearBottom());
+        if (nearBottom()) {
+            if (!autoScroll) {
+                if (windowAtTail) setAutoScroll(true);
+                else rebuildVisible();
+            }
+        } else {
+            setAutoScroll(false);
+            showOlder();
+        }
     });
-    player.on('timeupdate', showDue);
-    player.on('seeked', reset);
-    player.on('loadedmetadata', reset);
-    reset();
+    player.on('timeupdate', function () {
+        if (!player.seeking || !player.seeking()) lastPlaybackPosition = positionMs();
+        showDue();
+    });
+    player.on('seeking', function () { seekStartPosition = lastPlaybackPosition; });
+    player.on('seeked', function () {
+        var previous = seekStartPosition === null ? lastPlaybackPosition : seekStartPosition;
+        var current = positionMs();
+        var moved = Math.abs(current - previous) > 750;
+        selectPosition(moved);
+        if (!moved && current < previous && activeSegment) {
+            var now = duePositionMs() + 250;
+            Array.from(list.children).forEach(function (row) {
+                if (Number(row.dataset.offsetMs) > now) row.remove();
+            });
+            displayCursor = activeSegment.messages.findIndex(function (message) { return message.offsetMs > now; });
+            if (displayCursor < 0) displayCursor = activeSegment.messages.length;
+        }
+        showDue();
+        lastPlaybackPosition = current;
+        seekStartPosition = null;
+    });
+    player.on('dispose', function () {
+        generation++;
+        clearTimeout(prefetchTimer);
+        if (controller) controller.abort();
+    });
+    lastPlaybackPosition = positionMs();
+    selectPosition(true);
 }());

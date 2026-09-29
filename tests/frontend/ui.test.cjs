@@ -97,6 +97,11 @@ async function pageFor(engine, options = {}) {
         }
         if (url.pathname.startsWith('/api/v1/live_chat/')) {
             chatCalls++;
+            if (options.chatReply) {
+                const reply = options.chatReply(url, chatCalls);
+                if (reply.delay) await new Promise(resolve => setTimeout(resolve, reply.delay));
+                return route.fulfill({contentType: 'application/json', body: JSON.stringify(reply.data)});
+            }
             if (options.chatError && chatCalls <= options.chatError) return route.fulfill({status: 503, contentType: 'application/json', body: '{}'});
             if (options.chatUnavailable) return route.fulfill({status: 404, contentType: 'application/json', body: '{}'});
             if (options.chatMessages) return route.fulfill({contentType: 'application/json', body: JSON.stringify({messages: options.chatMessages, removedIds: [], continuation: null})});
@@ -145,7 +150,7 @@ async function pageFor(engine, options = {}) {
 }
 
 for (const engine of engines) {
-    test(`${engine}: chat replay follows playback and resyncs after seeking`, async () => {
+    test(`${engine}: chat replay keeps fetched messages across pause and seeks`, async () => {
         const {page, context, errors, requests, chatCalls} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true});
         await page.locator('.chat-message').first().waitFor();
         assert.equal(await page.locator('.chat-message').count(), 1);
@@ -156,20 +161,143 @@ for (const engine of engines) {
         await page.getByText('Here!', {exact: true}).waitFor();
         await page.evaluate(() => player.pause());
         const pausedCount = await page.locator('.chat-message').count();
+        await page.waitForTimeout(900);
+        const callsBeforePause = chatCalls();
         await page.waitForTimeout(300);
         assert.equal(await page.locator('.chat-message').count(), pausedCount);
+        await page.evaluate(() => player.currentTime(0.6));
+        await page.getByText('Here!', {exact: true}).waitFor({state: 'detached'});
+        await page.evaluate(() => player.currentTime(1.1));
+        await page.getByText('Here!', {exact: true}).waitFor();
+        assert.equal(chatCalls(), callsBeforePause);
+        await page.evaluate(() => { player.play(); player.pause(); player.trigger('loadedmetadata'); });
+        await page.waitForTimeout(100);
+        assert.equal(chatCalls(), callsBeforePause);
         await page.evaluate(() => player.currentTime(2.7));
         await page.getByText('Great stream', {exact: true}).waitFor();
-        assert.equal(await page.getByText('Here!', {exact: true}).count(), 0);
-        assert.ok(requests.some(url => url.startsWith('/api/v1/live_chat/') && Number(new URL(url, 'https://invidious.test').searchParams.get('offset_ms')) >= 2000));
+        assert.equal(await page.getByText('Here!', {exact: true}).count(), 1);
         assert.ok(requests.some(url => url.startsWith('/api/v1/live_chat/') && new URL(url, 'https://invidious.test').searchParams.has('continuation')));
         await page.evaluate(() => player.currentTime(0));
+        await page.getByText('Great stream', {exact: true}).waitFor({state: 'detached'});
         await page.getByText('Hello <script>alert(1)</script>', {exact: true}).waitFor();
-        assert.equal(await page.getByText('Great stream', {exact: true}).count(), 0);
-        assert.ok(chatCalls() >= 2);
+        assert.equal(chatCalls(), callsBeforePause);
         await page.setViewportSize({width: 390, height: 844});
         assert.equal(await page.locator('#chat-panel').isVisible(), true);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: cached ranges are reused and distant seeks fetch near the playhead`, async () => {
+        const message = (id, offsetMs) => ({id, offsetMs, author: 'Viewer', text: id, kind: 'text', amount: ''});
+        const chatReply = (url) => {
+            const offset = Number(url.searchParams.get('offset_ms'));
+            if (url.searchParams.has('continuation')) return {data: {messages: [message('ahead', 60000)], removedIds: [], continuation: 'later'}};
+            if (offset >= 100000) return {data: {messages: [message('distant', 120000)], removedIds: [], continuation: null}};
+            return {data: {messages: [message('start', 0), message('near', 1000)], removedIds: [], continuation: 'next'}};
+        };
+        const {page, context, chatCalls, requests, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true,
+            videoData: {length_seconds: 180}, chatReply});
+        await page.getByText('start', {exact: true}).waitFor();
+        await page.waitForTimeout(950);
+        assert.equal(chatCalls(), 2);
+        await page.evaluate(() => {
+            window.chatTestTime = 0;
+            player.currentTime = function (value) {
+                if (value !== undefined) window.chatTestTime = value;
+                return window.chatTestTime;
+            };
+            player.currentTime(20);
+            player.trigger('seeked');
+        });
+        await page.waitForTimeout(100);
+        assert.equal(chatCalls(), 2);
+        await page.evaluate(() => { player.currentTime(120); player.trigger('seeked'); });
+        await page.getByText('distant', {exact: true}).waitFor();
+        assert.equal(chatCalls(), 3);
+        assert.ok(requests.some(url => url.startsWith('/api/v1/live_chat/') && Number(new URL(url, 'https://invidious.test').searchParams.get('offset_ms')) >= 100000));
+        await page.evaluate(() => { player.currentTime(0); player.trigger('seeked'); });
+        await page.getByText('start', {exact: true}).waitFor();
+        assert.equal(chatCalls(), 3);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: stale chat responses cannot replace a later seek`, async () => {
+        const message = (id, offsetMs) => ({id, offsetMs, author: 'Viewer', text: id, kind: 'text', amount: ''});
+        const chatReply = url => Number(url.searchParams.get('offset_ms')) < 100000 ?
+            {delay: 350, data: {messages: [message('stale', 0)], removedIds: [], continuation: null}} :
+            {data: {messages: [message('current', 120000)], removedIds: [], continuation: null}};
+        const {page, context, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true,
+            videoData: {length_seconds: 180}, chatReply});
+        await page.waitForTimeout(50);
+        assert.equal(chatCalls(), 1);
+        await page.evaluate(() => {
+            window.chatTestTime = 120;
+            player.currentTime = function (value) {
+                if (value !== undefined) window.chatTestTime = value;
+                return window.chatTestTime;
+            };
+            player.trigger('seeked');
+        });
+        await page.getByText('current', {exact: true}).waitFor();
+        await page.waitForTimeout(400);
+        assert.equal(await page.getByText('stale', {exact: true}).count(), 0);
+        assert.equal(chatCalls(), 2);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: removals and timing changes reuse cached replay`, async () => {
+        const message = (id, offsetMs) => ({id, offsetMs, author: 'Viewer', text: id, kind: 'text', amount: ''});
+        const chatReply = url => url.searchParams.has('continuation') ?
+            {data: {messages: [message('ahead', 60000)], removedIds: ['deleted'], continuation: 'later'}} :
+            {data: {messages: [message('kept', 0), message('deleted', 0)], removedIds: [], continuation: 'next'}};
+        const {page, context, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true,
+            videoData: {length_seconds: 180}, chatReply});
+        await page.getByText('kept', {exact: true}).waitFor();
+        await page.waitForTimeout(950);
+        assert.equal(await page.getByText('deleted', {exact: true}).count(), 0);
+        const calls = chatCalls();
+        await page.locator('#chat-settings summary').click();
+        await page.locator('#chat-timing').fill('-1');
+        await page.locator('#chat-timing').press('Tab');
+        await page.getByText('kept', {exact: true}).waitFor();
+        assert.equal(await page.getByText('deleted', {exact: true}).count(), 0);
+        assert.equal(chatCalls(), calls);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: scrolling up exposes earlier cached chat without another request`, async () => {
+        const chatMessages = Array.from({length: 151}, (_, index) => ({
+            id: `old-${index}`, offsetMs: 0, author: `Viewer ${index}`, text: `Old message ${index}`, kind: 'text', amount: ''
+        }));
+        const {page, context, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatMessages});
+        await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 120);
+        assert.equal(await page.locator('[data-message-id="old-0"]').count(), 0);
+        const calls = chatCalls();
+        await page.locator('#chat-messages').evaluate(el => { el.scrollTop = 0; });
+        await page.locator('[data-message-id="old-0"]').waitFor();
+        assert.equal(await page.locator('.chat-message').count(), 120);
+        assert.equal(chatCalls(), calls);
+        await page.locator('#chat-sync').click();
+        assert.equal(await page.locator('[data-message-id="old-0"]').count(), 0);
+        assert.equal(await page.locator('[data-message-id="old-150"]').count(), 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: chat cache evicts beyond 5000 messages and refetches evicted time`, async () => {
+        const chatMessages = Array.from({length: 5001}, (_, index) => ({
+            id: `bulk-${index}`, offsetMs: index, author: 'Viewer', text: `Bulk ${index}`, kind: 'text', amount: ''
+        }));
+        const {page, context, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatMessages});
+        await page.locator('[data-message-id="bulk-250"]').waitFor();
+        assert.equal(chatCalls(), 1);
+        await page.evaluate(() => player.trigger('seeked'));
+        await page.waitForTimeout(100);
+        assert.equal(chatCalls(), 2);
         assert.deepEqual(errors, []);
         await context.close();
     });
@@ -186,6 +314,7 @@ for (const engine of engines) {
     test(`${engine}: player chat control hides and restores replay`, async () => {
         const {page, context, requests, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat-only', realPlayer: true});
         await page.locator('.chat-message').first().waitFor();
+        await page.waitForTimeout(950);
         await page.evaluate(() => { player.muted(true); player.play(); });
         await page.waitForFunction(() => player.currentTime() > 0.1);
         await page.evaluate(() => { player.pause(); player.userActive(true); });
@@ -216,7 +345,7 @@ for (const engine of engines) {
         assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
         assert.equal(await page.locator('#watch-layout').evaluate(el => el.classList.contains('watch-without-sidebar')), true);
         assert.equal(await page.locator('.watch-sidebar').count(), 0);
-        assert.ok(requests.some(url => url.startsWith('/api/v1/live_chat/') && Number(new URL(url, 'https://invidious.test').searchParams.get('offset_ms')) >= 2500));
+        assert.equal(chatCalls(), calls);
         assert.deepEqual(errors, []);
         await context.close();
     });
