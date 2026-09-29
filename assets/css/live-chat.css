@@ -84,6 +84,7 @@ body #player-container.chat-docked .video-js { width: 100%; height: 100%; paddin
 }
 .video-js.chat-docked.chat-mobile { --chat-effective-width: 0px; }
 .video-js.chat-docked.chat-mobile .vjs-tech, .video-js.chat-docked.chat-mobile .vjs-poster { width: 100% !important; height: var(--chat-video-height) !important; }
+.video-js.chat-docked.chat-mobile .vjs-touch-overlay { height: var(--chat-video-height); }
 .video-js.chat-docked.chat-mobile .vjs-text-track-display, .video-js.chat-docked.chat-mobile .vjs-control-bar, .video-js.chat-docked.chat-mobile .vjs-error-display, .video-js.chat-docked.chat-mobile .vjs-modal-dialog { right: 0; width: 100%; }
 .video-js.chat-docked.chat-mobile .vjs-control-bar { top: calc(var(--chat-video-height) - 52px); bottom: auto; }
 .video-js.chat-docked.chat-mobile .vjs-text-track-display, .video-js.chat-docked.chat-mobile .vjs-error-display { bottom: auto; height: var(--chat-video-height); }

@@ -481,6 +481,43 @@ for (const engine of engines) {
         await context.close();
     });
 
+    test(`${engine}: mobile play/pause stays over the video with docked chat`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, touch: true,
+            mobileUserAgent: true, width: 390, height: 844});
+        await page.locator('.chat-message').first().waitFor();
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > 0.1);
+        const control = page.locator('.vjs-touch-overlay .vjs-play-control');
+        async function assertPlayable() {
+            await page.evaluate(() => { player.pause(); player.userActive(true); });
+            await page.waitForFunction(() => {
+                const video = document.querySelector('#player .vjs-tech').getBoundingClientRect();
+                const overlay = document.querySelector('.vjs-touch-overlay').getBoundingClientRect();
+                const control = document.querySelector('.vjs-touch-overlay .vjs-play-control');
+                const button = control.getBoundingClientRect();
+                if (getComputedStyle(control).opacity !== '1') return false;
+                if (Math.abs(overlay.height - video.height) > 2) return false;
+                if (Math.abs(button.y + button.height / 2 - (video.y + video.height / 2)) > 2) return false;
+                if (button.y < video.y || button.bottom > video.bottom) return false;
+                return true;
+            });
+            await control.tap();
+            await page.waitForFunction(() => !player.paused());
+            await control.tap();
+            await page.waitForFunction(() => player.paused());
+        }
+        await assertPlayable();
+        await page.evaluate(() => player.userActive(true));
+        await page.locator('.vjs-fullscreen-control').tap();
+        await page.waitForFunction(() => player.isFullscreen());
+        await assertPlayable();
+        await page.evaluate(() => { player.exitFullscreen(); });
+        await page.waitForFunction(() => !player.isFullscreen());
+        await assertPlayable();
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
     test(`${engine}: mobile docked chat follows orientation in and out of fullscreen`, async () => {
         const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, touch: true,
             mobileUserAgent: true, width: 390, height: 844});
