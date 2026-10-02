@@ -235,7 +235,7 @@
                 <i class="icon <%= params.listen ? "ion-ios-videocam" : "ion-md-headset" %>" aria-hidden="true"></i> <%= I18n.translate(locale, params.listen ? "Video mode" : "Audio mode") %>
             </a>
             <button type="button" class="pure-button js-only" id="share-video"><%= I18n.translate(locale, "ui_share") %></button>
-            <% unless Invidious::Clips.source_error(video) %><a class="pure-button" id="create-clip" href="/create_clip?videoId=<%= video.id %>"><%= I18n.translate(locale, "clips_create") %></a><% end %>
+            <% unless Invidious::Clips.source_error(video) %><a class="pure-button" id="create-clip" href="/create_clip?videoId=<%= video.id %>" aria-haspopup="dialog"><%= I18n.translate(locale, "clips_create") %></a><% end %>
             <% if user %><details><summary><%= I18n.translate(locale, "Add to playlist") %></summary><div class="action-content">
             <% if user %>
                 <% playlists = Invidious::Database::Playlists.select_user_created_playlists(user.email) %>
@@ -476,6 +476,7 @@
     </aside>
     <% end %>
 </div>
+<% unless Invidious::Clips.source_error(video) %><%= rendered "components/clip_dialog" %><% end %>
 <script src="/js/comments.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/watch.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/player-ui.js?v=<%= ASSET_COMMIT %>"></script>

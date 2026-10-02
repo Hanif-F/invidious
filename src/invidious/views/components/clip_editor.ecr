@@ -1,0 +1,55 @@
+<form class="pure-form pure-form-stacked clip-editor" action="/create_clip" method="post" id="clip-editor" data-duration="<%= video.length_seconds %>" data-preview="/embed/<%= video.id %>?save_player_pos=0&clip_preview=1">
+    <input type="hidden" name="csrf_token" value="<%= HTML.escape(clip_csrf) %>">
+    <input type="hidden" name="videoId" value="<%= video.id %>">
+    <div class="clip-body">
+        <div class="clip-preview-area js-only" hidden>
+            <div id="clip-preview-placeholder"><img src="/vi/<%= video.id %>/mqdefault.jpg" alt="" loading="lazy"><span><%= I18n.translate(locale, "clips_preview_hint") %></span></div>
+            <iframe class="clip-preview" id="clip-preview-frame" title="<%= I18n.translate(locale, "clips_preview") %>" allow="autoplay; fullscreen" hidden></iframe>
+        </div>
+        <div class="clip-title-label"><label for="clip-title"><%= I18n.translate(locale, "clips_title") %></label><span id="clip-title-count" class="js-only" hidden aria-hidden="true">0 / 140</span></div>
+        <input id="clip-title" name="title" type="text" required maxlength="280" value="<%= HTML.escape(clip_title) %>" aria-describedby="clip-title-error" dir="auto">
+        <p id="clip-title-error" class="clip-field-error" hidden></p>
+        <div class="clip-range js-only" hidden>
+            <div class="clip-timeline" dir="ltr">
+                <div class="clip-timeline-track"><span></span></div>
+                <input id="clip-start-range" type="range" min="0" max="<%= video.length_seconds %>" step="1" value="0" aria-label="<%= I18n.translate(locale, "clips_start") %>">
+                <input id="clip-end-range" type="range" min="0" max="<%= video.length_seconds %>" step="1" value="<%= Math.min(30, video.length_seconds) %>" aria-label="<%= I18n.translate(locale, "clips_end") %>">
+            </div>
+            <div class="clip-timeline-labels" dir="ltr"><span>00:00</span><span><%= Invidious::Clips::Validation.timestamp(video.length_seconds.to_f) %></span></div>
+        </div>
+        <div class="clip-time-fields">
+            <% {"start" => {"startTime", clip_start_value}, "end" => {"endTime", clip_end_value}}.each do |boundary, field| %>
+            <div class="clip-time-field">
+                <label for="clip-<%= boundary %>"><%= I18n.translate(locale, "clips_#{boundary}") %></label>
+                <input id="clip-<%= boundary %>" name="<%= field[0] %>" type="text" inputmode="text" required pattern="([0-9]+:)?[0-5]?[0-9]:[0-5][0-9]" maxlength="16" value="<%= HTML.escape(field[1]) %>" placeholder="00:00" autocomplete="off" spellcheck="false" dir="ltr" aria-describedby="clip-time-hint clip-<%= boundary %>-error">
+                <div class="clip-time-actions js-only" hidden>
+                    <button type="button" class="pure-button" data-clip-boundary="<%= boundary %>" data-clip-step="-1" aria-label="<%= I18n.translate(locale, "clips_#{boundary}_earlier") %>">−1 s</button>
+                    <button type="button" class="pure-button" data-clip-boundary="<%= boundary %>" data-clip-step="1" aria-label="<%= I18n.translate(locale, "clips_#{boundary}_later") %>">+1 s</button>
+                    <button type="button" class="pure-button clip-use-time" data-clip-boundary="<%= boundary %>"><%= I18n.translate(locale, "clips_use_time") %></button>
+                </div>
+                <p id="clip-<%= boundary %>-error" class="clip-field-error" hidden></p>
+            </div>
+            <% end %>
+        </div>
+        <p id="clip-time-hint" class="clip-hint"><%= I18n.translate(locale, "clips_time_hint") %></p>
+        <p id="clip-duration" role="status" aria-live="polite"><%= I18n.translate(locale, "clips_range_error") %></p>
+        <p class="clip-public"><%= I18n.translate(locale, "clips_public") %></p>
+        <p id="clip-submit-status" role="alert" tabindex="-1" hidden></p>
+    </div>
+    <footer class="clip-footer">
+        <button class="pure-button js-only" hidden type="button" id="clip-preview"><%= I18n.translate(locale, "clips_preview") %></button>
+        <button class="pure-button pure-button-primary" id="clip-publish" type="submit"><%= I18n.translate(locale, "clips_publish") %></button>
+    </footer>
+</form>
+<script id="clip-editor-labels" type="application/json"><%= {
+    "time" => I18n.translate(locale, "clips_time_error"),
+    "bounds" => I18n.translate(locale, "clips_bounds_error"),
+    "range" => I18n.translate(locale, "clips_range_error"),
+    "title" => I18n.translate(locale, "clips_title_error"),
+    "duration" => I18n.translate(locale, "clips_duration"),
+    "publishing" => I18n.translate(locale, "clips_publishing"),
+    "error" => I18n.translate(locale, "clips_submit_error"),
+    "session" => I18n.translate(locale, "clips_session_error"),
+    "copied" => I18n.translate(locale, "ui_copied"),
+    "copy_fallback" => I18n.translate(locale, "clips_copy_fallback"),
+}.to_json.gsub("<", "\\u003c") %></script>

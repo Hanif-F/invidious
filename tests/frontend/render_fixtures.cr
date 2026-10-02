@@ -88,10 +88,11 @@ def fixture_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
-def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false, native_clip : InvidiousClip? = nil)
+def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false, native_clip : InvidiousClip? = nil, clip_duration : Int32? = nil)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   video = fixture_video
+  video.length_seconds = clip_duration if clip_duration
   video.info["liveChatReplay"] = JSON::Any.new(true) if chat
   video.info["shortDescription"] = JSON::Any.new(chapter_description) if chapter_description
   related_videos = video.related_videos
@@ -534,16 +535,29 @@ def create_clip_fixture(visual_theme = "modern-neon", locale = "en-US")
   preferences.locale = locale
   env.set "preferences", preferences
   video = fixture_video
-  title = ""
-  start_time = 0.0
-  end_time = 30.0
+  clip_title = ""
+  clip_start_value = "00:00"
+  clip_end_value = "00:30"
   error = nil
-  csrf_token = "fixture-token"
+  clip_csrf = "fixture-token"
   navbar_search = true
   render "src/invidious/views/create_clip.ecr", "src/invidious/views/template.ecr"
 end
 
 File.write("#{output}/clip-watch.html", watch_fixture(signed_in_env(fixture_clip.permalink), nil, account: true, native_clip: fixture_clip))
+{"modern-neon", "diary"}.each do |theme|
+  {"dark", "light"}.each do |mode|
+    env = signed_in_env("/watch?v=2isYuQZMbdU")
+    preferences = env.get("preferences").as(Preferences)
+    preferences.theme = theme
+    preferences.dark_mode = mode
+    File.write("#{output}/watch-clips-#{theme}-#{mode}.html", watch_fixture(env, nil, account: true, clip_duration: 7205))
+  end
+end
+env = signed_in_env("/watch?v=2isYuQZMbdU")
+env.get("preferences").as(Preferences).locale = "ar"
+File.write("#{output}/watch-clips-rtl.html", watch_fixture(env, nil, account: true, clip_duration: 7205))
+File.write("#{output}/watch-clips-short.html", watch_fixture(signed_in_env("/watch?v=2isYuQZMbdU"), nil, account: true, clip_duration: 5))
 File.write("#{output}/clips-library.html", clips_fixture)
 File.write("#{output}/clips-empty.html", clips_fixture(empty: true))
 File.write("#{output}/channel-clips.html", clips_fixture(channel_page: true))

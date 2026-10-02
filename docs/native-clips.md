@@ -1,10 +1,29 @@
 # Native clips
 
 Signed-in users can create public 5–120 second clips from playable videos and
-completed livestream archives. Click **Create clip** beside **Share**, choose a
-title and range, preview, and publish. The normal creation form also works without
-JavaScript. The initial selection spans 30 seconds around the current position,
-bounded by the source duration. Clips play the selected range on a loop, with a
+completed livestream archives. Click **Create clip** beside **Share** to open a
+centered desktop popup or a full-screen mobile overlay. Choose a title and range,
+preview inside the popup, and publish without leaving the watch page. A successful
+publish shows **Copy link**, **Watch clip**, and **Done**; if copying is unavailable,
+select and copy the displayed link.
+
+Enter whole-second timestamps as **MM:SS** (for example, `00:01`) or **HH:MM:SS**
+(`01:00:05`). Both fields show hours when either boundary reaches an hour.
+The highlighted timeline has keyboard-accessible start/end handles, one-second
+adjustments, and **Use playback time** buttons. These capture the preview's
+playhead, or the main player's position when the popup opened. The initial
+selection spans 30 seconds around the current position rounded down to a whole
+second, bounded by the source duration. The 5–120 second clip limit still applies.
+
+Opening pauses the main player; closing resumes it only if it was already playing.
+Closing keeps an unpublished draft for reopening within that page. Changing the
+range stops the previous preview, and closing unloads it. Preview playback never
+saves full-video resume positions. Guests sign in and return to the popup.
+The normal `/create_clip` form also works without JavaScript and is used if popup
+assets cannot load. It accepts formatted timestamps and existing numeric-second
+submissions, retaining typed fields after validation errors.
+
+Published clips play the selected range on a loop, with a
 loop toggle and a link to the full video. Playback does not change full-video
 resume positions.
 
@@ -55,6 +74,10 @@ Times use seconds and are stored at millisecond precision. Native metadata has
 `createdAt` (Unix seconds), `url`, and saved source metadata under `video`.
 Native lookup does not fetch the source video. Legacy YouTube lookup responses
 retain their existing shape.
+
+The popup obtains a browser-session token from `/api/v1/auth/csrf`, then posts
+numeric seconds to the existing authenticated creation API. Whole-second
+timestamp editing does not change API schemas or existing fractional clips.
 
 Use existing API authentication and method/path scopes (`GET:clips`, `POST:clips`,
 `DELETE:clips/*`). Browser-session mutations require a valid CSRF token. All

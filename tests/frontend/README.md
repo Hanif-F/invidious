@@ -247,10 +247,18 @@ page restoration, local storage updates, and desktop/mobile layouts.
 
 ## Native clips
 
-Clip fixtures cover public channel listings, My Clips, creation, escaped titles,
+Clip fixtures cover public channel listings, My Clips, popup creation, escaped titles,
 creator attribution, themes, RTL, mobile forms, and no-JavaScript use. The real
 player checks exercise fractional range bounds, loop toggling, canonical sharing,
 SponsorBlock, audio settings, source refresh, quality changes, and preservation of
 full-video resume data. `clip-player.test.cjs` also checks
 source changes and unavailable ranges. See [native clips](../../docs/native-clips.md)
 for the API and disposable PostgreSQL route/integration checks.
+
+Popup checks exercise lazy asset loading, MM:SS/HH:MM:SS validation, hour crossings,
+range handles, one-second adjustments, preview playhead capture, draft recovery,
+main-player pause/resume, CSRF and publish failures, duplicate submissions, clipboard
+fallback, guest login return, theme/RTL/mobile layout, and the no-JavaScript form.
+Run `node --test clip-editor.test.cjs clip-player.test.cjs` in this directory for
+browser-free checks, or select browser cases with
+`node --test --test-name-pattern='clip creation|clip popup|guests return' ui.test.cjs`.

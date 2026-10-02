@@ -39,5 +39,25 @@ describe Invidious::Clips::Validation do
     Invidious::Clips::Validation.default_range(199.0, 200).should eq({170.0, 200.0})
     Invidious::Clips::Validation.default_range(5.0, 8).should eq({0.0, 8.0})
     Invidious::Clips::Validation.default_range(Float64::NAN, 200).should eq({0.0, 30.0})
+    Invidious::Clips::Validation.default_range(60.999, 200).should eq({45.0, 75.0})
+  end
+
+  it "parses elapsed form timestamps while retaining legacy numeric seconds" do
+    Invidious::Clips::Validation.form_time(" 00:01 ").should eq("1")
+    Invidious::Clips::Validation.form_time("1:05").should eq("65")
+    Invidious::Clips::Validation.form_time("01:00:05").should eq("3605")
+    Invidious::Clips::Validation.form_time("25:01:05").should eq("90065")
+    Invidious::Clips::Validation.form_time("10.25").should eq("10.25")
+    ["00:60", "60:00", "01:60:00", "-1:00", "00:01.250", "1:2", "1::02", "999999999999999999999999:00:00"].each do |value|
+      expect_raises(ArgumentError) { Invidious::Clips::Validation.form_time(value) }
+    end
+  end
+
+  it "formats whole-second timestamps including hour crossings" do
+    Invidious::Clips::Validation.timestamp(1.9).should eq("00:01")
+    Invidious::Clips::Validation.timestamp(3599.0).should eq("59:59")
+    Invidious::Clips::Validation.timestamp(3599.0, true).should eq("00:59:59")
+    Invidious::Clips::Validation.timestamp(3605.0).should eq("01:00:05")
+    Invidious::Clips::Validation.timestamp(90065.0).should eq("25:01:05")
   end
 end

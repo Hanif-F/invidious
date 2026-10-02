@@ -18,10 +18,29 @@ module Invidious::Clips::Validation
   end
 
   def default_range(position : Float64, duration : Int32) : Tuple(Float64, Float64)
-    position = 0.0 unless position.finite?
+    position = position.finite? ? position.floor : 0.0
     length = Math.min(30.0, duration.to_f)
     start_time = (position - 15.0).clamp(0.0, duration - length)
     {start_time, start_time + length}
+  end
+
+  # HTML forms use elapsed timestamps; the public API continues to use seconds.
+  def form_time(value : String) : String
+    value = value.strip
+    return value unless value.includes?(':')
+    match = /\A(?:(\d+):)?(\d{1,2}):([0-5]\d)\z/.match(value)
+    raise ArgumentError.new("Use MM:SS or HH:MM:SS for clip times.") unless match
+    hours = match[1]?.try(&.to_i64?) || 0_i64
+    minutes = match[2].to_i64
+    raise ArgumentError.new("Invalid clip time.") if minutes >= 60 || (match[1]? && !match[1].to_i64?) || hours > (Int64::MAX - 3599) // 3600
+    (hours * 3600 + minutes * 60 + match[3].to_i64).to_s
+  end
+
+  def timestamp(time : Float64, hours : Bool = false) : String
+    seconds = time.finite? && time >= 0 ? time.floor.to_i64 : 0_i64
+    minute = ((seconds // 60) % 60).to_s.rjust(2, '0')
+    second = (seconds % 60).to_s.rjust(2, '0')
+    hours || seconds >= 3600 ? "#{(seconds // 3600).to_s.rjust(2, '0')}:#{minute}:#{second}" : "#{minute}:#{second}"
   end
 
   def native?(id : String) : Bool

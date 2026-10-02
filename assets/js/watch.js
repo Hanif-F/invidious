@@ -386,13 +386,6 @@ if (transcript_panel) {
     document.getElementById('timestamp-panel').hidden = false;
 })();
 
-var createClip = document.getElementById('create-clip');
-if (createClip) createClip.addEventListener('click', function () {
-    var url = new URL(createClip.href);
-    url.searchParams.set('startTime', Math.max(0, player.currentTime() || 0).toFixed(3));
-    createClip.href = url.pathname + url.search;
-});
-
 var clipLoop = document.getElementById('clip-loop');
 if (clipLoop) clipLoop.addEventListener('change', function () {
     player.loop(clipLoop.checked);

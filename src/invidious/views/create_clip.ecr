@@ -3,25 +3,9 @@
 <link rel="stylesheet" href="/css/clips.css?v=<%= ASSET_COMMIT %>">
 <script src="/js/clip-editor.js?v=<%= ASSET_COMMIT %>" defer></script>
 <% end %>
-<h1><%= I18n.translate(locale, "clips_create") %></h1>
-<p dir="auto"><a href="/watch?v=<%= video.id %>"><%= HTML.escape(video.title) %></a></p>
-<% if error %><p role="alert"><%= HTML.escape(error) %></p><% end %>
-<form class="pure-form pure-form-stacked clip-editor" action="/create_clip" method="post" id="clip-editor" data-duration="<%= video.length_seconds %>" data-preview="/embed/<%= video.id %>?save_player_pos=0&clip_preview=1">
-    <p><%= I18n.translate(locale, "clips_public") %></p>
-    <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-    <input type="hidden" name="videoId" value="<%= video.id %>">
-    <label for="clip-title"><%= I18n.translate(locale, "clips_title") %></label>
-    <input id="clip-title" name="title" type="text" required maxlength="140" value="<%= HTML.escape(title) %>">
-    <label for="clip-start"><%= I18n.translate(locale, "clips_start") %></label>
-    <input id="clip-start" name="startTime" type="number" min="0" max="<%= video.length_seconds %>" step="0.001" required value="<%= start_time %>">
-    <label for="clip-end"><%= I18n.translate(locale, "clips_end") %></label>
-    <input id="clip-end" name="endTime" type="number" min="5" max="<%= video.length_seconds %>" step="0.001" required value="<%= end_time %>">
-    <div class="js-only clip-range" hidden>
-        <label for="clip-start-range"><%= I18n.translate(locale, "clips_start") %></label><input id="clip-start-range" type="range" min="0" max="<%= video.length_seconds %>" step="0.001" value="<%= start_time %>">
-        <label for="clip-end-range"><%= I18n.translate(locale, "clips_end") %></label><input id="clip-end-range" type="range" min="0" max="<%= video.length_seconds %>" step="0.001" value="<%= end_time %>">
-    </div>
-    <p id="clip-duration" role="status" data-error="<%= I18n.translate(locale, "clips_range_error") %>"><%= I18n.translate(locale, "clips_range_error") %></p>
-    <button class="pure-button js-only" hidden type="button" id="clip-preview"><%= I18n.translate(locale, "clips_preview") %></button>
-    <button class="pure-button pure-button-primary" type="submit"><%= I18n.translate(locale, "clips_publish") %></button>
-</form>
-<iframe class="clip-preview" id="clip-preview-frame" title="<%= I18n.translate(locale, "clips_preview") %>" allow="autoplay; fullscreen" hidden></iframe>
+<div class="clip-fallback">
+    <h1><%= I18n.translate(locale, "clips_create") %></h1>
+    <p dir="auto"><a href="/watch?v=<%= video.id %>"><%= HTML.escape(video.title) %></a></p>
+    <% if error %><p role="alert"><%= HTML.escape(error) %></p><% end %>
+    <%= rendered "components/clip_editor" %>
+</div>

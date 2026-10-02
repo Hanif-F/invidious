@@ -35,14 +35,18 @@ module Invidious::Routes::Clips
     rescue ex
       return error_template(500, ex)
     end
-    title = values["title"]? || ""
+    clip_title = values["title"]? || ""
     position = values["startTime"]?.try(&.to_f64?) || 0.0
     start_time, end_time = Invidious::Clips::Validation.default_range(position, video.length_seconds)
-    if values.has_key?("endTime")
-      start_time = position.finite? ? position : 0.0
-      end_time = values["endTime"]?.try(&.to_f64?) || end_time
+    hours = end_time >= 3600
+    clip_start_value = Invidious::Clips::Validation.timestamp(start_time, hours)
+    clip_end_value = Invidious::Clips::Validation.timestamp(end_time, hours)
+    # Retain exactly what was typed when returning a failed form submission.
+    if env.request.method == "POST" || values.has_key?("endTime")
+      clip_start_value = values["startTime"]? || ""
+      clip_end_value = values["endTime"]? || ""
     end
-    csrf_token = generate_response(env.get("sid").as(String), {"POST:create_clip"}, HMAC_KEY)
+    clip_csrf = generate_response(env.get("sid").as(String), {"POST:create_clip"}, HMAC_KEY)
     templated "create_clip"
   end
 
@@ -52,7 +56,8 @@ module Invidious::Routes::Clips
     return error_template(403, "Invalid CSRF token") unless Authentication.valid_session_csrf?(env)
     begin
       clip = Invidious::Clips.create(user, env.params.body["videoId"]? || "", env.params.body["title"]? || "",
-        env.params.body["startTime"]? || "", env.params.body["endTime"]? || "")
+        Invidious::Clips::Validation.form_time(env.params.body["startTime"]? || ""),
+        Invidious::Clips::Validation.form_time(env.params.body["endTime"]? || ""))
       env.redirect clip.permalink
     rescue ex : ArgumentError
       env.response.status_code = 400

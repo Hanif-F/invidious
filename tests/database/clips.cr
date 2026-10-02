@@ -231,13 +231,22 @@ begin
   form = result(clip_request("GET", "/create_clip?videoId=#{video.id}", "alice-session"))
   check(form.includes?("name=\"startTime\"") && form.includes?("method=\"post\""), "No-JavaScript creation form missing")
   centered = XML.parse_html(result(clip_request("GET", "/create_clip?videoId=#{video.id}&startTime=60", "alice-session")))
-  check(centered.xpath_string("string(//input[@id='clip-start']/@value)").to_f == 45.0 && centered.xpath_string("string(//input[@id='clip-end']/@value)").to_f == 75.0, "Default range is not centered on playback")
+  check(centered.xpath_string("string(//input[@id='clip-start']/@value)") == "00:45" && centered.xpath_string("string(//input[@id='clip-end']/@value)") == "01:15", "Default range is not centered on playback")
   form_token = XML.parse_html(form).xpath_string("string(//form[@id='clip-editor']/input[@name='csrf_token']/@value)")
   submitted = clip_request("POST", "/create_clip", "alice-session",
-    body: URI::Params.encode({"csrf_token" => form_token, "videoId" => video.id, "title" => "Form clip", "startTime" => "10", "endTime" => "15"}),
+    body: URI::Params.encode({"csrf_token" => form_token, "videoId" => video.id, "title" => "Form clip", "startTime" => "00:10", "endTime" => "00:15"}),
     content_type: "application/x-www-form-urlencoded")
   check(submitted.response.status_code == 302, "Ordinary creation form could not publish")
   form_clip_id = submitted.response.headers["Location"].split('/').last
+  failed_form = clip_request("POST", "/create_clip", "alice-session",
+    body: URI::Params.encode({"csrf_token" => form_token, "videoId" => video.id, "title" => "Keep my draft", "startTime" => "01:99", "endTime" => "00:15"}),
+    content_type: "application/x-www-form-urlencoded")
+  check(failed_form.response.status_code == 400 && result(failed_form).includes?("value=\"01:99\"") && result(failed_form).includes?("Keep my draft"), "Failed form lost its raw draft")
+  legacy_form = clip_request("POST", "/create_clip", "alice-session",
+    body: URI::Params.encode({"csrf_token" => form_token, "videoId" => video.id, "title" => "Legacy form clip", "startTime" => "10.25", "endTime" => "15.25"}),
+    content_type: "application/x-www-form-urlencoded")
+  check(legacy_form.response.status_code == 302, "Legacy numeric form times stopped working")
+  Invidious::Database::Clips.delete(legacy_form.response.headers["Location"].split('/').last, alice.email)
   delete_form = result(clip_request("GET", "/delete_clip?id=#{form_clip_id}", "alice-session"))
   delete_token = XML.parse_html(delete_form).xpath_string("string(//form[@action='/delete_clip']/input[@name='csrf_token']/@value)")
   removed = clip_request("POST", "/delete_clip", "alice-session",

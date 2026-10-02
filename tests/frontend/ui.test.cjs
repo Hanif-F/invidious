@@ -21,10 +21,13 @@ after(async () => { for (const browser of Object.values(browsers)) await browser
 // Only playback and upstream responses are stubbed. Templates, CSS and UI scripts
 // are production code. No request is allowed to escape this fixture origin.
 const playerStub = `
-window.__ended = []; window.__time = 0;
+window.__ended = []; window.__time = 0; window.__paused = true;
 window.player = {
  on: function(event, cb) { if (event === 'ended') window.__ended.push(cb); },
  off: function(event, cb) { if (event === 'ended') window.__ended = window.__ended.filter(f => f !== cb); },
+ paused: function() { return window.__paused; },
+ pause: function() { window.__paused = true; },
+ play: function() { window.__paused = false; return Promise.resolve(); },
  currentTime: function(value) { if (value !== undefined) window.__time = value; return window.__time; }
 };`;
 const picture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720"><defs><linearGradient id="sky" x2="1" y2="1"><stop stop-color="#213b6b"/><stop offset=".6" stop-color="#744287"/><stop offset="1" stop-color="#df9378"/></linearGradient></defs><path fill="url(#sky)" d="M0 0h1280v720H0z"/><circle cx="860" cy="230" r="92" fill="#f4ccaf"/><path d="m0 520 360-330 440 440 250-285 230 235v140H0z" fill="#1e253d"/><path d="m0 655 430-215 470 200 380-160v240H0z" fill="#131b2d"/></svg>`;
@@ -52,7 +55,13 @@ async function pageFor(engine, options = {}) {
         const url = new URL(route.request().url());
         requests.push(url.pathname + url.search);
         if (route.request().isNavigationRequest()) {
-            let body = fs.readFileSync(path.join(generated, fixture + '.html'), 'utf8');
+            let body = fs.readFileSync(path.join(generated, (url.pathname.startsWith('/embed/') ? 'embed-mobile' : fixture) + '.html'), 'utf8');
+            if (url.searchParams.get('clip_preview') === '1') {
+                body = body.replace(/(<script id="video_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => {
+                    const original = JSON.parse(data);
+                    return start + JSON.stringify({...original, clip: {startTime: Number(url.searchParams.get('start')), endTime: Number(url.searchParams.get('end'))}, params: {...original.params, video_start: Number(url.searchParams.get('start')), video_end: Number(url.searchParams.get('end')), video_loop: true, autoplay: true, save_player_pos: false}}) + end;
+                });
+            }
             if (options.videoData) {
                 body = body.replace(/(<script id="video_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => {
                     const original = JSON.parse(data);
@@ -125,7 +134,7 @@ async function pageFor(engine, options = {}) {
         if (url.pathname.startsWith('/videojs/') && !options.realPlayer) return route.fulfill({ contentType: url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript', body: '' });
         if (url.pathname.startsWith('/vi/') || url.pathname.startsWith('/ggpht')) return route.fulfill({ contentType: 'image/svg+xml', body: picture });
         if (options.realPlayer && url.pathname === '/latest_version') {
-            const body = fs.readFileSync(path.join(generated, fixture === 'clip-watch' ? 'clip-fixture.webm' : 'fixture.webm'));
+            const body = fs.readFileSync(path.join(generated, fixture === 'clip-watch' || new URL(route.request().frame().url()).searchParams.get('clip_preview') === '1' ? 'clip-fixture.webm' : 'fixture.webm'));
             const range = route.request().headers().range;
             const match = range && range.match(/bytes=(\d+)-(\d*)/);
             if (match) {
@@ -168,25 +177,222 @@ for (const engine of engines) {
             assert.deepEqual(errors, []); await context.close();
         }
     });
-    test(`${engine}: clip creation numeric fields, draggable selection, preview and no-JavaScript form`, async () => {
+    test(`${engine}: clip creation timestamps, draggable selection, preview and no-JavaScript form`, async () => {
         const {page, context, errors} = await pageFor(engine, {fixture:'create-clip', width:390});
         await page.locator('#clip-title').fill('A new moment');
-        await page.locator('#clip-start').fill('1.234'); await page.locator('#clip-end').fill('6.234');
-        assert.match(await page.locator('#clip-duration').textContent(), /5 s/);
-        await page.locator('#clip-end').fill('3'); assert.equal(await page.locator('#clip-preview').isDisabled(), true);
-        await page.locator('#clip-end').fill('6.234');
+        await page.locator('#clip-start').fill('00:01'); await page.locator('#clip-end').fill('00:06');
+        assert.match(await page.locator('#clip-duration').textContent(), /00:05/);
+        await page.locator('#clip-end').fill('00:03'); assert.equal(await page.locator('#clip-preview').isDisabled(), true);
+        await page.locator('#clip-end').fill('00:06');
         await page.locator('#clip-start-range').evaluate(input => { input.value = '2'; input.dispatchEvent(new Event('input', {bubbles:true})); });
-        assert.equal(Number(await page.locator('#clip-start').inputValue()), 1.234);
+        assert.equal(await page.locator('#clip-start').inputValue(), '00:01');
         await page.locator('#clip-preview').click();
         const src = await page.locator('#clip-preview-frame').getAttribute('src');
         assert.ok(src.startsWith('/embed/')); assert.ok(src.includes('clip_preview=1')); assert.ok(src.includes('loop=1'));
-        assert.deepEqual(errors, []); await page.screenshot({path:path.join(artifacts, `${engine}-create-clip.png`)}); await context.close();
+        await page.locator('#clip-end').fill('00:07');
+        assert.equal(await page.locator('#clip-preview-frame').getAttribute('src'), null);
+        assert.deepEqual(errors, []); await context.close();
         const nojs = await pageFor(engine, {fixture:'create-clip-diary', width:320, javascript:false});
         assert.equal(await nojs.page.locator('form#clip-editor').getAttribute('method'), 'post');
         assert.equal(await nojs.page.locator('#clip-editor input[name=csrf_token]').count(), 1);
-        assert.equal(await nojs.page.locator('#clip-start').isVisible(), true);
+        assert.equal(await nojs.page.locator('#clip-start').getAttribute('type'), 'text');
+        await nojs.page.locator('#clip-start').fill('00:01'); await nojs.page.locator('#clip-end').fill('00:06');
+        assert.equal(await nojs.page.locator('#clip-editor').evaluate(form => form.checkValidity()), false); // Title is required.
+        await nojs.page.locator('#clip-title').fill('Fallback clip');
+        assert.equal(await nojs.page.locator('#clip-editor').evaluate(form => form.checkValidity()), true);
         assert.equal(await nojs.page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
         await nojs.context.close();
+    });
+    test(`${engine}: clip popup preserves playback, timestamps, drafts and keyboard focus`, async () => {
+        const {page, context, requests, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark'});
+        assert.ok(!requests.some(url => /\/(clip-editor.js|clips.css)/.test(url)));
+        await page.evaluate(() => { player.currentTime(3600.9); player.play(); });
+        const watchURL = page.url();
+        await page.locator('#create-clip').click();
+        await page.waitForFunction(() => document.getElementById('clip-dialog').open);
+        assert.equal(page.url(), watchURL);
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        assert.equal(await page.locator('#clip-start').inputValue(), '00:59:45');
+        assert.equal(await page.locator('#clip-end').inputValue(), '01:00:15');
+        assert.equal(await page.locator('#clip-publish').isDisabled(), true);
+        await page.locator('#clip-title').fill('A draft <script> & title');
+        await page.locator('#clip-start').fill('59:59'); await page.locator('#clip-end').fill('01:00:04');
+        await page.locator('#clip-start').focus(); await page.locator('#clip-start').blur();
+        assert.equal(await page.locator('#clip-start').inputValue(), '00:59:59');
+        assert.equal(await page.locator('#clip-publish').isDisabled(), false);
+        for (const value of ['00:60', '60:00', '1', '00:01.250', '03:00:00']) {
+            await page.locator('#clip-end').fill(value);
+            assert.equal(await page.locator('#clip-publish').isDisabled(), true, value);
+            assert.equal(await page.locator('#clip-end').getAttribute('aria-invalid'), 'true');
+        }
+        await page.locator('#clip-start').fill('00:00'); await page.locator('#clip-end').fill('02:00');
+        assert.equal(await page.locator('#clip-publish').isDisabled(), false);
+        await page.locator('#clip-end').fill('02:01'); assert.equal(await page.locator('#clip-publish').isDisabled(), true);
+        await page.locator('#clip-end').fill('02:00');
+        const sliderBox = await page.locator('#clip-start-range').boundingBox();
+        await page.mouse.move(sliderBox.x + 12, sliderBox.y + 12);
+        await page.mouse.down(); await page.mouse.move(sliderBox.x + 90, sliderBox.y + 12, {steps:5}); await page.mouse.up();
+        assert.ok(Number(await page.locator('#clip-start-range').inputValue()) > 0);
+        await page.locator('#clip-start').fill('00:00');
+        await page.locator('#clip-start-range').focus(); await page.keyboard.press('ArrowRight');
+        assert.equal(await page.locator('#clip-start').inputValue(), '00:01');
+        await page.locator('[data-clip-boundary=start][data-clip-step="1"]').click();
+        assert.equal(await page.locator('#clip-start').inputValue(), '00:02');
+        await page.locator('.clip-use-time[data-clip-boundary=start]').click();
+        assert.equal(await page.locator('#clip-start').inputValue(), '01:00:00');
+        await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !document.getElementById('clip-dialog').open);
+        assert.equal(await page.evaluate(() => player.paused()), false);
+        assert.equal(await page.evaluate(() => player.currentTime()), 3600.9);
+        assert.equal(await page.locator('#create-clip').evaluate(el => el === document.activeElement), true);
+        assert.equal(await page.evaluate(() => document.documentElement.style.overflow), '');
+        await page.locator('#create-clip').click();
+        assert.equal(await page.locator('#clip-title').inputValue(), 'A draft <script> & title');
+        assert.equal(await page.locator('#clip-start').inputValue(), '01:00:00');
+        await page.locator('#clip-close').focus(); await page.keyboard.press('Shift+Tab');
+        assert.equal(await page.evaluate(() => document.getElementById('clip-dialog').contains(document.activeElement)), true);
+        await page.locator('#clip-close').click();
+        assert.deepEqual(errors, []); await context.close();
+    });
+    test(`${engine}: clip popup publishes once, recovers errors and shows a safe share result`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark', initScript: () => Object.defineProperty(navigator, 'clipboard', {value: undefined, configurable:true})});
+        let calls = 0, received;
+        await page.route('**/api/v1/auth/clips', async route => {
+            calls++; received = JSON.parse(route.request().postData());
+            assert.equal(route.request().headers()['x-csrf-token'], 'fixture-token');
+            if (calls === 1) return route.fulfill({status:403, contentType:'application/json', body:'{"error":"Expired session"}'});
+            if (calls === 2) return route.fulfill({status:500, contentType:'application/json', body:'{"error":"Source temporarily unavailable"}'});
+            await new Promise(resolve => setTimeout(resolve, 100));
+            return route.fulfill({status:201, contentType:'application/json', body:JSON.stringify({clipId:'IVCL' + 'a'.repeat(32), clipTitle:'Safe <script> & title'})});
+        });
+        await page.locator('#create-clip').click();
+        await page.waitForFunction(() => document.getElementById('clip-dialog').open);
+        await page.locator('#clip-title').fill('Safe <script> & title');
+        await page.locator('#clip-start').fill('00:10'); await page.locator('#clip-end').fill('00:15');
+        await page.locator('#clip-publish').click(); await page.locator('#clip-submit-status').waitFor({state:'visible'});
+        assert.match(await page.locator('#clip-submit-status').textContent(), /session expired/);
+        await page.waitForFunction(() => !document.getElementById('clip-publish').disabled);
+        await page.locator('#clip-publish').click();
+        await page.waitForFunction(() => document.getElementById('clip-submit-status').textContent.includes('Source temporarily'));
+        assert.equal(await page.locator('#clip-title').inputValue(), 'Safe <script> & title');
+        assert.equal(await page.locator('#clip-start').inputValue(), '00:10');
+        await page.waitForFunction(() => !document.getElementById('clip-publish').disabled);
+        await page.evaluate(() => { const form = document.getElementById('clip-editor'); form.dispatchEvent(new Event('submit', {cancelable:true})); form.dispatchEvent(new Event('submit', {cancelable:true})); });
+        await page.locator('#clip-result').waitFor({state:'visible'});
+        assert.equal(calls, 3);
+        assert.deepEqual(received, {videoId:'2isYuQZMbdU', title:'Safe <script> & title', startTime:10, endTime:15});
+        assert.equal(await page.locator('#clip-result script').count(), 0);
+        assert.equal(await page.locator('#clip-result-title').textContent(), 'Safe <script> & title');
+        assert.equal(await page.locator('#clip-share-url').inputValue(), 'https://invidious.test/clip/IVCL' + 'a'.repeat(32));
+        await page.locator('#clip-copy').click();
+        assert.match(await page.locator('#clip-copy-status').textContent(), /Select and copy/);
+        assert.equal(await page.locator('#clip-share-url').evaluate(el => el.selectionEnd - el.selectionStart), (await page.locator('#clip-share-url').inputValue()).length);
+        await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {value: {writeText: async value => { window.__copiedClip = value; }}, configurable:true}));
+        await page.locator('#clip-copy').click();
+        assert.equal(await page.evaluate(() => window.__copiedClip), 'https://invidious.test/clip/IVCL' + 'a'.repeat(32));
+        await page.locator('#clip-done').click(); await page.locator('#create-clip').click();
+        assert.equal(await page.locator('#clip-title').inputValue(), '');
+        assert.equal(await page.locator('#clip-result').isVisible(), false);
+        assert.deepEqual(errors, []); await context.close();
+    });
+    test(`${engine}: closing during publishing preserves the pending draft and unseen result`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark'});
+        let release, submitted, calls = 0;
+        const sent = new Promise(resolve => { submitted = resolve; });
+        const response = new Promise(resolve => { release = resolve; });
+        await page.route('**/api/v1/auth/clips', async route => {
+            calls++; submitted(); await response;
+            return route.fulfill({status:201, contentType:'application/json', body:JSON.stringify({clipId:'IVCL' + 'b'.repeat(32), clipTitle:'Pending draft'})});
+        });
+        await page.locator('#create-clip').click(); await page.waitForFunction(() => document.getElementById('clip-dialog').open);
+        await page.locator('#clip-title').fill('Pending draft'); await page.locator('#clip-publish').click(); await sent;
+        await page.locator('#clip-close').click(); await page.locator('#create-clip').click();
+        assert.equal(await page.locator('#clip-title').inputValue(), 'Pending draft');
+        assert.equal(await page.locator('#clip-publish').isDisabled(), true);
+        await page.locator('#clip-close').click(); release();
+        await page.waitForFunction(() => document.getElementById('clip-result-title').textContent === 'Pending draft');
+        await page.locator('#create-clip').click();
+        assert.equal(await page.locator('#clip-result').isVisible(), true);
+        assert.equal(await page.locator('#clip-share-url').inputValue(), 'https://invidious.test/clip/IVCL' + 'b'.repeat(32));
+        assert.equal(calls, 1); assert.deepEqual(errors, []); await context.close();
+    });
+    test(`${engine}: clip popup preview uses its playhead and never changes source resume data`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark', realPlayer:true,
+            initScript: () => localStorage.setItem('save_player_pos', JSON.stringify({'2isYuQZMbdU': 123}))});
+        await page.evaluate(() => { player.muted(true); player.currentTime(1); });
+        await page.locator('#create-clip').click();
+        await page.waitForFunction(() => document.getElementById('clip-dialog').open);
+        await page.locator('#clip-start').fill('00:01'); await page.locator('#clip-end').fill('00:06');
+        await page.locator('#clip-preview').click();
+        const preview = page.frameLocator('#clip-preview-frame');
+        await preview.locator('#player').waitFor();
+        await page.locator('#clip-preview-frame').evaluate(frame => { frame.contentWindow.player.muted(true); frame.contentWindow.player.play(); });
+        await page.waitForFunction(() => { const p = document.getElementById('clip-preview-frame').contentWindow.player; return p && p.currentTime() >= 1; });
+        await page.locator('#clip-preview-frame').evaluate(frame => {
+            const p = frame.contentWindow.player;
+            p.currentTime(0); if (p.currentTime() < 1) throw new Error('Preview escaped start');
+            p.currentTime(100); if (p.currentTime() >= 6) throw new Error('Preview escaped end');
+        });
+        await page.locator('#clip-preview-frame').evaluate(frame => { frame.contentWindow.player.pause(); frame.contentWindow.player.currentTime(2.8); });
+        await page.locator('.clip-use-time[data-clip-boundary=start]').click();
+        assert.equal(await page.locator('#clip-start').inputValue(), '00:02');
+        assert.equal(await page.locator('#clip-preview-frame').getAttribute('src'), null);
+        await page.locator('#clip-close').click();
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('save_player_pos'))['2isYuQZMbdU']), 123);
+        assert.deepEqual(errors, []); await context.close();
+    });
+    test(`${engine}: clip popup themes, RTL, short videos and responsive actions`, async () => {
+        for (const fixture of ['watch-clips-modern-neon-dark', 'watch-clips-modern-neon-light', 'watch-clips-diary-dark', 'watch-clips-diary-light', 'watch-clips-rtl', 'watch-clips-short']) {
+            for (const width of [1440, 390, 320]) {
+                const {page, context, errors} = await pageFor(engine, {fixture, width, height:844, touch:width < 500});
+                await page.locator('#create-clip').click(); await page.waitForFunction(() => document.getElementById('clip-dialog').open);
+                if (fixture === 'watch-clips-short') assert.equal(await page.locator('#clip-end').inputValue(), '00:05');
+                const box = await page.locator('#clip-dialog').boundingBox();
+                if (width < 500) { assert.equal(box.x, 0); assert.equal(box.width, width); }
+                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+                assert.equal(await page.locator('#clip-dialog').evaluate(el => el.scrollWidth > el.clientWidth + 1), false);
+                const footer = await page.locator('.clip-footer').boundingBox();
+                assert.ok(footer.y + footer.height <= 845);
+                await page.locator('#clip-title').fill('Responsive clip');
+                if (width === 390 || (width === 1440 && fixture === 'watch-clips-modern-neon-dark')) await page.screenshot({path:path.join(artifacts, `${engine}-${fixture}-popup-${width}.png`)});
+                await page.locator('.clip-body').evaluate(el => { el.scrollTop = el.scrollHeight; });
+                assert.equal(await page.locator('#clip-close').isVisible(), true);
+                assert.deepEqual(errors, []); await context.close();
+            }
+        }
+    });
+    test(`${engine}: clip popup enlarged text and landscape keep fields and actions reachable`, async () => {
+        for (const [width, height, touch] of [[1440, 900, false], [390, 844, true], [844, 390, true]]) {
+            const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark', width, height, touch});
+            await page.locator('#create-clip').click(); await page.waitForFunction(() => document.getElementById('clip-dialog').open);
+            await page.addStyleTag({content:'html { font-size: 200% !important; }'});
+            assert.equal(await page.locator('#clip-dialog').evaluate(el => el.scrollWidth > el.clientWidth + 1), false);
+            const box = await page.locator('#clip-publish').boundingBox();
+            assert.ok(box.y >= 0 && box.y + box.height <= height + 1);
+            await page.locator('#clip-end').fill('00:05');
+            assert.equal(await page.locator('#clip-end').isVisible(), true);
+            await page.locator('#clip-close').click();
+            assert.deepEqual(errors, []); await context.close();
+        }
+    });
+    test(`${engine}: guests return from login to the clip popup and asset failures use the fallback form`, async () => {
+        const guest = await pageFor(engine, {fixture:'watch-dark'});
+        await guest.page.evaluate(() => player.currentTime(65));
+        await guest.page.locator('#create-clip').click(); await guest.page.waitForURL('**/login?*');
+        const referer = new URL(new URL(guest.page.url()).searchParams.get('referer'), 'https://invidious.test');
+        assert.equal(referer.searchParams.get('create_clip'), '1'); assert.equal(referer.searchParams.get('t'), '65');
+        await guest.context.close();
+        const returned = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark', route:'watch?v=2isYuQZMbdU&create_clip=1&t=65'});
+        await returned.page.waitForFunction(() => document.getElementById('clip-dialog').open);
+        assert.equal(await returned.page.locator('#clip-start').inputValue(), '00:50');
+        assert.equal(new URL(returned.page.url()).searchParams.has('create_clip'), false);
+        await returned.context.close();
+        const fallback = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark'});
+        await fallback.page.route('**/js/clip-editor.js?*', route => route.abort());
+        await fallback.page.locator('#create-clip').click(); await fallback.page.waitForURL('**/create_clip?*');
+        assert.equal(new URL(fallback.page.url()).searchParams.get('videoId'), '2isYuQZMbdU');
+        await fallback.context.close();
     });
     test(`${engine}: native clip boundaries, loop toggle, canonical sharing and resume isolation`, async () => {
         const {page, context, errors, requests} = await pageFor(engine, {
@@ -1944,7 +2150,7 @@ test('UI asset additions report the advisory 35KB compressed target', () => {
     }
     // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
     delta += Math.max(0, ...themeBytes);
-    for (const file of ['js/dearrow.js', 'js/player-mobile.js', 'js/player-stats.js', 'js/player-stream-menu.js', 'js/dearrow-loader.js', 'js/player-chapters.js', 'css/dearrow.css']) {
+    for (const file of ['js/dearrow.js', 'js/player-mobile.js', 'js/player-stats.js', 'js/player-stream-menu.js', 'js/dearrow-loader.js', 'js/clip-loader.js', 'js/player-chapters.js', 'css/dearrow.css']) {
         const bytes = gzipSync(fs.readFileSync(path.join(root, 'assets', file))).length;
         delta += bytes;
         totalShared += bytes;

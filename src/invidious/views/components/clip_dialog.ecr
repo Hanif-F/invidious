@@ -1,0 +1,35 @@
+<% if user %>
+<%
+  clip_title = ""
+  clip_start_value = "00:00"
+  clip_end_value = Invidious::Clips::Validation.timestamp(Math.min(30, video.length_seconds).to_f)
+  clip_csrf = ""
+%>
+<dialog id="clip-dialog" aria-labelledby="clip-heading">
+    <header class="clip-header">
+        <div><h2 id="clip-heading"><%= I18n.translate(locale, "clips_create") %></h2><p dir="auto"><%= HTML.escape(video.title) %></p></div>
+        <button type="button" id="clip-close" class="pure-button"><%= I18n.translate(locale, "dearrow_close") %></button>
+    </header>
+    <%= rendered "components/clip_editor" %>
+    <section id="clip-result" hidden aria-labelledby="clip-result-heading">
+        <h3 id="clip-result-heading" tabindex="-1"><%= I18n.translate(locale, "clips_published") %></h3>
+        <p id="clip-result-title" dir="auto"></p>
+        <label for="clip-share-url"><%= I18n.translate(locale, "clips_link") %></label>
+        <input id="clip-share-url" type="text" readonly dir="ltr">
+        <p id="clip-copy-status" role="status"></p>
+        <div class="clip-result-actions">
+            <button type="button" id="clip-copy" class="pure-button pure-button-primary"><%= I18n.translate(locale, "clips_copy") %></button>
+            <a id="clip-watch" class="pure-button"><%= I18n.translate(locale, "clips_watch") %></a>
+            <button type="button" id="clip-done" class="pure-button"><%= I18n.translate(locale, "clips_done") %></button>
+        </div>
+    </section>
+</dialog>
+<% end %>
+<script id="clip-config" type="application/json"><%= {
+    "signed_in" => !!user,
+    "script" => "/js/clip-editor.js?v=#{ASSET_COMMIT}",
+    "style" => "/css/clips.css?v=#{ASSET_COMMIT}",
+    "loading" => I18n.translate(locale, "ui_loading"),
+    "error" => I18n.translate(locale, "clips_submit_error"),
+}.to_json.gsub("<", "\\u003c") %></script>
+<script src="/js/clip-loader.js?v=<%= ASSET_COMMIT %>" defer></script>
