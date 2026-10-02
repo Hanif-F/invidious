@@ -14,6 +14,7 @@ shards install --skip-postinstall --skip-executables
 crystal scripts/fetch-player-dependencies.cr
 crystal run tests/frontend/render_fixtures.cr
 ffmpeg -f lavfi -i color=c=0x303a53:s=320x180:r=12 -t 4 -an -c:v libvpx -y tests/frontend/.generated/fixture.webm
+ffmpeg -f lavfi -i color=c=0x303a53:s=320x180:r=12 -t 8 -an -c:v libvpx -y tests/frontend/.generated/clip-fixture.webm
 npm ci --prefix tests/frontend --ignore-scripts
 cd tests/frontend
 npx playwright install --with-deps chromium firefox
@@ -243,3 +244,13 @@ including through history import/export. Unknown durations remain unknown and do
 not trigger per-video upstream requests. Browser regressions cover matching
 percentages, partial/full/unknown states, history search, duplicate queue entries,
 page restoration, local storage updates, and desktop/mobile layouts.
+
+## Native clips
+
+Clip fixtures cover public channel listings, My Clips, creation, escaped titles,
+creator attribution, themes, RTL, mobile forms, and no-JavaScript use. The real
+player checks exercise fractional range bounds, loop toggling, canonical sharing,
+SponsorBlock, audio settings, source refresh, quality changes, and preservation of
+full-video resume data. `clip-player.test.cjs` also checks
+source changes and unavailable ranges. See [native clips](../../docs/native-clips.md)
+for the API and disposable PostgreSQL route/integration checks.

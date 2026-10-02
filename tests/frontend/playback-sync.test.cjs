@@ -4,23 +4,32 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync(require('node:path').join(__dirname, '../../assets/js/player.js'), 'utf8');
-const start = source.indexOf('if (video_data.params.save_player_pos) {');
+const start = source.indexOf('if (!video_data.clip && video_data.params.save_player_pos) {');
 const end = source.indexOf('\nif (video_data.params.autoplay)', start);
-function session(saved = 492) {
+assert.notEqual(start, -1, "Resume implementation must be included in this harness");
+function session(saved = 492, clip = false, save = true) {
     const events = {}, windowEvents = {}, documentEvents = {}, requests = [];
-    let time = 0, now = 20000;
+    let time = 0, now = 20000, cleared = false;
     const document = {visibilityState: 'visible', addEventListener: (e, cb) => documentEvents[e] = cb};
     const context = {
-        video_data: {params: {save_player_pos: true}, playback_sync: true, playback_position: saved, length_seconds: 2000},
+        video_data: {clip: clip ? {} : null, params: {save_player_pos: save}, playback_sync: true, playback_position: saved, length_seconds: 2000},
         URL, location: 'https://test/watch?v=abcdefghijk', Date: {now: () => now}, isFinite,
         player: {on: (e, cb) => events[e] = cb, currentTime: () => time, ended: () => false},
         window: {addEventListener: (e, cb) => windowEvents[e] = cb}, document,
         set_seconds_after_start: value => time = value,
+        remove_all_video_times: () => cleared = true,
         send_playback_position: (action, position, beacon, done) => requests.push({action, position, beacon, done})
     };
     vm.runInNewContext(source.slice(start, end), context);
-    return {requests, events, windowEvents, documentEvents, document, setTime: v => time = v, tick: () => now += 15000, time: () => time};
+    return {requests, events, windowEvents, documentEvents, document, setTime: v => time = v, tick: () => now += 15000, time: () => time, cleared: () => cleared};
 }
+test('native clips never restore, save or clear full-video progress', () => {
+    for (const save of [true, false]) {
+        const s = session(492, true, save);
+        assert.equal(s.time(), 0); assert.deepEqual(s.events, {});
+        assert.equal(s.requests.length, 0); assert.equal(s.cleared(), false);
+    }
+});
 test('startup does not overwrite restored progress; periodic save survives a fresh load', () => {
     const s = session();
     assert.equal(s.time(), 492);

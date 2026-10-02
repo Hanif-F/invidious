@@ -9,6 +9,7 @@ module Invidious::Frontend::ChannelPage
     Releases
     Courses
     Playlists
+    Clips
     Posts
     Channels
     Search
@@ -24,7 +25,7 @@ module Invidious::Frontend::ChannelPage
 
         tab_name = tab.to_s.downcase
 
-        if tab.search? ? selected_tab.search? : channel.tabs.includes?(tab_name)
+        if tab.clips? || (tab.search? ? selected_tab.search? : channel.tabs.includes?(tab_name))
           str << %(<div class="pure-u-1 pure-md-1-3">\n)
 
           if tab == selected_tab

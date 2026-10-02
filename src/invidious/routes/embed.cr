@@ -146,7 +146,29 @@ module Invidious::Routes::Embed
       return error_template(500, ex)
     end
 
-    playback_sync = !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now
+    preview_clip = env.params.query["clip_preview"]? == "1"
+    if preview_clip
+      if error = Invidious::Clips.source_error(video)
+        return error_template(400, error)
+      end
+      begin
+        start_ms = Invidious::Clips::Validation.milliseconds(env.params.query["start"]? || "")
+        end_ms = Invidious::Clips::Validation.milliseconds(env.params.query["end"]? || "")
+        Invidious::Clips::Validation.range(start_ms, end_ms, video.length_seconds)
+      rescue ex : ArgumentError
+        return error_template(400, ex)
+      end
+      params.video_start = start_ms / 1000.0
+      params.video_end = end_ms / 1000.0
+      params.save_player_pos = false
+      params.continue = false
+      params.continue_autoplay = false
+      params.raw = false
+      plid = nil
+      video_series = nil
+    end
+
+    playback_sync = !preview_clip && !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now
     env.response.headers["Cache-Control"] = "private, no-store" if playback_sync
     playback_position = playback_sync ? Invidious::Database::PlaybackPositions.select(user.not_nil!.email, id).try(&.[:position_seconds]) : nil
 

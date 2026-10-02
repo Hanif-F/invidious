@@ -400,6 +400,7 @@ module Invidious::Routes::API::V1::Videos
     env.response.content_type = "application/json"
 
     clip_id = env.params.url["id"]
+    return Invidious::Routes::API::V1::Clips.show(env) if Invidious::Clips::Validation.native?(clip_id)
     region = env.params.query["region"]?
     proxy = {"1", "true"}.any? &.== env.params.query["local"]?
 

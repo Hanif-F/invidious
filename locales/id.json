@@ -514,5 +514,22 @@
     "player_stream_low_bitrate": "Bitrate Rendah",
     "player_stream_stable_volume": "Volume Stabil",
     "player_stream_original_audio": "Audio Asli",
-    "player_stream_dubbed_audio": "Audio Sulih Suara"
+    "player_stream_dubbed_audio": "Audio Sulih Suara",
+    "clips_my": "Klip Saya",
+    "channel_tab_clips_label": "Klip",
+    "clips_create": "Buat klip",
+    "clips_empty": "Belum ada klip. Buat klip dari halaman video.",
+    "clips_by": "Dibuat oleh",
+    "clips_delete": "Hapus klip",
+    "clips_delete_confirm": "Hapus klip ini secara permanen? Tautan klip tidak akan dapat digunakan.",
+    "clips_full_video": "Tonton video lengkap",
+    "clips_public": "Klip ini akan tersedia untuk umum di instans ini, termasuk pada tab Klip di kanalnya.",
+    "clips_title": "Judul klip",
+    "clips_start": "Mulai (detik)",
+    "clips_end": "Akhir (detik)",
+    "clips_range_error": "Pilih 5–120 detik dalam video.",
+    "clips_preview": "Pratinjau klip",
+    "clips_publish": "Publikasikan klip",
+    "clips_unavailable": "Video sumber atau rentang yang dipilih tidak tersedia. Anda dapat mencoba lagi nanti.",
+    "clips_loop": "Ulangi klip"
 }

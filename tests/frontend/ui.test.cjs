@@ -125,7 +125,7 @@ async function pageFor(engine, options = {}) {
         if (url.pathname.startsWith('/videojs/') && !options.realPlayer) return route.fulfill({ contentType: url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript', body: '' });
         if (url.pathname.startsWith('/vi/') || url.pathname.startsWith('/ggpht')) return route.fulfill({ contentType: 'image/svg+xml', body: picture });
         if (options.realPlayer && url.pathname === '/latest_version') {
-            const body = fs.readFileSync(path.join(generated, 'fixture.webm'));
+            const body = fs.readFileSync(path.join(generated, fixture === 'clip-watch' ? 'clip-fixture.webm' : 'fixture.webm'));
             const range = route.request().headers().range;
             const match = range && range.match(/bytes=(\d+)-(\d*)/);
             if (match) {
@@ -147,6 +147,105 @@ async function pageFor(engine, options = {}) {
     });
     await page.goto('https://invidious.test/' + (options.route || (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture.startsWith('preferences') ? 'preferences' : fixture.startsWith('search') ? 'search?q=light' : 'feed/popular')));
     return { page, context, errors, requests, chatWrites, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls, chatCalls: () => chatCalls };
+}
+
+for (const engine of engines) {
+    test(`${engine}: native clip cards, tab, attribution and no-JavaScript library`, async () => {
+        for (const fixture of ['clips-library', 'clips-diary', 'clips-rtl', 'channel-clips', 'clips-empty']) {
+            const {page, context, errors} = await pageFor(engine, {fixture, width: 390, javascript: false});
+            if (fixture !== 'clips-empty') {
+                assert.match(await page.locator('.clip-card h3').textContent(), /Moment <script>/);
+                assert.equal(await page.locator('.clip-card script').count(), 0);
+                assert.match(await page.locator('.clip-card').textContent(), /viewer/);
+            }
+            if (fixture === 'channel-clips') assert.equal(await page.locator('.channel-tabs [aria-current=page]').textContent(), 'Clips');
+            if (fixture === 'clips-library') {
+                const links = await page.locator('.navigation-link').allTextContents();
+                assert.ok(links.findIndex(x => x.includes('My Clips')) === links.findIndex(x => x.includes('Playlists')) + 1);
+                assert.equal(await page.locator('a[href^="/delete_clip"]').count(), 1);
+            }
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+            assert.deepEqual(errors, []); await context.close();
+        }
+    });
+    test(`${engine}: clip creation numeric fields, draggable selection, preview and no-JavaScript form`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture:'create-clip', width:390});
+        await page.locator('#clip-title').fill('A new moment');
+        await page.locator('#clip-start').fill('1.234'); await page.locator('#clip-end').fill('6.234');
+        assert.match(await page.locator('#clip-duration').textContent(), /5 s/);
+        await page.locator('#clip-end').fill('3'); assert.equal(await page.locator('#clip-preview').isDisabled(), true);
+        await page.locator('#clip-end').fill('6.234');
+        await page.locator('#clip-start-range').evaluate(input => { input.value = '2'; input.dispatchEvent(new Event('input', {bubbles:true})); });
+        assert.equal(Number(await page.locator('#clip-start').inputValue()), 1.234);
+        await page.locator('#clip-preview').click();
+        const src = await page.locator('#clip-preview-frame').getAttribute('src');
+        assert.ok(src.startsWith('/embed/')); assert.ok(src.includes('clip_preview=1')); assert.ok(src.includes('loop=1'));
+        assert.deepEqual(errors, []); await page.screenshot({path:path.join(artifacts, `${engine}-create-clip.png`)}); await context.close();
+        const nojs = await pageFor(engine, {fixture:'create-clip-diary', width:320, javascript:false});
+        assert.equal(await nojs.page.locator('form#clip-editor').getAttribute('method'), 'post');
+        assert.equal(await nojs.page.locator('#clip-editor input[name=csrf_token]').count(), 1);
+        assert.equal(await nojs.page.locator('#clip-start').isVisible(), true);
+        assert.equal(await nojs.page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+        await nojs.context.close();
+    });
+    test(`${engine}: native clip boundaries, loop toggle, canonical sharing and resume isolation`, async () => {
+        const {page, context, errors, requests} = await pageFor(engine, {
+            fixture:'clip-watch', realPlayer:true, route:'clip/IVCL' + 'a'.repeat(32),
+            initScript: () => { localStorage.setItem('save_player_pos', JSON.stringify({'2isYuQZMbdU': 123})); Object.defineProperty(navigator, 'clipboard', {value: undefined}); }
+        });
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() >= .5 && !player.paused());
+        await page.evaluate(() => player.currentTime(0));
+        await page.waitForFunction(() => player.currentTime() >= .5 && player.currentTime() < 1.5);
+        await page.evaluate(() => player.currentTime(5.45));
+        await page.waitForFunction(() => player.currentTime() >= .5 && player.currentTime() < 1.5);
+        await page.locator('#clip-loop').uncheck();
+        await page.evaluate(() => player.currentTime(5.45));
+        await page.waitForFunction(() => player.paused());
+        assert.ok(await page.evaluate(() => player.currentTime()) <= 5.5);
+        assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('save_player_pos'))['2isYuQZMbdU']), 123);
+        assert.equal(requests.some(url => /watch_ajax.*(set_progress|clear_progress)/.test(url)), false);
+        assert.equal(requests.some(url => url.startsWith('/api/v1/playlists/')), false);
+        assert.equal(await page.locator('#continue').count(), 0);
+        assert.ok((await page.locator('#link-iv-listen').getAttribute('href')).includes('loop=0'));
+        await page.locator('#share-video').click();
+        assert.equal(await page.locator('#share-url').inputValue(), 'https://invidious.test/clip/IVCL' + 'a'.repeat(32));
+        assert.equal(await page.locator('meta[property="og:url"]').getAttribute('content'), 'https://invidious.test/clip/IVCL' + 'a'.repeat(32));
+        assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://invidious.test/clip/IVCL' + 'a'.repeat(32));
+        assert.equal(await page.locator('meta[name="twitter:player"]').count(), 0);
+        assert.equal(await page.locator('#link-yt-embed, #link-iv-embed').count(), 0);
+        assert.ok((await page.locator('#annotations a').getAttribute('href')).startsWith('/clip/IVCL'));
+        assert.ok((await page.locator('#link-iv-listen').getAttribute('href')).startsWith('/clip/IVCL'));
+        assert.equal(await page.locator('.watch-heading script').count(), 0);
+        await page.screenshot({path:path.join(artifacts, `${engine}-native-clip.png`)});
+        assert.deepEqual(errors, []); await context.close();
+    });
+    test(`${engine}: native clip SponsorBlock, audio settings and source refresh retain saved bounds`, async () => {
+        const {page, context, errors} = await pageFor(engine, {
+            fixture:'clip-watch', realPlayer:true, extraQuality:true,
+            videoData:{params:{listen:true}},
+            sponsorblock:{enabled:true,modes:{sponsor:'manual'}},
+            sponsorblockSegments:[{id:'beyond-clip',category:'sponsor',start:1,end:7}]
+        });
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() >= .5 && !player.seeking());
+        await page.evaluate(() => { player.pause(); player.currentTime(2); });
+        await page.waitForFunction(() => document.querySelector('.sb-overlay').classList.contains('sb-visible'));
+        await page.getByRole('button', {name:'Skip (Enter)',exact:true}).click();
+        await page.waitForFunction(() => player.currentTime() >= .5 && player.currentTime() < 1);
+        await page.locator('#clip-loop').uncheck();
+        await page.evaluate(() => player.currentTime(2));
+        await page.waitForFunction(() => document.querySelector('.sb-overlay').classList.contains('sb-visible'));
+        await page.getByRole('button', {name:'Skip (Enter)',exact:true}).click();
+        await page.waitForFunction(() => player.paused() && player.currentTime() > 5.49 && player.currentTime() <= 5.5);
+        await page.evaluate(() => { player.currentTime(3); player.refreshBuffer(); });
+        await page.waitForFunction(() => !player.seeking() && Math.abs(player.currentTime() - 3) < .05);
+        await page.evaluate(() => { player.src({src:'/latest_version?id=2isYuQZMbdU&itag=44',type:'video/webm'}); player.play(); });
+        await page.waitForFunction(() => player.readyState() > 0 && !player.seeking() && player.currentTime() >= .5 && player.currentTime() < 5.5);
+        await page.evaluate(() => player.currentTime(0));
+        await page.waitForFunction(() => player.currentTime() >= .5 && player.currentTime() < 1);
+        assert.deepEqual(errors, []); await context.close();
+    });
 }
 
 for (const engine of engines) {

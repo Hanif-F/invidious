@@ -1,5 +1,6 @@
 <% ucid = video.ucid %>
-<% title = HTML.escape(video.title) %>
+<% title = HTML.escape(native_clip ? native_clip.title : video.title) %>
+<% watch_url = native_clip ? native_clip.permalink : "/watch?v=#{video.id}" %>
 <% author = HTML.escape(video.author) %>
 
 
@@ -8,24 +9,29 @@
 <meta name="description" content="<%= HTML.escape(video.short_description) %>">
 <meta name="keywords" content="<%= video.keywords.join(",") %>">
 <meta property="og:site_name" content="<%= author %> | Invidious">
-<meta property="og:url" content="<%= HOST_URL %>/watch?v=<%= video.id %>">
+<meta property="og:url" content="<%= HOST_URL %><%= watch_url %>">
+<% if native_clip %><link rel="canonical" href="<%= HOST_URL %><%= watch_url %>"><% end %>
 <meta property="og:title" content="<%= title %>">
 <meta property="og:image" content="<%= HOST_URL %>/vi/<%= video.id %>/maxres.jpg">
 <meta property="og:description" content="<%= HTML.escape(video.short_description) %>">
 <meta property="og:type" content="video.other">
+<% unless native_clip %>
 <meta property="og:video:url" content="<%= HOST_URL %>/embed/<%= video.id %>">
 <meta property="og:video:secure_url" content="<%= HOST_URL %>/embed/<%= video.id %>">
 <meta property="og:video:type" content="text/html">
 <meta property="og:video:width" content="1280">
 <meta property="og:video:height" content="720">
-<meta name="twitter:card" content="player">
-<meta name="twitter:url" content="<%= HOST_URL %>/watch?v=<%= video.id %>">
+<% end %>
+<meta name="twitter:card" content="<%= native_clip ? "summary_large_image" : "player" %>">
+<meta name="twitter:url" content="<%= HOST_URL %><%= watch_url %>">
 <meta name="twitter:title" content="<%= title %>">
 <meta name="twitter:description" content="<%= HTML.escape(video.short_description) %>">
 <meta name="twitter:image" content="<%= HOST_URL %>/vi/<%= video.id %>/maxres.jpg">
+<% unless native_clip %>
 <meta name="twitter:player" content="<%= HOST_URL %>/embed/<%= video.id %>">
 <meta name="twitter:player:width" content="1280">
 <meta name="twitter:player:height" content="720">
+<% end %>
 <link rel="alternate" href="https://www.youtube.com/watch?v=<%= video.id %>">
 <%= rendered "components/player_sources" %>
 <% if video.live_chat_replay? %><link rel="stylesheet" href="/css/live-chat.css?v=<%= ASSET_COMMIT %>"><% end %>
@@ -39,6 +45,7 @@
 <%=
 {
     "id" => video.id,
+    "clip" => (native_clip || preview_clip) ? {"url" => native_clip.try(&.permalink), "startTime" => params.video_start, "endTime" => params.video_end} : nil,
     "index" => continuation,
     "playlist_current_removed" => env.params.query["playlist_current_removed"]? == "1",
     "plid" => plid,
@@ -46,7 +53,7 @@
     "playback_sync" => playback_sync,
     "playback_position" => playback_position,
     "csrf_token" => env.get?("csrf_token").try(&.as(String)) || "",
-    "play_next" => !related_videos.empty? && !plid && params.continue,
+    "play_next" => !native_clip && !preview_clip && !related_videos.empty? && !plid && params.continue,
     "next_video" => related_videos.select { |rv| rv["id"]? }[0]?.try &.["id"],
     "youtube_comments_text" => HTML.escape(I18n.translate(locale, "View YouTube comments")),
     "comments_youtube_disabled_text" => HTML.escape(I18n.translate(locale, "comments_youtube_disabled_text")),
@@ -175,8 +182,17 @@
     </div>
     <div class="watch-primary">
         <header class="watch-heading">
+            <% if native_clip %>
+            <h1 dir="auto"><%= title %></h1>
+            <p><%= I18n.translate(locale, "clips_by") %> <%= HTML.escape(native_clip.creator) %> · <%= native_clip.start_time %>–<%= native_clip.end_time %> s</p>
+            <p dir="auto"><a href="/watch?v=<%= video.id %>"><%= HTML.escape(video.title) %></a></p>
+            <p class="js-only"><label><input id="clip-loop" type="checkbox" <%= "checked" if params.video_loop %>> <%= I18n.translate(locale, "clips_loop") %></label></p>
+            <p><a class="pure-button" href="/watch?v=<%= video.id %>&t=<%= native_clip.start_time %>"><%= I18n.translate(locale, "clips_full_video") %></a>
+            <% if user && user.email == native_clip.owner %><a href="/delete_clip?id=<%= native_clip.id %>"><%= I18n.translate(locale, "clips_delete") %></a><% end %></p>
+            <% else %>
             <div data-dearrow-row><h1 dir="auto" data-dearrow-id="<%= HTML.escape(video.id) %>" data-dearrow-watch><%= title %></h1></div>
             <%= rendered "components/dearrow_contributions" %>
+            <% end %>
     <% if !video.is_listed %>
         <h3>
             <i class="icon ion-ios-unlock"></i> <%= I18n.translate(locale, "Unlisted") %>
@@ -215,10 +231,11 @@
             <div><% sub_count_text = video.sub_count_text %><%= rendered "components/subscribe_widget" %></div>
         </div>
         <div class="watch-actions">
-            <a class="pure-button" id="link-iv-listen" data-base-url="/watch?<%= env.params.query %>&listen=<%= params.listen ? 0 : 1 %>" href="/watch?<%= env.params.query %>&listen=<%= params.listen ? 0 : 1 %>">
+            <a class="pure-button" id="link-iv-listen" data-base-url="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&listen=<%= params.listen ? 0 : 1 %>" href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&listen=<%= params.listen ? 0 : 1 %>">
                 <i class="icon <%= params.listen ? "ion-ios-videocam" : "ion-md-headset" %>" aria-hidden="true"></i> <%= I18n.translate(locale, params.listen ? "Video mode" : "Audio mode") %>
             </a>
             <button type="button" class="pure-button js-only" id="share-video"><%= I18n.translate(locale, "ui_share") %></button>
+            <% unless Invidious::Clips.source_error(video) %><a class="pure-button" id="create-clip" href="/create_clip?videoId=<%= video.id %>"><%= I18n.translate(locale, "clips_create") %></a><% end %>
             <% if user %><details><summary><%= I18n.translate(locale, "Add to playlist") %></summary><div class="action-content">
             <% if user %>
                 <% playlists = Invidious::Database::Playlists.select_user_created_playlists(user.email) %>
@@ -272,9 +289,10 @@
                     end
                 -%>
                 <a id="link-yt-watch" rel="noreferrer noopener" data-base-url="<%= link_yt_watch %>" href="<%= link_yt_watch %>"><%= I18n.translate(locale, "videoinfo_watch_on_youTube") %></a>
-                (<a id="link-yt-embed" referrerpolicy="origin-when-cross-origin" rel="noopener" data-base-url="<%= link_yt_embed %>" href="<%= link_yt_embed %>"><%= I18n.translate(locale, "videoinfo_youTube_embed_link") %></a>)
+                <% unless native_clip %>(<a id="link-yt-embed" referrerpolicy="origin-when-cross-origin" rel="noopener" data-base-url="<%= link_yt_embed %>" href="<%= link_yt_embed %>"><%= I18n.translate(locale, "videoinfo_youTube_embed_link") %></a>)<% end %>
             </span>
 
+            <% unless native_clip %>
             <p id="watch-on-another-invidious-instance">
                 <%- link_iv_other = IV::Frontend::Misc.redirect_url(env) -%>
                 <a id="link-iv-other" data-base-url="<%= link_iv_other %>" href="<%= link_iv_other %>"><%= I18n.translate(locale, "Switch Invidious Instance") %></a>
@@ -291,13 +309,14 @@
                 <a id="link-iv-embed" data-base-url="<%= link_iv_embed %>" href="<%= link_iv_embed %>"><%= I18n.translate(locale, "videoinfo_invidious_embed_link") %></a>
             </p>
 
+            <% end %>
             <p id="annotations">
                 <% if params.annotations %>
-                    <a href="/watch?<%= env.params.query %>&iv_load_policy=3">
+                    <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&iv_load_policy=3">
                         <%= I18n.translate(locale, "Hide annotations") %>
                     </a>
                 <% else %>
-                    <a href="/watch?<%= env.params.query %>&iv_load_policy=1">
+                    <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&iv_load_policy=1">
                         <%=I18n.translate(locale, "Show annotations")%>
                     </a>
                 <% end %>
@@ -383,7 +402,7 @@
                             <%= comment_html %>
                         <% else %>
                             <noscript>
-                                <a href="/watch?<%= env.params.query %>&nojs=1">
+                                <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&nojs=1">
                                     <%= I18n.translate(locale, "Hi! Looks like you have JavaScript turned off. Click here to view comments, keep in mind they may take a bit longer to load.") %>
                                 </a>
                             </noscript>
@@ -402,7 +421,7 @@
                             <% if nojs %>
                                 <%= comment_html %>
                             <% else %>
-                                <a href="/watch?<%= env.params.query %>&nojs=1">
+                                <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&nojs=1">
                                     <%= HTML.escape(I18n.translate(locale, "comments_youtube_disabled_try_reddit_no_js")) %>
                                 </a>
                             <% end %>
@@ -430,7 +449,7 @@
         <% if params.related_videos %>
         <section class="recommendations panel" aria-labelledby="recommendations-heading">
             <h2 class="panel-heading" id="recommendations-heading"><%= I18n.translate(locale, "ui_recommended") %></h2>
-            <% if !plid && !related_videos.empty? %>
+            <% if !native_clip && !preview_clip && !plid && !related_videos.empty? %>
             <div class="continue-control"><label for="continue"><%= I18n.translate(locale, "preferences_continue_label") %></label> <input id="continue" name="continue" type="checkbox" <%= "checked" if params.continue %>></div>
             <% end %>
             <% related_videos.each do |rv| %>

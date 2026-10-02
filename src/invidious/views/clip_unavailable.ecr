@@ -1,0 +1,5 @@
+<% content_for "header" do %><title><%= HTML.escape(clip.title) %> - Invidious</title><% end %>
+<h1 dir="auto"><%= HTML.escape(clip.title) %></h1>
+<p><%= I18n.translate(locale, "clips_unavailable") %></p>
+<p><a href="<%= clip.permalink %>"><%= I18n.translate(locale, "ui_retry") %></a> · <a href="/watch?v=<%= clip.video_id %>"><%= I18n.translate(locale, "clips_full_video") %></a></p>
+<% if user && user.email == clip.owner %><p><a href="/delete_clip?id=<%= clip.id %>"><%= I18n.translate(locale, "clips_delete") %></a></p><% end %>

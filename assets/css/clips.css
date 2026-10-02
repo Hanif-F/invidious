@@ -1,0 +1,7 @@
+.clip-editor { max-width: 48rem; margin-block: 1rem; }
+.clip-editor input[type="text"], .clip-editor input[type="range"] { width: 100%; }
+.clip-editor input[type="number"] { max-width: 100%; }
+.clip-range { margin-block: 1rem; }
+.clip-range input[type="range"] { min-height: 44px; }
+.clip-preview { width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; margin-block: 1rem; }
+.clip-card h3, .clip-card p { overflow-wrap: anywhere; }

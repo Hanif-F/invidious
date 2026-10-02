@@ -335,7 +335,7 @@ player.on('timeupdate', function () {
     let elem_iv_listen = document.getElementById('link-iv-listen');
     if (elem_iv_listen) {
         let base_url_iv_listen = elem_iv_listen.getAttribute('data-base-url');
-        elem_iv_listen.href = addCurrentTimeToURL(base_url_iv_listen, domain);
+        elem_iv_listen.href = video_data.clip && video_data.clip.url ? base_url_iv_listen : addCurrentTimeToURL(base_url_iv_listen, domain);
     }
 });
 
@@ -344,12 +344,13 @@ var shareOptions = {
     socials: ['fbFeed', 'tw', 'reddit', 'email'],
 
     get url() {
-        return addCurrentTimeToURL(short_url);
+        return video_data.clip && video_data.clip.url ? location.origin + video_data.clip.url : addCurrentTimeToURL(short_url);
     },
     title: player_data.title,
     description: player_data.description,
     image: player_data.thumbnail,
     get embedCode() {
+        if (video_data.clip) return "";
         // Single quotes inside here required. HTML inserted as is into value attribute of input
         return "<iframe id='ivplayer' width='640' height='360' src='" +
             addCurrentTimeToURL(embed_url) + "' style='border:none;'></iframe>";
@@ -385,7 +386,7 @@ if (!video_data.params.listen && video_data.vr && video_data.params.vr_mode) {
 }
 
 // Add markers
-if (video_data.params.video_start > 0 || video_data.params.video_end > 0) {
+if (!video_data.clip && (video_data.params.video_start > 0 || video_data.params.video_end > 0)) {
     var markers = [{ time: video_data.params.video_start, text: 'Start' }];
 
     if (video_data.params.video_end < 0) {
@@ -403,6 +404,14 @@ if (video_data.params.video_start > 0 || video_data.params.video_end > 0) {
     });
 
     player.currentTime(video_data.params.video_start);
+}
+
+if (video_data.clip) {
+    window.InvidiousClipPlayer(player, video_data.clip, player_data.clip_unavailable);
+    player.markers({markers: [
+        {time: video_data.clip.startTime, text: 'Start'},
+        {time: video_data.clip.endTime, text: 'End'}
+    ]});
 }
 
 // Volume belongs to this browser, never to PREFS or the account.
@@ -497,7 +506,7 @@ if (video_data.premiere_timestamp && Math.round(new Date() / 1000) < video_data.
     player.getChild('bigPlayButton').hide();
 }
 
-if (video_data.params.save_player_pos) {
+if (!video_data.clip && video_data.params.save_player_pos) {
     const url = new URL(location);
     const hasTimeParam = url.searchParams.has('t') || url.searchParams.has('start') || url.searchParams.has('time_continue');
     const rememberedTime = video_data.playback_sync ? (video_data.playback_position || 0) : get_video_time();
@@ -572,7 +581,7 @@ if (video_data.params.save_player_pos) {
         window.addEventListener('online', function () { flushPosition(false); });
     }
 }
-else remove_all_video_times();
+else if (!video_data.clip) remove_all_video_times();
 
 if (video_data.params.autoplay) {
     var bpb = player.getChild('bigPlayButton');
@@ -1016,7 +1025,7 @@ if (player_data.preferred_caption_found) {
 }
 
 // Safari audio double duration fix
-if (navigator.vendor === 'Apple Computer, Inc.' && video_data.params.listen) {
+if (!video_data.clip && navigator.vendor === 'Apple Computer, Inc.' && video_data.params.listen) {
     player.on('loadedmetadata', function () {
         player.on('timeupdate', function () {
             if (player.remainingTime() < player.duration() / 2 && player.remainingTime() >= 2) {
@@ -1027,7 +1036,7 @@ if (navigator.vendor === 'Apple Computer, Inc.' && video_data.params.listen) {
 }
 
 // Safari screen timeout on looped video playback fix
-if (navigator.vendor === 'Apple Computer, Inc.' && !video_data.params.listen && video_data.params.video_loop) {
+if (!video_data.clip && navigator.vendor === 'Apple Computer, Inc.' && !video_data.params.listen && video_data.params.video_loop) {
     player.loop(false);
     player.ready(function () {
         player.on('ended', function () {

@@ -5,9 +5,18 @@ module Invidious::Routes::Watch
     preferences = env.get("preferences").as(Preferences)
     locale = preferences.locale
     region = env.params.query["region"]?
+    native_clip_id = env.get?("native_clip_id").try(&.as(String))
+    native_clip = env.get?("native_clip_id").try(&.as(String)).try { |clip_id| Database::Clips.select(clip_id) }
+    return error_template(404, "Clip not found.") if native_clip_id && !native_clip
+    preview_clip = env.params.query["clip_preview"]? == "1"
+    if native_clip
+      %w(t start end time_continue list index continuation raw clip_preview).each { |key| env.params.query.delete_all(key) }
+      env.params.query["v"] = native_clip.video_id
+      env.set "native_clip_title", native_clip.title
+    end
 
     if env.params.query.to_s.includes?("%20") || env.params.query.to_s.includes?("+")
-      url = "/watch?" + env.params.query.to_s.gsub("%20", "").delete("+")
+      url = "#{native_clip ? native_clip.permalink : "/watch"}?" + env.params.query.to_s.gsub("%20", "").delete("+")
       return env.redirect url
     end
 
@@ -47,11 +56,37 @@ module Invidious::Routes::Watch
     begin
       video = get_video(id, region: params.region)
     rescue ex : NotFoundException
+      return Routes::Clips.unavailable(env, native_clip) if native_clip
       LOGGER.error("get_video not found: #{id} : #{ex.message}")
       return error_template(404, ex)
     rescue ex
+      return Routes::Clips.unavailable(env, native_clip) if native_clip
       LOGGER.error("get_video: #{id} : #{ex.message}")
       return error_template(500, ex)
+    end
+
+    if native_clip || preview_clip
+      if error = Invidious::Clips.source_error(video)
+        return Routes::Clips.unavailable(env, native_clip) if native_clip
+        return error_template(400, error)
+      end
+      begin
+        clip_start_ms = native_clip ? native_clip.start_ms : Invidious::Clips::Validation.milliseconds(env.params.query["start"]? || "")
+        clip_end_ms = native_clip ? native_clip.end_ms : Invidious::Clips::Validation.milliseconds(env.params.query["end"]? || "")
+        Invidious::Clips::Validation.range(clip_start_ms, clip_end_ms, video.length_seconds)
+      rescue ex : ArgumentError
+        return Routes::Clips.unavailable(env, native_clip) if native_clip
+        return error_template(400, ex)
+      end
+      params.video_start = clip_start_ms / 1000.0
+      params.video_end = clip_end_ms / 1000.0
+      params.video_loop = true unless env.params.query.has_key?("loop")
+      params.save_player_pos = false
+      params.continue = false
+      params.continue_autoplay = false
+      params.raw = false
+      plid = nil
+      continuation = nil
     end
 
     related_videos = Frontend::BlockedChannels.recommendations(video.related_videos, Frontend::BlockedChannels.ids(env))
@@ -68,7 +103,7 @@ module Invidious::Routes::Watch
       Invidious::Database::Users.mark_watched(user.as(User), id, video)
     end
 
-    playback_sync = !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now
+    playback_sync = !native_clip && !preview_clip && !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now
     env.response.headers["Cache-Control"] = "private, no-store" if playback_sync
     playback_position = playback_sync ? Invidious::Database::PlaybackPositions.select(user.not_nil!.email, id).try(&.[:position_seconds]) : nil
     chat_timing_ms = user && video.live_chat_replay? ? Invidious::Database::ChatTimingOffsets.select(user.email, id) : 0
@@ -140,11 +175,11 @@ module Invidious::Routes::Watch
         if params.quality == "dash"
           env.params.query.delete_all("quality")
           env.params.query["quality"] = "medium"
-          return env.redirect "/watch?#{env.params.query}"
+          return env.redirect "#{native_clip ? native_clip.permalink : "/watch"}?#{env.params.query}"
         elsif params.listen
           env.params.query.delete_all("listen")
           env.params.query["listen"] = "0"
-          return env.redirect "/watch?#{env.params.query}"
+          return env.redirect "#{native_clip ? native_clip.permalink : "/watch"}?#{env.params.query}"
         end
       end
     end
@@ -285,6 +320,11 @@ module Invidious::Routes::Watch
     clip_id = env.params.url["clip"]?
 
     return error_template(400, "A clip ID is required") if !clip_id
+
+    if Invidious::Clips::Validation.native?(clip_id)
+      env.set "native_clip_id", clip_id
+      return handle(env)
+    end
 
     response = YoutubeAPI.resolve_url("https://www.youtube.com/clip/#{clip_id}")
     return error_template(400, "Invalid clip ID") if response["error"]?

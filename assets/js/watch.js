@@ -39,13 +39,13 @@ function playback_url(url, advancing) {
 }
 
 function next_video() {
-    if (video_data.plid || !video_data.next_video) return;
+    if (video_data.clip || video_data.plid || !video_data.next_video) return;
     location.assign(playback_url('/watch?v=' + encodeURIComponent(video_data.next_video) + '&continue=1', true));
 }
 
 function continue_autoplay(event) {
     player.off('ended', next_video);
-    if (event.target.checked && !video_data.plid) player.on('ended', next_video);
+    if (!video_data.clip && event.target.checked && !video_data.plid) player.on('ended', next_video);
 }
 var continue_button = document.getElementById('continue');
 if (continue_button) continue_button.onclick = continue_autoplay;
@@ -284,7 +284,7 @@ function get_reddit_comments() {
     });
 }
 
-if (video_data.play_next && !video_data.plid) player.on('ended', next_video);
+if (!video_data.clip && video_data.play_next && !video_data.plid) player.on('ended', next_video);
 
 addEventListener('load', function (e) {
     if (video_data.plid)
@@ -309,8 +309,8 @@ var reddit_link = document.getElementById('try-reddit-comments-link');
 if (reddit_link) reddit_link.onclick = swap_comments;
 
 document.getElementById('share-video').onclick = function () {
-    var url = new URL(location.href);
-    url.searchParams.set('t', Math.floor(player.currentTime() || 0));
+    var url = new URL(video_data.clip && video_data.clip.url ? video_data.clip.url : location.href, location.origin);
+    if (!video_data.clip) url.searchParams.set('t', Math.floor(player.currentTime() || 0));
     var status = document.getElementById('share-status');
     function fallback() {
         document.getElementById('share-fallback').hidden = false;
@@ -385,3 +385,22 @@ if (transcript_panel) {
     });
     document.getElementById('timestamp-panel').hidden = false;
 })();
+
+var createClip = document.getElementById('create-clip');
+if (createClip) createClip.addEventListener('click', function () {
+    var url = new URL(createClip.href);
+    url.searchParams.set('startTime', Math.max(0, player.currentTime() || 0).toFixed(3));
+    createClip.href = url.pathname + url.search;
+});
+
+var clipLoop = document.getElementById('clip-loop');
+if (clipLoop) clipLoop.addEventListener('change', function () {
+    player.loop(clipLoop.checked);
+    var listen = document.getElementById('link-iv-listen');
+    if (listen) {
+        var url = new URL(listen.dataset.baseUrl, location.origin);
+        url.searchParams.set('loop', clipLoop.checked ? '1' : '0');
+        listen.dataset.baseUrl = url.pathname + url.search;
+        listen.href = listen.dataset.baseUrl;
+    }
+});

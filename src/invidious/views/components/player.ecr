@@ -34,9 +34,9 @@
 
                 selected = (i == best_m4a_stream_index)
             %>
-                <source src="<%= src_url %>" type='<%= mimetype %>' label="<%= bitrate %>k" selected="<%= selected %>">
+                <source src="<%= src_url %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='<%= mimetype %>' label="<%= bitrate %>k" selected="<%= selected %>">
                 <% if !params.local && !CONFIG.disabled?("local") %>
-                <source src="<%= src_url %>&local=true" type='<%= mimetype %>' hidequalityoption="true">
+                <source src="<%= src_url %>&local=true<%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='<%= mimetype %>' hidequalityoption="true">
                 <% end %>
             <% end %>
         <% else %>
@@ -45,7 +45,7 @@
                src_url = invidious_companion.public_url.to_s + src_url +
                             "&check=#{invidious_companion_check_id}" if (invidious_companion)
             %>
-                <source src="<%= src_url %>" type='application/dash+xml' label="dash">
+                <source src="<%= src_url %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='application/dash+xml' label="dash">
             <% end %>
 
             <%
@@ -62,9 +62,9 @@
 
                 selected = params.quality ? (params.quality == quality) : (i == 0)
             %>
-                <source src="<%= src_url %>" type="<%= mimetype %>" label="<%= quality %>" selected="<%= selected %>">
+                <source src="<%= src_url %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type="<%= mimetype %>" label="<%= quality %>" selected="<%= selected %>">
                 <% if !params.local && !CONFIG.disabled?("local") %>
-                <source src="<%= src_url %>&local=true" type="<%= mimetype %>" hidequalityoption="true">
+                <source src="<%= src_url %>&local=true<%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type="<%= mimetype %>" hidequalityoption="true">
                 <% end %>
             <% end %>
         <% end %>
@@ -106,7 +106,8 @@
     "stats_formats" => (fmt_stream + adaptive_fmts).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate contentLength audioQuality isDrc audioTrack).includes?(key) } },
     "chapters" => Invidious::Videos::Chapters.parse(video.short_description, video.live_now ? 0 : video.length_seconds),
     "aspect_ratio" => aspect_ratio,
-    "title" => video.title,
+    "title" => env.get?("native_clip_title").try(&.as(String)) || video.title,
+    "clip_unavailable" => I18n.translate(locale, "clips_unavailable"),
     "description" => HTML.escape(video.short_description),
     "thumbnail" => thumbnail,
     "preferred_caption_found" => !preferred_captions.empty?
@@ -114,6 +115,7 @@
 %>
 </script>
 <script src="/js/player-stream-menu.js?v=<%= ASSET_COMMIT %>"></script>
+<script src="/js/clip-player.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/player.js?v=<%= ASSET_COMMIT %>"></script>
 
 <script src="/js/player-chapters.js?v=<%= ASSET_COMMIT %>"></script>

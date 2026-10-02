@@ -57,6 +57,10 @@ module Invidious::Routing
     # User login/out
     get "/signup", Routes::Login, :signup_page
     post "/signup", Routes::Login, :signup
+    get "/create_clip", Routes::Clips, :new_page
+    post "/create_clip", Routes::Clips, :create
+    get "/delete_clip", Routes::Clips, :delete_page
+    post "/delete_clip", Routes::Clips, :delete
     get "/account", Routes::Account, :get_account
     post "/account/username", Routes::Account, :post_username
     get "/login", Routes::Login, :login_page
@@ -115,6 +119,7 @@ module Invidious::Routing
     get "/feed/trending", Routes::Feeds, :trending
     get "/feed/subscriptions", Routes::Feeds, :subscriptions
     get "/feed/history", Routes::Feeds, :history
+    get "/feed/clips", Routes::Clips, :index
 
     # RSS Feeds
     get "/feed/channel/:ucid", Routes::Feeds, :rss_channel
@@ -139,6 +144,7 @@ module Invidious::Routing
     get "/channel/:ucid/releases", Routes::Channels, :releases
     get "/channel/:ucid/courses", Routes::Channels, :courses
     get "/channel/:ucid/playlists", Routes::Channels, :playlists
+    get "/channel/:ucid/clips", Routes::Channels, :clips
     get "/channel/:ucid/community", Routes::Channels, :community
     get "/channel/:ucid/posts", Routes::Channels, :community
     get "/channel/:ucid/channels", Routes::Channels, :channels
@@ -269,6 +275,7 @@ module Invidious::Routing
       get "/api/v1/annotations/:id", {{namespace}}::Videos, :annotations
       get "/api/v1/comments/:id", {{namespace}}::Videos, :comments
       get "/api/v1/clips/:id", {{namespace}}::Videos, :clips
+      get "/api/v1/channels/:ucid/clips", {{namespace}}::Clips, :channel
       get "/api/v1/transcripts/:id", {{namespace}}::Videos, :transcripts
       get "/api/v1/live_chat/:id", {{namespace}}::LiveChat, :replay
 
@@ -307,6 +314,9 @@ module Invidious::Routing
 
       # Authenticated
 
+      get "/api/v1/auth/clips", {{namespace}}::Clips, :index
+      post "/api/v1/auth/clips", {{namespace}}::Clips, :create
+      delete "/api/v1/auth/clips/:id", {{namespace}}::Clips, :delete
       get "/api/v1/auth/csrf", {{namespace}}::Authenticated, :get_csrf
       get "/api/v1/auth/preferences", {{namespace}}::Authenticated, :get_preferences
       post "/api/v1/auth/preferences", {{namespace}}::Authenticated, :set_preferences

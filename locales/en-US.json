@@ -792,5 +792,22 @@
     "Invalid form. Please try again.": "Invalid form. Please try again.",
     "Too many attempts. Please try again later.": "Too many attempts. Please try again later.",
     "Account updated. Other sessions and API tokens have been revoked.": "Account updated. Other sessions and API tokens have been revoked.",
-    "Changing your username or password signs out other sessions and revokes API tokens.": "Changing your username or password signs out other sessions and revokes API tokens."
+    "Changing your username or password signs out other sessions and revokes API tokens.": "Changing your username or password signs out other sessions and revokes API tokens.",
+    "clips_my": "My Clips",
+    "channel_tab_clips_label": "Clips",
+    "clips_create": "Create clip",
+    "clips_empty": "No clips yet. Create a clip from a video’s watch page.",
+    "clips_by": "Clipped by",
+    "clips_delete": "Delete clip",
+    "clips_delete_confirm": "Delete this clip permanently? Its shared link will stop working.",
+    "clips_full_video": "Watch full video",
+    "clips_public": "This clip will be public on this instance, including on its channel’s Clips tab.",
+    "clips_title": "Clip title",
+    "clips_start": "Start (seconds)",
+    "clips_end": "End (seconds)",
+    "clips_range_error": "Select 5–120 seconds within the video.",
+    "clips_preview": "Preview clip",
+    "clips_publish": "Publish clip",
+    "clips_unavailable": "The source video or selected range is unavailable. You can retry later.",
+    "clips_loop": "Loop clip"
 }

@@ -31,7 +31,7 @@
     <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
 </head>
 
-<body data-theme="<%= theme.id %>" class="<%= dark_mode.blank? ? "no" : dark_mode %>-theme" data-page="<%= env.request.path == "/watch" ? "watch" : (env.request.path == "/search" ? "search" : (env.request.path.includes?("playlist") || env.request.path.starts_with?("/mix") ? "playlist" : "browse")) %>" data-density="<%= preferences.ui_density == "compact" ? "compact" : "balanced" %>" data-thin="<%= preferences.thin_mode %>">
+<body data-theme="<%= theme.id %>" class="<%= dark_mode.blank? ? "no" : dark_mode %>-theme" data-page="<%= (env.request.path == "/watch" || env.get?("native_clip_id")) ? "watch" : (env.request.path == "/search" ? "search" : (env.request.path.includes?("playlist") || env.request.path.starts_with?("/mix") ? "playlist" : "browse")) %>" data-density="<%= preferences.ui_density == "compact" ? "compact" : "balanced" %>" data-thin="<%= preferences.thin_mode %>">
     <a class="skip-link" href="#main-content"><%= I18n.translate(locale, "ui_skip_content") %></a>
     <span style="display:none" id="dark_mode_pref"><%= dark_mode %></span>
     <div class="pure-g">

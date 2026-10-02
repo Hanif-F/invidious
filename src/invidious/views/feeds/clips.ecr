@@ -1,0 +1,4 @@
+<% content_for "header" do %><link rel="stylesheet" href="/css/clips.css?v=<%= ASSET_COMMIT %>"><title><%= I18n.translate(locale, "clips_my") %> - Invidious</title><% end %>
+<h1><%= I18n.translate(locale, "clips_my") %></h1>
+<%= rendered "components/clips" %>
+<%= page_nav_html %>

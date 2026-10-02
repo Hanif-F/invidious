@@ -40,3 +40,15 @@ The account harness also runs `security_checks.cr` against production middleware
 and routes. It covers private playlist embeds, API/browser identity precedence,
 restricted-token listings, cross-user revocation, CSRF-protected API/forms/imports,
 cache headers, log redaction and playlist deletion/rollback with two users.
+
+Native clip storage and route checks use an **empty** disposable PostgreSQL
+database named `invidious_clips_test`:
+
+```sh
+CLIPS_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_clips_test crystal run tests/database/clips.cr
+```
+
+The harness checks migration 19, public and account listings, creation, CSRF,
+token scopes, cross-account deletion, username attribution, immutable playback
+bounds, cache eviction, pagination, account cleanup, and the fresh schema.
+Remove the disposable database after testing.

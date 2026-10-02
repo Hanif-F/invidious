@@ -88,7 +88,7 @@ def fixture_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
-def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false)
+def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false, native_clip : InvidiousClip? = nil)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   video = fixture_video
@@ -97,10 +97,21 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
   related_videos = video.related_videos
   id = video.id
   continuation = 2
+  preview_clip = false
   params = Invidious::Videos.process_video_params(URI::Params.new, preferences)
   params.related_videos = false if chat_only
   params.comments = ["", ""]
   params.quality = "medium"
+  if native_clip
+    plid = nil
+    params.video_start = native_clip.start_time
+    params.video_end = native_clip.end_time
+    params.video_loop = true
+    params.save_player_pos = false
+    params.continue = false
+    env.set "native_clip_title", native_clip.title
+    env.set "native_clip_id", native_clip.id
+  end
   params.vr_mode = false
   playback_sync = false
   playback_position = nil
@@ -483,3 +494,60 @@ ensure
   CONFIG.admins.delete("viewer@example.test")
 end
 File.write("#{output}/preferences-rtl.html", preferences_fixture(fixture_env("/preferences", "dark", locale: "ar")))
+
+# Native clips render production pages with escaped, immutable titles.
+def fixture_clip
+  video = fixture_video
+  InvidiousClip.new({id: "IVCL" + "a" * 32, owner: "viewer@example.test", video_id: video.id,
+                     ucid: video.ucid, title: "Moment <script>alert(1)</script> & light", start_ms: 500_i64, end_ms: 5500_i64,
+                     created_at: Time.utc(2026, 10, 2), video_title: video.title, channel_name: video.author,
+                     video_duration: video.length_seconds, creator: "viewer"})
+end
+
+def clips_fixture(channel_page = false, empty = false, visual_theme = "modern-neon", locale = "en-US")
+  env = channel_page ? fixture_env("/channel/#{fixture_clip.ucid}/clips", visual_theme: visual_theme, locale: locale) : signed_in_env("/feed/clips")
+  preferences = env.get("preferences").as(Preferences)
+  preferences.theme = visual_theme
+  preferences.locale = locale
+  env.set "preferences", preferences
+  user = env.get?("user").try(&.as(User))
+  subscriptions = [] of String
+  clips = empty ? [] of InvidiousClip : [fixture_clip]
+  page_nav_html = ""
+  navbar_search = true
+  if channel_page
+    channel = AboutChannel.new(ucid: fixture_clip.ucid, author: "Studio North", auto_generated: false,
+      author_url: "/channel/#{fixture_clip.ucid}", author_thumbnail: "https://example.test/avatar", banner: nil,
+      description: "Channel clips", description_html: "Channel clips", total_views: 123456_i64, sub_count: 1200,
+      joined: Time.utc, is_family_friendly: true, pronouns: nil, allowed_regions: [] of String,
+      tabs: ["videos", "playlists"], tags: [] of String, verified: true, is_age_gated: false)
+    render "src/invidious/views/channel_clips.ecr", "src/invidious/views/template.ecr"
+  else
+    render "src/invidious/views/feeds/clips.ecr", "src/invidious/views/template.ecr"
+  end
+end
+
+def create_clip_fixture(visual_theme = "modern-neon", locale = "en-US")
+  env = signed_in_env("/create_clip?videoId=2isYuQZMbdU")
+  preferences = env.get("preferences").as(Preferences)
+  preferences.theme = visual_theme
+  preferences.locale = locale
+  env.set "preferences", preferences
+  video = fixture_video
+  title = ""
+  start_time = 0.0
+  end_time = 30.0
+  error = nil
+  csrf_token = "fixture-token"
+  navbar_search = true
+  render "src/invidious/views/create_clip.ecr", "src/invidious/views/template.ecr"
+end
+
+File.write("#{output}/clip-watch.html", watch_fixture(signed_in_env(fixture_clip.permalink), nil, account: true, native_clip: fixture_clip))
+File.write("#{output}/clips-library.html", clips_fixture)
+File.write("#{output}/clips-empty.html", clips_fixture(empty: true))
+File.write("#{output}/channel-clips.html", clips_fixture(channel_page: true))
+File.write("#{output}/clips-diary.html", clips_fixture(visual_theme: "diary"))
+File.write("#{output}/clips-rtl.html", clips_fixture(locale: "ar"))
+File.write("#{output}/create-clip.html", create_clip_fixture)
+File.write("#{output}/create-clip-diary.html", create_clip_fixture("diary", "id"))

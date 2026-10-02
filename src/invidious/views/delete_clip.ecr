@@ -1,0 +1,10 @@
+<% content_for "header" do %><title><%= I18n.translate(locale, "clips_delete") %> - Invidious</title><% end %>
+<h1><%= I18n.translate(locale, "clips_delete") %></h1>
+<p dir="auto"><%= HTML.escape(clip.title) %></p>
+<p><%= I18n.translate(locale, "clips_delete_confirm") %></p>
+<form action="/delete_clip" method="post" class="pure-form">
+    <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
+    <input type="hidden" name="id" value="<%= clip.id %>">
+    <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "clips_delete") %></button>
+    <a class="pure-button" href="<%= clip.permalink %>"><%= I18n.translate(locale, "generic_button_cancel") %></a>
+</form>

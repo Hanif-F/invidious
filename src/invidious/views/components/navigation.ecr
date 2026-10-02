@@ -1,10 +1,10 @@
-<% navigation_feeds = preferences.feed_menu.reject { |feed| feed.empty? || {"Subscriptions", "Playlists", "History"}.includes?(feed) }.uniq %>
+<% navigation_feeds = preferences.feed_menu.reject { |feed| feed.empty? || {"Subscriptions", "Playlists", "History", "Clips", "My Clips"}.includes?(feed) }.uniq %>
 <% navigation_feeds.each do |feed| %>
     <a class="navigation-link" href="/feed/<%= feed.downcase %>" <%= "aria-current=page" if env.request.path == "/feed/#{feed.downcase}" %>><span aria-hidden="true"><%= {"Popular" => "◇", "Trending" => "↗"}[feed]? || "•" %></span><%= I18n.translate(locale, feed) %></a>
 <% end %>
 <% if env.get?("user") || CONFIG.login_enabled %>
     <h2 class="navigation-heading"><%= I18n.translate(locale, "ui_library") %></h2>
-    <% {"history" => {"◷", "Watch history"}, "subscriptions" => {"▣", "Subscriptions"}, "playlists" => {"≡", "Playlists"}}.each do |feed, label| %>
+    <% {"history" => {"◷", "Watch history"}, "subscriptions" => {"▣", "Subscriptions"}, "playlists" => {"≡", "Playlists"}, "clips" => {"✂", "clips_my"}}.each do |feed, label| %>
         <a class="navigation-link" href="/feed/<%= feed %>" <%= "aria-current=page" if env.request.path == "/feed/#{feed}" %>><span aria-hidden="true"><%= label[0] %></span><%= I18n.translate(locale, label[1]) %></a>
     <% end %>
 <% end %>

@@ -63,6 +63,17 @@ module Invidious::Routes::Channels
     templated "channel"
   end
 
+  def self.clips(env)
+    data = self.fetch_basic_information(env)
+    return data if !data.is_a?(Tuple)
+    locale, user, subscriptions, continuation, ucid, channel = data
+    page = Invidious::Clips.page(env.params.query["page"]?)
+    clips = Database::Clips.list(channel.ucid, owned: false, page: page, extra: true)
+    page_nav_html = Frontend::Pagination.nav_numeric(locale, base_url: "/channel/#{channel.ucid}/clips", current_page: page, show_next: clips.size > Invidious::Clips::PAGE_SIZE)
+    clips = clips.first(Invidious::Clips::PAGE_SIZE)
+    templated "channel_clips"
+  end
+
   def self.search(env)
     data = self.fetch_basic_information(env)
     return data if !data.is_a?(Tuple)

@@ -1,0 +1,15 @@
+<%-
+  ucid = channel.ucid
+  author = HTML.escape(channel.author)
+  channel_profile_pic = URI.parse(channel.author_thumbnail).request_target
+  relative_url = "/channel/#{ucid}/clips"
+  youtube_url = "https://www.youtube.com/channel/#{ucid}"
+  redirect_url = "/redirect?referer=#{URI.encode_www_form("/channel/#{ucid}")}"
+  selected_tab = Frontend::ChannelPage::TabsAvailable::Clips
+  sort_options = [] of String
+  sort_by = ""
+-%>
+<% content_for "header" do %><link rel="stylesheet" href="/css/clips.css?v=<%= ASSET_COMMIT %>"><title><%= author %> - <%= I18n.translate(locale, "channel_tab_clips_label") %> - Invidious</title><% end %>
+<%= rendered "components/channel_info" %>
+<%= rendered "components/clips" %>
+<%= page_nav_html %>

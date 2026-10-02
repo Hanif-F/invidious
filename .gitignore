@@ -1,6 +1,7 @@
 /docs/*
 !/docs/theming.md
 !/docs/dearrow-contributions.md
+!/docs/native-clips.md
 /dev/
 /lib/
 /bin/
