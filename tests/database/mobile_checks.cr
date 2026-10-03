@@ -13,6 +13,7 @@ def check_mobile_security
   token = data["accessToken"].as_s
   check_mobile_dearrow(token, email, sid)
   check_mobile_sponsorblock(token, email, sid)
+  check_mobile_preferences(token, email, sid)
   session = JSON.parse(token)["session"].as_s
   check(data["username"] == "MobileAlice", "Native sign-in returned internal account owner")
   check((data["expiresAt"].as_i64 - Time.utc.to_unix - 30.days.total_seconds).abs < 3, "Native lifetime differs from 30 days")
@@ -84,6 +85,33 @@ def check_mobile_security
     end
   end
   puts "Native sign-in, least privilege, expiry, revocation, settings preservation and history API passed"
+end
+
+def check_mobile_preferences(token, email, sid)
+  path = "/api/v1/auth/preferences"
+  before = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+  before["future_native_settings"] = JSON.parse(%({"preserve":[1,2,3]}))
+  PG_DB.exec("UPDATE users SET preferences = $1 WHERE email = $2", before.to_json, email)
+  body = %({"autoplay":false,"listen":true,"local":true,"speed":1.5,"quality_dash":"720p",
+    "dark_mode":"dark","ui_density":"compact","thin_mode":true,"default_home":"Trending",
+    "feed_menu":["Trending","Popular","Subscriptions","Playlists"],"region":"ID",
+    "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube","reddit"],
+    "related_videos":false,"extend_desc":true,"max_results":60,"sort":"channel name",
+    "latest_only":true,"unseen_only":true,"notifications_only":true,"default_playlist":null})
+  patch = security_request("PATCH", path, bearer: token, body: body)
+  check(patch.response.status_code == 200, "Native core preference patch failed")
+  after = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+  JSON.parse(body).as_h.each { |key, value| check(after[key] == value, "Native preference #{key} was not saved") }
+  before.each { |key, value| check(after[key] == value, "Native core settings overwrote #{key}") unless JSON.parse(body).as_h.has_key?(key) }
+  read = security_request("GET", path, bearer: token)
+  check(JSON.parse(read.get("test_result").as(String)).as_h["captions"] == after["captions"], "Shared caption priorities were not returned")
+  [%({"speed":0,"related_videos":true}), %({"region":"invalid"}), %({"captions":["<script>"]}),
+   %({"max_results":1501}), %({"feed_menu":["unknown"]}), %({"comments":["other"]})].each do |invalid|
+    check(security_request("PATCH", path, bearer: token, body: invalid).response.status_code == 400, "Invalid native core preferences accepted")
+    check(JSON.parse(Invidious::Database::Users.preference_json(email)).as_h == after, "Rejected native settings partially applied")
+  end
+  check(security_request("PATCH", path, sid: sid, body: %({"speed":1})).response.status_code == 403, "Native core settings bypassed browser CSRF")
+  puts "Native core settings, shared reads, unknown preference preservation, atomic rejection and CSRF passed"
 end
 
 def check_mobile_sponsorblock(token, email, sid)

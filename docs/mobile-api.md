@@ -29,9 +29,32 @@ Invidious's existing auth middleware returns 403 for expired/revoked bearer toke
 
 ## Safe preference updates
 
-`PATCH /api/v1/auth/preferences` accepts boolean `watch_history`,
-`save_player_pos`, `dearrow_enabled`, `dearrow_show_original` and `sponsorblock_enabled`,
-plus the SponsorBlock maps described below. At least one field is required.
+`PATCH /api/v1/auth/preferences` accepts only settings supported by the native app.
+At least one field is required. Supported fields are:
+
+- Booleans: `watch_history`, `save_player_pos`, `dearrow_enabled`,
+  `dearrow_show_original`, `autoplay`, `listen`, `local`, `thin_mode`,
+  `related_videos`, `extend_desc`, `latest_only`, `unseen_only`, `notifications_only`.
+- `speed`: finite JSON number from 0.25 to 2.0; `quality_dash`: the existing web
+  DASH quality values (`auto`, `best`, resolution values from `144p` through `4320p`,
+  or `worst`). Android applies resolution choices as ceilings.
+- `captions`: up to three bounded language-name strings, in priority order, matching
+  the web names; empty strings mean no preferred language. `comments`: up to two
+  sources (`youtube`, `reddit`, or empty). Android edits YouTube visibility while
+  retaining the web's Reddit choice; it does not implement Reddit comments.
+- `dark_mode`: empty (system), `light` or `dark`; `ui_density`: `balanced` or
+  `compact`; `default_home`: null, empty (Search), `Popular`, `Trending`,
+  `Subscriptions` or `Playlists`; `feed_menu`: up to four of those string values.
+- `region`: two uppercase letters; `max_results`: integer 1–1500; `sort`: one of
+  `published`, `published - reverse`, `alphabetically`, `alphabetically - reverse`,
+  `channel name`, `channel name - reverse`.
+- `default_playlist`: null/empty to clear, or a bounded playlist identifier.
+- `sponsorblock_enabled` and the SponsorBlock maps described below.
+
+Background playback and PiP are device-local. Unsupported web capabilities such as
+chat replay, annotations, VR, interface localization and next-video queues are not
+added to this native PATCH contract. The extension uses existing preference scopes
+and storage; no migration or token renewal is required.
 Clients send only changed fields. It locks the account, merges the
 stored JSON (including unknown keys), and returns the merged object. Disabling
 saved positions clears them in the same transaction. The existing POST endpoint

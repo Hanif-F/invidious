@@ -45,10 +45,9 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
     begin
       data = Mobile.read_json(env)
-      raise "Invalid preferences" if data.empty? || data.keys.any? { |key| !{"watch_history", "save_player_pos", "dearrow_enabled", "dearrow_show_original", "sponsorblock_enabled", "sponsorblock_modes", "sponsorblock_colors", "sponsorblock_channel_overrides"}.includes?(key) }
-      Invidious::SponsorBlock.validate_patch(data)
+      Invidious::NativePreferences.validate_patch(data)
     rescue
-      return error_json(400, "Invalid preference patch. SponsorBlock settings require the Mobivious SponsorBlock API update, valid categories, modes, colors and channel IDs.")
+      return error_json(400, "Invalid preference patch. Use supported Mobivious settings with valid types and values.")
     end
     names = {} of String => String
     # Channel extraction can involve upstream IO; do it before locking preferences.
