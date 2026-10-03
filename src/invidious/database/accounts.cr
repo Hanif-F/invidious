@@ -37,6 +37,27 @@ module Invidious::Database::Accounts
     sid
   end
 
+  # Verification and issuance share the same account lock as credential changes.
+  # A concurrent password change therefore cannot leave a newly issued token alive.
+  def authenticate_mobile(username : String, password : String) : NamedTuple(accessToken: String, username: String, expiresAt: Int64)?
+    result = nil
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      user = conn.query_one?("SELECT * FROM users WHERE lower(username) = lower($1) FOR UPDATE", username, as: User)
+      if user && Credentials.verify(user.password, user.credential_version, password)
+        session = "v1:#{Base64.urlsafe_encode(Random::Secure.random_bytes(32))}"
+        expires = Time.utc + 30.days
+        conn.exec("INSERT INTO session_ids (id, email, issued, expires_at) VALUES ($1, $2, now(), $3)", session, user.email, expires)
+        token = {"session" => session, "scopes" => Invidious::Routes::API::V1::Mobile::SCOPES, "expire" => expires.to_unix}
+        token["signature"] = sign_token(HMAC_KEY, token)
+        result = {accessToken: token.to_json, username: user.username, expiresAt: expires.to_unix}
+      else
+        Credentials.dummy_verify unless user
+      end
+    end
+    result
+  end
+
   def change(email : String, current_sid : String, password : String, username : String? = nil, new_password : String? = nil) : String?
     new_hash = new_password.try { |value| Credentials.hash(value) }
     sid = nil

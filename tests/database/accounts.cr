@@ -92,6 +92,7 @@ def must_fail(message, &)
 end
 
 require "./security_checks"
+require "./mobile_checks"
 
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
@@ -266,6 +267,7 @@ begin
   disabled = context("GET", "/signup")
   Invidious::Routes::Login.signup_page(disabled)
   check(disabled.response.status_code == 403, "Registration switch ignored")
+  check_mobile_security
   CONFIG.login_enabled = false
   disabled = context
   Invidious::Routes::Login.login_page(disabled)

@@ -14,11 +14,17 @@ class SecurityTestEndpoint
              when "/api/v1/auth/tokens/unregister"
                Invidious::Routes::API::V1::Authenticated.unregister_token(env)
              when "/api/v1/auth/preferences"
-               if env.request.method == "POST"
+               if env.request.method == "PATCH"
+                 Invidious::Routes::API::V1::Authenticated.patch_preferences(env)
+               elsif env.request.method == "POST"
                  Invidious::Routes::API::V1::Authenticated.set_preferences(env)
                else
                  Invidious::Routes::API::V1::Authenticated.get_preferences(env)
                end
+             when "/api/v1/mobile/login"
+               Invidious::Routes::API::V1::Mobile.login(env)
+             when "/api/v1/auth/history"
+               Invidious::Routes::API::V1::Authenticated.get_history(env)
              when "/preferences"
                Invidious::Routes::PreferencesRoute.update(env)
              when "/data_control"

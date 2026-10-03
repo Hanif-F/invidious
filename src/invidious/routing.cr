@@ -312,6 +312,8 @@ module Invidious::Routing
       get "/api/v1/hashtag/:hashtag", {{namespace}}::Search, :hashtag
 
 
+      post "/api/v1/mobile/login", {{namespace}}::Mobile, :login
+
       # Authenticated
 
       get "/api/v1/auth/clips", {{namespace}}::Clips, :index
@@ -320,6 +322,7 @@ module Invidious::Routing
       get "/api/v1/auth/csrf", {{namespace}}::Authenticated, :get_csrf
       get "/api/v1/auth/preferences", {{namespace}}::Authenticated, :get_preferences
       post "/api/v1/auth/preferences", {{namespace}}::Authenticated, :set_preferences
+      patch "/api/v1/auth/preferences", {{namespace}}::Authenticated, :patch_preferences
       patch "/api/v1/auth/chat_preferences", {{namespace}}::Authenticated, :set_chat_preferences
       get "/api/v1/auth/chat_timing/:id", {{namespace}}::Authenticated, :get_chat_timing
       put "/api/v1/auth/chat_timing/:id", {{namespace}}::Authenticated, :set_chat_timing

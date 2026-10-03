@@ -40,6 +40,30 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.status_code = 204
   end
 
+  def self.patch_preferences(env)
+    env.response.content_type = "application/json"
+    user = env.get("user").as(User)
+    begin
+      data = Mobile.read_json(env)
+      raise "Invalid preferences" if data.empty? || data.keys.any? { |key| !{"watch_history", "save_player_pos"}.includes?(key) }
+      data.each_value(&.as_bool)
+    rescue
+      return error_json(400, "Only boolean watch_history and save_player_pos settings are accepted.")
+    end
+    raw = ""
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      stored = JSON.parse(conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", user.email, as: String)).as_h
+      data.each { |key, value| stored[key] = value }
+      raw = stored.to_json
+      conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw, user.email)
+      if data["save_player_pos"]?.try(&.as_bool) == false
+        conn.exec("DELETE FROM playback_positions WHERE email = $1", user.email)
+      end
+    end
+    raw
+  end
+
   def self.set_chat_preferences(env)
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
@@ -77,9 +101,8 @@ module Invidious::Routes::API::V1::Authenticated
     4.times do
       raw = Invidious::Database::Users.preference_json(user.email)
       preferences = Preferences.from_json(raw)
-      return error_json(400, "Invalid chat settings") if
-        (overlay_x || preferences.chat_overlay_x) + (overlay_width || preferences.chat_overlay_width) > 1000 ||
-        (overlay_y || preferences.chat_overlay_y) + (overlay_height || preferences.chat_overlay_height) > 1000
+      return error_json(400, "Invalid chat settings") if (overlay_x || preferences.chat_overlay_x) + (overlay_width || preferences.chat_overlay_width) > 1000 ||
+                                                         (overlay_y || preferences.chat_overlay_y) + (overlay_height || preferences.chat_overlay_height) > 1000
       preferences.chat_show_timestamps = timestamps unless timestamps.nil?
       preferences.chat_font_scale = font if font
       preferences.chat_width_px = width if width
@@ -149,18 +172,34 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
 
-    page = env.params.query["page"]?.try &.to_i?.try &.clamp(0, Int32::MAX)
+    page = env.params.query["page"]?.try &.to_i?.try &.clamp(1, Int32::MAX)
     page ||= 1
 
     max_results = env.params.query["max_results"]?.try &.to_i?.try &.clamp(0, MAX_ITEMS_PER_PAGE)
     max_results ||= user.preferences.max_results
     max_results ||= CONFIG.default_user_preferences.max_results
 
-    start_index = (page - 1) * max_results
-    if user.watched[start_index]?
-      watched = user.watched.reverse[start_index, max_results]
+    start_index = (page.to_i64 - 1) * max_results
+    if start_index < user.watched.size
+      watched = user.watched.reverse[start_index.to_i, max_results]
     end
     watched ||= [] of String
+
+    if env.params.query["details"]? == "true"
+      entries = Invidious::Database::WatchHistory.select_all(user.email).to_h { |entry| {entry.video_id, entry} }
+      cached = Invidious::Database::WatchHistory.cached(watched)
+      return watched.map do |id|
+        entry = entries[id]? || Invidious::Database::WatchHistory::Entry.new(id)
+        if fallback = cached[id]?
+          entry.title ||= fallback.title
+          entry.channel_name ||= fallback.channel_name
+          entry.channel_id ||= fallback.channel_id
+          entry.release_date ||= fallback.release_date
+          entry.length_seconds ||= fallback.length_seconds
+        end
+        entry
+      end.to_json
+    end
 
     return watched.to_json
   end
