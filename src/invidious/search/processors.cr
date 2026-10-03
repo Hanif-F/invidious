@@ -37,18 +37,23 @@ module Invidious::Search
 
     # Search inside of user subscriptions
     def subscriptions(query : Query, user : Invidious::User) : Array(ChannelVideo)
-      view_name = "subscriptions_#{sha256(user.email)}"
+      subscriptions(query.text, user, query.page)
+    end
+
+    def subscriptions(text : String, user : Invidious::User, page : Int32) : Array(ChannelVideo)
+      return [] of ChannelVideo if text.strip.empty? || user.subscriptions.empty?
 
       return PG_DB.query_all("
-        SELECT id,title,published,updated,ucid,author,length_seconds
+        SELECT id,title,published,updated,ucid,author,length_seconds,live_now,premiere_timestamp,views,members_only
         FROM (
           SELECT *,
-          to_tsvector(#{view_name}.title) ||
-          to_tsvector(#{view_name}.author)
+          to_tsvector(title) ||
+          to_tsvector(author)
           as document
-          FROM #{view_name}
-        ) v_search WHERE v_search.document @@ plainto_tsquery($1) LIMIT 20 OFFSET $2;",
-        query.text, (query.page - 1) * 20,
+          FROM channel_videos WHERE ucid = ANY($1)
+        ) v_search WHERE v_search.document @@ plainto_tsquery($2)
+        ORDER BY published DESC, id ASC LIMIT 20 OFFSET $3;",
+        user.subscriptions, text, (page.clamp(1, Int32::MAX).to_i64 - 1) * 20,
         as: ChannelVideo
       )
     end

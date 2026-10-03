@@ -199,6 +199,52 @@ metadata and archived dates. Missing videos remain as entries with their ID.
 Only local caches are consulted; viewing history never triggers YouTube lookups.
 Without `details=true`, the endpoint continues returning an array of video IDs.
 
+`GET /api/v1/auth/history?details=true&organized=true&q=title&page=1` opts into
+the organized response: `{entries, total, hasMore, today, timezone}`. `entries`
+contain the same saved metadata as detailed history; `total` counts matching
+entries across the entire history. Search trims the query and matches title or
+channel name case-insensitively as literal substrings, before pagination. The
+account's page size applies unless `max_results` is supplied.
+
+The website and this API share ordering and filtering: Today, Yesterday, Last 7
+days (2–6 days ago), Last 30 days (7–29 days ago), and Older, then newest saved
+calendar date and account watch recency. Unknown and future watch dates are Older.
+`today` is an ISO calendar date in the account's validated `timezone`, with UTC
+fallback. Saved calendar dates are not timestamps and must not be shifted into a
+device timezone. On a calendar-day change while loading more, Android reloads the
+first page to keep groups consistent. Metadata recovery uses local caches only
+and persists recovered values, matching the website. This mode uses existing
+`GET:history` permissions and introduces no migration.
+
+Older servers ignore `organized=true` and return a legacy array. Android keeps
+basic viewing, including ID-only entries, and disables history search with a server
+update explanation. Existing ID-array and detailed-array modes remain unchanged.
+
+## Scoped search
+
+Channel search uses the existing public
+`GET /api/v1/channels/:ucid/search?q=term&page=1`, without bearer credentials.
+Android presents its video results independently of the channel's Videos/Streams
+tab and retains original response counts for pagination.
+
+`GET /api/v1/auth/subscriptions/search?q=term&page=1` returns an array of cached
+videos from the authenticated account's current subscriptions. Matching uses the
+website's PostgreSQL full-text title/channel search. Results are ordered by
+publication descending, then video ID ascending, in fixed 20-result pages. Empty
+queries or empty subscriptions return `[]`. The query is bound as text and cannot
+switch the endpoint to channel/public search using legacy operators. Feed-only
+filters and ordering do not restrict this library search. The shared search
+processor reads `channel_videos` directly so subscription changes do not depend
+on materialized-feed refreshes. No upstream video lookup is introduced.
+
+The endpoint requires the exact `GET:subscriptions/search` scope, added to new
+native sign-in tokens. Existing native sessions must sign out and sign in after
+deploying the server update. Missing routes and old-token scopes have distinct
+Android explanations; neither grants broader subscription permissions. Responses
+use the existing authenticated private/no-store handling. Android applies saved
+search visibility overrides locally, while channel search follows direct-channel
+visibility and history retains every entry. No migration or new secret is needed.
+
 ## Verification
 
 The guarded disposable database harness `tests/database/accounts.cr` includes

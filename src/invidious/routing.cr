@@ -352,6 +352,7 @@ module Invidious::Routing
       get "/api/v1/auth/feed", {{namespace}}::Authenticated, :feed
 
       get "/api/v1/auth/subscriptions", {{namespace}}::Authenticated, :get_subscriptions
+      get "/api/v1/auth/subscriptions/search", {{namespace}}::Authenticated, :search_subscriptions
       post "/api/v1/auth/subscriptions/:ucid", {{namespace}}::Authenticated, :subscribe_channel
       delete "/api/v1/auth/subscriptions/:ucid", {{namespace}}::Authenticated, :unsubscribe_channel
 

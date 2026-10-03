@@ -38,6 +38,24 @@ module Invidious::History
     query.empty? || !!title.try(&.downcase.includes?(query)) || !!channel_name.try(&.downcase.includes?(query))
   end
 
+  # Shared by the website and organized native API, before either paginates.
+  def organize(entries, watched : Array(String), query : String, today : String)
+    recency = watched.reverse.each_with_index.to_h
+    groups = %w(history_today history_yesterday history_last_7_days history_last_30_days history_older)
+    entries.select { |entry| matches?(entry.title, entry.channel_name, query) }.sort_by do |entry|
+      {groups.index(group(entry.latest_watched, today)).not_nil!,
+       entry.latest_watched.nil? ? 1 : 0,
+       -(entry.latest_watched || "0000-00-00").delete('-').to_i64,
+       recency[entry.video_id]? || Int32::MAX}
+    end
+  end
+
+  def page(entries, page : Int32, size : Int32)
+    offset = (page.clamp(1, Int32::MAX).to_i64 - 1) * size.clamp(0, Int32::MAX)
+    # Array#skip subtracts into Int32; bound the offset before calling it.
+    entries.skip(Math.min(offset, entries.size).to_i).first(size.clamp(0, Int32::MAX))
+  end
+
   def group(watched : String?, today : String) : String
     return "history_older" unless watched
     days = (Time.parse(today, "%F", Time::Location::UTC) - Time.parse(watched, "%F", Time::Location::UTC)).days.to_i

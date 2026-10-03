@@ -133,19 +133,9 @@ module Invidious::Routes::Feeds
     page = page.clamp(1, Int32::MAX)
     history_today = Invidious::History.today(user.preferences.timezone)
     history_query = (env.params.query["q"]? || "").strip
-    history_entries = IV::Database::WatchHistory.entries(user)
-    history_entries.select! { |entry| Invidious::History.matches?(entry.title, entry.channel_name, history_query) }
+    history_entries = Invidious::History.organize(IV::Database::WatchHistory.entries(user), user.watched, history_query, history_today)
     history_count = history_entries.size
-    recency = user.watched.reverse.each_with_index.to_h
-    groups = %w(history_today history_yesterday history_last_7_days history_last_30_days history_older)
-    history_entries.sort_by! do |entry|
-      # Future calendar dates (after changing timezone) belong in Older too.
-      {groups.index(Invidious::History.group(entry.latest_watched, history_today)).not_nil!,
-       entry.latest_watched.nil? ? 1 : 0,
-       -(entry.latest_watched || "0000-00-00").delete('-').to_i64,
-       recency[entry.video_id]? || Int32::MAX}
-    end
-    watched = history_entries.skip((page.to_i64 - 1) * max_results).first(max_results)
+    watched = Invidious::History.page(history_entries, page, max_results)
 
     # Used for pagination links
     history_params = URI::Params.new

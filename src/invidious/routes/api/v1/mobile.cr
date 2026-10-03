@@ -1,6 +1,6 @@
 module Invidious::Routes::API::V1::Mobile
   # No account export/import, token minting, or wildcard access to future APIs.
-  SCOPES = %w(GET:preferences PATCH:preferences GET:feed GET:subscriptions
+  SCOPES = %w(GET:preferences PATCH:preferences GET:feed GET:subscriptions GET:subscriptions/search
     GET:blocked_channels POST;DELETE:blocked_channels/*
     POST;DELETE:subscriptions/* GET:history POST;DELETE:history/* DELETE:history
     GET:playback GET;PUT;DELETE:playback/* DELETE:playback

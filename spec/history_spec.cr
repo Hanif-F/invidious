@@ -1,7 +1,27 @@
 require "spec"
 require "../src/invidious/history"
 
+record HistoryTestEntry, video_id : String, title : String?, channel_name : String?, latest_watched : String?
+
 describe Invidious::History do
+  it "organizes and searches the full history before pagination with stable recency ties" do
+    entries = [
+      HistoryTestEntry.new("older", "Café archive", "Studio", "2025-12-01"),
+      HistoryTestEntry.new("unknown", nil, nil, nil),
+      HistoryTestEntry.new("today1", "Other", "Studio", "2026-01-03"),
+      HistoryTestEntry.new("today2", "Needle", "Studio", "2026-01-03"),
+      HistoryTestEntry.new("future", "Future", "Studio", "2026-01-04"),
+    ]
+    watched = %w(today1 today2 older unknown future)
+    organized = Invidious::History.organize(entries, watched, "", "2026-01-03")
+    organized.map(&.video_id).should eq(%w(today2 today1 future older unknown))
+    Invidious::History.page(organized, 2, 2).map(&.video_id).should eq(%w(future older))
+    Invidious::History.page(organized, Int32::MAX, 1500).should be_empty
+    Invidious::History.page(organized, 1, 0).should be_empty
+    Invidious::History.organize(entries, watched, " NEEDLE ", "2026-01-03").map(&.video_id).should eq(["today2"])
+    Invidious::History.organize(entries, watched, "CAFÉ", "2026-01-03").map(&.video_id).should eq(["older"])
+    Invidious::History.organize(entries, watched, "studio", "2026-01-03").size.should eq(4)
+  end
   it "searches titles and channel names case-insensitively without requiring metadata" do
     Invidious::History.matches?("Light & Color", nil, " LIGHT ").should be_true
     Invidious::History.matches?(nil, "Studio North", "studio NORTH").should be_true

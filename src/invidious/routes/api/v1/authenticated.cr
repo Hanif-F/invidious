@@ -191,6 +191,17 @@ module Invidious::Routes::API::V1::Authenticated
     max_results ||= CONFIG.default_user_preferences.max_results
 
     start_index = (page.to_i64 - 1) * max_results
+    if env.params.query["details"]? == "true" && env.params.query["organized"]? == "true"
+      today = Invidious::History.today(user.preferences.timezone)
+      entries = Invidious::History.organize(Invidious::Database::WatchHistory.entries(user), user.watched, env.params.query["q"]? || "", today)
+      return {
+        entries:  Invidious::History.page(entries, page, max_results),
+        total:    entries.size,
+        hasMore:  max_results > 0 && start_index + max_results < entries.size,
+        today:    today,
+        timezone: Invidious::History.timezone(user.preferences.timezone) || "UTC",
+      }.to_json
+    end
     if start_index < user.watched.size
       watched = user.watched.reverse[start_index.to_i, max_results]
     end
@@ -364,6 +375,20 @@ module Invidious::Routes::API::V1::Authenticated
             json.field "authorId", subscription.id
           end
         end
+      end
+    end
+  end
+
+  def self.search_subscriptions(env)
+    env.response.content_type = "application/json"
+    user = env.get("user").as(User)
+    locale = env.get("preferences").as(Preferences).locale
+    page = (env.params.query["page"]?.try(&.to_i?) || 1).clamp(1, Int32::MAX)
+    # Dedicated scope: query operators cannot switch to public/channel search.
+    videos = Invidious::Search::Processors.subscriptions(env.params.query["q"]? || "", user, page)
+    JSON.build do |json|
+      json.array do
+        videos.each &.to_json(locale, json)
       end
     end
   end

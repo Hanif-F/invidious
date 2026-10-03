@@ -1,3 +1,5 @@
+require "./search_history_checks"
+
 def check_mobile_security
   CONFIG.login_enabled = true
   PG_DB.exec("DELETE FROM auth_rate_limits")
@@ -10,14 +12,16 @@ def check_mobile_security
   check(login.response.cookies.empty?, "Native sign-in issued a browser cookie")
   check(login.response.headers["Cache-Control"] == "private, no-store", "Native credentials may be cached")
   data = JSON.parse(login.get("test_result").as(String))
+  login_time = Time.utc.to_unix
   token = data["accessToken"].as_s
   check_mobile_dearrow(token, email, sid)
   check_mobile_sponsorblock(token, email, sid)
   check_mobile_preferences(token, email, sid)
   check_mobile_blocking(token, email, sid)
+  check_mobile_search_history(token, email)
   session = JSON.parse(token)["session"].as_s
   check(data["username"] == "MobileAlice", "Native sign-in returned internal account owner")
-  check((data["expiresAt"].as_i64 - Time.utc.to_unix - 30.days.total_seconds).abs < 3, "Native lifetime differs from 30 days")
+  check((data["expiresAt"].as_i64 - login_time - 30.days.total_seconds).abs < 3, "Native lifetime differs from 30 days")
   check(PG_DB.query_one("SELECT expires_at IS NOT NULL FROM session_ids WHERE id = $1", session, as: Bool), "Native database session has no expiry")
   check(security_request("GET", "/api/v1/auth/preferences", bearer: token).response.status_code == 200, "Native scopes reject preferences")
   check(security_request("GET", "/api/v1/auth/tokens", bearer: token).response.status_code == 403, "Native token gained token-manager access")
