@@ -45,16 +45,28 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
     begin
       data = Mobile.read_json(env)
-      raise "Invalid preferences" if data.empty? || data.keys.any? { |key| !{"watch_history", "save_player_pos", "dearrow_enabled", "dearrow_show_original"}.includes?(key) }
-      data.each_value(&.as_bool)
+      raise "Invalid preferences" if data.empty? || data.keys.any? { |key| !{"watch_history", "save_player_pos", "dearrow_enabled", "dearrow_show_original", "sponsorblock_enabled", "sponsorblock_modes", "sponsorblock_colors", "sponsorblock_channel_overrides"}.includes?(key) }
+      Invidious::SponsorBlock.validate_patch(data)
     rescue
-      return error_json(400, "Only boolean watch_history, save_player_pos, dearrow_enabled and dearrow_show_original settings are accepted.")
+      return error_json(400, "Invalid preference patch. SponsorBlock settings require the Mobivious SponsorBlock API update, valid categories, modes, colors and channel IDs.")
+    end
+    names = {} of String => String
+    # Channel extraction can involve upstream IO; do it before locking preferences.
+    begin
+      data["sponsorblock_channel_overrides"]?.try(&.as_h).try &.each do |id, entry|
+        next if entry.raw.nil?
+        fields = entry.as_h
+        next if fields["enabled"]?.try(&.raw).nil? && (fields["modes"]?.try(&.as_h).try(&.empty?) != false)
+        names[id] = user.preferences.sponsorblock_channel_overrides[id]?.try(&.name) || get_channel(id).author
+      end
+    rescue
+      return error_json(502, "Could not load this channel. Please try again.")
     end
     raw = ""
     PG_DB.transaction do |tx|
       conn = tx.connection
       stored = JSON.parse(conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", user.email, as: String)).as_h
-      data.each { |key, value| stored[key] = value }
+      Invidious::SponsorBlock.merge_patch(stored, data, names)
       raw = stored.to_json
       conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw, user.email)
       if data["save_player_pos"]?.try(&.as_bool) == false

@@ -10,6 +10,54 @@ private def sb_body
   ]}].to_json
 end
 
+describe "SponsorBlock native preference deltas" do
+  it "rejects invalid nested fields and accepts inheritance/reset" do
+    invalid = [
+      %({"sponsorblock_enabled":"true"}), %({"sponsorblock_modes":{"other":"auto"}}),
+      %({"sponsorblock_modes":{"intro":"inherit"}}), %({"sponsorblock_colors":{"sponsor":"red"}}),
+      %({"sponsorblock_channel_overrides":{"UCinvalid":null}}),
+      %({"sponsorblock_channel_overrides":{"UCaaaaaaaaaaaaaaaaaaaaaa":{"enabled":"false"}}}),
+      %({"sponsorblock_channel_overrides":{"UCaaaaaaaaaaaaaaaaaaaaaa":{"name":"Untrusted","enabled":true}}}),
+      %({"sponsorblock_channel_overrides":{"UCaaaaaaaaaaaaaaaaaaaaaa":{"modes":{"intro":null}}}}),
+    ]
+    invalid.each do |body|
+      expect_raises(Exception) { Invidious::SponsorBlock.validate_patch(JSON.parse(body).as_h) }
+    end
+    Invidious::SponsorBlock.validate_patch(JSON.parse(%({"sponsorblock_channel_overrides":{"UCaaaaaaaaaaaaaaaaaaaaaa":{"enabled":null,"modes":{"intro":"auto"}},"UCbbbbbbbbbbbbbbbbbbbbbb":null}})).as_h)
+  end
+
+  it "merges category deltas and preserves other channels and unknown preferences" do
+    a = "UC" + "a" * 22
+    b = "UC" + "b" * 22
+    stored = JSON.parse({theme: "diary", future: {keep: true}, sponsorblock_modes: {sponsor: "manual", intro: "marker"}, sponsorblock_channel_overrides: {
+      a => {name: "Existing", enabled: false, modes: {sponsor: "manual"}}, b => {name: "Other", enabled: true, modes: {} of String => String},
+    }}.to_json).as_h
+    data = JSON.parse({sponsorblock_modes: {sponsor: "auto"}, sponsorblock_colors: {intro: "#123ABC"}, sponsorblock_channel_overrides: {a => {enabled: nil, modes: {intro: "marker"}}}}.to_json).as_h
+    Invidious::SponsorBlock.validate_patch(data)
+    Invidious::SponsorBlock.merge_patch(stored, data, {} of String => String)
+    stored["theme"].as_s.should eq("diary")
+    stored["future"]["keep"].as_bool.should be_true
+    stored["sponsorblock_modes"]["intro"].as_s.should eq("marker")
+    stored["sponsorblock_modes"]["sponsor"].as_s.should eq("auto")
+    stored["sponsorblock_channel_overrides"][a]["name"].as_s.should eq("Existing")
+    stored["sponsorblock_channel_overrides"][a]["enabled"].raw.should be_nil
+    stored["sponsorblock_channel_overrides"][a]["modes"].as_h.has_key?("sponsor").should be_false
+    stored["sponsorblock_channel_overrides"][b]["enabled"].as_bool.should be_true
+    Invidious::SponsorBlock.merge_patch(stored, JSON.parse({sponsorblock_channel_overrides: {a => nil}}.to_json).as_h, {} of String => String)
+    stored["sponsorblock_channel_overrides"].as_h.has_key?(a).should be_false
+    stored["sponsorblock_channel_overrides"].as_h.has_key?(b).should be_true
+  end
+
+  it "uses server-resolved names and deletes all-inherited overrides" do
+    id = "UC" + "a" * 22
+    stored = JSON.parse("{}").as_h
+    Invidious::SponsorBlock.merge_patch(stored, JSON.parse({sponsorblock_channel_overrides: {id => {enabled: false, modes: {} of String => String}}}.to_json).as_h, {id => "Resolved channel"})
+    stored["sponsorblock_channel_overrides"][id]["name"].as_s.should eq("Resolved channel")
+    Invidious::SponsorBlock.merge_patch(stored, JSON.parse({sponsorblock_channel_overrides: {id => {enabled: nil, modes: {} of String => String}}}.to_json).as_h, {} of String => String)
+    stored["sponsorblock_channel_overrides"].as_h.should be_empty
+  end
+end
+
 describe Invidious::SponsorBlock do
   it "filters malformed, unsupported and unrelated segments" do
     segments = Invidious::SponsorBlock.parse(sb_body, "abcdefghijk")

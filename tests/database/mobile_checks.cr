@@ -12,6 +12,7 @@ def check_mobile_security
   data = JSON.parse(login.get("test_result").as(String))
   token = data["accessToken"].as_s
   check_mobile_dearrow(token, email, sid)
+  check_mobile_sponsorblock(token, email, sid)
   session = JSON.parse(token)["session"].as_s
   check(data["username"] == "MobileAlice", "Native sign-in returned internal account owner")
   check((data["expiresAt"].as_i64 - Time.utc.to_unix - 30.days.total_seconds).abs < 3, "Native lifetime differs from 30 days")
@@ -83,6 +84,54 @@ def check_mobile_security
     end
   end
   puts "Native sign-in, least privilege, expiry, revocation, settings preservation and history API passed"
+end
+
+def check_mobile_sponsorblock(token, email, sid)
+  path = "/api/v1/auth/preferences"
+  id = "UC" + "a" * 22
+  other = "UC" + "b" * 22
+  stored = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+  stored["future_sponsorblock_test"] = JSON.parse(%({"keep":true}))
+  stored["sponsorblock_channel_overrides"] = JSON.parse({id => {name: "Studio", enabled: false, modes: {intro: "manual"}}, other => {name: "Other", enabled: true, modes: {} of String => String}}.to_json)
+  PG_DB.exec("UPDATE users SET preferences = $1 WHERE email = $2", stored.to_json, email)
+  patch = {sponsorblock_enabled: true, sponsorblock_modes: {sponsor: "auto"}, sponsorblock_colors: {sponsor: "#123456"},
+           sponsorblock_channel_overrides: {id => {enabled: nil, modes: {intro: "marker"}}}}.to_json
+  result = security_request("PATCH", path, bearer: token, body: patch)
+  check(result.response.status_code == 200, "SponsorBlock patch failed")
+  raw = JSON.parse(Invidious::Database::Users.preference_json(email))
+  prefs = Preferences.from_json(raw.to_json)
+  check(prefs.sponsorblock_enabled && prefs.sponsorblock_modes["sponsor"] == "auto" && prefs.sponsorblock_colors["sponsor"] == "#123456", "Global SponsorBlock values differ")
+  check(prefs.sponsorblock_channel_overrides[id].name == "Studio" && prefs.sponsorblock_channel_overrides[id].enabled.nil? && prefs.sponsorblock_channel_overrides[id].modes == {"intro" => "marker"}, "Channel replacement/inheritance failed")
+  check(raw["future_sponsorblock_test"]["keep"].as_bool && raw["dearrow_enabled"] == stored["dearrow_enabled"] && raw["theme"] == stored["theme"], "SponsorBlock destroyed unrelated preferences")
+  check(prefs.sponsorblock_channel_overrides.has_key?(other), "SponsorBlock lost other channels")
+  before = raw.to_json
+  { %({"sponsorblock_modes":{"intro":"wrong"}}), %({"sponsorblock_colors":{"intro":"red"}}), %({"sponsorblock_enabled":"true"}), %({"sponsorblock_channel_overrides":{"UCbad":null}}), "x" * 16_385 }.each do |invalid|
+    check(security_request("PATCH", path, bearer: token, body: invalid).response.status_code == 400, "Invalid SponsorBlock update accepted")
+    check(Invidious::Database::Users.preference_json(email) == before, "Rejected SponsorBlock patch changed settings")
+  end
+  check(security_request("PATCH", path, body: patch).response.status_code == 403, "Guest SponsorBlock account write accepted")
+  check(security_request("PATCH", path, sid, body: patch).response.status_code == 403, "Cookie SponsorBlock write bypassed CSRF")
+  # A pre-existing token with the original preference scopes remains sufficient.
+  old_token = generate_token(email, ["GET:preferences", "PATCH:preferences"], nil, HMAC_KEY, sid)
+  check(security_request("PATCH", path, bearer: old_token, body: %({"sponsorblock_modes":{"intro":"auto"}})).response.status_code == 200, "SponsorBlock required new token permissions")
+  csrf = JSON.parse(security_request("GET", "/api/v1/auth/csrf", sid).get("test_result").as(String))["csrfToken"].as_s
+  check(security_request("PATCH", path, sid, body: %({"sponsorblock_colors":{"intro":"#abcdef"}}), csrf: csrf).response.status_code == 200, "Valid cookie SponsorBlock write failed")
+  signals = Channel(Int32).new(2)
+  spawn { signals.send(security_request("PATCH", path, bearer: token, body: %({"sponsorblock_modes":{"outro":"marker"}})).response.status_code) }
+  spawn { signals.send(security_request("PATCH", path, bearer: token, body: %({"sponsorblock_colors":{"outro":"#654321"}})).response.status_code) }
+  2.times { check(signals.receive == 200, "Concurrent SponsorBlock patch failed") }
+  raw = JSON.parse(Invidious::Database::Users.preference_json(email))
+  check(raw["sponsorblock_modes"]["outro"].as_s == "marker" && raw["sponsorblock_colors"]["outro"].as_s == "#654321", "Concurrent SponsorBlock delta lost")
+  missing = "UC" + "c" * 22
+  before = raw.to_json
+  check(security_request("PATCH", path, bearer: token, body: {sponsorblock_enabled: false, sponsorblock_channel_overrides: {missing => {enabled: true}}}.to_json).response.status_code == 502, "Channel lookup failure not reported")
+  check(Invidious::Database::Users.preference_json(email) == before, "Failed channel lookup partly applied")
+  check(security_request("PATCH", path, bearer: token, body: {sponsorblock_channel_overrides: {id => nil}}.to_json).response.status_code == 200, "Channel reset failed")
+  prefs = Preferences.from_json(Invidious::Database::Users.preference_json(email))
+  check(!prefs.sponsorblock_channel_overrides.has_key?(id) && prefs.sponsorblock_channel_overrides.has_key?(other), "Channel reset changed other channels")
+  read = security_request("GET", path, bearer: token)
+  check(Preferences.from_json(read.get("test_result").as(String)).sponsorblock_modes == prefs.sponsorblock_modes, "Web/native SponsorBlock preferences differ")
+  puts "Native SponsorBlock preferences, inheritance, isolation, scopes, CSRF and concurrent deltas passed"
 end
 
 def check_mobile_dearrow(token, email, sid)

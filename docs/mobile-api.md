@@ -29,11 +29,53 @@ Invidious's existing auth middleware returns 403 for expired/revoked bearer toke
 
 ## Safe preference updates
 
-`PATCH /api/v1/auth/preferences` accepts only boolean `watch_history` and
-`save_player_pos`, `dearrow_enabled` and `dearrow_show_original` fields. At least one is required. Clients send only changed fields. It locks the account, merges the
+`PATCH /api/v1/auth/preferences` accepts boolean `watch_history`,
+`save_player_pos`, `dearrow_enabled`, `dearrow_show_original` and `sponsorblock_enabled`,
+plus the SponsorBlock maps described below. At least one field is required.
+Clients send only changed fields. It locks the account, merges the
 stored JSON (including unknown keys), and returns the merged object. Disabling
 saved positions clears them in the same transaction. The existing POST endpoint
 continues replacing the full preferences object and is unsuitable for native clients.
+
+## Native SponsorBlock settings
+
+Public segment reads use the existing `GET /api/v1/sponsorblock/:id` route, returning
+`{segments: [{id, category, start, end}]}` with times in seconds. The server proxies
+and caches SponsorBlock's skip segments; clients send no bearer token or cookies
+to this route and never contact SponsorBlock directly. The eight supported categories
+are `sponsor`, `selfpromo`, `interaction`, `intro`, `outro`, `preview`,
+`music_offtopic` and `filler`. Submission/voting is outside this fork's capability.
+
+Authenticated preference reads include `sponsorblock_enabled`, `sponsorblock_modes`,
+`sponsorblock_colors` and `sponsorblock_channel_overrides`. The existing native
+`GET:preferences` / `PATCH:preferences` scopes suffice; no token renewal or migration
+is needed for SponsorBlock.
+
+The preference PATCH endpoint accepts:
+
+- `sponsorblock_enabled`: a JSON boolean.
+- `sponsorblock_modes`: changed category keys with `auto`, `manual`, `marker` or
+  `disabled` values; merge with stored modes.
+- `sponsorblock_colors`: changed category keys with six-digit `#RRGGBB` colors;
+  merge with stored colors. Colors remain global.
+- `sponsorblock_channel_overrides`: changed canonical `UC` channel IDs, each mapped
+  to `{enabled: boolean | null, modes: {category: mode}}` or `null` to remove it.
+  Each supplied entry replaces only that channel's override; other channels survive.
+  Nullable/omitted enablement and omitted category modes inherit global settings.
+  An all-inherited entry is removed. Names are retained or resolved server-side;
+  clients cannot submit names or arbitrary channel URLs to the PATCH endpoint.
+
+For example, `{"sponsorblock_modes":{"sponsor":"auto"}}` changes only the Sponsor
+category. Invalid categories, modes, colors, IDs, nested fields or types return 400
+without applying any changes. The existing 16 KiB JSON limit still applies.
+Channel lookup failures return 502 before account locking or writes. Account-row
+locking preserves concurrent deltas and unknown preference fields. Bearer writes
+remain scope-checked; cookie writes still require a session-bound CSRF token.
+
+The web defaults remain opt-in with manual category modes. Android guests keep
+global settings per instance locally; per-channel overrides require an account.
+Active livestreams are excluded by the player. An older boolean-only preference
+PATCH implementation must be updated before saving shared SponsorBlock settings.
 
 ## Native DeArrow contributions
 

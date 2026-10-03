@@ -264,4 +264,62 @@ module Invidious::SponsorBlock
     return {enabled, modes} unless override
     {override.enabled.nil? ? enabled : override.enabled.not_nil!, modes.merge(override.modes)}
   end
+
+  # Native clients send category deltas and replace only explicitly named channels.
+  # Validate before acquiring the account lock; no malformed patch may partly apply.
+  def self.validate_patch(data : Hash(String, JSON::Any))
+    data.each do |key, value|
+      case key
+      when "sponsorblock_modes", "sponsorblock_colors"
+        value.as_h.each do |category, setting|
+          raise "Invalid SponsorBlock category" unless CATEGORIES.has_key?(category)
+          text = setting.as_s
+          valid = key == "sponsorblock_modes" ? {"auto", "manual", "marker", "disabled"}.includes?(text) : text.matches?(/\A#[0-9a-fA-F]{6}\z/)
+          raise "Invalid SponsorBlock setting" unless valid
+        end
+      when "sponsorblock_channel_overrides"
+        value.as_h.each do |id, entry|
+          raise "Invalid channel ID" unless id.matches?(/\AUC[A-Za-z0-9_-]{22}\z/)
+          next if entry.raw.nil?
+          fields = entry.as_h
+          raise "Invalid channel fields" if fields.keys.any? { |field| !{"enabled", "modes"}.includes?(field) }
+          fields["enabled"]?.try { |enabled| enabled.as_bool unless enabled.raw.nil? }
+          fields["modes"]?.try do |modes|
+            modes.as_h.each do |category, mode|
+              raise "Invalid channel mode" unless CATEGORIES.has_key?(category) && {"auto", "manual", "marker", "disabled"}.includes?(mode.as_s)
+            end
+          end
+        end
+      else
+        value.as_bool
+      end
+    end
+  end
+
+  def self.merge_patch(stored : Hash(String, JSON::Any), data : Hash(String, JSON::Any), names : Hash(String, String))
+    data.each do |key, value|
+      case key
+      when "sponsorblock_modes", "sponsorblock_colors"
+        merged = stored[key]?.try(&.as_h?) || {} of String => JSON::Any
+        value.as_h.each { |category, setting| merged[category] = setting }
+        stored[key] = JSON::Any.new(merged)
+      when "sponsorblock_channel_overrides"
+        merged = stored[key]?.try(&.as_h?) || {} of String => JSON::Any
+        value.as_h.each do |id, entry|
+          fields = entry.as_h?
+          enabled = fields.try(&.["enabled"]?) || JSON::Any.new(nil)
+          modes = fields.try(&.["modes"]?).try(&.as_h?) || {} of String => JSON::Any
+          if fields.nil? || (enabled.raw.nil? && modes.empty?)
+            merged.delete(id)
+          else
+            name = merged[id]?.try(&.as_h?).try(&.["name"]?).try(&.as_s?) || names[id]? || id
+            merged[id] = JSON.parse({name: name, enabled: enabled, modes: modes}.to_json)
+          end
+        end
+        stored[key] = JSON::Any.new(merged)
+      else
+        stored[key] = value
+      end
+    end
+  end
 end
