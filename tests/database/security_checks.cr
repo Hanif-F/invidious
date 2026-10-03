@@ -51,6 +51,15 @@ class SecurityTestEndpoint
                Invidious::Routes::API::V1::DeArrow.submit(env, DEARROW_TEST_CLIENT)
              when "/api/v1/auth/history"
                Invidious::Routes::API::V1::Authenticated.get_history(env)
+             when "/api/v1/auth/blocked_channels"
+               Invidious::Routes::API::V1::BlockedChannels.index(env)
+             when .starts_with?("/api/v1/auth/blocked_channels/")
+               env.params.url["ucid"] = env.request.path.split('/').last
+               if env.request.method == "POST"
+                 Invidious::Routes::API::V1::BlockedChannels.block(env)
+               else
+                 Invidious::Routes::API::V1::BlockedChannels.unblock(env)
+               end
              when "/preferences"
                Invidious::Routes::PreferencesRoute.update(env)
              when "/data_control"

@@ -34,6 +34,7 @@ struct ChannelVideo
       end
 
       json.field "lengthSeconds", self.length_seconds
+      json.field "isMember", self.members_only
 
       json.field "author", self.author
       json.field "authorId", self.ucid

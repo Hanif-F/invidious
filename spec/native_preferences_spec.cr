@@ -8,7 +8,7 @@ describe Invidious::NativePreferences do
       "dark_mode":"dark","ui_density":"compact","thin_mode":true,"default_home":"Trending",
       "feed_menu":["Trending","Popular","Subscriptions","Playlists"],"region":"ID",
       "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube","reddit"],
-      "related_videos":false,"extend_desc":true,"max_results":60,"sort":"channel name",
+      "related_videos":false,"extend_desc":true,"show_member_videos":true,"max_results":60,"sort":"channel name",
       "latest_only":true,"unseen_only":true,"notifications_only":true,"default_playlist":null,
       "sponsorblock_modes":{"intro":"auto"}
     })).as_h)
@@ -16,7 +16,7 @@ describe Invidious::NativePreferences do
   end
 
   it "rejects unknown fields, wrong types and oversized/out-of-range settings" do
-    invalid = ["{}", %({"theme":"diary"}), %({"autoplay":"false"}), %({"speed":0}), %({"speed":2.5}),
+    invalid = ["{}", %({"show_member_videos":"false"}), %({"show_member_videos":null}), %({"theme":"diary"}), %({"autoplay":"false"}), %({"speed":0}), %({"speed":2.5}),
                %({"speed":"1"}), %({"quality_dash":"fake"}), %({"dark_mode":true}), %({"ui_density":"wide"}),
                %({"default_home":"History"}), %({"feed_menu":["Popular","bad"]}), %({"feed_menu":["","","","",""]}),
                %({"region":"id"}), %({"captions":["<script>"]}), %({"captions":["","","",""]}),

@@ -31,7 +31,7 @@ No browser cookie is issued. Responses use `Cache-Control: private, no-store`.
 Tokens expire after 30 days in the signature and database, are revoked by existing
 credential changes, and can revoke themselves at `POST /api/v1/auth/tokens/unregister`
 with `{}`. Permissions cover viewing and managing preferences, subscriptions,
-history, playback positions, playlists and DeArrow contributions/identity import; no token minting or account export/import.
+history, playback positions, playlists, channel blocking and DeArrow contributions/identity import; no token minting or account export/import.
 
 The endpoint uses the existing password verifier, account-row transaction lock,
 HMAC signer and shared IP/username throttle. Legacy usernames/passwords remain
@@ -47,7 +47,8 @@ At least one field is required. Supported fields are:
 
 - Booleans: `watch_history`, `save_player_pos`, `dearrow_enabled`,
   `dearrow_show_original`, `autoplay`, `listen`, `local`, `thin_mode`,
-  `related_videos`, `extend_desc`, `latest_only`, `unseen_only`, `notifications_only`.
+  `related_videos`, `extend_desc`, `latest_only`, `unseen_only`, `notifications_only`,
+  `show_member_videos`.
 - `speed`: finite JSON number from 0.25 to 2.0; `quality_dash`: the existing web
   DASH quality values (`auto`, `best`, resolution values from `144p` through `4320p`,
   or `worst`). Android applies resolution choices as ceilings.
@@ -72,6 +73,50 @@ Clients send only changed fields. It locks the account, merges the
 stored JSON (including unknown keys), and returns the merged object. Disabling
 saved positions clears them in the same transaction. The existing POST endpoint
 continues replacing the full preferences object and is unsuitable for native clients.
+
+## Native content visibility and channel blocking
+
+Public search/channel/feed/video serializers add boolean `isMember`, using the
+fork’s existing members-only detection. Video details and recommendations include
+this field; playlist items retain their existing `isMember`. Missing metadata is
+unknown and remains visible in Android. Premium status and video titles are not
+membership indicators. No membership credentials or access are granted.
+
+`show_member_videos` is an account preference, default false, accepted as a boolean
+by the existing sparse preference PATCH. Existing preference scopes suffice. Guests
+save the setting locally per instance. Android filters discovery, search, channel
+uploads/streams, subscriptions, playlists and recommendations, while retaining
+history entries and direct video access. Search has a separate device-local nullable
+members override and blocked-channel inclusion flag, scoped to instance and account
+or guest; neither is written to account preferences. Clearing the member override
+uses the current browsing default. Public API reads remain unpersonalized; Android
+filters original responses without changing pagination or playlist occurrence IDs.
+Search sorting sends `sort=relevance` or `sort=views`, the values this fork supports.
+
+The account block-list API uses the existing website table:
+
+- `GET /api/v1/auth/blocked_channels` returns `[{authorId: string, author: string}]`,
+  sorted by name and channel ID.
+- `POST /api/v1/auth/blocked_channels/:ucid` accepts JSON `{name?: string}` and
+  returns 204. The name is trimmed, bounded to 200 characters, and defaults to the
+  channel ID. Repeated blocks retain the existing entry and name.
+- `DELETE /api/v1/auth/blocked_channels/:ucid` returns 204, including for an already
+  unblocked channel. Both writes require a canonical `UC` ID plus 22 ID characters.
+
+Unknown POST fields, invalid name types or IDs, and oversized JSON are rejected
+with 400 before writes. Existing authenticated middleware enforces token scopes,
+CSRF for cookie writes, identity ownership and private/no-store responses. Native
+login grants `GET:blocked_channels` and `POST;DELETE:blocked_channels/*`; it grants
+no wider permissions. Deploy the updated server and renew existing native tokens
+by signing out and in. Missing API routes or token scopes produce an update message
+without clearing the session or pretending the action succeeded.
+
+Android refreshes blocks at sign-in, foreground return and manager opening, keeps
+confirmed snapshots per account/instance for offline use, and rejects delayed
+responses after context changes. Block/unblock updates filtering immediately;
+failed writes retain confirmed state. Only discovery, search and recommendations
+are filtered by channel blocking. Subscriptions, playlists, history, direct links,
+channel pages and current playback remain accessible. No new migration is needed.
 
 ## Native SponsorBlock settings
 

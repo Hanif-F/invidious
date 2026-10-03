@@ -126,6 +126,7 @@ struct SearchVideo
       json.field "lengthSeconds", self.length_seconds
       json.field "liveNow", self.badges.live_now?
       json.field "premium", self.badges.premium?
+      json.field "isMember", self.members_only
       json.field "isUpcoming", self.upcoming?
 
       if self.premiere_timestamp

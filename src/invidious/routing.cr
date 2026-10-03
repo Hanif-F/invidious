@@ -315,6 +315,9 @@ module Invidious::Routing
       post "/api/v1/mobile/login", {{namespace}}::Mobile, :login
 
       # Authenticated
+      get "/api/v1/auth/blocked_channels", {{namespace}}::BlockedChannels, :index
+      post "/api/v1/auth/blocked_channels/:ucid", {{namespace}}::BlockedChannels, :block
+      delete "/api/v1/auth/blocked_channels/:ucid", {{namespace}}::BlockedChannels, :unblock
 
       get "/api/v1/auth/dearrow/identity", {{namespace}}::DeArrow, :identity
       put "/api/v1/auth/dearrow/identity", {{namespace}}::DeArrow, :import_identity

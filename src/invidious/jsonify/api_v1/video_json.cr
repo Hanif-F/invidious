@@ -32,6 +32,7 @@ module Invidious::JSONify::APIv1
 
       json.field "paid", video.paid
       json.field "premium", video.premium
+      json.field "isMember", video.members_only
       json.field "isFamilyFriendly", video.is_family_friendly
       json.field "allowedRegions", video.allowed_regions
       json.field "genre", video.genre
@@ -252,6 +253,7 @@ module Invidious::JSONify::APIv1
                 json.field "author", rv["author"]
                 json.field "authorUrl", "/channel/#{rv["ucid"]?}"
                 json.field "authorId", rv["ucid"]?
+                json.field "isMember", rv["members_only"]? == "true"
                 json.field "authorVerified", rv["author_verified"] == "true"
                 if rv["author_thumbnail"]?
                   json.field "authorThumbnails" do

@@ -14,6 +14,7 @@ def check_mobile_security
   check_mobile_dearrow(token, email, sid)
   check_mobile_sponsorblock(token, email, sid)
   check_mobile_preferences(token, email, sid)
+  check_mobile_blocking(token, email, sid)
   session = JSON.parse(token)["session"].as_s
   check(data["username"] == "MobileAlice", "Native sign-in returned internal account owner")
   check((data["expiresAt"].as_i64 - Time.utc.to_unix - 30.days.total_seconds).abs < 3, "Native lifetime differs from 30 days")
@@ -96,7 +97,7 @@ def check_mobile_preferences(token, email, sid)
     "dark_mode":"dark","ui_density":"compact","thin_mode":true,"default_home":"Trending",
     "feed_menu":["Trending","Popular","Subscriptions","Playlists"],"region":"ID",
     "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube","reddit"],
-    "related_videos":false,"extend_desc":true,"max_results":60,"sort":"channel name",
+    "related_videos":false,"extend_desc":true,"show_member_videos":true,"max_results":60,"sort":"channel name",
     "latest_only":true,"unseen_only":true,"notifications_only":true,"default_playlist":null})
   patch = security_request("PATCH", path, bearer: token, body: body)
   check(patch.response.status_code == 200, "Native core preference patch failed")
@@ -215,4 +216,66 @@ def check_mobile_dearrow(token, email, sid)
   check(!JSON.parse(security_request("GET", identity_path, bearer: token).get("test_result").as(String))["ready"].as_bool, "Missing key reported ready")
   CONFIG.dearrow_identity_key = saved_key
   puts "Native DeArrow authentication, shared identity, validation, voting and settings passed"
+end
+
+def check_mobile_blocking(token, email, sid)
+  path = "/api/v1/auth/blocked_channels"
+  first = "UC" + "a" * 22
+  second = "UC" + "b" * 22
+  before = Invidious::Database::Users.preference_json(email)
+  reader = generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
+  check(security_request("GET", path, bearer: reader).response.status_code == 403, "Old scope gained blocking access")
+  check(security_request("GET", path).response.status_code == 403, "Guest block list readable")
+  check(security_request("POST", "#{path}/#{first}", bearer: reader, body: "{}").response.status_code == 403, "Old token can block channels")
+  check(security_request("POST", "#{path}/#{first}", sid: sid, body: "{}").response.status_code == 403, "Block write bypassed browser CSRF")
+  check(security_request("DELETE", "#{path}/#{first}", sid: sid).response.status_code == 403, "Unblock write bypassed browser CSRF")
+  2.times do
+    check(security_request("POST", "#{path}/#{first}", bearer: token, body: %({"name":" Zeta "})).response.status_code == 204, "Native block failed")
+  end
+  check(Database::BlockedChannels.list(email) == [{first, "Zeta"}], "Block was not idempotent or name was not trimmed")
+  check(security_request("POST", "#{path}/#{second}", bearer: token, body: %({"name":"Alpha"})).response.status_code == 204, "Second native block failed")
+  read = security_request("GET", path, bearer: token)
+  check(read.response.headers["Cache-Control"] == "private, no-store", "Block list may be cached publicly")
+  channels = JSON.parse(read.get("test_result").as(String)).as_a
+  check(channels.map(&.["authorId"].as_s) == [second, first], "Native manager order differs from website")
+  other_sid = Database::Accounts.register("BlockedOther", "a separate blocking password", Preferences.from_json("{}"))
+  check(JSON.parse(security_request("GET", path, sid: other_sid).get("test_result").as(String)).as_a.empty?, "Block list leaked across accounts")
+  csrf = JSON.parse(security_request("GET", "/api/v1/auth/csrf", sid).get("test_result").as(String))["csrfToken"].as_s
+  check(security_request("DELETE", "#{path}/#{first}", sid: sid, csrf: csrf).response.status_code == 204, "Valid cookie unblock failed")
+  # The website and native API share one table and ordinary website mutations.
+  web = context("POST", "/blocked_channels?redirect=false", {"ucid" => first, "action" => "block", "name" => "Web channel", "csrf_token" => generate_response(sid, {":blocked_channels"}, HMAC_KEY)}, "SID=#{sid}")
+  web.set "user", Database::Users.select!(email: email)
+  web.set "sid", sid
+  Invidious::Routes::BlockedChannels.update(web)
+  check(web.response.status_code == 200 && Database::BlockedChannels.ids(email).includes?(first), "Website did not share native block state")
+  check(JSON.parse(security_request("GET", path, bearer: token).get("test_result").as(String)).as_a.size == 2, "Native API did not see web block")
+  [%({"name":false}), %({"name":null}), %({"name":2}), %({"unexpected":true}), "x" * 16_385].each do |invalid|
+    check(security_request("POST", "#{path}/#{first}", bearer: token, body: invalid).response.status_code == 400, "Invalid block payload accepted")
+  end
+  {"bad", "UCshort", first + "x"}.each do |invalid|
+    check(security_request("POST", "#{path}/#{invalid}", bearer: token, body: "{}").response.status_code == 400, "Invalid channel ID accepted")
+    check(security_request("DELETE", "#{path}/#{invalid}", bearer: token).response.status_code == 400, "Invalid unblock ID accepted")
+  end
+  {first, second}.each do |id|
+    2.times { check(security_request("DELETE", "#{path}/#{id}", bearer: token).response.status_code == 204, "Unblock was not idempotent") }
+  end
+  check(Database::BlockedChannels.ids(email).empty?, "Unblock failed to update shared table")
+  check(security_request("POST", "#{path}/#{first}", bearer: token, body: {name: "x" * 300}.to_json).response.status_code == 204, "Long name not bounded")
+  check(Database::BlockedChannels.list(email).first[1].size == 200, "Block name exceeds website limit")
+  check(security_request("DELETE", "#{path}/#{first}", bearer: token).response.status_code == 204, "Name test cleanup failed")
+  check(Invidious::Database::Users.preference_json(email) == before, "Blocking modified unrelated preferences")
+  raw = JSON.parse(File.read("mocks/video/regular_mrbeast.player.json")).as_h
+  raw.merge!(JSON.parse(File.read("mocks/video/regular_mrbeast.next.json")).as_h)
+  info = Invidious::Videos::Parser.parse_video_info("2isYuQZMbdU", raw)
+  info["membersOnly"] = JSON::Any.new(true)
+  info["storyboards"] = JSON.parse("{}")
+  info["relatedVideos"].as_a.first.as_h["members_only"] = JSON::Any.new("true")
+  video = Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
+  serialized = JSON.parse(video.to_json("en-US", nil))
+  check(serialized["isMember"].as_bool && serialized["recommendedVideos"].as_a.first["isMember"].as_bool, "Video/recommendation membership missing")
+  channel_video = ChannelVideo.new({id: "2isYuQZMbdU", title: "Member", author: "Author", ucid: first, published: Time.utc, updated: Time.utc, members_only: true, length_seconds: 10, live_now: false, premiere_timestamp: nil, views: 0_i64})
+  check(JSON.parse(channel_video.to_json("en-US"))["isMember"].as_bool, "Feed membership missing")
+  search_video = SearchVideo.new({title: "Member", id: "2isYuQZMbdU", author: "Author", ucid: first, published: Time.utc, views: 0_i64, description_html: "", length_seconds: 10, premiere_timestamp: nil, author_verified: false, author_thumbnail: nil, badges: VideoBadges::MembersOnly})
+  check(JSON.parse(search_video.to_json("en-US", nil))["isMember"].as_bool, "Search/channel membership missing")
+  puts "Native blocking, shared web state, scopes, CSRF, isolation and membership serialization passed"
 end
