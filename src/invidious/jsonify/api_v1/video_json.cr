@@ -1,4 +1,5 @@
 require "json"
+require "../../videos/audio_metadata"
 
 module Invidious::JSONify::APIv1
   extend self
@@ -150,6 +151,9 @@ module Invidious::JSONify::APIv1
               json.field "audioQuality", fmt["audioQuality"] if fmt.has_key?("audioQuality")
               json.field "audioSampleRate", fmt["audioSampleRate"].as_s.to_i if fmt.has_key?("audioSampleRate")
               json.field "audioChannels", fmt["audioChannels"] if fmt.has_key?("audioChannels")
+              if fmt["mimeType"]?.try(&.as_s?).try(&.starts_with?("audio/"))
+                Invidious::Videos::AudioMetadata.write(json, fmt)
+              end
 
               # Extra misc stuff
               json.field "colorInfo", fmt["colorInfo"] if fmt.has_key?("colorInfo")

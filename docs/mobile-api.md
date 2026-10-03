@@ -4,6 +4,19 @@ These additions keep YouTube extraction, stream resolution, channel/search reque
 and captions in Invidious and Companion. They introduce no database migrations.
 Existing accounts and existing web APIs keep their behavior.
 
+## Stream representation metadata
+
+`GET /api/v1/videos/:id` adds optional public audio metadata to `adaptiveFormats`:
+`audioTrack` contains available `id`, `displayName`, and boolean `audioIsDefault`
+values; `isDrc` identifies stable-volume streams using the same flag/name/URL
+detection as DASH manifest generation. Original false values are preserved.
+The existing itag, type, bitrate, size, FPS and content-length fields remain intact.
+Android matches metadata against supported manifest tracks; audio itags alone are
+not unique across languages and processed variants. Old clients can ignore these
+fields, and the new client falls back to manifest labels/roles on older servers.
+Deploy this source update for reliable native audio enrichment. No migration,
+new secret, authentication scope or sign-in renewal is required.
+
 ## Native sign-in
 
 `POST /api/v1/mobile/login`, `Content-Type: application/json`:
