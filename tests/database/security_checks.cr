@@ -1,5 +1,19 @@
 # Loaded by accounts.cr after migration, against its guarded disposable database.
 # Exercise production authentication, before filters, and route implementations.
+DEARROW_TEST_WRITES = [] of String
+DEARROW_TEST_CLIENT = Invidious::DeArrow::Contributions.new(->(method : String, path : String, body : String?) {
+  if method == "POST"
+    DEARROW_TEST_WRITES << body.not_nil!
+    HTTP::Client::Response.new(200)
+  else
+    HTTP::Client::Response.new(200, body: {"abcdefghijk" => {titles: [
+      {title: "Original title", original: true, votes: 1, locked: false, UUID: "original"},
+      {title: "Exact >proposal", original: false, votes: -2, locked: false, UUID: "proposal"},
+      {title: "Locked proposal", original: false, votes: 3, locked: true, UUID: "locked"},
+    ]}}.to_json)
+  end
+})
+
 class SecurityTestEndpoint
   include HTTP::Handler
 
@@ -23,6 +37,18 @@ class SecurityTestEndpoint
                end
              when "/api/v1/mobile/login"
                Invidious::Routes::API::V1::Mobile.login(env)
+             when "/api/v1/auth/dearrow/identity"
+               if env.request.method == "PUT"
+                 Invidious::Routes::API::V1::DeArrow.import_identity(env)
+               else
+                 Invidious::Routes::API::V1::DeArrow.identity(env)
+               end
+             when "/api/v1/auth/dearrow/abcdefghijk/submissions"
+               env.params.url["id"] = "abcdefghijk"
+               Invidious::Routes::API::V1::DeArrow.submissions(env, DEARROW_TEST_CLIENT)
+             when "/api/v1/auth/dearrow/abcdefghijk"
+               env.params.url["id"] = "abcdefghijk"
+               Invidious::Routes::API::V1::DeArrow.submit(env, DEARROW_TEST_CLIENT)
              when "/api/v1/auth/history"
                Invidious::Routes::API::V1::Authenticated.get_history(env)
              when "/preferences"

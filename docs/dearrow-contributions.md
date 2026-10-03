@@ -21,6 +21,14 @@ An account receives a random private DeArrow ID on its first contribution. Prefe
 - Session-authenticated, CSRF-protected `POST /dearrow_submit` accepts URL-encoded `video_id`, `action` (`submit`, `upvote`, `downvote`), and `csrf_token`. A new title includes `title` (1–110 characters) and `confirmed=true`; votes identify an upstream `uuid` or `original=true`. The server resolves titles and identities, and returns `{ok:true}` or `{error:...}` with an appropriate status.
 - `POST /dearrow_identity` accepts a private ID and CSRF token through a dedicated Preferences form; successful saves redirect back to Preferences. The API never returns the ID.
 
+Mobivious uses the bearer-authenticated `/api/v1/auth/dearrow` endpoints documented
+in [the native API contract](mobile-api.md#native-dearrow-contributions). The web
+forms and native API share validation, upstream title resolution and encrypted
+identity storage. Native identity status reports only storage readiness and whether
+an identity exists. Private IDs are submitted only in a dedicated import request,
+never in ordinary preferences or title reads. Existing native tokens need a new
+sign-in to obtain the DeArrow permissions; browser form behavior is unchanged.
+
 All upstream requests go to the fixed SponsorBlock host. Reads use a four-character video hash prefix and `fetchAll=true`. Contributions send only title data, use `Invidious/<version>` as the client identifier and disable VIP auto-lock. The UI disables downvotes for locked submissions and for an original title without an upstream record. Upstream moderation remains authoritative. A success means the upstream accepted the request, not that a title will immediately replace the original. Votes cast elsewhere are not presented as locally known vote state.
 
 Failures preserve a title draft. Write requests are never automatically retried because a timeout can follow an accepted submission. The local winning-title cache is invalidated after a successful contribution, but upstream rankings can take time to refresh. No private submitter IDs are requested in read responses.

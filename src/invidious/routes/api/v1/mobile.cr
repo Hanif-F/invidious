@@ -4,7 +4,7 @@ module Invidious::Routes::API::V1::Mobile
     POST;DELETE:subscriptions/* GET:history POST;DELETE:history/* DELETE:history
     GET:playback GET;PUT;DELETE:playback/* DELETE:playback
     GET;POST:playlists GET;PATCH;DELETE:playlists/* POST:playlists/*
-    POST:tokens/unregister)
+    POST:tokens/unregister GET;POST:dearrow/* PUT:dearrow/identity)
 
   def self.read_json(env) : Hash(String, JSON::Any)
     body = env.request.body

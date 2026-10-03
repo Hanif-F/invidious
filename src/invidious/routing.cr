@@ -316,6 +316,11 @@ module Invidious::Routing
 
       # Authenticated
 
+      get "/api/v1/auth/dearrow/identity", {{namespace}}::DeArrow, :identity
+      put "/api/v1/auth/dearrow/identity", {{namespace}}::DeArrow, :import_identity
+      get "/api/v1/auth/dearrow/:id/submissions", {{namespace}}::DeArrow, :submissions
+      post "/api/v1/auth/dearrow/:id", {{namespace}}::DeArrow, :submit
+
       get "/api/v1/auth/clips", {{namespace}}::Clips, :index
       post "/api/v1/auth/clips", {{namespace}}::Clips, :create
       delete "/api/v1/auth/clips/:id", {{namespace}}::Clips, :delete

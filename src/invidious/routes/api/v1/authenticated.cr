@@ -45,10 +45,10 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
     begin
       data = Mobile.read_json(env)
-      raise "Invalid preferences" if data.empty? || data.keys.any? { |key| !{"watch_history", "save_player_pos"}.includes?(key) }
+      raise "Invalid preferences" if data.empty? || data.keys.any? { |key| !{"watch_history", "save_player_pos", "dearrow_enabled", "dearrow_show_original"}.includes?(key) }
       data.each_value(&.as_bool)
     rescue
-      return error_json(400, "Only boolean watch_history and save_player_pos settings are accepted.")
+      return error_json(400, "Only boolean watch_history, save_player_pos, dearrow_enabled and dearrow_show_original settings are accepted.")
     end
     raw = ""
     PG_DB.transaction do |tx|
