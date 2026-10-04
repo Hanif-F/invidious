@@ -40,14 +40,16 @@ module Invidious::Frontend::ChannelAvatars
     {"/search", "/playlist", "/mix"}.includes?(env.request.path)
   end
 
-  def render(env, id : String, size : Int32 = 36) : String
+  def render(env, id : String, size : Int32 = 36, name : String? = nil) : String
     return "" unless show?(env, id)
     url = env.get?("channel_avatars").try &.as(Hash(String, String))[id]?
     url = Invidious::ChannelAvatars.proxy_url(url)
+    initial = Invidious::ChannelAvatars.placeholder_initial(name)
+    color = Invidious::ChannelAvatars.placeholder_color(initial)
 
     String.build do |html|
-      html << %(<span class="channel-avatar channel-avatar-#{size}" aria-hidden="true">)
-      html << %(<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3z"/></svg>)
+      html << %(<span class="channel-avatar channel-avatar-#{size} channel-avatar-color-#{color}" aria-hidden="true">)
+      html << %(<span class="channel-avatar-initial" dir="auto">#{HTML.escape(initial)}</span>)
       if url
         html << %(<img loading="lazy" decoding="async" width="#{size}" height="#{size}" src="#{HTML.escape(url)}" alt="">)
       end

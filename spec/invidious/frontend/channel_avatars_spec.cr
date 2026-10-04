@@ -2,6 +2,39 @@ require "spectator"
 require "../../../src/invidious/helpers/channel_avatars"
 
 Spectator.describe Invidious::ChannelAvatars do
+  it "uses uppercase Unicode initials without splitting character clusters" do
+    {
+      "zip Tie Tuning" => "Z",
+      " \t\nZip Tie"   => "Z",
+      "\u2003éclair"   => "É",
+      "e\u0301clair"   => "É",
+      "журнал"         => "Ж",
+      "عالم"           => "ع",
+      "שירים"          => "ש",
+      "山田"             => "山",
+      "किरण"           => "कि",
+      "ßeta"           => "ß",
+      "ﬃ studio"       => "ﬃ",
+    }.each do |name, initial|
+      expect(described_class.placeholder_initial(name)).to eq(initial)
+    end
+  end
+
+  it "uses a hash for missing names and nonletter prefixes without scanning ahead" do
+    {nil, "", " \t\n", "123 live", "😊 creator", "👩‍💻 creator", ".Zip Tie", "#channel", "<script>Zip"}.each do |name|
+      expect(described_class.placeholder_initial(name)).to eq("#")
+    end
+  end
+
+  it "gives equivalent initials the same stable palette color" do
+    expect(described_class.placeholder_color(described_class.placeholder_initial("zip Tie"))).to eq(0)
+    expect(described_class.placeholder_color(described_class.placeholder_initial("Zebra"))).to eq(0)
+    expect(described_class.placeholder_color(described_class.placeholder_initial("éclair"))).to eq(3)
+    expect(described_class.placeholder_color(described_class.placeholder_initial("e\u0301cole"))).to eq(3)
+    expect(described_class.placeholder_color("#")).to eq(5)
+    expect(described_class.placeholder_color("")).to eq(5)
+  end
+
   it "normalizes supported avatars to the same proxy image across layouts" do
     {"https://yt3.ggpht.com/avatar=s48-c-k", "//yt3.googleusercontent.com/avatar=s176-c-k", "/ggpht/avatar=s88-c-k"}.each do |url|
       expect(described_class.proxy_url(url)).to eq("/ggpht/avatar=s88-c-k")

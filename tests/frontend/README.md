@@ -33,6 +33,11 @@ cache (migration 21 for existing installations). Cache misses use an inline plac
 there are no extra channel lookups, background fetches, or age-triggered refreshes.
 Avatars are learned during normal browsing and fetched video/channel metadata requests.
 Thin mode omits them, and a channel's own video listings do not repeat its avatar.
+Placeholders use the first Unicode letter cluster in the channel name, uppercased
+when it remains one cluster, or `#` for missing names and nonletter prefixes.
+Six fixed colors are selected deterministically from the initial. Inline text
+works without JavaScript and remains underneath real avatars for image failures;
+it requires no additional database queries, image assets, or requests.
 
 The avatar fixtures verify cache precedence and failure isolation, including the
 existing video fetch's request count. Browser checks cover both themes, mobile,

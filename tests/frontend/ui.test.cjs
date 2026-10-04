@@ -4178,7 +4178,7 @@ async function assertAvatarCardLayout(page) {
         const link = avatar.closest('a');
         return {
             details: rect(el), title: rect(el.querySelector('[data-dearrow-row]')),
-            avatar: rect(avatar), name: rect(link.querySelector('[dir=auto]')),
+            avatar: rect(avatar), name: rect(link.querySelector(':scope > [dir=auto]')),
             metadata: rect(el.lastElementChild),
             menu: el.querySelector('.video-context summary') ? rect(el.querySelector('.video-context summary')) : null,
             rtl: getComputedStyle(link).direction === 'rtl',
@@ -4219,6 +4219,11 @@ for (const engine of engines) {
                 assert.match(await images.nth(1).getAttribute('src'), /\/ggpht\/cached=s88/);
                 assert.equal(await images.nth(0).getAttribute('alt'), '');
                 assert.equal(await images.nth(0).getAttribute('loading'), 'lazy');
+                assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), ['A', 'C', 'U', 'C']);
+                assert.equal(await images.nth(0).evaluate(img => {
+                    const rect = img.getBoundingClientRect();
+                    return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === img;
+                }), true, 'real avatar covers the initial');
                 const geometry = await page.locator('.channel-avatar').first().evaluate(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height, radius: getComputedStyle(el).borderRadius }));
                 assert.deepEqual(geometry, { width: 36, height: 36, radius: '50%' });
                 await assertAvatarCardLayout(page);
@@ -4253,6 +4258,8 @@ for (const engine of engines) {
                 const size = kind === 'manager' ? 40 : kind === 'history' ? 36 : 24;
                 assert.ok(await page.locator(`.channel-avatar-${size}`).count() > 0);
                 assert.equal(await page.locator('.channel-avatar').first().evaluate(el => el.getBoundingClientRect().width), size);
+                assert.equal(await page.locator('.channel-avatar-initial').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize)), size / 2);
+                assert.equal(await page.locator('.channel-avatar-initial').first().textContent(), kind === 'manager' ? 'A' : kind === 'history' ? 'S' : 'A');
                 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
                 if (kind === 'manager') {
                     assert.equal(await page.locator('form[action^="/subscription_ajax"]').count(), 3);
@@ -4293,16 +4300,65 @@ for (const engine of engines) {
         }
     });
 
+    test(`${engine}: channel avatar initials preserve Unicode, stable colors and readable contrast`, async () => {
+        const expected = ['Z', 'Z', 'É', 'É', 'Ж', 'ع', '山', 'कि', 'ß', '#', '#', '#', '#', 'B', 'C', 'D', 'E', 'F', 'A'];
+        const luminance = color => {
+            const channels = color.match(/[\d.]+/g).slice(0, 3).map(value => {
+                const channel = Number(value) / 255;
+                return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
+            });
+            return channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+        };
+        const colors = [];
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const mode of ['dark', 'light']) {
+                const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatar-initials-${theme}-${mode}`, width: 390, javascript: false});
+                assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), expected);
+                assert.equal(await page.locator('.channel-avatar img').count(), 0);
+                await assertAvatarCardLayout(page);
+                const styles = await page.locator('.channel-avatar-initial').evaluateAll(elements => elements.map(el => {
+                    const initial = getComputedStyle(el), avatar = getComputedStyle(el.parentElement);
+                    return {text: initial.color, background: avatar.backgroundColor, font: initial.fontFamily, centered: initial.placeItems, direction: el.dir};
+                }));
+                assert.equal(styles[0].background, styles[1].background, 'uppercase and lowercase share a color');
+                assert.equal(styles[2].background, styles[3].background, 'equivalent accents share a color');
+                assert.equal(new Set(styles.map(style => style.background)).size, 6);
+                for (const style of styles) {
+                    const foreground = luminance(style.text), background = luminance(style.background);
+                    assert.ok((Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05) >= 4.5, 'readable initial contrast');
+                    assert.match(style.font, /system-ui/);
+                    assert.equal(style.centered, 'center');
+                    assert.equal(style.direction, 'auto');
+                }
+                const backgrounds = styles.map(style => style.background);
+                if (colors.length) assert.deepEqual(backgrounds, colors, 'colors stable across themes and modes');
+                else colors.push(...backgrounds);
+                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+                assert.ok(!requests.some(url => url.startsWith('/ggpht') || /\/api\/v1\/(channels|videos)/.test(url)));
+                if (mode === 'light') {
+                    await page.setViewportSize({width: 1440, height: 1000});
+                    await assertAvatarCardLayout(page);
+                    await page.screenshot({path: path.join(artifacts, `${engine}-avatar-initials-${theme}.png`), fullPage: true});
+                }
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+    });
+
     test(`${engine}: failed avatar images keep placeholders and never retry metadata`, async () => {
-        const {page, context, requests, errors} = await pageFor(engine, {fixture: 'avatars-modern-neon', width: 1440, brokenAvatars: true});
-        await page.waitForFunction(() => Array.from(document.querySelectorAll('.channel-avatar img')).every(img => img.hidden));
-        assert.equal(await page.locator('.channel-avatar svg:visible').count(), 4);
-        await assertAvatarCardLayout(page);
-        const before = requests.length;
-        await page.waitForTimeout(100);
-        assert.equal(requests.length, before);
-        assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
-        assert.deepEqual(errors, []);
-        await context.close();
+        for (const theme of ['modern-neon', 'diary']) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-${theme}`, width: 1440, brokenAvatars: true});
+            await page.waitForFunction(() => Array.from(document.querySelectorAll('.channel-avatar img')).every(img => img.hidden));
+            assert.equal(await page.locator('.channel-avatar-initial:visible').count(), 4);
+            assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), ['A', 'C', 'U', 'C']);
+            await assertAvatarCardLayout(page);
+            const before = requests.length;
+            await page.waitForTimeout(100);
+            assert.equal(requests.length, before);
+            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
     });
 }

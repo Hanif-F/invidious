@@ -1,7 +1,25 @@
 require "uri"
+require "string/grapheme"
 
 module Invidious::ChannelAvatars
   extend self
+
+  def placeholder_initial(name : String?) : String
+    return "#" if name.nil?
+
+    name.lstrip.each_grapheme do |glyph|
+      initial = glyph.to_s.unicode_normalize
+      return "#" unless initial.each_char.first.letter?
+
+      uppercase = initial.upcase
+      return uppercase.grapheme_size == 1 ? uppercase : initial
+    end
+    "#"
+  end
+
+  def placeholder_color(initial : String) : Int32
+    (initial.each_char.first?.try(&.ord) || '#'.ord) % 6
+  end
 
   # Extract only data already in a listing; this helper has no storage or network effects.
   def from_items(items) : Hash(String, String)

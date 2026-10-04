@@ -25,7 +25,9 @@ def check_channel_avatars
   raise "Cached avatar missing" unless frontend.render(env, "UCcached").includes?("/ggpht/cached=s88")
   raise "Response avatar missing" unless frontend.render(env, "UCdirect").includes?("/ggpht/direct=s88")
   raise "Uncached channel requested an image" if frontend.render(env, "UCmissing").includes?("<img")
-  raise "Uncached placeholder missing" unless frontend.render(env, "UCmissing").includes?("<svg")
+  raise "Uncached placeholder missing" unless frontend.render(env, "UCmissing", name: "Zip Tie Tuning").includes?(%(class="channel-avatar-initial" dir="auto">Z</span>))
+  raise "Missing name placeholder missing" unless frontend.render(env, "UCmissing").includes?(%(dir="auto">#</span>))
+  raise "Placeholder expanded into markup" if frontend.render(env, "UCmissing", name: "<script>Zip").includes?("<script>")
   raise "Direct avatar not persisted" unless cache.select(["UCdirect"])["UCdirect"] == "/ggpht/direct=s88"
   cache.observe({"UCdirect" => "https://yt3.ggpht.com/older=s48"}, Time.utc - 2.days)
   raise "Older metadata replaced the URL" unless cache.select(["UCdirect"])["UCdirect"] == "/ggpht/direct=s88"
@@ -70,6 +72,18 @@ def avatar_cards_fixture(theme = "modern-neon", path = "/feed/popular", thin = f
   render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
 end
 
+def avatar_initials_fixture(theme = "modern-neon", mode = "dark")
+  env = fixture_env("/feed/popular", mode, visual_theme: theme)
+  locale = env.get("preferences").as(Preferences).locale
+  names = ["Zip Tie Tuning", "zebra", "éclair", "e\u0301cole", "журнал", "عالم", "山田", "किरण", "ßeta", "123 live", "😊 creator", ".Zip", "", "Blue", "Cyan", "Dawn", "Emerald", "Forest", "Amber"]
+  items = names.map_with_index do |name, index|
+    ChannelVideo.new({title: "A channel without a cached avatar", id: "initial#{index}", author: name, ucid: "UCinitial#{index}", published: Time.utc, updated: Time.utc, views: 100_i64, length_seconds: 1000, live_now: false, premiere_timestamp: nil, members_only: false})
+  end
+  navbar_search = true
+  page_nav_html = ""
+  render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
+end
+
 def avatar_manager_fixture(theme = "modern-neon", thin = false)
   env = signed_in_env("/subscription_manager")
   preferences = env.get("preferences").as(Preferences)
@@ -94,6 +108,9 @@ Invidious::Database::ChannelAvatars.observe({"UCcached" => "https://yt3.ggpht.co
   File.write("#{avatar_output}/avatars-playlist-#{theme}.html", avatar_cards_fixture(theme, "/playlist"))
   File.write("#{avatar_output}/avatars-manager-#{theme}.html", avatar_manager_fixture(theme))
   File.write("#{avatar_output}/avatars-history-#{theme}.html", history_fixture(theme))
+  {"dark", "light"}.each do |mode|
+    File.write("#{avatar_output}/avatar-initials-#{theme}-#{mode}.html", avatar_initials_fixture(theme, mode))
+  end
 end
 File.write("#{avatar_output}/avatars-channel.html", avatar_cards_fixture(path: "/channel/UCdirect"))
 File.write("#{avatar_output}/avatars-thin.html", avatar_cards_fixture(thin: true))

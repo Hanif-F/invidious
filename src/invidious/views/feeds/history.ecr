@@ -83,7 +83,7 @@
                 <p data-dearrow-row><a href="/watch?v=<%= HTML.escape(item) %>" dir="auto" data-dearrow-id="<%= HTML.escape(item) %>"><%= HTML.escape(entry.title || "#{I18n.translate(locale, "ui_open_video")} (#{item})") %></a></p>
                 <p>
                     <% if channel_id = entry.channel_id %>
-                    <a class="channel-name-link" href="/channel/<%= URI.encode_www_form(channel_id) %>"><% if history_avatar %><%= Invidious::Frontend::ChannelAvatars.render(env, history_channel_id) %><% end %><span dir="auto"><%= HTML.escape(entry.channel_name || channel_id) %></span></a>
+                    <a class="channel-name-link" href="/channel/<%= URI.encode_www_form(channel_id) %>"><% if history_avatar %><%= Invidious::Frontend::ChannelAvatars.render(env, history_channel_id, name: entry.channel_name) %><% end %><span dir="auto"><%= HTML.escape(entry.channel_name || channel_id) %></span></a>
                     <% else %>
                     <span dir="auto"><%= HTML.escape(entry.channel_name || I18n.translate(locale, "history_channel_unknown")) %></span>
                     <% end %>
