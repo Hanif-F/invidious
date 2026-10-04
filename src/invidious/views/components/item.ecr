@@ -180,10 +180,7 @@
 
             <% card_avatar = Invidious::Frontend::ChannelAvatars.show?(env, item.ucid.to_s) %>
             <% compact_avatar = Invidious::Frontend::ChannelAvatars.compact?(env) %>
-            <div class="video-card-details<%= " has-channel-avatar" if card_avatar && !compact_avatar %>">
-            <% if card_avatar && !compact_avatar %>
-                <a class="channel-avatar-link" href="/channel/<%= HTML.escape(item.ucid.to_s) %>" tabindex="-1" aria-hidden="true"><%= Invidious::Frontend::ChannelAvatars.render(env, item.ucid.to_s) %></a>
-            <% end %>
+            <div class="video-card-details">
 
             <div class="video-card-row" data-dearrow-row>
                 <a href="<%= link_url %>"><p dir="auto" data-dearrow-id="<%= HTML.escape(item.id) %>"><%= HTML.escape(item.title) %></p></a>
@@ -193,7 +190,7 @@
                 <div class="flex-left">
                     <% if !item.ucid.to_s.empty? %>
                         <a class="channel-name-link" href="/channel/<%= item.ucid %>">
-                            <% if card_avatar && compact_avatar %><%= Invidious::Frontend::ChannelAvatars.render(env, item.ucid.to_s, 24) %><% end %>
+                            <% if card_avatar %><%= Invidious::Frontend::ChannelAvatars.render(env, item.ucid.to_s, compact_avatar ? 24 : 36) %><% end %>
                             <p class="channel-name" dir="auto"><%= HTML.escape(item.is_a?(InvidiousPlaylist) ? item.display_author : item.author) %>
                                 <%- if author_verified %>&nbsp;<i class="icon ion ion-md-checkmark-circle"></i><% end -%>
                             </p>

@@ -4162,8 +4162,52 @@ for (const engine of engines) {
     });
 }
 
+async function assertAvatarCardLayout(page) {
+    // Firefox does not settle fonts.ready with page JavaScript disabled.
+    // Poll from the test runner so the same geometry checks cover that mode.
+    for (let attempt = 0; attempt < 50 && await page.evaluate(() => document.fonts.status) !== 'loaded'; attempt++) {
+        await page.waitForTimeout(100);
+    }
+    assert.equal(await page.evaluate(() => document.fonts.status), 'loaded');
+    const cards = await page.locator('.media-card .video-card-details:has(.channel-avatar)').evaluateAll(elements => elements.map(el => {
+        const rect = node => {
+            const {x, y, width, height, right, bottom} = node.getBoundingClientRect();
+            return {x, y, width, height, right, bottom};
+        };
+        const avatar = el.querySelector('.channel-avatar');
+        const link = avatar.closest('a');
+        return {
+            details: rect(el), title: rect(el.querySelector('[data-dearrow-row]')),
+            avatar: rect(avatar), name: rect(link.querySelector('[dir=auto]')),
+            metadata: rect(el.lastElementChild),
+            menu: el.querySelector('.video-context summary') ? rect(el.querySelector('.video-context summary')) : null,
+            rtl: getComputedStyle(link).direction === 'rtl',
+            channelLinks: el.querySelectorAll('a[href^="/channel/"]').length,
+            avatarInNameLink: link.classList.contains('channel-name-link'),
+            channelFocusable: link.tabIndex === 0 && link.getAttribute('aria-hidden') !== 'true',
+            decorative: avatar.getAttribute('aria-hidden') === 'true'
+        };
+    }));
+    assert.ok(cards.length > 0);
+    for (const card of cards) {
+        assert.ok(card.avatarInNameLink && card.channelFocusable && card.decorative);
+        assert.equal(card.channelLinks, 1, 'one channel link per card');
+        assert.ok(card.title.bottom <= card.avatar.y + 1, 'title above avatar and creator');
+        assert.ok(Math.abs(card.title.width - card.details.width) <= 4, 'title uses full details width');
+        assert.ok(Math.abs(card.metadata.width - card.details.width) <= 4, 'metadata has no avatar indentation');
+        assert.ok(Math.abs(card.avatar.y + card.avatar.height / 2 - card.name.y - card.name.height / 2) <= 1, 'avatar centered beside creator');
+        if (card.rtl) {
+            assert.ok(card.name.right <= card.avatar.x, 'avatar precedes creator in RTL');
+            if (card.menu) assert.ok(card.menu.right <= card.name.x, 'creator does not overlap menu in RTL');
+        } else {
+            assert.ok(card.avatar.right <= card.name.x, 'avatar precedes creator');
+            if (card.menu) assert.ok(card.name.right <= card.menu.x, 'creator does not overlap menu');
+        }
+    }
+}
+
 for (const engine of engines) {
-    test(`${engine}: channel avatars use response URLs, cache URLs and local placeholders`, async () => {
+    test(`${engine}: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles`, async () => {
         for (const theme of ['modern-neon', 'diary']) {
             for (const width of [320, 390, 768, 1440]) {
                 const { page, context, requests, errors } = await pageFor(engine, { fixture: `avatars-${theme}`, width });
@@ -4177,14 +4221,25 @@ for (const engine of engines) {
                 assert.equal(await images.nth(0).getAttribute('loading'), 'lazy');
                 const geometry = await page.locator('.channel-avatar').first().evaluate(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height, radius: getComputedStyle(el).borderRadius }));
                 assert.deepEqual(geometry, { width: 36, height: 36, radius: '50%' });
-                assert.equal(await page.locator('.channel-avatar-link').first().getAttribute('tabindex'), '-1');
-                assert.equal(await page.locator('.channel-avatar-link').first().getAttribute('aria-hidden'), 'true');
+                await assertAvatarCardLayout(page);
+                const firstCard = page.locator('.media-card').first();
+                assert.ok(await firstCard.locator('[data-dearrow-id]').evaluate(el => el.getBoundingClientRect().height > parseFloat(getComputedStyle(el).lineHeight)), 'long title wraps');
+                assert.ok(await firstCard.locator('.channel-name').evaluate(el => el.getBoundingClientRect().height > parseFloat(getComputedStyle(el).lineHeight)), 'long creator name wraps');
                 assert.match(await page.locator('.channel-name').first().textContent(), /<script> & details/);
                 assert.equal(await page.locator('.media-card script').count(), 0);
                 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
                 assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
                 if (width === 390) await page.screenshot({path: path.join(artifacts, `${engine}-avatars-${theme}-mobile.png`), fullPage: true});
                 if (width === 1440) await page.screenshot({path: path.join(artifacts, `${engine}-avatars-${theme}-desktop.png`), fullPage: true});
+                await firstCard.locator('[data-dearrow-row] > a').focus();
+                await page.keyboard.press('Tab');
+                assert.equal(await firstCard.locator('.channel-name-link').evaluate(el => el === document.activeElement), true);
+                await page.keyboard.press('Tab');
+                const summary = firstCard.locator('.video-context summary');
+                assert.equal(await summary.evaluate(el => el === document.activeElement), true);
+                await page.keyboard.press('Enter');
+                await firstCard.locator('.video-context-actions').waitFor({state: 'visible'});
+                await page.keyboard.press('Enter');
                 assert.deepEqual(errors, []);
                 await context.close();
             }
@@ -4203,6 +4258,14 @@ for (const engine of engines) {
                     assert.equal(await page.locator('form[action^="/subscription_ajax"]').count(), 3);
                     assert.equal(await page.locator('.deleted .channel-avatar img').count(), 0);
                     assert.match(await page.locator('.channel-name-link').first().textContent(), /<script> & details/);
+                } else {
+                    await assertAvatarCardLayout(page);
+                    const summary = page.locator('.media-card .video-context summary').first();
+                    if (await summary.count()) {
+                        await summary.focus();
+                        await page.keyboard.press('Enter');
+                        assert.equal(await summary.evaluate(el => el.parentElement.open), true);
+                    }
                 }
                 assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
                 assert.deepEqual(errors, []);
@@ -4222,9 +4285,7 @@ for (const engine of engines) {
                 assert.equal(await page.locator('.channel-avatar').count(), 3);
             } else {
                 assert.equal(await page.locator('html').getAttribute('dir'), 'rtl');
-                const avatar = await page.locator('.channel-avatar').first().boundingBox();
-                const title = await page.locator('[data-dearrow-id]').first().boundingBox();
-                assert.ok(avatar.x > title.x);
+                await assertAvatarCardLayout(page);
             }
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
             assert.deepEqual(errors, []);
@@ -4236,6 +4297,7 @@ for (const engine of engines) {
         const {page, context, requests, errors} = await pageFor(engine, {fixture: 'avatars-modern-neon', width: 1440, brokenAvatars: true});
         await page.waitForFunction(() => Array.from(document.querySelectorAll('.channel-avatar img')).every(img => img.hidden));
         assert.equal(await page.locator('.channel-avatar svg:visible').count(), 4);
+        await assertAvatarCardLayout(page);
         const before = requests.length;
         await page.waitForTimeout(100);
         assert.equal(requests.length, before);

@@ -60,7 +60,7 @@ end
 def avatar_cards_fixture(theme = "modern-neon", path = "/feed/popular", thin = false, locale = "en-US", compact = false)
   env = fixture_env(path, "dark", thin, compact ? "compact" : "balanced", locale, theme)
   items = [
-    SearchVideo.new({title: "An avatar already in this response", id: "avatar00001", author: "A creator with a long name <script> & details", ucid: "UCdirect", published: Time.utc - 2.days, views: 100_i64, description_html: "", length_seconds: 1000, premiere_timestamp: nil, author_verified: true, author_thumbnail: "https://yt3.ggpht.com/direct=s48", badges: VideoBadges::None}),
+    SearchVideo.new({title: "An avatar already in this response beside a long creator name", id: "avatar00001", author: "A creator with a long name <script> & details", ucid: "UCdirect", published: Time.utc - 2.days, views: 100_i64, description_html: "", length_seconds: 1000, premiere_timestamp: nil, author_verified: true, author_thumbnail: "https://yt3.ggpht.com/direct=s48", badges: VideoBadges::None}),
     ChannelVideo.new({title: "A subscription with a cached avatar", id: "avatar00002", author: "Cached creator", ucid: "UCcached", published: Time.utc, updated: Time.utc, views: 100_i64, length_seconds: 1000, live_now: false, premiere_timestamp: nil, members_only: false}),
     PlaylistVideo.new({title: "An unknown creator uses a placeholder", id: "avatar00003", author: "Unknown creator", ucid: "UCmissing", published: Time.utc, length_seconds: 1000, plid: "PLfixture", index: 2_i64, live_now: false, members_only: false}),
     MixVideo.new({title: "Cached creator in a mix", id: "avatar00004", author: "Cached creator", ucid: "UCcached", length_seconds: 1000, rdid: "RDfixture", index: 3, members_only: false}),

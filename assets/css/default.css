@@ -452,9 +452,6 @@ input[type="search"]::-webkit-search-cancel-button {
 .channel-name-link { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .channel-name-link > p, .channel-name-link > span:not(.channel-avatar) { min-width: 0; overflow-wrap: anywhere; }
 .video-card-details { min-width: 0; }
-.video-card-details.has-channel-avatar { display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 10px; }
-.video-card-details.has-channel-avatar > .channel-avatar-link { grid-column: 1; grid-row: 1 / span 5; align-self: start; margin-block-start: 10px; }
-.video-card-details.has-channel-avatar > :not(.channel-avatar-link) { grid-column: 2; }
 .video-card-details > p { margin-block: 8px; }
 body .media-card .video-card-details .video-card-row.channel-attribution { display: flex; flex-wrap: nowrap; }
 .channel-attribution > .flex-left { flex: 1; min-width: 0; }

@@ -79,16 +79,13 @@
                 </div>
                 <% history_channel_id = entry.channel_id || "" %>
                 <% history_avatar = Invidious::Frontend::ChannelAvatars.show?(env, history_channel_id) %>
-                <div class="video-card-details<%= " has-channel-avatar" if history_avatar %>">
-                <% if history_avatar %>
-                <a class="channel-avatar-link" href="/channel/<%= URI.encode_www_form(history_channel_id) %>" tabindex="-1" aria-hidden="true"><%= Invidious::Frontend::ChannelAvatars.render(env, history_channel_id) %></a>
-                <% end %>
+                <div class="video-card-details">
                 <p data-dearrow-row><a href="/watch?v=<%= HTML.escape(item) %>" dir="auto" data-dearrow-id="<%= HTML.escape(item) %>"><%= HTML.escape(entry.title || "#{I18n.translate(locale, "ui_open_video")} (#{item})") %></a></p>
-                <p dir="auto">
+                <p>
                     <% if channel_id = entry.channel_id %>
-                    <a href="/channel/<%= URI.encode_www_form(channel_id) %>"><%= HTML.escape(entry.channel_name || channel_id) %></a>
+                    <a class="channel-name-link" href="/channel/<%= URI.encode_www_form(channel_id) %>"><% if history_avatar %><%= Invidious::Frontend::ChannelAvatars.render(env, history_channel_id) %><% end %><span dir="auto"><%= HTML.escape(entry.channel_name || channel_id) %></span></a>
                     <% else %>
-                    <%= HTML.escape(entry.channel_name || I18n.translate(locale, "history_channel_unknown")) %>
+                    <span dir="auto"><%= HTML.escape(entry.channel_name || I18n.translate(locale, "history_channel_unknown")) %></span>
                     <% end %>
                 </p>
                 <p><%= I18n.translate(locale, "history_released") %>: <%= HTML.escape(entry.release_date || I18n.translate(locale, "history_date_unknown")) %></p>
