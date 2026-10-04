@@ -57,6 +57,22 @@ class SecurityTestEndpoint
                else
                  Invidious::Routes::API::V1::Authenticated.get_preferences(env)
                end
+             when "/api/v1/mobile/registration"
+               Invidious::Routes::API::V1::Mobile.registration(env)
+             when "/api/v1/mobile/register"
+               Invidious::Routes::API::V1::Mobile.register(env)
+             when "/api/v1/auth/account/username"
+               Invidious::Routes::API::V1::Account.username(env)
+             when "/api/v1/auth/account/password"
+               Invidious::Routes::API::V1::Account.password(env)
+             when "/api/v1/auth/account/delete"
+               Invidious::Routes::API::V1::Account.delete(env)
+             when "/api/v1/auth/account/sessions"
+               Invidious::Routes::API::V1::Account.sessions(env)
+             when "/api/v1/auth/account/sessions/revoke"
+               Invidious::Routes::API::V1::Account.revoke(env)
+             when "/api/v1/auth/account/tokens"
+               Invidious::Routes::API::V1::Account.token(env)
              when "/api/v1/mobile/login"
                Invidious::Routes::API::V1::Mobile.login(env)
              when "/api/v1/auth/dearrow/identity"

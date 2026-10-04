@@ -31,7 +31,7 @@ No browser cookie is issued. Responses use `Cache-Control: private, no-store`.
 Tokens expire after 30 days in the signature and database, are revoked by existing
 credential changes, and can revoke themselves at `POST /api/v1/auth/tokens/unregister`
 with `{}`. Permissions cover viewing and managing preferences, subscriptions,
-history, playback positions, playlists, channel blocking and DeArrow contributions/identity import; no token minting or account export/import.
+history, playback positions, playlists, channel blocking and DeArrow contributions/identity import, plus the dedicated account-management scopes below. Mobile sessions do not receive generic token-listing/minting or account export/import permissions.
 
 The endpoint uses the existing password verifier, account-row transaction lock,
 HMAC signer and shared IP/username throttle. Legacy usernames/passwords remain
@@ -39,6 +39,106 @@ usable. Login must be enabled. Invalid credentials return a generic 401, malform
 or oversized requests 400, disabled login 403, and throttling 429 with `Retry-After`.
 JSON is limited to 16 KiB; passwords are never placed in URLs or server logs.
 Invidious's existing auth middleware returns 403 for expired/revoked bearer tokens.
+
+## Native registration and account management
+
+Public `GET /api/v1/mobile/registration` returns:
+
+```json
+{"loginEnabled":true,"registrationEnabled":true,"captcha":{"image":"data:image/png;base64,...","token":"<single-use challenge>"}}
+```
+
+`captcha` is null when not required or registration is disabled. Availability
+respects both login and registration switches. Anonymous CAPTCHA issuance is
+limited to 60 challenges per IP per hour, in addition to the existing signup
+throttle. Image rendering uses the same clock challenge and `rsvg-convert` runtime
+as web signup. Challenges are bound to `POST:api/v1/mobile/register`, expire,
+and consume the existing database nonce once. Web signup challenges cannot be
+used for native registration, or conversely.
+
+`POST /api/v1/mobile/register` accepts JSON:
+
+```json
+{"username":"new-name","password":"a long uncommon password","passwordConfirmation":"a long uncommon password","captchaAnswer":"1:05:10","captchaToken":"<challenge>"}
+```
+
+CAPTCHA fields are required only when CAPTCHA is enabled. Username and password
+validation use the website's rules and password verifier. Success returns the
+same `accessToken`, `username`, `expiresAt` contract as mobile login, without a
+browser cookie. Account insertion, subscription materialized-view creation and
+mobile-session issuance share one transaction. Duplicate usernames return 409;
+invalid credentials/confirmation or incorrect, expired or replayed CAPTCHA return
+400; disabled login/signup returns 403; throttling returns 429.
+
+All account interfaces below require an authenticated bearer token or the existing
+cookie/CSRF contract. JSON bodies are bounded at 16 KiB. Responses are private and
+no-store; password-confirmed writes reuse the shared authentication throttle.
+Native sessions now include these explicit scopes:
+
+```text
+POST:account/username
+POST:account/password
+POST:account/delete
+GET:account/sessions
+POST:account/sessions/revoke
+POST:account/tokens
+```
+
+| Interface | JSON request | Result |
+| --- | --- | --- |
+| `POST /api/v1/auth/account/username` | `{"password":"<current>","username":"<new>"}` | Replacement mobile login response |
+| `POST /api/v1/auth/account/password` | `{"password":"<current>","newPassword":"<new>","passwordConfirmation":"<new>"}` | Replacement mobile login response |
+| `POST /api/v1/auth/account/delete` | `{"password":"<current>"}` | 204 after deletion |
+| `GET /api/v1/auth/account/sessions` | None | Session metadata array |
+| `POST /api/v1/auth/account/sessions/revoke` | `{"id":"<management handle>"}` | 204, including the current session; 404 if absent |
+| `POST /api/v1/auth/account/tokens` | `{"password":"<current>","scopes":["GET:preferences"],"expiresAt":<Unix seconds or null>}` | `{"accessToken":"<signed JSON token>","expiresAt":<Unix seconds or null>}` |
+
+Credential changes verify the active session and current password under the
+account row lock, update credentials, revoke every old browser session and API
+token, and issue the replacement mobile session inside the same transaction.
+Duplicate rename failure rolls everything back. Internal account identity,
+subscriptions, playlists and other saved data are retained. A concurrent login
+cannot leave an old-password session alive after the change. Deletion removes
+the account, subscriptions view, owned playlists and linked account data/sessions
+using the existing account deletion transaction and cascades.
+
+An incorrect current password returns 401 with `code: "invalid_password"` and
+must **not** clear the client's bearer session. A session that disappears/expires
+inside the transaction returns 401 with `code: "session_expired"`; existing
+middleware still returns its normal 403 for an already expired/revoked bearer.
+Invalid request fields return 400; duplicate username returns 409. Missing routes
+on old servers and `403 {"error":"Invalid scope"}` for old mobile tokens should
+explain the required server update or fresh sign-in without logging the user out.
+
+Session metadata is:
+
+```json
+[{"id":"<opaque management handle>","type":"api","issuedAt":1700000000,"expiresAt":1702592000,"current":true}]
+```
+
+`type` is `api` or `browser`. Handles are purpose-bound HMACs of the owning account
+and session identifier; browser cookies and raw session identifiers are never
+returned. Only the caller's sessions may be listed/revoked. `current` marks the
+request's session. Available database expiry is returned; legacy API tokens may
+have null/unknown expiry. Expired rows may remain listed until pruned. Revoking the
+current session signs that client out after success.
+
+Token creation requires explicit, nonempty selected scopes (at most 64, each at
+most 256 bytes), using the existing method/endpoint wildcard syntax. Methods may
+be joined by semicolons, for example `GET;POST:playlists/*`; `:*` explicitly grants
+all API permissions. Expiry is an optional future Unix timestamp; omitted/null
+means no expiry. Android defaults to 30 days and offers guided groups, advanced
+scopes and other expiry choices. The password authorizes permissions broader than
+the mobile session; generic delegated `/auth/tokens/register` permissions remain
+separate and are not silently added to mobile sessions. Newly created token rows
+store their expiry in the existing column. Android shows the secret once with Copy,
+keeps it out of saved UI state, and protects responses against instance/account
+changes. Tokens are credentials and must not appear in logs or URLs.
+
+Deploy the updated server and renew mobile sign-in for management scopes. No new
+schema migration is introduced; the secure account/session schema from prior
+migrations is required. Existing mobile login responses and web routes remain
+compatible. Production deployment and release publication are separate actions.
 
 ## Safe preference updates
 

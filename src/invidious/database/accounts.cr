@@ -27,7 +27,7 @@ module Invidious::Database::Accounts
     sid = Base64.urlsafe_encode(Random::Secure.random_bytes(32))
     user, _ = create_user(sid, "account:#{Random::Secure.hex(32)}", password)
     user.username = username
-    user.preferences = preferences
+    user.preferences = preferences if preferences
     PG_DB.transaction do |tx|
       conn = tx.connection
       Users.insert(user, conn: conn)
@@ -45,12 +45,7 @@ module Invidious::Database::Accounts
       conn = tx.connection
       user = conn.query_one?("SELECT * FROM users WHERE lower(username) = lower($1) FOR UPDATE", username, as: User)
       if user && Credentials.verify(user.password, user.credential_version, password)
-        session = "v1:#{Base64.urlsafe_encode(Random::Secure.random_bytes(32))}"
-        expires = Time.utc + 30.days
-        conn.exec("INSERT INTO session_ids (id, email, issued, expires_at) VALUES ($1, $2, now(), $3)", session, user.email, expires)
-        token = {"session" => session, "scopes" => Invidious::Routes::API::V1::Mobile::SCOPES, "expire" => expires.to_unix}
-        token["signature"] = sign_token(HMAC_KEY, token)
-        result = {accessToken: token.to_json, username: user.username, expiresAt: expires.to_unix}
+        result = issue_mobile(user, conn)
       else
         Credentials.dummy_verify unless user
       end
@@ -64,7 +59,7 @@ module Invidious::Database::Accounts
     PG_DB.transaction do |tx|
       conn = tx.connection
       user = conn.query_one?("SELECT * FROM users WHERE email = $1 FOR UPDATE", email, as: User)
-      active = conn.query_one?("SELECT true FROM session_ids WHERE id = $1 AND email = $2 AND expires_at > now()", current_sid, email, as: Bool)
+      active = conn.query_one?("SELECT true FROM session_ids WHERE id = $1 AND email = $2 AND (expires_at > now() OR (expires_at IS NULL AND id LIKE 'v1:%'))", current_sid, email, as: Bool)
       if user && active && Credentials.verify(user.password, user.credential_version, password)
         if username
           conn.exec("UPDATE users SET username = $1 WHERE email = $2", username, email)
@@ -80,13 +75,17 @@ module Invidious::Database::Accounts
     sid
   end
 
-  def delete(email : String, sid : String, password : String) : Bool
+  def delete(email : String, sid : String, password : String, strict : Bool = false) : Bool
     deleted = false
     PG_DB.transaction do |tx|
       conn = tx.connection
       user = conn.query_one?("SELECT * FROM users WHERE email = $1 FOR UPDATE", email, as: User)
-      active = conn.query_one?("SELECT true FROM session_ids WHERE id = $1 AND email = $2 AND expires_at > now()", sid, email, as: Bool)
-      if user && active && Credentials.verify(user.password, user.credential_version, password)
+      active = conn.query_one?("SELECT true FROM session_ids WHERE id = $1 AND email = $2 AND (expires_at > now() OR (expires_at IS NULL AND id LIKE 'v1:%'))", sid, email, as: Bool)
+      if strict
+        raise SessionError.new("Your session expired. Sign in again.") unless user && active
+        verify_password(user, password)
+      end
+      if user && active && (strict || Credentials.verify(user.password, user.credential_version, password))
         conn.exec("DELETE FROM session_ids WHERE email = $1", email)
         conn.exec("DROP MATERIALIZED VIEW IF EXISTS subscriptions_#{sha256(email)}")
         conn.exec("DELETE FROM playlist_videos WHERE plid IN (SELECT id FROM playlists WHERE author = $1)", email)
@@ -96,6 +95,103 @@ module Invidious::Database::Accounts
       end
     end
     deleted
+  end
+
+  class PasswordError < Exception
+  end
+
+  class SessionError < Exception
+  end
+
+  def active_account(email : String, sid : String, conn) : User
+    user = conn.query_one?("SELECT * FROM users WHERE email = $1 FOR UPDATE", email, as: User)
+    active = conn.query_one?("SELECT true FROM session_ids WHERE id = $1 AND email = $2 AND (expires_at > now() OR (expires_at IS NULL AND id LIKE 'v1:%'))", sid, email, as: Bool)
+    raise SessionError.new("Your session expired. Sign in again.") unless user && active
+    user
+  end
+
+  def verify_password(user : User, password : String)
+    raise PasswordError.new("Incorrect current password.") unless Credentials.verify(user.password, user.credential_version, password)
+  end
+
+  def issue_mobile(user : User, conn) : NamedTuple(accessToken: String, username: String, expiresAt: Int64)
+    expires = Time.utc + 30.days
+    token = issue_account_token(user.email, Invidious::Routes::API::V1::Mobile::SCOPES, expires, conn)
+    {accessToken: token, username: user.username, expiresAt: expires.to_unix}
+  end
+
+  def issue_account_token(email : String, scopes : Array(String), expires : Time?, conn) : String
+    session = "v1:#{Base64.urlsafe_encode(Random::Secure.random_bytes(32))}"
+    conn.exec("INSERT INTO session_ids (id, email, issued, expires_at) VALUES ($1, $2, now(), $3)", session, email, expires)
+    token = {"session" => JSON::Any.new(session), "scopes" => JSON::Any.new(scopes.map { |scope| JSON::Any.new(scope) })}
+    token["expire"] = JSON::Any.new(expires.to_unix) if expires
+    token["signature"] = JSON::Any.new(sign_token(HMAC_KEY, token))
+    token.to_json
+  end
+
+  def register_mobile(username : String, password : String, preferences : Preferences? = nil)
+    user, _ = create_user("", "account:#{Random::Secure.hex(32)}", password)
+    user.username = username
+    user.preferences = preferences if preferences
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      Users.insert(user, conn: conn)
+      conn.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256(user.email)} AS #{MATERIALIZED_VIEW_SQL.call(user.email)}")
+      issue_mobile(user, conn)
+    end.not_nil!
+  end
+
+  def change_mobile(email : String, sid : String, password : String, username : String? = nil, new_password : String? = nil)
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      user = active_account(email, sid, conn)
+      verify_password(user, password)
+      if username
+        conn.exec("UPDATE users SET username = $1 WHERE email = $2", username, email)
+        user.username = username
+      end
+      if new_password
+        conn.exec("UPDATE users SET password = $1, credential_version = 2 WHERE email = $2", Credentials.hash(new_password), email)
+      end
+      conn.exec("DELETE FROM session_ids WHERE email = $1", email)
+      issue_mobile(user, conn)
+    end.not_nil!
+  end
+
+  def management_id(email : String, sid : String) : String
+    OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, "account-session:#{email}:#{sid}")
+  end
+
+  def managed_sessions(email : String, sid : String)
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      active_account(email, sid, conn)
+      conn.query_all("SELECT id, issued, expires_at FROM session_ids WHERE email = $1 ORDER BY issued DESC, id", email, as: {String, Time, Time?}).map do |id, issued, expires|
+        {id: management_id(email, id), type: id.starts_with?("v1:") ? "api" : "browser",
+         issuedAt: issued.to_unix, expiresAt: expires.try(&.to_unix), current: id == sid}
+      end
+    end.not_nil!
+  end
+
+  def revoke_managed(email : String, sid : String, id : String) : Bool
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      active_account(email, sid, conn)
+      target = conn.query_all("SELECT id FROM session_ids WHERE email = $1", email, as: String).find { |value| Crypto::Subtle.constant_time_compare(management_id(email, value), id) }
+      if target
+        conn.exec("DELETE FROM session_ids WHERE id = $1 AND email = $2", target, email)
+      end
+      !target.nil?
+    end.not_nil!
+  end
+
+  def authorize_mobile_token(email : String, sid : String, password : String, scopes : Array(String), expires : Time?)
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      user = active_account(email, sid, conn)
+      verify_password(user, password)
+      issue_account_token(email, scopes, expires, conn)
+    end.not_nil!
   end
 
   # Fixed windows are persisted and updated atomically across all instances.

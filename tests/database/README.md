@@ -69,3 +69,13 @@ AVATAR_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_avatars_test cr
 These verify migration 21 and fresh-install SQL, batched persistence, old-cache reuse,
 newer/concurrent observations, invalid URLs, database failure fallback, and isolation
 from the subscription crawler. Remove the disposable database after testing.
+
+`account_management_checks.cr` also runs in the account harness through production
+middleware. It checks native registration availability/duplicates and atomic
+rollback, single-use endpoint-bound CAPTCHA (including expired/web challenges),
+password typos without session loss, replacement credential sessions, concurrent
+old-password login races, internal identity/subscription preservation, opaque
+browser/API metadata, cross-account revocation rejection, current-session
+revocation, selected token scopes and malformed expiry, delegated permission
+limits, and password-confirmed deletion. Native signup issues no browser cookie
+or extra session. These additions reuse the existing account/session schema.

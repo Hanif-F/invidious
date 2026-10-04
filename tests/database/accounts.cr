@@ -93,6 +93,7 @@ end
 
 require "./security_checks"
 require "./mobile_checks"
+require "./account_management_checks"
 
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
@@ -157,7 +158,9 @@ begin
   # Simulated feed-creation failure must roll back the user and session too.
   PG_DB.exec("ALTER TABLE channel_videos RENAME TO channel_videos_test_hidden")
   must_fail("Signup should fail when feed creation fails") { store.register("Rollback", new_password, Preferences.from_json("{}")) }
+  must_fail("Native signup should roll back failed feed creation") { store.register_mobile("NativeRollback", new_password) }
   PG_DB.exec("ALTER TABLE channel_videos_test_hidden RENAME TO channel_videos")
+  check(PG_DB.query_one("SELECT count(*) FROM users WHERE username = 'NativeRollback'", as: Int64) == 0, "Failed native signup left an account")
   check(PG_DB.query_one("SELECT count(*) FROM users WHERE username = 'Rollback'", as: Int64) == 0, "Failed signup left an account")
   # A credential change and an old-password login serialize on the same user row.
   raced = Channel(String?).new(2)
@@ -273,6 +276,7 @@ begin
   Invidious::Routes::Login.signup_page(disabled)
   check(disabled.response.status_code == 403, "Registration switch ignored")
   check_mobile_security
+  check_mobile_account_management
   CONFIG.login_enabled = false
   disabled = context
   Invidious::Routes::Login.login_page(disabled)

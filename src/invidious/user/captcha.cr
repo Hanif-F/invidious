@@ -4,7 +4,7 @@ struct Invidious::User
   module Captcha
     extend self
 
-    def generate_image(key)
+    def generate_image(key, scope = "POST:signup")
       second = Random::Secure.rand(12)
       second_angle = second * 30
       second = second * 5
@@ -55,7 +55,7 @@ struct Invidious::User
 
       return {
         question: image,
-        tokens:   {generate_response(answer, {"POST:signup"}, key, use_nonce: true)},
+        tokens:   {generate_response(answer, {scope}, key, use_nonce: true)},
       }
     end
   end

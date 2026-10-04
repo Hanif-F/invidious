@@ -316,6 +316,14 @@ module Invidious::Routing
 
 
       post "/api/v1/mobile/login", {{namespace}}::Mobile, :login
+      get "/api/v1/mobile/registration", {{namespace}}::Mobile, :registration
+      post "/api/v1/mobile/register", {{namespace}}::Mobile, :register
+      post "/api/v1/auth/account/username", {{namespace}}::Account, :username
+      post "/api/v1/auth/account/password", {{namespace}}::Account, :password
+      post "/api/v1/auth/account/delete", {{namespace}}::Account, :delete
+      get "/api/v1/auth/account/sessions", {{namespace}}::Account, :sessions
+      post "/api/v1/auth/account/sessions/revoke", {{namespace}}::Account, :revoke
+      post "/api/v1/auth/account/tokens", {{namespace}}::Account, :token
 
       # Authenticated
       get "/api/v1/auth/blocked_channels", {{namespace}}::BlockedChannels, :index
