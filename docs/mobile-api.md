@@ -52,6 +52,11 @@ At least one field is required. Supported fields are:
 - `speed`: finite JSON number from 0.25 to 2.0; `quality_dash`: the existing web
   DASH quality values (`auto`, `best`, resolution values from `144p` through `4320p`,
   or `worst`). Android applies resolution choices as ceilings.
+- `video_codec`: `auto`, `av1` or `h264`, shared with the website's Preferred video
+  codec setting. Native patches reject invalid strings and non-string values.
+  Android applies the captured preference to DASH playback, respecting the target
+  resolution before preferring a codec for fixed quality presets. Changes apply
+  to the next video; in-player choices remain local to the current occurrence.
 - `captions`: up to three bounded language-name strings, in priority order, matching
   the web names; empty strings mean no preferred language. `comments`: up to two
   sources (`youtube`, `reddit`, or empty). Android edits YouTube visibility while

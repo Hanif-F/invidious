@@ -26,6 +26,8 @@ module Invidious::NativePreferences
           raise "Invalid speed" unless speed.finite? && (0.25..2.0).includes?(speed)
         when "quality_dash"
           raise "Invalid quality" unless QUALITIES.includes?(value.as_s)
+        when "video_codec"
+          raise "Invalid video codec" unless {"auto", "av1", "h264"}.includes?(value.as_s)
         when "dark_mode"
           raise "Invalid color mode" unless {"", "light", "dark"}.includes?(value.as_s)
         when "ui_density"

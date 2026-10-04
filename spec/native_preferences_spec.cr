@@ -2,6 +2,19 @@ require "spec"
 require "../src/invidious/native_preferences"
 
 describe Invidious::NativePreferences do
+  it "accepts every shared codec and preserves it through unrelated sparse patches" do
+    {"auto", "av1", "h264"}.each do |codec|
+      stored = JSON.parse(%({"video_codec":"auto","theme":"diary","future":{"keep":true}})).as_h
+      patch = JSON.parse({"video_codec" => codec}.to_json).as_h
+      Invidious::NativePreferences.validate_patch(patch)
+      Invidious::SponsorBlock.merge_patch(stored, patch, {} of String => String)
+      stored["video_codec"].should eq(codec)
+      Invidious::SponsorBlock.merge_patch(stored, JSON.parse(%({"speed":1.5})).as_h, {} of String => String)
+      stored["video_codec"].should eq(codec)
+      stored["theme"].should eq("diary")
+      stored["future"]["keep"].should eq(true)
+    end
+  end
   it "accepts supported native settings, web caption names and SponsorBlock deltas together" do
     Invidious::NativePreferences.validate_patch(JSON.parse(%({
       "autoplay":false,"continue":true,"continue_autoplay":false,"video_loop":true,"listen":true,"local":true,"speed":1.5,"quality_dash":"720p",
@@ -17,7 +30,9 @@ describe Invidious::NativePreferences do
 
   it "rejects unknown fields, wrong types and oversized/out-of-range settings" do
     invalid = ["{}", %({"continue":"true"}), %({"continue_autoplay":null}), %({"video_loop":1}), %({"show_member_videos":"false"}), %({"show_member_videos":null}), %({"theme":"diary"}), %({"autoplay":"false"}), %({"speed":0}), %({"speed":2.5}),
-               %({"speed":"1"}), %({"quality_dash":"fake"}), %({"dark_mode":true}), %({"ui_density":"wide"}),
+               %({"speed":"1"}), %({"quality_dash":"fake"}), %({"video_codec":"vp9"}), %({"video_codec":"AV1"}), %({"video_codec":""}),
+               %({"video_codec":null}), %({"video_codec":true}), %({"video_codec":123}), %({"video_codec":{}}), %({"video_codec":[]}),
+               %({"dark_mode":true}), %({"ui_density":"wide"}),
                %({"default_home":"History"}), %({"feed_menu":["Popular","bad"]}), %({"feed_menu":["","","","",""]}),
                %({"region":"id"}), %({"captions":["<script>"]}), %({"captions":["","","",""]}),
                %({"comments":["other"]}), %({"max_results":0}), %({"max_results":1501}), %({"max_results":1.5}),
