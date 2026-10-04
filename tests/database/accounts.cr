@@ -108,12 +108,17 @@ begin
   PG_DB.exec("INSERT INTO blocked_channels (email, ucid, name) VALUES ('Legacy Name!', 'UCblocked', 'Blocked')")
   PG_DB.exec("INSERT INTO dearrow_identities VALUES ('Legacy Name!', 'encrypted-preserved')")
   PG_DB.exec("INSERT INTO playlists (id, author, title) VALUES ('IVtest', 'Legacy Name!', 'Saved playlist')")
+  PG_DB.exec("INSERT INTO playlists (id, author, title, video_count) VALUES ('PLlegacy', 'Legacy Name!', 'Legacy subscription', 8)")
+  PG_DB.exec("INSERT INTO playlists (id, author, title, video_count) VALUES ('RDabcdefghijk', 'Legacy Name!', 'Legacy mix', -1)")
   PG_DB.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256("Legacy Name!")} AS #{MATERIALIZED_VIEW_SQL.call("Legacy Name!")}")
   linked = %w(watch_history playback_positions blocked_channels dearrow_identities playlists)
   snapshots = linked.to_h { |table| {table, PG_DB.query_one("SELECT json_agg(t)::text FROM #{table} t", as: String)} }
   migration = Invidious::Database::Migrator.new(PG_DB)
   migration.migrate
   migration.migrate
+  check(Invidious::Database::SavedPlaylists.exists?("Legacy Name!", "PLlegacy"), "Migration 20 lost a legacy subscription")
+  check(Invidious::Database::SavedPlaylists.seed("Legacy Name!", "RDabcdefghijk") == "abcdefghijk", "Migration 20 lost an embedded mix seed")
+  check(PG_DB.query_one("SELECT count(*) FROM playlists WHERE id='PLlegacy'", as: Int64) == 1, "Migration 20 deleted the legacy row")
   user = Invidious::Database::Users.select!(email: "Legacy Name!")
   check(user.username == user.email && user.password == legacy_hash && user.credential_version == 1, "Legacy identity and password changed")
   check(user.watched == ["video"] && user.subscriptions == ["UCtest"] && user.notifications == ["notice"], "Legacy account arrays changed")
@@ -287,7 +292,7 @@ begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'username'", as: Int64) == 0, "Failed migration did not roll back DDL")
   PG_DB.exec("DROP SCHEMA public CASCADE")
   PG_DB.exec("CREATE SCHEMA public")
-  %w(users session_ids auth_rate_limits).each do |table|
+  %w(users session_ids auth_rate_limits saved_playlists).each do |table|
     PG_DB.using_connection { |conn| conn.as(PG::Connection).exec_all(File.read("config/sql/#{table}.sql")) }
   end
   store.check_schema

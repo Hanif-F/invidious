@@ -52,3 +52,10 @@ The harness checks migration 19, public and account listings, creation, CSRF,
 token scopes, cross-account deletion, username attribution, immutable playback
 bounds, cache eviction, pagination, account cleanup, and the fresh schema.
 Remove the disposable database after testing.
+
+`playlist_rss_checks.cr` is included in the account harness. It tests migration 20
+backfill/preservation, concurrent and independent subscriptions, caller-only legacy
+cleanup, live source metadata, cached fallback, ownership/privacy flags, CSRF and
+native scopes, private Atom authorization, empty/populated Atom namespaces, seeded
+mix snapshots, complete OPML (165 subscriptions with an uncached ID), account
+cascades and rendered English category headings with their existing counts.

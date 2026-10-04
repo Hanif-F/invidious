@@ -21,6 +21,28 @@ class SecurityTestEndpoint
     env = context
     Invidious::Routes::BeforeAll.handle(env)
     result = case env.request.path
+             when "/api/v1/auth/playlists"
+               Invidious::Routes::API::V1::Authenticated.list_playlists(env)
+             when "/api/v1/auth/feed/rss"
+               Invidious::Routes::API::V1::Authenticated.rss_link(env)
+             when "/api/v1/auth/subscriptions/export"
+               Invidious::Routes::API::V1::Authenticated.export_subscriptions(env)
+             when .starts_with?("/api/v1/auth/saved_playlists/")
+               env.params.url["id"] = env.request.path.split('/').last
+               if env.request.method == "PUT"
+                 Invidious::Routes::API::V1::Authenticated.save_external_playlist(env)
+               else
+                 Invidious::Routes::API::V1::Authenticated.unsave_external_playlist(env)
+               end
+             when .starts_with?("/api/v1/auth/playlists/")
+               env.params.url["plid"] = env.request.path.split('/')[5]
+               if env.request.path.ends_with?("/feed")
+                 Invidious::Routes::API::V1::Authenticated.playlist_feed(env)
+               elsif env.request.method == "PATCH"
+                 Invidious::Routes::API::V1::Authenticated.update_playlist_attribute(env)
+               else
+                 Invidious::Routes::API::V1::Misc.get_playlist(env)
+               end
              when "/api/v1/auth/csrf"
                Invidious::Routes::API::V1::Authenticated.get_csrf(env)
              when "/api/v1/auth/tokens"

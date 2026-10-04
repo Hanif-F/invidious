@@ -169,3 +169,12 @@ SUCH DAMAGES.
 
 Choose a visual theme in **Preferences → Appearance → Theme**. See the
 [theming guide](docs/theming.md) to add a theme or replace its preview image.
+
+### Fork playlist subscriptions and native RSS
+
+The Mobivious playlist/RSS API adds per-account source bookmarks via migration 20.
+Run the migration before rollout and renew native sign-in for the new permissions.
+Legacy saves are preserved during backfill; references follow the owner’s current
+playlist on open/refresh. English Library headings are My playlists and Subscribed
+playlists with counts. See [the native API contract](docs/mobile-api.md) and
+[guarded integration checks](tests/database/README.md).

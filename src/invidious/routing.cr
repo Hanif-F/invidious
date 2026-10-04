@@ -43,6 +43,7 @@ module Invidious::Routing
     {% end %}
 
     self.register_image_routes
+    self.register_rss_routes
     self.register_api_v1_routes
     self.register_api_manifest_routes
     self.register_video_playback_routes
@@ -120,8 +121,10 @@ module Invidious::Routing
     get "/feed/subscriptions", Routes::Feeds, :subscriptions
     get "/feed/history", Routes::Feeds, :history
     get "/feed/clips", Routes::Clips, :index
+  end
 
-    # RSS Feeds
+  def register_rss_routes
+    # RSS feeds are also available to native clients on API-only instances.
     get "/feed/channel/:ucid", Routes::Feeds, :rss_channel
     get "/feed/private", Routes::Feeds, :rss_private
     get "/feed/playlist/:plid", Routes::Feeds, :rss_playlist
@@ -349,13 +352,18 @@ module Invidious::Routing
       delete "/api/v1/auth/playback/:id", {{namespace}}::Authenticated, :delete_playback_position
       delete "/api/v1/auth/playback", {{namespace}}::Authenticated, :clear_playback_positions
 
+      get "/api/v1/auth/feed/rss", {{namespace}}::Authenticated, :rss_link
       get "/api/v1/auth/feed", {{namespace}}::Authenticated, :feed
 
       get "/api/v1/auth/subscriptions", {{namespace}}::Authenticated, :get_subscriptions
+      get "/api/v1/auth/subscriptions/export", {{namespace}}::Authenticated, :export_subscriptions
       get "/api/v1/auth/subscriptions/search", {{namespace}}::Authenticated, :search_subscriptions
       post "/api/v1/auth/subscriptions/:ucid", {{namespace}}::Authenticated, :subscribe_channel
       delete "/api/v1/auth/subscriptions/:ucid", {{namespace}}::Authenticated, :unsubscribe_channel
 
+      put "/api/v1/auth/saved_playlists/:id", {{namespace}}::Authenticated, :save_external_playlist
+      delete "/api/v1/auth/saved_playlists/:id", {{namespace}}::Authenticated, :unsave_external_playlist
+      get "/api/v1/auth/playlists/:plid/feed", {{namespace}}::Authenticated, :playlist_feed
       get "/api/v1/auth/playlists", {{namespace}}::Authenticated, :list_playlists
       post "/api/v1/auth/playlists", {{namespace}}::Authenticated, :create_playlist
       patch "/api/v1/auth/playlists/:plid",{{namespace}}:: Authenticated, :update_playlist_attribute

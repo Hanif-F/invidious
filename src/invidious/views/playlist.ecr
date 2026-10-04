@@ -28,7 +28,7 @@
             </div>
         <%- else -%>
             <div class="pure-u">
-                <%- if IV::Database::Playlists.exists?(playlist.id) -%>
+                <%- if !user || !IV::Database::SavedPlaylists.exists?(user.email, playlist.id) -%>
                     <form action="/subscribe_playlist?list=<%= plid %>" method="post">
                         <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
                         <button type="submit" class="pure-button pure-button-secondary low-profile" dir="auto">

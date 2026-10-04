@@ -80,15 +80,21 @@ module Invidious::Routes::Playlists
 
     playlist_id = env.params.query["list"]
     begin
-      playlist = get_playlist(playlist_id)
+      fields = Invidious::NativePlaylists.resolve(playlist_id, user.email, env.params.query["continuation"]?)
     rescue ex : NotFoundException
       return error_template(404, ex)
+    rescue ex : InfoException
+      return error_template(400, ex)
     rescue ex
       return error_template(500, ex)
     end
-    subscribe_playlist(user, playlist)
+    Database::SavedPlaylists.save(user.email, fields)
 
-    env.redirect "/playlist?list=#{playlist.id}"
+    if playlist_id.starts_with?("RD")
+      env.redirect "/mix?list=#{playlist_id}&continuation=#{fields["seedVideoId"].as_s}"
+    else
+      env.redirect "/playlist?list=#{playlist_id}"
+    end
   end
 
   def self.delete_page(env)
@@ -109,6 +115,13 @@ module Invidious::Routes::Playlists
     end
 
     playlist = Invidious::Database::Playlists.select(id: plid)
+    subscribed = Database::SavedPlaylists.exists?(user.email, plid)
+    if subscribed && (!playlist || playlist.author != user.email)
+      cached = Database::SavedPlaylists.list(user.email).find { |item| item["playlistId"].as_s == plid }.not_nil!
+      playlist = InvidiousPlaylist.new({id: plid, title: cached["title"].as_s, author: user.email,
+                                        description: "", video_count: 0, created: Time.utc, updated: Time.utc,
+                                        privacy: PlaylistPrivacy::Private, index: [] of Int64})
+    end
     if !playlist || playlist.author != user.email
       return env.redirect referer
     end
@@ -138,6 +151,11 @@ module Invidious::Routes::Playlists
       validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
       return error_template(400, ex)
+    end
+
+    if Database::SavedPlaylists.exists?(user.email, plid) || !plid.starts_with?("IV")
+      Database::SavedPlaylists.delete(user.email, plid)
+      return env.redirect "/feed/playlists"
     end
 
     playlist = Invidious::Database::Playlists.select(id: plid)

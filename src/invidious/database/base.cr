@@ -14,6 +14,7 @@ module Invidious::Database
     Invidious::Database.check_table("channels", InvidiousChannel)
     Invidious::Database.check_table("channel_videos", ChannelVideo)
     Invidious::Database.check_table("playlists", InvidiousPlaylist)
+    Invidious::Database.check_table("saved_playlists")
     Invidious::Database.check_table("playlist_videos", PlaylistVideo)
     Invidious::Database.check_table("nonces", Nonce)
     Invidious::Database.check_table("session_ids", SessionId)

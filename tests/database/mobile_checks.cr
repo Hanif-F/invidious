@@ -1,4 +1,5 @@
 require "./search_history_checks"
+require "./playlist_rss_checks"
 
 def check_mobile_security
   CONFIG.login_enabled = true
@@ -19,6 +20,7 @@ def check_mobile_security
   check_mobile_preferences(token, email, sid)
   check_mobile_blocking(token, email, sid)
   check_mobile_search_history(token, email)
+  check_mobile_playlist_rss(token, email, sid)
   session = JSON.parse(token)["session"].as_s
   check(data["username"] == "MobileAlice", "Native sign-in returned internal account owner")
   check((data["expiresAt"].as_i64 - login_time - 30.days.total_seconds).abs < 3, "Native lifetime differs from 30 days")

@@ -46,7 +46,8 @@ module Invidious::Routes::API::V1::Misc
     listen = (listen_param == "true" || listen_param == "1")
 
     if plid.starts_with? "RD"
-      return env.redirect "/api/v1/mixes/#{plid}"
+      env.params.url["rdid"] = plid
+      return mixes(env)
     end
 
     begin
@@ -87,6 +88,11 @@ module Invidious::Routes::API::V1::Misc
       end
     end
 
+    fields = Invidious::NativePlaylists.metadata(playlist, user.try(&.email))
+    json_response.as_h.merge!(fields)
+    Database::SavedPlaylists.refresh(user.email, fields) if user
+    response = json_response.to_json
+
     if format == "html"
       env.response.headers["Cache-Control"] = "private, no-store"
       editable = playlist.is_a?(InvidiousPlaylist) && playlist.author == user.try &.email
@@ -118,7 +124,11 @@ module Invidious::Routes::API::V1::Misc
     rdid = env.params.url["rdid"]
 
     continuation = env.params.query["continuation"]?
-    continuation ||= rdid.lchop("RD")[0, 11]
+    begin
+      continuation = Invidious::NativePlaylists.seed(rdid, continuation)
+    rescue ex
+      return error_json(400, ex)
+    end
 
     format = env.params.query["format"]?
     format ||= "json"
@@ -129,11 +139,7 @@ module Invidious::Routes::API::V1::Misc
     begin
       mix = fetch_mix(rdid, continuation, locale: locale)
 
-      if !rdid.ends_with? continuation
-        mix = fetch_mix(rdid, mix.videos[1].id)
-        index = mix.videos.index(mix.videos.select { |video| video.id == continuation }[0]?)
-      end
-
+      index = mix.videos.index { |video| video.id == continuation } || 0
       mix.videos = mix.videos[index..-1]
     rescue ex
       return error_json(500, ex)
@@ -168,6 +174,19 @@ module Invidious::Routes::API::V1::Misc
         end
       end
     end
+
+    fields = Invidious::NativePlaylists.metadata(mix, continuation)
+    if user = env.get?("user").try(&.as(User))
+      if seed = Database::SavedPlaylists.seed(user.email, rdid)
+        fields["seedVideoId"] = JSON::Any.new(seed)
+        fields["playlistThumbnail"] = JSON::Any.new("/vi/#{seed}/mqdefault.jpg")
+      end
+      fields["isSaved"] = JSON::Any.new(Database::SavedPlaylists.exists?(user.email, rdid))
+      Database::SavedPlaylists.refresh(user.email, fields)
+    end
+    parsed = JSON.parse(response).as_h
+    parsed.merge!(fields)
+    response = parsed.to_json
 
     if format == "html"
       env.response.headers["Cache-Control"] = "private, no-store"

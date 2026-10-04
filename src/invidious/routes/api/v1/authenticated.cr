@@ -422,15 +422,12 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
 
-    playlists = Invidious::Database::Playlists.select_all(author: user.email)
-
-    JSON.build do |json|
-      json.array do
-        playlists.each do |playlist|
-          playlist.to_json(0, json)
-        end
-      end
+    created = Invidious::Database::Playlists.select_like_iv(user.email).map do |playlist|
+      fields = JSON.parse(playlist.to_json(0)).as_h
+      fields.merge!(Invidious::NativePlaylists.metadata(playlist, user.email))
+      JSON::Any.new(fields)
     end
+    (created + Database::SavedPlaylists.list(user.email)).to_json
   end
 
   def self.create_playlist(env)
@@ -474,8 +471,8 @@ module Invidious::Routes::API::V1::Authenticated
       return error_json(404, "Playlist does not exist.")
     end
 
-    if playlist.author != user.email
-      return error_json(403, "Invalid user")
+    if !plid.starts_with?("IV") || playlist.author != user.email
+      return error_json(403, "Only owned playlists can be edited.")
     end
 
     title = env.params.json["title"].try &.as(String).delete("<>").byte_slice(0, 150) || playlist.title
@@ -501,13 +498,19 @@ module Invidious::Routes::API::V1::Authenticated
 
     plid = env.params.url["plid"]
 
+    if !plid.starts_with?("IV") || Database::SavedPlaylists.exists?(user.email, plid)
+      Database::SavedPlaylists.delete(user.email, plid)
+      env.response.status_code = 204
+      return
+    end
+
     playlist = Invidious::Database::Playlists.select(id: plid)
     if !playlist || playlist.author != user.email && playlist.privacy.private?
       return error_json(404, "Playlist does not exist.")
     end
 
-    if playlist.author != user.email
-      return error_json(403, "Invalid user")
+    if !plid.starts_with?("IV") || playlist.author != user.email
+      return error_json(403, "Only owned playlists can be edited.")
     end
 
     Invidious::Database::Playlists.delete(plid)
@@ -526,8 +529,8 @@ module Invidious::Routes::API::V1::Authenticated
       return error_json(404, "Playlist does not exist.")
     end
 
-    if playlist.author != user.email
-      return error_json(403, "Invalid user")
+    if !plid.starts_with?("IV") || playlist.author != user.email
+      return error_json(403, "Only owned playlists can be edited.")
     end
 
     if playlist.index.size >= CONFIG.playlist_length_limit
@@ -584,8 +587,8 @@ module Invidious::Routes::API::V1::Authenticated
       return error_json(404, "Playlist does not exist.")
     end
 
-    if playlist.author != user.email
-      return error_json(403, "Invalid user")
+    if !plid.starts_with?("IV") || playlist.author != user.email
+      return error_json(403, "Only owned playlists can be edited.")
     end
 
     if !playlist.index.includes? index

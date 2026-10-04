@@ -184,6 +184,10 @@ struct SearchPlaylist
       json.field "title", self.title
       json.field "playlistId", self.id
       json.field "playlistThumbnail", self.thumbnail
+      if self.id.starts_with?("RD")
+        candidate = self.videos.first?.try(&.id) || self.thumbnail.try { |url| URI.parse(url).path.split('/')[2]? } || self.id.lchop("RD")
+        json.field "seedVideoId", candidate if candidate && candidate.matches?(/\A[A-Za-z0-9_-]{11}\z/)
+      end
 
       json.field "author", self.author
       json.field "authorId", self.ucid

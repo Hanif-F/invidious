@@ -39,6 +39,7 @@ struct PlaylistVideo
       end
 
       xml.element("published") { xml.text self.published.to_s("%Y-%m-%dT%H:%M:%S%:z") }
+      xml.element("updated") { xml.text self.published.to_rfc3339 }
 
       xml.element("media:group") do
         xml.element("media:title") { xml.text self.title }
@@ -284,21 +285,10 @@ def create_playlist(title, privacy, user)
 end
 
 def subscribe_playlist(user, playlist)
-  playlist = InvidiousPlaylist.new({
-    title:       playlist.title[..150],
-    id:          playlist.id,
-    author:      user.email,
-    description: "", # Max 5000 characters
-    video_count: playlist.video_count,
-    created:     Time.utc,
-    updated:     playlist.updated,
-    privacy:     PlaylistPrivacy::Private,
-    index:       [] of Int64,
-  })
-
-  Invidious::Database::Playlists.insert(playlist)
-
-  return playlist
+  if playlist.privacy.private? && playlist.author != user.email
+    raise NotFoundException.new("Playlist does not exist.")
+  end
+  Invidious::Database::SavedPlaylists.save(user.email, Invidious::NativePlaylists.metadata(playlist, user.email))
 end
 
 def produce_playlist_continuation(id, index)

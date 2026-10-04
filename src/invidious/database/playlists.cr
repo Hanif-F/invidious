@@ -164,7 +164,7 @@ module Invidious::Database::Playlists
   def count_owned_by(author : String) : Int64
     request = <<-SQL
       SELECT count(*) FROM playlists
-      WHERE author = $1
+      WHERE author = $1 AND id LIKE 'IV%'
     SQL
 
     return PG_DB.query_one?(request, author, as: Int64) || 0_i64

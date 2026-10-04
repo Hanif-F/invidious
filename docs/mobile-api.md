@@ -1,7 +1,7 @@
 # Mobivious API additions
 
 These additions keep YouTube extraction, stream resolution, channel/search requests,
-and captions in Invidious and Companion. They introduce no database migrations.
+and captions in Invidious and Companion. Playlist subscriptions require migration 20.
 Existing accounts and existing web APIs keep their behavior.
 
 ## Stream representation metadata
@@ -273,9 +273,56 @@ control for finite queues, with no new wire preference. Guests store defaults lo
 Existing playlist/mix JSON endpoints provide source metadata and original `index`
 positions. Native playlist deletes use stable hexadecimal `indexId` occurrence
 identifiers. Public guest reads omit credentials; signed-in reads use existing
-authenticated playlist scopes, including private access. Mix reads are public.
-The client calls the mix endpoint directly for RD sources and
-never follows playlist redirects. Playlist creation and add responses already return
+authenticated playlist scopes, including private access. Guests use the public mix endpoint; signed-in RD reads
+use the authenticated playlist endpoint for subscription metadata, without redirects. Playlist creation and add responses already return
 identifiers/occurrence metadata, so no endpoint, token scope or migration is added.
 Deploy the boolean allowlist update before saving the new native settings. Older
 servers can still read/play and report a settings-update explanation on rejection.
+
+## Playlist subscriptions, RSS and OPML
+
+Deploy **migration 20** before enabling these native flows. `saved_playlists` has
+primary key `(email, source_id)`, serialized cached metadata, optional seed and save
+time, and a user foreign key with cascading deletion. Backfill preserves old
+external rows; unsubscribe removes any matching caller-owned legacy external row.
+Own IV playlists stay in `playlists`. A source can be subscribed independently by
+multiple accounts, and saving it never copies its videos or transfers ownership.
+
+| Authenticated method/path | Response and behavior |
+| --- | --- |
+| `PUT /api/v1/auth/saved_playlists/:id` | JSON `{}` or optional `seedVideoId`; idempotent subscribe with resolved metadata. An opaque RD mix requires its 11-character seed. |
+| `DELETE /api/v1/auth/saved_playlists/:id` | Idempotent 204; removes only caller’s subscription. |
+| `GET /api/v1/auth/feed/rss` | JSON `{"feedPath":"/feed/private?token=..."}` using the existing RSS token, relative to the selected instance. |
+| `GET /api/v1/auth/subscriptions/export?format=rss` | Complete OPML with Invidious channel URLs; `format=newpipe` uses YouTube URLs. Includes uncached channel IDs. |
+| `GET /api/v1/auth/playlists/:id/feed` | Atom snapshot of an owned IV playlist, including private playlists; another account gets 404. Existing 100-item playlist feed window is retained. |
+
+Library/detail responses add `isOwned`, `isSaved`, actual `privacy`, `isMix` and
+`seedVideoId` where applicable, while preserving existing fields and owned playlist
+video arrays. `playlistId` also identifies mixes, alongside `mixId` on mix details.
+Subscribed details retrieve the current source; a successful read refreshes cached
+metadata without resurrecting a removed subscription. Another account’s private
+IV playlist cannot be subscribed to or read. Only owners may edit or remove videos;
+legacy authenticated DELETE of a saved source unsubscribes it. Missing/deleted
+sources retain cached library metadata so the caller can still unsubscribe.
+
+New native permissions are `PUT;DELETE:saved_playlists/*`, `GET:feed/rss` and
+`GET:subscriptions/export`. Renew native tokens by signing out and in after the
+server update. Atom uses the existing `GET:playlists/*` permission. Bearer identity,
+CSRF-protected cookie writes and private/no-store responses remain enforced. JSON
+is bounded to 16 KiB; malformed input is 400, hidden/missing IV sources 404 and
+upstream subscribe failures 502 with a retry explanation.
+
+Public RSS remains at `/feed/channel/:id`, `/feed/playlist/:id`, and
+`/feed/private?token=...`; RD playlist feeds accept `continuation=<seed>` and export
+a current mix snapshot. These routes are available in normal and API-only builds.
+Web/native OPML and IV Atom share serializers; namespaces and entry times are
+valid for empty and populated snapshots. Subscription-feed windows retain the
+existing account filters, page size and query parameters.
+
+Android keeps the secret RSS link in memory and explains that anyone holding it
+can read the feed. It never includes the native bearer token in a shared URL/file.
+Private-owned Atom is authenticated in-app, then exported as a snapshot using the
+document picker or a restricted cache-only FileProvider with temporary read grants.
+Canceled picker results, missing external apps, retries and stale account/instance
+responses do not change playback. Built-in RSS reading, polling and upload alerts
+are outside this contract.
