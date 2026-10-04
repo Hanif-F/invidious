@@ -5,7 +5,7 @@ require "./sponsorblock"
 # Validate every field before the account transaction; retain all unrelated JSON.
 module Invidious::NativePreferences
   BOOLEANS = %w(watch_history save_player_pos dearrow_enabled dearrow_show_original
-    autoplay listen local thin_mode related_videos extend_desc latest_only unseen_only notifications_only show_member_videos)
+    autoplay continue continue_autoplay video_loop listen local thin_mode related_videos extend_desc latest_only unseen_only notifications_only show_member_videos)
   SPONSORBLOCK = %w(sponsorblock_enabled sponsorblock_modes sponsorblock_colors sponsorblock_channel_overrides)
   HOMES        = ["", "Popular", "Trending", "Subscriptions", "Playlists"]
   SORTS        = ["published", "published - reverse", "alphabetically", "alphabetically - reverse", "channel name", "channel name - reverse"]

@@ -97,7 +97,7 @@ def check_mobile_preferences(token, email, sid)
   before = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
   before["future_native_settings"] = JSON.parse(%({"preserve":[1,2,3]}))
   PG_DB.exec("UPDATE users SET preferences = $1 WHERE email = $2", before.to_json, email)
-  body = %({"autoplay":false,"listen":true,"local":true,"speed":1.5,"quality_dash":"720p",
+  body = %({"autoplay":false,"continue":true,"continue_autoplay":false,"video_loop":true,"listen":true,"local":true,"speed":1.5,"quality_dash":"720p",
     "dark_mode":"dark","ui_density":"compact","thin_mode":true,"default_home":"Trending",
     "feed_menu":["Trending","Popular","Subscriptions","Playlists"],"region":"ID",
     "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube","reddit"],
@@ -110,7 +110,7 @@ def check_mobile_preferences(token, email, sid)
   before.each { |key, value| check(after[key] == value, "Native core settings overwrote #{key}") unless JSON.parse(body).as_h.has_key?(key) }
   read = security_request("GET", path, bearer: token)
   check(JSON.parse(read.get("test_result").as(String)).as_h["captions"] == after["captions"], "Shared caption priorities were not returned")
-  [%({"speed":0,"related_videos":true}), %({"region":"invalid"}), %({"captions":["<script>"]}),
+  [%({"continue":"true"}), %({"continue_autoplay":null}), %({"video_loop":1}), %({"speed":0,"related_videos":true}), %({"region":"invalid"}), %({"captions":["<script>"]}),
    %({"max_results":1501}), %({"feed_menu":["unknown"]}), %({"comments":["other"]})].each do |invalid|
     check(security_request("PATCH", path, bearer: token, body: invalid).response.status_code == 400, "Invalid native core preferences accepted")
     check(JSON.parse(Invidious::Database::Users.preference_json(email)).as_h == after, "Rejected native settings partially applied")

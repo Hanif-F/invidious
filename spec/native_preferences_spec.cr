@@ -4,7 +4,7 @@ require "../src/invidious/native_preferences"
 describe Invidious::NativePreferences do
   it "accepts supported native settings, web caption names and SponsorBlock deltas together" do
     Invidious::NativePreferences.validate_patch(JSON.parse(%({
-      "autoplay":false,"listen":true,"local":true,"speed":1.5,"quality_dash":"720p",
+      "autoplay":false,"continue":true,"continue_autoplay":false,"video_loop":true,"listen":true,"local":true,"speed":1.5,"quality_dash":"720p",
       "dark_mode":"dark","ui_density":"compact","thin_mode":true,"default_home":"Trending",
       "feed_menu":["Trending","Popular","Subscriptions","Playlists"],"region":"ID",
       "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube","reddit"],
@@ -16,7 +16,7 @@ describe Invidious::NativePreferences do
   end
 
   it "rejects unknown fields, wrong types and oversized/out-of-range settings" do
-    invalid = ["{}", %({"show_member_videos":"false"}), %({"show_member_videos":null}), %({"theme":"diary"}), %({"autoplay":"false"}), %({"speed":0}), %({"speed":2.5}),
+    invalid = ["{}", %({"continue":"true"}), %({"continue_autoplay":null}), %({"video_loop":1}), %({"show_member_videos":"false"}), %({"show_member_videos":null}), %({"theme":"diary"}), %({"autoplay":"false"}), %({"speed":0}), %({"speed":2.5}),
                %({"speed":"1"}), %({"quality_dash":"fake"}), %({"dark_mode":true}), %({"ui_density":"wide"}),
                %({"default_home":"History"}), %({"feed_menu":["Popular","bad"]}), %({"feed_menu":["","","","",""]}),
                %({"region":"id"}), %({"captions":["<script>"]}), %({"captions":["","","",""]}),

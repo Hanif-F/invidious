@@ -46,7 +46,7 @@ Invidious's existing auth middleware returns 403 for expired/revoked bearer toke
 At least one field is required. Supported fields are:
 
 - Booleans: `watch_history`, `save_player_pos`, `dearrow_enabled`,
-  `dearrow_show_original`, `autoplay`, `listen`, `local`, `thin_mode`,
+  `dearrow_show_original`, `autoplay`, `continue`, `continue_autoplay`, `video_loop`, `listen`, `local`, `thin_mode`,
   `related_videos`, `extend_desc`, `latest_only`, `unseen_only`, `notifications_only`,
   `show_member_videos`.
 - `speed`: finite JSON number from 0.25 to 2.0; `quality_dash`: the existing web
@@ -66,7 +66,7 @@ At least one field is required. Supported fields are:
 - `sponsorblock_enabled` and the SponsorBlock maps described below.
 
 Background playback and PiP are device-local. Unsupported web capabilities such as
-chat replay, annotations, VR, interface localization and next-video queues are not
+chat replay, annotations, VR and interface localization are not
 added to this native PATCH contract. The extension uses existing preference scopes
 and storage; no migration or token renewal is required.
 Clients send only changed fields. It locks the account, merges the
@@ -258,3 +258,24 @@ ACCOUNT_TEST_DATABASE_URL=postgres://user:password@localhost/invidious_accounts_
 
 Never point this harness at a production database: it deliberately recreates its
 guarded disposable schema to test migrations and rollback behavior.
+
+## Native next-video and queue settings
+
+The sparse native preference PATCH accepts boolean `continue`, `continue_autoplay`
+and `video_loop`. They use the existing web preference fields, GET/PATCH preference
+scopes and account storage. Defaults are false, true and false respectively.
+Android uses `continue` only for standalone recommendation advancement; explicit
+playlist/mix/temporary queues advance independently. Automatic successors start
+when `autoplay || continue_autoplay`; otherwise they load paused. `video_loop`
+initializes a playback session's Repeat One default. Native Repeat All is a session
+control for finite queues, with no new wire preference. Guests store defaults locally.
+
+Existing playlist/mix JSON endpoints provide source metadata and original `index`
+positions. Native playlist deletes use stable hexadecimal `indexId` occurrence
+identifiers. Public guest reads omit credentials; signed-in reads use existing
+authenticated playlist scopes, including private access. Mix reads are public.
+The client calls the mix endpoint directly for RD sources and
+never follows playlist redirects. Playlist creation and add responses already return
+identifiers/occurrence metadata, so no endpoint, token scope or migration is added.
+Deploy the boolean allowlist update before saving the new native settings. Older
+servers can still read/play and report a settings-update explanation on rejection.
