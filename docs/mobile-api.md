@@ -326,3 +326,31 @@ document picker or a restricted cache-only FileProvider with temporary read gran
 Canceled picker results, missing external apps, retries and stale account/instance
 responses do not change playback. Built-in RSS reading, polling and upload alerts
 are outside this contract.
+
+## Native channel avatars
+
+Identity-bearing records in existing discovery, search, channel, subscription,
+video/recommendation, detailed-history and playlist/mix JSON responses can include
+`authorThumbnails` using the established `{url, width, height}` array shape.
+Supplied response URLs retain precedence. Missing thumbnails are filled from the
+existing `channel_avatars` table (migration 21), using a single unique-ID batch read
+across each response and its nested records. History identifies creators by its
+existing `channel_id`; other records retain `authorId`.
+
+Normal responses teach the optional cache URLs already obtained by existing
+operations. No channel/video lookup, background fetch, age-based refresh, or
+cache-miss fetch is introduced. Cache read/write failures do not fail responses or
+fall through to upstream metadata requests. Existing payload fields, ordering,
+pagination, playlist occurrence indexes, scopes and basic history-ID
+response shapes are preserved.
+
+Android parses the existing singular/array avatar formats, normalizes supported
+YouTube image URLs to the selected instance's fixed-host `/ggpht` proxy, and uses
+one 176-pixel variant where the URL supports sizing. Paths and query parameters
+are preserved; redirects and bearer/cookie credentials are excluded. Ordinary
+proxy image downloads may still contact YouTube's image CDN. Missing or failed
+images show local placeholders, and thin mode omits avatar requests.
+
+Deploy the additive API update and existing migration 21 for cached-list coverage,
+then install a new Android build. Older servers remain usable with supplied
+images/placeholders. No additional migration, endpoint or token renewal is needed.

@@ -194,13 +194,13 @@ module Invidious::Routes::API::V1::Authenticated
     if env.params.query["details"]? == "true" && env.params.query["organized"]? == "true"
       today = Invidious::History.today(user.preferences.timezone)
       entries = Invidious::History.organize(Invidious::Database::WatchHistory.entries(user), user.watched, env.params.query["q"]? || "", today)
-      return {
+      return Invidious::JSONify::APIv1::ChannelAvatars.enrich_json({
         entries:  Invidious::History.page(entries, page, max_results),
         total:    entries.size,
         hasMore:  max_results > 0 && start_index + max_results < entries.size,
         today:    today,
         timezone: Invidious::History.timezone(user.preferences.timezone) || "UTC",
-      }.to_json
+      }.to_json)
     end
     if start_index < user.watched.size
       watched = user.watched.reverse[start_index.to_i, max_results]
@@ -210,7 +210,7 @@ module Invidious::Routes::API::V1::Authenticated
     if env.params.query["details"]? == "true"
       entries = Invidious::Database::WatchHistory.select_all(user.email).to_h { |entry| {entry.video_id, entry} }
       cached = Invidious::Database::WatchHistory.cached(watched)
-      return watched.map do |id|
+      detailed = watched.map do |id|
         entry = entries[id]? || Invidious::Database::WatchHistory::Entry.new(id)
         if fallback = cached[id]?
           entry.title ||= fallback.title
@@ -220,7 +220,8 @@ module Invidious::Routes::API::V1::Authenticated
           entry.length_seconds ||= fallback.length_seconds
         end
         entry
-      end.to_json
+      end
+      return Invidious::JSONify::APIv1::ChannelAvatars.enrich_json(detailed.to_json)
     end
 
     return watched.to_json
@@ -340,7 +341,7 @@ module Invidious::Routes::API::V1::Authenticated
 
     videos, notifications = get_subscription_feed(user, max_results, page)
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "notifications" do
           json.array do
@@ -367,7 +368,7 @@ module Invidious::Routes::API::V1::Authenticated
 
     subscriptions = Invidious::Database::Channels.select(user.subscriptions)
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.array do
         subscriptions.each do |subscription|
           json.object do
@@ -386,7 +387,7 @@ module Invidious::Routes::API::V1::Authenticated
     page = (env.params.query["page"]?.try(&.to_i?) || 1).clamp(1, Int32::MAX)
     # Dedicated scope: query operators cannot switch to public/channel search.
     videos = Invidious::Search::Processors.subscriptions(env.params.query["q"]? || "", user, page)
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.array do
         videos.each &.to_json(locale, json)
       end
@@ -427,7 +428,7 @@ module Invidious::Routes::API::V1::Authenticated
       fields.merge!(Invidious::NativePlaylists.metadata(playlist, user.email))
       JSON::Any.new(fields)
     end
-    (created + Database::SavedPlaylists.list(user.email)).to_json
+    Invidious::JSONify::APIv1::ChannelAvatars.enrich_json((created + Database::SavedPlaylists.list(user.email)).to_json)
   end
 
   def self.create_playlist(env)

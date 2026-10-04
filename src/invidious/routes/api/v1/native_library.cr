@@ -19,7 +19,7 @@ module Invidious::Routes::API::V1::Authenticated
     end
     fields["isSaved"] = JSON::Any.new(true)
     Database::SavedPlaylists.save(user.email, fields)
-    fields.to_json
+    Invidious::JSONify::APIv1::ChannelAvatars.enrich_json(fields.to_json)
   end
 
   def self.unsave_external_playlist(env)

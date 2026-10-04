@@ -13,7 +13,7 @@ module Invidious::Routes::API::V1::Feeds
       return error_json(500, ex)
     end
 
-    videos = JSON.build do |json|
+    videos = Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.array do
         trending.each do |video|
           video.to_json(locale, json)
@@ -34,7 +34,7 @@ module Invidious::Routes::API::V1::Feeds
       haltf env, 403, error_message
     end
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.array do
         popular_videos.each do |video|
           video.to_json(locale, json)

@@ -100,6 +100,25 @@ def avatar_manager_fixture(theme = "modern-neon", thin = false)
 end
 
 check_channel_avatars
+
+# Exercise the native API enrichment against the real optional cache boundary.
+# The metadata spy above would detect any attempt to resolve a missing identity.
+def check_native_channel_avatars
+  cache = Invidious::Database::ChannelAvatars
+  cache.observe({"UCnativecached" => "https://yt3.ggpht.com/native=s48"})
+  calls = Invidious::Videos::Parser.avatar_metadata_calls
+  payload = %({"authorId":"UCnativedirect","authorThumbnails":[{"url":"https://yt3.ggpht.com/direct=s176"}],"videos":[{"authorId":"UCnativecached","videoId":"one"},{"authorId":"UCmissing","videoId":"two"}],"entries":[{"channel_id":"UCnativecached"}]})
+  response = JSON.parse(Invidious::JSONify::APIv1::ChannelAvatars.enrich_json(payload))
+  raise "Native supplied image was replaced" unless response["authorThumbnails"][0]["url"].as_s == "https://yt3.ggpht.com/direct=s176"
+  raise "Native cached image missing" unless response["videos"][0]["authorThumbnails"][0]["url"].as_s == "/ggpht/native=s88"
+  raise "Native history image missing" unless response["entries"][0]["authorThumbnails"][0]["url"].as_s == "/ggpht/native=s88"
+  raise "Native cache miss received an image" if response["videos"][1]["authorThumbnails"]?
+  raise "Native supplied image was not learned" unless cache.select(["UCnativedirect"])["UCnativedirect"] == "/ggpht/direct=s88"
+  raise "Native enrichment fetched metadata" unless Invidious::Videos::Parser.avatar_metadata_calls == calls
+  puts "Native response enrichment, cache learning and zero-added-metadata-request checks passed"
+end
+
+check_native_channel_avatars
 avatar_output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
 Invidious::Database::ChannelAvatars.observe({"UCcached" => "https://yt3.ggpht.com/cached=s88", "UCfixture" => "https://yt3.ggpht.com/history=s88"})
 {"modern-neon", "diary"}.each do |theme|

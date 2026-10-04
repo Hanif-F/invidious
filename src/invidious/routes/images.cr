@@ -1,7 +1,7 @@
 module Invidious::Routes::Images
   # Avatars, banners and other large image assets.
   def self.ggpht(env)
-    url = env.request.path.lchop("/ggpht")
+    url = env.request.resource.lchop("/ggpht")
 
     headers = HTTP::Headers.new
 

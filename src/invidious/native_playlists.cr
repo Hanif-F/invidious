@@ -13,7 +13,7 @@ module Invidious::NativePlaylists
 
   def metadata(playlist : InvidiousPlaylist | Playlist, email : String? = nil) : Hash(String, JSON::Any)
     owned = playlist.is_a?(InvidiousPlaylist) && playlist.id.starts_with?("IV") && playlist.author == email
-    JSON.parse({
+    fields = JSON.parse({
       "type" => playlist.is_a?(InvidiousPlaylist) ? "invidiousPlaylist" : "playlist",
       "playlistId" => playlist.id, "title" => playlist.title,
       "videoCount" => playlist.video_count, "privacy" => playlist.privacy.to_s.downcase,
@@ -24,6 +24,12 @@ module Invidious::NativePlaylists
       "isSaved" => email ? Database::SavedPlaylists.exists?(email, playlist.id) : false,
       "isMix" => false,
     }.to_json).as_h
+    if playlist.is_a?(Playlist)
+      if url = Invidious::ChannelAvatars.proxy_url(playlist.author_thumbnail)
+        fields["authorThumbnails"] = JSON.parse([{url: url, width: 88, height: 88}].to_json)
+      end
+    end
+    fields
   end
 
   def metadata(mix : Mix, seed : String) : Hash(String, JSON::Any)

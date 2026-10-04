@@ -40,6 +40,8 @@ Spectator.describe Invidious::ChannelAvatars do
       expect(described_class.proxy_url(url)).to eq("/ggpht/avatar=s88-c-k")
     end
     expect(described_class.proxy_url("https://yt3.ggpht.com/avatar?key=a&size=88")).to eq("/ggpht/avatar?key=a&size=88")
+    expect(described_class.proxy_url("https://yt3.ggpht.com/avatar=s48?key=s512&token=a%2Bb")).to eq("/ggpht/avatar=s88?key=s512&token=a%2Bb")
+    expect(described_class.proxy_url("https://yt3.ggpht.com/s176-c-k/avatar")).to eq("/ggpht/s88-c-k/avatar")
   end
 
   it "rejects missing, invalid and unrelated images without raising" do

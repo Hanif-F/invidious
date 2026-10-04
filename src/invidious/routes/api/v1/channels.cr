@@ -43,7 +43,7 @@ module Invidious::Routes::API::V1::Channels
       end
     end
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       # TODO: Refactor into `to_json` for InvidiousChannel
       json.object do
         json.field "author", channel.author
@@ -172,7 +172,7 @@ module Invidious::Routes::API::V1::Channels
       end
     end
 
-    return JSON.build do |json|
+    return Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "videos" do
           json.array do
@@ -218,7 +218,7 @@ module Invidious::Routes::API::V1::Channels
       end
     end
 
-    return JSON.build do |json|
+    return Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "videos" do
           json.array do
@@ -264,7 +264,7 @@ module Invidious::Routes::API::V1::Channels
       end
     end
 
-    return JSON.build do |json|
+    return Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "videos" do
           json.array do
@@ -294,7 +294,7 @@ module Invidious::Routes::API::V1::Channels
 
     items, next_continuation = fetch_channel_playlists(channel.ucid, channel.author, continuation, sort_by)
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "playlists" do
           json.array do
@@ -323,7 +323,7 @@ module Invidious::Routes::API::V1::Channels
 
     items, next_continuation = fetch_channel_podcasts(channel.ucid, channel.author, continuation)
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "playlists" do
           json.array do
@@ -352,7 +352,7 @@ module Invidious::Routes::API::V1::Channels
 
     items, next_continuation = fetch_channel_releases(channel.ucid, channel.author, continuation)
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "playlists" do
           json.array do
@@ -381,7 +381,7 @@ module Invidious::Routes::API::V1::Channels
 
     items, next_continuation = fetch_channel_courses(channel.ucid, channel.author, continuation)
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "playlists" do
           json.array do
@@ -492,7 +492,7 @@ module Invidious::Routes::API::V1::Channels
       return error_json(500, ex)
     end
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "relatedChannels" do
           json.array do
@@ -523,7 +523,7 @@ module Invidious::Routes::API::V1::Channels
       return error_json(400, ex)
     end
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.array do
         search_results.each do |item|
           item.to_json(locale, json)

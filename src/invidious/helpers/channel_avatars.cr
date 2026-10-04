@@ -51,7 +51,8 @@ module Invidious::ChannelAvatars
     end
 
     return nil if uri.path.empty? || uri.path == "/" || uri.path.includes?('\\')
-    "/ggpht#{uri.request_target.gsub(/=s\d+/, "=s88")}"
+    uri.path = uri.path.gsub(/=s\d+/, "=s88").gsub(/\/s\d+-/, "/s88-")
+    "/ggpht#{uri.request_target}"
   rescue URI::Error
     nil
   end

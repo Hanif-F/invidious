@@ -13,7 +13,7 @@ module Invidious::Routes::API::V1::Search
       return error_json(400, ex)
     end
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.array do
         search_results.each do |item|
           item.to_json(locale, json)
@@ -72,7 +72,7 @@ module Invidious::Routes::API::V1::Search
       return error_json(400, ex)
     end
 
-    JSON.build do |json|
+    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.object do
         json.field "results" do
           json.array do
