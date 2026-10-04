@@ -1,4 +1,5 @@
 require "./frontend/watched_indicator"
+require "./helpers/channel_avatars"
 
 struct PlaylistVideo
   include DB::Serializable
@@ -7,6 +8,8 @@ struct PlaylistVideo
   property id : String
   property author : String
   property ucid : String
+  @[DB::Field(ignore: true)]
+  property author_thumbnail : String? = nil
   property length_seconds : Int32
   property published : Time
   # Remote playlist responses may omit publication metadata; keep DB rows unchanged.
@@ -67,6 +70,10 @@ struct PlaylistVideo
       json.field "author", self.author
       json.field "authorId", self.ucid
       json.field "authorUrl", "/channel/#{self.ucid}"
+
+      if url = Invidious::ChannelAvatars.proxy_url(self.author_thumbnail)
+        json.field "authorThumbnails", [{url: url, width: 88, height: 88}]
+      end
 
       json.field "videoThumbnails" do
         Invidious::JSONify::APIv1.thumbnails(json, self.id)
@@ -557,6 +564,7 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
         index:          index || -1_i64,
       })
       video.published_known = !published.nil?
+      video.author_thumbnail = Invidious::ChannelAvatars.lockup_thumbnail(lockup_metadata_view_model, video.ucid)
       videos << video
     end
   rescue ex

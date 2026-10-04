@@ -1,4 +1,5 @@
 require "../helpers/serialized_yt_data"
+require "../helpers/channel_avatars"
 
 # This file contains helper methods to parse the Youtube API json data into
 # neat little packages we can use
@@ -661,8 +662,15 @@ private module Parsers
 
         metadata = item_contents.dig("metadata", "lockupMetadataViewModel")
         title = metadata.dig("title", "content").as_s
+        author, author_id = Invidious::ChannelAvatars.lockup_author(metadata)
+        author ||= author_fallback.name
+        author_id ||= author_fallback.id
         # Contains the views of the video and the published time of the video.
-        metadata_parts = metadata.dig("metadata", "contentMetadataViewModel", "metadataRows", 0, "metadataParts").try &.as_a
+        metadata_parts = metadata.dig("metadata", "contentMetadataViewModel", "metadataRows").as_a.flat_map do |row|
+          row["metadataParts"]?.try(&.as_a) || [] of JSON::Any
+        end
+        # Linked author names can contain "ago" (e.g. ImagineDragons).
+        metadata_parts.reject! { |item| item.dig?("text", "commandRuns") }
 
         view_count_text = metadata_parts.try &.find { |item| item["icon"]?.nil? && item.dig?("text", "content").try &.as_s.includes?("views") }
           .try &.dig("text", "content").as_s
@@ -678,15 +686,15 @@ private module Parsers
         return SearchVideo.new({
           title:              title,
           id:                 video_id,
-          author:             author_fallback.name,
-          ucid:               author_fallback.id,
+          author:             author,
+          ucid:               author_id,
           published:          published,
           views:              view_count,
           description_html:   "",
           length_seconds:     length_seconds || 0,
           premiere_timestamp: Time.unix(0),
           author_verified:    false,
-          author_thumbnail:   nil,
+          author_thumbnail:   Invidious::ChannelAvatars.lockup_thumbnail(metadata, author_id),
           badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
         })
         # If it's a playlist, it's content_type would be "LOCKUP_CONTENT_TYPE_PLAYLIST"

@@ -32,6 +32,12 @@ Channel avatars reuse URLs in existing responses and the persistent `channel_ava
 cache (migration 21 for existing installations). Cache misses use an inline placeholder;
 there are no extra channel lookups, background fetches, or age-triggered refreshes.
 Avatars are learned during normal browsing and fetched video/channel metadata requests.
+Modern video and playlist cards also extract linked channel avatars from the same
+response. The reduced `avatar_lockups.json` fixture was captured on 2026-10-05 from
+the existing playlist continuation request for `PLNoVVZkH7--4P12wo6pVV10ycmBCMct6l`.
+The response contained 49 video cards with avatar fields; the original playlist
+parser ignored them. Tests preserve two creators' actual identity and avatar
+structures, while removing tracking, menus and playback data.
 Thin mode omits them, and a channel's own video listings do not repeat its avatar.
 Placeholders use the first Unicode letter cluster in the channel name, uppercased
 when it remains one cluster, or `#` for missing names and nonletter prefixes.

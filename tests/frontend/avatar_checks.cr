@@ -1,6 +1,15 @@
 # Runs inside the production-template fixture harness with an in-memory cache.
 private record AvatarFixtureSource, ucid : String, author_thumbnail : String?
 
+module YoutubeAPI
+  class_getter avatar_listing_calls = 0
+
+  def _post_json(endpoint : String, data : Hash, client_config : ClientConfig | Nil) : Hash(String, JSON::Any)
+    @@avatar_listing_calls += 1
+    raise "Avatar fixtures must never fetch upstream metadata"
+  end
+end
+
 module Invidious::Videos::Parser
   class_getter avatar_metadata_calls = 0
 
@@ -119,9 +128,70 @@ def check_native_channel_avatars
 end
 
 check_native_channel_avatars
+
+def real_avatar_items
+  items = JSON.parse(File.read("spec/invidious/frontend/fixtures/avatar_lockups.json")).as_a
+  response = JSON.parse({onResponseReceivedActions: [{appendContinuationItemsAction: {continuationItems: items}}]}.to_json).as_h
+  extract_playlist_videos("PLNoVVZkH7--4P12wo6pVV10ycmBCMct6l", response).select(PlaylistVideo)
+end
+
+def check_real_avatar_extraction
+  videos = real_avatar_items
+  ids = videos.map(&.ucid)
+  cache = Invidious::Database::ChannelAvatars
+  raise "Real fixture channels already cached" unless cache.select(ids).empty?
+  expected = Invidious::ChannelAvatars.from_items(videos)
+  raise "Real playlist avatars not recovered" unless expected.size == 2
+
+  # Native serialization alone must learn the avatar for other pages.
+  response = Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
+    json.array { videos.each &.to_json(json) }
+  end
+  raise "Native response lost real avatars" unless JSON.parse(response).as_a.all? { |video| video["authorThumbnails"][0]["url"].as_s == expected[video["authorId"].as_s] }
+  raise "Native serialization lost playlist positions" unless JSON.parse(response).as_a.map(&.["index"].as_i) == [0, 1]
+  raise "Real avatars not cached" unless cache.select(ids) == expected
+  raise "Avatar changed playlist database fields" if PlaylistVideo.type_array.includes?("author_thumbnail")
+  raise "Avatar changed playlist database values" if videos.first.to_a.includes?(videos.first.author_thumbnail)
+
+  env = fixture_env("/feed/history")
+  Invidious::Frontend::ChannelAvatars.prepare_ids(env, ids)
+  ids.each do |id|
+    raise "Another page cannot reuse real avatar" unless Invidious::Frontend::ChannelAvatars.render(env, id).includes?(expected[id])
+  end
+  raise "Real avatar extraction fetched metadata" unless YoutubeAPI.avatar_listing_calls == 0
+
+  # Bad optional images or conflicting identities cannot discard playlist entries.
+  [JSON.parse("null"), JSON.parse("42"), JSON.parse(%({"decoratedAvatarViewModel":{"avatar":"bad"}}))].each do |image|
+    item = JSON.parse(File.read("spec/invidious/frontend/fixtures/avatar_lockups.json")).as_a.first
+    item["lockupViewModel"]["metadata"]["lockupMetadataViewModel"].as_h["image"] = image
+    response = JSON.parse({onResponseReceivedActions: [{appendContinuationItemsAction: {continuationItems: [item]}}]}.to_json).as_h
+    video = extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo)
+    raise "Malformed avatar lost playlist identity" unless video.ucid == ids.first && video.index == 0
+    raise "Malformed playlist avatar accepted" unless video.author_thumbnail.nil?
+  end
+  item = JSON.parse(File.read("spec/invidious/frontend/fixtures/avatar_lockups.json")).as_a.first
+  endpoint = item["lockupViewModel"]["metadata"]["lockupMetadataViewModel"].dig("image", "decoratedAvatarViewModel", "rendererContext", "commandContext", "onTap", "innertubeCommand", "browseEndpoint")
+  endpoint.as_h["browseId"] = JSON::Any.new("UCother")
+  response = JSON.parse({onResponseReceivedActions: [{appendContinuationItemsAction: {continuationItems: [item]}}]}.to_json).as_h
+  raise "Conflicting playlist avatar accepted" unless extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo).author_thumbnail.nil?
+  raise "Invalid avatar extraction fetched metadata" unless YoutubeAPI.avatar_listing_calls == 0
+  puts "Real response avatar extraction, native serialization, cache reuse and zero-metadata-request checks passed"
+end
+
+def real_avatar_fixture(theme)
+  env = fixture_env("/playlist", visual_theme: theme)
+  locale = env.get("preferences").as(Preferences).locale
+  items = real_avatar_items
+  navbar_search = true
+  page_nav_html = ""
+  render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
+end
+
+check_real_avatar_extraction
 avatar_output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
 Invidious::Database::ChannelAvatars.observe({"UCcached" => "https://yt3.ggpht.com/cached=s88", "UCfixture" => "https://yt3.ggpht.com/history=s88"})
 {"modern-neon", "diary"}.each do |theme|
+  File.write("#{avatar_output}/avatars-real-#{theme}.html", real_avatar_fixture(theme))
   File.write("#{avatar_output}/avatars-#{theme}.html", avatar_cards_fixture(theme))
   File.write("#{avatar_output}/avatars-search-#{theme}.html", avatar_cards_fixture(theme, "/search"))
   File.write("#{avatar_output}/avatars-playlist-#{theme}.html", avatar_cards_fixture(theme, "/playlist"))

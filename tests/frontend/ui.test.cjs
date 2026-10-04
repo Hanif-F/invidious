@@ -4366,6 +4366,24 @@ async function assertAvatarCardLayout(page) {
 }
 
 for (const engine of engines) {
+    test(`${engine}: channel avatars recovered from a real playlist response render without metadata lookups`, async () => {
+        const ids = ['UCfLdIEPs1tYj4ieEdJnyNyw', 'UCwppdrjsBPAZg5_cUwQjfMQ'];
+        for (const theme of ['modern-neon', 'diary']) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-real-${theme}`, width: 390});
+            const links = page.locator('.channel-name-link');
+            assert.equal(await links.count(), 2);
+            assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['Lauv', 'Charlie Puth']);
+            for (const [index, id] of ids.entries()) {
+                assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
+                assert.match(await links.nth(index).locator('img').getAttribute('src'), /^\/ggpht\/.+=s88/);
+            }
+            await assertAvatarCardLayout(page);
+            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
     test(`${engine}: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles`, async () => {
         for (const theme of ['modern-neon', 'diary']) {
             for (const width of [320, 390, 768, 1440]) {

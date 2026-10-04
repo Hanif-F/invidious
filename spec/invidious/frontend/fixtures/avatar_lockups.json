@@ -1,0 +1,250 @@
+[
+  {
+    "lockupViewModel": {
+      "contentId": "MsSIVZlqC9w",
+      "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+      "contentImage": {
+        "thumbnailViewModel": {
+          "image": {
+            "sources": [
+              {
+                "url": "https://i.ytimg.com/vi/MsSIVZlqC9w/hqdefault.jpg?sqp=-oaymwEbCKgBEF5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLDJVOL5Q6UoxgMsaYmUeQNqfibcfA",
+                "width": 168,
+                "height": 94
+              }
+            ]
+          },
+          "overlays": [
+            {
+              "thumbnailBottomOverlayViewModel": {
+                "badges": [
+                  {
+                    "thumbnailBadgeViewModel": {
+                      "text": "3:18"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "lockupMetadataViewModel": {
+          "title": {
+            "content": "I Like Me Better"
+          },
+          "image": {
+            "decoratedAvatarViewModel": {
+              "avatar": {
+                "avatarViewModel": {
+                  "image": {
+                    "sources": [
+                      {
+                        "url": "https://yt3.ggpht.com/aH-KI73mjthezA3_J76iwJKAIIdH06Z3LIpKSYdi1_lbtzR46-8YkTGURuB94tUaxAY-iP2V=s88-c-k-c0x00ffffff-no-rj",
+                        "width": 68,
+                        "height": 68
+                      }
+                    ]
+                  },
+                  "avatarImageSize": "AVATAR_SIZE_M"
+                }
+              },
+              "rendererContext": {
+                "commandContext": {
+                  "onTap": {
+                    "innertubeCommand": {
+                      "browseEndpoint": {
+                        "browseId": "UCfLdIEPs1tYj4ieEdJnyNyw"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "metadata": {
+            "contentMetadataViewModel": {
+              "metadataRows": [
+                {
+                  "metadataParts": [
+                    {
+                      "text": {
+                        "content": "Lauv",
+                        "commandRuns": [
+                          {
+                            "startIndex": 0,
+                            "length": 4,
+                            "onTap": {
+                              "innertubeCommand": {
+                                "browseEndpoint": {
+                                  "browseId": "UCfLdIEPs1tYj4ieEdJnyNyw",
+                                  "canonicalBaseUrl": "/channel/UCfLdIEPs1tYj4ieEdJnyNyw"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "metadataParts": [
+                    {
+                      "text": {
+                        "content": "106M views"
+                      }
+                    },
+                    {
+                      "text": {
+                        "content": "2 years ago"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "rendererContext": {
+        "commandContext": {
+          "onTap": {
+            "innertubeCommand": {
+              "watchEndpoint": {
+                "videoId": "MsSIVZlqC9w",
+                "playlistId": "PLNoVVZkH7--4P12wo6pVV10ycmBCMct6l",
+                "index": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "lockupViewModel": {
+      "contentId": "ffqliB42Nh4",
+      "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+      "contentImage": {
+        "thumbnailViewModel": {
+          "image": {
+            "sources": [
+              {
+                "url": "https://i.ytimg.com/vi/ffqliB42Nh4/hqdefault.jpg?sqp=-oaymwEbCKgBEF5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLAOZ_I0r-N0rlVc0MKmO30GDMlGJg",
+                "width": 168,
+                "height": 94
+              }
+            ]
+          },
+          "overlays": [
+            {
+              "thumbnailBottomOverlayViewModel": {
+                "badges": [
+                  {
+                    "thumbnailBadgeViewModel": {
+                      "text": "3:38"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "lockupMetadataViewModel": {
+          "title": {
+            "content": "We Don't Talk Anymore (feat. Selena Gomez)"
+          },
+          "image": {
+            "decoratedAvatarViewModel": {
+              "avatar": {
+                "avatarViewModel": {
+                  "image": {
+                    "sources": [
+                      {
+                        "url": "https://yt3.ggpht.com/e2JmK7jFHAAm-11PF157N2nIy9pmnOiC0p14goxtAZiG7yHSENIcxvk54Oq2i1L-snCF_DhMlA=s88-c-k-c0x00ffffff-no-rj",
+                        "width": 68,
+                        "height": 68
+                      }
+                    ]
+                  },
+                  "avatarImageSize": "AVATAR_SIZE_M"
+                }
+              },
+              "rendererContext": {
+                "commandContext": {
+                  "onTap": {
+                    "innertubeCommand": {
+                      "browseEndpoint": {
+                        "browseId": "UCwppdrjsBPAZg5_cUwQjfMQ"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "metadata": {
+            "contentMetadataViewModel": {
+              "metadataRows": [
+                {
+                  "metadataParts": [
+                    {
+                      "text": {
+                        "content": "Charlie Puth",
+                        "commandRuns": [
+                          {
+                            "startIndex": 0,
+                            "length": 12,
+                            "onTap": {
+                              "innertubeCommand": {
+                                "browseEndpoint": {
+                                  "browseId": "UCwppdrjsBPAZg5_cUwQjfMQ",
+                                  "canonicalBaseUrl": "/channel/UCwppdrjsBPAZg5_cUwQjfMQ"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "metadataParts": [
+                    {
+                      "text": {
+                        "content": "386M views"
+                      }
+                    },
+                    {
+                      "text": {
+                        "content": "9 years ago"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "rendererContext": {
+        "commandContext": {
+          "onTap": {
+            "innertubeCommand": {
+              "watchEndpoint": {
+                "videoId": "ffqliB42Nh4",
+                "playlistId": "PLNoVVZkH7--4P12wo6pVV10ycmBCMct6l",
+                "index": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+]
