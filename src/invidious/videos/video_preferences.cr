@@ -15,6 +15,7 @@ module Invidious::Videos
     property local : Bool
     property preferred_captions : Array(String)
     property player_style : String
+    property video_codec : String
     property quality : String
     property quality_dash : String
     property raw : Bool
@@ -42,6 +43,7 @@ module Invidious::Videos
     preferred_captions = query["subtitles"]?.try &.split(",").map(&.downcase)
     quality = query["quality"]?
     quality_dash = query["quality_dash"]?
+    video_codec = query["video_codec"]?
     region = query["region"]?
     related_videos = query["related_videos"]?.try { |q| (q == "true" || q == "1").to_unsafe }
     speed = query["speed"]?.try &.rchop("x").to_f?
@@ -64,6 +66,7 @@ module Invidious::Videos
       preferred_captions ||= preferences.captions
       quality ||= preferences.quality
       quality_dash ||= preferences.quality_dash
+      video_codec ||= preferences.video_codec
       related_videos ||= preferences.related_videos.to_unsafe
       speed ||= preferences.speed
       video_loop ||= preferences.video_loop.to_unsafe
@@ -84,6 +87,7 @@ module Invidious::Videos
     preferred_captions ||= CONFIG.default_user_preferences.captions
     quality ||= CONFIG.default_user_preferences.quality
     quality_dash ||= CONFIG.default_user_preferences.quality_dash
+    video_codec = Preferences::VideoCodec.normalize(video_codec || CONFIG.default_user_preferences.video_codec)
     related_videos ||= CONFIG.default_user_preferences.related_videos.to_unsafe
     speed ||= CONFIG.default_user_preferences.speed
     video_loop ||= CONFIG.default_user_preferences.video_loop.to_unsafe
@@ -144,6 +148,7 @@ module Invidious::Videos
       preferred_captions: preferred_captions,
       quality:            quality,
       quality_dash:       quality_dash,
+      video_codec:        video_codec,
       raw:                raw,
       region:             region,
       related_videos:     related_videos,

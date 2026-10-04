@@ -64,6 +64,9 @@ if (CONFIG.videojs.max_goal_buffer_length) {
 }
 
 var player = videojs('player', options);
+if (!video_data.params.listen && video_data.params.quality === 'dash') {
+    InvidiousStreamMenus.initializeQualitySelection(player, function () { return video_data.params; });
+}
 if (video_data.params.controls) player.addClass('vjs-buffer-refreshable');
 
 // Setting a source again disposes Video.js's previous source handler and its
@@ -90,12 +93,7 @@ player.refreshBuffer = function () {
     var volume = player.volume();
     var muted = player.muted();
     var oldLevels = Array.from(player.qualityLevels ? player.qualityLevels() : []);
-    var quality = oldLevels.length ? {
-        auto: oldLevels.every(function (level) { return level.enabled; }),
-        selected: oldLevels.filter(function (level) { return level.enabled; }).map(function (level) {
-            return {id: level.id, height: level.height, bitrate: level.bitrate};
-        })
-    } : null;
+    var quality = oldLevels.length ? InvidiousStreamMenus.qualitySelection(player) : null;
     var audio = Array.from(player.audioTracks()).find(function (track) { return track.enabled; });
     var selectedAudio = audio && {id: audio.id, label: audio.label, language: audio.language};
     var caption = Array.from(player.textTracks()).find(function (track) {
@@ -117,22 +115,10 @@ player.refreshBuffer = function () {
     }
 
     function restoreQuality() {
-        if (!quality || !levels || !levels.length) return;
-        var available = Array.from(levels);
-        if (quality.auto) {
-            available.forEach(function (level) { level.enabled = true; });
-            qualityRestored = true;
-            return;
-        }
-        var matching = available.filter(function (level) {
-            return quality.selected.some(function (wanted) {
-                return wanted.id != null && level.id === wanted.id ||
-                    level.height === wanted.height && level.bitrate === wanted.bitrate;
-            });
-        });
-        if (!matching.length) return;
-        available.forEach(function (level) { level.enabled = matching.includes(level); });
-        qualityRestored = true;
+        // Once restored, the shared selection state handles later renditions.
+        // Metadata arriving late must not overwrite a newer manual/Auto choice.
+        if (qualityRestored || !quality || !levels || !levels.length) return;
+        qualityRestored = InvidiousStreamMenus.restoreQualitySelection(player, quality);
     }
 
     function restoreAudio() {
@@ -601,31 +587,6 @@ if (video_data.params.autoplay) {
             }
         });
     });
-}
-
-if (!video_data.params.listen && video_data.params.quality === 'dash') {
-    if (video_data.params.quality_dash !== 'auto') {
-        player.ready(function () {
-            player.on('loadedmetadata', function () {
-                const qualityLevels = InvidiousStreamMenus.rankedQualityLevels(player);
-                if (!qualityLevels.length) return;
-                let targetQualityLevel = qualityLevels[0];
-                switch (video_data.params.quality_dash) {
-                    case 'best':
-                        break;
-                    case 'worst':
-                        targetQualityLevel = qualityLevels[qualityLevels.length - 1];
-                        break;
-                    default:
-                        const targetHeight = parseInt(video_data.params.quality_dash);
-                        targetQualityLevel = qualityLevels.find(function (entry) { return entry.height <= targetHeight; }) || qualityLevels[qualityLevels.length - 1];
-                }
-                qualityLevels.forEach(function (entry) {
-                    entry.level.enabled = (entry === targetQualityLevel);
-                });
-            });
-        });
-    }
 }
 
 player.vttThumbnails({

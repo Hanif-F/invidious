@@ -75,6 +75,9 @@ async function pageFor(engine, options = {}) {
                     return start + JSON.stringify({...original, ...options.playerData}).replace(/</g, '\\u003c') + end;
                 });
             }
+            if (options.dashManifest) {
+                body = body.replace(/<source\b[^>]*>/g, '').replace('</video>', '<source src="/api/manifest/dash/id/fixture?local=true" type="application/dash+xml"></video>');
+            }
             if (options.dearrowOriginal) body = body.replace(/(<[^>]+data-dearrow-id=[^>]+>)[^<]*(<\/)/g, (_, start, end) => start + options.dearrowOriginal + end);
             if (options.extraQuality) body = body.replace('</video>', '<source src="/latest_version?id=2isYuQZMbdU&itag=44" type="video/webm" label="high"></video>');
             if (options.sponsorblock) body = body.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => start + JSON.stringify({...JSON.parse(data), sponsorblock: {...JSON.parse(data).sponsorblock, ...options.sponsorblock}}).replace(/</g, '\\u003c') + end);
@@ -125,6 +128,14 @@ async function pageFor(engine, options = {}) {
             return route.fulfill({contentType: 'application/json', body: JSON.stringify({messages, removedIds: [], continuation: second ? null : 'next'})});
         }
         if (url.pathname === '/api/v1/auth/csrf') return route.fulfill({contentType: 'application/json', body: '{"csrfToken":"fixture-token"}'});
+        if (options.dashManifest && url.pathname.startsWith('/api/manifest/dash/')) {
+            return route.fulfill({contentType:'application/dash+xml', body:options.dashManifest});
+        }
+        if (options.dashManifest && url.pathname.startsWith('/codec-media-')) {
+            // Initial rendition choice precedes decoding. Keep media local and
+            // fail immediately rather than requesting upstream video bytes.
+            return route.abort('blockedbyclient');
+        }
         if (url.pathname === '/api/v1/auth/chat_preferences' || url.pathname.startsWith('/api/v1/auth/chat_timing/')) {
             chatWrites.push({path: url.pathname, method: route.request().method(), body: JSON.parse(route.request().postData() || '{}')});
             return route.fulfill({contentType: 'application/json', body: '{}'});
@@ -1511,6 +1522,7 @@ for (const engine of engines) {
                 levels.addQualityLevel({id: String(height), height, bitrate: height * 1000,
                     enabled: value => value === undefined ? enabled : (enabled = value)});
             });
+            InvidiousStreamMenus.selectManualQuality(player, Array.from(levels).find(level => level.height === 720));
             player.audioTracks().addTrack(new videojs.AudioTrack({id: 'en', kind: 'main', label: 'English', language: 'en'}));
             player.audioTracks().addTrack(new videojs.AudioTrack({id: 'id', kind: 'alternative', label: 'Indonesian', language: 'id', enabled: true}));
             player.one('loadstart', () => {
@@ -3221,16 +3233,133 @@ test('DASH player source keeps the complete rendition manifest', () => {
     assert.match(playerTemplate, /\/api\/manifest\/dash\/id\/.*\?local=true/);
 });
 
+async function waitForCodecPlayer(page, condition) {
+    try {
+        await page.waitForFunction(condition, null, {timeout:10000});
+    } catch (error) {
+        const state = await page.evaluate(() => ({readyState:player.readyState(), time:player.currentTime(), paused:player.paused(),
+            error:player.error(), preference:video_data.params, source:player.currentSource(),
+            levels:Array.from(player.qualityLevels()).map(level => ({id:level.id, enabled:level.enabled})),
+            selection:InvidiousStreamMenus.qualitySelection(player),
+            codecs:['avc1.42E01E','av01.0.04M.08'].map(codec => [codec, MediaSource.isTypeSupported(`video/mp4; codecs="${codec}"`)])}));
+        throw new Error(JSON.stringify(state), {cause:error});
+    }
+}
+
+for (const engine of engines) {
+    test(`${engine}: preferred video codec setting precedes quality and saves without JavaScript`, async () => {
+        const {page, context} = await pageFor(engine, {fixture:'preferences', width:390, javascript:false});
+        const codec = page.getByLabel('Preferred video codec:', {exact:true});
+        assert.deepEqual(await codec.locator('option').allTextContents(), ['Auto', 'AV1', 'H.264']);
+        assert.equal(await codec.inputValue(), 'auto');
+        assert.equal(await codec.evaluate(el => Boolean(el.compareDocumentPosition(document.getElementById('quality')) & Node.DOCUMENT_POSITION_FOLLOWING)), true);
+        assert.match(await page.locator('#video_codec_help').textContent(), /DASH playback/);
+        await codec.focus();
+        assert.equal(await codec.evaluate(el => document.activeElement === el), true);
+        await codec.selectOption('av1');
+        await codec.scrollIntoViewIfNeeded();
+        await page.screenshot({path:path.join(artifacts, `${engine}-preferred-codec-setting.png`)});
+        const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
+        await page.getByRole('button', {name:'Save preferences', exact:true}).click();
+        assert.equal(new URLSearchParams((await posted).postData()).get('video_codec'), 'av1');
+        await context.close();
+    });
+
+    test(`${engine}: preferred codec reaches the initial DASH rendition selector on watch and embed`, async () => {
+        const formats = [
+            {itag:'h-1080', height:1080, fps:30, bitrate:200000, mimeType:'video/mp4; codecs="avc1.42E01E"'},
+            {itag:'av-1080', height:1080, fps:30, bitrate:100000, mimeType:'video/mp4; codecs="av01.0.04M.08"'},
+            {itag:'av-720', height:720, fps:30, bitrate:50000, mimeType:'video/mp4; codecs="av01.0.04M.08"'}
+        ];
+        const manifest = `<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" type="static" mediaPresentationDuration="PT4S" minBufferTime="PT1S">
+            <Period><AdaptationSet mimeType="video/mp4" contentType="video">
+                <SegmentTemplate timescale="1" duration="1" startNumber="1" initialization="/codec-media-$RepresentationID$-init.mp4" media="/codec-media-$RepresentationID$-$Number$.m4s"/>
+                ${formats.map(format => `<Representation id="${format.itag}" codecs="${format.mimeType.match(/"([^"]+)"/)[1]}" bandwidth="${format.bitrate}" width="${format.height * 16 / 9}" height="${format.height}" frameRate="30"/>`).join('')}
+            </AdaptationSet></Period></MPD>`;
+        const unsupportedManifest = manifest.replaceAll('av01.0.04M.08', 'av01.0.99M.08');
+        for (const [route, codec, quality, expected, overriddenManifest] of [
+            ['watch?v=2isYuQZMbdU','av1','auto','av-'], ['embed/2isYuQZMbdU','h264','auto','h-1080'],
+            ['watch?v=2isYuQZMbdU','h264','720p','av-720'],
+            ['watch?v=2isYuQZMbdU','av1','auto','h-1080',unsupportedManifest]
+        ]) {
+            const {page, context, errors, requests} = await pageFor(engine, {route, realPlayer:true, dashManifest:overriddenManifest || manifest,
+                videoData:{params:{quality:'dash', quality_dash:quality, video_codec:codec}}, playerData:{stats_formats:formats}});
+            if (overriddenManifest) {
+                assert.equal(await page.evaluate(() => MediaSource.isTypeSupported('video/mp4; codecs="av01.0.99M.08"')), false);
+            }
+            await page.evaluate(() => { player.muted(true); player.play().catch(() => {}); });
+            await waitForCodecPlayer(page, () => player.tech({IWillNotUseThisInPlugins:true}).vhs?.masterPlaylistController_?.initialMedia_);
+            const initial = await page.evaluate(() => player.tech({IWillNotUseThisInPlugins:true}).vhs.masterPlaylistController_.initialMedia_.attributes.NAME);
+            if (expected === 'av-') assert.match(initial, /^av-/);
+            else assert.equal(initial, expected);
+            await page.waitForFunction(() => player.qualityLevels().length > 0);
+            const firstMedia = requests.find(url => url.startsWith('/codec-media-'));
+            if (firstMedia) assert.ok(firstMedia.startsWith(`/codec-media-${expected}`));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: preferred codec Auto and manual selections survive buffer refresh on mobile`, async () => {
+        const formats = [
+            {itag:'av', height:720, fps:30, bitrate:1000000, mimeType:'video/mp4; codecs="av01"'},
+            {itag:'h', height:720, fps:30, bitrate:2000000, mimeType:'video/mp4; codecs="avc1"'}
+        ];
+        const {page, context, errors} = await pageFor(engine, {fixture:'watch-single', realPlayer:true, touch:true, width:320, height:700,
+            videoData:{params:{quality:'dash', quality_dash:'auto', video_codec:'av1'}}, playerData:{stats_formats:formats}});
+        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.waitForFunction(() => player.currentTime() > .1);
+        await page.evaluate(() => {
+            const levels = player.qualityLevels();
+            function add() {
+                ['av','h'].forEach((id, index) => {
+                    let enabled = true;
+                    levels.addQualityLevel({id, height:720, bandwidth:(index + 1) * 1000000,
+                        enabled: value => value === undefined ? enabled : (enabled = value)});
+                });
+            }
+            window.recreateCodecLevels = () => player.one('loadstart', () => {
+                Array.from(levels).forEach(level => levels.removeQualityLevel(level)); add();
+            });
+            add(); player.hasStarted(true); player.userActive(true);
+        });
+        await page.locator('.vjs-mobile-settings').tap();
+        const qualityRow = page.locator('.mobile-player-settings .mobile-setting-row').filter({hasText:'Quality'});
+        assert.equal(await qualityRow.getAttribute('aria-label'), 'Quality, Auto');
+        await qualityRow.tap();
+        assert.equal(await page.locator('.mobile-player-settings').getByRole('button', {name:'Auto', exact:true}).getAttribute('aria-pressed'), 'true');
+        await page.locator('.mobile-player-settings').getByRole('button', {name:'720p30 · H.264, 2 Mbps', exact:true}).tap();
+        await page.locator('.mobile-player-settings').getByRole('button', {name:'Close', exact:true}).tap();
+        await page.evaluate(() => { recreateCodecLevels(); player.refreshBuffer(); });
+        await waitForCodecPlayer(page, () => player.readyState() >= 1 && player.qualityLevels().length === 2 &&
+            Array.from(player.qualityLevels()).find(level => level.id === 'h').enabled && !Array.from(player.qualityLevels()).find(level => level.id === 'av').enabled);
+        assert.equal(await page.evaluate(() => InvidiousStreamMenus.selectedQualityText(player)), '720p30 · H.264 · 2 Mbps');
+        assert.equal(await page.evaluate(() => {
+            InvidiousStreamMenus.selectAutoQuality(player);
+            // A late metadata notification from the previous refresh must not
+            // restore its manual snapshot over the user's newer Auto choice.
+            player.trigger('loadedmetadata');
+            return InvidiousStreamMenus.isAutoQuality(player);
+        }), true);
+        await page.evaluate(() => { recreateCodecLevels(); player.refreshBuffer(); });
+        await waitForCodecPlayer(page, () => player.readyState() >= 1 && player.qualityLevels().length === 2 &&
+            Array.from(player.qualityLevels()).find(level => level.id === 'av').enabled && !Array.from(player.qualityLevels()).find(level => level.id === 'h').enabled);
+        assert.equal(await page.evaluate(() => InvidiousStreamMenus.selectedQualityText(player)), 'Auto');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
 for (const engine of engines) {
     test(`${engine}: rich stream menus rank video and audio variants consistently`, async () => {
         const videoFormats = [
-            {itag:'v8', height:1080, fps:30, bitrate:8000000, contentLength:'800000000'},
-            {itag:'v6', height:1080, fps:30, bitrate:6000000, contentLength:'600000000'},
-            {itag:'v5', height:1080, fps:30, bitrate:5000000, contentLength:'500000000'},
-            {itag:'v3', height:1080, fps:30, bitrate:3000000, contentLength:'300000000'},
-            {itag:'v1', height:1080, fps:30, bitrate:1000000, contentLength:'100000000'},
-            {itag:'v60', height:720, fps:60, bitrate:4000000, contentLength:'350000000'},
-            {itag:'v30', height:720, fps:30, bitrate:2000000}
+            {itag:'v8', height:1080, fps:30, bitrate:8000000, contentLength:'800000000', mimeType:'video/mp4; codecs="avc1.640028"'},
+            {itag:'v6', height:1080, fps:30, bitrate:6000000, contentLength:'600000000', mimeType:'video/mp4; codecs="avc3.640028"'},
+            {itag:'v5', height:1080, fps:30, bitrate:5000000, contentLength:'500000000', mimeType:'video/mp4; codecs="av01.0.08M.08"'},
+            {itag:'v3', height:1080, fps:30, bitrate:3000000, contentLength:'300000000', mimeType:'video/mp4; codecs="av01.0.08M.10"'},
+            {itag:'v1', height:1080, fps:30, bitrate:1000000, contentLength:'100000000', mimeType:'video/mp4; codecs="av01.0.08M.08"'},
+            {itag:'v60', height:720, fps:60, bitrate:4000000, contentLength:'350000000', mimeType:'video/mp4; codecs="avc1.640028"'},
+            {itag:'v30', height:720, fps:30, bitrate:2000000, mimeType:'video/webm; codecs="vp09.00.31.08"'}
         ];
         const audioFormats = [
             {itag:'oa-h', bitrate:128000, contentLength:'12800000', audioTrack:{id:'en.4', displayName:'English original', audioIsDefault:true}},
@@ -3314,8 +3443,9 @@ for (const engine of engines) {
             };
         });
         assert.deepEqual(desktopResult.quality, [
-            ['Auto',''], ['1080p30 High Bitrate','800 MB · 8 Mbps'], ['1080p30 Medium Bitrate','500 MB · 5 Mbps'],
-            ['1080p30 Low Bitrate','100 MB · 1 Mbps'], ['720p60','350 MB · 4 Mbps'], ['720p30','2 Mbps']
+            ['Auto',''], ['1080p30 · H.264','800 MB · 8 Mbps'], ['1080p30 · H.264','600 MB · 6 Mbps'],
+            ['1080p30 · AV1','500 MB · 5 Mbps'], ['1080p30 · AV1','100 MB · 1 Mbps'],
+            ['720p60 · H.264','350 MB · 4 Mbps'], ['720p30 · VP9','2 Mbps']
         ]);
         assert.deepEqual(desktopResult.desktopQuality, desktopResult.quality.map(option => option[0]));
         assert.deepEqual(desktopResult.rankedQuality, ['2-','6-','5-','0-','3-','1-','4-']);
@@ -3359,8 +3489,11 @@ for (const engine of engines) {
         assert.ok(desktopResult.spacerOrder < desktopResult.controlOrders[1]);
         assert.ok(desktopResult.controlPositions[1] < desktopResult.controlPositions[2]);
         assert.ok(desktopResult.controlPositions[2] < desktopResult.controlPositions[3]);
-        await desktop.page.evaluate(() => InvidiousStreamMenus.qualityOptions(player)[2].select());
-        assert.equal(await desktop.page.evaluate(() => InvidiousStreamMenus.selectedText(InvidiousStreamMenus.qualityOptions(player))), '1080p30 Medium Bitrate');
+        await desktop.page.locator('.vjs-rich-quality').getByRole('button').click();
+        await desktop.page.screenshot({path:path.join(artifacts, `${engine}-codec-quality-desktop.png`)});
+        await desktop.page.locator('.vjs-rich-quality').getByRole('menuitemradio', {name:'1080p30 · AV1, 500 MB · 5 Mbps', exact:true}).click();
+        assert.equal(await desktop.page.evaluate(() => InvidiousStreamMenus.selectedText(InvidiousStreamMenus.qualityOptions(player))), '1080p30 · AV1');
+        assert.equal(await desktop.page.evaluate(() => InvidiousStreamMenus.selectedQualityText(player)), '1080p30 · AV1 · 5 Mbps');
         assert.deepEqual(await desktop.page.evaluate(() => Array.from(player.qualityLevels()).map(level => level.enabled)), [false,false,false,false,false,true,false]);
         await desktop.page.evaluate(() => InvidiousStreamMenus.qualityOptions(player)[0].select());
         assert.equal(await desktop.page.evaluate(() => Array.from(player.qualityLevels()).every(level => level.enabled)), true);
@@ -3376,16 +3509,42 @@ for (const engine of engines) {
 
         const mobile = await pageFor(engine, {realPlayer:true, touch:true, width:320, height:700, videoData:{params:{quality:'dash'}}, playerData:{stats_formats:videoFormats.concat(audioFormats)}});
         await setup(mobile.page);
-        await mobile.page.evaluate(() => { player.hasStarted(true); player.userActive(true); });
+        await mobile.page.evaluate(() => {
+            player.hasStarted(true); player.userActive(true);
+            Array.from(player.qualityLevels()).forEach(level => { level.enabled = level.id === '0-'; });
+        });
         await mobile.page.locator('.vjs-mobile-settings').tap();
         const audioRow = mobile.page.locator('.mobile-player-settings .mobile-setting-row').filter({hasText:'Audio'});
         assert.match(await audioRow.getAttribute('aria-label'), /^Audio, English original/);
         assert.equal(await audioRow.locator('.mobile-setting-value').getAttribute('title'), 'English original');
         assert.equal(await audioRow.locator('.mobile-setting-value').evaluate(el => getComputedStyle(el).textOverflow), 'ellipsis');
+        const qualityRow = mobile.page.locator('.mobile-player-settings .mobile-setting-row').filter({hasText:'Quality'});
+        assert.equal(await qualityRow.getAttribute('aria-label'), 'Quality, 1080p30 · AV1 · 3 Mbps');
+        assert.equal(await qualityRow.locator('.mobile-setting-value').getAttribute('title'), '1080p30 · AV1 · 3 Mbps');
         await mobile.page.locator('.mobile-player-settings').getByRole('button', {name:/^Quality/}).tap();
         assert.deepEqual(await mobile.page.locator('.mobile-player-settings .stream-option-primary').allTextContents(), desktopResult.quality.map(option => option[0]));
+        assert.deepEqual(await mobile.page.locator('.mobile-player-settings .stream-option-secondary').allTextContents(), desktopResult.quality.slice(1).map(option => option[1]));
+        assert.equal(await mobile.page.locator('.mobile-player-settings button[aria-pressed="true"]').count(), 0);
+        assert.equal(await mobile.page.locator('.mobile-player-settings').evaluate(el => el.scrollWidth <= el.clientWidth), true);
+        await mobile.page.screenshot({path:path.join(artifacts, `${engine}-codec-quality-mobile.png`)});
+        await mobile.page.locator('.mobile-player-settings').getByRole('button', {name:'1080p30 · AV1, 100 MB · 1 Mbps', exact:true}).tap();
+        assert.deepEqual(await mobile.page.evaluate(() => Array.from(player.qualityLevels()).map(level => level.enabled)), [false,false,false,true,false,false,false]);
+        assert.equal(await qualityRow.getAttribute('aria-label'), 'Quality, 1080p30 · AV1 · 1 Mbps');
+        await qualityRow.tap();
+        await mobile.page.locator('.mobile-player-settings').getByRole('button', {name:'Auto', exact:true}).tap();
+        assert.equal(await mobile.page.evaluate(() => Array.from(player.qualityLevels()).every(level => level.enabled)), true);
+        assert.equal(await qualityRow.getAttribute('aria-label'), 'Quality, Auto');
         assert.deepEqual(mobile.errors, []);
         await mobile.context.close();
+
+        const embed = await pageFor(engine, {fixture:'embed-mobile', route:'embed/2isYuQZMbdU', realPlayer:true, touch:true, width:320, height:700, videoData:{params:{quality:'dash'}}, playerData:{stats_formats:videoFormats.concat(audioFormats)}});
+        await setup(embed.page);
+        await embed.page.evaluate(() => { player.hasStarted(true); player.userActive(true); });
+        await embed.page.locator('.vjs-mobile-settings').tap();
+        await embed.page.locator('.mobile-player-settings').getByRole('button', {name:/^Quality/}).tap();
+        assert.deepEqual(await embed.page.locator('.mobile-player-settings .stream-option-primary').allTextContents(), desktopResult.quality.map(option => option[0]));
+        assert.deepEqual(embed.errors, []);
+        await embed.context.close();
 
         const preferred = await pageFor(engine, {realPlayer:true, videoData:{params:{quality:'dash', quality_dash:'720p'}}, playerData:{stats_formats:videoFormats}});
         await setup(preferred.page);

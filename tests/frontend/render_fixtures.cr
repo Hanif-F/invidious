@@ -448,6 +448,8 @@ File.write("#{output}/watch-chapters.html", watch_fixture(fixture_env("/watch?v=
 
 require "./member_checks"
 check_member_preferences
+require "./codec_checks"
+check_codec_preferences
 File.write("#{output}/search-members-hidden.html", member_search_fixture(false))
 File.write("#{output}/search-members-shown.html", member_search_fixture(true))
 File.write("#{output}/search-members-empty.html", member_search_fixture(false, true))

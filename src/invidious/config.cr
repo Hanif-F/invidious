@@ -42,6 +42,8 @@ struct ConfigPreferences
   property max_results : Int32 = 40
   property notifications_only : Bool = false
   property player_style : String = "invidious"
+  @[YAML::Field(converter: Preferences::VideoCodec)]
+  property video_codec : String = "auto"
   property quality : String = "dash"
   property quality_dash : String = "auto"
   property default_home : String? = "Popular"

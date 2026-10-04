@@ -145,6 +145,16 @@
             </div>
 
             <div class="pure-control-group">
+                <label for="video_codec"><%= I18n.translate(locale, "preferences_video_codec_label") %></label>
+                <select name="video_codec" id="video_codec" aria-describedby="video_codec_help">
+                    <% {"auto", "av1", "h264"}.each do |option| %>
+                        <option value="<%= option %>" <% if preferences.video_codec == option %> selected <% end %>><%= I18n.translate(locale, "preferences_video_codec_option_" + option) %></option>
+                    <% end %>
+                </select>
+                <p class="preference-description" id="video_codec_help"><%= I18n.translate(locale, "preferences_video_codec_help") %></p>
+            </div>
+
+            <div class="pure-control-group">
                 <label for="quality"><%= I18n.translate(locale, "preferences_quality_label") %></label>
                 <select name="quality" id="quality">
                     <% {"dash", "hd720", "medium", "small"}.each do |option| %>

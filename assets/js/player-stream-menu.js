@@ -7,6 +7,7 @@
     var data = JSON.parse(document.getElementById('player_data').textContent);
     var labels = data.stream_labels || {};
     var formats = data.stats_formats || [];
+    var qualityStates = new WeakMap();
 
     function number(value) {
         value = Number(value);
@@ -48,21 +49,46 @@
         return parts.join(' · ');
     }
 
-    function representationItag(player, level) {
+    function videoRepresentations(player) {
         try {
             var tech = player.tech({IWillNotUseThisInPlugins: true});
             var vhs = tech && tech.vhs;
-            var representation = vhs && vhs.representations && vhs.representations().find(function (entry) {
-                return String(entry.id) === String(level.id);
-            });
-            return representation && representation.playlist && representation.playlist.attributes && representation.playlist.attributes.NAME;
+            return vhs && vhs.representations ? vhs.representations() : [];
         } catch (_) {
-            return null;
+            return [];
         }
     }
 
-    function formatForLevel(player, level) {
-        var itag = representationItag(player, level);
+    function codecName(value) {
+        var codecs = String(value || '').split(',').map(function (codec) { return codec.trim(); });
+        var video = codecs.find(function (codec) {
+            return codec && !/^(?:mp4a|aac|ac-3|ec-3|opus|vorbis|flac)(?:\.|$)/i.test(codec);
+        });
+        if (!video) return '';
+        if (/^(?:av01|av1)(?:\.|$)/i.test(video)) return 'AV1';
+        if (/^(?:avc1|avc3|h\.?264)(?:\.|$)/i.test(video)) return 'H.264';
+        if (/^(?:vp09|vp9)(?:\.|$)/i.test(video)) return 'VP9';
+        if (/^(?:vp08|vp8)(?:\.|$)/i.test(video)) return 'VP8';
+        if (/^(?:hev1|hvc1|hevc)(?:\.|$)/i.test(video)) return 'HEVC';
+        return video;
+    }
+
+    function formatCodec(format) {
+        var match = String(format.mimeType || '').match(/\bcodecs\s*=\s*(?:"([^"]*)"|'([^']*)'|([^;\s]+))/i);
+        return codecName(match && (match[1] || match[2] || match[3]));
+    }
+
+    function representationCodec(representation) {
+        if (!representation) return '';
+        var codecs = representation.codecs;
+        var attributes = representation.playlist && representation.playlist.attributes;
+        return codecName(typeof codecs === 'string' ? codecs : codecs && codecs.video) ||
+            codecName(attributes && attributes.CODECS);
+    }
+
+    function formatForLevel(level, representation) {
+        var attributes = representation && representation.playlist && representation.playlist.attributes;
+        var itag = attributes && attributes.NAME;
         var exact = formats.find(function (format) {
             return itag != null && format.itag != null && String(format.itag) === String(itag) && format.height;
         });
@@ -73,32 +99,59 @@
             return level.id != null && format.itag != null && String(format.itag) === String(level.id) && format.height;
         });
         if (exact) return exact;
+        var codec = representationCodec(representation);
         return formats.find(function (format) {
             return format.height && Number(format.height) === Number(level.height) &&
-                Number(format.bitrate) === Number(level.bitrate);
+                Number(format.bitrate) === Number(level.bitrate) &&
+                (!codec || formatCodec(format) === codec);
         }) || {};
     }
 
-    function tierName(index, length) {
-        if (length < 2) return '';
-        if (index === 0) return labels.high_bitrate || 'High Bitrate';
-        if (index === length - 1) return labels.low_bitrate || 'Low Bitrate';
-        return labels.medium_bitrate || 'Medium Bitrate';
+    function bitrateOrder(a, b) {
+        return b.bitrate - a.bitrate || a.originalIndex - b.originalIndex;
     }
 
-    function retainedIndexes(length, maximum) {
-        if (length <= maximum) return Array.from({length: length}, function (_, index) { return index; });
-        if (maximum === 2) return [0, length - 1];
-        return [0, Math.floor((length - 1) / 2), length - 1];
+    function retainedQualityEntries(entries) {
+        if (entries.length <= 4) return entries;
+        var codecs = new Map();
+        entries.forEach(function (entry) {
+            if (!codecs.has(entry.codec)) codecs.set(entry.codec, []);
+            codecs.get(entry.codec).push(entry);
+        });
+        var kept = [];
+        var otherCodecs = Array.from(codecs.keys()).filter(function (codec) {
+            return codec !== 'AV1' && codec !== 'H.264';
+        }).sort(function (a, b) {
+            if (!a) return b ? 1 : 0;
+            if (!b) return -1;
+            return a.localeCompare(b);
+        });
+        ['AV1', 'H.264'].concat(otherCodecs).forEach(function (codec) {
+            var variants = codecs.get(codec) || [];
+            var known = variants.filter(function (entry) { return entry.bitrate > 0; });
+            var high = known[0] || variants[0];
+            if (!high || kept.length >= 4) return;
+            kept.push(high);
+            // Choose the first representation at the lowest known bitrate so
+            // equal extremes never duplicate a codec/bitrate choice.
+            var low = known.find(function (entry) { return entry.bitrate === known[known.length - 1].bitrate; });
+            if (low && low.bitrate !== high.bitrate && kept.length < 4) kept.push(low);
+        });
+        return kept.sort(bitrateOrder);
     }
 
     function qualityEntries(player) {
         var levels = Array.from(player.qualityLevels ? player.qualityLevels() : []);
+        var representations = new Map(videoRepresentations(player).map(function (representation) {
+            return [String(representation.id), representation];
+        }));
         return levels.map(function (level, originalIndex) {
-            var format = formatForLevel(player, level);
+            var representation = representations.get(String(level.id));
+            var format = formatForLevel(level, representation);
             return {
                 level: level,
                 format: format,
+                codec: representationCodec(representation) || formatCodec(format),
                 height: number(level.height != null ? level.height : format.height) || 0,
                 fps: number(format.fps != null ? format.fps : (level.frameRate || level.fps)) || 0,
                 bitrate: number(level.bitrate != null ? level.bitrate : format.bitrate) || 0,
@@ -107,20 +160,224 @@
         });
     }
 
+    function qualityPrimary(entry) {
+        var fps = entry.fps ? Math.round(entry.fps) : 0;
+        var base = entry.height ? entry.height + 'p' + (fps || '') : '';
+        return [base, entry.codec || labels.unknown_codec || 'Unknown codec'].filter(Boolean).join(' · ');
+    }
+
+    function selectedQualityText(player) {
+        var entries = qualityEntries(player);
+        if (!entries.length) return '';
+        if (isAutoQuality(player)) return labels.auto || 'Auto';
+        var enabled = entries.filter(function (entry) { return entry.level.enabled; });
+        if (enabled.length !== 1) return '';
+        return [qualityPrimary(enabled[0]), formatBitrate(enabled[0].bitrate)].filter(Boolean).join(' · ');
+    }
+
     function rankedQualityLevels(player) {
-        return qualityEntries(player).sort(function (a, b) {
-            return b.height - a.height || b.fps - a.fps || b.bitrate - a.bitrate || a.originalIndex - b.originalIndex;
+        return qualityEntries(player).sort(qualityOrder);
+    }
+
+    function qualityOrder(a, b) {
+        return b.height - a.height || b.fps - a.fps || bitrateOrder(a, b);
+    }
+
+    function qualityState(player) {
+        if (!qualityStates.has(player)) qualityStates.set(player, {codec: '', quality: 'auto', mode: 'auto', selected: []});
+        return qualityStates.get(player);
+    }
+
+    function preferredCodec(value) {
+        return value === 'av1' ? 'AV1' : value === 'h264' ? 'H.264' : '';
+    }
+
+    function playable(playlist) {
+        return !playlist || !playlist.excludeUntil || playlist.excludeUntil <= Date.now();
+    }
+
+    function playlistEntries(vhs) {
+        var master = vhs && vhs.playlists && vhs.playlists.master;
+        return Array.from(master && master.playlists || []).map(function (playlist, originalIndex) {
+            var attributes = playlist.attributes || {};
+            var format = formats.find(function (format) { return String(format.itag) === String(attributes.NAME) && format.height; }) || {};
+            var resolution = attributes.RESOLUTION || {};
+            return {playlist: playlist, id: playlist.id, itag: attributes.NAME,
+                codec: codecName(attributes.CODECS) || formatCodec(format),
+                height: number(resolution.height || format.height) || 0,
+                fps: number(format.fps || attributes['FRAME-RATE']) || 0,
+                bitrate: number(attributes.BANDWIDTH || format.bitrate) || 0, originalIndex: originalIndex};
+        }).filter(function (entry) { return entry.height && playable(entry.playlist); });
+    }
+
+    function availableQualityEntries(player) {
+        var vhs;
+        try { vhs = player.tech({IWillNotUseThisInPlugins: true}).vhs; } catch (_) {}
+        var playlists = new Map(playlistEntries(vhs).map(function (entry) { return [String(entry.id), entry.playlist]; }));
+        var master = vhs && vhs.playlists && vhs.playlists.master;
+        return qualityEntries(player).filter(function (entry) {
+            // The manifest includes excluded renditions; the representation API
+            // can omit them after a codec incompatibility is detected.
+            return !master || !master.playlists || playlists.has(String(entry.level.id));
         });
+    }
+
+    function automaticEntries(entries, codec) {
+        var preferred = entries.filter(function (entry) { return codec && entry.codec === codec; });
+        return preferred.length ? preferred : entries;
+    }
+
+    function presetEntry(entries, quality, codec) {
+        var ranked = entries.slice().sort(qualityOrder);
+        if (!ranked.length) return null;
+        var worst = quality === 'worst';
+        var target = worst ? ranked[ranked.length - 1] : ranked[0];
+        if (quality !== 'best' && !worst) {
+            var height = parseInt(quality);
+            var below = ranked.find(function (entry) { return entry.height <= height; });
+            target = below || ranked[ranked.length - 1];
+            worst = !below;
+        }
+        var preferred = ranked.filter(function (entry) { return entry.height === target.height && codec && entry.codec === codec; });
+        return preferred.length ? preferred[worst ? preferred.length - 1 : 0] : target;
+    }
+
+    function describeQuality(entry) {
+        return {id: entry.level ? entry.level.id : entry.id, itag: entry.format ? entry.format.itag : entry.itag,
+            height: entry.height, fps: entry.fps, bitrate: entry.bitrate, codec: entry.codec};
+    }
+
+    function matchesQuality(entry, wanted) {
+        var actual = describeQuality(entry);
+        if (actual.id != null && wanted.id != null && String(actual.id) === String(wanted.id)) return true;
+        if (actual.itag != null && wanted.itag != null) return String(actual.itag) === String(wanted.itag);
+        return actual.height === wanted.height && actual.fps === wanted.fps && actual.bitrate === wanted.bitrate && actual.codec === wanted.codec;
+    }
+
+    function selectedEntries(entries, state) {
+        if (state.mode === 'auto') return automaticEntries(entries, state.codec);
+        if (state.mode === 'preset') {
+            var target = presetEntry(entries, state.quality, state.codec);
+            return target ? [target] : [];
+        }
+        return entries.filter(function (entry) {
+            return state.selected.some(function (wanted) { return matchesQuality(entry, wanted); });
+        });
+    }
+
+    function isAutoQuality(player) {
+        var entries = qualityEntries(player);
+        var state = qualityStates.get(player);
+        if (!state) return entries.length > 0 && entries.every(function (entry) { return entry.level.enabled; });
+        if (state.mode !== 'auto') return false;
+        if (state.updating) return true;
+        var allowed = automaticEntries(availableQualityEntries(player), state.codec);
+        return entries.length > 0 && entries.every(function (entry) {
+            return entry.level.enabled === allowed.some(function (candidate) { return candidate.level === entry.level; });
+        });
+    }
+
+    function updateQualitySelection(player) {
+        var state = qualityState(player);
+        if (state.updating) return false;
+        var entries = qualityEntries(player);
+        var chosen = selectedEntries(availableQualityEntries(player), state);
+        if (!chosen.length) return false;
+        state.updating = true;
+        try {
+            entries.forEach(function (entry) {
+                var enabled = chosen.some(function (candidate) { return candidate.level === entry.level; });
+                if (entry.level.enabled !== enabled) entry.level.enabled = enabled;
+            });
+        } finally { state.updating = false; }
+        var levels = player.qualityLevels();
+        if (levels.trigger) levels.trigger('change');
+        return true;
+    }
+
+    function selectAutoQuality(player) {
+        var state = qualityState(player);
+        state.mode = 'auto'; state.selected = [];
+        updateQualitySelection(player);
+    }
+
+    function selectManualQuality(player, level) {
+        var state = qualityState(player);
+        var entry = qualityEntries(player).find(function (entry) { return entry.level === level; });
+        if (!entry) return;
+        state.mode = 'manual'; state.selected = [describeQuality(entry)];
+        updateQualitySelection(player);
+    }
+
+    function qualitySelection(player) {
+        return {auto: isAutoQuality(player), selected: qualityEntries(player).filter(function (entry) { return entry.level.enabled; }).map(describeQuality)};
+    }
+
+    function restoreQualitySelection(player, selection) {
+        var state = qualityState(player);
+        state.mode = selection.auto ? 'auto' : 'manual'; state.selected = selection.selected;
+        return updateQualitySelection(player);
+    }
+
+    function applyQualityPreference(player, params) {
+        var state = qualityState(player);
+        var codec = preferredCodec(params.video_codec);
+        var quality = params.quality_dash || 'auto';
+        if (state.codec !== codec || state.quality !== quality || !state.configured) {
+            state.codec = codec; state.quality = quality;
+            state.mode = quality === 'auto' ? 'auto' : 'preset'; state.selected = [];
+            state.configured = true;
+        }
+        return updateQualitySelection(player);
+    }
+
+    function attachQualitySelector(player) {
+        var state = qualityState(player), vhs;
+        try { vhs = player.tech({IWillNotUseThisInPlugins: true}).vhs; } catch (_) {}
+        if (!vhs || typeof vhs.selectPlaylist !== 'function' || state.vhs === vhs) return;
+        state.vhs = vhs;
+        function wrap(selector) {
+            return function () {
+                var entries = playlistEntries(vhs);
+                var chosen = selectedEntries(entries, state);
+                if (chosen.length) entries.forEach(function (entry) { entry.playlist.disabled = chosen.indexOf(entry) < 0; });
+                if (state.mode !== 'auto' && chosen.length) return chosen[0].playlist;
+                return selector.apply(vhs, arguments);
+            };
+        }
+        vhs.selectPlaylist = wrap(vhs.selectPlaylist);
+        var controller = vhs.masterPlaylistController_;
+        if (controller && typeof controller.selectInitialPlaylist === 'function') {
+            controller.selectInitialPlaylist = wrap(controller.selectInitialPlaylist);
+        }
+    }
+
+    function initializeQualitySelection(player, params) {
+        function currentParams() { return typeof params === 'function' ? params() : params; }
+        applyQualityPreference(player, currentParams());
+        function attach() { attachQualitySelector(player); }
+        function update() { applyQualityPreference(player, currentParams()); }
+        var levels = player.qualityLevels();
+        player.on('loadstart', attach);
+        player.on('loadedmetadata', update);
+        levels.on(['addqualitylevel', 'removequalitylevel'], update);
+        player.on('dispose', function () {
+            levels.off(['addqualitylevel', 'removequalitylevel'], update);
+            qualityStates.delete(player);
+        });
+        player.ready(attach);
+        attach();
     }
 
     function qualityOptions(player) {
         var entries = qualityEntries(player);
         var levels = entries.map(function (entry) { return entry.level; });
         if (!levels.length) return [];
-        var allEnabled = levels.every(function (level) { return level.enabled; });
+        var allEnabled = isAutoQuality(player);
+        var enabledCount = levels.filter(function (level) { return level.enabled; }).length;
         var options = [{
             primary: labels.auto || 'Auto', secondary: '', selected: allEnabled,
-            select: function () { levels.forEach(function (level) { level.enabled = true; }); }
+            select: function () { selectAutoQuality(player); }
         }];
         var groups = new Map();
         entries.forEach(function (entry) {
@@ -131,16 +388,13 @@
             groups.get(key).entries.push(entry);
         });
         Array.from(groups.values()).sort(function (a, b) { return b.height - a.height || b.fps - a.fps; }).forEach(function (group) {
-            group.entries.sort(function (a, b) { return b.bitrate - a.bitrate || a.originalIndex - b.originalIndex; });
-            retainedIndexes(group.entries.length, 3).forEach(function (index) {
-                var entry = group.entries[index];
-                var base = group.height ? group.height + 'p' + (group.fps ? group.fps : '') : formatBitrate(entry.bitrate);
-                var tier = tierName(index, group.entries.length);
+            group.entries.sort(bitrateOrder);
+            retainedQualityEntries(group.entries).forEach(function (entry) {
                 options.push({
-                    primary: base + (tier ? ' ' + tier : ''),
-                    secondary: secondary(entry.format, entry.bitrate),
-                    selected: !allEnabled && levels.filter(function (level) { return level.enabled; }).length === 1 && entry.level.enabled,
-                    select: function () { levels.forEach(function (level) { level.enabled = level === entry.level; }); },
+                    primary: qualityPrimary(entry),
+                    secondary: secondary({contentLength: entry.format.contentLength, bitrate: entry.bitrate}),
+                    selected: !allEnabled && enabledCount === 1 && entry.level.enabled,
+                    select: function () { selectManualQuality(player, entry.level); },
                     level: entry.level
                 });
             });
@@ -407,6 +661,15 @@
 
     window.InvidiousStreamMenus = {
         qualityOptions: qualityOptions,
+        selectedQualityText: selectedQualityText,
+        initializeQualitySelection: initializeQualitySelection,
+        applyQualityPreference: applyQualityPreference,
+        attachQualitySelector: attachQualitySelector,
+        isAutoQuality: isAutoQuality,
+        selectAutoQuality: selectAutoQuality,
+        selectManualQuality: selectManualQuality,
+        qualitySelection: qualitySelection,
+        restoreQualitySelection: restoreQualitySelection,
         rankedQualityLevels: rankedQualityLevels,
         audioOptions: audioOptions,
         selectedText: selectedText,

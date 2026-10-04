@@ -149,6 +149,7 @@ module Invidious::Routes::PreferencesRoute
     dark_mode ||= CONFIG.default_user_preferences.dark_mode
 
     previous = env.get("preferences").as(Preferences)
+    video_codec = Preferences::VideoCodec.normalize(env.params.body["video_codec"]? || previous.video_codec)
     selection = env.params.body["theme"]?
     theme_random = selection ? selection == "random" : previous.theme_random
     theme = selection && selection != "random" ? Invidious::Themes.normalize(selection) : previous.theme
@@ -217,6 +218,7 @@ module Invidious::Routes::PreferencesRoute
       player_style:                   player_style,
       quality:                        quality,
       quality_dash:                   quality_dash,
+      video_codec:                    video_codec,
       default_home:                   default_home,
       feed_menu:                      feed_menu,
       automatic_instance_redirect:    automatic_instance_redirect,

@@ -203,6 +203,29 @@ The channel editor is checked at mobile and desktop widths without JavaScript.
 Rich stream-menu checks also verify that audio/quality icons sit inside centered
 buttons and selected rows use neutral, high-contrast colors.
 
+Video quality rows identify the codec and numeric bitrate, retaining all choices
+for resolution/FPS groups of four or fewer. Larger groups keep AV1 and H.264
+bitrate extremes, filling spare slots with other codec extremes alphabetically
+(unknown codecs last). This only filters manual menu choices; codec Auto uses
+the complete playable rendition list. Mobile summaries include the selected codec and
+bitrate even when a middle rendition is filtered out. `stream-menu.test.cjs`
+checks grouping, metadata fallbacks, ties and missing bitrates without a browser;
+the rich stream-menu browser checks cover desktop, narrow mobile and embed UI.
+
+Preferred video codec accepts `auto` (default), `av1`, or `h264` through the
+existing preference storage, instance defaults and watch/embed URL parameters.
+It applies to DASH video playback. Resolution presets choose their resolution
+first, then prefer the codec before ranking FPS and bitrate. DASH Auto retains
+the existing VHS bandwidth selector within that codec, falling back to all
+playable codecs when it is unavailable. Manual choices override the preference
+for the current video; choosing Auto restores it, including after buffer refresh.
+
+Codec fixture checks cover JSON/YAML, defaults, validation, guest/account/API
+saving and export/import. Browser checks verify the dropdown without JavaScript,
+the actual first DASH rendition on watch and embed pages, and mobile selection
+restoration. Initial rendition checks use a local MPD and intercept media requests
+before decoding; they do not verify live codec decoding or physical device support.
+
 ## Playback sync
 
 `playback-sync.test.cjs` runs without a browser and covers restoration at 8:12,

@@ -62,6 +62,10 @@ struct Preferences
   @[JSON::Field(converter: Preferences::ProcessString)]
   property player_style : String = CONFIG.default_user_preferences.player_style
 
+  @[JSON::Field(converter: Preferences::VideoCodec)]
+  @[YAML::Field(converter: Preferences::VideoCodec)]
+  property video_codec : String = CONFIG.default_user_preferences.video_codec
+
   @[JSON::Field(converter: Preferences::ProcessString)]
   property quality : String = CONFIG.default_user_preferences.quality
   @[JSON::Field(converter: Preferences::ProcessString)]
@@ -107,6 +111,28 @@ struct Preferences
   property chat_overlay_height : Int32 = 750
   property chat_user_blacklist : String = ""
   property chat_word_blacklist : String = ""
+
+  module VideoCodec
+    def self.normalize(value : String) : String
+      {"auto", "av1", "h264"}.includes?(value) ? value : "auto"
+    end
+
+    def self.from_json(value : JSON::PullParser) : String
+      normalize(JSON::Any.new(value).as_s? || "auto")
+    end
+
+    def self.to_json(value : String, json : JSON::Builder)
+      json.string normalize(value)
+    end
+
+    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : String
+      normalize(node.is_a?(YAML::Nodes::Scalar) ? node.value : "auto")
+    end
+
+    def self.to_yaml(value : String, yaml : YAML::Nodes::Builder)
+      yaml.scalar normalize(value)
+    end
+  end
 
   module ThemeDeadline
     def self.from_json(value : JSON::PullParser) : Int64?

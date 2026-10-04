@@ -905,6 +905,11 @@ default_user_preferences:
   #  Video playback settings
   # -----------------------------
 
+  ## Preferred DASH video codec. Auto leaves codec selection unrestricted.
+  ## Accepted values: auto, av1, h264
+  ## Default: auto
+  #video_codec: auto
+
   ##
   ## Default video quality.
   ##

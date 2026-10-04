@@ -104,7 +104,7 @@
             row(player_data.refresh_buffer, '', function () { panel.close(); player.refreshBuffer(); });
             if (video_data.params.quality === 'dash' && !video_data.params.listen) {
                 var qualityOptions = InvidiousStreamMenus.qualityOptions(player);
-                if (qualityOptions.length) row(labels.quality, InvidiousStreamMenus.selectedText(qualityOptions), function () { choices(labels.quality, qualityOptions); });
+                if (qualityOptions.length) row(labels.quality, InvidiousStreamMenus.selectedQualityText(player), function () { choices(labels.quality, qualityOptions); });
             } else componentChoices('qualitySelector', labels.quality);
             if (video_data.params.quality === 'dash' && !video_data.params.listen) {
                 var audioOptions = InvidiousStreamMenus.audioOptions(player);
