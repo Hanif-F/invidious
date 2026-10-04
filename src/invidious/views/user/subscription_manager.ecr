@@ -26,12 +26,13 @@
     </div>
 </div>
 
+<% Invidious::Frontend::ChannelAvatars.prepare_ids(env, subscriptions.map(&.id)) %>
 <% subscriptions.each do |channel| %>
     <div class="h-box">
-        <div class="pure-g<% if channel.deleted %> deleted <% end %>">
+        <div class="pure-g subscription-row<% if channel.deleted %> deleted <% end %>">
             <div class="pure-u-2-5">
                 <h3 style="padding-left:0.5em">
-                    <a href="/channel/<%= channel.id %>"><%= HTML.escape(channel.author) %></a>
+                    <a class="channel-name-link" href="/channel/<%= channel.id %>"><%= Invidious::Frontend::ChannelAvatars.render(env, channel.id, 40) %><span dir="auto"><%= HTML.escape(channel.author) %></span></a>
                 </h3>
             </div>
             <div class="pure-u-2-5"></div>

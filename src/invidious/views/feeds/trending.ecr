@@ -40,6 +40,7 @@
     <hr>
 </div>
 
+<% Invidious::Frontend::ChannelAvatars.prepare(env, trending) %>
 <div class="pure-g media-grid">
 <% trending.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>

@@ -22,6 +22,7 @@
     </div>
 </div>
 
+<% Invidious::Frontend::ChannelAvatars.prepare(env, items_created + items_saved) %>
 <div class="pure-g media-grid playlist-library">
 <% items_created.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>

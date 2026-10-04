@@ -11,8 +11,10 @@
 
 <%= rendered "components/feed_menu" %>
 
+<% avatar_items = Invidious::Frontend::BlockedChannels.filter(popular_videos, Invidious::Frontend::BlockedChannels.ids(env)) %>
+<% Invidious::Frontend::ChannelAvatars.prepare(env, avatar_items) %>
 <div class="pure-g media-grid">
-<% Invidious::Frontend::BlockedChannels.filter(popular_videos, Invidious::Frontend::BlockedChannels.ids(env)).each_with_index do |item, item_position| %>
+<% avatar_items.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>

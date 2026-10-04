@@ -565,3 +565,5 @@ File.write("#{output}/clips-diary.html", clips_fixture(visual_theme: "diary"))
 File.write("#{output}/clips-rtl.html", clips_fixture(locale: "ar"))
 File.write("#{output}/create-clip.html", create_clip_fixture)
 File.write("#{output}/create-clip-diary.html", create_clip_fixture("diary", "id"))
+
+require "./avatar_checks"

@@ -1,4 +1,13 @@
 'use strict';
+
+// Capture image failures before list markup is parsed, including lazy images.
+// Keep the local placeholder visible without retrying or requesting metadata.
+addEventListener('error', function (event) {
+    var image = event.target;
+    if (image && image.tagName === 'IMG' && image.parentElement && image.parentElement.classList.contains('channel-avatar')) {
+        image.hidden = true;
+    }
+}, true);
 // Contains only auxiliary methods
 // May be included and executed unlimited number of times without any consequences
 

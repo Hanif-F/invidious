@@ -43,6 +43,7 @@
 </script>
 <script src="/js/watched_widget.js"></script>
 
+<% Invidious::Frontend::ChannelAvatars.prepare_ids(env, watched.compact_map(&.channel_id)) %>
 <% previous_group = "" %>
 <div class="history-groups">
     <% watched.each do |entry| %>
@@ -76,6 +77,12 @@
                     </form>
                     </div></div>
                 </div>
+                <% history_channel_id = entry.channel_id || "" %>
+                <% history_avatar = Invidious::Frontend::ChannelAvatars.show?(env, history_channel_id) %>
+                <div class="video-card-details<%= " has-channel-avatar" if history_avatar %>">
+                <% if history_avatar %>
+                <a class="channel-avatar-link" href="/channel/<%= URI.encode_www_form(history_channel_id) %>" tabindex="-1" aria-hidden="true"><%= Invidious::Frontend::ChannelAvatars.render(env, history_channel_id) %></a>
+                <% end %>
                 <p data-dearrow-row><a href="/watch?v=<%= HTML.escape(item) %>" dir="auto" data-dearrow-id="<%= HTML.escape(item) %>"><%= HTML.escape(entry.title || "#{I18n.translate(locale, "ui_open_video")} (#{item})") %></a></p>
                 <p dir="auto">
                     <% if channel_id = entry.channel_id %>
@@ -86,6 +93,7 @@
                 </p>
                 <p><%= I18n.translate(locale, "history_released") %>: <%= HTML.escape(entry.release_date || I18n.translate(locale, "history_date_unknown")) %></p>
                 <p><%= I18n.translate(locale, "history_watched") %>: <%= HTML.escape(entry.latest_watched || I18n.translate(locale, "history_watch_date_unknown")) %></p>
+                </div>
             </div>
         </div>
     <% end %>

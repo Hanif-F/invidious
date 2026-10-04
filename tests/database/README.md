@@ -59,3 +59,13 @@ cleanup, live source metadata, cached fallback, ownership/privacy flags, CSRF an
 native scopes, private Atom authorization, empty/populated Atom namespaces, seeded
 mix snapshots, complete OPML (165 subscriptions with an uncached ID), account
 cascades and rendered English category headings with their existing counts.
+
+Avatar cache checks use an **empty** disposable database named `invidious_avatars_test`:
+
+```sh
+AVATAR_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_avatars_test crystal run tests/database/channel_avatars.cr
+```
+
+These verify migration 21 and fresh-install SQL, batched persistence, old-cache reuse,
+newer/concurrent observations, invalid URLs, database failure fallback, and isolation
+from the subscription crawler. Remove the disposable database after testing.

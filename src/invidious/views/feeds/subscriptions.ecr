@@ -23,6 +23,8 @@
     </div>
 </div>
 
+<% Invidious::Frontend::ChannelAvatars.prepare(env, videos + notifications) %>
+
 <% if CONFIG.enable_user_notifications %>
 
 <center>

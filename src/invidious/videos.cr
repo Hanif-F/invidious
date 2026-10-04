@@ -364,6 +364,8 @@ def fetch_video(id, region)
     updated: Time.utc,
   })
 
+  Invidious::Database::ChannelAvatars.observe({video.ucid => video.author_thumbnail}, video.updated)
+
   return video
 end
 

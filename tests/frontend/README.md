@@ -28,6 +28,20 @@ ignored by Git.
 
 ## Coverage and limits
 
+Channel avatars reuse URLs in existing responses and the persistent `channel_avatars`
+cache (migration 21 for existing installations). Cache misses use an inline placeholder;
+there are no extra channel lookups, background fetches, or age-triggered refreshes.
+Avatars are learned during normal browsing and fetched video/channel metadata requests.
+Thin mode omits them, and a channel's own video listings do not repeat its avatar.
+
+The avatar fixtures verify cache precedence and failure isolation, including the
+existing video fetch's request count. Browser checks cover both themes, mobile,
+RTL, compact lists, history, subscriptions, no-JavaScript rendering and image failures:
+
+```sh
+node --test --test-name-pattern='channel avatars|failed avatar' tests/frontend/ui.test.cjs
+```
+
 - Production Video.js controls, playback, pause, seeking and playback speed using
   a local clip, at desktop and touch viewport sizes. Includes paused auto-hide,
   mouse/touch wake-up, keyboard focus, speed menus and the in-player wide toggle.

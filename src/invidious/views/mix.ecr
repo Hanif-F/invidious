@@ -13,6 +13,7 @@
     </div>
 </div>
 
+<% Invidious::Frontend::ChannelAvatars.prepare(env, mix.videos) %>
 <div class="pure-g media-grid">
 <% mix.videos.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>

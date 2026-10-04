@@ -132,6 +132,7 @@ async function pageFor(engine, options = {}) {
         if (url.pathname === '/js/silvermine-videojs-quality-selector.min.js' && !options.realPlayer) return route.fulfill({ contentType: 'application/javascript', body: '' });
         if (url.pathname === '/js/player.js' && !options.realPlayer) return route.fulfill({ contentType: 'application/javascript', body: playerStub });
         if (url.pathname.startsWith('/videojs/') && !options.realPlayer) return route.fulfill({ contentType: url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript', body: '' });
+        if (options.brokenAvatars && url.pathname.startsWith('/ggpht')) return route.fulfill({ status: 404, body: '' });
         if (url.pathname.startsWith('/vi/') || url.pathname.startsWith('/ggpht')) return route.fulfill({ contentType: 'image/svg+xml', body: picture });
         if (options.realPlayer && url.pathname === '/latest_version') {
             const body = fs.readFileSync(path.join(generated, fixture === 'clip-watch' || new URL(route.request().frame().url()).searchParams.get('clip_preview') === '1' ? 'clip-fixture.webm' : 'fixture.webm'));
@@ -4158,5 +4159,88 @@ for (const engine of engines) {
                 await session.context.close();
             }
         }
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: channel avatars use response URLs, cache URLs and local placeholders`, async () => {
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const width of [320, 390, 768, 1440]) {
+                const { page, context, requests, errors } = await pageFor(engine, { fixture: `avatars-${theme}`, width });
+                assert.equal(await page.locator('.channel-avatar').count(), 4);
+                assert.equal(await page.locator('.channel-avatar img').count(), 3);
+                assert.equal(await page.locator('.channel-avatar-36').count(), 4);
+                const images = page.locator('.channel-avatar img');
+                assert.match(await images.nth(0).getAttribute('src'), /\/ggpht\/direct=s88/);
+                assert.match(await images.nth(1).getAttribute('src'), /\/ggpht\/cached=s88/);
+                assert.equal(await images.nth(0).getAttribute('alt'), '');
+                assert.equal(await images.nth(0).getAttribute('loading'), 'lazy');
+                const geometry = await page.locator('.channel-avatar').first().evaluate(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height, radius: getComputedStyle(el).borderRadius }));
+                assert.deepEqual(geometry, { width: 36, height: 36, radius: '50%' });
+                assert.equal(await page.locator('.channel-avatar-link').first().getAttribute('tabindex'), '-1');
+                assert.equal(await page.locator('.channel-avatar-link').first().getAttribute('aria-hidden'), 'true');
+                assert.match(await page.locator('.channel-name').first().textContent(), /<script> & details/);
+                assert.equal(await page.locator('.media-card script').count(), 0);
+                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+                assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+                if (width === 390) await page.screenshot({path: path.join(artifacts, `${engine}-avatars-${theme}-mobile.png`), fullPage: true});
+                if (width === 1440) await page.screenshot({path: path.join(artifacts, `${engine}-avatars-${theme}-desktop.png`), fullPage: true});
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+    });
+
+    test(`${engine}: channel avatars fit compact rows, history and subscription manager without JavaScript`, async () => {
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const kind of ['search', 'playlist', 'history', 'manager']) {
+                const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-${kind}-${theme}`, width: 320, javascript: false});
+                const size = kind === 'manager' ? 40 : kind === 'history' ? 36 : 24;
+                assert.ok(await page.locator(`.channel-avatar-${size}`).count() > 0);
+                assert.equal(await page.locator('.channel-avatar').first().evaluate(el => el.getBoundingClientRect().width), size);
+                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+                if (kind === 'manager') {
+                    assert.equal(await page.locator('form[action^="/subscription_ajax"]').count(), 3);
+                    assert.equal(await page.locator('.deleted .channel-avatar img').count(), 0);
+                    assert.match(await page.locator('.channel-name-link').first().textContent(), /<script> & details/);
+                }
+                assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+    });
+
+    test(`${engine}: channel avatars preserve thin mode, channel ownership and RTL layout`, async () => {
+        for (const fixture of ['avatars-thin', 'avatars-manager-thin', 'avatars-channel', 'avatars-rtl']) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture, width: 390});
+            if (fixture.includes('thin')) {
+                assert.equal(await page.locator('.channel-avatar').count(), 0);
+                assert.ok(!requests.some(url => url.startsWith('/ggpht')));
+            } else if (fixture === 'avatars-channel') {
+                assert.equal(await page.locator('[data-channel-id=UCdirect] .channel-avatar').count(), 0);
+                assert.equal(await page.locator('.channel-avatar').count(), 3);
+            } else {
+                assert.equal(await page.locator('html').getAttribute('dir'), 'rtl');
+                const avatar = await page.locator('.channel-avatar').first().boundingBox();
+                const title = await page.locator('[data-dearrow-id]').first().boundingBox();
+                assert.ok(avatar.x > title.x);
+            }
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: failed avatar images keep placeholders and never retry metadata`, async () => {
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: 'avatars-modern-neon', width: 1440, brokenAvatars: true});
+        await page.waitForFunction(() => Array.from(document.querySelectorAll('.channel-avatar img')).every(img => img.hidden));
+        assert.equal(await page.locator('.channel-avatar svg:visible').count(), 4);
+        const before = requests.length;
+        await page.waitForTimeout(100);
+        assert.equal(requests.length, before);
+        assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 }

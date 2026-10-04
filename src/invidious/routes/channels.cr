@@ -488,6 +488,7 @@ module Invidious::Routes::Channels
     end
 
     env.set "search", "channel:#{ucid} "
+    env.set "channel_avatar_owner", channel.ucid
     return {locale, user, subscriptions, continuation, ucid, channel}
   end
 end

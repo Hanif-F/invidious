@@ -184,6 +184,8 @@ def get_about_info(ucid) : AboutChannel
     end
   end
 
+  Invidious::Database::ChannelAvatars.observe({ucid => author_thumbnail})
+
   AboutChannel.new(
     ucid: ucid,
     author: author,

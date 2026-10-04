@@ -198,6 +198,7 @@ def fetch_channel(ucid, pull_all_videos : Bool)
 
   LOGGER.trace("fetch_channel: #{ucid} : Downloading channel videos page")
   videos, continuation = IV::Channel::Tabs.get_videos(channel)
+  Invidious::Database::ChannelAvatars.observe(Invidious::ChannelAvatars.from_items(videos))
 
   LOGGER.trace("fetch_channel: #{ucid} : Extracting videos from channel RSS feed")
   rss.xpath_nodes("//default:feed/default:entry", namespaces).each do |entry|
@@ -262,6 +263,7 @@ def fetch_channel(ucid, pull_all_videos : Bool)
     loop do
       # Keep fetching videos using the continuation token retrieved earlier
       videos, continuation = IV::Channel::Tabs.get_videos(channel, continuation: continuation)
+      Invidious::Database::ChannelAvatars.observe(Invidious::ChannelAvatars.from_items(videos))
 
       count = 0
       videos.select(SearchVideo).each do |video|
