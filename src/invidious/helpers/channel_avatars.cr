@@ -37,29 +37,93 @@ module Invidious::ChannelAvatars
     avatars
   end
 
+  def from_video(video) : Hash(String, String)
+    avatars = {} of String => String
+    video.related_videos.each do |related|
+      id = related["ucid"]? || ""
+      next if id.empty?
+      if url = proxy_url(related["author_thumbnail"]?)
+        avatars[id] ||= url
+      end
+    end
+    if url = proxy_url(video.author_thumbnail)
+      avatars[video.ucid] = url unless video.ucid.empty?
+    end
+    avatars
+  end
+
   # Modern video cards put the linked author and avatar in lockup metadata.
   def lockup_author(metadata : JSON::Any?) : {String?, String?}
     authors = lockup_authors(metadata)
-    return {nil, nil} unless authors.map(&.[1]).uniq.size == 1
-    authors.first
+    unless authors.empty?
+      return authors.map(&.[1]).uniq.size == 1 ? authors.first : {nil, nil}
+    end
+
+    # Watch recommendations link the avatar, but leave the creator label unlinked.
+    id = lockup_avatar(metadata).try &.dig?("rendererContext", "commandContext", "onTap", "innertubeCommand", "browseEndpoint", "browseId").try &.as_s?
+    return {nil, nil} unless id && id.starts_with?("UC")
+    name = lockup_author_label(metadata)
+    return {nil, nil} unless name
+    {name, id}
+  rescue
+    {nil, nil}
+  end
+
+  def lockup_author_label(metadata : JSON::Any?) : String?
+    parts = metadata.try &.dig?("metadata", "contentMetadataViewModel", "metadataRows", 0, "metadataParts").try &.as_a?
+    return nil unless parts && parts.size == 1
+    text = parts.first.as_h?.try(&.["text"]?).try &.as_h?
+    return nil if text.try(&.["commandRuns"]?)
+    name = text.try(&.["content"]?).try &.as_s?
+    name unless name.try(&.blank?)
+  rescue
+    nil
   end
 
   def lockup_thumbnail(metadata : JSON::Any?, channel_id : String) : String?
     return nil if channel_id.empty?
     return nil unless lockup_authors(metadata).all? { |author| author[1] == channel_id }
 
-    avatar = metadata.try &.dig?("image", "decoratedAvatarViewModel")
-    avatar_id = avatar.try &.dig?("rendererContext", "commandContext", "onTap", "innertubeCommand", "browseEndpoint", "browseId").try &.as_s?
-    return nil if avatar_id && avatar_id != channel_id
+    avatar = lockup_avatar(metadata)
+    avatar_identity = avatar.try &.dig?("rendererContext", "commandContext", "onTap", "innertubeCommand", "browseEndpoint", "browseId")
+    return nil if avatar_identity && avatar_identity.as_s? != channel_id
 
     sources = avatar.try &.dig?("avatar", "avatarViewModel", "image", "sources").try &.as_a?
+    thumbnail_url(sources)
+  rescue
+    # Optional avatar data must never discard a video or request metadata.
+    nil
+  end
+
+  def related_thumbnail(renderer : JSON::Any, channel_id : String) : String?
+    return nil if channel_id.empty?
+    {"shortBylineText", "longBylineText"}.each do |key|
+      runs = renderer[key]?.try(&.dig?("runs")).try &.as_a?
+      next unless runs
+      return nil if runs.any? do |run|
+                      identity = run.dig?("navigationEndpoint", "browseEndpoint", "browseId")
+                      identity && identity.as_s? != channel_id
+                    end
+    end
+    sources = renderer.dig?("channelThumbnail", "thumbnails").try &.as_a?
+    thumbnail_url(sources)
+  rescue
+    nil
+  end
+
+  private def lockup_avatar(metadata : JSON::Any?) : JSON::Any?
+    image = metadata.try &.dig?("image").try &.as_h?
+    return nil if image.try(&.["avatarStackViewModel"]?)
+    image.try(&.["decoratedAvatarViewModel"]?)
+  rescue
+    nil
+  end
+
+  private def thumbnail_url(sources : Array(JSON::Any)?) : String?
     sources.try &.each do |source|
       url = source.as_h?.try(&.["url"]?).try &.as_s?
       return url if proxy_url(url)
     end
-    nil
-  rescue
-    # Optional avatar data must never discard a video or request metadata.
     nil
   end
 

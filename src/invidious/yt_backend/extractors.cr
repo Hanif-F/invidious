@@ -665,19 +665,14 @@ private module Parsers
         author, author_id = Invidious::ChannelAvatars.lockup_author(metadata)
         author ||= author_fallback.name
         author_id ||= author_fallback.id
-        # Contains the views of the video and the published time of the video.
-        metadata_parts = metadata.dig("metadata", "contentMetadataViewModel", "metadataRows").as_a.flat_map do |row|
-          row["metadataParts"]?.try(&.as_a) || [] of JSON::Any
+        image = metadata["image"]?.try &.as_h?
+        if author.empty? && (image.try(&.["decoratedAvatarViewModel"]?) || image.try(&.["avatarStackViewModel"]?))
+          author = Invidious::ChannelAvatars.lockup_author_label(metadata) || author
         end
-        # Linked author names can contain "ago" (e.g. ImagineDragons).
-        metadata_parts.reject! { |item| item.dig?("text", "commandRuns") }
-
-        view_count_text = metadata_parts.try &.find { |item| item["icon"]?.nil? && item.dig?("text", "content").try &.as_s.includes?("views") }
-          .try &.dig("text", "content").as_s
-        published = metadata_parts.try &.find { |item| item["icon"]?.nil? && item.dig?("text", "content").try &.as_s.includes?("ago") }
-          .try { |item| decode_date(item.dig("text", "content").as_s) } || Time.local
-
-        view_count = short_text_to_number(view_count_text || "0")
+        # Contains the views of the video and the published time of the video.
+        metadata_parts = HelperExtractors.lockup_metadata_parts(metadata, author)
+        published = HelperExtractors.get_lockup_published(metadata_parts) || Time.local
+        view_count = short_text_to_number(HelperExtractors.get_lockup_short_view_count(metadata_parts))
 
         length = Invidious::Videos::Membership.thumbnail_duration(thumbnail_view_model)
 
@@ -693,7 +688,7 @@ private module Parsers
           description_html:   "",
           length_seconds:     length_seconds || 0,
           premiere_timestamp: Time.unix(0),
-          author_verified:    false,
+          author_verified:    HelperExtractors.lockup_author_verified?(metadata, author),
           author_thumbnail:   Invidious::ChannelAvatars.lockup_thumbnail(metadata, author_id),
           badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
         })
@@ -1098,6 +1093,66 @@ end
 # Mostly used to extract out repeated structures to deal with code
 # repetition.
 module HelperExtractors
+  def self.lockup_metadata_parts(metadata : JSON::Any, author : String) : Array(JSON::Any)
+    parts = [] of JSON::Any
+    rows = metadata.dig?("metadata", "contentMetadataViewModel", "metadataRows").try &.as_a?
+    rows.try &.each_with_index do |row, index|
+      row_parts = row.as_h?.try(&.["metadataParts"]?).try &.as_a?
+      next unless row_parts
+      row_parts.each do |part|
+        text = part.as_h?.try(&.["text"]?).try &.as_h?
+        next if text.try(&.["commandRuns"]?)
+        # The unlinked creator label is not a view count or publication date.
+        next if index == 0 && row_parts.size == 1 && text.try(&.["content"]?).try(&.as_s?) == author
+        parts << part
+      end
+    end
+    parts
+  end
+
+  def self.get_lockup_short_view_count(parts : Array(JSON::Any)) : String
+    parts.each do |part|
+      text = part.dig?("text", "content").try &.as_s?
+      next unless text
+      label = part["accessibilityLabel"]?.try(&.as_s?) || ""
+      if text.ends_with?(" views") || text.ends_with?(" watching") || label.includes?(" views") ||
+         part.dig?("leadingIcon", "name").try(&.as_s?) == "PLAY_ARROW_OUTLINED"
+        return text.sub(/ (views|watching)\z/, "")
+      end
+    end
+    "0"
+  end
+
+  def self.get_lockup_published(parts : Array(JSON::Any)) : Time?
+    parts.each do |part|
+      text = part.dig?("text", "content").try &.as_s?
+      next unless text && text.matches?(/\A\d+ ?[smhdwy]\w* ago\z/)
+      return decode_date(text)
+    end
+    nil
+  rescue
+    nil
+  end
+
+  def self.lockup_author_verified?(metadata : JSON::Any, author : String) : Bool
+    rows = metadata.dig?("metadata", "contentMetadataViewModel", "metadataRows").try &.as_a?
+    rows.try &.each do |row|
+      parts = row.as_h?.try(&.["metadataParts"]?).try &.as_a?
+      parts.try &.each do |part|
+        text = part["text"]?
+        next unless text.try(&.dig?("content")).try(&.as_s?) == author
+        attachments = text.try &.dig?("attachmentRuns").try &.as_a?
+        attachments.try &.each do |attachment|
+          sources = attachment.dig?("element", "type", "imageType", "image", "sources").try &.as_a?
+          return true if sources.try &.any? { |source| source.dig?("clientResource", "imageName").try(&.as_s?) == "CHECK_CIRCLE_FILLED" }
+        end
+      end
+    end
+    false
+  rescue
+    false
+  end
+
   # Retrieves the amount of videos present within the given InnerTube data.
   #
   # Returns a 0 when it's unable to do so

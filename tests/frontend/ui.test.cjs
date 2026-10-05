@@ -4366,6 +4366,43 @@ async function assertAvatarCardLayout(page) {
 }
 
 for (const engine of engines) {
+    test(`${engine}: channel avatars learned from recommendations render on another page without metadata lookups`, async () => {
+        const ids = ['UCX6OQ3DkcsbYNE6H8uQQuVA', 'UCIPPMRA040LQr5QPyJEbmXA'];
+        for (const theme of ['modern-neon', 'diary']) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-recommendations-${theme}`, route: 'feed/subscriptions', width: 390});
+            const links = page.locator('.channel-name-link');
+            assert.equal(await links.count(), 2);
+            assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['MrBeast', 'MrBeast Gaming']);
+            for (const [index, id] of ids.entries()) {
+                assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
+                assert.match(await links.nth(index).locator('img').getAttribute('src'), /^\/ggpht\/.+=s88/);
+            }
+            await assertAvatarCardLayout(page);
+            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: real modern recommendations preserve creator links, duration and collaboration labels`, async () => {
+        const fixture = JSON.parse(fs.readFileSync(path.join(root, 'spec/invidious/frontend/fixtures/recommendation_avatar_lockups.json')));
+        for (const theme of ['modern-neon', 'diary']) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `watch-recommendations-${theme}`, route: 'watch?v=2isYuQZMbdU', width: 390});
+            const cards = page.locator('.recommendation');
+            assert.deepEqual(await cards.evaluateAll(nodes => nodes.map(node => node.dataset.videoId)), fixture.map(item => item.lockupViewModel.contentId));
+            assert.deepEqual((await cards.locator('h3').allTextContents()).map(text => text.trim()), fixture.map(item => item.lockupViewModel.metadata.lockupMetadataViewModel.title.content));
+            assert.deepEqual(await cards.locator('.length').allTextContents(), ['15:41', '16:19', '20:14']);
+            assert.equal(await cards.nth(0).getAttribute('data-channel-id'), 'UCX6OQ3DkcsbYNE6H8uQQuVA');
+            assert.equal(await cards.nth(1).locator('a[href="/channel/UCIPPMRA040LQr5QPyJEbmXA"]').count(), 1);
+            assert.equal(await cards.nth(2).getAttribute('data-channel-id'), '');
+            assert.ok((await cards.nth(2).innerText()).includes('MrBeast 2 and MrBeast'));
+            assert.equal(await cards.nth(2).locator('a[href^="/channel/"]').count(), 0);
+            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
     test(`${engine}: channel avatars recovered from a real playlist response render without metadata lookups`, async () => {
         const ids = ['UCfLdIEPs1tYj4ieEdJnyNyw', 'UCwppdrjsBPAZg5_cUwQjfMQ'];
         for (const theme of ['modern-neon', 'diary']) {

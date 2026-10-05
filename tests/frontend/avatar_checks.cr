@@ -12,11 +12,12 @@ end
 
 module Invidious::Videos::Parser
   class_getter avatar_metadata_calls = 0
+  class_property avatar_fixture_info : Hash(String, JSON::Any)?
 
   # Spy on the existing metadata fetch boundary; no upstream traffic is permitted.
   def extract_video_info(video_id : String)
     @@avatar_metadata_calls += 1
-    info = fixture_video.info
+    info = @@avatar_fixture_info || fixture_video.info
     info["version"] = JSON::Any.new(Video::SCHEMA_VERSION.to_i64)
     info
   end
@@ -188,7 +189,93 @@ def real_avatar_fixture(theme)
 end
 
 check_real_avatar_extraction
+
+def recommendation_avatar_video
+  items = JSON.parse(File.read("spec/invidious/frontend/fixtures/recommendation_avatar_lockups.json")).as_a
+  video = fixture_video
+  raw = JSON.parse(File.read("mocks/video/regular_mrbeast.player.json")).as_h
+  raw.merge!(JSON.parse(File.read("mocks/video/regular_mrbeast.next.json")).as_h)
+  raw["contents"].dig("twoColumnWatchNextResults", "secondaryResults", "secondaryResults").as_h["results"] = JSON::Any.new(items)
+  video.info = Invidious::Videos::Parser.parse_video_info(video.id, raw)
+  # Match the raw player fields retained by normal extract_video_info.
+  {"captions", "playabilityStatus", "playerConfig", "storyboards"}.each do |key|
+    video.info[key] = raw[key] if raw[key]?
+  end
+  video
+end
+
+def check_recommendation_avatar_cache
+  parser = Invidious::Videos::Parser
+  cache = Invidious::Database::ChannelAvatars
+  video = recommendation_avatar_video
+  expected = Invidious::ChannelAvatars.from_video(video)
+  ids = expected.keys
+  PG_DB.exec("DELETE FROM channel_avatars")
+  calls = parser.avatar_metadata_calls
+  parser.avatar_fixture_info = video.info
+  begin
+    # Exactly the normal video fetch learns all recommendation URLs in one batch.
+    fetched = fetch_video(video.id, nil)
+    raise "Recommendation learning added metadata fetches" unless parser.avatar_metadata_calls == calls + 1
+    raise "Recommendation avatars not cached during normal fetch" unless cache.select(ids) == expected
+    raise "Main creator avatar replaced by recommendation" unless expected[video.ucid] == Invidious::ChannelAvatars.proxy_url(video.author_thumbnail)
+
+    response = JSON.parse(fetched.to_json("en-US", nil))
+    recommendations = response["recommendedVideos"].as_a
+    raise "Modern recommendation metadata lost" unless recommendations.map(&.["videoId"].as_s) == fetched.related_videos.map(&.["id"])
+    recommendations.first(2).each_with_index do |record, index|
+      supplied = Invidious::ChannelAvatars.proxy_url(fetched.related_videos[index]["author_thumbnail"])
+      raise "Recommendation API avatar not serialized" unless Invidious::ChannelAvatars.proxy_url(record["authorThumbnails"][0]["url"].as_s) == supplied
+    end
+    raise "Collaboration assigned a creator avatar" if recommendations.last["authorThumbnails"]?
+
+    env = fixture_env("/feed/subscriptions")
+    Invidious::Frontend::ChannelAvatars.prepare_ids(env, ids)
+    ids.each do |id|
+      raise "Another frontend page cannot reuse recommendation avatar" unless Invidious::Frontend::ChannelAvatars.render(env, id).includes?(expected[id])
+    end
+    raise "Cross-page reuse fetched metadata" unless parser.avatar_metadata_calls == calls + 1
+
+    # The unchanged cached-video path must not force a refresh for new optional fields.
+    PG_DB.exec("DELETE FROM videos WHERE id = '2isYuQZMbdU'")
+    Invidious::Database::Videos.insert(fetched)
+    get_video(video.id, refresh: false)
+    raise "Compatible video cache forced metadata fetch" unless parser.avatar_metadata_calls == calls + 1
+
+    PG_DB.exec("DROP TABLE channel_avatars")
+    fetch_video(video.id, nil)
+    raise "Recommendation cache failure retried video metadata" unless parser.avatar_metadata_calls == calls + 2
+    PG_DB.exec("CREATE TABLE channel_avatars (ucid TEXT PRIMARY KEY, url TEXT NOT NULL, observed_at TEXT NOT NULL)")
+    cache.observe(expected)
+  ensure
+    parser.avatar_fixture_info = nil
+  end
+  raise "Recommendation avatar checks fetched upstream" unless YoutubeAPI.avatar_listing_calls == 0
+  puts "Recommendation avatar API, cache reuse, main-creator precedence and request-budget checks passed"
+end
+
+def recommendation_avatar_fixture(theme)
+  env = fixture_env("/feed/subscriptions", visual_theme: theme)
+  locale = env.get("preferences").as(Preferences).locale
+  items = recommendation_avatar_video.related_videos.first(2).map do |video|
+    ChannelVideo.new({title: video["title"], id: video["id"], author: video["author"], ucid: video["ucid"],
+                      published: Time.utc, updated: Time.utc, views: short_text_to_number(video["short_view_count"]),
+                      length_seconds: video["length_seconds"].to_i, live_now: false, premiere_timestamp: nil, members_only: false})
+  end
+  navbar_search = true
+  page_nav_html = ""
+  render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
+end
+
+check_recommendation_avatar_cache
 avatar_output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
+{"modern-neon", "diary"}.each do |theme|
+  File.write("#{avatar_output}/avatars-recommendations-#{theme}.html", recommendation_avatar_fixture(theme))
+  File.write("#{avatar_output}/watch-recommendations-#{theme}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU", visual_theme: theme), nil, supplied_video: recommendation_avatar_video))
+end
+# Keep existing fixture caches available after the cache-failure check above.
+Invidious::Database::ChannelAvatars.observe(Invidious::ChannelAvatars.from_items(real_avatar_items))
+Invidious::Database::ChannelAvatars.observe({"UCdirect" => "https://yt3.ggpht.com/direct=s88"})
 Invidious::Database::ChannelAvatars.observe({"UCcached" => "https://yt3.ggpht.com/cached=s88", "UCfixture" => "https://yt3.ggpht.com/history=s88"})
 {"modern-neon", "diary"}.each do |theme|
   File.write("#{avatar_output}/avatars-real-#{theme}.html", real_avatar_fixture(theme))

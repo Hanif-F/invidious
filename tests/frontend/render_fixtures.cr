@@ -88,10 +88,10 @@ def fixture_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
-def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false, native_clip : InvidiousClip? = nil, clip_duration : Int32? = nil)
+def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false, native_clip : InvidiousClip? = nil, clip_duration : Int32? = nil, supplied_video : Video? = nil)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
-  video = fixture_video
+  video = supplied_video || fixture_video
   video.length_seconds = clip_duration if clip_duration
   video.info["liveChatReplay"] = JSON::Any.new(true) if chat
   video.info["shortDescription"] = JSON::Any.new(chapter_description) if chapter_description

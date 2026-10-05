@@ -1,4 +1,5 @@
 require "json"
+require "../helpers/channel_avatars"
 
 module Invidious::Videos::Parser
   extend self
@@ -43,7 +44,7 @@ module Invidious::Videos::Parser
 
     # TODO: when refactoring video types, make a struct for related videos
     # or reuse an existing type, if that fits.
-    return {
+    result = {
       "members_only"     => JSON::Any.new(Invidious::Videos::Membership.detected?(related).to_s),
       "id"               => related["videoId"],
       "title"            => related["title"]["simpleText"],
@@ -54,6 +55,32 @@ module Invidious::Videos::Parser
       "author_verified"  => JSON::Any.new(author_verified),
       "published"        => JSON::Any.new(published || ""),
     }
+    if thumbnail = Invidious::ChannelAvatars.related_thumbnail(related, ucid || "")
+      result["author_thumbnail"] = JSON::Any.new(thumbnail)
+    end
+    result
+  end
+
+  def parse_related_lockup(item : JSON::Any) : Hash(String, JSON::Any)?
+    video = parse_item(item)
+    return nil unless video.is_a?(SearchVideo)
+    metadata = item.dig("lockupViewModel", "metadata", "lockupMetadataViewModel")
+    parts = HelperExtractors.lockup_metadata_parts(metadata, video.author)
+    result = {
+      "members_only"     => JSON::Any.new(video.members_only.to_s),
+      "id"               => JSON::Any.new(video.id),
+      "title"            => JSON::Any.new(video.title),
+      "author"           => JSON::Any.new(video.author),
+      "ucid"             => JSON::Any.new(video.ucid),
+      "length_seconds"   => JSON::Any.new(video.length_seconds.to_s),
+      "short_view_count" => JSON::Any.new(HelperExtractors.get_lockup_short_view_count(parts)),
+      "author_verified"  => JSON::Any.new(video.author_verified.to_s),
+      "published"        => JSON::Any.new(HelperExtractors.get_lockup_published(parts).try(&.to_rfc3339) || ""),
+    }
+    if thumbnail = video.author_thumbnail
+      result["author_thumbnail"] = JSON::Any.new(thumbnail)
+    end
+    result
   end
 
   def extract_video_info(video_id : String)
@@ -241,14 +268,16 @@ module Invidious::Videos::Parser
 
     related = [] of JSON::Any
 
-    # Parse "compactVideoRenderer" items (under secondary results)
+    # Parse supported video cards in upstream order (under secondary results).
     secondary_results = main_results
       .dig?("secondaryResults", "secondaryResults", "results")
     secondary_results.try &.as_a.each do |element|
-      if item = element["compactVideoRenderer"]?
-        related_video = self.parse_related_video(item)
-        related << JSON::Any.new(related_video) if related_video
-      end
+      related_video = if item = element["compactVideoRenderer"]?
+                        self.parse_related_video(item)
+                      elsif element.dig?("lockupViewModel", "contentType").try(&.as_s?) == "LOCKUP_CONTENT_TYPE_VIDEO"
+                        self.parse_related_lockup(element)
+                      end
+      related << JSON::Any.new(related_video) if related_video
     end
 
     # If nothing was found previously, fall back to end screen renderer

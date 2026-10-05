@@ -38,6 +38,20 @@ the existing playlist continuation request for `PLNoVVZkH7--4P12wo6pVV10ycmBCMct
 The response contained 49 video cards with avatar fields; the original playlist
 parser ignored them. Tests preserve two creators' actual identity and avatar
 structures, while removing tracking, menus and playback data.
+Watch recommendations also retain avatars from modern cards whose creator text
+is unlinked: the channel ID comes from the single avatar's channel link. Normal
+video fetching learns recommendation URLs in one batch, with the main creator's
+avatar taking precedence. Collaboration stacks keep their label without assigning
+an uncertain channel identity or avatar. Older compact recommendation thumbnails
+are supported too. Existing video caches refresh on their usual schedule.
+
+The reduced `recommendation_avatar_lockups.json` fixture was captured on
+2026-10-05 using the unchanged `/next` request for `2isYuQZMbdU`. One verification
+request returned 26 video cards; baseline extraction exposed no channel IDs or
+avatars. Updated extraction recovers 25 associated avatars, leaving one
+collaboration unassigned. The fixture retains two single-channel examples and
+the collaboration, including creator labels, avatar links, view/date metadata
+and duration badges, while removing tracking, menus and playback URLs.
 Thin mode omits them, and a channel's own video listings do not repeat its avatar.
 Placeholders use the first Unicode letter cluster in the channel name, uppercased
 when it remains one cluster, or `#` for missing names and nonletter prefixes.
@@ -50,7 +64,7 @@ existing video fetch's request count. Browser checks cover both themes, mobile,
 RTL, compact lists, history, subscriptions, no-JavaScript rendering and image failures:
 
 ```sh
-node --test --test-name-pattern='channel avatars|failed avatar' tests/frontend/ui.test.cjs
+node --test --test-name-pattern='channel avatars|failed avatar|real modern recommendations|recommendation.*autoplay|blocking.*recommendation' tests/frontend/ui.test.cjs
 ```
 
 - Production Video.js controls, playback, pause, seeking and playback speed using
