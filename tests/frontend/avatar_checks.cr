@@ -4,9 +4,11 @@ private record AvatarFixtureSource, ucid : String, author_thumbnail : String?
 module YoutubeAPI
   class_getter avatar_listing_calls = 0
   class_property avatar_listing_fixture : Hash(String, JSON::Any)?
+  class_getter avatar_listing_requests = [] of {String, String}
 
   def _post_json(endpoint : String, data : Hash, client_config : ClientConfig | Nil) : Hash(String, JSON::Any)
     @@avatar_listing_calls += 1
+    @@avatar_listing_requests << {endpoint, data.to_json}
     if response = @@avatar_listing_fixture
       return response
     end

@@ -1,0 +1,89 @@
+{
+  "starting_master": "6091cdb28a700def7a724bc7e04cd7d2b69cf4d7",
+  "requests": [
+    {
+      "number": 1,
+      "mode": "baseline",
+      "channel": "ltt",
+      "status": 200,
+      "bytes": 396353,
+      "elapsed_ms": 517,
+      "items": 31,
+      "videos": 30,
+      "has_continuation": true,
+      "metadata_id": null,
+      "has_avatar": false
+    },
+    {
+      "number": 2,
+      "mode": "candidate-home",
+      "channel": "ltt",
+      "status": 200,
+      "bytes": 1697152,
+      "elapsed_ms": 953,
+      "items": 13,
+      "videos": 0,
+      "has_continuation": false,
+      "metadata_id": "UCXuqSBlHAE6Xw-yeJA0Tunw",
+      "has_avatar": true,
+      "selected_tab": "Home"
+    },
+    {
+      "number": 3,
+      "mode": "candidate",
+      "channel": "ltt",
+      "status": 200,
+      "bytes": 437063,
+      "elapsed_ms": 357,
+      "items": 31,
+      "videos": 30,
+      "has_continuation": true,
+      "metadata_id": "UCXuqSBlHAE6Xw-yeJA0Tunw",
+      "has_avatar": true,
+      "selected_tab": "Videos"
+    },
+    {
+      "number": 4,
+      "mode": "continuation",
+      "channel": "ltt",
+      "status": 200,
+      "bytes": 391976,
+      "elapsed_ms": 385,
+      "items": 31,
+      "videos": 30,
+      "has_continuation": true,
+      "metadata_id": null,
+      "has_avatar": false
+    },
+    {
+      "number": 5,
+      "mode": "baseline",
+      "channel": "mrbeast",
+      "status": 200,
+      "bytes": 395065,
+      "elapsed_ms": 731,
+      "items": 31,
+      "videos": 30,
+      "has_continuation": true,
+      "metadata_id": null,
+      "has_avatar": false
+    },
+    {
+      "number": 6,
+      "mode": "candidate",
+      "channel": "mrbeast",
+      "status": 200,
+      "bytes": 433417,
+      "elapsed_ms": 978,
+      "items": 31,
+      "videos": 30,
+      "has_continuation": true,
+      "metadata_id": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      "has_avatar": true,
+      "selected_tab": "Videos"
+    }
+  ],
+  "pagination_live_channel": "ltt",
+  "request_cap": 6,
+  "added_application_metadata_requests": 0
+}

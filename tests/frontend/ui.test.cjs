@@ -4367,6 +4367,32 @@ async function assertAvatarCardLayout(page) {
 }
 
 for (const engine of engines) {
+    test(`${engine}: Popular avatars learned during channel refreshes render without metadata lookups`, async () => {
+        const expected = JSON.parse(fs.readFileSync(path.join(root, 'spec/invidious/channels/fixtures/popular_avatars/expected_avatars.json')));
+        const entries = Object.entries(expected);
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const width of [390, 1440]) {
+                const {page, context, requests, errors} = await pageFor(engine, {fixture: `popular-avatars-${theme}`, route: 'feed/popular', width});
+                const links = page.locator('.channel-name-link');
+                assert.equal(await links.count(), 2);
+                assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['Linus Tech Tips', 'MrBeast']);
+                for (const [index, [id, avatar]] of entries.entries()) {
+                    assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
+                    assert.equal(await links.nth(index).locator('img').getAttribute('src'), avatar);
+                }
+                await assertAvatarCardLayout(page);
+                assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos|comments)|avatar.*lookup/.test(url)));
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: 'popular-avatars-thin', route: 'feed/popular', width: 390});
+        assert.equal(await page.locator('.channel-avatar').count(), 0);
+        assert.ok(!requests.some(url => url.startsWith('/ggpht') || /\/api\/v1\/(channels|videos|comments)/.test(url)));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
     test(`${engine}: channel avatars learned from comments and community posts render on another page without metadata lookups`, async () => {
         const expected = JSON.parse(fs.readFileSync(path.join(root, 'spec/invidious/comments/fixtures/expected_avatars.json')));
         const entries = Object.entries({...expected.modern, ...expected.community});

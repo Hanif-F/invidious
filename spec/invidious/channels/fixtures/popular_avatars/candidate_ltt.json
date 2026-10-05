@@ -1,0 +1,2317 @@
+{
+  "metadata": {
+    "channelMetadataRenderer": {
+      "title": "Linus Tech Tips",
+      "externalId": "UCXuqSBlHAE6Xw-yeJA0Tunw",
+      "avatar": {
+        "thumbnails": [
+          {
+            "url": "https://yt3.googleusercontent.com/gnvYLhXy8FAlPXZ2RTrkrgj-5kyt0vdE2FUGVOiKGdEZIa-wN5A-7nwZBlWJLzUMmoh1NWAU=s900-c-k-c0x00ffffff-no-rj",
+            "width": 900,
+            "height": 900
+          }
+        ]
+      }
+    }
+  },
+  "contents": {
+    "twoColumnBrowseResultsRenderer": {
+      "tabs": [
+        {
+          "tabRenderer": {
+            "title": "Videos",
+            "selected": true,
+            "endpoint": {
+              "commandMetadata": {
+                "webCommandMetadata": {
+                  "url": "/@LinusTechTips/videos",
+                  "webPageType": "WEB_PAGE_TYPE_CHANNEL",
+                  "rootVe": 3611,
+                  "apiUrl": "/youtubei/v1/browse"
+                }
+              },
+              "browseEndpoint": {
+                "browseId": "UCXuqSBlHAE6Xw-yeJA0Tunw",
+                "params": "EgZ2aWRlb3PyBgQKAjoA",
+                "canonicalBaseUrl": "/@LinusTechTips"
+              }
+            },
+            "content": {
+              "richGridRenderer": {
+                "contents": [
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "ijFSEb2W6_8",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/ijFSEb2W6_8/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAXPye_77NL82PlWpMGiueAa6rHcg",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "13:52",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "13 minutes, 52 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "I’ve Wanted This Robot for 10 Years"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "997K views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "21 hours ago"
+                                          },
+                                          "accessibilityLabel": "21 hours ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "79s8O7Cipl0",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/79s8O7Cipl0/hq720_custom_1.jpg?sqp=CMT0jtYG-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDLok01CZiwoT40yTbb_RUnBTpy6g",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "30:11",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "30 minutes, 11 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "I Spent Over 10 Hours Upgrading my Controllers"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.2M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "1 day ago"
+                                          },
+                                          "accessibilityLabel": "1 day ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "fOJ1UkSPW4Y",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/fOJ1UkSPW4Y/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAfP2dUid3RdoCIM2AWAv7LpVuGxA",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "18:29",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "18 minutes, 29 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "LMG Learns Life Skills - Oil Changing | Episode 3"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "2 days ago"
+                                          },
+                                          "accessibilityLabel": "2 days ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "LzxC-RzdfKg",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/LzxC-RzdfKg/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDBA79aLXMdlV-AV6yYxBPfR0llMQ",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "18:58",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "18 minutes, 58 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "They Reviewed Our Products, But Is THEIR Shirt Worth It?"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "2 days ago"
+                                          },
+                                          "accessibilityLabel": "2 days ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "1H20xp8Brnc",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/1H20xp8Brnc/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAfV_lFb2j9-xRKSXWF76WeV3iMag",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "21:04",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "21 minutes, 4 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "I Have Strong Feelings About Air Conditioning in the Tech House"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.6M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "3 days ago"
+                                          },
+                                          "accessibilityLabel": "3 days ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "y1hZ3EalPQU",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/y1hZ3EalPQU/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLClsrgsCSnCXxpf9vbJkJ7hJ0SAJg",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "27:05",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "27 minutes, 5 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "I Found these Computers in a Ditch…"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.8M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "6 days ago"
+                                          },
+                                          "accessibilityLabel": "6 days ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "1gxnANAbLuE",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/1gxnANAbLuE/hq720_custom_2.jpg?sqp=CMT0jtYG-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAowR_z-7KCyMGZYCqoS8QIU932Cg",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "25:29",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "25 minutes, 29 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "The ALL RAZER Gaming Setup"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.8M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "8 days ago"
+                                          },
+                                          "accessibilityLabel": "8 days ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "DLOQOUWmRpI",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/DLOQOUWmRpI/hq720_custom_2.jpg?sqp=CMT0jtYG-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDLsJY_OnrahvH1eFvqLD78xoedVA",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "11:55",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "11 minutes, 55 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "The Apple Product I Still Fanboy Over - AirPods 5 Review"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.2M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "10 days ago"
+                                          },
+                                          "accessibilityLabel": "10 days ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "hPWDjkoiwUU",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/hPWDjkoiwUU/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAtS1HIRe-YJQJ6AmI6u7bor1OdXQ",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "15:16",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "15 minutes, 16 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Extras - AMD Upgrade Lisa Hawthorne"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "11 days ago"
+                                          },
+                                          "accessibilityLabel": "11 days ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "XM04mbymDsE",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/XM04mbymDsE/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLANQBlQEouCsUk2sDwKCBjLRybinQ",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "29:20",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "29 minutes, 20 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "The Most Permanent Tech Upgrade of All Time - AMD $5000 Ultimate Tech Upgrade"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "2.9M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "11 days ago"
+                                          },
+                                          "accessibilityLabel": "11 days ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "GaX0frxNwfQ",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/GaX0frxNwfQ/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDU_5M_vq95YyXHOHeE6bH4ceC58A",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "10:33",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "10 minutes, 33 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "I Thought These Guys Made Cables"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.6M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "13 days ago"
+                                          },
+                                          "accessibilityLabel": "13 days ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "fnUEt8IZy1U",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/fnUEt8IZy1U/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBJJXuERrKXX-TQcraC66UBQjUnjA",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "15:18",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "15 minutes, 18 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Overexplaining - The Overengineered Commuter Backpack -  British Millerain"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "2 weeks ago"
+                                          },
+                                          "accessibilityLabel": "2 weeks ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "qgLaCZyKv_8",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/qgLaCZyKv_8/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCRQLMRaAXY2Fsjv_8DHCrrpellag",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "17:23",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "17 minutes, 23 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "I Tried All The Best (and Worst) Doorbells"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.5M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "2 weeks ago"
+                                          },
+                                          "accessibilityLabel": "2 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "zg-rMHEqg-4",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/zg-rMHEqg-4/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBF7RDOf3869Lp3twZZceqS0aCMWg",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "19:57",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "19 minutes, 57 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "My Son Needs a New Laptop"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "4.4M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "2 weeks ago"
+                                          },
+                                          "accessibilityLabel": "2 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "P82XPloDtMc",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/P82XPloDtMc/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDw6CGb0WN4iFuR9jpZX9G7ZjC49g",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "18:25",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "18 minutes, 25 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Adding Recoil to My Mouse was a lot Harder than I Thought..."
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "2 weeks ago"
+                                          },
+                                          "accessibilityLabel": "2 weeks ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "3xngArcFpek",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/3xngArcFpek/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA-gYPSvXmtygtWldss5LxAgj3NrA",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "9:44",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "9 minutes, 44 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "I Promise you this is NOT Stupid"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "2.2M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "2 weeks ago"
+                                          },
+                                          "accessibilityLabel": "2 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "3PGKMwgjla0",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/3PGKMwgjla0/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCy2vxbb9FUeRml1Zkf99rOzWuymA",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "23:46",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "23 minutes, 46 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Steam Frame Review - This Changes Everything"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "5.2M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "2 weeks ago"
+                                          },
+                                          "accessibilityLabel": "2 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "i_nj_vkD03g",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/i_nj_vkD03g/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCxCayPNideCLyE2mVFxlxByBv1Gg",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "25:42",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "25 minutes, 42 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "The Steam-Cooled STEAM Machine"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.8M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "pvSdeU13hKc",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/pvSdeU13hKc/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD7LNFEMWIZDEe7_SyoDq6m0K_LBQ",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "19:02",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "19 minutes, 2 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "This GPU can be Hacked to Unlock Secret Memory "
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.4M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "VfQdPRyqQW4",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/VfQdPRyqQW4/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCVvsyXxtHlcMmH_MKKtTWNTtCG0Q",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "24:15",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "24 minutes, 15 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "I Cooled my PC with a SLUSHIE MACHINE"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.8M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "mLeBcqYINw8",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/mLeBcqYINw8/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA6Aag4zutOA6A0IEb6z71XD0fMAw",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "31:18",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "31 minutes, 18 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "LMG Show and Tell"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "sL6OWsT47zc",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/sL6OWsT47zc/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBTJ2lHpA-Mvjt60Pk51rFRe2m9xQ",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "18:20",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "18 minutes, 20 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Apple just Copied Microsoft’s Worst Idea - iPhone Duo, Airpods 5, iPhone 18 Pro & More"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "4.1M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "xh8WlbnO82k",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/xh8WlbnO82k/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC6NgBKdmusp6sWrSWsynXRo5cA6A",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "7:18",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "7 minutes, 18 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Overexplaining - Why iPods Sound Different"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "ZRPrB1z1cD8",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/ZRPrB1z1cD8/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLASpcc7vW5lItgeqyZ6RQvdhUr6eQ",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "15:09",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "15 minutes, 9 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Meet the Pets - Yvonne's Three Chickens"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "2KztkwBYD68",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/2KztkwBYD68/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDTKRSciuB-TKFUBziZw8dMK06ZEA",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "15:19",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "15 minutes, 19 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Why are people spending $1,000 for old iPods"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "3.1M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "nZwdIPg7N3A",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/nZwdIPg7N3A/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAZr-colm7g9b8KL5TrTNkYcxbo8A",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "21:44",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "21 minutes, 44 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "We Should Have Hired Someone to do this…"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "2.1M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "3 weeks ago"
+                                          },
+                                          "accessibilityLabel": "3 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "lmLh29LE2W4",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/lmLh29LE2W4/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAgB2fM9G-kWnKlZgc7n6_qQTBHEg",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "11:13",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "11 minutes, 13 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "The Best Value Gaming PC I’ve Ever Seen"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1.7M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "4 weeks ago"
+                                          },
+                                          "accessibilityLabel": "4 weeks ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "16gtw_cVL-k",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/16gtw_cVL-k/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDE2suWqlp9I1Vqj0poFHX_ujG35A",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "23:27",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "23 minutes, 27 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "Asking Linus the Important Questions, Clanker Attacks Me | Why is WAN Late Episode 26"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "1 month ago"
+                                          },
+                                          "accessibilityLabel": "1 month ago"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "badges": [
+                                        {
+                                          "badgeViewModel": {
+                                            "badgeText": "Members only",
+                                            "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                            "iconName": "SPONSORSHIP_STAR"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "X8sgBpmdCT8",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/X8sgBpmdCT8/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC3M5gVDmnboH-o9lUcF1r9hU7qiw",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "13:43",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "13 minutes, 43 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "We Built the BEST PC"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "4.3M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "1 month ago"
+                                          },
+                                          "accessibilityLabel": "1 month ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "richItemRenderer": {
+                      "content": {
+                        "lockupViewModel": {
+                          "contentId": "fX-g6XNrkiA",
+                          "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                          "contentImage": {
+                            "thumbnailViewModel": {
+                              "image": {
+                                "sources": [
+                                  {
+                                    "url": "https://i.ytimg.com/vi/fX-g6XNrkiA/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAHDxcBVDCM03moylxYaGDxeEJyrg",
+                                    "width": 360,
+                                    "height": 202
+                                  }
+                                ]
+                              },
+                              "overlays": [
+                                {
+                                  "thumbnailBottomOverlayViewModel": {
+                                    "badges": [
+                                      {
+                                        "thumbnailBadgeViewModel": {
+                                          "text": "18:58",
+                                          "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                          "rendererContext": {
+                                            "accessibilityContext": {
+                                              "label": "18 minutes, 58 seconds"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "metadata": {
+                            "lockupMetadataViewModel": {
+                              "title": {
+                                "content": "DLSS 5 is NOT What We Expected"
+                              },
+                              "metadata": {
+                                "contentMetadataViewModel": {
+                                  "metadataRows": [
+                                    {
+                                      "metadataParts": [
+                                        {
+                                          "text": {
+                                            "content": "4.1M views"
+                                          }
+                                        },
+                                        {
+                                          "text": {
+                                            "content": "1 month ago"
+                                          },
+                                          "accessibilityLabel": "1 month ago"
+                                        }
+                                      ]
+                                    }
+                                  ],
+                                  "delimiter": " • "
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "continuationItemRenderer": {
+                      "trigger": "CONTINUATION_TRIGGER_ON_ITEM_SHOWN",
+                      "continuationEndpoint": {
+                        "commandMetadata": {
+                          "webCommandMetadata": {
+                            "sendPost": true,
+                            "apiUrl": "/youtubei/v1/browse"
+                          }
+                        },
+                        "continuationCommand": {
+                          "token": "fixture-next-page",
+                          "request": "CONTINUATION_REQUEST_TYPE_BROWSE"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "header": {
+                  "chipBarViewModel": {
+                    "chips": [
+                      {
+                        "chipViewModel": {
+                          "text": "Latest",
+                          "displayType": "CHIP_VIEW_MODEL_DISPLAY_TYPE_DROP_DOWN",
+                          "tapCommand": {
+                            "innertubeCommand": {
+                              "showSheetCommand": {
+                                "panelLoadingStrategy": {
+                                  "inlineContent": {
+                                    "sheetViewModel": {
+                                      "content": {
+                                        "listViewModel": {
+                                          "listItems": [
+                                            {
+                                              "listItemViewModel": {
+                                                "title": {
+                                                  "content": "Latest"
+                                                },
+                                                "isSelected": true
+                                              }
+                                            },
+                                            {
+                                              "listItemViewModel": {
+                                                "title": {
+                                                  "content": "Popular"
+                                                }
+                                              }
+                                            },
+                                            {
+                                              "listItemViewModel": {
+                                                "title": {
+                                                  "content": "Oldest"
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "chipViewModel": {
+                          "text": "Members only",
+                          "selected": false,
+                          "displayType": "CHIP_VIEW_MODEL_DISPLAY_TYPE_UNSPECIFIED"
+                        }
+                      },
+                      {
+                        "chipViewModel": {
+                          "text": "Public",
+                          "selected": false,
+                          "displayType": "CHIP_VIEW_MODEL_DISPLAY_TYPE_UNSPECIFIED"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

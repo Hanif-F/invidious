@@ -76,6 +76,23 @@ module Invidious::ChannelAvatars
     avatars
   end
 
+  # A refresh response must explicitly identify the channel supplying its avatar.
+  def from_channel_metadata(response : JSON::Any, expected_id : String) : Hash(String, String)
+    avatars = {} of String => String
+    metadata = response.as_h?.try(&.["metadata"]?).try(&.as_h?).try(&.["channelMetadataRenderer"]?).try &.as_h?
+    id = metadata.try(&.["externalId"]?).try &.as_s?
+    return avatars unless id == expected_id && expected_id.matches?(/\AUC[A-Za-z0-9_-]{22}\z/)
+
+    sources = metadata.try(&.["avatar"]?).try(&.as_h?).try(&.["thumbnails"]?).try &.as_a?
+    sources.try &.reverse_each do |source|
+      if url = proxy_url(source.as_h?.try(&.["url"]?).try &.as_s?)
+        avatars[expected_id] = url
+        break
+      end
+    end
+    avatars
+  end
+
   # Modern video cards put the linked author and avatar in lockup metadata.
   def lockup_author(metadata : JSON::Any?) : {String?, String?}
     authors = lockup_authors(metadata)

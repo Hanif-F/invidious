@@ -1,0 +1,2223 @@
+{
+  "onResponseReceivedActions": [
+    {
+      "appendContinuationItemsAction": {
+        "continuationItems": [
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "LYMvJW5rYME",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/LYMvJW5rYME/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBBFaBErrDLFn9v9j1scAY3B5X-zw",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "17:09",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "17 minutes, 9 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "I Built a Fake Home Theater in the Tech House…"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1.3M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "yFJDP7OinRM",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/yFJDP7OinRM/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA4yhaGvvoo6MEM4Ww7P-R61ywAOg",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "21:46",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "21 minutes, 46 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "My Wife Needs a Phone, and I’m NOT Gonna Mess it Up This Time"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "4M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "oeqUHEp4sYM",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/oeqUHEp4sYM/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCbRVA4GKCGr0P2bt0iyZDZvnYmBw",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "11:22",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "11 minutes, 22 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "How to Stop Smart TV Spying"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1.2M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "OWLYxxoqvNU",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/OWLYxxoqvNU/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD71-qrDnqIYdrL8VmqWL8f8fzrFQ",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "11:04",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "11 minutes, 4 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Is Yvonne Happy with Her New Laptop?"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "N-traNXpqX0",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/N-traNXpqX0/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBFnmsb52siSu-aVVayA00PqWxYYg",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "16:50",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "16 minutes, 50 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Extras - AMD Upgrade Jordan Block"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "H4BKUbtCmp0",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/H4BKUbtCmp0/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBPmRO7F7YnhyWbibnV-ebo3lLXHQ",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "30:00",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "30 minutes"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "How do you upgrade a lifelong Tech??? - AMD $5000 Ultimate Tech Upgrade"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "2M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "ZWCAXHNOIcA",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/ZWCAXHNOIcA/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCpSfKLSHHWJHfnAjy8JGISMX6C0A",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "24:04",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "24 minutes, 4 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Your Next Budget PC Upgrade is...Custom Watercooling??"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "743K views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "DXK-F0SjC_E",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/DXK-F0SjC_E/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBwNuQviIL1sbyiYxKIDUnssyFQ7g",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "13:48",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "13 minutes, 48 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "I put the NEWEST CPU in the OLDEST Motherboard"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1.5M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "36oL-7C_qR4",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/36oL-7C_qR4/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB6hJiHv9TWIeOLK9Wn4plrMgPyRw",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "18:00",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "18 minutes"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "There’s NO Excuse Not To Try Linux!"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "931K views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "AHP423JqiLc",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/AHP423JqiLc/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAJK8EGEUJXWOsC3wcOAVdZcISZIg",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "23:44",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "23 minutes, 44 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "$5 vs $500 Guitar Hero Controller!"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "389K views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "ibH_IYJcXDo",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/ibH_IYJcXDo/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAl03POfxta3lN5kmEyVtP6euL6iQ",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "12:44",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "12 minutes, 44 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "We Rebranded Linus Media Group to..."
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "I18BRqSQ9HA",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/I18BRqSQ9HA/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC85A_HU92bOgcgTQyXLWPghVzKGA",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "20:06",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "20 minutes, 6 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "My Friends Roast Me for My Birthday"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "MQeJYEN_lrg",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/MQeJYEN_lrg/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBGikdZvaV0zoD5WI736aPcIGRY7g",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "21:40",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "21 minutes, 40 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "This DIY Datacenter is NUTS - Hetzner Tour"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1.8M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "ea3EvwkW_28",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/ea3EvwkW_28/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBSKdLua7OGFn31VP4oor-4piYcug",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "11:20",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "11 minutes, 20 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "The Greatest Graphics Card of All Time."
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "896K views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "_rcsnTKp4lc",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/_rcsnTKp4lc/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA8PBBL7n4_xTdHuf2ETMDlyMnRHw",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "21:52",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "21 minutes, 52 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Creators Wish Linus a Happy 40th Birthday"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "J261Rg0LTDA",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/J261Rg0LTDA/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD1BS_cmuRI0-G-Gm3jpbLHbPVyHA",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "11:03",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "11 minutes, 3 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "\"Pro\" phones are stupid - Pixel 11 Announcement"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "744K views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "kH-n4PjcZPI",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/kH-n4PjcZPI/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDY2atGs8_PhnekuRd0jk2fcA_9rw",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "9:05",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "9 minutes, 5 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Get a Question Wrong, Water Balloon drops - Tech Roulette Episode 3"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "rbQtX_thQtQ",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/rbQtX_thQtQ/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBbYqFI-66lKsWRIEAb22E-DlaV7Q",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "19:39",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "19 minutes, 39 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "It Shouldn’t be this Hard to Buy A Printer…"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "2.2M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "NWoT1ZVd1Lo",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/NWoT1ZVd1Lo/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDdZZUlgYIi52zL7EOGB3Qs_c9lfg",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "18:16",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "18 minutes, 16 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Her phone died, so I'm making her fix it"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1.4M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "XiSMWonFuQQ",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/XiSMWonFuQQ/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAqmE8uTWdaBjm2ZfREMYRgA3QyqQ",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "28:58",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "28 minutes, 58 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Rating Every Version of Windows"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1.1M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "lGHTN-8eZzk",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/lGHTN-8eZzk/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCgyYx4qjpOq3Q3wrggyaekMYU_ng",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "14:04",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "14 minutes, 4 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Board Game Night: Wavelengths - Boomer vs Zoomers"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "JpER9IDCFWI",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/JpER9IDCFWI/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBKhgNPieAz8eeoEuNBtLO4mh3gcQ",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "3:55",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "3 minutes, 55 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Extras - I Bought Every YouTuber Merch"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "ijUCl9w95vg",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/ijUCl9w95vg/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA5Um7Fp2aUii3vzTRgUe9c07PHyw",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "22:38",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "22 minutes, 38 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Youtuber Products Tier List"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "895K views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "1 month ago"
+                                  },
+                                  "accessibilityLabel": "1 month ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "bmFDotIAoF8",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/bmFDotIAoF8/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBrs__Psi1Aj0GbfZr5ZzTAI4Iylg",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "11:04",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "11 minutes, 4 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Extras - I Followed ChatGPT’s PC Build Guide (2026)"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "2 months ago"
+                                  },
+                                  "accessibilityLabel": "2 months ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "1oIyk13JwQM",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/1oIyk13JwQM/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLACv-cwRLMaOPSypYyLHnInVvFeQQ",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "13:48",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "13 minutes, 48 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "Does Linux use less RAM?"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1.1M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "2 months ago"
+                                  },
+                                  "accessibilityLabel": "2 months ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "t6MAZW-joCo",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/t6MAZW-joCo/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDrHhZCSldzuYOa5rZp0qzkER6wTQ",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "35:07",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "35 minutes, 7 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "I Followed ChatGPT’s PC Build Guide (2026)"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "2.3M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "2 months ago"
+                                  },
+                                  "accessibilityLabel": "2 months ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "xbxWkOmaqfU",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/xbxWkOmaqfU/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLANuiermOe6W4IBNOtvdySB6BE2oQ",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "8:30",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "8 minutes, 30 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "LMG Whips - Jordan's 2009 Subaru Sambar (Kei Truck)"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "2 months ago"
+                                  },
+                                  "accessibilityLabel": "2 months ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "nKF7Id9F7QU",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/nKF7Id9F7QU/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDLre7QrVj0d1M9G2W5Z8xT--f1HA",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "35:30",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "35 minutes, 30 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "An Epic Funny Prank Happened (GONE WRONG, not really but GONE WRONG) - Why is WAN Late Episode 25"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "2 months ago"
+                                  },
+                                  "accessibilityLabel": "2 months ago"
+                                }
+                              ]
+                            },
+                            {
+                              "badges": [
+                                {
+                                  "badgeViewModel": {
+                                    "badgeText": "Members only",
+                                    "badgeStyle": "BADGE_MEMBERS_ONLY",
+                                    "iconName": "SPONSORSHIP_STAR"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "L0ViytO-560",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/L0ViytO-560/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAYGJoS8P_tyCqbGkB2uf7VpODSjA",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "21:26",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "21 minutes, 26 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "The Tech House Needs a Workshop…"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "825K views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "2 months ago"
+                                  },
+                                  "accessibilityLabel": "2 months ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "richItemRenderer": {
+              "content": {
+                "lockupViewModel": {
+                  "contentId": "sd4v2N7HUyk",
+                  "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+                  "contentImage": {
+                    "thumbnailViewModel": {
+                      "image": {
+                        "sources": [
+                          {
+                            "url": "https://i.ytimg.com/vi/sd4v2N7HUyk/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCILhfZXgVNYj0O13GXfWr90XkHTA",
+                            "width": 360,
+                            "height": 202
+                          }
+                        ]
+                      },
+                      "overlays": [
+                        {
+                          "thumbnailBottomOverlayViewModel": {
+                            "badges": [
+                              {
+                                "thumbnailBadgeViewModel": {
+                                  "text": "13:08",
+                                  "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT",
+                                  "rendererContext": {
+                                    "accessibilityContext": {
+                                      "label": "13 minutes, 8 seconds"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "lockupMetadataViewModel": {
+                      "title": {
+                        "content": "This Obsoleted Every 3D Printer I Own"
+                      },
+                      "metadata": {
+                        "contentMetadataViewModel": {
+                          "metadataRows": [
+                            {
+                              "metadataParts": [
+                                {
+                                  "text": {
+                                    "content": "1M views"
+                                  }
+                                },
+                                {
+                                  "text": {
+                                    "content": "2 months ago"
+                                  },
+                                  "accessibilityLabel": "2 months ago"
+                                }
+                              ]
+                            }
+                          ],
+                          "delimiter": " • "
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "continuationItemRenderer": {
+              "trigger": "CONTINUATION_TRIGGER_ON_ITEM_SHOWN",
+              "continuationEndpoint": {
+                "commandMetadata": {
+                  "webCommandMetadata": {
+                    "sendPost": true,
+                    "apiUrl": "/youtubei/v1/browse"
+                  }
+                },
+                "continuationCommand": {
+                  "token": "fixture-next-page",
+                  "request": "CONTINUATION_REQUEST_TYPE_BROWSE"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

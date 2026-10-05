@@ -32,6 +32,21 @@ module Invidious::Channel::Tabs
     return extract_items(initial_data, author, ucid)
   end
 
+  # Refreshes can learn the channel avatar from the same first Videos-tab request.
+  # General listings and subsequent pages retain their existing continuation path.
+  def get_refresh_videos(channel : InvidiousChannel, *, auto_generated : Bool)
+    if auto_generated
+      items, continuation = get_videos(channel)
+      return {items, continuation, Invidious::ChannelAvatars.from_items(items)}
+    end
+
+    initial_data = YoutubeAPI.browse(browse_id: channel.id, params: "EgZ2aWRlb3PyBgQKAjoA")
+    items, continuation = extract_items(initial_data, channel.author, channel.id)
+    avatars = Invidious::ChannelAvatars.from_items(items)
+    avatars.merge!(Invidious::ChannelAvatars.from_channel_metadata(JSON::Any.new(initial_data), channel.id))
+    {items, continuation, avatars}
+  end
+
   def get_60_videos(channel : AboutChannel, *, continuation : String? = nil, sort_by = "newest")
     if continuation.nil?
       # Fetch the first "page" of video
