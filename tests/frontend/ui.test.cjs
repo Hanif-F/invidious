@@ -91,6 +91,7 @@ async function pageFor(engine, options = {}) {
         if (url.pathname === '/api/v1/auth/playback') return route.fulfill({ contentType: 'application/json', body: JSON.stringify(options.playback || {positions: {}, watched: []}) });
         if (url.pathname === '/api/v1/auth/subscriptions') return route.fulfill({ contentType: 'application/json', body: '[]' });
         if (url.pathname === '/api/v1/auth/notifications') return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
+        if (url.pathname.startsWith('/api/v1/comments/') && options.comments) return route.fulfill({ contentType: 'application/json', body: JSON.stringify(options.comments) });
         if (/^\/api\/v1\/(playlists|mixes)\//.test(url.pathname)) {
             queueCalls++;
             if (options.queueError && queueCalls <= options.queueError) return route.fulfill({ status: 500, body: '{}' });
@@ -4366,6 +4367,51 @@ async function assertAvatarCardLayout(page) {
 }
 
 for (const engine of engines) {
+    test(`${engine}: channel avatars learned from comments and community posts render on another page without metadata lookups`, async () => {
+        const expected = JSON.parse(fs.readFileSync(path.join(root, 'spec/invidious/comments/fixtures/expected_avatars.json')));
+        const entries = Object.entries({...expected.modern, ...expected.community});
+        for (const theme of ['modern-neon', 'diary']) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-comments-${theme}`, route: 'feed/subscriptions', width: 390});
+            const links = page.locator('.channel-name-link');
+            assert.equal(await links.count(), entries.length);
+            for (const [index, [id, avatar]] of entries.entries()) {
+                assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
+                assert.equal(await links.nth(index).locator('img').getAttribute('src'), avatar);
+            }
+            await assertAvatarCardLayout(page);
+            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos|comments)|avatar.*lookup/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: 'avatars-comments-thin', width: 390});
+        assert.equal(await page.locator('.channel-avatar').count(), 0);
+        assert.ok(!requests.some(url => url.startsWith('/ggpht') || /\/api\/v1\/(channels|videos|comments)/.test(url)));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: comment avatar cache learning preserves modern and legacy comment rendering and thin mode`, async () => {
+        for (const kind of ['modern', 'legacy']) {
+            for (const thin of [false, true]) {
+                const comments = JSON.parse(fs.readFileSync(path.join(generated, `comment-avatar-${kind}-${thin}.json`)));
+                const {page, context, requests, errors} = await pageFor(engine, {
+                    fixture: 'watch-single', route: 'watch?v=2isYuQZMbdU', width: 390, comments,
+                    videoData: {comments_enabled: true, params: {comments: ['youtube', ''], thin_mode: thin}, preferences: {locale: 'en-US', thin_mode: thin}}
+                });
+                await page.waitForSelector('#comments .channel-profile img');
+                const avatars = page.locator('#comments .channel-profile img');
+                assert.equal(await avatars.count(), kind === 'modern' ? 3 : 1);
+                const urls = await avatars.evaluateAll(images => images.map(image => image.getAttribute('src')));
+                assert.ok(urls.every(url => thin ? url === '' : url.startsWith('/ggpht/')));
+                assert.equal(await page.locator('#comments a[href^="/channel/"]').count(), kind === 'modern' ? 3 : 1);
+                assert.equal(requests.filter(url => url.startsWith('/api/v1/comments/')).length, 1);
+                assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+    });
+
     test(`${engine}: channel avatars learned from recommendations render on another page without metadata lookups`, async () => {
         const ids = ['UCX6OQ3DkcsbYNE6H8uQQuVA', 'UCIPPMRA040LQr5QPyJEbmXA'];
         for (const theme of ['modern-neon', 'diary']) {

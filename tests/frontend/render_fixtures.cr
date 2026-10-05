@@ -581,3 +581,4 @@ File.write("#{output}/create-clip.html", create_clip_fixture)
 File.write("#{output}/create-clip-diary.html", create_clip_fixture("diary", "id"))
 
 require "./avatar_checks"
+require "./comment_avatar_checks"

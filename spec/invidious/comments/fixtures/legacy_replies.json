@@ -1,0 +1,59 @@
+{
+  "continuationContents": {
+    "commentRepliesContinuation": {
+      "contents": [
+        {
+          "commentRenderer": {
+            "commentId": "Ugw-A2DIs0poceJQszF4AaABAg",
+            "authorText": {
+              "simpleText": "@MrBeast"
+            },
+            "authorThumbnail": {
+              "thumbnails": [
+                {
+                  "url": "https://yt3.ggpht.com/nxYrc_1_2f77DoBadyxMTmv7ZpRZapHR5jbuYe7PlPd5cIRJxtNNEYyOC0ZsxaDyJJzXrnJiuDE=s88-c-k-c0x00ffffff-no-rj",
+                  "width": 48,
+                  "height": 48
+                }
+              ]
+            },
+            "authorEndpoint": {
+              "browseEndpoint": {
+                "browseId": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+                "canonicalBaseUrl": "/channel/UCX6OQ3DkcsbYNE6H8uQQuVA"
+              }
+            },
+            "authorIsChannelOwner": true,
+            "publishedTimeText": {
+              "runs": [
+                {
+                  "text": "4 years ago (edited)"
+                }
+              ]
+            },
+            "contentText": {
+              "runs": [
+                {
+                  "text": "Legacy reply fixture"
+                }
+              ]
+            },
+            "actionButtons": {
+              "commentActionButtonsRenderer": {
+                "likeButton": {
+                  "toggleButtonRenderer": {
+                    "accessibilityData": {
+                      "accessibilityData": {
+                        "label": "1 like"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

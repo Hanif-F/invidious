@@ -1,0 +1,22 @@
+{
+  "modern-json-false": "f1b3a29f8044b45a592c6b6398c2a9f7e2a854beeacf94bac2429c124863e6c5",
+  "legacy-json-false": "20fa6dee8b6d7e664ee81293148586fedc7f7a716f0a57d848108c42884436d0",
+  "post-comments-json-false": "7737eb14d345fe762ba7b0eab6a29e5eb3d6183e6f99fafc5b6cac1a7109348e",
+  "community-false-json-false": "d9009de5368180ab8eb4d9b274769b4ee64c4a2a53d71f35be4a8ea44a75caff",
+  "community-true-json-false": "282b594c14edac8f807a092f0a9d361afb8ea545034aa45fd9531b6c16e8c2d6",
+  "modern-json-true": "f1b3a29f8044b45a592c6b6398c2a9f7e2a854beeacf94bac2429c124863e6c5",
+  "legacy-json-true": "20fa6dee8b6d7e664ee81293148586fedc7f7a716f0a57d848108c42884436d0",
+  "post-comments-json-true": "7737eb14d345fe762ba7b0eab6a29e5eb3d6183e6f99fafc5b6cac1a7109348e",
+  "community-false-json-true": "d9009de5368180ab8eb4d9b274769b4ee64c4a2a53d71f35be4a8ea44a75caff",
+  "community-true-json-true": "282b594c14edac8f807a092f0a9d361afb8ea545034aa45fd9531b6c16e8c2d6",
+  "modern-html-false": "c12c2e11d865e2fbc2a342aaceec4c5adbdc474270feec3e9c19180481996181",
+  "legacy-html-false": "48145793d329a9a48b4974a05ee2f6350457384f68d70aed4f61b58ef074b6ff",
+  "post-comments-html-false": "a78477e086d8c814275d85c1c38ca2432a76ba293551afb150964144b2e4529d",
+  "community-false-html-false": "6e8094228853da691ff01183874950bf6d737ff4cdd76e4b325e54f3254ab5ca",
+  "community-true-html-false": "d9cf104752b4009c95fad04fe2502fb3675e371af69f16099b5968fc860760c5",
+  "modern-html-true": "fd1ca482360fd23b711482c575dc7384d986613e5b220c74bc3066de5fc1a384",
+  "legacy-html-true": "88c4edc1cf42d7368ff79efe910e237fc0723418e9acaccf234cc525dfc2685a",
+  "post-comments-html-true": "084bcbf75b79cd43aaa3c43f708b8cfbe803076415d6816048a3408a062dde64",
+  "community-false-html-true": "a4c023c08eff77b7a12688f04312cf8a64b6661fad6ec11d1ecb7ca0da39ab1a",
+  "community-true-html-true": "cfb9fd755c7207514e461399de9c8eda0ac21d000e3fbb25fb4915da9242eb98"
+}

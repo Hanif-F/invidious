@@ -1,0 +1,261 @@
+{
+  "onResponseReceivedEndpoints": [
+    {
+      "reloadContinuationItemsCommand": {
+        "slot": "RELOAD_CONTINUATION_SLOT_BODY",
+        "continuationItems": [
+          {
+            "commentThreadRenderer": {
+              "commentViewModel": {
+                "commentViewModel": {
+                  "commentKey": "EhpVZ3ctQTJESXMwcG9jZUpRc3pGNEFhQUJBZyAoKAE%3D",
+                  "toolbarStateKey": "EhpVZ3ctQTJESXMwcG9jZUpRc3pGNEFhQUJBZyAsKAE%3D",
+                  "pinnedText": "Pinned by @MrBeast",
+                  "commentId": "Ugw-A2DIs0poceJQszF4AaABAg"
+                }
+              }
+            }
+          },
+          {
+            "commentThreadRenderer": {
+              "commentViewModel": {
+                "commentViewModel": {
+                  "commentKey": "EhpVZ3pqZDJFQU1CYzNSSGhiS2lONEFhQUJBZyAoKAE%3D",
+                  "toolbarStateKey": "EhpVZ3pqZDJFQU1CYzNSSGhiS2lONEFhQUJBZyAsKAE%3D",
+                  "commentId": "Ugzjd2EAMBc3RHhbKiN4AaABAg"
+                }
+              }
+            }
+          },
+          {
+            "commentThreadRenderer": {
+              "commentViewModel": {
+                "commentViewModel": {
+                  "commentKey": "EhpVZ3pMOWFwOTVLb1AwMVJNaklwNEFhQUJBZyAoKAE%3D",
+                  "toolbarStateKey": "EhpVZ3pMOWFwOTVLb1AwMVJNaklwNEFhQUJBZyAsKAE%3D",
+                  "commentId": "UgzL9ap95KoP01RMjIp4AaABAg"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "frameworkUpdates": {
+    "entityBatchUpdate": {
+      "mutations": [
+        {
+          "entityKey": "EhpVZ3ctQTJESXMwcG9jZUpRc3pGNEFhQUJBZyAoKAE%3D",
+          "payload": {
+            "commentEntityPayload": {
+              "key": "EhpVZ3ctQTJESXMwcG9jZUpRc3pGNEFhQUJBZyAoKAE%3D",
+              "properties": {
+                "content": {
+                  "content": "Here are my Shopify stores https://shopmrbeast.com/shop and https://feastables.com Comment yours below! (Also buy the new merch to get the secret video)",
+                  "commandRuns": [
+                    {
+                      "startIndex": 27,
+                      "length": 28,
+                      "onTap": {
+                        "innertubeCommand": {
+                          "commandMetadata": {
+                            "webCommandMetadata": {
+                              "url": "https://www.youtube.com/redirect?event=comments&q=https%3A%2F%2Fshopmrbeast.com%2Fshop",
+                              "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                              "rootVe": 83769
+                            }
+                          },
+                          "urlEndpoint": {
+                            "url": "https://www.youtube.com/redirect?event=comments&q=https%3A%2F%2Fshopmrbeast.com%2Fshop",
+                            "target": "TARGET_NEW_WINDOW",
+                            "nofollow": true
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "startIndex": 60,
+                      "length": 22,
+                      "onTap": {
+                        "innertubeCommand": {
+                          "commandMetadata": {
+                            "webCommandMetadata": {
+                              "url": "https://www.youtube.com/redirect?event=comments&q=https%3A%2F%2Ffeastables.com%2F",
+                              "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                              "rootVe": 83769
+                            }
+                          },
+                          "urlEndpoint": {
+                            "url": "https://www.youtube.com/redirect?event=comments&q=https%3A%2F%2Ffeastables.com%2F",
+                            "target": "TARGET_NEW_WINDOW",
+                            "nofollow": true
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "styleRuns": [
+                    {
+                      "startIndex": 27,
+                      "length": 28,
+                      "weightLabel": "FONT_WEIGHT_NORMAL"
+                    },
+                    {
+                      "startIndex": 60,
+                      "length": 22,
+                      "weightLabel": "FONT_WEIGHT_NORMAL"
+                    }
+                  ]
+                },
+                "publishedTime": "4 years ago (edited)"
+              },
+              "author": {
+                "channelId": "UCX6OQ3DkcsbYNE6H8uQQuVA",
+                "displayName": "@MrBeast",
+                "avatarThumbnailUrl": "https://yt3.ggpht.com/nxYrc_1_2f77DoBadyxMTmv7ZpRZapHR5jbuYe7PlPd5cIRJxtNNEYyOC0ZsxaDyJJzXrnJiuDE=s88-c-k-c0x00ffffff-no-rj",
+                "isVerified": true,
+                "isCreator": true
+              },
+              "toolbar": {
+                "likeCountNotliked": "91K",
+                "replyCount": "811",
+                "heartActiveTooltip": "❤ by @MrBeast"
+              }
+            }
+          }
+        },
+        {
+          "entityKey": "EhpVZ3ctQTJESXMwcG9jZUpRc3pGNEFhQUJBZyAsKAE%3D",
+          "payload": {
+            "engagementToolbarStateEntityPayload": {
+              "key": "EhpVZ3ctQTJESXMwcG9jZUpRc3pGNEFhQUJBZyAsKAE%3D",
+              "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+              "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+            }
+          }
+        },
+        {
+          "entityKey": "EhpVZ3pqZDJFQU1CYzNSSGhiS2lONEFhQUJBZyAoKAE%3D",
+          "payload": {
+            "commentEntityPayload": {
+              "key": "EhpVZ3pqZDJFQU1CYzNSSGhiS2lONEFhQUJBZyAoKAE%3D",
+              "properties": {
+                "content": {
+                  "content": "That guy who got first place at the red light green light deserved an island of his own just for the mega brain play he did"
+                },
+                "publishedTime": "4 years ago"
+              },
+              "author": {
+                "channelId": "UCikBlJrp4PWoHcwXgCS5aCg",
+                "displayName": "@Apen_melker",
+                "avatarThumbnailUrl": "https://yt3.ggpht.com/6loW-DhE13ikyLZz7V969ZtlYf_K2evxgYFIEfChm4pj05PTh1stM3J28cw-9AysSfARR3bf=s88-c-k-c0x00ffffff-no-rj",
+                "isVerified": false,
+                "isCreator": false
+              },
+              "toolbar": {
+                "likeCountNotliked": "2.8K",
+                "replyCount": "14",
+                "heartActiveTooltip": "❤ by @MrBeast"
+              }
+            }
+          }
+        },
+        {
+          "entityKey": "EhpVZ3pqZDJFQU1CYzNSSGhiS2lONEFhQUJBZyAsKAE%3D",
+          "payload": {
+            "engagementToolbarStateEntityPayload": {
+              "key": "EhpVZ3pqZDJFQU1CYzNSSGhiS2lONEFhQUJBZyAsKAE%3D",
+              "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+              "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+            }
+          }
+        },
+        {
+          "entityKey": "EhpVZ3pMOWFwOTVLb1AwMVJNaklwNEFhQUJBZyAoKAE%3D",
+          "payload": {
+            "commentEntityPayload": {
+              "key": "EhpVZ3pMOWFwOTVLb1AwMVJNaklwNEFhQUJBZyAoKAE%3D",
+              "properties": {
+                "content": {
+                  "content": "this is insanely epic...as we expected 😎",
+                  "attachmentRuns": [
+                    {
+                      "startIndex": 39,
+                      "length": 2,
+                      "element": {
+                        "type": {
+                          "imageType": {
+                            "image": {
+                              "sources": [
+                                {
+                                  "url": "https://www.youtube.com/s/gaming/emoji/7ff574f2/emoji_u1f60e.png",
+                                  "width": 16,
+                                  "height": 16
+                                }
+                              ]
+                            },
+                            "playbackState": "IMAGE_PLAYBACK_STATE_STOPPED"
+                          }
+                        },
+                        "properties": {
+                          "layoutProperties": {
+                            "height": {
+                              "value": 16,
+                              "unit": "DIMENSION_UNIT_POINT"
+                            },
+                            "width": {
+                              "value": 16,
+                              "unit": "DIMENSION_UNIT_POINT"
+                            },
+                            "margin": {
+                              "left": {
+                                "value": 2,
+                                "unit": "DIMENSION_UNIT_POINT"
+                              },
+                              "right": {
+                                "value": 2,
+                                "unit": "DIMENSION_UNIT_POINT"
+                              }
+                            }
+                          },
+                          "accessibilityProperties": {
+                            "label": "😎"
+                          }
+                        }
+                      },
+                      "alignment": "ALIGNMENT_VERTICAL_CENTER"
+                    }
+                  ]
+                },
+                "publishedTime": "4 years ago"
+              },
+              "author": {
+                "channelId": "UCBR8-60-B28hp2BmDPdntcQ",
+                "displayName": "@YouTube",
+                "avatarThumbnailUrl": "https://yt3.ggpht.com/3s6evpqAiDU9tQR4sC2siJippbH2RWVPnwHgyl4V0th2iuQz0VDQZbUhQBGmsxLYo-mjG6TqZQ=s88-c-k-c0x00ffffff-no-rj",
+                "isVerified": true,
+                "isCreator": false
+              },
+              "toolbar": {
+                "likeCountNotliked": "247K",
+                "replyCount": "676",
+                "heartActiveTooltip": "❤ by @MrBeast"
+              }
+            }
+          }
+        },
+        {
+          "entityKey": "EhpVZ3pMOWFwOTVLb1AwMVJNaklwNEFhQUJBZyAsKAE%3D",
+          "payload": {
+            "engagementToolbarStateEntityPayload": {
+              "key": "EhpVZ3pMOWFwOTVLb1AwMVJNaklwNEFhQUJBZyAsKAE%3D",
+              "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+              "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

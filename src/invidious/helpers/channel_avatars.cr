@@ -52,6 +52,30 @@ module Invidious::ChannelAvatars
     avatars
   end
 
+  # Only direct authors in the parsed comments/posts response can supply identity.
+  def from_comments(response : JSON::Any) : Hash(String, String)
+    avatars = {} of String => String
+    comments = response.as_h?.try(&.["comments"]?).try &.as_a?
+    comments.try &.each do |item|
+      record = item.as_h?
+      next unless record
+      id = record["authorId"]?.try &.as_s?
+      next unless id && id.matches?(/\AUC[A-Za-z0-9_-]{22}\z/)
+
+      url = proxy_url(record["authorThumbnail"]?.try &.as_s?)
+      unless url
+        sources = record["authorThumbnails"]?.try &.as_a?
+        sources.try &.reverse_each do |source|
+          url = proxy_url(source.as_h?.try(&.["url"]?).try &.as_s?)
+          break if url
+        end
+      end
+      # A malformed duplicate must not erase an earlier valid observation.
+      avatars[id] = url if url
+    end
+    avatars
+  end
+
   # Modern video cards put the linked author and avatar in lockup metadata.
   def lockup_author(metadata : JSON::Any?) : {String?, String?}
     authors = lockup_authors(metadata)

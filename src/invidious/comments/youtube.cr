@@ -296,8 +296,12 @@ module Invidious::Comments
       end
     end
 
+    parsed_response = JSON.parse(response)
+    avatars = Invidious::ChannelAvatars.from_comments(parsed_response)
+    Invidious::Database::ChannelAvatars.observe(avatars) unless avatars.empty?
+
     if format == "html"
-      response = JSON.parse(response)
+      response = parsed_response
       content_html = Frontend::Comments.template_youtube(response, locale, thin_mode)
       response = JSON.build do |json|
         json.object do
