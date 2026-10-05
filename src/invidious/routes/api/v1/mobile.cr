@@ -1,6 +1,6 @@
 module Invidious::Routes::API::V1::Mobile
   # Account administration uses dedicated, password-confirmed routes, not generic token minting.
-  SCOPES = %w(GET:preferences PATCH:preferences GET:feed GET:feed/rss GET:subscriptions GET:subscriptions/search GET:subscriptions/export
+  SCOPES = %w(GET:preferences PATCH:preferences PATCH:chat_preferences GET;PUT:chat_timing/* GET:feed GET:feed/rss GET:subscriptions GET:subscriptions/search GET:subscriptions/export
     PUT;DELETE:saved_playlists/*
     GET:blocked_channels POST;DELETE:blocked_channels/*
     POST;DELETE:subscriptions/* GET:history POST;DELETE:history/* DELETE:history

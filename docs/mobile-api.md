@@ -55,7 +55,7 @@ No browser cookie is issued. Responses use `Cache-Control: private, no-store`.
 Tokens expire after 30 days in the signature and database, are revoked by existing
 credential changes, and can revoke themselves at `POST /api/v1/auth/tokens/unregister`
 with `{}`. Permissions cover viewing and managing preferences, subscriptions,
-history, playback positions, playlists, channel blocking and DeArrow contributions/identity import, plus the dedicated account-management scopes below. Mobile sessions do not receive generic token-listing/minting or account export/import permissions.
+history, playback positions, playlists, channel blocking, chat replay settings/timing and DeArrow contributions/identity import, plus the dedicated account-management scopes below. Mobile sessions do not receive generic token-listing/minting or account export/import permissions.
 
 The endpoint uses the existing password verifier, account-row transaction lock,
 HMAC signer and shared IP/username throttle. Legacy usernames/passwords remain
@@ -483,3 +483,17 @@ images show local placeholders, and thin mode omits avatar requests.
 Deploy the additive API update and existing migration 21 for cached-list coverage,
 then install a new Android build. Older servers remain usable with supplied
 images/placeholders. No additional migration, endpoint or token renewal is needed.
+
+## Archive chat replay
+
+`GET /api/v1/videos/:id` exposes optional `liveChatReplay`. Native clients offer replay only when it is true and the video is neither live nor upcoming. Older instances without the field remain usable without chat.
+
+Public `GET /api/v1/live_chat/:id?offset_ms=<nonnegative milliseconds>&continuation=<opaque token>` returns `messages`, `removedIds`, and a nullable `continuation`. Messages contain `id`, `offsetMs`, `author`, `authorChannelId`, `authorHandle`, `text`, `kind` and `amount`. Native clients never send account credentials to this public endpoint. Replay is read-only.
+
+Account timestamps and user/word filters are read from `GET /api/v1/auth/preferences` and saved as sparse patches to `PATCH /api/v1/auth/chat_preferences`, using `chat_show_timestamps`, `chat_user_blacklist` and `chat_word_blacklist`. Native appearance settings remain device-local; the app does not patch the website's appearance values.
+
+`GET /api/v1/auth/chat_timing/:id` and `PUT /api/v1/auth/chat_timing/:id` use `{ "offsetMs": <integer> }`, within −3,600,000 through 3,600,000 ms. Zero deletes the saved override. Positive offsets delay replay relative to playback. Guests persist timing and filters locally per instance.
+
+Native sign-in now grants `PATCH:chat_preferences` and `GET;PUT:chat_timing/*`. Existing native tokens must be renewed by signing out and back in after the server update; scope failures must retain playback and explain how to restore account sync. This uses the existing chat timing table and requires no additional migration.
+
+Native word filters use whitespace-separated substring tokens or `/pattern/` tokens with case-insensitive RE2/J matching. Lookaround and backreferences are unsupported. Unsupported imported patterns are reported and skipped without rewriting saved account values. Filter fields are limited to 1,024 UTF-8 bytes and each token to 128 characters.
