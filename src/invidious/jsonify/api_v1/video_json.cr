@@ -37,6 +37,7 @@ module Invidious::JSONify::APIv1
       json.field "allowedRegions", video.allowed_regions
       json.field "genre", video.genre
       json.field "genreUrl", video.genre_url
+      json.field "license", video.license
 
       json.field "author", video.author
       json.field "authorId", video.ucid

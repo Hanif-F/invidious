@@ -88,6 +88,18 @@ def fixture_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
+# The public watch serializer must expose the same license and rich information as the web page.
+metadata_video = fixture_video
+metadata_video.info["storyboards"] = JSON.parse("{}")
+metadata = JSON.parse(metadata_video.to_json("en-US", nil))
+raise "Missing standard video license" unless metadata["license"].as_s.empty?
+raise "Missing rich video metadata" unless metadata["descriptionHtml"].as_s.includes?("0:00") && metadata["authorVerified"].as_bool && metadata["allowedRegions"].as_a.size > 0
+metadata_video.license = "Creative Commons Attribution license"
+metadata_video.info["music"] = JSON.parse(%([{"song":"Fixture song","artist":"Fixture artist","album":"Fixture album","license":"Fixture music license"}]))
+metadata = JSON.parse(metadata_video.to_json("en-US", nil))
+raise "Custom video license lost" unless metadata["license"].as_s == "Creative Commons Attribution license"
+raise "Music credit lost" unless metadata["musicTracks"][0]["song"].as_s == "Fixture song" && metadata["musicTracks"][0]["license"].as_s == "Fixture music license"
+
 def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false, native_clip : InvidiousClip? = nil, clip_duration : Int32? = nil, supplied_video : Video? = nil)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale

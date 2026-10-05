@@ -17,6 +17,30 @@ fields, and the new client falls back to manifest labels/roles on older servers.
 Deploy this source update for reliable native audio enrichment. No migration,
 new secret, authentication scope or sign-in renewal is required.
 
+## Rich video information and content-link navigation
+
+Public `GET /api/v1/videos/:id` now also exposes `license` from the existing
+`Video.license` extraction. An empty string means Standard YouTube license;
+nonempty text is displayed as supplied. No new extraction request is made.
+The other rich-watch fields already exist: `descriptionHtml`, `likeCount`,
+`authorVerified`, `subCountText`, `isUpcoming`, `premiereTimestamp`, `isListed`,
+`genre`, `genreUrl`, `isFamilyFriendly`, `allowedRegions` and `musicTracks`.
+Android treats these fields as optional and retains false/zero values; unknown
+metadata is hidden and plain description text remains the fallback.
+
+Native channel aliases use the existing public `GET /api/v1/resolveurl?url=…`
+on the selected instance and accept valid `ucid`/channel `browseId` responses.
+Hashtags use public `GET /api/v1/hashtag/:tag?page=…` and its `results` array.
+These navigation requests do not send bearer credentials. Android handles
+missing/failed endpoints through native retry/error and external fallback.
+The video/stream/caption requests carry an explicit per-link region when given.
+
+Deploy the license serializer update to display license metadata in the native
+client. Old clients ignore the field; new clients work on older instances with
+unknown optional metadata hidden. No migration, authentication scope, sign-in
+renewal or new endpoint is required by this addition. Full public serialization
+regressions live in `tests/frontend/render_fixtures.cr`.
+
 ## Native sign-in
 
 `POST /api/v1/mobile/login`, `Content-Type: application/json`:
