@@ -365,8 +365,14 @@ module Invidious::Routes::API::V1::Authenticated
   def self.get_subscriptions(env)
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
+    include_stats = env.params.query["include_stats"]? == "true"
+    if include_stats && !scopes_include_scope(env.get("scopes").as(Array(String)), "GET:history")
+      return error_json(403, "Channel sorting requires history read permission.")
+    end
 
     subscriptions = Invidious::Database::Channels.select(user.subscriptions)
+    now = Time.utc
+    stats = include_stats ? Invidious::Database::SubscriptionManager.select(user, user.preferences.show_member_videos, now) : nil
 
     Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
       json.array do
@@ -374,6 +380,16 @@ module Invidious::Routes::API::V1::Authenticated
           json.object do
             json.field "author", subscription.author
             json.field "authorId", subscription.id
+            if data = stats.try &.[subscription.id]?
+              json.field "subscriptionStats" do
+                json.object do
+                  json.field "latestUpload", data.latest_upload.try(&.to_unix)
+                  json.field "allTimeWatched", data.all_time_watched
+                  json.field "recentWatched", data.recent_watched
+                  json.field "relevance", data.relevance(now)
+                end
+              end
+            end
           end
         end
       end

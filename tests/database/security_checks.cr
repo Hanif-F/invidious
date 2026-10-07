@@ -27,6 +27,8 @@ class SecurityTestEndpoint
                Invidious::Routes::API::V1::Authenticated.rss_link(env)
              when "/api/v1/auth/subscriptions/export"
                Invidious::Routes::API::V1::Authenticated.export_subscriptions(env)
+             when "/api/v1/auth/subscriptions"
+               Invidious::Routes::API::V1::Authenticated.get_subscriptions(env)
              when .starts_with?("/api/v1/auth/saved_playlists/")
                env.params.url["id"] = env.request.path.split('/').last
                if env.request.method == "PUT"

@@ -86,3 +86,9 @@ and 90-day decay, unwatched-upload freshness at seven days, future/premiere/memb
 filtering, account isolation, browser sort persistence, OPML export and unsubscribe.
 Ranking and malformed-cookie cases also have focused Crystal specs; the frontend
 harness checks the production manager at mobile widths, in RTL and without JavaScript.
+
+The same account harness exercises optional native `include_stats=true` responses
+through production auth middleware: ordinary response compatibility, existing
+subscription/history scopes, permission denials, shared-score equality,
+cross-account isolation, private/no-store headers, untouched browser preferences
+and read-only history. Native tokens need no new scopes or renewal.

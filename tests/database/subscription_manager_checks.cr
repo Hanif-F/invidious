@@ -68,6 +68,35 @@ def check_subscription_manager
     check(Invidious::Database::SubscriptionManager.select(Invidious::Database::Users.select!(email: bob_email), false, now).values.all? { |data| data.all_time_watched == 0 }, "Subscription manager leaked another account's history")
     check(before == PG_DB.query_one("SELECT json_agg(h ORDER BY email,video_id)::text FROM watch_history h", as: String), "Subscription manager wrote history backfills")
 
+    # Native clients opt into the exact same stats, without granting history to subscription-only tokens.
+    plain = security_request("GET", "/api/v1/auth/subscriptions", alice_sid)
+    check(!plain.get("test_result").as(String).includes?("subscriptionStats"), "Ordinary subscriptions gained stats")
+    subscription_reader = generate_token(alice_email, ["GET:subscriptions"], nil, HMAC_KEY, alice_sid)
+    allowed_plain = security_request("GET", "/api/v1/auth/subscriptions", bearer: subscription_reader)
+    check(allowed_plain.response.status_code == 200, "Subscription-only token lost ordinary directory access")
+    denied = security_request("GET", "/api/v1/auth/subscriptions?include_stats=true", bearer: subscription_reader)
+    check(denied.response.status_code == 403, "Subscription-only token received history statistics")
+    check(denied.response.headers["Cache-Control"] == "private, no-store", "Denied stats response was cacheable")
+    history_reader = generate_token(alice_email, ["GET:history"], nil, HMAC_KEY, alice_sid)
+    check(security_request("GET", "/api/v1/auth/subscriptions?include_stats=true", bearer: history_reader).response.status_code == 403, "History-only token received subscriptions")
+    check(security_request("GET", "/api/v1/auth/subscriptions?include_stats=true").response.status_code == 403, "Anonymous client received subscription stats")
+    full_reader = generate_token(alice_email, ["GET:subscriptions", "GET:history"], nil, HMAC_KEY, alice_sid)
+    api_now = Time.utc
+    expected_stats = Invidious::Database::SubscriptionManager.select(alice, false, api_now)
+    native = security_request("GET", "/api/v1/auth/subscriptions?include_stats=true", bearer: full_reader)
+    check(native.response.status_code == 200 && native.response.headers["Cache-Control"] == "private, no-store", "Native stats request failed or was cacheable")
+    JSON.parse(native.get("test_result").as(String)).as_a.each do |row|
+      expected = expected_stats[row["authorId"].as_s]
+      actual = row["subscriptionStats"]
+      check(actual["latestUpload"].as_i64? == expected.latest_upload.try(&.to_unix), "Native latest upload differs from shared stats")
+      check(actual["allTimeWatched"].as_i == expected.all_time_watched && actual["recentWatched"].as_i == expected.recent_watched, "Native counts differ from shared stats")
+      check((actual["relevance"].as_f - expected.relevance(api_now)).abs < 1e-5, "Native relevance differs from shared ranking")
+    end
+    check(native.response.cookies[Invidious::Frontend::SubscriptionManager::COOKIE]?.nil?, "Native stats modified browser sorting")
+    bob_native = security_request("GET", "/api/v1/auth/subscriptions?include_stats=true", bob_sid)
+    check(JSON.parse(bob_native.get("test_result").as(String)).as_a.all? { |row| row["subscriptionStats"]["allTimeWatched"].as_i == 0 }, "Native statistics leaked across accounts")
+    check(before == PG_DB.query_one("SELECT json_agg(h ORDER BY email,video_id)::text FROM watch_history h", as: String), "Native stats wrote history backfills")
+
     # Exercise the production route, browser cookie, exports and unsubscribe handler.
     page = security_request("GET", "/subscription_manager?sort_by=most_watched", alice_sid)
     html = page.get("test_result").as(String)

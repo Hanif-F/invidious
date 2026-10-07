@@ -374,6 +374,42 @@ use the existing authenticated private/no-store handling. Android applies saved
 search visibility overrides locally, while channel search follows direct-channel
 visibility and history retains every entry. No migration or new secret is needed.
 
+## Native subscription directory sorting
+
+`GET /api/v1/auth/subscriptions?include_stats=true` keeps the ordinary channel
+array and avatar fields, adding a `subscriptionStats` object to each channel:
+
+```json
+{
+  "latestUpload": 1791374400,
+  "allTimeWatched": 18,
+  "recentWatched": 6,
+  "relevance": 4.5
+}
+```
+
+`latestUpload` is Unix seconds or `null` when the upload date is unknown.
+Counts are distinct watched videos, and `relevance` is the shared website
+subscription-manager score. Habits decay linearly across 90 account-calendar
+days; the newest eligible unwatched upload adds a bounded boost across seven
+days. Future uploads, upcoming premieres and hidden members-only uploads are
+excluded. Statistics read existing channel/video/history caches without upstream
+lookups or history backfills. All channels receive statistics, including zero
+counts and unknown uploads.
+
+Only the literal `include_stats=true` opts in. Ordinary requests retain their
+existing response. Enriched requests require both `GET:subscriptions` and
+`GET:history`; lacking history permission returns HTTP 403 with
+`Channel sorting requires history read permission.` Native tokens already have
+both scopes, so no token renewal or migration is needed. Responses retain
+authenticated private/no-store handling and never modify the browser sort cookie.
+
+Android sorts and filters the complete returned directory locally. It defaults to
+Relevance and remembers the choice on this device per instance. Older servers
+that omit statistics retain A–Z; a history-permission denial retries the ordinary
+directory. Both fallbacks explain the limitation without overwriting the saved
+sort. Channel directory ordering is independent of video-feed ordering.
+
 ## Verification
 
 The guarded disposable database harness `tests/database/accounts.cr` includes
