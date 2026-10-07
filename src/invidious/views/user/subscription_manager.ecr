@@ -26,14 +26,37 @@
     </div>
 </div>
 
+<div class="h-box subscription-sorting">
+    <form class="pure-form" action="/subscription_manager" method="get">
+        <label for="subscription-sort"><%= I18n.translate(locale, "subscription_manager_sort_label") %></label>
+        <select id="subscription-sort" name="sort_by" aria-describedby="subscription-sort-help">
+            <% Invidious::Frontend::SubscriptionManager::SORTS.each do |option| %>
+                <option value="<%= option %>"<% if sort_by == option %> selected<% end %>><%= I18n.translate(locale, "subscription_manager_sort_#{option}") %></option>
+            <% end %>
+        </select>
+        <button class="pure-button pure-button-primary" type="submit"><%= I18n.translate(locale, "subscription_manager_sort_apply") %></button>
+    </form>
+    <p id="subscription-sort-help" class="subscription-details"><%= I18n.translate(locale, "subscription_manager_sort_help") %></p>
+</div>
+
 <% Invidious::Frontend::ChannelAvatars.prepare_ids(env, subscriptions.map(&.id)) %>
-<% subscriptions.each do |channel| %>
+<% subscriptions.each_with_index do |channel, index| %>
+    <% stats = subscription_stats[channel.id] %>
     <div class="h-box">
         <div class="pure-g subscription-row<% if channel.deleted %> deleted <% end %>">
             <div class="pure-u-2-5">
                 <h3 style="padding-left:0.5em">
                     <a class="channel-name-link" href="/channel/<%= channel.id %>"><%= Invidious::Frontend::ChannelAvatars.render(env, channel.id, 40, name: channel.author) %><span dir="auto"><%= HTML.escape(channel.author) %></span></a>
                 </h3>
+                <p class="subscription-details">
+                    <% if uploaded = stats.latest_upload %>
+                        <%= I18n.translate(locale, "subscription_manager_last_upload", recode_date(uploaded, locale)) %>
+                    <% else %>
+                        <%= I18n.translate(locale, "subscription_manager_upload_unknown") %>
+                    <% end %>
+                    <span aria-hidden="true"> · </span>
+                    <%= I18n.translate_count(locale, sort_by == "most_watched" ? "subscription_manager_watched_total" : "subscription_manager_watched_recent", sort_by == "most_watched" ? stats.all_time_watched : stats.recent_watched) %>
+                </p>
             </div>
             <div class="pure-u-2-5"></div>
             <div class="pure-u-1-5" style="text-align:right">
@@ -46,7 +69,7 @@
             </div>
         </div>
 
-        <% if subscriptions[-1].author != channel.author %>
+        <% if index < subscriptions.size - 1 %>
             <hr>
         <% end %>
     </div>

@@ -76,9 +76,6 @@ module Invidious::Routes::Subscriptions
     format = env.params.query["format"]?
     format ||= "rss"
 
-    subscriptions = Invidious::Database::Channels.select(user.subscriptions)
-    subscriptions.sort_by!(&.author.downcase)
-
     if action_takeout
       if format == "json"
         env.response.content_type = "application/json"
@@ -91,6 +88,12 @@ module Invidious::Routes::Subscriptions
         return Invidious::RSS.subscriptions(user.subscriptions, format)
       end
     end
+
+    now = Time.utc
+    sort_by = Frontend::SubscriptionManager.preference(env, !!(Kemal.config.ssl || CONFIG.https_only))
+    subscription_stats = Database::SubscriptionManager.select(user, env.get("preferences").as(Preferences).show_member_videos, now)
+    subscriptions = Frontend::SubscriptionManager.sort(Database::Channels.select(user.subscriptions), subscription_stats, sort_by, now)
+    env.response.headers["Cache-Control"] = "private, no-store"
 
     templated "user/subscription_manager"
   end

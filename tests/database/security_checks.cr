@@ -106,6 +106,10 @@ class SecurityTestEndpoint
                Invidious::Routes::PreferencesRoute.update_data_control(env)
              when "/subscribe_playlist"
                Invidious::Routes::Playlists.subscribe(env)
+             when "/subscription_manager"
+               Invidious::Routes::Subscriptions.subscription_manager(env)
+             when "/subscription_ajax"
+               Invidious::Routes::Subscriptions.toggle_subscription(env)
              when "/embed/"
                Invidious::Routes::Embed.redirect(env)
              when "/embed/videoseries"

@@ -468,6 +468,10 @@ body .media-card .video-card-details .video-card-row.channel-attribution { displ
 .subscription-row > .pure-u-1-5 { width: auto; flex: 0 0 auto; }
 .subscription-row h3 { margin-block: 12px; }
 .subscription-row { align-items: center; column-gap: 12px; }
+.subscription-sorting .pure-form { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.subscription-sorting select { max-width: 100%; }
+.subscription-details { font-size: 85%; color: var(--muted, inherit); overflow-wrap: anywhere; }
+.subscription-row .subscription-details { margin: 0 0 12px; padding-inline-start: 0.5rem; }
 
 @media (max-width: 400px) {
   .subscription-row > .pure-u-1-5 { max-width: 45%; }

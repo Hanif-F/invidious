@@ -79,3 +79,10 @@ browser/API metadata, cross-account revocation rejection, current-session
 revocation, selected token scopes and malformed expiry, delegated permission
 limits, and password-confirmed deletion. Native signup issues no browser cookie
 or extra session. These additions reuse the existing account/session schema.
+
+`subscription_manager_checks.cr` runs in the same account harness. It verifies
+read-only channel/history cache queries, distinct viewing counts, account timezone
+and 90-day decay, unwatched-upload freshness at seven days, future/premiere/member
+filtering, account isolation, browser sort persistence, OPML export and unsubscribe.
+Ranking and malformed-cookie cases also have focused Crystal specs; the frontend
+harness checks the production manager at mobile widths, in RTL and without JavaScript.

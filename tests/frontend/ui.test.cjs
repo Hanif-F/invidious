@@ -13,6 +13,44 @@ const browsers = {};
 fs.mkdirSync(artifacts, { recursive: true });
 const queue = JSON.parse(fs.readFileSync(path.join(generated, 'queue.json')));
 
+for (const engine of engines) {
+    test(`${engine}: subscription sorting details, GET forms and mobile layouts work without JavaScript`, async () => {
+        for (const fixture of ['avatars-manager-modern-neon', 'avatars-manager-diary', 'subscriptions-relevance', 'subscriptions-most-watched', 'subscriptions-rtl', 'subscriptions-empty']) {
+            const {page, context, errors, requests} = await pageFor(engine, {fixture, route: 'subscription_manager', width: 320, javascript: false});
+            assert.deepEqual(await page.locator('#subscription-sort option').evaluateAll(options => options.map(option => option.value)), ['alphabetical', 'latest', 'most_watched', 'relevance']);
+            assert.equal(await page.locator('label[for="subscription-sort"]').isVisible(), true);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+            if (fixture === 'subscriptions-empty') {
+                assert.equal(await page.locator('.subscription-row').count(), 0);
+            } else {
+                assert.match(await page.locator('.subscription-row .subscription-details').first().textContent(), /Last upload:/);
+                assert.match(await page.locator('.subscription-row .subscription-details').first().textContent(), fixture === 'subscriptions-most-watched' ? /1 video watched all time/ : /1 video watched in the last 90 days/);
+                assert.match(await page.locator('.subscription-row .subscription-details').last().textContent(), /Last upload unknown/);
+                assert.equal(await page.locator('.subscription-row script').count(), 0);
+                assert.equal(await page.locator('form[action^="/subscription_ajax"]').count(), 3);
+            }
+            await page.selectOption('#subscription-sort', 'latest');
+            await Promise.all([
+                page.waitForURL(url => url.pathname === '/subscription_manager' && url.searchParams.get('sort_by') === 'latest'),
+                page.locator('.subscription-sorting button[type="submit"]').click()
+            ]);
+            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: sorting keeps subscription removal working`, async () => {
+        const {page, context, errors, requests} = await pageFor(engine, {fixture: 'subscriptions-relevance', route: 'subscription_manager'});
+        await page.locator('[data-onclick="remove_subscription"]').first().click();
+        assert.equal(await page.locator('.subscription-row:visible').count(), 2);
+        assert.ok(requests.some(url => url.startsWith('/subscription_ajax?action=remove_subscriptions')));
+        assert.equal(await page.locator('#count').textContent(), '2');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
 before(async () => {
     for (const engine of engines) browsers[engine] = await playwright[engine].launch({ headless: true });
 });

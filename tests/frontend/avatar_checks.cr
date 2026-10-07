@@ -100,16 +100,27 @@ def avatar_initials_fixture(theme = "modern-neon", mode = "dark")
   render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
 end
 
-def avatar_manager_fixture(theme = "modern-neon", thin = false)
+def avatar_manager_fixture(theme = "modern-neon", thin = false, sort_by = "alphabetical", locale = "en-US", empty = false)
   env = signed_in_env("/subscription_manager")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = theme
   preferences.thin_mode = thin
+  preferences.locale = locale
   env.set "preferences", preferences
   locale = preferences.locale
   referer = "/feed/subscriptions"
   subscriptions = ["UCdirect", "UCcached", "UCmissing"].map do |id|
     InvidiousChannel.new({id: id, author: "A long creator name <script> & details #{id}", updated: Time.utc, deleted: id == "UCmissing", subscribed: nil})
+  end
+  subscriptions.clear if empty
+  now = Time.utc
+  subscription_stats = subscriptions.to_h do |channel|
+    stats = Invidious::Frontend::SubscriptionManager::Stats.new
+    unless channel.deleted
+      stats.latest_upload = now - 2.days
+      stats.record_watch(Invidious::History.today(nil, now), [] of String, Time.parse(Invidious::History.today(nil, now), "%F", Time::Location::UTC))
+    end
+    {channel.id, stats}
   end
   navbar_search = true
   render "src/invidious/views/user/subscription_manager.ecr", "src/invidious/views/template.ecr"
@@ -298,3 +309,7 @@ File.write("#{avatar_output}/avatars-channel.html", avatar_cards_fixture(path: "
 File.write("#{avatar_output}/avatars-thin.html", avatar_cards_fixture(thin: true))
 File.write("#{avatar_output}/avatars-manager-thin.html", avatar_manager_fixture(thin: true))
 File.write("#{avatar_output}/avatars-rtl.html", avatar_cards_fixture(locale: "ar", compact: true))
+File.write("#{avatar_output}/subscriptions-relevance.html", avatar_manager_fixture(sort_by: "relevance"))
+File.write("#{avatar_output}/subscriptions-most-watched.html", avatar_manager_fixture(sort_by: "most_watched"))
+File.write("#{avatar_output}/subscriptions-rtl.html", avatar_manager_fixture(locale: "ar"))
+File.write("#{avatar_output}/subscriptions-empty.html", avatar_manager_fixture(empty: true))

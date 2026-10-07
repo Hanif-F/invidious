@@ -94,6 +94,7 @@ end
 require "./security_checks"
 require "./mobile_checks"
 require "./account_management_checks"
+require "./subscription_manager_checks"
 
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
@@ -282,6 +283,7 @@ begin
   Invidious::Routes::Login.login_page(disabled)
   check(disabled.response.status_code == 403, "Login switch ignored")
   check_public_security
+  check_subscription_manager
 
   # Verify migration failure rolls back DDL rather than dropping/merging conflicts.
   PG_DB.exec("DROP SCHEMA public CASCADE")
