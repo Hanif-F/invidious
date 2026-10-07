@@ -6,6 +6,7 @@ module Invidious::Routes::API::V1::Mobile
     POST;DELETE:subscriptions/* GET:history POST;DELETE:history/* DELETE:history
     GET:playback GET;PUT;DELETE:playback/* DELETE:playback
     GET;POST:playlists GET;PATCH;DELETE:playlists/* POST:playlists/*
+    GET;POST:clips DELETE:clips/*
     POST:tokens/unregister GET;POST:dearrow/* PUT:dearrow/identity
     POST:account/username POST:account/password POST:account/delete
     GET:account/sessions POST:account/sessions/revoke POST:account/tokens)

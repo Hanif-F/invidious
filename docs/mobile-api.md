@@ -55,7 +55,13 @@ No browser cookie is issued. Responses use `Cache-Control: private, no-store`.
 Tokens expire after 30 days in the signature and database, are revoked by existing
 credential changes, and can revoke themselves at `POST /api/v1/auth/tokens/unregister`
 with `{}`. Permissions cover viewing and managing preferences, subscriptions,
-history, playback positions, playlists, channel blocking, chat replay settings/timing and DeArrow contributions/identity import, plus the dedicated account-management scopes below. Mobile sessions do not receive generic token-listing/minting or account export/import permissions.
+history, playback positions, playlists, clip reading/creation/deletion, channel blocking, chat replay settings/timing and DeArrow contributions/identity import, plus the dedicated account-management scopes below. Mobile sessions do not receive generic token-listing/minting or account export/import permissions.
+
+Clip permissions are `GET:clips`, `POST:clips` and `DELETE:clips/*`. Existing
+native tokens need renewed sign-in to receive them. The public channel API
+advertises native clips between playlists and posts, in website tab order.
+See [native-clips.md](native-clips.md) for the existing endpoint contract and
+migration 19; this mobile integration introduces no new migration.
 
 The endpoint uses the existing password verifier, account-row transaction lock,
 HMAC signer and shared IP/username throttle. Legacy usernames/passwords remain

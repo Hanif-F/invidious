@@ -1,4 +1,11 @@
 module Invidious::Routes::API::V1::Channels
+  # Native clips exist independently of YouTube's advertised tabs. Match website order.
+  def self.advertised_tabs(tabs : Array(String)) : Array(String)
+    order = %w(videos shorts streams podcasts releases courses playlists clips posts channels)
+    available = (tabs + ["clips"]).uniq
+    order.select { |tab| available.includes?(tab) } + available.reject { |tab| order.includes?(tab) }
+  end
+
   # Macro to avoid duplicating some code below
   # This sets the `channel` variable, or handles Exceptions.
   private macro get_channel
@@ -100,7 +107,7 @@ module Invidious::Routes::API::V1::Channels
         json.field "descriptionHtml", channel.description_html
 
         json.field "allowedRegions", channel.allowed_regions
-        json.field "tabs", channel.tabs
+        json.field "tabs", advertised_tabs(channel.tabs)
         json.field "tags", channel.tags
         json.field "authorVerified", channel.verified
         json.field "pronouns", channel.pronouns

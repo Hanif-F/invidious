@@ -83,6 +83,19 @@ Use existing API authentication and method/path scopes (`GET:clips`, `POST:clips
 `DELETE:clips/*`). Browser-session mutations require a valid CSRF token. All
 authenticated responses use `private, no-store`.
 
+Mobivious native sign-in now grants these three permissions. Existing mobile
+tokens retain their original scopes; sign out and sign in again after deploying
+the update. Android's token management groups expose clip reading separately
+from creation/deletion. No additional migration is needed beyond migration 19.
+The public channel API advertises `clips` in website tab order, between playlists
+and posts, independently of YouTube's discontinued clips tab.
+
+The native editor retains tenths of a second; saved clips retain their original
+millisecond bounds. Android uses Media3 clipping so system controls and player
+seeks operate within a timeline from zero to the clip duration. Native clip
+permalinks retain their origin instance, and foreign-instance links do not switch
+the configured Android server.
+
 Active livestreams, clip editing, native clip embeds, federation, and clip
 import/export are excluded from this version. YouTube's clipping permission
 settings do not control native clips.
