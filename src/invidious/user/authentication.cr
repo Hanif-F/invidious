@@ -31,12 +31,14 @@ module Invidious::Authentication
 
   def set_session(env, sid : String)
     env.response.cookies << User::Cookies.sid(cookie_domain(env), sid)
-    if cookie = env.request.cookies["PREFS"]?
-      cookie.expires = Time.utc(1990, 1, 1)
-      cookie.path = "/"
-      env.response.cookies << cookie
-    end
+    BrowserProfiles.publish(env, BrowserProfiles.account_scope(Database::SessionIDs.select_email(sid).not_nil!))
     env.response.cookies << HTTP::Cookie.new("AUTH_CSRF", "", path: "/", expires: Time.utc(1990, 1, 1), http_only: true)
+  end
+
+  def clear_session(env)
+    env.response.cookies << User::Cookies.sid(cookie_domain(env), "").tap { |cookie| cookie.expires = Time.unix(0) }
+    env.response.cookies << HTTP::Cookie.new("AUTH_CSRF", "", path: "/", expires: Time.unix(0), http_only: true)
+    BrowserProfiles.publish(env, "guest")
   end
 
   def form_token(env, path : String) : String

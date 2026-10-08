@@ -58,4 +58,22 @@ Spectator.describe Invidious::Frontend::SearchPreferences do
     expect(params.has_key?("show_member_videos")).to be_false
     expect(params.has_key?("include_blocked")).to be_false
   end
+
+  it "isolates account cookies from guest and other accounts" do
+    env = search_context("SEARCH_SHOW_MEMBER_VIDEOS=1; SEARCH_SHOW_MEMBER_VIDEOS_alice=0; SEARCH_INCLUDE_BLOCKED_bob=1")
+    env.set "browser_profile", "alice"
+    params = HTTP::Params.new
+    expect(described_class.apply(env, params, true)).to be_false
+    expect(params.has_key?("include_blocked")).to be_false
+    params["show_member_videos"] = "1"
+    described_class.apply(env, params, false)
+    expect(env.response.cookies["SEARCH_SHOW_MEMBER_VIDEOS_alice"].value).to eq("1")
+    expect(env.response.cookies[Invidious::Frontend::SearchPreferences::MEMBER_COOKIE]?).to be_nil
+    params["reset_member_videos"] = "1"
+    described_class.apply(env, params, false)
+    expect(env.response.cookies["SEARCH_SHOW_MEMBER_VIDEOS_alice"].expires).to eq(Time.unix(0))
+    other = search_context("SEARCH_SHOW_MEMBER_VIDEOS=1; SEARCH_SHOW_MEMBER_VIDEOS_alice=1")
+    other.set "browser_profile", "bob"
+    expect(described_class.apply(other, HTTP::Params.new, false)).to be_false
+  end
 end

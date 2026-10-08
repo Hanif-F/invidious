@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="/css/default.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/css/embed.css?v=<%= ASSET_COMMIT %>">
     <title><%= HTML.escape(video.title) %> - Invidious</title>
+    <script id="browser-profile" type="application/json"><%= {scope: Invidious::BrowserProfiles.render_scope(env), cookieDomain: Invidious::Authentication.cookie_domain(env), saveError: I18n.translate(preferences.locale, "browser_save_error")}.to_json.gsub("<", "\\u003c") %></script>
+    <script src="/js/browser-storage.js?v=<%= ASSET_COMMIT %>"></script>
     <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
 </head>
 
@@ -19,6 +21,8 @@
 <%=
 {
     "id" => video.id,
+    "channel_id" => video.ucid,
+    "live_now" => video.live_now,
     "clip" => preview_clip ? {"url" => nil, "startTime" => params.video_start, "endTime" => params.video_end} : nil,
     "index" => continuation,
     "plid" => plid,

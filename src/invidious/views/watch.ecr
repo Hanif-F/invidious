@@ -45,6 +45,7 @@
 <%=
 {
     "id" => video.id,
+    "channel_id" => video.ucid,
     "clip" => (native_clip || preview_clip) ? {"url" => native_clip.try(&.permalink), "startTime" => params.video_start, "endTime" => params.video_end} : nil,
     "index" => continuation,
     "playlist_current_removed" => env.params.query["playlist_current_removed"]? == "1",

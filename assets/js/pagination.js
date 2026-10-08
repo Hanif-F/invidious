@@ -4,14 +4,14 @@ const CURRENT_CONTINUATION = (new URL(document.location)).searchParams.get("cont
 const CONT_CACHE_KEY = `continuation_cache_${encodeURIComponent(window.location.pathname)}`;
 
 function get_data(){
-    return JSON.parse(sessionStorage.getItem(CONT_CACHE_KEY)) || [];
+    return helpers.sessionStorage.get(CONT_CACHE_KEY) || [];
 }
 
 function save_data(){
     const prev_data = get_data();
     prev_data.push(CURRENT_CONTINUATION);
 
-    sessionStorage.setItem(CONT_CACHE_KEY, JSON.stringify(prev_data));
+    helpers.sessionStorage.set(CONT_CACHE_KEY, prev_data);
 }
 
 function button_press(){
@@ -31,14 +31,14 @@ function button_press(){
 
     // On the first page, the stored continuation token is null.
     if (prev_ctoken === null) {
-        sessionStorage.removeItem(CONT_CACHE_KEY);
+        helpers.sessionStorage.remove(CONT_CACHE_KEY);
         let url = set_continuation();
         window.location.href = url;
 
         return;
     }
 
-    sessionStorage.setItem(CONT_CACHE_KEY, JSON.stringify(prev_data));
+    helpers.sessionStorage.set(CONT_CACHE_KEY, prev_data);
     let url = set_continuation(prev_ctoken);
 
     window.location.href = url;

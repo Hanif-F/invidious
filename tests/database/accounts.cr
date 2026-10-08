@@ -95,6 +95,7 @@ require "./security_checks"
 require "./mobile_checks"
 require "./account_management_checks"
 require "./subscription_manager_checks"
+require "./browser_profile_checks"
 
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
@@ -278,6 +279,7 @@ begin
   check(disabled.response.status_code == 403, "Registration switch ignored")
   check_mobile_security
   check_mobile_account_management
+  check_browser_profiles
   CONFIG.login_enabled = false
   disabled = context
   Invidious::Routes::Login.login_page(disabled)

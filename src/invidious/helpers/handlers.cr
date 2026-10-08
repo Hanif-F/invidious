@@ -96,6 +96,9 @@ class AuthHandler < Kemal::Handler
 
         if email = Invidious::Database::SessionIDs.select_email(sid)
           user = Invidious::Database::Users.select!(email: email)
+          Invidious::BrowserProfiles.publish(env, Invidious::BrowserProfiles.account_scope(user.email))
+        else
+          Invidious::Authentication.clear_session(env)
         end
 
         if !{"GET", "HEAD", "OPTIONS"}.includes?(env.request.method) && !Invidious::Authentication.valid_session_csrf?(env)
@@ -107,6 +110,7 @@ class AuthHandler < Kemal::Handler
       end
 
       if !user
+        Invidious::Authentication.clear_session(env) unless env.request.headers.has_key?("Authorization")
         raise "Request must be authenticated"
       end
 

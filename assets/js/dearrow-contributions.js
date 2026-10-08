@@ -28,6 +28,7 @@
     }
 
     async function request(url, body) {
+        if (!window.InvidiousStorage.isCurrent()) throw new Error(config.error);
         var controller = new AbortController();
         var timeout = setTimeout(function () { controller.abort(); }, 15000);
         try {
@@ -39,6 +40,7 @@
                 headers: body ? {'Content-Type': 'application/x-www-form-urlencoded'} : {},
                 body: body ? new URLSearchParams(body).toString() : undefined
             });
+            if (!window.InvidiousStorage.checkResponse(response)) throw new Error(config.error);
             var result = await response.json();
             if (!response.ok) throw new Error(result.error || config.error);
             return result;

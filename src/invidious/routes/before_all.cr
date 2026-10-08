@@ -122,8 +122,16 @@ module Invidious::Routes::BeforeAll
         env.set "sid", sid
         env.set "csrf_token", csrf_token
         env.set "user", user
+      else
+        Authentication.clear_session(env)
       end
     end
+
+    # Bearer API requests must not change the browser's active profile.
+    unless env.request.path.starts_with?("/api/")
+      BrowserProfiles.publish(env, BrowserProfiles.render_scope(env))
+    end
+    env.set "browser_profile", BrowserProfiles.render_scope(env)
 
     preferences = Invidious::Themes.apply_random_theme(env, preferences)
 

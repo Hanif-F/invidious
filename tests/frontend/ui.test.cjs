@@ -10,6 +10,7 @@ const generated = process.env.FRONTEND_FIXTURES || path.join(__dirname, '.genera
 const artifacts = path.join(__dirname, 'artifacts');
 const engines = (process.env.FRONTEND_BROWSERS || 'chromium,firefox').split(',');
 const browsers = {};
+const accountProfile = require('node:crypto').createHmac('sha256', 'frontend-fixtures').update('browser-profile:v2:viewer@example.test').digest('hex');
 fs.mkdirSync(artifacts, { recursive: true });
 const queue = JSON.parse(fs.readFileSync(path.join(generated, 'queue.json')));
 
@@ -88,12 +89,27 @@ async function pageFor(engine, options = {}) {
     let transcriptCalls = 0;
     let chatCalls = 0;
     const chatWrites = [];
+    const preferenceWrites = [];
     const fixture = options.fixture || 'watch-dark';
+    const fixtureScope = JSON.parse(fs.readFileSync(path.join(generated, fixture + '.html'), 'utf8')
+        .match(/<script id="browser-profile"[^>]*>([\s\S]*?)<\/script>/)[1]).scope;
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         requests.push(url.pathname + url.search);
         if (route.request().isNavigationRequest()) {
-            let body = fs.readFileSync(path.join(generated, (url.pathname.startsWith('/embed/') ? 'embed-mobile' : fixture) + '.html'), 'utf8');
+            let body = fs.readFileSync(path.join(generated, (url.pathname.startsWith('/embed/') ? 'embed-mobile' : options.profile?.fixture || fixture) + '.html'), 'utf8');
+            const scope = options.profile?.scope || fixtureScope;
+            body = body.replace(/(<script id="browser-profile"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) =>
+                start + JSON.stringify({...JSON.parse(data), scope}) + end);
+            if (options.profile) {
+                body = body.replace(/(<script id="video_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => {
+                    const original = JSON.parse(data);
+                    const prefs = route.request().headers().cookie?.split('; ').find(c => c.startsWith('PREFS='));
+                    const speed = options.profile.scope === 'guest' && prefs ? JSON.parse(decodeURIComponent(prefs.slice(6))).speed : options.profile.speeds?.[options.profile.scope];
+                    return start + JSON.stringify({...original, chat_account: options.profile.scope !== 'guest',
+                        params: {...original.params, speed: speed || original.params.speed}}) + end;
+                });
+            }
             if (url.searchParams.get('clip_preview') === '1') {
                 body = body.replace(/(<script id="video_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => {
                     const original = JSON.parse(data);
@@ -119,7 +135,8 @@ async function pageFor(engine, options = {}) {
             if (options.dearrowOriginal) body = body.replace(/(<[^>]+data-dearrow-id=[^>]+>)[^<]*(<\/)/g, (_, start, end) => start + options.dearrowOriginal + end);
             if (options.extraQuality) body = body.replace('</video>', '<source src="/latest_version?id=2isYuQZMbdU&itag=44" type="video/webm" label="high"></video>');
             if (options.sponsorblock) body = body.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => start + JSON.stringify({...JSON.parse(data), sponsorblock: {...JSON.parse(data).sponsorblock, ...options.sponsorblock}}).replace(/</g, '\\u003c') + end);
-            return route.fulfill({ contentType: 'text/html', body });
+            return route.fulfill({ contentType: 'text/html', body,
+                headers: {'set-cookie': 'IV_BROWSER_PROFILE=' + scope + '; Path=/; SameSite=Lax; Secure'} });
         }
         if (url.pathname.startsWith('/api/v1/sponsorblock/')) return route.fulfill({ status: options.sponsorblockError ? 503 : 200, contentType: 'application/json', body: JSON.stringify({segments: options.sponsorblockSegments || []}) });
         if (url.pathname.startsWith('/api/v1/dearrow/')) {
@@ -167,6 +184,12 @@ async function pageFor(engine, options = {}) {
             return route.fulfill({contentType: 'application/json', body: JSON.stringify({messages, removedIds: [], continuation: second ? null : 'next'})});
         }
         if (url.pathname === '/api/v1/auth/csrf') return route.fulfill({contentType: 'application/json', body: '{"csrfToken":"fixture-token"}'});
+        if (url.pathname === '/api/v1/auth/preferences' && route.request().method() === 'PATCH') {
+            const body = JSON.parse(route.request().postData());
+            preferenceWrites.push({body, csrf: route.request().headers()['x-csrf-token'], scope: options.profile?.scope});
+            if (options.profile?.speeds && !options.preferenceError) options.profile.speeds[options.profile.scope] = body.speed;
+            return route.fulfill({status: options.preferenceError ? 403 : 200, contentType: 'application/json', body: '{}'});
+        }
         if (options.dashManifest && url.pathname.startsWith('/api/manifest/dash/')) {
             return route.fulfill({contentType:'application/dash+xml', body:options.dashManifest});
         }
@@ -206,7 +229,7 @@ async function pageFor(engine, options = {}) {
         return route.fulfill({ contentType: 'application/json', body: '{}' });
     });
     await page.goto('https://invidious.test/' + (options.route || (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture.startsWith('preferences') ? 'preferences' : fixture.startsWith('search') ? 'search?q=light' : 'feed/popular')));
-    return { page, context, errors, requests, chatWrites, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls, chatCalls: () => chatCalls };
+    return { page, context, errors, requests, chatWrites, preferenceWrites, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls, chatCalls: () => chatCalls };
 }
 
 for (const engine of engines) {
@@ -390,7 +413,7 @@ for (const engine of engines) {
         assert.equal(await page.locator('#clip-preview-frame').getAttribute('src'), null);
         await page.locator('#clip-close').click();
         assert.equal(await page.evaluate(() => player.paused()), true);
-        assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('save_player_pos'))['2isYuQZMbdU']), 123);
+        assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('iv:browser:v2:guest:save_player_pos'))['2isYuQZMbdU']), 123);
         assert.deepEqual(errors, []); await context.close();
     });
     test(`${engine}: clip popup themes, RTL, short videos and responsive actions`, async () => {
@@ -460,7 +483,7 @@ for (const engine of engines) {
         await page.evaluate(() => player.currentTime(5.45));
         await page.waitForFunction(() => player.paused());
         assert.ok(await page.evaluate(() => player.currentTime()) <= 5.5);
-        assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('save_player_pos'))['2isYuQZMbdU']), 123);
+        assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('iv:browser:v2:guest:save_player_pos'))['2isYuQZMbdU']), 123);
         assert.equal(requests.some(url => /watch_ajax.*(set_progress|clear_progress)/.test(url)), false);
         assert.equal(requests.some(url => url.startsWith('/api/v1/playlists/')), false);
         assert.equal(await page.locator('#continue').count(), 0);
@@ -974,7 +997,7 @@ for (const engine of engines) {
         await page.locator('.chat-message').first().waitFor();
         const restored = await overlay.boundingBox();
         assert.ok(Math.abs(restored.x - resized.x) <= 3 && Math.abs(restored.width - resized.width) <= 3,
-            JSON.stringify({restored, resized, settings: await page.evaluate(() => localStorage.getItem('chat-settings-v1'))}));
+            JSON.stringify({restored, resized, settings: await page.evaluate(() => helpers.storage.get('chat-settings-v1'))}));
         assert.equal(await page.locator('#chat-overlay-mode').isChecked(), true);
         assert.equal(await page.locator('#chat-overlay-opacity').inputValue(), '100');
         await page.locator('#chat-settings summary').click();
@@ -1133,7 +1156,7 @@ for (const engine of engines) {
         const legacy = {...original, chat_font_scale: 150, chat_width_px: 640, chat_overlay_mode: true};
         const first = await pageFor(engine, {fixture: 'watch-chat-account', realPlayer: true,
             videoData: {preferences: legacy},
-            initScript: "if (!localStorage.getItem('chat-settings-v1')) localStorage.setItem('chat-settings-v1', JSON.stringify({chat_hide_user_ids:true, chat_font_scale:50, chat_width_px:200, chat_overlay_mode:false}))"});
+            initScript: `if (!localStorage.getItem('iv:browser:v2:${accountProfile}:chat-settings-v1')) localStorage.setItem('iv:browser:v2:${accountProfile}:chat-settings-v1', JSON.stringify({chat_hide_user_ids:true, chat_font_scale:50, chat_width_px:200, chat_overlay_mode:false}))`});
         const second = await pageFor(engine, {fixture: 'watch-chat-account', realPlayer: true,
             videoData: {preferences: legacy}});
         await first.page.locator('.chat-message').first().waitFor();
@@ -1156,7 +1179,7 @@ for (const engine of engines) {
         await first.page.locator('#chat-overlay-move').focus();
         await first.page.keyboard.press('ArrowLeft');
         await first.page.locator('#chat-overlay-save').click();
-        const savedLocal = JSON.parse(await first.page.evaluate(() => localStorage.getItem('chat-settings-v1')));
+        const savedLocal = await first.page.evaluate(() => helpers.storage.get('chat-settings-v1'));
         assert.equal(savedLocal.chat_overlay_mode, true);
         assert.equal(savedLocal.chat_overlay_opacity, 40);
         assert.ok(savedLocal.chat_overlay_x < 560);
@@ -1234,7 +1257,7 @@ for (const engine of engines) {
         const accountWrites = chatWrites.filter(write => write.path === '/api/v1/auth/chat_preferences').length;
         await page.locator('#chat-overlay-mode').check();
         await page.locator('#chat-overlay-opacity').evaluate(el => { el.value = '0'; el.dispatchEvent(new Event('input', {bubbles: true})); });
-        assert.deepEqual(JSON.parse(await page.evaluate(() => localStorage.getItem('chat-settings-v1'))).chat_overlay_mode, true);
+        assert.deepEqual(await page.evaluate(() => helpers.storage.get('chat-settings-v1').chat_overlay_mode), true);
         await page.waitForTimeout(500);
         assert.equal(chatWrites.filter(write => write.path === '/api/v1/auth/chat_preferences').length, accountWrites);
         assert.ok(chatWrites.filter(write => write.path === '/api/v1/auth/chat_preferences').every(write =>
@@ -2092,10 +2115,10 @@ for (const engine of engines) {
             const otherTab = await context.newPage();
             await otherTab.route('**/*', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
             await otherTab.goto('https://invidious.test/other-tab');
-            await otherTab.evaluate(() => localStorage.setItem('dark_mode', encodeURIComponent(JSON.stringify('light'))));
+            await otherTab.evaluate(() => localStorage.setItem('iv:browser:v2:guest:dark_mode', JSON.stringify('light')));
             await page.waitForFunction(() => document.body.classList.contains('light-theme'));
             assert.equal(await scheme(), 'light');
-            await otherTab.evaluate(() => localStorage.setItem('dark_mode', encodeURIComponent(JSON.stringify(''))));
+            await otherTab.evaluate(() => localStorage.setItem('iv:browser:v2:guest:dark_mode', JSON.stringify('')));
             await page.waitForFunction(() => document.body.classList.contains('no-theme'));
             assert.equal(await scheme(), 'dark');
             assert.deepEqual(errors, []);
@@ -3829,18 +3852,18 @@ for (const engine of engines) {
         await page.evaluate(() => { player.muted(true); return player.play(); });
         await page.waitForFunction(() => player.readyState() >= 1);
         await page.evaluate(() => { player.pause(); player.volume(.37); player.playbackRate(1.5); });
-        await page.waitForFunction(() => localStorage.getItem('invidious_player_volume') === '0.37');
+        await page.waitForFunction(() => helpers.storage.get('invidious_player_volume') === .37);
         await page.waitForFunction(() => JSON.parse(decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('PREFS=')).slice(6))).speed === 1.5);
         assert.deepEqual(await page.evaluate(() => JSON.parse(decodeURIComponent(document.cookie.split('; ').find(c => c.startsWith('PREFS=')).slice(6)))), {speed: 1.5});
         await page.reload();
         await page.waitForFunction(() => window.player && player.volume);
         assert.equal(await page.evaluate(() => player.volume()), .37);
         await page.evaluate(() => player.muted(true));
-        assert.equal(await page.evaluate(() => localStorage.getItem('invidious_player_volume')), '0.37');
-        await page.evaluate(() => { localStorage.setItem('invidious_player_volume', '.62'); player.muted(false); });
-        assert.equal(await page.evaluate(() => localStorage.getItem('invidious_player_volume')), '.62');
+        assert.equal(await page.evaluate(() => helpers.storage.get('invidious_player_volume')), .37);
+        await page.evaluate(() => { helpers.storage.set('invidious_player_volume', .62); player.muted(false); });
+        assert.equal(await page.evaluate(() => helpers.storage.get('invidious_player_volume')), .62);
         for (const value of ['garbage', '2', '-1', '', 'NaN']) {
-            await page.evaluate(value => localStorage.setItem('invidious_player_volume', value), value);
+            await page.evaluate(value => localStorage.setItem(helpers.storage.key('invidious_player_volume'), value), value);
             await page.reload();
             await page.waitForFunction(() => window.player && player.volume);
             assert.equal(await page.evaluate(() => player.volume()), 1);
@@ -3849,8 +3872,8 @@ for (const engine of engines) {
         await context.close();
         const blocked = await pageFor(engine, {realPlayer: true, initScript: () => {
             const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
-            Storage.prototype.getItem = function (key) { if (key === 'invidious_player_volume') throw new Error('Storage blocked'); return get.call(this, key); };
-            Storage.prototype.setItem = function (key, value) { if (key === 'invidious_player_volume') throw new Error('Storage blocked'); return set.call(this, key, value); };
+            Storage.prototype.getItem = function (key) { if (key.endsWith(':invidious_player_volume')) throw new Error('Storage blocked'); return get.call(this, key); };
+            Storage.prototype.setItem = function (key, value) { if (key.endsWith(':invidious_player_volume')) throw new Error('Storage blocked'); return set.call(this, key, value); };
         }});
         await blocked.page.waitForFunction(() => window.player && player.volume);
         assert.equal(await blocked.page.evaluate(() => player.volume()), 1);
@@ -3867,7 +3890,7 @@ for (const engine of engines) {
             assert.equal(await page.evaluate(() => player.volume()), 1);
             await page.evaluate(() => { change_volume(-.5); toggle_muted(); });
             assert.equal(await page.evaluate(() => player.volume()), 1);
-            assert.equal(await page.evaluate(() => localStorage.getItem('invidious_player_volume')), '.25');
+            assert.equal(await page.evaluate(() => helpers.storage.get('invidious_player_volume')), .25);
             assert.equal(await page.locator('.vjs-volume-panel').isVisible(), false);
             await page.evaluate(() => { player.muted(true); return player.play(); });
             await page.waitForFunction(() => player.currentTime() > .1);
@@ -4008,6 +4031,187 @@ for (const engine of engines) {
 }
 
 for (const engine of engines) {
+    test(`${engine}: browser profiles restore guest and two accounts independently on watch and embed`, async () => {
+        const bob = 'b'.repeat(64);
+        const profile = {scope: 'guest', fixture: 'watch-chat', speeds: {[accountProfile]: 1.25, [bob]: 1.75}};
+        const {page, context, errors, preferenceWrites} = await pageFor(engine, {profile, realPlayer: true, videoData: {params: {save_player_pos: true}}});
+        async function ready() { await page.waitForFunction(() => window.player && player.getChild('textTrackSettings')); }
+        async function snapshot() {
+            await ready();
+            return page.evaluate(() => ({volume: player.volume(), speed: player.playbackRate(),
+                captions: player.getChild('textTrackSettings').getValues().fontPercent || 1,
+                font: document.getElementById('chat-font-value')?.value,
+                position: helpers.storage.get('save_player_pos')?.abcdefghijk,
+                pages: helpers.sessionStorage.get('continuation_cache_profile-test')}));
+        }
+        async function change(volume, captions, font, speed) {
+            await ready();
+            await page.evaluate(({volume, captions, font, speed}) => {
+                player.volume(volume);
+                const settings = player.getChild('textTrackSettings');
+                settings.setValues({fontPercent: captions}); settings.saveSettings();
+                const input = document.getElementById('chat-font-value');
+                input.value = String(font); input.dispatchEvent(new Event('change', {bubbles: true}));
+                helpers.storage.set('save_player_pos', {abcdefghijk: font});
+                helpers.sessionStorage.set('continuation_cache_profile-test', [null, String(font)]);
+                player.playbackRate(speed);
+            }, {volume, captions, font, speed});
+            await page.waitForFunction(volume => helpers.storage.get('invidious_player_volume') === volume, volume);
+        }
+        await change(.3, 1.5, 125, .75);
+        await page.waitForFunction(() => document.cookie.includes('PREFS='));
+        profile.scope = accountProfile; profile.fixture = 'watch-chat-account';
+        await page.reload();
+        assert.deepEqual(await snapshot(), {volume: 1, speed: 1.25, captions: 1, font: '100', position: undefined, pages: undefined});
+        await change(.7, 2, 155, 1.5);
+        await page.waitForFunction(() => !speedSaving && pendingSpeed === undefined);
+        assert.equal(preferenceWrites.length, 1);
+        assert.deepEqual(preferenceWrites[0], {body: {speed: 1.5}, csrf: 'fixture-token', scope: accountProfile});
+        profile.scope = 'guest'; profile.fixture = 'watch-chat';
+        await page.reload();
+        assert.deepEqual(await snapshot(), {volume: .3, speed: .75, captions: 1.5, font: '125', position: 125, pages: [null, '125']});
+        profile.scope = bob; profile.fixture = 'watch-chat-account';
+        await page.reload();
+        assert.deepEqual(await snapshot(), {volume: 1, speed: 1.75, captions: 1, font: '100', position: undefined, pages: undefined});
+        await change(.9, 3, 175, 2);
+        await page.waitForFunction(() => !speedSaving && pendingSpeed === undefined);
+        profile.scope = accountProfile;
+        await page.reload();
+        assert.deepEqual(await snapshot(), {volume: .7, speed: 1.5, captions: 2, font: '155', position: 155, pages: [null, '155']});
+        await page.goto('https://invidious.test/embed/2isYuQZMbdU');
+        const embed = await snapshot();
+        assert.deepEqual([embed.volume, embed.speed, embed.captions], [.7, 1.5, 2]);
+        assert.equal(await page.evaluate(() => localStorage.getItem('vjs-text-track-settings')), null);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: stale browser tabs reload and delayed authenticated saves never write another profile`, async () => {
+        const profile = {scope: accountProfile, fixture: 'watch-chat-account'};
+        const {page, context, errors, preferenceWrites} = await pageFor(engine, {profile, realPlayer: true});
+        await page.waitForFunction(() => window.player && player.playbackRate);
+        let release, requested;
+        const pending = new Promise(resolve => { requested = resolve; });
+        const delay = new Promise(resolve => { release = resolve; });
+        await page.route('**/api/v1/auth/csrf', async route => {
+            requested(); await delay;
+            await route.fulfill({contentType: 'application/json', body: '{"csrfToken":"old-account-token"}'}).catch(() => {});
+        });
+        await page.evaluate(() => player.playbackRate(1.5));
+        await pending;
+        profile.scope = 'b'.repeat(64);
+        const other = await context.newPage();
+        await other.goto('https://invidious.test/watch?v=2isYuQZMbdU');
+        await page.waitForFunction(scope => window.InvidiousStorage?.scope === scope, profile.scope);
+        release();
+        await page.waitForTimeout(200);
+        assert.deepEqual(preferenceWrites, []);
+        assert.equal(await page.evaluate(() => helpers.storage.get('invidious_player_volume')), undefined);
+        assert.equal((await context.cookies()).some(cookie => cookie.name === 'PREFS'), false);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: failed account speed saves preserve guest preferences and denied browser saves report failure`, async () => {
+        const profile = {scope: accountProfile, fixture: 'watch-chat-account'};
+        const first = await pageFor(engine, {profile, realPlayer: true, preferenceError: true,
+            initScript: () => { document.cookie = 'PREFS=' + encodeURIComponent('{"speed":0.75}') + '; Path=/'; }});
+        await first.page.waitForFunction(() => window.player && player.playbackRate);
+        await first.page.evaluate(() => player.playbackRate(1.5));
+        await first.page.locator('.browser-save-status').filter({hasText: 'could not be saved'}).waitFor();
+        assert.equal(first.preferenceWrites.length, 1);
+        assert.equal(JSON.parse(decodeURIComponent((await first.context.cookies()).find(c => c.name === 'PREFS').value)).speed, .75);
+        assert.deepEqual(first.errors, []);
+        await first.context.close();
+        const blocked = await pageFor(engine, {realPlayer: true, initScript: () => {
+            Object.defineProperty(window, 'localStorage', {get() { throw new Error('Denied'); }});
+            let proto = document, descriptor;
+            while (proto && !(descriptor = Object.getOwnPropertyDescriptor(proto, 'cookie'))) proto = Object.getPrototypeOf(proto);
+            Object.defineProperty(document, 'cookie', {get() { return descriptor.get.call(document); }, set() {}});
+        }});
+        await blocked.page.waitForFunction(() => window.player && player.volume);
+        await blocked.page.evaluate(() => player.volume(.4));
+        await blocked.page.locator('.browser-save-status').filter({hasText: 'could not be saved'}).waitFor();
+        assert.equal(await blocked.page.evaluate(() => helpers.storage.get('invidious_player_volume')), .4);
+        await blocked.page.reload();
+        await blocked.page.waitForFunction(() => window.player && player.volume);
+        assert.equal(await blocked.page.evaluate(() => player.volume()), 1);
+        assert.deepEqual(blocked.errors, []);
+        await blocked.context.close();
+    });
+
+    test(`${engine}: authenticated response headers invalidate stale saves when browser storage and cookie access are denied`, async () => {
+        const profile = {scope: accountProfile, fixture: 'watch-chat-account'};
+        const {page, context, errors, preferenceWrites} = await pageFor(engine, {profile, realPlayer: true, initScript: () => {
+            Object.defineProperty(window, 'localStorage', {get() { throw new Error('Denied'); }});
+            Object.defineProperty(document, 'cookie', {get() { throw new Error('Denied'); }, set() { throw new Error('Denied'); }});
+        }});
+        await page.waitForFunction(() => window.player && player.playbackRate);
+        const changed = 'b'.repeat(64);
+        await page.route('**/api/v1/auth/csrf', async route => {
+            profile.scope = changed;
+            await route.fulfill({contentType: 'application/json', headers: {'X-Invidious-Browser-Profile': changed}, body: '{"csrfToken":"changed-account"}'});
+        });
+        await page.evaluate(() => player.playbackRate(1.5));
+        await page.waitForFunction(scope => window.InvidiousStorage?.scope === scope, changed);
+        assert.deepEqual(preferenceWrites, []);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests`, async () => {
+        const id = 'UC' + 'a'.repeat(22);
+        const profile = {scope: 'guest', fixture: 'sponsorblock-channels-guest-editor'};
+        const {page, context, errors, requests} = await pageFor(engine, {profile, realPlayer: true, width: 390,
+            route: 'preferences/sponsorblock/channels?channel=' + id,
+            videoData: {channel_id: id}, sponsorblockSegments: [{id: 'guest', category: 'sponsor', start: .5, end: 2}]});
+        assert.equal(await page.locator('#enabled').inputValue(), 'inherit');
+        await page.selectOption('#enabled', 'true');
+        await page.selectOption('#mode_sponsor', 'auto');
+        await page.locator('.sponsorblock-channel-form button[value="save"]').click();
+        assert.deepEqual(await page.evaluate(id => helpers.storage.get('sponsorblock_channel_overrides')[id], id),
+            {name: '<Channel>', enabled: true, modes: {sponsor: 'auto'}});
+        await page.reload();
+        assert.equal(await page.locator('#enabled').inputValue(), 'true');
+        assert.equal(await page.locator('#mode_intro').inputValue(), 'inherit');
+        assert.equal(await page.locator('#sponsorblock-saved-channels a').first().textContent(), '<Channel>');
+        assert.equal(await page.locator('#sponsorblock-saved-channels script').count(), 0);
+        profile.fixture = 'watch-dark';
+        for (const url of ['watch?v=2isYuQZMbdU', 'embed/2isYuQZMbdU']) {
+            await page.goto('https://invidious.test/' + url);
+            await page.evaluate(() => { player.muted(true); return player.play(); });
+            await page.waitForFunction(() => window.player && player.readyState() >= 1);
+            await page.evaluate(() => player.pause());
+            await page.locator('.sb-range').waitFor();
+            await page.evaluate(() => { player.currentTime(.6); player.trigger('timeupdate'); });
+            await page.waitForFunction(() => player.currentTime() >= 2);
+        }
+        profile.fixture = 'sponsorblock-channels-guest-editor';
+        await page.goto('https://invidious.test/preferences/sponsorblock/channels?channel=' + id);
+        await page.selectOption('#enabled', 'false');
+        await page.selectOption('#mode_sponsor', 'marker');
+        await page.locator('.sponsorblock-channel-form button[value="save"]').click();
+        profile.fixture = 'watch-dark';
+        await page.goto('https://invidious.test/watch?v=2isYuQZMbdU');
+        assert.equal(await page.locator('.sb-ranges').count(), 0);
+        profile.fixture = 'sponsorblock-channels-guest-editor';
+        await page.goto('https://invidious.test/preferences/sponsorblock/channels?channel=' + id);
+        await page.locator('.sponsorblock-channel-form button[value="reset"]').click();
+        assert.deepEqual(await page.evaluate(() => helpers.storage.get('sponsorblock_channel_overrides')), {});
+        await page.reload();
+        assert.equal(await page.locator('#enabled').inputValue(), 'inherit');
+        assert.equal(await page.locator('#mode_sponsor').inputValue(), 'inherit');
+        assert.ok(!requests.some(url => url.startsWith('/api/v1/auth/')));
+        assert.deepEqual(errors, []);
+        await context.close();
+        const nojs = await pageFor(engine, {fixture: 'sponsorblock-channels-guest', javascript: false});
+        assert.equal(await nojs.page.locator('#sponsorblock-controls').isVisible(), false);
+        assert.match(await nojs.page.locator('noscript').textContent(), /Enable JavaScript/);
+        await nojs.context.close();
+    });
+}
+
+for (const engine of engines) {
     for (const width of [390, 1440]) {
         test(`${engine}: account thumbnail bars ignore local progress and update dynamic queues at ${width}px`, async () => {
             const page = await browsers[engine].newPage({viewport: {width, height: 900}});
@@ -4017,6 +4221,7 @@ for (const engine of engines) {
                 <div class="watched-indicator" data-id="new" data-length="1000" hidden></div>`);
             await page.evaluate(() => {
                 window.calls = 0;
+                window.InvidiousStorage = {isCurrent: () => true};
                 window.helpers = {
                     storage: {get: () => { throw new Error('Account bars must not read local storage'); }},
                     xhr: (method, url, options, callbacks) => {
@@ -4317,12 +4522,16 @@ for (const engine of engines) {
         await indicator.waitFor({state: 'visible'});
         assert.equal(await indicator.evaluate(el => el.style.width), '49%');
         await search.context.close();
-        const local = await pageFor(engine, {fixture: 'history', route: 'feed/history', initScript: "localStorage.setItem('save_player_pos', JSON.stringify({'2isYuQZMbdU':492}));"});
+        const local = await pageFor(engine, {fixture: 'history', route: 'feed/history', initScript: `localStorage.setItem('iv:browser:v2:${accountProfile}:save_player_pos', JSON.stringify({'2isYuQZMbdU':492}));`});
         const partial = local.page.locator('.watched-indicator[data-id="2isYuQZMbdU"]');
         await partial.waitFor({state: 'visible'});
         assert.equal(await partial.evaluate(el => el.style.width), '49%');
         assert.equal(local.requests.some(url => url === '/api/v1/auth/playback'), false);
-        await local.page.evaluate(() => {localStorage.setItem('save_player_pos', JSON.stringify({'2isYuQZMbdU':250})); window.dispatchEvent(new StorageEvent('storage'));});
+        await local.page.evaluate(() => {
+            const key = helpers.storage.key('save_player_pos');
+            localStorage.setItem(key, JSON.stringify({'2isYuQZMbdU':250}));
+            window.dispatchEvent(new StorageEvent('storage', {key, storageArea: localStorage}));
+        });
         assert.equal(await partial.evaluate(el => el.style.width), '25%');
         assert.deepEqual(local.errors, []);
         await local.context.close();

@@ -59,13 +59,16 @@ def check_sponsorblock_channels
   path = Invidious::Routes::SponsorBlockPreferences::PATH
   guest = fixture_env(path)
   html = Invidious::Routes::SponsorBlockPreferences.show(guest)
-  raise "Guest sign-in missing" unless html.includes?("Sign in to save")
+  raise "Guest browser settings missing" unless html.includes?("sponsorblock-preferences.js") && html.includes?("signed-out use") && html.includes?("<noscript>")
+  File.write("tests/frontend/.generated/sponsorblock-channels-guest.html", html)
   page = signed_in_env("#{path}?channel=#{id}")
   page.set "preferences", prefs
   page.set "sid", "fixture-session"
   html = Invidious::Routes::SponsorBlockPreferences.show(page)
   raise "Channel editor missing" unless html.includes?("name=\"mode_sponsor\"") && html.includes?("&lt;Channel&gt;")
   File.write("tests/frontend/.generated/sponsorblock-channels.html", html)
+  # Render a guest editor with known channel metadata; no upstream request.
+  File.write("tests/frontend/.generated/sponsorblock-channels-guest-editor.html", guest_sponsorblock_editor(id))
   token = generate_response("fixture-session", {"POST:preferences/sponsorblock/channels"}, HMAC_KEY)
   # Effective settings are resolved by the shared watch/embed player template.
   video_id = fixture_video.ucid
@@ -112,4 +115,14 @@ def check_sponsorblock_channels
     Invidious::Routes::SponsorBlockPreferences.update(post)
     raise "CSRF or reset failure" unless valid ? user.preferences.sponsorblock_channel_overrides.empty? : post.response.status_code == 403
   end
+end
+
+def guest_sponsorblock_editor(channel_id : String)
+  env = fixture_env(Invidious::Routes::SponsorBlockPreferences::PATH)
+  preferences = env.get("preferences").as(Preferences)
+  locale = preferences.locale
+  user = nil.as(User?)
+  entry = Invidious::SponsorBlock::ChannelOverride.new("<Channel>", nil, {} of String => String)
+  csrf_token = ""
+  templated "user/sponsorblock_channels"
 end

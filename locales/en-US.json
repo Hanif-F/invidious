@@ -847,5 +847,8 @@
     "clips_copy": "Copy link",
     "clips_watch": "Watch clip",
     "clips_done": "Done",
-    "clips_copy_fallback": "Select and copy the link below."
+    "clips_copy_fallback": "Select and copy the link below.",
+    "browser_save_error": "These settings could not be saved. Your changes will only last for this page.",
+    "sb_channels_guest": "Channel settings are saved in this browser for signed-out use.",
+    "sb_channels_guest_js": "Enable JavaScript to save channel settings in this browser, or sign in to use account settings."
 }

@@ -61,6 +61,12 @@
     var generation = 0;
     var controller;
     var prefetchTimer;
+    window.addEventListener('browserprofilechange', function () {
+        generation++;
+        clearTimeout(prefetchTimer);
+        clearTimeout(saveTimer);
+        if (controller) controller.abort();
+    });
     var nextRequestAt = 0;
     var autoScroll = true;
     var windowAtTail = true;
@@ -70,12 +76,12 @@
     var PREFETCH_MS = 30000;
 
     function readLocal(key, fallback) {
-        try { return JSON.parse(localStorage.getItem(key)) || fallback; }
-        catch (error) { return fallback; }
+        var value = helpers.storage.get(key);
+        return value === undefined ? fallback : value;
     }
 
     function writeLocal(key, value) {
-        try { localStorage.setItem(key, JSON.stringify(value)); } catch (error) { /* Private browsing can disable storage. */ }
+        window.InvidiousStorage.report(helpers.storage.set(key, value), settingsStatus);
     }
 
     function clamp(value, min, max, fallback) {
@@ -238,6 +244,7 @@
     }
 
     function saveSettings(scope) {
+        if (!window.InvidiousStorage.isCurrent()) return;
         if (!account) { writeLocal('chat-settings-v1', settings); return; }
         if (scope === 'local') {
             var local = Object.assign({}, readLocal('chat-settings-v1', {}));
@@ -247,25 +254,27 @@
         }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () {
-            fetch('/api/v1/auth/csrf').then(function (response) { if (!response.ok) throw new Error(); return response.json(); })
-                .then(function (data) { csrfToken = data.csrfToken; return fetch('/api/v1/auth/chat_preferences', {
+            if (!window.InvidiousStorage.isCurrent()) return;
+            fetch('/api/v1/auth/csrf').then(function (response) { if (!window.InvidiousStorage.checkResponse(response) || !response.ok) throw new Error(); return response.json(); })
+                .then(function (data) { if (!window.InvidiousStorage.isCurrent()) throw new Error(); csrfToken = data.csrfToken; return fetch('/api/v1/auth/chat_preferences', {
                     method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
                     body: JSON.stringify({chat_show_timestamps: settings.chat_show_timestamps,
                         chat_user_blacklist: settings.chat_user_blacklist,
                         chat_word_blacklist: settings.chat_word_blacklist})
-                }); }).then(function (response) { if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
-                .catch(function () { settingsStatus.textContent = labels.chat_save_error; });
+                }); }).then(function (response) { if (!window.InvidiousStorage.checkResponse(response)) return; if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
+                .catch(function () { if (window.InvidiousStorage.isCurrent()) settingsStatus.textContent = labels.chat_save_error; });
         }, 350);
     }
 
     function saveTiming() {
+        if (!window.InvidiousStorage.isCurrent()) return;
         if (!account) { writeLocal('chat-timing-v1-' + video_data.id, timingMs); return; }
-        fetch('/api/v1/auth/csrf').then(function (response) { if (!response.ok) throw new Error(); return response.json(); })
-            .then(function (data) { return fetch('/api/v1/auth/chat_timing/' + encodeURIComponent(video_data.id), {
+        fetch('/api/v1/auth/csrf').then(function (response) { if (!window.InvidiousStorage.checkResponse(response) || !response.ok) throw new Error(); return response.json(); })
+            .then(function (data) { if (!window.InvidiousStorage.isCurrent()) throw new Error(); return fetch('/api/v1/auth/chat_timing/' + encodeURIComponent(video_data.id), {
                 method: 'PUT', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': data.csrfToken},
                 body: JSON.stringify({offsetMs: timingMs})
-            }); }).then(function (response) { if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
-            .catch(function () { settingsStatus.textContent = labels.chat_save_error; });
+            }); }).then(function (response) { if (!window.InvidiousStorage.checkResponse(response)) return; if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
+            .catch(function () { if (window.InvidiousStorage.isCurrent()) settingsStatus.textContent = labels.chat_save_error; });
     }
 
     function nearBottom() {
@@ -461,7 +470,7 @@
     }
 
     function load() {
-        if (panel.hidden || !activeSegment || loading || activeSegment.failed || activeSegment.complete) return;
+        if (!window.InvidiousStorage.isCurrent() || panel.hidden || !activeSegment || loading || activeSegment.failed || activeSegment.complete) return;
         var segment = activeSegment;
         var request = generation;
         var initial = !segment.started;
@@ -483,7 +492,7 @@
             if (!response.ok) throw new Error('request failed');
             return response.json();
         }).then(function (data) {
-            if (request !== generation || segment !== activeSegment) return;
+            if (!window.InvidiousStorage.isCurrent() || request !== generation || segment !== activeSegment) return;
             if (!data || !Array.isArray(data.messages) || !Array.isArray(data.removedIds))
                 throw new Error('invalid chat response');
             var removedInChunk = new Set(data.removedIds);
@@ -530,7 +539,7 @@
             }
             maybePrefetch();
         }).catch(function (error) {
-            if (request !== generation || error.name === 'AbortError') return;
+            if (!window.InvidiousStorage.isCurrent() || request !== generation || error.name === 'AbortError') return;
             loading = false;
             controller = null;
             segment.failed = true;

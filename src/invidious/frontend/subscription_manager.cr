@@ -1,3 +1,5 @@
+require "../browser_profiles"
+
 module Invidious::Frontend::SubscriptionManager
   extend self
 
@@ -37,10 +39,11 @@ module Invidious::Frontend::SubscriptionManager
 
   def preference(env, secure : Bool = false) : String
     explicit = env.params.query.fetch_all("sort_by").last?
-    saved = env.request.cookies[COOKIE]?.try &.value
+    name = BrowserProfiles.cookie_name(env, COOKIE)
+    saved = env.request.cookies[name]?.try &.value
     if SORTS.includes?(explicit)
-      env.response.cookies[COOKIE] = HTTP::Cookie.new(
-        name: COOKIE, value: explicit.not_nil!, path: "/", expires: Time.utc + 2.years,
+      env.response.cookies[name] = HTTP::Cookie.new(
+        name: name, value: explicit.not_nil!, path: "/", expires: Time.utc + 2.years,
         secure: secure, http_only: true, samesite: HTTP::Cookie::SameSite::Lax
       )
       explicit.not_nil!

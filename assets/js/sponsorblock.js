@@ -1,6 +1,7 @@
 'use strict';
 (function () {
-    var config = JSON.parse(document.getElementById('player_data').textContent).sponsorblock;
+    var config = window.InvidiousStorage.sponsorblock(
+        JSON.parse(document.getElementById('player_data').textContent).sponsorblock, video_data.channel_id, video_data.live_now);
     if (!config || !config.enabled || !Object.keys(config.modes).some(function (key) { return config.modes[key] !== 'disabled'; })) return;
     var segments = [], active = null, dismissed = new Set(), bypassedAuto = new Set(), timer, disposed = false, seeking = false;
     // Page-local history: replayed automatic segments use the manual controls.
@@ -117,7 +118,7 @@
     player.on('dispose', function () { disposed = true; clearTimeout(timer); window.removeEventListener('keydown', keydown); });
     helpers.xhr('GET', '/api/v1/sponsorblock/' + encodeURIComponent(video_data.id), {responseType: 'json'}, {
         on200: function (response) {
-            if (disposed) return;
+            if (disposed || !window.InvidiousStorage.isCurrent()) return;
             segments = (response && Array.isArray(response.segments) ? response.segments : []).filter(function (s) {
                 return Object.prototype.hasOwnProperty.call(config.modes, s.category) && config.modes[s.category] !== 'disabled' &&
                     Number.isFinite(s.start) && Number.isFinite(s.end) && s.start >= 0 && s.end > s.start;

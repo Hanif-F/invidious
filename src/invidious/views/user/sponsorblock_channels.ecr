@@ -1,12 +1,16 @@
 <% content_for "header" do %>
 <title><%= I18n.translate(locale, "sb_channels") %> - Invidious</title>
+<% unless user %><script src="/js/sponsorblock-preferences.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
 <% end %>
-<div class="h-box">
+<div class="h-box" id="sponsorblock-channels" data-guest="<%= !user %>">
     <h1><%= I18n.translate(locale, "sb_channels") %></h1>
     <p><a href="/preferences#preferences-sponsorblock"><%= I18n.translate(locale, "sb_global_settings") %></a></p>
     <% if !user %>
-        <p><%= I18n.translate(locale, "sb_channels_sign_in") %> <a href="/login?referer=%2Fpreferences%2Fsponsorblock%2Fchannels"><%= I18n.translate(locale, "Log in") %></a></p>
-    <% else %>
+        <p><%= I18n.translate(locale, "sb_channels_guest") %></p>
+        <noscript><p><%= I18n.translate(locale, "sb_channels_guest_js") %></p></noscript>
+    <% end %>
+    <div id="sponsorblock-controls" <%= "hidden" unless user %>>
+        <p id="sponsorblock-save-status" role="status"></p>
         <p><%= I18n.translate(locale, "sb_channels_hint") %></p>
         <form class="pure-form pure-form-stacked" method="get" action="/preferences/sponsorblock/channels">
             <label for="channel"><%= I18n.translate(locale, "sb_channel_input") %></label>
@@ -15,7 +19,7 @@
         </form>
         <% if channel_id %>
             <h2><a href="/channel/<%= channel_id %>" dir="auto"><%= HTML.escape(entry.name) %></a></h2>
-            <form class="pure-form pure-form-stacked" method="post" action="/preferences/sponsorblock/channels">
+            <form class="pure-form pure-form-stacked sponsorblock-channel-form" data-name="<%= HTML.escape(entry.name) %>" method="post" action="/preferences/sponsorblock/channels">
                 <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
                 <input type="hidden" name="channel" value="<%= channel_id %>">
                 <label for="enabled"><%= I18n.translate(locale, "sb_enable") %></label>
@@ -38,6 +42,7 @@
             </form>
         <% end %>
         <h2><%= I18n.translate(locale, "sb_configured_channels") %></h2>
+        <div id="sponsorblock-saved-channels" data-edit="<%= I18n.translate(locale, "sb_channel_edit") %>" data-reset="<%= I18n.translate(locale, "sb_channel_reset") %>" data-empty="<%= I18n.translate(locale, "sb_channels_empty") %>">
         <% if preferences.sponsorblock_channel_overrides.empty? %><p><%= I18n.translate(locale, "sb_channels_empty") %></p><% end %>
         <% preferences.sponsorblock_channel_overrides.to_a.sort_by { |id, saved| saved.name.downcase }.each do |id, saved| %>
             <div class="h-box">
@@ -49,5 +54,6 @@
                 </form>
             </div>
         <% end %>
-    <% end %>
+        </div>
+    </div>
 </div>

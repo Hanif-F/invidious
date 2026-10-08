@@ -1078,3 +1078,5 @@ body .pure-form.preferences-form .preferences-save { bottom: calc(12px + env(saf
   max-width: 100%;
   margin: 0;
 }
+
+.browser-save-status:empty { display: none; }

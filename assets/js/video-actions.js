@@ -88,6 +88,7 @@
         location.pathname.startsWith('/hashtag/') || (location.pathname === '/search' && !includeBlocked);
 
     async function request(url, data) {
+        if (!window.InvidiousStorage.isCurrent()) throw new Error(words.error);
         var options = { credentials: 'same-origin', headers: { 'Accept': 'application/json' } };
         if (data) {
             options.method = 'POST';
@@ -98,6 +99,7 @@
         var timeout = setTimeout(function () { controller.abort(); }, 15000);
         try {
             var response = await fetch(url, options);
+            if (!window.InvidiousStorage.checkResponse(response)) throw new Error(words.error);
             if (!response.ok || response.redirected) throw new Error(words.error);
             return await response.json();
         } finally { clearTimeout(timeout); }

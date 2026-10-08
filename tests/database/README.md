@@ -92,3 +92,10 @@ through production auth middleware: ordinary response compatibility, existing
 subscription/history scopes, permission denials, shared-score equality,
 cross-account isolation, private/no-store headers, untouched browser preferences
 and read-only history. Native tokens need no new scopes or renewal.
+
+`browser_profile_checks.cr` runs in the account harness through production middleware.
+It covers opaque stable account identifiers, account defaults versus guest preferences,
+browser signup defaults, preserved guest cookies across sign-in/sign-out, scoped search
+and sorting, revoked sessions, account rename, current-profile response headers,
+unchanged native bearer behavior, rejected guest channel writes and account-only
+deletion cleanup. It reuses the existing schema; no browser-profile migration is needed.

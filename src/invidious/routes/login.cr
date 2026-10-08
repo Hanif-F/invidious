@@ -60,7 +60,7 @@ module Invidious::Routes::Login
       end
       unless error
         begin
-          sid = Database::Accounts.register(username, password, env.get("preferences").as(Preferences))
+          sid = Database::Accounts.register(username, password, Preferences.from_json("{}"))
         rescue ex : PQ::PQError
           raise ex unless ex.field_message(:code) == "23505"
           error = "Username is already taken."
@@ -101,10 +101,7 @@ module Invidious::Routes::Login
 
     Invidious::Database::SessionIDs.delete(sid: sid)
 
-    env.request.cookies.each do |cookie|
-      cookie.expires = Time.utc(1990, 1, 1)
-      env.response.cookies << cookie
-    end
+    Authentication.clear_session(env)
 
     env.redirect referer
   end

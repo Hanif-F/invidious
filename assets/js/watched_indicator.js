@@ -29,7 +29,7 @@
 
     function refresh() {
         if (!sync) { render(); return; }
-        if (loading) return;
+        if (loading || !window.InvidiousStorage.isCurrent()) return;
         loading = true;
         function failed() { loading = false; }
         helpers.xhr('GET', '/api/v1/auth/playback', {}, {
@@ -58,6 +58,6 @@
         if (document.visibilityState === 'visible') refresh();
     });
     window.addEventListener('pageshow', function (event) { if (event.persisted) refresh(); });
-    window.addEventListener('storage', function () { if (!sync) render(); });
+    window.addEventListener('storage', function (event) { if (!sync && helpers.storage.matchesEvent(event, 'save_player_pos')) render(); });
     refresh();
 })();

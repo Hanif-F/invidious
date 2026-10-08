@@ -1,15 +1,26 @@
 'use strict';
 var notification_data = JSON.parse(document.getElementById('notification_data').textContent);
 
-/** Boolean meaning 'some tab have stream' */
+/** A short-lived, profile-scoped lease identifies the streaming tab. */
 const STORAGE_KEY_STREAM = 'stream';
 /** Number of notifications. May be increased or reset */
 const STORAGE_KEY_NOTIF_COUNT = 'notification_count';
 
 var notifications, delivered;
-var notifications_mock = { close: function () { } };
+var streamOwner = Date.now().toString(36) + Math.random().toString(36).slice(2);
+var leaseDuration = 45000;
+function ownsStream() {
+    if (!window.InvidiousStorage.isCurrent()) return false;
+    var lease = helpers.storage.get(STORAGE_KEY_STREAM);
+    return lease && lease.owner === streamOwner && lease.expires > Date.now();
+}
+function closeStream() {
+    if (notifications) notifications.close();
+    notifications = null;
+}
 
 function get_subscriptions() {
+    if (!ownsStream()) return;
     helpers.xhr('GET', '/api/v1/auth/subscriptions', {
         retries: 5,
         entity_name: 'subscriptions'
@@ -19,6 +30,8 @@ function get_subscriptions() {
 }
 
 function create_notification_stream(subscriptions) {
+    if (!ownsStream()) return;
+    closeStream();
     // sse.js can't be replaced to EventSource in place as it lack support of payload and headers
     // see https://developer.mozilla.org/en-US/docs/Web/API/EventSource/EventSource
     notifications = new SSE(
@@ -32,9 +45,10 @@ function create_notification_stream(subscriptions) {
     var start_time = Math.round(new Date() / 1000);
 
     notifications.onmessage = function (event) {
-        if (!event.id) return;
+        if (!event.id || !ownsStream()) return;
 
-        var notification = JSON.parse(event.data);
+        var notification;
+        try { notification = JSON.parse(event.data); } catch (_) { return; }
         console.info('Got notification:', notification);
 
         // Ignore not actual and delivered notifications
@@ -67,8 +81,8 @@ function create_notification_stream(subscriptions) {
 
     notifications.addEventListener('error', function (e) {
         console.warn('Something went wrong with notifications, trying to reconnect...');
-        notifications = notifications_mock;
-        setTimeout(get_subscriptions, 1000);
+        closeStream();
+        if (ownsStream()) setTimeout(get_subscriptions, 1000);
     });
 
     notifications.stream();
@@ -88,44 +102,40 @@ function update_ticker_count() {
 }
 
 function start_stream_if_needed() {
-    // random wait for other tabs set 'stream' flag
+    if (!window.InvidiousStorage.isCurrent()) return;
+    // Give another visible tab a chance to claim the lease first.
     setTimeout(function () {
-        if (!helpers.storage.get(STORAGE_KEY_STREAM)) {
-            // if no one set 'stream', set it by yourself and start stream
-            helpers.storage.set(STORAGE_KEY_STREAM, true);
-            notifications = notifications_mock;
-            get_subscriptions();
+        if (!window.InvidiousStorage.isCurrent()) return;
+        var lease = helpers.storage.get(STORAGE_KEY_STREAM);
+        if (!lease || lease.expires <= Date.now()) {
+            helpers.storage.set(STORAGE_KEY_STREAM, {owner: streamOwner, expires: Date.now() + leaseDuration});
+            if (ownsStream()) get_subscriptions();
         }
-    }, Math.random() * 1000 + 50); // [0.050 .. 1.050) second
+    }, Math.random() * 1000 + 50);
 }
 
-
-addEventListener('storage', function (e) {
-    if (e.key === STORAGE_KEY_NOTIF_COUNT)
-        update_ticker_count();
-
-    // if 'stream' key was removed
-    if (e.key === STORAGE_KEY_STREAM && !helpers.storage.get(STORAGE_KEY_STREAM)) {
-        if (notifications) {
-            // restore it if we have active stream
-            helpers.storage.set(STORAGE_KEY_STREAM, true);
-        } else {
-            start_stream_if_needed();
-        }
+addEventListener('storage', function (event) {
+    if (helpers.storage.matchesEvent(event, STORAGE_KEY_NOTIF_COUNT)) update_ticker_count();
+    if (helpers.storage.matchesEvent(event, STORAGE_KEY_STREAM)) {
+        if (!ownsStream()) closeStream();
+        start_stream_if_needed();
     }
 });
 
-addEventListener('load', function () {
-    var notification_count_el = document.getElementById('notification_count');
-    var notification_count = notification_count_el ? parseInt(notification_count_el.textContent) : 0;
-    helpers.storage.set(STORAGE_KEY_NOTIF_COUNT, notification_count);
+var leaseTimer = setInterval(function () {
+    if (!window.InvidiousStorage.isCurrent()) { closeStream(); clearInterval(leaseTimer); return; }
+    if (ownsStream()) helpers.storage.set(STORAGE_KEY_STREAM, {owner: streamOwner, expires: Date.now() + leaseDuration});
+    else { closeStream(); start_stream_if_needed(); }
+}, 15000);
 
-    if (helpers.storage.get(STORAGE_KEY_STREAM))
-        helpers.storage.remove(STORAGE_KEY_STREAM);
+addEventListener('load', function () {
+    var count = document.getElementById('notification_count');
+    helpers.storage.set(STORAGE_KEY_NOTIF_COUNT, count ? parseInt(count.textContent, 10) || 0 : 0);
     start_stream_if_needed();
 });
-
-addEventListener('unload', function () {
-    // let chance to other tabs to be a streamer via firing 'storage' event
-    if (notifications) helpers.storage.remove(STORAGE_KEY_STREAM);
+addEventListener('pageshow', start_stream_if_needed);
+addEventListener('browserprofilechange', function () { closeStream(); clearInterval(leaseTimer); });
+addEventListener('pagehide', function () {
+    if (ownsStream()) helpers.storage.remove(STORAGE_KEY_STREAM);
+    closeStream();
 });

@@ -102,15 +102,17 @@ def check_subscription_manager
     html = page.get("test_result").as(String)
     check(html.includes?("value=\"most_watched\" selected") && html.includes?("8 videos watched all time"), "Manager sort or row details were not rendered")
     check(page.response.headers["Cache-Control"] == "private, no-store", "Personalized subscription manager was publicly cacheable")
-    cookie = page.response.cookies[Invidious::Frontend::SubscriptionManager::COOKIE]
+    cookie_name = Invidious::BrowserProfiles.cookie_name(page, Invidious::Frontend::SubscriptionManager::COOKIE)
+    cookie = page.response.cookies[cookie_name]
     check(cookie.value == "most_watched" && cookie.http_only, "Manager did not save a dedicated browser preference")
     env = context("GET", "/subscription_manager", cookies: "#{cookie.name}=#{cookie.value}")
     env.set "user", alice
     env.set "sid", alice_sid
+    env.set "browser_profile", Invidious::BrowserProfiles.account_scope(alice_email)
     check(Invidious::Routes::Subscriptions.subscription_manager(env).not_nil!.includes?("value=\"most_watched\" selected"), "Browser sort did not persist on return")
     export = security_request("GET", "/subscription_manager?action_takeout=1&sort_by=relevance", alice_sid)
     check(XML.parse(export.get("test_result").as(String)).xpath_nodes("//outline[@type='rss']").size == channels.size, "Sorting changed the OPML export")
-    check(export.response.cookies[Invidious::Frontend::SubscriptionManager::COOKIE]?.nil?, "Export changed the browser sort preference")
+    check(export.response.cookies[cookie_name]?.nil?, "Export changed the browser sort preference")
     csrf = generate_response(alice_sid, {"POST:subscription_ajax"}, HMAC_KEY)
     remove = security_request("POST", "/subscription_ajax?action=remove_subscriptions&redirect=false&c=#{channels[0]}", alice_sid, body: URI::Params.encode({"csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
     check(remove.response.status_code == 200 && !Invidious::Database::Users.select!(email: alice_email).subscriptions.includes?(channels[0]), "Sorting broke subscription removal")

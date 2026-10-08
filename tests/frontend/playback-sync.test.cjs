@@ -77,7 +77,7 @@ function indicators(sync, local = {}) {
     const nodes = [{dataset: {id: 'video', length: '1000', watched: 'true'}, style: {}, hidden: true}];
     vm.runInNewContext(indicatorSource, {
         document: {getElementById: () => ({textContent: JSON.stringify({sync})}), querySelectorAll: () => nodes,
-            body: {}, addEventListener() {}}, window: {addEventListener() {}},
+            body: {}, addEventListener() {}}, window: {InvidiousStorage: {isCurrent: () => true}, addEventListener() {}},
         MutationObserver: class {constructor(fn) {mutation = fn;} observe() {}},
         helpers: {storage: {get: () => local}, xhr: (_, __, ___, cb) => callback = cb}
     });

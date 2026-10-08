@@ -1,3 +1,5 @@
+require "../browser_profiles"
+
 module Invidious::Frontend::SearchPreferences
   extend self
 
@@ -24,6 +26,7 @@ module Invidious::Frontend::SearchPreferences
 
     { {"show_member_videos", MEMBER_COOKIE}, {"include_blocked", BLOCKED_COOKIE} }.each do |key, name|
       next if reset && key == "show_member_videos"
+      name = BrowserProfiles.cookie_name(env, name)
       explicit = boolean(params.fetch_all(key).last?)
       saved = boolean(env.request.cookies[name]?.try &.value)
       value = explicit.nil? ? saved : explicit
@@ -39,6 +42,7 @@ module Invidious::Frontend::SearchPreferences
   end
 
   private def write_cookie(env, name : String, value : String, secure : Bool, clear = false)
+    name = BrowserProfiles.cookie_name(env, name) if name == MEMBER_COOKIE || name == BLOCKED_COOKIE
     env.response.cookies[name] = HTTP::Cookie.new(
       name: name, value: value, path: "/", expires: clear ? Time.unix(0) : Time.utc + 2.years,
       secure: secure, http_only: true, samesite: HTTP::Cookie::SameSite::Lax

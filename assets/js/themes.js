@@ -21,6 +21,7 @@ function setTheme(theme) {
 if (toggle_theme) {
     toggle_theme.addEventListener('click', function (event) {
         event.preventDefault();
+        if (!window.InvidiousStorage.isCurrent()) return;
         var next = colorMode === '' ? THEME_LIGHT : colorMode === THEME_LIGHT ? THEME_DARK : '';
         setTheme(next);
         helpers.storage.set(STORAGE_KEY_THEME, next);
@@ -36,7 +37,7 @@ if (systemColor) {
 }
 
 addEventListener('storage', function (event) {
-    if (event.key === STORAGE_KEY_THEME) {
+    if (helpers.storage.matchesEvent(event, STORAGE_KEY_THEME)) {
         var mode = helpers.storage.get(STORAGE_KEY_THEME);
         if (mode === '' || mode === THEME_LIGHT || mode === THEME_DARK) setTheme(mode);
     }

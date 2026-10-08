@@ -38,6 +38,20 @@ describe Invidious::Frontend::SubscriptionManager do
     manager.preference(sorting_context("?sort_by=latest&sort_by=relevance")).should eq("relevance")
   end
 
+  it "starts accounts at defaults and restores only their own sort" do
+    manager = Invidious::Frontend::SubscriptionManager
+    env = sorting_context(cookies: "SUBSCRIPTION_MANAGER_SORT=relevance; SUBSCRIPTION_MANAGER_SORT_alice=latest")
+    env.set "browser_profile", "bob"
+    manager.preference(env).should eq("alphabetical")
+    env.set "browser_profile", "alice"
+    manager.preference(env).should eq("latest")
+    save = sorting_context("?sort_by=most_watched")
+    save.set "browser_profile", "alice"
+    manager.preference(save).should eq("most_watched")
+    save.response.cookies["SUBSCRIPTION_MANAGER_SORT_alice"].value.should eq("most_watched")
+    save.response.cookies[Invidious::Frontend::SubscriptionManager::COOKIE]?.should be_nil
+  end
+
   it "fades each distinct video's latest valid watch to zero exactly at day 90" do
     stats = Invidious::Frontend::SubscriptionManager::Stats.new
     stats.record_watch(today.to_s("%F"), [] of String, today)

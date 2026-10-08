@@ -556,5 +556,8 @@
     "clips_copy": "Salin tautan",
     "clips_watch": "Tonton klip",
     "clips_done": "Selesai",
-    "clips_copy_fallback": "Pilih dan salin tautan di bawah."
+    "clips_copy_fallback": "Pilih dan salin tautan di bawah.",
+    "browser_save_error": "Pengaturan ini tidak dapat disimpan. Perubahan hanya berlaku pada halaman ini.",
+    "sb_channels_guest": "Pengaturan kanal disimpan di browser ini untuk penggunaan tanpa akun.",
+    "sb_channels_guest_js": "Aktifkan JavaScript untuk menyimpan pengaturan kanal di browser ini, atau masuk untuk menggunakan pengaturan akun."
 }

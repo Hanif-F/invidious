@@ -72,6 +72,7 @@ window.helpers = window.helpers || {
 
     /** @private */
     _xhr: function (method, url, options, callbacks) {
+        if (!window.InvidiousStorage.isCurrent()) return;
         const xhr = new XMLHttpRequest();
         xhr.open(method, url);
 
@@ -89,6 +90,7 @@ window.helpers = window.helpers || {
 
         // better than onreadystatechange because of 404 codes https://stackoverflow.com/a/36182963
         xhr.onloadend = function () {
+            if (!window.InvidiousStorage.isCurrent(xhr.getResponseHeader('X-Invidious-Browser-Profile'))) return;
             if (xhr.status === 200) {
                 if (callbacks.on200) {
                     // fix for IE11. It doesn't convert response to JSON
@@ -107,11 +109,13 @@ window.helpers = window.helpers || {
         };
 
         xhr.ontimeout = function () {
+            if (!window.InvidiousStorage.isCurrent()) return;
             if (callbacks.onTimeout)
                 callbacks.onTimeout(xhr);
         };
 
         xhr.onerror = function () {
+            if (!window.InvidiousStorage.isCurrent()) return;
             if (callbacks.onError)
                 callbacks.onError(xhr);
         };
@@ -123,6 +127,7 @@ window.helpers = window.helpers || {
     },
     /** @private */
     _xhrRetry: function(method, url, options, callbacks) {
+        if (!window.InvidiousStorage.isCurrent()) return;
         if (options.retries <= 0) {
             console.warn('Failed to pull', options.entity_name);
             if (callbacks.onTotalFail)
@@ -200,64 +205,9 @@ window.helpers = window.helpers || {
      */
 
     /**
-     * Universal storage, stores and returns JS objects. Uses inside localStorage or cookies
+     * Validated browser storage belonging to the server-rendered profile.
      * @type {invidiousStorage}
      */
-    storage: (function () {
-        // access to localStorage throws exception in Tor Browser, so try is needed
-        let localStorageIsUsable = false;
-        try{localStorageIsUsable = !!localStorage.setItem;}catch(e){}
-
-        if (localStorageIsUsable) {
-            return {
-                get: function (key) {
-                    let storageItem = localStorage.getItem(key)
-                    if (!storageItem) return;
-                    try {
-                        return JSON.parse(decodeURIComponent(storageItem));
-                    } catch(e) {
-                        // Erase non parsable value
-                        helpers.storage.remove(key);
-                    }
-                },
-                set: function (key, value) {
-                    let encoded_value = encodeURIComponent(JSON.stringify(value))
-                    localStorage.setItem(key, encoded_value);
-                },
-                remove: function (key) { localStorage.removeItem(key); }
-            };
-        }
-
-        // TODO: fire 'storage' event for cookies
-        console.info('Storage: localStorage is disabled or unaccessible. Cookies used as fallback');
-        return {
-            get: function (key) {
-                const cookiePrefix = key + '=';
-                function findCallback(cookie) {return cookie.startsWith(cookiePrefix);}
-                const matchedCookie = document.cookie.split('; ').find(findCallback);
-                if (matchedCookie) {
-                    const cookieBody = matchedCookie.replace(cookiePrefix, '');
-                    if (cookieBody.length === 0) return;
-                    try {
-                        return JSON.parse(decodeURIComponent(cookieBody));
-                    } catch(e) {
-                        // Erase non parsable value
-                        helpers.storage.remove(key);
-                    }
-                }
-            },
-            set: function (key, value) {
-                const cookie_data = encodeURIComponent(JSON.stringify(value));
-
-                // Set expiration in 2 year
-                const date = new Date();
-                date.setFullYear(date.getFullYear()+2);
-
-                document.cookie = key + '=' + cookie_data + '; expires=' + date.toGMTString();
-            },
-            remove: function (key) {
-                document.cookie = key + '=; Max-Age=0';
-            }
-        };
-    })()
+    storage: window.InvidiousStorage.local,
+    sessionStorage: window.InvidiousStorage.session
 };

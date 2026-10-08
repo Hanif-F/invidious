@@ -9,7 +9,7 @@ var options = {
     fontPercent: [0.5, 0.75, 1.25, 1.5, 1.75, 2, 3, 4],
     windowOpacity: ['0', '0.5', '1'],
     textOpacity: ['0.5', '1'],
-    persistTextTrackSettings: true,
+    persistTextTrackSettings: false,
     controlBar: {
         children: [
             'playToggle',
@@ -400,85 +400,76 @@ if (video_data.clip) {
     ]});
 }
 
-// Volume belongs to this browser, never to PREFS or the account.
+// Device settings belong to this browser profile; account preferences remain synced.
+var browserStorage = window.InvidiousStorage;
 var volumeStorageKey = 'invidious_player_volume';
 var initialVolume = 1;
 if (!isMobile()) {
-    try {
-        var savedVolume = localStorage.getItem(volumeStorageKey);
-        var parsedVolume = savedVolume === null || savedVolume.trim() === '' ? NaN : Number(savedVolume);
-        if (Number.isFinite(parsedVolume) && parsedVolume >= 0 && parsedVolume <= 1) initialVolume = parsedVolume;
-    } catch (error) { /* Playback still works when storage is unavailable. */ }
+    var savedVolume = helpers.storage.get(volumeStorageKey);
+    if (typeof savedVolume === 'number') initialVolume = savedVolume;
 }
 player.volume(initialVolume);
 player.playbackRate(video_data.params.speed);
 
-/**
- * Method for getting the contents of a cookie
- *
- * @param {String} name Name of cookie
- * @returns {String|null} cookieValue
- */
-function getCookieValue(name) {
-    var cookiePrefix = name + '=';
-    var matchedCookie = document.cookie.split(';').find(function (item) {return item.includes(cookiePrefix);});
-    if (matchedCookie)
-        return matchedCookie.replace(cookiePrefix, '');
-    return null;
-}
-
-/**
- * Method for updating the 'PREFS' cookie (or creating it if missing)
- *
- * @param {number} newSpeed New speed defined (null if unchanged)
- */
-function updateCookie(newSpeed) {
-    var speedValue = newSpeed !== null ? newSpeed : video_data.params.speed;
-
-    var cookieValue = getCookieValue('PREFS');
-    var cookieData;
-
-    if (cookieValue !== null) {
-        var cookieJson = JSON.parse(decodeURIComponent(cookieValue));
-        delete cookieJson.volume;
-        cookieJson.speed = speedValue;
-        cookieData = encodeURIComponent(JSON.stringify(cookieJson));
-    } else {
-        cookieData = encodeURIComponent(JSON.stringify({ 'speed': speedValue }));
+var preferenceStatus;
+function storageStatus() {
+    if (!preferenceStatus) {
+        preferenceStatus = document.createElement('p');
+        preferenceStatus.className = 'browser-save-status';
+        preferenceStatus.setAttribute('role', 'status');
+        player.el().insertAdjacentElement('afterend', preferenceStatus);
     }
-
-    // Set expiration in 2 year
-    var date = new Date();
-    date.setFullYear(date.getFullYear() + 2);
-
-    var ipRegex = /^((\d+\.){3}\d+|[\dA-Fa-f]*:[\d:A-Fa-f]*:[\d:A-Fa-f]+)$/;
-    var domainUsed = location.hostname;
-
-    // Fix for a bug in FF where the leading dot in the FQDN is not ignored
-    if (domainUsed.charAt(0) !== '.' && !ipRegex.test(domainUsed) && domainUsed !== 'localhost')
-        domainUsed = '.' + location.hostname;
-
-    var secure = location.protocol.startsWith("https") ? " Secure;" : "";
-
-    document.cookie = 'PREFS=' + cookieData + '; SameSite=Lax; path=/; domain=' +
-        domainUsed + '; expires=' + date.toGMTString() + ';' + secure;
-
-    video_data.params.speed = speedValue;
+    return preferenceStatus;
 }
 
+var captionSettings = player.getChild('textTrackSettings');
+if (captionSettings) {
+    captionSettings.setValues(helpers.storage.get('caption_settings') || {});
+    captionSettings.updateDisplay();
+    captionSettings.saveSettings = function () {
+        browserStorage.report(helpers.storage.set('caption_settings', this.getValues()), storageStatus());
+    };
+}
+
+var lastPlaybackRate = video_data.params.speed;
+var pendingSpeed, speedSaving = false;
+function saveAccountSpeed() {
+    if (speedSaving || pendingSpeed === undefined || !browserStorage.isCurrent()) return;
+    var speed = pendingSpeed;
+    pendingSpeed = undefined;
+    speedSaving = true;
+    fetch('/api/v1/auth/csrf', {credentials: 'same-origin'}).then(function (response) {
+        if (!browserStorage.checkResponse(response)) throw new Error();
+        if (!response.ok) throw new Error();
+        return response.json();
+    }).then(function (data) {
+        if (!browserStorage.isCurrent()) throw new Error();
+        return fetch('/api/v1/auth/preferences', {method: 'PATCH', credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': data.csrfToken},
+            body: JSON.stringify({speed: speed})});
+    }).then(function (response) {
+        if (browserStorage.checkResponse(response)) browserStorage.report(response.ok, storageStatus());
+    }).catch(function () {
+        if (browserStorage.isCurrent()) browserStorage.report(false, storageStatus());
+    }).then(function () { speedSaving = false; saveAccountSpeed(); });
+}
 player.on('ratechange', function () {
-    updateCookie(player.playbackRate());
+    var speed = player.playbackRate();
+    if (speed === lastPlaybackRate || !browserStorage.isCurrent()) return;
+    lastPlaybackRate = speed;
+    video_data.params.speed = speed;
+    if (browserStorage.scope === 'guest') browserStorage.report(browserStorage.guestSpeed(speed, video_data.preferences), storageStatus());
+    else { pendingSpeed = speed; saveAccountSpeed(); }
 });
 
 var lastPlayerVolume = initialVolume;
 player.on('volumechange', function () {
-    if (isMobile()) return;
+    if (isMobile() || !browserStorage.isCurrent()) return;
     var volume = player.volume();
     // Muting also emits volumechange; it must not overwrite another tab's level.
     if (volume === lastPlayerVolume) return;
     lastPlayerVolume = volume;
-    try { localStorage.setItem(volumeStorageKey, String(volume)); }
-    catch (error) { /* Storage may be blocked or full. */ }
+    browserStorage.report(helpers.storage.set(volumeStorageKey, volume), storageStatus());
 });
 
 player.on('waiting', function () {
@@ -665,7 +656,7 @@ function set_seconds_after_start(delta) {
 function save_video_time(seconds) {
     const all_video_times = get_all_video_times();
     all_video_times[video_data.id] = seconds;
-    helpers.storage.set(save_player_pos_key, all_video_times);
+    browserStorage.report(helpers.storage.set(save_player_pos_key, all_video_times), storageStatus());
 }
 
 function playback_position_payload(position) {
@@ -676,6 +667,7 @@ function playback_position_payload(position) {
 }
 
 function send_playback_position(action, position, useBeacon, done) {
+    if (!window.InvidiousStorage.isCurrent()) return;
     const url = '/watch_ajax?action=' + action + '&redirect=false&id=' + encodeURIComponent(video_data.id);
     const payload = playback_position_payload(position);
 
@@ -791,6 +783,7 @@ const toggle_captions = (function () {
 
 // For real-time updates to captions (if currently showing)
 function update_captions() {
+    if (captionSettings) captionSettings.saveSettings();
     if (document.body.querySelector('.vjs-text-track-cue')) {
         toggle_captions(); toggle_captions();
     }

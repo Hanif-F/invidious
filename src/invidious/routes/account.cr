@@ -118,10 +118,8 @@ module Invidious::Routes::Account
       return error_template(401, "Incorrect password")
     end
 
-    env.request.cookies.each do |cookie|
-      cookie.expires = Time.utc(1990, 1, 1)
-      env.response.cookies << cookie
-    end
+    BrowserProfiles.delete_profile(env, user.email)
+    Authentication.clear_session(env)
 
     env.redirect referer
   end
@@ -326,6 +324,7 @@ module Invidious::Routes::Account
     when "revoke_token"
       session = env.params.query["session"]
       Invidious::Database::SessionIDs.delete(sid: session, email: user.email)
+      Authentication.clear_session(env) if session == sid
     else
       return error_json(400, "Unsupported action #{action}")
     end

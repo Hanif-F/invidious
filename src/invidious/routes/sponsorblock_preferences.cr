@@ -12,18 +12,18 @@ module Invidious::Routes::SponsorBlockPreferences
     csrf_token = ""
     if user
       csrf_token = generate_response(env.get("sid").as(String), {"POST:preferences/sponsorblock/channels"}, HMAC_KEY)
-      if input = env.params.query["channel"]?
-        channel_id = Invidious::SponsorBlock.channel_id(input)
-        return error_template(400, I18n.translate(locale, "sb_channel_invalid")) unless channel_id
-        if saved = preferences.sponsorblock_channel_overrides[channel_id]?
-          entry = saved
-        else
-          begin
-            channel = get_channel(channel_id)
-            entry = Invidious::SponsorBlock::ChannelOverride.new(channel.author, nil, {} of String => String)
-          rescue
-            return error_template(502, I18n.translate(locale, "sb_channel_lookup_failed"))
-          end
+    end
+    if input = env.params.query["channel"]?
+      channel_id = Invidious::SponsorBlock.channel_id(input)
+      return error_template(400, I18n.translate(locale, "sb_channel_invalid")) unless channel_id
+      if user && (saved = preferences.sponsorblock_channel_overrides[channel_id]?)
+        entry = saved
+      else
+        begin
+          channel = get_channel(channel_id)
+          entry = Invidious::SponsorBlock::ChannelOverride.new(channel.author, nil, {} of String => String)
+        rescue
+          return error_template(502, I18n.translate(locale, "sb_channel_lookup_failed"))
         end
       end
     end

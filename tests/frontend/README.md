@@ -203,11 +203,31 @@ Title suggestions and voting are documented in [DeArrow contributions](../../doc
 
 ## Browser volume and playlist cards
 
-Desktop volume is stored in same-origin localStorage, independent of account
-preferences and volume URL parameters. New browsers default to 100%; mute is
+Desktop volume is stored in same-origin localStorage in a separate guest or account
+profile, independent of database preferences and volume URL parameters. First use
+of each profile defaults to 100%; mute is
 not persisted. Coarse-pointer mobile players use 100% website volume, omit
-volume controls, and leave sound adjustment to the device. Playback-speed
-preference persistence is unchanged. Old JSON/YAML volume fields are ignored.
+volume controls, and leave sound adjustment to the device. Guest playback speed
+updates the guest `PREFS` cookie; account playback speed uses the authenticated
+preferences PATCH API with CSRF protection. Old JSON/YAML volume fields are ignored.
+
+Profiles use `iv:browser:v2:<opaque account HMAC or guest>:<setting>` in localStorage
+and sessionStorage. Caption appearance, chat appearance/timing, existing local playback
+positions, notifications and continuation caches use the shared validated storage
+helper. Account-synced preferences remain authoritative in the database. Login,
+logout and signup never copy guest settings into accounts, and logout retains all
+browser profiles. Account deletion purges only that account's profile. Keep the
+instance `hmac_key` stable to retain account browser profiles across server restarts.
+
+Recognized old persistent saves migrate only to the guest profile, preserving new
+values. Old notification locks and pagination caches are discarded. Denied or full
+storage uses bounded cookie fallbacks for small values and page memory for larger
+ones; save controls report failed persistence. Server markers, response headers and
+scoped storage events invalidate stale tabs and delayed callbacks after account changes.
+`browser-storage.test.cjs` covers migration, validation, storage failures, deletion,
+notification ownership and stale responses. Browser checks exercise the guest →
+account A → guest → account B → account A sequence, captions, speed and watch/embed
+restoration with real player code. These profiles add no guest history or account library.
 
 Playlist publication dates are read only from the existing playlist response;
 missing or unrecognized dates remain hidden without fetching video details.
@@ -219,7 +239,12 @@ and verify neutral translucent mobile controls in watch and embed players.
 Channel SponsorBlock checks cover account preference roundtrips and export/import,
 global-form preservation, per-category inheritance, enablement overrides in watch
 and embed players, invalid IDs, lookup failure, CSRF rejection, saving and resetting.
-The channel editor is checked at mobile and desktop widths without JavaScript.
+Guests can edit channel overrides in localStorage using the existing channel lookup;
+these override global guest settings before watch/embed SponsorBlock initialization.
+Guest editing requires JavaScript, while account channel forms and core preferences
+retain their no-JavaScript behavior. Browser checks cover inheritance, enable/disable,
+category modes, reset, reload persistence and safe channel-name rendering at mobile
+widths; guest actions never call authenticated APIs or write account database records.
 Rich stream-menu checks also verify that audio/quality icons sit inside centered
 buttons and selected rows use neutral, high-contrast colors.
 
@@ -290,7 +315,7 @@ thumbnail coexistence, and simulated touch input in Chromium and Firefox.
 Members-only filtering checks cover the default-hidden preference, anonymous and
 account form/API/import/export round trips, browser-local search overrides,
 no-JavaScript controls, filtered-empty search pagination, and cached/playlist
-membership metadata. Search choices use separate host-only cookies and never
+membership metadata. Search choices use separate host-only cookies per profile and never
 enter account preferences. Public playlist/mix JSON remains unfiltered and adds
 an `isMember` flag; HTML queues and browsing cards respect the preference.
 Migration 15 adds membership columns and schedules subscription-view refreshes.

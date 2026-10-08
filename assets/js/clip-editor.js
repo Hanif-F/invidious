@@ -180,7 +180,9 @@
         update();
     }
     async function request(url, options) {
+        if (!window.InvidiousStorage.isCurrent()) throw new Error(labels.session);
         var response = await fetch(url, Object.assign({credentials: 'same-origin'}, options));
+        if (!window.InvidiousStorage.checkResponse(response)) throw new Error(labels.session);
         var data;
         try { data = await response.json(); } catch (_) { throw new Error(labels.error); }
         if (!response.ok) throw new Error(response.status === 401 || response.status === 403 ? labels.session : (data.error || labels.error));
