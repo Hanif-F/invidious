@@ -556,3 +556,36 @@ Account timestamps and user/word filters are read from `GET /api/v1/auth/prefere
 Native sign-in now grants `PATCH:chat_preferences` and `GET;PUT:chat_timing/*`. Existing native tokens must be renewed by signing out and back in after the server update; scope failures must retain playback and explain how to restore account sync. This uses the existing chat timing table and requires no additional migration.
 
 Native word filters use whitespace-separated substring tokens or `/pattern/` tokens with case-insensitive RE2/J matching. Lookaround and backreferences are unsupported. Unsupported imported patterns are reported and skipped without rewriting saved account values. Filter fields are limited to 1,024 UTF-8 bytes and each token to 128 characters.
+
+## Native downloads
+
+Public `GET /api/v1/videos/:id/downloads?region=<optional country>` returns
+`{video, allowed, reason, choices}`. `video` uses the existing detailed-video
+metadata shape. Each choice has an opaque stable `key`, `kind` (`video`, `audio`
+or `caption`), a guarded relative `url` and the existing format/caption fields
+(codec, resolution, FPS, bitrate, available content length, audio identity/DRC,
+caption label/language). Only finite separate adaptive video/audio tracks are
+offered; `formatStreams` combined tracks are excluded. Captions are optional
+alongside a media choice in Android.
+
+The catalog is `no-store`. Disabled downloads, DMCA-restricted videos, active live
+or upcoming videos and videos with no finite separate media return
+`allowed: false`, a human-readable reason and an empty choice list. Completed
+recordings can be downloaded when finite tracks exist.
+
+Public `GET /api/v1/videos/:id/download?key=<exact catalog key>&region=<optional country>`
+fetches current metadata, rechecks restrictions, and resolves that exact key.
+Media redirects through the existing instance media/Companion path with a safe
+download title, preserving all selection-bearing URL parameters. Captions use
+the existing VTT handler for the catalog label; caller language/translation
+parameters cannot override it. There are no caller-supplied redirect targets.
+Restrictions return 403, unavailable keys return 404, and invalid proxy targets
+return 502. Audio identity and DRC status participate in the key alongside itag;
+expiring URLs do not. A changed or removed selection never substitutes a track.
+
+No server database migration, new secret or account permission is required.
+Android uses DownloadManager and a device-wide SQLite catalog in app-specific
+storage; paired offline playback merges sources without changing the files.
+Save to files runs a local foreground export using Media3 Transformer 1.9.3:
+attempt MP4 transmux first, require explicit consent before H.264/AAC conversion,
+and fail rather than reduce unsupported resolution or frame rate.

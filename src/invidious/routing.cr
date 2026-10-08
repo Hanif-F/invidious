@@ -272,6 +272,8 @@ module Invidious::Routing
       get "/api/v1/sponsorblock/:id", {{namespace}}::SponsorBlock, :segments
       get "/api/v1/dearrow/:id", {{namespace}}::DeArrow, :title
       get "/api/v1/dearrow/:id/submissions", {{namespace}}::DeArrow, :submissions
+      get "/api/v1/videos/:id/downloads", {{namespace}}::Videos, :downloads
+      get "/api/v1/videos/:id/download", {{namespace}}::Videos, :download_file
       get "/api/v1/videos/:id", {{namespace}}::Videos, :videos
       get "/api/v1/storyboards/:id", {{namespace}}::Videos, :storyboards
       get "/api/v1/captions/:id", {{namespace}}::Videos, :captions
