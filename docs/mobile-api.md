@@ -49,8 +49,25 @@ regressions live in `tests/frontend/render_fixtures.cr`.
 {"username":"your-name","password":"your-password"}
 ```
 
-Successful response: `{"accessToken":"<signed JSON token>","username":"your-name","expiresAt":<Unix seconds>}`.
+Successful response: `{"accessToken":"<signed JSON token>","username":"your-name","expiresAt":<Unix seconds>,"profileId":"<opaque account profile>"}`.
 Send the token as `Authorization: Bearer <accessToken>` to authenticated APIs.
+`profileId` is a 64-character lowercase hexadecimal storage identifier derived
+from the account's internal identity using the existing browser-profile HMAC.
+It is stable across sign-ins, token replacement, and username/password changes;
+recreating a deleted native account with the same username produces a different ID.
+It is never a credential or authorization check, and stability assumes the instance
+retains its signing key. Android combines it with the normalized instance address.
+Older clients ignore this additive field; newer clients fall back to username
+ownership on older servers, with limited rename/reused-name guarantees.
+
+Authenticated `GET /api/v1/auth/preferences` also returns
+`X-Invidious-Account-Profile: <profileId>`. Existing mobile sessions can resolve
+their storage identity with their current `GET:preferences` permission, without
+new endpoints, scopes, database migrations, or browser profile cookies. The header
+is metadata and is not included in preference patches. Android migrates a legacy
+profile only after confirmation for that exact live session; signing into a new
+stable profile never claims another account's local data by matching its username.
+
 No browser cookie is issued. Responses use `Cache-Control: private, no-store`.
 Tokens expire after 30 days in the signature and database, are revoked by existing
 credential changes, and can revoke themselves at `POST /api/v1/auth/tokens/unregister`
@@ -94,7 +111,7 @@ used for native registration, or conversely.
 
 CAPTCHA fields are required only when CAPTCHA is enabled. Username and password
 validation use the website's rules and password verifier. Success returns the
-same `accessToken`, `username`, `expiresAt` contract as mobile login, without a
+same `accessToken`, `username`, `expiresAt`, `profileId` contract as mobile login, without a
 browser cookie. Account insertion, subscription materialized-view creation and
 mobile-session issuance share one transaction. Duplicate usernames return 409;
 invalid credentials/confirmation or incorrect, expired or replayed CAPTCHA return

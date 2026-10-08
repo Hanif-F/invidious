@@ -94,6 +94,9 @@ cross-account isolation, private/no-store headers, untouched browser preferences
 and read-only history. Native tokens need no new scopes or renewal.
 
 `browser_profile_checks.cr` runs in the account harness through production middleware.
+The native account-management checks also verify mobile `profileId` and preference
+response metadata, unchanged browser identity, stable profiles through credential
+changes, and different identities when a deleted username is reused.
 It covers opaque stable account identifiers, account defaults versus guest preferences,
 browser signup defaults, preserved guest cookies across sign-in/sign-out, scoped search
 and sorting, revoked sessions, account rename, current-profile response headers,

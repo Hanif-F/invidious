@@ -22,6 +22,7 @@ module Invidious::Routes::API::V1::Authenticated
   def self.get_preferences(env)
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
+    env.response.headers["X-Invidious-Account-Profile"] = Invidious::BrowserProfiles.account_scope(user.email)
     user.preferences.to_json
   end
 

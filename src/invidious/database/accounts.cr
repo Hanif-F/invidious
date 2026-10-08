@@ -39,7 +39,7 @@ module Invidious::Database::Accounts
 
   # Verification and issuance share the same account lock as credential changes.
   # A concurrent password change therefore cannot leave a newly issued token alive.
-  def authenticate_mobile(username : String, password : String) : NamedTuple(accessToken: String, username: String, expiresAt: Int64)?
+  def authenticate_mobile(username : String, password : String) : NamedTuple(accessToken: String, username: String, expiresAt: Int64, profileId: String)?
     result = nil
     PG_DB.transaction do |tx|
       conn = tx.connection
@@ -114,10 +114,11 @@ module Invidious::Database::Accounts
     raise PasswordError.new("Incorrect current password.") unless Credentials.verify(user.password, user.credential_version, password)
   end
 
-  def issue_mobile(user : User, conn) : NamedTuple(accessToken: String, username: String, expiresAt: Int64)
+  def issue_mobile(user : User, conn) : NamedTuple(accessToken: String, username: String, expiresAt: Int64, profileId: String)
     expires = Time.utc + 30.days
     token = issue_account_token(user.email, Invidious::Routes::API::V1::Mobile::SCOPES, expires, conn)
-    {accessToken: token, username: user.username, expiresAt: expires.to_unix}
+    {accessToken: token, username: user.username, expiresAt: expires.to_unix,
+     profileId: Invidious::BrowserProfiles.account_scope(user.email)}
   end
 
   def issue_account_token(email : String, scopes : Array(String), expires : Time?, conn) : String

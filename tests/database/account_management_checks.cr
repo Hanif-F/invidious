@@ -19,6 +19,11 @@ def check_mobile_account_management
   token = account_result(register)["accessToken"].as_s
   sid = JSON.parse(token)["session"].as_s
   email = Invidious::Database::SessionIDs.select_email(sid).not_nil!
+  profile = account_result(register)["profileId"].as_s
+  check(profile == Invidious::BrowserProfiles.account_scope(email), "Native profile does not match stable account identity")
+  preferences = security_request("GET", "/api/v1/auth/preferences", bearer: token)
+  check(preferences.response.headers["X-Invidious-Account-Profile"] == profile, "Existing bearer session cannot discover its profile")
+  check(preferences.response.headers["X-Invidious-Browser-Profile"]?.nil? && preferences.response.cookies.empty?, "Native profile discovery changed browser identity")
   check(security_request("POST", path, body: body).response.status_code == 409, "Duplicate native registration accepted")
   check(PG_DB.query_one("SELECT count(*) FROM session_ids WHERE email = $1", email, as: Int64) == 1, "Registration left an extra browser session")
   CONFIG.registration_enabled = false
@@ -31,6 +36,7 @@ def check_mobile_account_management
   browser = Invidious::Database::Accounts.authenticate("NativeManager", password).not_nil!
   other = Invidious::Database::Accounts.register("OtherNativeManager", password, Preferences.from_json("{}"))
   other_email = Invidious::Database::SessionIDs.select_email(other).not_nil!
+  check(profile != Invidious::BrowserProfiles.account_scope(other_email), "Separate accounts share a native profile")
   list = security_request("GET", "/api/v1/auth/account/sessions", bearer: token)
   entries = account_result(list).as_a
   check(entries.size == 2 && entries.count { |entry| entry["current"].as_bool } == 1, "Session list incomplete")
@@ -58,6 +64,7 @@ def check_mobile_account_management
   rename = security_request("POST", "/api/v1/auth/account/username", bearer: token, body: {password: password, username: "NativeRenamed"}.to_json)
   check(rename.response.status_code == 200, "Native rename failed")
   replacement = account_result(rename)["accessToken"].as_s
+  check(account_result(rename)["profileId"].as_s == profile, "Renaming changed the native profile")
   check(account_result(rename)["username"].as_s == "NativeRenamed", "Replacement session has old username")
   check(Invidious::Database::SessionIDs.select_email(sid).nil?, "Rename retained the previous session")
   check(security_request("GET", "/api/v1/auth/preferences", bearer: delegated).response.status_code == 403, "Credential change retained delegated token")
@@ -72,6 +79,7 @@ def check_mobile_account_management
   check(Invidious::Database::Accounts.authenticate_mobile("NativeRenamed", password).nil?, "Old password still works")
   check(PG_DB.query_one("SELECT count(*) FROM session_ids WHERE email = $1", email, as: Int64) == 1, "Concurrent credential change left an old token alive")
   replacement = changed[:accessToken]
+  check(changed[:profileId] == profile, "Password rotation changed the native profile")
 
   # CAPTCHA challenges bind to the native route, expire, and consume their nonce.
   CONFIG.captcha_enabled = true
@@ -92,6 +100,8 @@ def check_mobile_account_management
   check(deleted.response.status_code == 204, "Native account deletion failed")
   check(Invidious::Database::Users.select(email: email).nil?, "Deleted native account remains")
   check(Invidious::Database::SessionIDs.select_email(JSON.parse(replacement)["session"].as_s).nil?, "Account deletion retained its session")
+  recreated = Invidious::Database::Accounts.register_mobile("NativeRenamed", password)
+  check(recreated[:profileId] != profile, "A reused username inherited the deleted account profile")
   captcha_login = Invidious::Database::Accounts.authenticate_mobile("NativeCaptcha", password).not_nil![:accessToken]
   current = account_result(security_request("GET", "/api/v1/auth/account/sessions", bearer: captcha_login)).as_a.find { |entry| entry["current"].as_bool }.not_nil!
   check(security_request("POST", revoke_path, bearer: captcha_login, body: {id: current["id"].as_s}.to_json).response.status_code == 204, "Current-session revocation failed")
