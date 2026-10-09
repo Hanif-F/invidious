@@ -2,16 +2,34 @@
 
 Preferences → Enhancements → AI channel filter offers independent AiSList
 blocklist (high confidence) and warnlist (moderate confidence) controls for
-Popular/Trending, search/hashtags, and watch recommendations. All six settings
-default off. They are saved to account preferences or the guest preference cookie
+Popular/Trending, search/hashtags, and watch recommendations. Each list has a
+Discovery action: **Hide videos** (the existing default) or **Replace thumbnails**.
+All six Discovery switches default off. Each list also has an independent
+**Replace thumbnails on other pages** switch, default off, covering subscriptions
+and notifications, history, playlists/mixes, channel videos, scoped searches,
+watch queues and clip cards. These pages only replace thumbnails; AiSList never
+removes their videos or changes their order or autoplay eligibility.
+The settings are saved to account preferences or the guest preference cookie
 and included in existing preference exports/imports and account preference JSON.
 The public discovery APIs remain unpersonalized; native clients are unchanged.
 
-The filter hides video cards only. Subscriptions, playlists, history, channel
-pages, scoped library/channel searches, direct links and current playback remain
-accessible. Manual channel blocking and membership filtering continue to apply
+Replacement thumbnails use a muted charcoal background and grey, regular-weight
+text: “Likely AI-generated” with “AiSList Blocklist”, or “Possibly AI-generated”
+with “AiSList Warnlist”. They replace the image markup entirely, including in thin
+mode, while preserving links, titles and controls. Player posters, avatars and
+aggregate playlist covers retain their existing behavior. Direct links and current
+playback remain accessible. Manual channel blocking and membership filtering continue to apply
 independently. Pagination uses the original upstream result count; filtered pages
-can contain fewer videos. Removed recommendations cannot become autoplay targets.
+can contain fewer videos. Removed recommendations cannot become autoplay targets;
+replaced recommendations remain eligible. If both enabled lists match on a
+Discovery page, Hide wins over replacement. When both request replacement, the
+Blocklist warning takes precedence. Other-page replacements always use the
+Blocklist warning when both lists match.
+
+The additive preference fields are `ai_blocklist_action` / `ai_warnlist_action`
+(`hide` or `replace_thumbnail`, with invalid values normalized to `hide`) and
+`ai_blocklist_other_pages` / `ai_warnlist_other_pages` (booleans). Instance defaults
+use the same names. Existing preferences require no migration.
 
 The server downloads the official
 [blocklist](https://raw.githubusercontent.com/Override92/AiSList/main/AiSList/aislist_blocklist.txt)

@@ -1,4 +1,5 @@
 require "./frontend/watched_indicator"
+require "./frontend/ai_thumbnail"
 require "./helpers/channel_avatars"
 
 struct PlaylistVideo
@@ -574,12 +575,12 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
   return videos
 end
 
-def template_playlist(playlist, listen, thin_mode = false, editable = false, watched = [] of String)
-  template_queue(playlist, listen, false, thin_mode, editable, watched)
+def template_playlist(playlist, listen, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil)
+  template_queue(playlist, listen, false, thin_mode, editable, watched, ai_thumbnails: ai_thumbnails, locale: locale)
 end
 
 # The DOM carries occurrence indices; video IDs alone are not unique in playlists.
-def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false, watched = [] of String)
+def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil)
   plid = playlist[mix ? "mixId" : "playlistId"].as_s
   String.build do |html|
     html << %(<div class="queue-metadata" hidden data-title="#{HTML.escape(playlist["title"].as_s)}")
@@ -603,7 +604,9 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       html << ">"
       html << %(<a href="#{HTML.escape(url)}"><span class="queue-number">#{index >= 0 ? (index + 1).to_s : ""}</span>)
       html << %(<span class="queue-thumbnail">)
-      if thin_mode
+      if ai_kind = ai_thumbnails[video["authorId"]?.try(&.as_s?) || ""]?
+        html << Invidious::Frontend::AiThumbnail.render(ai_kind, locale, compact: true)
+      elsif thin_mode
         html << %(<span class="thumbnail-placeholder video-placeholder"></span>)
       else
         html << %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)

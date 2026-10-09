@@ -104,6 +104,14 @@ struct Preferences
   property ai_warnlist_feeds : Bool = CONFIG.default_user_preferences.ai_warnlist_feeds
   property ai_warnlist_search : Bool = CONFIG.default_user_preferences.ai_warnlist_search
   property ai_warnlist_recommendations : Bool = CONFIG.default_user_preferences.ai_warnlist_recommendations
+  @[JSON::Field(converter: Preferences::AiListAction)]
+  @[YAML::Field(converter: Preferences::AiListAction)]
+  property ai_blocklist_action : String = CONFIG.default_user_preferences.ai_blocklist_action
+  @[JSON::Field(converter: Preferences::AiListAction)]
+  @[YAML::Field(converter: Preferences::AiListAction)]
+  property ai_warnlist_action : String = CONFIG.default_user_preferences.ai_warnlist_action
+  property ai_blocklist_other_pages : Bool = CONFIG.default_user_preferences.ai_blocklist_other_pages
+  property ai_warnlist_other_pages : Bool = CONFIG.default_user_preferences.ai_warnlist_other_pages
   property dearrow_show_original : Bool = CONFIG.default_user_preferences.dearrow_show_original
   property search_privacy : Bool = CONFIG.default_user_preferences.search_privacy
   property chat_show_timestamps : Bool = true
@@ -117,6 +125,28 @@ struct Preferences
   property chat_overlay_height : Int32 = 750
   property chat_user_blacklist : String = ""
   property chat_word_blacklist : String = ""
+
+  module AiListAction
+    def self.normalize(value : String) : String
+      value == "replace_thumbnail" ? value : "hide"
+    end
+
+    def self.from_json(value : JSON::PullParser) : String
+      normalize(JSON::Any.new(value).as_s? || "hide")
+    end
+
+    def self.to_json(value : String, json : JSON::Builder)
+      json.string normalize(value)
+    end
+
+    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : String
+      normalize(node.is_a?(YAML::Nodes::Scalar) ? node.value : "hide")
+    end
+
+    def self.to_yaml(value : String, yaml : YAML::Nodes::Builder)
+      yaml.scalar normalize(value)
+    end
+  end
 
   module VideoCodec
     def self.normalize(value : String) : String

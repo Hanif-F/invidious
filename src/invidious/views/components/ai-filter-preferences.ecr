@@ -4,16 +4,29 @@
     <p class="preference-description"><%= I18n.translate(locale, "ai_filter_lookup_hint") %></p>
     <% ai_lists = Invidious::AiSList.runtime.lists %>
     <% {
-        {"blocklist", preferences.ai_blocklist_feeds, preferences.ai_blocklist_search, preferences.ai_blocklist_recommendations},
-        {"warnlist", preferences.ai_warnlist_feeds, preferences.ai_warnlist_search, preferences.ai_warnlist_recommendations},
-    }.each do |kind, feeds, search, recommendations| %>
+        {"blocklist", preferences.ai_blocklist_feeds, preferences.ai_blocklist_search, preferences.ai_blocklist_recommendations, preferences.ai_blocklist_action, preferences.ai_blocklist_other_pages},
+        {"warnlist", preferences.ai_warnlist_feeds, preferences.ai_warnlist_search, preferences.ai_warnlist_recommendations, preferences.ai_warnlist_action, preferences.ai_warnlist_other_pages},
+    }.each do |kind, feeds, search, recommendations, action, other_pages| %>
         <h3><%= I18n.translate(locale, "ai_filter_#{kind}") %></h3>
+        <div class="pure-control-group">
+            <label for="ai_<%= kind %>_action"><%= I18n.translate(locale, "ai_filter_action") %></label>
+            <select name="ai_<%= kind %>_action" id="ai_<%= kind %>_action">
+                <% {"hide", "replace_thumbnail"}.each do |choice| %>
+                <option value="<%= choice %>" <% if choice == action %>selected<% end %>><%= I18n.translate(locale, "ai_filter_action_#{choice}") %></option>
+                <% end %>
+            </select>
+        </div>
         <% { {"feeds", feeds}, {"search", search}, {"recommendations", recommendations} }.each do |surface, enabled| %>
         <div class="pure-control-group">
             <label for="ai_<%= kind %>_<%= surface %>"><%= I18n.translate(locale, "ai_filter_#{surface}") %></label>
             <input type="checkbox" name="ai_<%= kind %>_<%= surface %>" id="ai_<%= kind %>_<%= surface %>" <% if enabled %>checked<% end %>>
         </div>
         <% end %>
+        <div class="pure-control-group">
+            <label for="ai_<%= kind %>_other_pages"><%= I18n.translate(locale, "ai_filter_other_pages") %></label>
+            <input type="checkbox" name="ai_<%= kind %>_other_pages" id="ai_<%= kind %>_other_pages" <% if other_pages %>checked<% end %>>
+        </div>
+        <p class="preference-description"><%= I18n.translate(locale, "ai_filter_other_pages_hint") %></p>
         <% if snapshot = ai_lists.snapshot(kind) %>
         <p class="preference-description ai-list-status">
             <%= I18n.translate_count(locale, "ai_filter_channels", snapshot.entries.size) %> ·

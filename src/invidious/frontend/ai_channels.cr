@@ -1,4 +1,7 @@
 require "../ai_slist_runtime"
+require "./ai_thumbnail"
+
+add_context_storage_type(Hash(String, String))
 
 module Invidious::Frontend::AiChannels
   extend self
@@ -8,6 +11,7 @@ module Invidious::Frontend::AiChannels
     when :feeds           then {preferences.ai_blocklist_feeds, preferences.ai_warnlist_feeds}
     when :search          then {preferences.ai_blocklist_search, preferences.ai_warnlist_search}
     when :recommendations then {preferences.ai_blocklist_recommendations, preferences.ai_warnlist_recommendations}
+    when :other           then {preferences.ai_blocklist_other_pages, preferences.ai_warnlist_other_pages}
     else                       {false, false}
     end
   end
@@ -18,10 +22,12 @@ module Invidious::Frontend::AiChannels
 
   def filter(items, env, surface : Symbol)
     observe(items)
-    ids = items.compact_map do |item|
-      item.ucid if item.is_a?(SearchVideo) || item.is_a?(ChannelVideo)
+    ids = [] of String
+    items.each do |item|
+      ids << item.ucid if item.is_a?(SearchVideo | ChannelVideo)
     end
-    blocked = blocked_ids(env, surface, ids)
+    blocked, thumbnails = decisions(env.get("preferences").as(Preferences), surface, ids)
+    env.set "ai_thumbnail_matches", thumbnails
     result = items.reject do |item|
       (item.is_a?(SearchVideo) || item.is_a?(ChannelVideo)) && blocked.includes?(item.ucid)
     end
@@ -37,30 +43,83 @@ module Invidious::Frontend::AiChannels
       end
     end
     AiSList.runtime.resolver.observe(supplied) unless supplied.empty?
-    blocked = blocked_ids(env, :recommendations, items.map { |item| item["ucid"]? || "" })
+    blocked, thumbnails = decisions(env.get("preferences").as(Preferences), :recommendations, items.map { |item| item["ucid"]? || "" })
+    env.set "ai_thumbnail_matches", thumbnails
     result = items.reject { |item| blocked.includes?(item["ucid"]? || "") }
     env.set "ai_filtered_recommendations", result.size < items.size
     result
   end
 
-  private def blocked_ids(env, surface : Symbol, ids : Array(String)) : Set(String)
-    block, warn = enabled(env.get("preferences").as(Preferences), surface)
-    return Set(String).new unless block || warn
-    lists = AiSList.runtime.lists
-    active = [] of AiSList::Entries
-    lists.snapshot("blocklist").try { |snapshot| active << snapshot.entries } if block
-    lists.snapshot("warnlist").try { |snapshot| active << snapshot.entries } if warn
-    return Set(String).new if active.empty?
+  # Discovery helpers prepare this map even when disabled, so a shared template
+  # must not apply the other-page preferences to discovery results afterwards.
+  def prepare(env, items)
+    return if env.get?("ai_thumbnail_matches")
+    observe(items)
+    ids = [] of String
+    items.each do |item|
+      ids << item.ucid if item.is_a?(SearchVideo | ChannelVideo | PlaylistVideo | MixVideo)
+    end
+    prepare_ids(env, ids)
+  end
 
-    # IDs listed directly need no metadata request. Likewise, an ID-only list
-    # needs no handle resolution at all.
-    blocked = ids.select { |id| active.any?(&.ids.includes?(id)) }.to_set
-    if active.any? { |list| !list.handles.empty? }
-      handles = AiSList.runtime.resolver.handles(ids.reject { |id| blocked.includes?(id) })
-      handles.each do |id, handle|
-        blocked << id if active.any?(&.handles.includes?(handle))
+  def prepare_ids(env, ids : Array(String)) : Hash(String, String)
+    _, thumbnails = decisions(env.get("preferences").as(Preferences), :other, ids)
+    env.set "ai_thumbnail_matches", thumbnails
+    thumbnails
+  end
+
+  def prepare_queue(env, videos : Array(JSON::Any)) : Hash(String, String)
+    prepare_ids(env, videos.compact_map { |video| video["authorId"]?.try &.as_s? })
+  end
+
+  def thumbnail_kind(env, id : String) : String?
+    env.get?("ai_thumbnail_matches").try &.as(Hash(String, String))[id]?
+  end
+
+  def render_thumbnail(kind : String, locale : String?, compact = false) : String
+    AiThumbnail.render(kind, locale, compact)
+  end
+
+  # One collection-wide lookup shares the resolver's existing deadline. Only
+  # resolve a handle when another match could change visibility or warning text.
+  private def decisions(preferences : Preferences, surface : Symbol, ids : Array(String)) : Tuple(Set(String), Hash(String, String))
+    blocked = Set(String).new
+    thumbnails = {} of String => String
+    block, warn = enabled(preferences, surface)
+    return {blocked, thumbnails} unless block || warn
+    lists = AiSList.runtime.lists
+    active = {} of String => AiSList::Entries
+    lists.snapshot("blocklist").try { |snapshot| active["blocklist"] = snapshot.entries } if block
+    lists.snapshot("warnlist").try { |snapshot| active["warnlist"] = snapshot.entries } if warn
+    return {blocked, thumbnails} if active.empty?
+    actions = {
+      "blocklist" => surface == :other ? "replace_thumbnail" : Preferences::AiListAction.normalize(preferences.ai_blocklist_action),
+      "warnlist"  => surface == :other ? "replace_thumbnail" : Preferences::AiListAction.normalize(preferences.ai_warnlist_action),
+    }
+    ids = ids.uniq.select { |id| AiSList.valid_id?(id) }
+    matches = ids.to_h { |id| {id, active.select { |_, list| list.ids.includes?(id) }.keys} }
+    missing = ids.select do |id|
+      current_priority = matches[id].max_of? { |kind| priority(kind, actions[kind]) } || 0
+      active.any? { |kind, list| !list.handles.empty? && priority(kind, actions[kind]) > current_priority }
+    end
+    unless missing.empty?
+      AiSList.runtime.resolver.handles(missing).each do |id, handle|
+        active.each do |kind, list|
+          matches[id] << kind if list.handles.includes?(handle) && !matches[id].includes?(kind)
+        end
       end
     end
-    blocked
+    matches.each do |id, kinds|
+      if kinds.any? { |kind| actions[kind] == "hide" }
+        blocked << id
+      elsif kind = AiSList::KINDS.find { |kind| kinds.includes?(kind) }
+        thumbnails[id] = kind
+      end
+    end
+    {blocked, thumbnails}
+  end
+
+  private def priority(kind : String, action : String) : Int32
+    action == "hide" ? 3 : (kind == "blocklist" ? 2 : 1)
   end
 end

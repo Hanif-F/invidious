@@ -14,6 +14,43 @@ const accountProfile = require('node:crypto').createHmac('sha256', 'frontend-fix
 fs.mkdirSync(artifacts, { recursive: true });
 const queue = JSON.parse(fs.readFileSync(path.join(generated, 'queue.json')));
 
+async function assertQuietAiThumbnails(page, count, selector = '.ai-thumbnail') {
+    assert.equal(await page.locator(selector).count(), count);
+    const warnings = await page.locator(selector).evaluateAll(elements => elements.map(el => {
+        const style = getComputedStyle(el);
+        const box = el.getBoundingClientRect();
+        const card = el.closest('.media-item, .recommendation');
+        const overlays = card ? Array.from(card.querySelectorAll('.length, .playlist-position, .top-left-overlay button')) : [];
+        const uncovered = Array.from(el.children).every(child => {
+            const text = child.getBoundingClientRect();
+            return overlays.every(overlay => {
+                const badge = overlay.getBoundingClientRect();
+                return badge.width === 0 || badge.height === 0 || text.right <= badge.left || text.left >= badge.right || text.bottom <= badge.top || text.top >= badge.bottom;
+            });
+        });
+        return {
+            background: style.backgroundColor, color: style.color,
+            weights: [style.fontWeight, ...Array.from(el.children, child => getComputedStyle(child).fontWeight)],
+            label: el.getAttribute('aria-label'), role: el.getAttribute('role'), uncovered,
+            fits: el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1 &&
+                Array.from(el.children).every(child => {
+                    const text = child.getBoundingClientRect();
+                    return text.left >= box.left - 1 && text.right <= box.right + 1 && text.top >= box.top - 1 && text.bottom <= box.bottom + 1;
+                })
+        };
+    }));
+    for (const warning of warnings) {
+        assert.equal(warning.background, 'rgb(32, 35, 38)');
+        assert.equal(warning.color, 'rgb(133, 140, 147)');
+        assert.ok(warning.weights.every(weight => weight === '400'));
+        assert.equal(warning.role, 'img');
+        assert.match(warning.label, /(?:Likely|Possibly) AI-generated · AiSList (?:Blocklist|Warnlist)/);
+        assert.equal(warning.fits, true, JSON.stringify(warning));
+        assert.equal(warning.uncovered, true, JSON.stringify(warning));
+    }
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+}
+
 for (const engine of engines) {
     test(`${engine}: subscription sorting details, GET forms and mobile layouts work without JavaScript`, async () => {
         for (const fixture of ['avatars-manager-modern-neon', 'avatars-manager-diary', 'subscriptions-relevance', 'subscriptions-most-watched', 'subscriptions-rtl', 'subscriptions-empty']) {
@@ -1271,7 +1308,11 @@ for (const engine of engines) {
             'ai_warnlist_feeds', 'ai_warnlist_search', 'ai_warnlist_recommendations'];
         for (const width of [320, 390, 1440]) {
             const {page, context, errors, requests} = await pageFor(engine, {fixture: 'preferences-ai-filter', width, javascript: false});
-            assert.equal(await page.locator('#preferences-ai-filter input[type=checkbox]').count(), 6);
+            assert.equal(await page.locator('#preferences-ai-filter input[type=checkbox]').count(), 8);
+            for (const kind of ['blocklist', 'warnlist']) {
+                assert.equal(await page.locator(`#ai_${kind}_action`).inputValue(), 'hide');
+                assert.equal(await page.locator(`#ai_${kind}_other_pages`).isChecked(), false);
+            }
             for (const field of fields) {
                 assert.equal(await page.locator(`label[for="${field}"]`).count(), 1);
                 assert.equal(await page.locator(`#${field}`).isChecked(), field.startsWith('ai_blocklist_'));
@@ -1284,6 +1325,8 @@ for (const engine of engines) {
             assert.match(statuses[1], /Update overdue or failed/);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
             await page.locator('#ai_warnlist_search').check();
+            await page.locator('#ai_blocklist_action').selectOption('replace_thumbnail');
+            await page.locator('#ai_warnlist_other_pages').check();
             await page.locator('#ai_blocklist_feeds').uncheck();
             await page.screenshot({path: path.join(artifacts, `${engine}-ai-filter-${width}.png`), fullPage: true});
             if (width === 390) await page.locator('#preferences-ai-filter').screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-390.png`)});
@@ -1291,6 +1334,9 @@ for (const engine of engines) {
             await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
             const data = new URLSearchParams((await posted).postData());
             assert.equal(data.get('ai_warnlist_search'), 'on');
+            assert.equal(data.get('ai_blocklist_action'), 'replace_thumbnail');
+            assert.equal(data.get('ai_warnlist_action'), 'hide');
+            assert.equal(data.get('ai_warnlist_other_pages'), 'on');
             assert.equal(data.has('ai_blocklist_feeds'), false);
             assert.ok(!requests.some(url => /aisloplist|raw\.githubusercontent/.test(url)));
             assert.deepEqual(errors, []);
@@ -1312,6 +1358,97 @@ for (const engine of engines) {
         assert.equal(videoData.next_video, 'aib00000000');
         assert.deepEqual(watch.errors, []);
         await watch.context.close();
+    });
+
+    test(`${engine}: AI channel filter replacement is quiet, keeps Discovery results and works in thin mode`, async () => {
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const thin of [false, true]) {
+                for (const width of [320, 1440]) {
+                    const suffix = `${theme}${thin ? '-thin' : ''}`;
+                    for (const surface of ['search', 'watch']) {
+                        const {page, context, errors, requests} = await pageFor(engine, {fixture: `${surface}-ai-thumbnails-${suffix}`, route: surface === 'search' ? 'search?q=videos' : 'watch?v=2isYuQZMbdU', width, javascript: false});
+                        await assertQuietAiThumbnails(page, 2);
+                        const cards = page.locator(surface === 'search' ? '.media-card' : '.recommendation');
+                        assert.equal(await cards.count(), 3);
+                        assert.equal(await cards.nth(0).locator('img.thumbnail').count(), 0);
+                        assert.equal(await cards.nth(1).locator('img.thumbnail').count(), 0);
+                        assert.match(await cards.nth(0).locator('.ai-thumbnail').textContent(), /Likely AI-generated.*AiSList Blocklist/);
+                        assert.match(await cards.nth(1).locator('.ai-thumbnail').textContent(), /Possibly AI-generated.*AiSList Warnlist/);
+                        assert.equal(await cards.nth(2).locator('img.thumbnail').count(), thin ? 0 : 1);
+                        assert.ok(!requests.some(url => /\/vi\/ai[ab]00000000\//.test(url)));
+                        if (surface === 'watch') {
+                            const data = JSON.parse(await page.locator('#video_data').textContent());
+                            assert.equal(data.next_video, 'aia00000000');
+                        } else {
+                            const title = cards.first().locator('[data-dearrow-row] a');
+                            await title.focus();
+                            assert.equal(await title.evaluate(el => el === document.activeElement), true);
+                            assert.equal(await title.getAttribute('href'), '/watch?v=aia00000000');
+                        }
+                        if (width === 320 && !thin) await cards.first().screenshot({path: path.join(artifacts, `${engine}-ai-${surface}-${theme}.png`)});
+                        assert.deepEqual(errors, []);
+                        await context.close();
+                    }
+                }
+            }
+        }
+    });
+
+    test(`${engine}: AI channel filter other pages only replace thumbnails and retain every card`, async () => {
+        const cases = [
+            ['subscriptions', 'feed/subscriptions', 2, 3], ['history', 'feed/history', 1, 3],
+            ['channel', 'channel/UCfixture', 2, 3], ['channel-search', 'channel/UCfixture/search?q=video', 2, 3],
+            ['playlist', 'playlist?list=PLfixture', 2, 3], ['playlist', 'playlist?list=PLfixture', 2, 3, true],
+            ['mix', 'mix?list=RDfixture', 2, 3], ['mix', 'mix?list=RDfixture', 2, 3, true]
+        ];
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const [surface, route, replacements, total, thin] of cases) {
+                const {page, context, errors, requests} = await pageFor(engine, {fixture: `${surface}-ai-thumbnails-${theme}${thin ? '-thin' : ''}`, route, width: 320, javascript: false});
+                assert.equal(await page.locator('.media-card').count(), total);
+                await assertQuietAiThumbnails(page, replacements);
+                assert.equal(await page.locator('.ai-thumbnail').locator('xpath=ancestor::a[1]').count(), replacements);
+                assert.ok(!requests.some(url => /\/vi\/ai[ab]00000000\//.test(url)));
+                if (surface === 'playlist') assert.deepEqual(await page.locator('.playlist-position').allTextContents(), ['1', '2', '3']);
+                if (surface === 'history') assert.equal(await page.locator('[data-onclick="mark_unwatched"]').count(), total);
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+        for (const fixture of ['clips-ai-thumbnails', 'channel-clips-ai-thumbnails']) {
+            const {page, context, errors} = await pageFor(engine, {fixture, width: 320, javascript: false});
+            assert.equal(await page.locator('.clip-card').count(), 1);
+            await assertQuietAiThumbnails(page, 1);
+            assert.equal(await page.locator('.clip-card img.thumbnail').count(), 0);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: AI channel filter watch queues preserve duplicate occurrences and advancement`, async () => {
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const thin of [false, true]) {
+                for (const width of [320, 1440]) {
+                    const queue = JSON.parse(fs.readFileSync(path.join(generated, `queue-ai-thumbnails-${theme}${thin ? '-thin' : ''}.json`)));
+                    const fixture = theme === 'diary' ? 'watch-diary-dark' : 'watch-dark';
+                    const {page, context, errors, requests} = await pageFor(engine, {fixture, queue, width});
+                    await page.locator('.queue-row').first().waitFor({state: 'attached'});
+                    if (width === 320) await page.locator('#queue-toggle').click();
+                    await assertQuietAiThumbnails(page, 3, '#playlist .ai-thumbnail');
+                    assert.equal(await page.locator('.queue-row').count(), 4);
+                    assert.deepEqual(await page.locator('.queue-row').evaluateAll(rows => rows.map(row => row.dataset.index)), ['0', '1', '2', '3']);
+                    assert.equal(await page.locator('.queue-row[data-video-id="2isYuQZMbdU"]').count(), 2);
+                    assert.equal(await page.locator('.queue-row').nth(1).locator('img').count(), 0);
+                    assert.ok(!requests.some(url => /\/vi\/previous001\//.test(url)));
+                    assert.equal(await page.locator('#playlist [aria-current]').getAttribute('href'), '/watch?v=2isYuQZMbdU&list=PLfixture&index=2');
+                    const next = new URL(await page.locator('#queue-navigation [data-direction="next"]').getAttribute('href'), 'https://invidious.test');
+                    assert.equal(next.searchParams.get('v'), 'nextvideo01');
+                    assert.equal(next.searchParams.get('index'), '3');
+                    if (width === 320 && !thin) await page.locator('#playlist-panel').screenshot({path: path.join(artifacts, `${engine}-ai-queue-${theme}.png`)});
+                    assert.deepEqual(errors, []);
+                    await context.close();
+                }
+            }
+        }
     });
 
     test(`${engine}: preferences sections, labels, and form fields`, async () => {

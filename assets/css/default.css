@@ -219,6 +219,55 @@ img.thumbnail {
   aspect-ratio: 16 / 9;
 }
 
+/* AiSList thumbnails intentionally keep the same quiet palette in every theme. */
+body .ai-thumbnail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  box-sizing: border-box;
+  padding: 8px;
+  background: #202326;
+  color: #858c93;
+  font-family: system-ui, sans-serif;
+  font-size: .875rem;
+  font-weight: 400;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+body .ai-thumbnail-list { font-size: .85em; }
+body .video-thumbnail:has(.ai-thumbnail) { container-type: inline-size; }
+body .video-thumbnail .ai-thumbnail {
+  font-size: clamp(10px, 6cqi, 14px);
+  padding: 24px 6px 4px;
+  gap: 2px;
+}
+body .video-thumbnail:has(.ai-thumbnail) > .bottom-right-overlay { top: 2px; bottom: auto; }
+body .video-thumbnail:has(.ai-thumbnail) .length {
+  margin: 2px 4px;
+  padding: 0 3px;
+  background: #202326;
+  color: #858c93;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+body .media-item:has(.ai-thumbnail) .playlist-position { font-size: 10px; line-height: 1.2; padding: 1px 4px; }
+body .video-thumbnail:has(.top-left-overlay form) .ai-thumbnail-message { padding-inline-start: 28px; }
+body .queue-thumbnail:has(.ai-thumbnail) { width: 100%; }
+body .queue-thumbnail .ai-thumbnail-compact {
+  min-height: 50px;
+  padding: 3px 4px;
+  gap: 1px;
+  border-radius: 6px;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
 .thumbnail-placeholder {
   min-height: 50px;
   border: 2px dotted;

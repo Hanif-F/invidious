@@ -622,7 +622,7 @@ videojs:
   max_goal_buffer_length: 60
 
 default_user_preferences:
-  ## Opt-in AiSList channel filtering for discovery pages. The server downloads
+  ## Opt-in AiSList channel filtering and thumbnail replacements. The server downloads
   ## the lists every six hours; missing handles may add up to two seconds per page.
   #ai_blocklist_feeds: false
   #ai_blocklist_search: false
@@ -630,6 +630,12 @@ default_user_preferences:
   #ai_warnlist_feeds: false
   #ai_warnlist_search: false
   #ai_warnlist_recommendations: false
+  ## Discovery action for each list: hide or replace_thumbnail.
+  #ai_blocklist_action: hide
+  #ai_warnlist_action: hide
+  ## Other video-card pages can only replace thumbnails, independently of Discovery.
+  #ai_blocklist_other_pages: false
+  #ai_warnlist_other_pages: false
 
   ## Opt-in community title replacements from DeArrow (no license key required).
   ## These defaults also apply to accounts that have not saved DeArrow settings.

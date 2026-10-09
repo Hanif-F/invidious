@@ -23,6 +23,7 @@
     </div>
 </div>
 
+<% Invidious::Frontend::AiChannels.prepare(env, videos + notifications) %>
 <% Invidious::Frontend::ChannelAvatars.prepare(env, videos + notifications) %>
 
 <% if CONFIG.enable_user_notifications %>

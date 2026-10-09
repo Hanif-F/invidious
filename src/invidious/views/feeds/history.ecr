@@ -44,6 +44,7 @@
 <script src="/js/watched_widget.js"></script>
 
 <% Invidious::Frontend::ChannelAvatars.prepare_ids(env, watched.compact_map(&.channel_id)) %>
+<% Invidious::Frontend::AiChannels.prepare_ids(env, watched.compact_map(&.channel_id)) %>
 <% previous_group = "" %>
 <div class="history-groups">
     <% watched.each do |entry| %>
@@ -59,7 +60,9 @@
         <div class="pure-u-1 pure-u-md-1-4 media-item" data-kind="video">
             <div class="h-box media-card">
                 <div class="thumbnail video-thumbnail">
-                    <% unless env.get("preferences").as(Preferences).thin_mode %>
+                    <% if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, entry.channel_id || "") %>
+                    <a style="width:100%" href="/watch?v=<%= HTML.escape(item) %>" aria-label="<%= I18n.translate(locale, "ui_open_video") %> <%= HTML.escape(entry.title || item) %>"><%= Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale) %></a>
+                    <% elsif !env.get("preferences").as(Preferences).thin_mode %>
                     <a style="width:100%" href="/watch?v=<%= HTML.escape(item) %>" aria-label="<%= I18n.translate(locale, "ui_open_video") %> <%= HTML.escape(item) %>">
                         <img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= HTML.escape(item) %>/mqdefault.jpg" alt="" />
                     </a>

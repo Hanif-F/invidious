@@ -1,9 +1,10 @@
 <% if clips.empty? %><p class="h-box"><%= I18n.translate(locale, "clips_empty") %></p><% end %>
+<% Invidious::Frontend::AiChannels.prepare_ids(env, clips.map(&.ucid)) %>
 <div class="pure-g media-grid clip-library">
 <% clips.each do |clip| %>
     <article class="pure-u-1 pure-u-md-1-2 pure-u-lg-1-4 media-item clip-card">
         <div class="h-box">
-            <a href="<%= clip.permalink %>"><img class="thumbnail" loading="lazy" src="/vi/<%= clip.video_id %>/mqdefault.jpg" alt=""><h3 dir="auto"><%= HTML.escape(clip.title) %></h3></a>
+            <a href="<%= clip.permalink %>"><% if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, clip.ucid) %><%= Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale) %><% else %><img class="thumbnail" loading="lazy" src="/vi/<%= clip.video_id %>/mqdefault.jpg" alt=""><% end %><h3 dir="auto"><%= HTML.escape(clip.title) %></h3></a>
             <p><%= (clip.end_time - clip.start_time).round(3) %> s · <time datetime="<%= clip.created_at.to_rfc3339 %>"><%= clip.created_at.to_s("%Y-%m-%d") %></time></p>
             <p dir="auto"><a href="/watch?v=<%= clip.video_id %>"><%= HTML.escape(clip.video_title) %></a></p>
             <p><a href="/channel/<%= clip.ucid %>"><%= HTML.escape(clip.channel_name) %></a> · <%= I18n.translate(locale, "clips_by") %> <%= HTML.escape(clip.creator) %></p>

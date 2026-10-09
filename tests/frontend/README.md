@@ -29,9 +29,14 @@ ignored by Git.
 ## Coverage and limits
 
 AiSList fixtures use local lists and fake channel resolution to verify all six
-switches, guest/account persistence, JSON/YAML and export/import, exact channel
-identity, independent list status, preserved search pagination, and recommendation
-autoplay ordering. Browser coverage checks desktop/mobile and no-JavaScript forms:
+Discovery switches, independent Hide/Replace actions, both replacement-only
+other-page switches, guest/account persistence, JSON/YAML and export/import,
+exact channel identity, overlap precedence, independent list status, preserved
+search pagination, and recommendation autoplay ordering. Browser coverage checks
+both themes, thin mode, desktop/mobile and no-JavaScript forms, subscriptions,
+history, channels/scoped searches, playlists/mixes, clips and dynamically loaded
+queues with duplicate occurrences. Warning text stays regular-weight and muted;
+replaced thumbnails issue no original-image request:
 
 ```sh
 node --test --test-name-pattern='AI channel filter|preferences sections' tests/frontend/ui.test.cjs

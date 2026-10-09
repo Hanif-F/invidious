@@ -103,7 +103,8 @@ module Invidious::Routes::API::V1::Misc
       index, next_video = Frontend::MemberVideos.queue_videos(json_response["videos"].as_a.skip((current_removed ? 0 : 1) + lookback), show_members).select { |video| !video["author"].as_s.empty? }[0]?.try { |v| {v["index"], v["videoId"]} } || {nil, nil}
 
       json_response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(json_response["videos"].as_a, show_members))
-      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode, editable, user.try(&.watched) || [] of String)
+      ai_thumbnails = Frontend::AiChannels.prepare_queue(env, json_response["videos"].as_a)
+      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode, editable, user.try(&.watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: env.get("preferences").as(Preferences).locale)
 
       response = {
         "playlistHtml" => playlist_html,
@@ -192,7 +193,8 @@ module Invidious::Routes::API::V1::Misc
       env.response.headers["Cache-Control"] = "private, no-store"
       response = JSON.parse(response)
       response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(response["videos"].as_a, env.get("preferences").as(Preferences).show_member_videos))
-      playlist_html = template_mix(response, listen, env.get("preferences").as(Preferences).thin_mode, env.get?("user").try(&.as(User).watched) || [] of String)
+      ai_thumbnails = Frontend::AiChannels.prepare_queue(env, response["videos"].as_a)
+      playlist_html = template_mix(response, listen, env.get("preferences").as(Preferences).thin_mode, env.get?("user").try(&.as(User).watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: locale)
       next_video = response["videos"].as_a.select { |video| !video["author"].as_s.empty? }[0]?.try &.["videoId"]
 
       response = {

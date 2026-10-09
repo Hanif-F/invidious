@@ -1,4 +1,5 @@
 require "../../spec_helper"
+require "../../parsers_helper"
 require "../../../src/invidious/mixes"
 
 private def queue_test_data

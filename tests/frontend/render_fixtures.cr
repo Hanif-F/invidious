@@ -212,7 +212,7 @@ def navigation_fixture
   render "src/invidious/views/components/navigation.ecr"
 end
 
-def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "", sync = false, dearrow = false)
+def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "", sync = false, dearrow = false, ai = false)
   env = signed_in_env("/feed/history")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = visual_theme
@@ -225,12 +225,18 @@ def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, h
   user.preferences = preferences
   env.set "preferences", preferences
   env.set "user", user
+  ai_other_preferences(env) if ai
   history_today = "2026-09-13"
   watched = [
     Invidious::Database::WatchHistory::Entry.new("2isYuQZMbdU", "A journey through light, color, and motion", "Studio North", "UCfixture", "2026-08-01", "2026-09-13", length_seconds: 1000),
     Invidious::Database::WatchHistory::Entry.new("previous001", "Light <study> & color", "A channel", nil, nil, "2026-09-12", length_seconds: 1000),
     Invidious::Database::WatchHistory::Entry.new("nextvideo01"),
   ]
+  if ai
+    first_entry = watched[0]
+    first_entry.channel_id = ai_fixture_video('a', "@blocked").ucid
+    watched[0] = first_entry
+  end
   watched.select! { |entry| Invidious::History.matches?(entry.title, entry.channel_name, history_query) }
   watched.clear if empty
   user.watched.clear if empty
@@ -244,7 +250,7 @@ def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, h
   render "src/invidious/views/feeds/history.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = false, search = false, privacy = false, empty = false)
+def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = false, search = false, privacy = false, empty = false, ai = false)
   env = fixture_env("/channel/UCfixture", mode, visual_theme: visual_theme)
   locale = "en-US"
   user = nil
@@ -259,6 +265,10 @@ def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = fa
   sort_options = ["newest", "oldest", "popular"]
   sort_by = "newest"
   items = [SearchVideo.new({title: "The art of noticing", id: "fixture0", author: "Studio North", ucid: "UCfixture", published: Time.utc, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})]
+  if ai
+    ai_other_preferences(env)
+    items = [ai_fixture_video('a', "@blocked"), ai_fixture_video('b', "@moderate"), ai_fixture_video('c', "@safe")]
+  end
   if playlists
     items = (0...4).map do |i|
       SearchPlaylist.new({title: "Light and motion #{i + 1}", id: "PLfixture#{i}", author: "Studio North", ucid: "UCfixture", video_count: 12, videos: [] of SearchPlaylistVideo, thumbnail: "/vi/2isYuQZMbdU/mqdefault.jpg", author_verified: false})
@@ -521,12 +531,13 @@ def fixture_clip
                      video_duration: video.length_seconds, creator: "viewer"})
 end
 
-def clips_fixture(channel_page = false, empty = false, visual_theme = "modern-neon", locale = "en-US")
+def clips_fixture(channel_page = false, empty = false, visual_theme = "modern-neon", locale = "en-US", ai = false)
   env = channel_page ? fixture_env("/channel/#{fixture_clip.ucid}/clips", visual_theme: visual_theme, locale: locale) : signed_in_env("/feed/clips")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = visual_theme
   preferences.locale = locale
   env.set "preferences", preferences
+  ai_other_preferences(env) if ai
   user = env.get?("user").try(&.as(User))
   subscriptions = [] of String
   clips = empty ? [] of InvidiousClip : [fixture_clip]

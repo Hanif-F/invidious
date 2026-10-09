@@ -127,7 +127,9 @@
             -%>
 
             <div class="thumbnail video-thumbnail">
-                <%- if !thin_mode -%>
+                <%- if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, item.ucid.to_s) -%>
+                    <a tabindex="-1" href="<%= link_url %>"><%= Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale) %></a>
+                <%- elsif !thin_mode -%>
                     <a tabindex="-1" href="<%= link_url %>">
                         <img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= item.id %>/mqdefault.jpg" alt="" />
 

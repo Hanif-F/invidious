@@ -80,6 +80,12 @@ struct ConfigPreferences
   property ai_warnlist_feeds : Bool = false
   property ai_warnlist_search : Bool = false
   property ai_warnlist_recommendations : Bool = false
+  @[YAML::Field(converter: Preferences::AiListAction)]
+  property ai_blocklist_action : String = "hide"
+  @[YAML::Field(converter: Preferences::AiListAction)]
+  property ai_warnlist_action : String = "hide"
+  property ai_blocklist_other_pages : Bool = false
+  property ai_warnlist_other_pages : Bool = false
   property dearrow_show_original : Bool = true
   property search_privacy : Bool = false
 
