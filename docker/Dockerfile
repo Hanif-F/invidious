@@ -22,7 +22,7 @@ RUN cd openssl-${OPENSSL_VERSION} && ./Configure --openssldir=/etc/ssl no-apps &
 
 FROM dependabot-crystal AS builder
 
-RUN apk add --no-cache sqlite-static yaml-static
+RUN apk add --no-cache sqlite-static yaml-static gmp-static
 RUN apk del openssl-dev openssl-libs-static
 
 ARG release
