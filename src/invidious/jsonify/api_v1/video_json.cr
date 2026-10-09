@@ -22,12 +22,17 @@ module Invidious::JSONify::APIv1
 
       json.field "description", video.description
       json.field "descriptionHtml", video.description_html
-      json.field "published", video.published.to_unix
-      json.field "publishedText", I18n.translate(locale, "`x` ago", recode_date(video.published, locale))
+      published = if video.info["publishedIsKnown"]?.try(&.as_bool?) == true
+                    Invidious::Videos::Metadata.publication((video.info["sourcePublished"]? || video.info["published"]?).try(&.as_s?))
+                  end
+      json.field "published", published.try(&.to_unix) || 0
+      json.field "publishedText", published ? I18n.translate(locale, "`x` ago", recode_date(published, locale)) : ""
       json.field "keywords", video.keywords
 
       json.field "viewCount", video.views
       json.field "likeCount", video.likes
+      json.field "viewCountPrecision", video.info["viewCountPrecision"]?.try(&.as_s?) || "unknown"
+      json.field "likeCountPrecision", video.info["likeCountPrecision"]?.try(&.as_s?) || "unknown"
       json.field "dislikeCount", 0_i64
 
       json.field "paid", video.paid

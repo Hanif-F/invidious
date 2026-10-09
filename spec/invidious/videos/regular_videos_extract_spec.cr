@@ -20,6 +20,9 @@ Spectator.describe "parse_video_info" do
     expect(info["title"].as_s).to eq("I Gave My 100,000,000th Subscriber An Island")
     expect(info["views"].as_i).to eq(220_226_287)
     expect(info["likes"].as_i).to eq(6_870_691)
+    expect(info["viewCountPrecision"].as_s).to eq("exact")
+    expect(info["likeCountPrecision"].as_s).to eq("exact")
+    expect(info["publishedIsKnown"].as_bool).to be_true
 
     # For some reason the video length from VideoDetails and the
     # one from microformat differs by 1s...

@@ -80,7 +80,9 @@ module Invidious::Channel::Tabs
     continuation ||= make_initial_shorts_ctoken(channel.ucid, sort_by)
     initial_data = YoutubeAPI.browse(continuation: continuation)
 
-    return extract_items(initial_data, channel.author, channel.ucid)
+    items, next_continuation = extract_items(initial_data, channel.author, channel.ucid)
+    items = Invidious::Videos::Metadata.enrich_shorts(items) { |ids| Invidious::Database::Videos.select_metadata(ids) }
+    return items, next_continuation
   end
 
   # -------------------

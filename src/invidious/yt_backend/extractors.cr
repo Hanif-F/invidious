@@ -1,6 +1,7 @@
 require "../helpers/serialized_yt_data"
 require "../helpers/channel_avatars"
 require "../ai_slist"
+require "../videos/metadata"
 
 # This file contains helper methods to parse the Youtube API json data into
 # neat little packages we can use
@@ -94,14 +95,15 @@ private module Parsers
       # Instead, in its place is the amount of people currently watching. This behavior should be replicated
       # on Invidious once all features of livestreams are supported. On an unrelated note, defaulting to the current
       # time for publishing isn't a good idea.
-      published = item_contents.dig?("publishedTimeText", "simpleText").try { |t| decode_date(t.as_s) } || Time.local
+      published = Invidious::Videos::Metadata.publication_text(item_contents.dig?("publishedTimeText", "simpleText").try(&.as_s?)) || Time.unix(0)
 
       # Typically views are stored under a "simpleText" in the "viewCountText". However, for
       # livestreams and premiered it is stored under a "runs" array: [{"text":123}, {"text": "watching"}]
       # When view count is disabled the "viewCountText" is not present on InnerTube data.
       # TODO change default value to nil and typical encoding type to tuple storing type (watchers, views, etc)
       # and count
-      view_count = item_contents.dig?("viewCountText", "simpleText").try &.as_s.gsub(/\D+/, "").to_i64? || 0_i64
+      view_count_text = extract_text(item_contents["viewCountText"]?)
+      view_count, view_count_precision = Invidious::Videos::Metadata.count(view_count_text)
       description_html = item_contents["descriptionSnippet"]?.try { |t| parse_content(t, video_id) } || ""
 
       # The length information generally exist in "lengthText". However, the info can sometimes
@@ -117,9 +119,8 @@ private module Parsers
           length_text = length_text.as_s
 
           if length_text == "SHORTS"
-            # Approximate length to one minute, as "shorts" generally don't exceed that length.
-            # TODO: Add some sort of metadata for the type of video (normal, live, premiere, shorts)
-            length_seconds = 60_i32
+            # The SHORTS badge does not provide a duration.
+            length_seconds = 0_i32
           else
             length_seconds = decode_length_seconds(length_text)
           end
@@ -164,7 +165,7 @@ private module Parsers
         author:             author,
         ucid:               author_id,
         published:          published,
-        views:              view_count,
+        views:              view_count || 0_i64,
         description_html:   description_html,
         length_seconds:     length_seconds,
         premiere_timestamp: premiere_timestamp,
@@ -173,6 +174,7 @@ private module Parsers
         badges:             badges | (Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None),
       })
       video.author_handle = Invidious::AiSList.author_handle(author_info, author_id)
+      video.view_count_precision = view_count_precision
       video
     end
 
@@ -583,14 +585,14 @@ private module Parsers
 
         published = video_details_container
           .dig?("timestampText", "simpleText")
-          .try { |t| decode_date(t.as_s) } || Time.utc
+          .try { |t| Invidious::Videos::Metadata.publication_text(t.as_s?) } || Time.unix(0)
 
         # View count
         view_count_text = video_details_container.dig?("viewCountText", "simpleText")
       else
         author = author_fallback.name
         ucid = author_fallback.id
-        published = Time.utc
+        published = Time.unix(0)
         title = item_contents.dig?("headline", "simpleText").try &.as_s || ""
       end
       # View count
@@ -598,7 +600,7 @@ private module Parsers
       # View count used to be in the reelWatchEndpoint, but that changed?
       view_count_text ||= item_contents.dig?("viewCountText", "simpleText")
 
-      view_count = short_text_to_number(view_count_text.try &.as_s || "0")
+      view_count, view_count_precision = Invidious::Videos::Metadata.count(view_count_text.try(&.as_s?))
 
       # Duration
 
@@ -613,13 +615,13 @@ private module Parsers
 
       duration = (minutes*60 + seconds)
 
-      SearchVideo.new({
+      video = SearchVideo.new({
         title:              title,
         id:                 video_id,
         author:             author,
         ucid:               ucid,
         published:          published,
-        views:              view_count,
+        views:              view_count || 0_i64,
         description_html:   "",
         length_seconds:     duration,
         premiere_timestamp: Time.unix(0),
@@ -627,6 +629,8 @@ private module Parsers
         author_thumbnail:   nil,
         badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
       })
+      video.view_count_precision = view_count_precision
+      video
     end
 
     def self.parser_name
@@ -674,8 +678,8 @@ private module Parsers
         end
         # Contains the views of the video and the published time of the video.
         metadata_parts = HelperExtractors.lockup_metadata_parts(metadata, author)
-        published = HelperExtractors.get_lockup_published(metadata_parts) || Time.local
-        view_count = short_text_to_number(HelperExtractors.get_lockup_short_view_count(metadata_parts))
+        published = HelperExtractors.get_lockup_published(metadata_parts) || Time.unix(0)
+        view_count, view_count_precision = Invidious::Videos::Metadata.count(HelperExtractors.get_lockup_short_view_count(metadata_parts))
 
         length = Invidious::Videos::Membership.thumbnail_duration(thumbnail_view_model)
 
@@ -687,7 +691,7 @@ private module Parsers
           author:             author,
           ucid:               author_id,
           published:          published,
-          views:              view_count,
+          views:              view_count || 0_i64,
           description_html:   "",
           length_seconds:     length_seconds || 0,
           premiere_timestamp: Time.unix(0),
@@ -696,6 +700,7 @@ private module Parsers
           badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
         })
         video.author_handle = Invidious::AiSList.author_handle(metadata, author_id)
+        video.view_count_precision = view_count_precision
         return video
         # If it's a playlist, it's content_type would be "LOCKUP_CONTENT_TYPE_PLAYLIST"
         # If it's a podcast, it's content_type would be "LOCKUP_CONTENT_TYPE_PODCAST"
@@ -871,22 +876,24 @@ private module Parsers
 
       title = item_contents.dig("overlayMetadata", "primaryText", "content").as_s
 
-      view_count = short_text_to_number(
-        item_contents.dig("overlayMetadata", "secondaryText", "content").as_s
+      view_count, view_count_precision = Invidious::Videos::Metadata.count(
+        item_contents.dig?("overlayMetadata", "secondaryText", "content").try(&.as_s?)
       )
 
-      # Approximate to one minute, as "shorts" generally don't exceed that.
-      # NOTE: The actual duration is not provided by Youtube anymore.
-      # TODO: Maybe use -1 as an error value and handle that on the frontend?
-      duration = 60_i32
+      # Only use metadata actually supplied with this card. Modern lockups usually
+      # omit both fields; the channel endpoint can fill them from its local cache.
+      header = item_contents.dig?("onTap", "innertubeCommand", "reelWatchEndpoint", "overlay", "reelPlayerOverlayRenderer",
+        "reelPlayerHeaderSupportedRenderers", "reelPlayerHeaderRenderer")
+      published = Invidious::Videos::Metadata.publication_text(header.try(&.dig?("timestampText", "simpleText")).try(&.as_s?))
+      duration = item_contents["lengthSeconds"]?.try(&.as_i64?).try { |value| value.to_i32 if 0 < value <= Int32::MAX } || 0
 
-      SearchVideo.new({
+      video = SearchVideo.new({
         title:              title,
         id:                 video_id,
         author:             author_fallback.name,
         ucid:               author_fallback.id,
-        published:          Time.unix(0),
-        views:              view_count,
+        published:          published || Time.unix(0),
+        views:              view_count || 0_i64,
         description_html:   "",
         length_seconds:     duration,
         premiere_timestamp: Time.unix(0),
@@ -894,6 +901,8 @@ private module Parsers
         author_thumbnail:   nil,
         badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
       })
+      video.view_count_precision = view_count_precision
+      video
     end
 
     def self.parser_name

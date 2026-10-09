@@ -1,6 +1,7 @@
 require "json"
 require "../helpers/channel_avatars"
 require "../ai_slist"
+require "./metadata"
 
 module Invidious::Videos::Parser
   extend self
@@ -226,13 +227,20 @@ module Invidious::Videos::Parser
         .try &.dig?("viewCount", "videoViewCountRenderer", "viewCount")
     )
     views_txt ||= video_details["viewCount"]?.try &.as_s || ""
-    views = views_txt.gsub(/\D/, "").to_i64?
+    views, views_precision = Invidious::Videos::Metadata.count(views_txt)
+    # Player videoDetails often retains the full total when the visible label is rounded.
+    if views_precision != "exact" && microformat.dig?("liveBroadcastDetails", "isLiveNow").try(&.as_bool?) != true
+      player_views, player_precision = Invidious::Videos::Metadata.count(video_details["viewCount"]?.try(&.as_s?))
+      if player_precision == "exact"
+        views, views_precision = player_views, player_precision
+      end
+    end
 
     length_txt = (microformat["lengthSeconds"]? || video_details["lengthSeconds"])
       .try &.as_s.to_i64
 
-    published = microformat["publishDate"]?
-      .try { |t| Time.parse(t.as_s, "%Y-%m-%d", Time::Location::UTC) } || Time.utc
+    source_published = Invidious::Videos::Metadata.publication((microformat["publishDate"]? || microformat["uploadDate"]?).try(&.as_s?))
+    published = source_published || Time.utc
 
     premiere_timestamp = microformat.dig?("liveBroadcastDetails", "startTimestamp")
       .try { |t| Time.parse_rfc3339(t.as_s) }
@@ -304,6 +312,7 @@ module Invidious::Videos::Parser
     toplevel_buttons = video_primary_renderer
       .try &.dig?("videoActions", "menuRenderer", "topLevelButtons")
 
+    likes_precision = "unknown"
     if toplevel_buttons
       # New Format as of december 2023
       likes_button = toplevel_buttons.dig?(0,
@@ -344,9 +353,9 @@ module Invidious::Videos::Parser
         likes_txt = likes_button.dig?("accessibilityText")
         # Note: The like count from `toggledText` is off by one, as it would
         # represent the new like count in the event where the user clicks on "like".
-        likes_txt ||= (likes_button["defaultText"]? || likes_button["toggledText"]?)
+        likes_txt ||= likes_button["defaultText"]?
           .try &.dig?("accessibility", "accessibilityData", "label")
-        likes = likes_txt.as_s.gsub(/\D/, "").to_i64? if likes_txt
+        likes, likes_precision = Invidious::Videos::Metadata.count(likes_txt.try(&.as_s?))
 
         LOGGER.trace("extract_video_info: Found \"likes\" button. Button text is \"#{likes_txt}\"")
         LOGGER.debug("extract_video_info: Likes count is #{likes}") if likes
@@ -455,11 +464,15 @@ module Invidious::Videos::Parser
     params = {
       "videoType" => JSON::Any.new(video_type.to_s),
       # Basic video infos
-      "title"         => JSON::Any.new(title || ""),
-      "views"         => JSON::Any.new(views || 0_i64),
-      "likes"         => JSON::Any.new(likes || 0_i64),
-      "lengthSeconds" => JSON::Any.new(length_txt || 0_i64),
-      "published"     => JSON::Any.new(published.to_rfc3339),
+      "title"              => JSON::Any.new(title || ""),
+      "views"              => JSON::Any.new(views || 0_i64),
+      "viewCountPrecision" => JSON::Any.new(views_precision),
+      "likes"              => JSON::Any.new(likes || 0_i64),
+      "likeCountPrecision" => JSON::Any.new(likes_precision),
+      "lengthSeconds"      => JSON::Any.new(length_txt || 0_i64),
+      "published"          => JSON::Any.new(published.to_rfc3339),
+      "publishedIsKnown"   => JSON::Any.new(!source_published.nil?),
+      "sourcePublished"    => JSON::Any.new(source_published.try(&.to_rfc3339)),
       # Extra video infos
       "allowedRegions"   => JSON::Any.new(allowed_regions.map { |v| JSON::Any.new(v) }),
       "allowRatings"     => JSON::Any.new(allow_ratings || false),

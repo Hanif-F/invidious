@@ -28,6 +28,8 @@ struct SearchVideo
   property author_thumbnail : String?
   @[DB::Field(ignore: true)]
   property author_handle : String? = nil
+  @[DB::Field(ignore: true)]
+  property view_count_precision : String? = nil
   property badges : VideoBadges
 
   def members_only : Bool
@@ -122,9 +124,11 @@ struct SearchVideo
       json.field "descriptionHtml", self.description_html
 
       json.field "viewCount", self.views
-      json.field "viewCountText", I18n.translate_count(locale, "generic_views_count", self.views, I18n::NumberFormatting::Short)
-      json.field "published", self.published.to_unix
-      json.field "publishedText", I18n.translate(locale, "`x` ago", recode_date(self.published, locale))
+      json.field "viewCountPrecision", self.view_count_precision if self.view_count_precision
+      json.field "viewCountText", self.view_count_precision == "unknown" ? "" : I18n.translate_count(locale, "generic_views_count", self.views, I18n::NumberFormatting::Short)
+      published_known = Invidious::Videos::Metadata.valid_publication?(self.published)
+      json.field "published", published_known ? self.published.to_unix : 0
+      json.field "publishedText", published_known ? I18n.translate(locale, "`x` ago", recode_date(self.published, locale)) : ""
       json.field "lengthSeconds", self.length_seconds
       json.field "liveNow", self.badges.live_now?
       json.field "premium", self.badges.premium?
