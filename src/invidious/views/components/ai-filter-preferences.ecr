@@ -1,32 +1,40 @@
-<div class="preference-subgroup" id="preferences-ai-filter">
+<div class="preference-subgroup ai-filter-preferences" id="preferences-ai-filter">
     <h2><%= I18n.translate(locale, "ai_filter_title") %></h2>
+    <input type="hidden" name="ai_filter_form_version" value="2">
+    <div class="pure-control-group ai-filter-master">
+        <label for="ai_filter_enabled"><%= I18n.translate(locale, "ai_filter_enable") %></label>
+        <input type="checkbox" name="ai_filter_enabled" id="ai_filter_enabled" aria-describedby="ai-filter-master-hint" <% if preferences.ai_filter_enabled %>checked<% end %>>
+        <p id="ai-filter-master-hint" class="preference-description"><%= I18n.translate(locale, "ai_filter_enable_hint") %></p>
+    </div>
+    <p class="preference-description ai-filter-paused"><%= I18n.translate(locale, "ai_filter_paused") %></p>
     <p class="preference-description"><%= I18n.translate(locale, "ai_filter_description") %></p>
-    <p class="preference-description"><%= I18n.translate(locale, "ai_filter_lookup_hint") %></p>
-    <% ai_lists = Invidious::AiSList.runtime.lists %>
-    <% {
-        {"blocklist", preferences.ai_blocklist_feeds, preferences.ai_blocklist_search, preferences.ai_blocklist_recommendations, preferences.ai_blocklist_action, preferences.ai_blocklist_other_pages},
-        {"warnlist", preferences.ai_warnlist_feeds, preferences.ai_warnlist_search, preferences.ai_warnlist_recommendations, preferences.ai_warnlist_action, preferences.ai_warnlist_other_pages},
-    }.each do |kind, feeds, search, recommendations, action, other_pages| %>
-        <h3><%= I18n.translate(locale, "ai_filter_#{kind}") %></h3>
-        <div class="pure-control-group">
-            <label for="ai_<%= kind %>_action"><%= I18n.translate(locale, "ai_filter_action") %></label>
-            <select name="ai_<%= kind %>_action" id="ai_<%= kind %>_action">
-                <% {"hide", "replace_thumbnail"}.each do |choice| %>
-                <option value="<%= choice %>" <% if choice == action %>selected<% end %>><%= I18n.translate(locale, "ai_filter_action_#{choice}") %></option>
-                <% end %>
-            </select>
-        </div>
-        <% { {"feeds", feeds}, {"search", search}, {"recommendations", recommendations} }.each do |surface, enabled| %>
-        <div class="pure-control-group">
-            <label for="ai_<%= kind %>_<%= surface %>"><%= I18n.translate(locale, "ai_filter_#{surface}") %></label>
-            <input type="checkbox" name="ai_<%= kind %>_<%= surface %>" id="ai_<%= kind %>_<%= surface %>" <% if enabled %>checked<% end %>>
-        </div>
+    <p class="preference-description" id="ai-filter-actions-hint"><%= I18n.translate(locale, "ai_filter_actions_hint") %></p>
+    <div class="ai-filter-page-groups">
+        <% { {"feeds", :feeds}, {"search", :search}, {"recommendations", :recommendations}, {"other_pages", :other} }.each do |surface, scope| %>
+        <fieldset class="ai-filter-page-group" aria-describedby="ai-filter-<%= surface %>-hint ai-filter-actions-hint">
+            <legend><%= I18n.translate(locale, "ai_filter_#{surface}") %></legend>
+            <p class="preference-description" id="ai-filter-<%= surface %>-hint"><%= I18n.translate(locale, "ai_filter_#{surface}_hint") %></p>
+            <% {"blocklist", "warnlist"}.each do |kind| %>
+            <% # Show saved actions even while the global switch pauses filtering. %>
+            <% action = Invidious::Frontend::AiChannels.saved_action(preferences, kind, scope) %>
+            <div class="pure-control-group">
+                <label for="ai_<%= kind %>_<%= surface %>_action"><%= I18n.translate(locale, "ai_filter_#{kind}") %></label>
+                <select name="ai_<%= kind %>_<%= surface %>_action" id="ai_<%= kind %>_<%= surface %>_action" aria-describedby="ai-filter-<%= surface %>-hint ai-filter-actions-hint">
+                    <% (surface == "other_pages" ? {"off", "replace_thumbnail"} : {"off", "hide", "replace_thumbnail"}).each do |choice| %>
+                    <option value="<%= choice %>" <% if choice == action %>selected<% end %>><%= I18n.translate(locale, "ai_filter_action_#{choice}") %></option>
+                    <% end %>
+                </select>
+            </div>
+            <% end %>
+        </fieldset>
         <% end %>
-        <div class="pure-control-group">
-            <label for="ai_<%= kind %>_other_pages"><%= I18n.translate(locale, "ai_filter_other_pages") %></label>
-            <input type="checkbox" name="ai_<%= kind %>_other_pages" id="ai_<%= kind %>_other_pages" <% if other_pages %>checked<% end %>>
-        </div>
-        <p class="preference-description"><%= I18n.translate(locale, "ai_filter_other_pages_hint") %></p>
+    </div>
+    <details class="ai-filter-details">
+        <summary><%= I18n.translate(locale, "ai_filter_details") %></summary>
+        <p class="preference-description"><%= I18n.translate(locale, "ai_filter_lookup_hint") %></p>
+        <% ai_lists = Invidious::AiSList.runtime.lists %>
+        <% {"blocklist", "warnlist"}.each do |kind| %>
+        <h3><%= I18n.translate(locale, "ai_filter_#{kind}") %></h3>
         <% if snapshot = ai_lists.snapshot(kind) %>
         <p class="preference-description ai-list-status">
             <%= I18n.translate_count(locale, "ai_filter_channels", snapshot.entries.size) %> ·
@@ -37,6 +45,7 @@
         <% else %>
         <p class="preference-description ai-list-status"><%= I18n.translate(locale, "ai_filter_unavailable") %></p>
         <% end %>
-    <% end %>
-    <p class="preference-description"><%= I18n.translate(locale, "ai_filter_attribution") %> <a href="https://aisloplist.com/" rel="noopener noreferrer">AiSList</a> (<a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener noreferrer">CC BY-NC 4.0</a>). <a href="https://github.com/Override92/AiSList" rel="noopener noreferrer"><%= I18n.translate(locale, "ai_filter_source") %></a></p>
+        <% end %>
+        <p class="preference-description"><%= I18n.translate(locale, "ai_filter_attribution") %> <a href="https://aisloplist.com/" rel="noopener noreferrer">AiSList</a> (<a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener noreferrer">CC BY-NC 4.0</a>). <a href="https://github.com/Override92/AiSList" rel="noopener noreferrer"><%= I18n.translate(locale, "ai_filter_source") %></a></p>
+    </details>
 </div>

@@ -1096,6 +1096,23 @@ body .preferences-form .preference-option select { display: block; width: 100%; 
 .preferences-form .sponsorblock-categories { gap: 12px; }
 .preferences-form .sponsorblock-category { padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); }
 .preferences-form .sponsorblock-category h3 { margin: 0 0 8px; }
+.preferences-form .ai-filter-preferences > .preference-description { margin-block: 12px; }
+.ai-filter-paused { display: none !important; }
+.ai-filter-preferences:has(#ai_filter_enabled:not(:checked)) .ai-filter-paused { display: block !important; }
+.ai-filter-page-groups { display: grid; gap: 20px; margin-block: 24px; }
+.pure-form .ai-filter-page-group {
+  min-width: 0; margin: 0; padding: 16px; border: 1px solid var(--line, #888);
+  border-radius: var(--radius, 8px); background: var(--surface-raised, transparent);
+}
+.pure-form .ai-filter-page-group > legend {
+  width: auto; max-width: 100%; margin: 0; padding-inline: 8px; border: 0;
+  font-size: 1rem; font-weight: 600; overflow-wrap: anywhere;
+}
+.preferences-form .ai-filter-page-group > .preference-description { margin-bottom: 12px; }
+.ai-filter-details { border-block-start: 1px solid var(--line, #888); padding-block: 16px; }
+.ai-filter-details > summary { cursor: pointer; padding-block: 8px; font-weight: 600; }
+.preferences-form .ai-filter-details .preference-description { margin-block: 12px; }
+.ai-filter-details h3 { margin-block: 20px 8px; font-size: 1rem; }
 .preferences-form .preference-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 8px; }
 .preferences-form .preference-link a { display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-raised); }
 .preferences-form .preference-link a:hover { border-color: var(--accent); }

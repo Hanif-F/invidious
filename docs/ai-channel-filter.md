@@ -1,17 +1,30 @@
 # AI channel filter
 
-Preferences → Enhancements → AI channel filter offers independent AiSList
-blocklist (high confidence) and warnlist (moderate confidence) controls for
-Popular/Trending, search/hashtags, and watch recommendations. Each list has a
-Discovery action: **Hide videos** (the existing default) or **Replace thumbnails**.
-All six Discovery switches default off. Each list also has an independent
-**Replace thumbnails on other pages** switch, default off, covering subscriptions
-and notifications, history, playlists/mixes, channel videos, scoped searches,
-watch queues and clip cards. These pages only replace thumbnails; AiSList never
-removes their videos or changes their order or autoplay eligibility.
-The settings are saved to account preferences or the guest preference cookie
-and included in existing preference exports/imports and account preference JSON.
-The public discovery APIs remain unpersonalized; native clients are unchanged.
+Preferences → Enhancements → AI channel filter starts with **Enable AI Channel
+Filter**, a master switch for both lists on every supported page. Turning it off
+pauses hiding, thumbnail replacement and filter-triggered channel lookups without
+clearing any choices. Edit the actions while paused, then enable the filter and
+**Save preferences** to apply them. Settings are saved to the account or the guest
+preference cookie, and included in preference JSON and exports/imports.
+
+The section explains AiSList's **High confidence — Blocklist** and **Moderate
+confidence — Warnlist** community classifications. They may be incorrect; Invidious
+does not perform automatic AI detection. Each page group has a separate action for
+each list:
+
+| Page group | Applies to | Actions |
+| --- | --- | --- |
+| Popular and Trending | Videos in these feeds | Off, Hide videos, Replace thumbnails |
+| Search and hashtags | General search and hashtag pages | Off, Hide videos, Replace thumbnails |
+| Watch-page recommendations | Suggested videos beside or below the player | Off, Hide videos, Replace thumbnails |
+| Library, channels and queues | Subscriptions/notifications, history, playlists/mixes, channel videos, channel/subscription searches, watch queues and clip cards | Off, Replace thumbnails |
+
+Off leaves matching videos unchanged. Hide removes matching video cards from that
+page and excludes hidden recommendations from autoplay. Replacement retains the
+card and shows a warning instead of its image. Library/channel/queue pages never
+hide AI matches, change their order, or change their autoplay eligibility.
+The controls and the **List status and technical details** disclosure work without
+JavaScript. Public discovery APIs remain unpersonalized; native clients are unchanged.
 
 Replacement thumbnails use a muted charcoal background and grey, regular-weight
 text: “Likely AI-generated” with “AiSList Blocklist”, or “Possibly AI-generated”
@@ -26,16 +39,28 @@ Discovery page, Hide wins over replacement. When both request replacement, the
 Blocklist warning takes precedence. Other-page replacements always use the
 Blocklist warning when both lists match.
 
-The additive preference fields are `ai_blocklist_action` / `ai_warnlist_action`
-(`hide` or `replace_thumbnail`, with invalid values normalized to `hide`) and
-`ai_blocklist_other_pages` / `ai_warnlist_other_pages` (booleans). Instance defaults
-use the same names. Existing preferences require no migration.
+The canonical preference fields are `ai_filter_enabled` (boolean) and eight
+`ai_{blocklist|warnlist}_{feeds|search|recommendations|other_pages}_action` strings.
+Discovery actions accept `off`, `hide` and `replace_thumbnail`; other-page actions
+accept only `off` and `replace_thumbnail`. Invalid new actions resolve to `off`,
+including `hide` on other pages. Instance defaults accept the same fields.
+
+All actions default off. Missing master values use an explicitly configured
+instance master default, otherwise enablement is inferred from any active action.
+An explicit master value always wins. Legacy booleans and per-list shared actions
+remain readable: checked discovery pages inherit the old shared action, unchecked
+pages become off, and checked other-page switches become replacement. Explicit
+new actions win over legacy fields; saved legacy page choices win over new instance
+action defaults. Effective canonical values are written on the next save/export.
+The versioned settings form preserves actions when fields are omitted and keeps
+new settings intact when an older form is submitted. No new preference migration
+is required for this settings overhaul.
 
 The server downloads the official
 [blocklist](https://raw.githubusercontent.com/Override92/AiSList/main/AiSList/aislist_blocklist.txt)
 and [warnlist](https://raw.githubusercontent.com/Override92/AiSList/main/AiSList/aislist_warnlist.txt)
 at startup and every six hours. Each list is validated and persisted independently;
-failed downloads keep the last successful copy. Preferences shows parsed channel
+failed downloads keep the last successful copy. The settings disclosure shows parsed channel
 counts, the last successful download time in UTC, and unavailable/stale status.
 The source files' `Last Modified` comments are not used as download timestamps.
 These are community classifications, not automatic detection performed by Invidious.

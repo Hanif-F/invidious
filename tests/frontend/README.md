@@ -28,9 +28,10 @@ ignored by Git.
 
 ## Coverage and limits
 
-AiSList fixtures use local lists and fake channel resolution to verify all six
-Discovery switches, independent Hide/Replace actions, both replacement-only
-other-page switches, guest/account persistence, JSON/YAML and export/import,
+AiSList fixtures use local lists and fake channel resolution to verify the global
+master switch, eight independent per-page actions, replacement-only library pages,
+legacy preference conversion, instance defaults, paused-choice preservation,
+guest/account persistence, JSON/YAML and export/import,
 exact channel identity, overlap precedence, independent list status, preserved
 search pagination, and recommendation autoplay ordering. Browser coverage checks
 both themes, thin mode, desktop/mobile and no-JavaScript forms, subscriptions,

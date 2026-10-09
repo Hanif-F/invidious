@@ -267,6 +267,18 @@ module Invidious::Routes::PreferencesRoute
       chat_word_blacklist:            previous.chat_word_blacklist,
     }.to_json)
 
+    # Only the versioned form may pause filtering. Older forms and omitted
+    # actions must never reset saved AI selections.
+    ai_filter_form = env.params.body["ai_filter_form_version"]? == "2"
+    preferences.ai_filter_enabled = ai_filter_form ? env.params.body["ai_filter_enabled"]? == "on" : previous.ai_filter_enabled
+    {% for kind in {"blocklist", "warnlist"} %}
+      {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
+        preferences.ai_{{kind.id}}_{{surface.id}}_action = ai_filter_form ?
+          (env.params.body["ai_{{kind.id}}_{{surface.id}}_action"]? || previous.ai_{{kind.id}}_{{surface.id}}_action) :
+          previous.ai_{{kind.id}}_{{surface.id}}_action
+      {% end %}
+    {% end %}
+
     if user = env.get? "user"
       user = user.as(User)
       user.preferences = preferences

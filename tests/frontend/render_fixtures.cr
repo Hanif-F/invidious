@@ -397,7 +397,7 @@ ensure
   Invidious::Themes::AVAILABLE.pop
 end
 puts "Rendered frontend fixtures to #{output}"
-check_ai_preferences
+check_ai_preferences(output)
 
 # Account menus on recommendation cards without a PostgreSQL dependency.
 File.write("#{output}/watch-actions.html", watch_fixture(signed_in_env("/watch?v=2isYuQZMbdU"), nil))

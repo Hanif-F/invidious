@@ -98,20 +98,90 @@ struct Preferences
   @[YAML::Field(converter: Invidious::SponsorBlock::Colors)]
   property sponsorblock_colors : Hash(String, String) = CONFIG.default_user_preferences.sponsorblock_colors.dup
   property dearrow_enabled : Bool = CONFIG.default_user_preferences.dearrow_enabled
-  property ai_blocklist_feeds : Bool = CONFIG.default_user_preferences.ai_blocklist_feeds
-  property ai_blocklist_search : Bool = CONFIG.default_user_preferences.ai_blocklist_search
-  property ai_blocklist_recommendations : Bool = CONFIG.default_user_preferences.ai_blocklist_recommendations
-  property ai_warnlist_feeds : Bool = CONFIG.default_user_preferences.ai_warnlist_feeds
-  property ai_warnlist_search : Bool = CONFIG.default_user_preferences.ai_warnlist_search
-  property ai_warnlist_recommendations : Bool = CONFIG.default_user_preferences.ai_warnlist_recommendations
-  @[JSON::Field(converter: Preferences::AiListAction)]
-  @[YAML::Field(converter: Preferences::AiListAction)]
-  property ai_blocklist_action : String = CONFIG.default_user_preferences.ai_blocklist_action
-  @[JSON::Field(converter: Preferences::AiListAction)]
-  @[YAML::Field(converter: Preferences::AiListAction)]
-  property ai_warnlist_action : String = CONFIG.default_user_preferences.ai_warnlist_action
-  property ai_blocklist_other_pages : Bool = CONFIG.default_user_preferences.ai_blocklist_other_pages
-  property ai_warnlist_other_pages : Bool = CONFIG.default_user_preferences.ai_warnlist_other_pages
+
+  # Keep legacy fields readable, distinguishing saved choices from instance defaults.
+  # New actions are resolved lazily so legacy defaults also work for new accounts.
+  {% for kind in {"blocklist", "warnlist"} %}
+    @[JSON::Field(presence: true, converter: Preferences::AiListAction)]
+    @[YAML::Field(presence: true, converter: Preferences::AiListAction)]
+    property ai_{{kind.id}}_action : String = CONFIG.default_user_preferences.ai_{{kind.id}}_action
+    @[JSON::Field(ignore: true)]
+    @[YAML::Field(ignore: true)]
+    @ai_{{kind.id}}_action_present : Bool = false
+
+    {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
+      @[JSON::Field(presence: true)]
+      @[YAML::Field(presence: true)]
+      property ai_{{kind.id}}_{{surface.id}} : Bool = CONFIG.default_user_preferences.ai_{{kind.id}}_{{surface.id}}
+      @[JSON::Field(ignore: true)]
+      @[YAML::Field(ignore: true)]
+      @ai_{{kind.id}}_{{surface.id}}_present : Bool = false
+
+      @[JSON::Field(ignore_serialize: true, converter: Preferences::AiFilterAction)]
+      @[YAML::Field(ignore_serialize: true, converter: Preferences::AiFilterAction)]
+      property ai_{{kind.id}}_{{surface.id}}_action : String? = nil
+
+      def ai_{{kind.id}}_{{surface.id}}_action : String
+        action = @ai_{{kind.id}}_{{surface.id}}_action
+        unless action
+          unless @ai_{{kind.id}}_{{surface.id}}_present || @ai_{{kind.id}}_action_present
+            action = CONFIG.default_user_preferences.ai_{{kind.id}}_{{surface.id}}_action
+          end
+          action ||= @ai_{{kind.id}}_{{surface.id}} ? {{surface == "other_pages" ? "replace_thumbnail" : "@ai_#{kind.id}_action".id}} : "off"
+        end
+        AiFilterAction.normalize(action, other_pages: {{surface == "other_pages"}})
+      end
+    {% end %}
+  {% end %}
+
+  @[JSON::Field(ignore_serialize: true)]
+  @[YAML::Field(ignore_serialize: true)]
+  property ai_filter_enabled : Bool? = nil
+
+  def ai_filter_enabled : Bool
+    return @ai_filter_enabled.not_nil! unless @ai_filter_enabled.nil?
+    configured = CONFIG.default_user_preferences.ai_filter_enabled
+    return configured unless configured.nil?
+    {% for kind in {"blocklist", "warnlist"} %}
+      {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
+        return true unless ai_{{kind.id}}_{{surface.id}}_action == "off"
+      {% end %}
+    {% end %}
+    false
+  end
+
+  # Persist effective values, making old imports/cookies canonical on their next save.
+  protected def on_to_json(json : JSON::Builder)
+    json.field "ai_filter_enabled", ai_filter_enabled
+    {% for kind in {"blocklist", "warnlist"} %}
+      {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
+        json.field "ai_{{kind.id}}_{{surface.id}}_action", ai_{{kind.id}}_{{surface.id}}_action
+      {% end %}
+    {% end %}
+  end
+
+  protected def on_to_yaml(yaml : YAML::Nodes::Builder)
+    yaml.scalar "ai_filter_enabled"
+    ai_filter_enabled.to_yaml(yaml)
+    {% for kind in {"blocklist", "warnlist"} %}
+      {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
+        yaml.scalar "ai_{{kind.id}}_{{surface.id}}_action"
+        ai_{{kind.id}}_{{surface.id}}_action.to_yaml(yaml)
+      {% end %}
+    {% end %}
+  end
+
+  # Deserialization bookkeeping and inferred values must not affect equality.
+  protected def comparison_values
+    {% begin %}
+      {
+        {{@type.instance_vars.reject { |var| var.annotation(::JSON::Field) && var.annotation(::JSON::Field)[:ignore] }.map(&.name).splat}},
+      }
+    {% end %}
+  end
+
+  def_equals_and_hash comparison_values
+
   property dearrow_show_original : Bool = CONFIG.default_user_preferences.dearrow_show_original
   property search_privacy : Bool = CONFIG.default_user_preferences.search_privacy
   property chat_show_timestamps : Bool = true
@@ -125,6 +195,30 @@ struct Preferences
   property chat_overlay_height : Int32 = 750
   property chat_user_blacklist : String = ""
   property chat_word_blacklist : String = ""
+
+  module AiFilterAction
+    def self.normalize(value : String?, other_pages = false) : String
+      return "replace_thumbnail" if value == "replace_thumbnail"
+      return "hide" if value == "hide" && !other_pages
+      "off"
+    end
+
+    def self.from_json(value : JSON::PullParser) : String
+      normalize(JSON::Any.new(value).as_s?)
+    end
+
+    def self.to_json(value : String?, json : JSON::Builder)
+      json.string normalize(value)
+    end
+
+    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : String
+      normalize(node.is_a?(YAML::Nodes::Scalar) ? node.value : nil)
+    end
+
+    def self.to_yaml(value : String?, yaml : YAML::Nodes::Builder)
+      yaml.scalar normalize(value)
+    end
+  end
 
   module AiListAction
     def self.normalize(value : String) : String

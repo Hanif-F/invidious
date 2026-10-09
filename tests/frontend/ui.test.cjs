@@ -1304,43 +1304,84 @@ for (const engine of engines) {
     });
 
     test(`${engine}: AI channel filter controls, status and empty results work without JavaScript`, async () => {
-        const fields = ['ai_blocklist_feeds', 'ai_blocklist_search', 'ai_blocklist_recommendations',
-            'ai_warnlist_feeds', 'ai_warnlist_search', 'ai_warnlist_recommendations'];
-        for (const width of [320, 390, 1440]) {
-            const {page, context, errors, requests} = await pageFor(engine, {fixture: 'preferences-ai-filter', width, javascript: false});
-            assert.equal(await page.locator('#preferences-ai-filter input[type=checkbox]').count(), 8);
-            for (const kind of ['blocklist', 'warnlist']) {
-                assert.equal(await page.locator(`#ai_${kind}_action`).inputValue(), 'hide');
-                assert.equal(await page.locator(`#ai_${kind}_other_pages`).isChecked(), false);
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const enabled of [false, true]) {
+                for (const width of [320, 390, 1440]) {
+                    const fixture = `preferences-ai-filter-${theme}${enabled ? '' : '-paused'}`;
+                    const {page, context, errors, requests} = await pageFor(engine, {fixture, width, javascript: false});
+                    const root = page.locator('#preferences-ai-filter');
+                    const master = root.getByRole('checkbox', {name: 'Enable AI Channel Filter', exact: true});
+                    assert.equal(await root.locator('input[type=checkbox]').count(), 1);
+                    assert.equal(await master.isChecked(), enabled);
+                    assert.equal(await root.locator('.ai-filter-page-group').count(), 4);
+                    assert.equal(await root.locator('select').count(), 8);
+                    assert.equal(await root.locator('.ai-filter-paused').isVisible(), !enabled);
+                    assert.match(await root.textContent(), /community classifications.*may be incorrect/s);
+                    assert.match(await page.locator('#ai-filter-search-hint').textContent(), /within a channel or your subscriptions/);
+                    assert.match(await page.locator('#ai-filter-recommendations-hint').textContent(), /excluded from autoplay/);
+                    for (const kind of ['blocklist', 'warnlist']) {
+                        for (const surface of ['feeds', 'search', 'recommendations', 'other_pages']) {
+                            const field = `ai_${kind}_${surface}_action`;
+                            const control = page.locator(`#${field}`);
+                            assert.equal(await page.locator(`label[for="${field}"]`).count(), 1);
+                            assert.equal(await control.isEnabled(), true);
+                            assert.ok((await control.getAttribute('aria-describedby')).includes(`ai-filter-${surface}-hint`));
+                            assert.deepEqual(await control.locator('option').evaluateAll(options => options.map(o => o.value)),
+                                surface === 'other_pages' ? ['off', 'replace_thumbnail'] : ['off', 'hide', 'replace_thumbnail']);
+                        }
+                    }
+                    assert.equal(await page.locator('#ai_blocklist_feeds_action').inputValue(), 'hide');
+                    assert.equal(await page.locator('#ai_blocklist_search_action').inputValue(), 'replace_thumbnail');
+                    assert.equal(await page.locator('#ai_blocklist_recommendations_action').inputValue(), 'off');
+                    assert.equal(await page.locator('#ai_warnlist_search_action').inputValue(), 'hide');
+                    assert.equal(await page.locator('#ai_warnlist_other_pages_action').inputValue(), 'off');
+                    // Native checkbox and disclosure keyboard interactions work without scripts.
+                    await master.focus();
+                    await master.press('Space');
+                    assert.equal(await master.isChecked(), !enabled);
+                    await master.press('Space');
+                    assert.equal(await master.isChecked(), enabled);
+                    await master.press('Tab');
+                    assert.equal(await page.locator('#ai_blocklist_feeds_action').evaluate(el => el === document.activeElement), true);
+                    const disclosure = root.locator('details');
+                    assert.equal(await disclosure.getAttribute('open'), null);
+                    const summary = disclosure.locator('summary');
+                    await summary.focus();
+                    await summary.press('Enter');
+                    assert.equal(await disclosure.getAttribute('open'), '');
+                    const statuses = await root.locator('.ai-list-status').allTextContents();
+                    assert.equal(statuses.length, 2);
+                    assert.match(statuses[0], /1 channel.*Last successful update:/s);
+                    assert.doesNotMatch(statuses[0], /Update overdue/);
+                    assert.match(statuses[1], /Update overdue or failed/);
+                    await summary.press('Enter');
+                    await master.uncheck();
+                    assert.equal(await root.locator('.ai-filter-paused').isVisible(), true);
+                    await page.locator('#ai_blocklist_feeds_action').selectOption('replace_thumbnail');
+                    await page.locator('#ai_blocklist_search_action').selectOption('hide');
+                    await page.locator('#ai_warnlist_other_pages_action').selectOption('replace_thumbnail');
+                    assert.equal(await page.locator('#ai_blocklist_recommendations_action').inputValue(), 'off');
+                    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+                    if (width === 390 && enabled) {
+                        await root.screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-${theme}-390.png`)});
+                    }
+                    if (width === 1440 && enabled) {
+                        await root.screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-${theme}-1440.png`)});
+                    }
+                    const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
+                    await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
+                    const data = new URLSearchParams((await posted).postData());
+                    assert.equal(data.get('ai_filter_form_version'), '2');
+                    assert.equal(data.has('ai_filter_enabled'), false);
+                    assert.equal(data.get('ai_blocklist_feeds_action'), 'replace_thumbnail');
+                    assert.equal(data.get('ai_blocklist_search_action'), 'hide');
+                    assert.equal(data.get('ai_blocklist_recommendations_action'), 'off');
+                    assert.equal(data.get('ai_warnlist_other_pages_action'), 'replace_thumbnail');
+                    assert.ok(!requests.some(url => /aisloplist|raw\.githubusercontent/.test(url)));
+                    assert.deepEqual(errors, []);
+                    await context.close();
+                }
             }
-            for (const field of fields) {
-                assert.equal(await page.locator(`label[for="${field}"]`).count(), 1);
-                assert.equal(await page.locator(`#${field}`).isChecked(), field.startsWith('ai_blocklist_'));
-            }
-            const statuses = await page.locator('#preferences-ai-filter .ai-list-status').allTextContents();
-            assert.equal(statuses.length, 2);
-            assert.match(statuses[0], /1 channel/);
-            assert.match(statuses[0], /Last successful update:/);
-            assert.doesNotMatch(statuses[0], /Update overdue/);
-            assert.match(statuses[1], /Update overdue or failed/);
-            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
-            await page.locator('#ai_warnlist_search').check();
-            await page.locator('#ai_blocklist_action').selectOption('replace_thumbnail');
-            await page.locator('#ai_warnlist_other_pages').check();
-            await page.locator('#ai_blocklist_feeds').uncheck();
-            await page.screenshot({path: path.join(artifacts, `${engine}-ai-filter-${width}.png`), fullPage: true});
-            if (width === 390) await page.locator('#preferences-ai-filter').screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-390.png`)});
-            const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
-            await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
-            const data = new URLSearchParams((await posted).postData());
-            assert.equal(data.get('ai_warnlist_search'), 'on');
-            assert.equal(data.get('ai_blocklist_action'), 'replace_thumbnail');
-            assert.equal(data.get('ai_warnlist_action'), 'hide');
-            assert.equal(data.get('ai_warnlist_other_pages'), 'on');
-            assert.equal(data.has('ai_blocklist_feeds'), false);
-            assert.ok(!requests.some(url => /aisloplist|raw\.githubusercontent/.test(url)));
-            assert.deepEqual(errors, []);
-            await context.close();
         }
         const search = await pageFor(engine, {fixture: 'search-ai-empty', route: 'search?q=videos&page=2', width: 390, javascript: false});
         assert.equal(await search.page.locator('.video-card').count(), 0);
@@ -1358,6 +1399,52 @@ for (const engine of engines) {
         assert.equal(videoData.next_video, 'aib00000000');
         assert.deepEqual(watch.errors, []);
         await watch.context.close();
+    });
+
+    test(`${engine}: AI channel filter global Off restores cards, recommendations and queue thumbnails`, async () => {
+        for (const theme of ['modern-neon', 'diary']) {
+            for (const width of [320, 1440]) {
+                for (const surface of ['search', 'playlist', 'watch']) {
+                    const fixture = `${surface}-ai-paused-${theme}`;
+                    const {page, context, errors} = await pageFor(engine, {fixture, width, javascript: false});
+                    assert.equal(await page.locator('.ai-thumbnail').count(), 0);
+                    if (surface === 'watch') {
+                        assert.equal(await page.locator('.recommendation').count(), 3);
+                        assert.equal(JSON.parse(await page.locator('#video_data').textContent()).next_video, 'aia00000000');
+                    } else {
+                        assert.equal(await page.locator('.media-card').count(), 3);
+                        assert.equal(await page.locator('.media-card img.thumbnail').count(), 3);
+                    }
+                    assert.deepEqual(errors, []);
+                    await context.close();
+                }
+                const queue = JSON.parse(fs.readFileSync(path.join(generated, `queue-ai-paused-${theme}.json`)));
+                const fixture = theme === 'diary' ? 'watch-diary-dark' : 'watch-dark';
+                const {page, context, errors} = await pageFor(engine, {fixture, queue, width});
+                await page.locator('.queue-row').first().waitFor({state: 'attached'});
+                assert.equal(await page.locator('#playlist .ai-thumbnail').count(), 0);
+                assert.equal(await page.locator('.queue-row').count(), 4);
+                assert.equal(await page.locator('.queue-row img').count(), 4);
+                assert.deepEqual(await page.locator('.queue-row').evaluateAll(rows => rows.map(row => row.dataset.index)), ['0', '1', '2', '3']);
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+        // Store the production guest cookies in a real browser, including after
+        // pausing and resuming, to catch size limits as well as serialization.
+        const cookies = JSON.parse(fs.readFileSync(path.join(generated, 'ai-preferences-cookies.json')));
+        const {page, context} = await pageFor(engine, {fixture: 'preferences-ai-filter-modern-neon-paused', javascript: false});
+        for (const [state, value] of Object.entries(cookies)) {
+            await context.addCookies([{name: 'PREFS', value, url: 'https://invidious.test', sameSite: 'Lax'}]);
+            await page.reload();
+            const stored = (await context.cookies()).find(cookie => cookie.name === 'PREFS');
+            assert.equal(stored?.value, value, `guest ${state} cookie was not retained`);
+            const preferences = JSON.parse(decodeURIComponent(stored.value.replace(/\+/g, '%20')));
+            assert.equal(preferences.ai_filter_enabled, state !== 'paused');
+            assert.equal(preferences.ai_blocklist_feeds_action, 'hide');
+            assert.equal(preferences.ai_blocklist_search_action, 'replace_thumbnail');
+        }
+        await context.close();
     });
 
     test(`${engine}: AI channel filter replacement is quiet, keeps Discovery results and works in thin mode`, async () => {

@@ -86,6 +86,14 @@ struct ConfigPreferences
   property ai_warnlist_action : String = "hide"
   property ai_blocklist_other_pages : Bool = false
   property ai_warnlist_other_pages : Bool = false
+  # Nil means infer enablement from actions, preserving legacy opt-in defaults.
+  property ai_filter_enabled : Bool? = nil
+  {% for kind in {"blocklist", "warnlist"} %}
+    {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
+      @[YAML::Field(converter: Preferences::AiFilterAction)]
+      property ai_{{kind.id}}_{{surface.id}}_action : String? = nil
+    {% end %}
+  {% end %}
   property dearrow_show_original : Bool = true
   property search_privacy : Bool = false
 

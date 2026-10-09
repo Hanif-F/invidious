@@ -6,14 +6,22 @@ add_context_storage_type(Hash(String, String))
 module Invidious::Frontend::AiChannels
   extend self
 
-  def enabled(preferences : Preferences, surface : Symbol) : Tuple(Bool, Bool)
-    case surface
-    when :feeds           then {preferences.ai_blocklist_feeds, preferences.ai_warnlist_feeds}
-    when :search          then {preferences.ai_blocklist_search, preferences.ai_warnlist_search}
-    when :recommendations then {preferences.ai_blocklist_recommendations, preferences.ai_warnlist_recommendations}
-    when :other           then {preferences.ai_blocklist_other_pages, preferences.ai_warnlist_other_pages}
-    else                       {false, false}
-    end
+  def action(preferences : Preferences, kind : String, surface : Symbol) : String
+    return "off" unless preferences.ai_filter_enabled
+    saved_action(preferences, kind, surface)
+  end
+
+  def saved_action(preferences : Preferences, kind : String, surface : Symbol) : String
+    {% for kind in {"blocklist", "warnlist"} %}
+      if kind == {{kind}}
+        case surface
+        {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
+        when :{{surface == "other_pages" ? "other".id : surface.id}} then return preferences.ai_{{kind.id}}_{{surface.id}}_action
+        {% end %}
+        end
+      end
+    {% end %}
+    "off"
   end
 
   def observe(items)
@@ -85,17 +93,16 @@ module Invidious::Frontend::AiChannels
   private def decisions(preferences : Preferences, surface : Symbol, ids : Array(String)) : Tuple(Set(String), Hash(String, String))
     blocked = Set(String).new
     thumbnails = {} of String => String
-    block, warn = enabled(preferences, surface)
-    return {blocked, thumbnails} unless block || warn
+    actions = {
+      "blocklist" => action(preferences, "blocklist", surface),
+      "warnlist"  => action(preferences, "warnlist", surface),
+    }
+    return {blocked, thumbnails} if actions.values.all? { |value| value == "off" }
     lists = AiSList.runtime.lists
     active = {} of String => AiSList::Entries
-    lists.snapshot("blocklist").try { |snapshot| active["blocklist"] = snapshot.entries } if block
-    lists.snapshot("warnlist").try { |snapshot| active["warnlist"] = snapshot.entries } if warn
+    lists.snapshot("blocklist").try { |snapshot| active["blocklist"] = snapshot.entries } unless actions["blocklist"] == "off"
+    lists.snapshot("warnlist").try { |snapshot| active["warnlist"] = snapshot.entries } unless actions["warnlist"] == "off"
     return {blocked, thumbnails} if active.empty?
-    actions = {
-      "blocklist" => surface == :other ? "replace_thumbnail" : Preferences::AiListAction.normalize(preferences.ai_blocklist_action),
-      "warnlist"  => surface == :other ? "replace_thumbnail" : Preferences::AiListAction.normalize(preferences.ai_warnlist_action),
-    }
     ids = ids.uniq.select { |id| AiSList.valid_id?(id) }
     matches = ids.to_h { |id| {id, active.select { |_, list| list.ids.includes?(id) }.keys} }
     missing = ids.select do |id|

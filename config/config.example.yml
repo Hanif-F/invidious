@@ -622,20 +622,21 @@ videojs:
   max_goal_buffer_length: 60
 
 default_user_preferences:
-  ## Opt-in AiSList channel filtering and thumbnail replacements. The server downloads
-  ## the lists every six hours; missing handles may add up to two seconds per page.
-  #ai_blocklist_feeds: false
-  #ai_blocklist_search: false
-  #ai_blocklist_recommendations: false
-  #ai_warnlist_feeds: false
-  #ai_warnlist_search: false
-  #ai_warnlist_recommendations: false
-  ## Discovery action for each list: hide or replace_thumbnail.
-  #ai_blocklist_action: hide
-  #ai_warnlist_action: hide
-  ## Other video-card pages can only replace thumbnails, independently of Discovery.
-  #ai_blocklist_other_pages: false
-  #ai_warnlist_other_pages: false
+  ## AiSList channel filtering. Off pauses every action without clearing choices.
+  ## If omitted, enablement is inferred from active actions (all off by default).
+  #ai_filter_enabled: false
+  ## Each discovery page group accepts: off, hide, or replace_thumbnail.
+  #ai_blocklist_feeds_action: off
+  #ai_blocklist_search_action: off
+  #ai_blocklist_recommendations_action: off
+  #ai_warnlist_feeds_action: off
+  #ai_warnlist_search_action: off
+  #ai_warnlist_recommendations_action: off
+  ## Library/channel/queue cards accept only: off or replace_thumbnail.
+  #ai_blocklist_other_pages_action: off
+  #ai_warnlist_other_pages_action: off
+  ## Legacy ai_<list>_<page> booleans and ai_<list>_action remain readable.
+  ## Lists update every six hours; missing handles may add up to two seconds.
 
   ## Opt-in community title replacements from DeArrow (no license key required).
   ## These defaults also apply to accounts that have not saved DeArrow settings.

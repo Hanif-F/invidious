@@ -32,7 +32,8 @@ def ai_fixture_video(letter : Char, handle : String?) : SearchVideo
   video
 end
 
-def check_ai_preferences
+def check_ai_preferences(output)
+  check_ai_page_preferences(output)
   keys = %w(ai_blocklist_feeds ai_blocklist_search ai_blocklist_recommendations ai_warnlist_feeds ai_warnlist_search ai_warnlist_recommendations ai_blocklist_other_pages ai_warnlist_other_pages)
   actions = %w(ai_blocklist_action ai_warnlist_action)
   all_keys = keys + actions
@@ -94,6 +95,114 @@ def check_ai_preferences
     Invidious::User::Import.from_invidious(user, {preferences: exported["preferences"]}.to_json)
     imported = JSON.parse(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
     raise "Import lost switches" unless all_keys.all? { |key| imported[key] == json[key] }
+  end
+end
+
+# Exercise the canonical fields through the production form, API and serializers.
+def check_ai_page_preferences(output)
+  action_keys = %w(blocklist warnlist).flat_map do |kind|
+    %w(feeds search recommendations other_pages).map { |surface| "ai_#{kind}_#{surface}_action" }
+  end
+  defaults = Preferences.from_json("{}")
+  raise "Fresh filter enabled" if defaults.ai_filter_enabled
+  raise "Fresh page actions enabled" unless action_keys.all? { |key| JSON.parse(defaults.to_json)[key].as_s == "off" }
+  raise "Internal presence flags leaked" if defaults.to_json.includes?("_present") || defaults.to_yaml.includes?("_present")
+
+  legacy = Preferences.from_json(%({"ai_blocklist_feeds":true,"ai_blocklist_search":true,"ai_blocklist_action":"replace_thumbnail","ai_warnlist_recommendations":true,"ai_warnlist_other_pages":true}))
+  raise "Legacy filtering disabled" unless legacy.ai_filter_enabled
+  raise "Legacy action lost" unless legacy.ai_blocklist_feeds_action == "replace_thumbnail" && legacy.ai_blocklist_search_action == "replace_thumbnail"
+  raise "Legacy unchecked page enabled" unless legacy.ai_blocklist_recommendations_action == "off"
+  raise "Legacy other-page action lost" unless legacy.ai_warnlist_other_pages_action == "replace_thumbnail" && legacy.ai_warnlist_recommendations_action == "hide"
+  raise "Legacy YAML differs" unless Preferences.from_yaml(legacy.to_yaml).to_json == legacy.to_json
+  explicit = Preferences.from_json(%({"ai_filter_enabled":false,"ai_blocklist_search":true,"ai_blocklist_search_action":"off"}))
+  raise "Explicit Off ignored" if explicit.ai_filter_enabled || explicit.ai_blocklist_search_action != "off"
+  action_keys.each do |key|
+    {JSON::Any.new("invalid"), JSON::Any.new(nil), JSON::Any.new(123_i64), JSON::Any.new(true)}.each do |invalid|
+      value = JSON.parse(Preferences.from_json({key => invalid}.to_json).to_json)[key].as_s
+      raise "Invalid page action accepted" unless value == "off"
+    end
+    {"invalid", "null", "[]"}.each do |invalid|
+      value = JSON.parse(Preferences.from_yaml("#{key}: #{invalid}").to_json)[key].as_s
+      raise "Invalid YAML page action accepted" unless value == "off"
+    end
+  end
+  raise "Other pages accepted Hide" unless Preferences.from_json(%({"ai_blocklist_other_pages_action":"hide"})).ai_blocklist_other_pages_action == "off"
+
+  original_defaults = CONFIG.default_user_preferences
+  begin
+    CONFIG.default_user_preferences = ConfigPreferences.from_yaml("ai_filter_enabled: false\nai_blocklist_feeds_action: hide\nai_blocklist_search_action: replace_thumbnail\nai_warnlist_other_pages_action: replace_thumbnail\n")
+    {Preferences.from_json("{}"), Preferences.from_yaml("{}")}.each do |configured|
+      raise "Instance master ignored" if configured.ai_filter_enabled
+      raise "Instance page defaults lost" unless configured.ai_blocklist_feeds_action == "hide" && configured.ai_blocklist_search_action == "replace_thumbnail" && configured.ai_warnlist_other_pages_action == "replace_thumbnail"
+    end
+    raise "Saved legacy Off overridden by instance" unless Preferences.from_json(%({"ai_blocklist_feeds":false})).ai_blocklist_feeds_action == "off"
+    raise "Saved new Off overridden by instance" unless Preferences.from_yaml("ai_blocklist_feeds_action: off").ai_blocklist_feeds_action == "off"
+    raise "Explicit master overridden by instance" unless Preferences.from_json(%({"ai_filter_enabled":true})).ai_filter_enabled
+    CONFIG.default_user_preferences = ConfigPreferences.from_yaml("ai_blocklist_feeds: true\nai_blocklist_action: replace_thumbnail\n")
+    raise "Legacy instance defaults lost" unless Preferences.from_json("{}").ai_blocklist_feeds_action == "replace_thumbnail" && Preferences.from_yaml("{}").ai_filter_enabled
+    CONFIG.default_user_preferences = ConfigPreferences.from_yaml("ai_blocklist_search_action: hide\n")
+    raise "Instance action did not infer master" unless Preferences.from_json("{}").ai_filter_enabled
+    CONFIG.default_user_preferences = ConfigPreferences.from_yaml("ai_blocklist_other_pages_action: hide\nai_warnlist_search_action: invalid\n")
+    raise "Invalid instance action enabled filtering" if Preferences.from_json("{}").ai_filter_enabled
+  ensure
+    CONFIG.default_user_preferences = original_defaults
+  end
+
+  body = HTTP::Params.new
+  body["ai_filter_form_version"] = "2"
+  body["ai_filter_enabled"] = "on"
+  action_keys.each_with_index { |key, index| body[key] = key.includes?("other_pages") || index.odd? ? "replace_thumbnail" : "hide" }
+  {false, true}.each do |account|
+    saved = save_ai_page_preferences(defaults, body.to_s, account)
+    json = JSON.parse(saved.to_json)
+    raise "Master not saved" unless saved.ai_filter_enabled
+    raise "Page choices coupled" unless action_keys.all? { |key| json[key].as_s == body[key] }
+    raise "Page YAML roundtrip lost settings" unless Preferences.from_yaml(saved.to_yaml).to_json == saved.to_json
+    paused = save_ai_page_preferences(saved, "ai_filter_form_version=2", account)
+    raise "Master did not pause" if paused.ai_filter_enabled
+    raise "Pause erased choices" unless action_keys.all? { |key| JSON.parse(paused.to_json)[key] == json[key] }
+    stale = save_ai_page_preferences(paused, "ai_blocklist_search=on&ai_blocklist_action=hide", account)
+    raise "Older form changed master" if stale.ai_filter_enabled
+    raise "Older form erased choices" unless action_keys.all? { |key| JSON.parse(stale.to_json)[key] == json[key] }
+    resumed = save_ai_page_preferences(paused, "ai_filter_form_version=2&ai_filter_enabled=on", account)
+    raise "Resume lost actions" unless resumed.ai_filter_enabled && action_keys.all? { |key| JSON.parse(resumed.to_json)[key] == json[key] }
+    unless account
+      cookies = {"active" => saved, "paused" => paused, "resumed" => resumed}.transform_values { |value| Invidious::User::Cookies.prefs(nil, value).value }
+      File.write("#{output}/ai-preferences-cookies.json", cookies.to_json)
+    end
+
+    next unless account
+    user = signed_in_env("/preferences").get("user").as(User)
+    user.preferences = paused
+    api = theme_post_env(paused.to_json, "application/json")
+    api.set "user", user
+    Invidious::Routes::API::V1::Authenticated.set_preferences(api)
+    user.preferences = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
+    api.set "user", user
+    fetched = JSON.parse(Invidious::Routes::API::V1::Authenticated.get_preferences(api))
+    all_keys = action_keys + ["ai_filter_enabled"]
+    raise "Page actions API roundtrip lost settings" unless all_keys.all? { |key| fetched[key] == JSON.parse(paused.to_json)[key] }
+    exported = JSON.parse(Invidious::User::Export.to_invidious(user))
+    raise "Export lost page actions" unless all_keys.all? { |key| exported["preferences"][key] == fetched[key] }
+    Invidious::User::Import.from_invidious(user, {preferences: exported["preferences"]}.to_json)
+    imported = JSON.parse(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
+    raise "Import lost paused actions" unless all_keys.all? { |key| imported[key] == fetched[key] }
+  end
+end
+
+def save_ai_page_preferences(previous : Preferences, body : String, account : Bool) : Preferences
+  env = theme_post_env(body)
+  env.set "preferences", previous
+  if account
+    user = signed_in_env("/preferences").get("user").as(User)
+    user.preferences = previous
+    env.set "user", user
+  end
+  Invidious::Routes::PreferencesRoute.update(env)
+  if account
+    Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", env.get("user").as(User).email, as: String))
+  else
+    Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))
   end
 end
 
@@ -170,11 +279,26 @@ def render_ai_thumbnail_fixtures(output, items, frontend, video, storage, lists,
       raise "Replaced autoplay target was removed" unless filtered_related.first["id"] == items.first.id
       video.info["relatedVideos"] = JSON.parse(filtered_related.to_json)
       File.write("#{output}/watch-ai-thumbnails-#{suffix}.html", watch_fixture(watch_env, nil, supplied_video: video))
+      paused_preferences = preferences
+      paused_preferences.ai_filter_enabled = false
+      paused_env = fixture_env("/search", "dark", thin, visual_theme: theme)
+      paused_env.set "preferences", paused_preferences
+      File.write("#{output}/search-ai-paused-#{suffix}.html", ai_cards_fixture(paused_env, frontend.filter(items, paused_env, :search)))
+      paused_watch = fixture_env("/watch?v=2isYuQZMbdU", "dark", thin, visual_theme: theme)
+      paused_watch.set "preferences", paused_preferences
+      video.info["relatedVideos"] = JSON.parse(frontend.recommendations(related, paused_watch).to_json)
+      File.write("#{output}/watch-ai-paused-#{suffix}.html", watch_fixture(paused_watch, nil, supplied_video: video))
 
       library_env = fixture_env("/playlist?list=PLfixture", "dark", thin, "compact", visual_theme: theme)
       ai_other_preferences(library_env)
       playlist_items = items.map_with_index { |item, index| PlaylistVideo.new({title: item.title, id: item.id, author: item.author, ucid: item.ucid, length_seconds: 60, published: Time.utc, plid: "PLfixture", index: index.to_i64, live_now: false, members_only: false}) }
       File.write("#{output}/playlist-ai-thumbnails-#{suffix}.html", ai_cards_fixture(library_env, playlist_items))
+      paused_library = fixture_env("/playlist?list=PLfixture", "dark", thin, visual_theme: theme)
+      paused_library_preferences = library_env.get("preferences").as(Preferences)
+      paused_library_preferences.ai_filter_enabled = false
+      paused_library.set "preferences", paused_library_preferences
+      File.write("#{output}/playlist-ai-paused-#{suffix}.html", ai_cards_fixture(paused_library, playlist_items))
+
       File.write("#{output}/mix-ai-thumbnails-#{suffix}.html", ai_mix_fixture(fixture_env("/mix?list=RDfixture", "dark", thin, visual_theme: theme), items))
 
       queue_env = fixture_env("/api/v1/playlists/PLfixture?format=html", "dark", thin, visual_theme: theme)
@@ -192,6 +316,14 @@ def render_ai_thumbnail_fixtures(output, items, frontend, video, storage, lists,
       queue_data.as_h["playlistHtml"] = JSON::Any.new(template_playlist(source, false, thin, ai_thumbnails: replacements, locale: "en-US"))
       raise "Queue classification mutated public source" unless source.to_json == original_source
       File.write("#{output}/queue-ai-thumbnails-#{suffix}.json", queue_data.to_json)
+      paused_queue = fixture_env("/api/v1/playlists/PLfixture?format=html", "dark", thin, visual_theme: theme)
+      paused_queue.set "preferences", paused_library_preferences
+      paused_queue_data = JSON.parse(queue_data.to_json)
+      paused_replacements = frontend.prepare_queue(paused_queue, source["videos"].as_a)
+      raise "Paused queue still replaced thumbnails" unless paused_replacements.empty?
+      paused_queue_data.as_h["playlistHtml"] = JSON::Any.new(template_playlist(source, false, thin, ai_thumbnails: paused_replacements, locale: "en-US"))
+      File.write("#{output}/queue-ai-paused-#{suffix}.json", paused_queue_data.to_json)
+
       source.as_h["mixId"] = JSON::Any.new("RDfixture")
       mix_html = template_mix(source, false, thin, ai_thumbnails: replacements, locale: "en-US")
       raise "Mix queue lost replacement thumbnails" unless mix_html.scan("ai-thumbnail-compact").size == 3
@@ -224,6 +356,44 @@ def check_ai_filtering(output)
   Invidious::AiSList.fixture_runtime = Invidious::AiSList::Runtime.new(lists, resolver)
   items = [ai_fixture_video('a', "@blocked"), ai_fixture_video('b', "@moderate"), ai_fixture_video('c', "@safe")]
   frontend = Invidious::Frontend::AiChannels
+  {:feeds, :search, :recommendations, :other}.each do |surface|
+    suffix = surface == :other ? "other_pages" : surface.to_s
+    actions = surface == :other ? {"off", "replace_thumbnail"} : {"off", "hide", "replace_thumbnail"}
+    {false, true}.each do |enabled|
+      actions.each do |block_action|
+        actions.each do |warn_action|
+          env = fixture_env("/search")
+          preferences = Preferences.from_json({"ai_filter_enabled" => JSON::Any.new(enabled), "ai_blocklist_#{suffix}_action" => JSON::Any.new(block_action), "ai_warnlist_#{suffix}_action" => JSON::Any.new(warn_action)}.to_json)
+          env.set "preferences", preferences
+          expected = items.reject { |item| enabled && ((block_action == "hide" && item.author_handle == "@blocked") || (warn_action == "hide" && item.author_handle == "@moderate")) }
+          actual = surface == :other ? (frontend.prepare(env, items); items) : frontend.filter(items, env, surface)
+          raise "New page actions/global switch coupled" unless actual.map(&.id) == expected.map(&.id)
+          { {block_action, items[0], "blocklist"}, {warn_action, items[1], "warnlist"} }.each do |action, item, kind|
+            raise "New page thumbnail action wrong" unless frontend.thumbnail_kind(env, item.ucid) == (enabled && action == "replace_thumbnail" ? kind : nil)
+          end
+          if surface == :recommendations
+            related = items.map { |item| {"id" => item.id, "ucid" => item.ucid, "author_handle" => item.author_handle.not_nil!} }
+            raise "New recommendation action wrong" unless frontend.recommendations(related, env).map(&.["id"]) == expected.map(&.id)
+          end
+          # Unknown channels must not trigger metadata requests while paused.
+          unless enabled
+            frontend.filter([ai_fixture_video('z', nil)], env, surface)
+            frontend.prepare_ids(env, ["UC#{"y" * 22}"])
+            frontend.recommendations([{"id" => "unknown0001", "ucid" => "UC#{"x" * 22}"}], env)
+            raise "Global Off fetched channel metadata" unless calls == 0
+          end
+        end
+      end
+    end
+  end
+  independent = Preferences.from_json(%({"ai_blocklist_feeds_action":"hide","ai_blocklist_search_action":"replace_thumbnail","ai_blocklist_recommendations_action":"off","ai_blocklist_other_pages_action":"replace_thumbnail"}))
+  {:feeds, :search, :recommendations, :other}.each do |surface|
+    env = fixture_env("/search")
+    env.set "preferences", independent
+    actual = surface == :other ? (frontend.prepare(env, items); items) : frontend.filter(items, env, surface)
+    raise "Page groups share an action" unless actual.size == (surface == :feeds ? 2 : 3)
+    raise "Page groups share replacement" unless frontend.thumbnail_kind(env, items.first.ucid) == ({:search, :other}.includes?(surface) ? "blocklist" : nil)
+  end
   {:feeds, :search, :recommendations, :other}.each do |surface|
     {false, true}.each do |block|
       {false, true}.each do |warn|
@@ -327,6 +497,13 @@ def check_ai_filtering(output)
   env = fixture_env("/preferences")
   env.set "preferences", Preferences.from_json(%({"ai_blocklist_feeds":true,"ai_blocklist_search":true,"ai_blocklist_recommendations":true}))
   File.write("#{output}/preferences-ai-filter.html", preferences_fixture(env))
+  {"modern-neon", "diary"}.each do |theme|
+    {false, true}.each do |enabled|
+      setting_env = fixture_env("/preferences", visual_theme: theme)
+      setting_env.set "preferences", Preferences.from_json({theme: theme, dark_mode: "dark", ai_filter_enabled: enabled, ai_blocklist_feeds_action: "hide", ai_blocklist_search_action: "replace_thumbnail", ai_blocklist_recommendations_action: "off", ai_warnlist_search_action: "hide", ai_blocklist_other_pages_action: "replace_thumbnail"}.to_json)
+      File.write("#{output}/preferences-ai-filter-#{theme}#{enabled ? "" : "-paused"}.html", preferences_fixture(setting_env))
+    end
+  end
   search_env = fixture_env("/search?q=videos&page=2")
   search_env.set "preferences", env.get("preferences").as(Preferences)
   File.write("#{output}/search-ai-empty.html", ai_search_empty_fixture(search_env))
