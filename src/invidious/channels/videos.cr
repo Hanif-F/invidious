@@ -44,6 +44,12 @@ module Invidious::Channel::Tabs
     items, continuation = extract_items(initial_data, channel.author, channel.id)
     avatars = Invidious::ChannelAvatars.from_items(items)
     avatars.merge!(Invidious::ChannelAvatars.from_channel_metadata(JSON::Any.new(initial_data), channel.id))
+    if handle = Invidious::AiSList.channel_handle(initial_data, channel.id)
+      items.map! do |item|
+        item.author_handle = handle if item.is_a?(SearchVideo) && item.ucid == channel.id
+        item
+      end
+    end
     {items, continuation, avatars}
   end
 

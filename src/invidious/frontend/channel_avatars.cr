@@ -7,6 +7,7 @@ module Invidious::Frontend::ChannelAvatars
   extend self
 
   def prepare(env, items)
+    Invidious::Frontend::AiChannels.observe(items)
     ids = [] of String
     supplied = Invidious::ChannelAvatars.from_items(items)
     items.each do |item|

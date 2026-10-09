@@ -6,6 +6,15 @@ BLOCKING_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_blocking_test
 
 The test refuses any other database name. It creates tables, tests migration tracking, per-account isolation, repeated block/unblock operations, cascade cleanup, and the fresh-install SQL. It also runs `playback_positions.cr` against both migrated and fresh-install schemas, checking progress imports, stale updates, retention, pruning, and account deletion. Destroy the disposable database after the run.
 
+AiSList cache migration and persistence checks use a separate disposable database:
+
+```sh
+AI_SLIST_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_ai_slist_test crystal run tests/database/ai_slist.cr
+```
+
+This verifies migration 22, fresh-install schemas, independent persisted lists,
+offline recovery, stale status, newer handle observations, and negative caching.
+
 DeArrow identity storage has a separate disposable PostgreSQL check:
 
 ```sh

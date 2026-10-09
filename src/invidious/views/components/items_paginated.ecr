@@ -2,6 +2,8 @@
 
 <%= page_nav_html %>
 
+<% if items.empty? && env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
+
 <div class="pure-g media-grid<%= env.get?("playlist_library") == true ? " playlist-library" : "" %>">
     <%- items.each_with_index do |item, item_position| -%>
         <%= rendered "components/item" %>

@@ -1,5 +1,6 @@
 require "json"
 require "../helpers/channel_avatars"
+require "../ai_slist"
 
 module Invidious::Videos::Parser
   extend self
@@ -50,6 +51,7 @@ module Invidious::Videos::Parser
       "title"            => related["title"]["simpleText"],
       "author"           => author || JSON::Any.new(""),
       "ucid"             => JSON::Any.new(ucid || ""),
+      "author_handle"    => JSON::Any.new(Invidious::AiSList.author_handle(channel_info, ucid || "") || ""),
       "length_seconds"   => JSON::Any.new(length || "0"),
       "short_view_count" => JSON::Any.new(short_view_count || "0"),
       "author_verified"  => JSON::Any.new(author_verified),
@@ -72,6 +74,7 @@ module Invidious::Videos::Parser
       "title"            => JSON::Any.new(video.title),
       "author"           => JSON::Any.new(video.author),
       "ucid"             => JSON::Any.new(video.ucid),
+      "author_handle"    => JSON::Any.new(video.author_handle || ""),
       "length_seconds"   => JSON::Any.new(video.length_seconds.to_s),
       "short_view_count" => JSON::Any.new(HelperExtractors.get_lockup_short_view_count(parts)),
       "author_verified"  => JSON::Any.new(video.author_verified.to_s),

@@ -55,6 +55,7 @@ module Invidious::Routes::Feeds
     end
 
     trending = Frontend::BlockedChannels.filter(trending, Frontend::BlockedChannels.ids(env))
+    trending = Frontend::AiChannels.filter(trending, env, :feeds)
     templated "feeds/trending"
   end
 

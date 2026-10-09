@@ -26,6 +26,8 @@ struct SearchVideo
   property premiere_timestamp : Time?
   property author_verified : Bool
   property author_thumbnail : String?
+  @[DB::Field(ignore: true)]
+  property author_handle : String? = nil
   property badges : VideoBadges
 
   def members_only : Bool

@@ -87,6 +87,7 @@ module Invidious::Routes::Search
         items = Frontend::BlockedChannels.filter(items, Frontend::BlockedChannels.ids(env))
       end
       blocked_results = upstream_count > items.size
+      items = Frontend::AiChannels.filter(items, env, :search) if query.type.regular?
       before_members = items.size
       items = Frontend::MemberVideos.filter(items, show_members)
       member_results = before_members > items.size
@@ -134,6 +135,7 @@ module Invidious::Routes::Search
 
     upstream_count = items.size
     items = Frontend::BlockedChannels.filter(items, Frontend::BlockedChannels.ids(env))
+    items = Frontend::AiChannels.filter(items, env, :search)
 
     # Pagination
     hashtag_encoded = URI.encode_www_form(hashtag, space_to_plus: false)

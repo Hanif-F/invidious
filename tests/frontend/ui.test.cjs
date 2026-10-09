@@ -1266,6 +1266,54 @@ for (const engine of engines) {
         await context.close();
     });
 
+    test(`${engine}: AI channel filter controls, status and empty results work without JavaScript`, async () => {
+        const fields = ['ai_blocklist_feeds', 'ai_blocklist_search', 'ai_blocklist_recommendations',
+            'ai_warnlist_feeds', 'ai_warnlist_search', 'ai_warnlist_recommendations'];
+        for (const width of [320, 390, 1440]) {
+            const {page, context, errors, requests} = await pageFor(engine, {fixture: 'preferences-ai-filter', width, javascript: false});
+            assert.equal(await page.locator('#preferences-ai-filter input[type=checkbox]').count(), 6);
+            for (const field of fields) {
+                assert.equal(await page.locator(`label[for="${field}"]`).count(), 1);
+                assert.equal(await page.locator(`#${field}`).isChecked(), field.startsWith('ai_blocklist_'));
+            }
+            const statuses = await page.locator('#preferences-ai-filter .ai-list-status').allTextContents();
+            assert.equal(statuses.length, 2);
+            assert.match(statuses[0], /1 channel/);
+            assert.match(statuses[0], /Last successful update:/);
+            assert.doesNotMatch(statuses[0], /Update overdue/);
+            assert.match(statuses[1], /Update overdue or failed/);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+            await page.locator('#ai_warnlist_search').check();
+            await page.locator('#ai_blocklist_feeds').uncheck();
+            await page.screenshot({path: path.join(artifacts, `${engine}-ai-filter-${width}.png`), fullPage: true});
+            if (width === 390) await page.locator('#preferences-ai-filter').screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-390.png`)});
+            const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
+            await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
+            const data = new URLSearchParams((await posted).postData());
+            assert.equal(data.get('ai_warnlist_search'), 'on');
+            assert.equal(data.has('ai_blocklist_feeds'), false);
+            assert.ok(!requests.some(url => /aisloplist|raw\.githubusercontent/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+        const search = await pageFor(engine, {fixture: 'search-ai-empty', route: 'search?q=videos&page=2', width: 390, javascript: false});
+        assert.equal(await search.page.locator('.video-card').count(), 0);
+        assert.equal(await search.page.getByRole('link', {name: 'Change AI channel filter settings'}).count(), 1);
+        assert.ok(await search.page.getByRole('link', {name: /Next page/}).count() > 0);
+        assert.match(await search.page.locator('.no-results-error').textContent(), /AI channel filter hid/);
+        await search.page.screenshot({path: path.join(artifacts, `${engine}-ai-empty-390.png`), fullPage: true});
+        assert.deepEqual(search.errors, []);
+        await search.context.close();
+
+        const watch = await pageFor(engine, {fixture: 'watch-ai-filter', javascript: false});
+        assert.equal(await watch.page.locator('.recommendation').count(), 2);
+        assert.equal(await watch.page.locator('.recommendation[data-channel-id="UCaaaaaaaaaaaaaaaaaaaaaa"]').count(), 0);
+        const videoData = JSON.parse(await watch.page.locator('#video_data').textContent());
+        assert.equal(videoData.next_video, 'aib00000000');
+        assert.deepEqual(watch.errors, []);
+        await watch.context.close();
+    });
+
     test(`${engine}: preferences sections, labels, and form fields`, async () => {
         const base = ['preferences-appearance', 'preferences-playback', 'preferences-browsing', 'preferences-enhancements'];
         const cases = [

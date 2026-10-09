@@ -1,5 +1,6 @@
 require "../helpers/serialized_yt_data"
 require "../helpers/channel_avatars"
+require "../ai_slist"
 
 # This file contains helper methods to parse the Youtube API json data into
 # neat little packages we can use
@@ -157,7 +158,7 @@ private module Parsers
         end
       end
 
-      SearchVideo.new({
+      video = SearchVideo.new({
         title:              title,
         id:                 video_id,
         author:             author,
@@ -171,6 +172,8 @@ private module Parsers
         author_thumbnail:   author_thumbnail,
         badges:             badges | (Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None),
       })
+      video.author_handle = Invidious::AiSList.author_handle(author_info, author_id)
+      video
     end
 
     def self.parser_name
@@ -678,7 +681,7 @@ private module Parsers
 
         length_seconds = decode_length_seconds(length) if length
 
-        return SearchVideo.new({
+        video = SearchVideo.new({
           title:              title,
           id:                 video_id,
           author:             author,
@@ -692,6 +695,8 @@ private module Parsers
           author_thumbnail:   Invidious::ChannelAvatars.lockup_thumbnail(metadata, author_id),
           badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
         })
+        video.author_handle = Invidious::AiSList.author_handle(metadata, author_id)
+        return video
         # If it's a playlist, it's content_type would be "LOCKUP_CONTENT_TYPE_PLAYLIST"
         # If it's a podcast, it's content_type would be "LOCKUP_CONTENT_TYPE_PODCAST"
         # Playlist and Podcasts structures are quite similar, so we can use the same logic

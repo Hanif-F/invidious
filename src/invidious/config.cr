@@ -74,6 +74,12 @@ struct ConfigPreferences
   @[YAML::Field(converter: Invidious::SponsorBlock::Colors)]
   property sponsorblock_colors : Hash(String, String) = Invidious::SponsorBlock::Colors.normalize({} of String => String)
   property dearrow_enabled : Bool = false
+  property ai_blocklist_feeds : Bool = false
+  property ai_blocklist_search : Bool = false
+  property ai_blocklist_recommendations : Bool = false
+  property ai_warnlist_feeds : Bool = false
+  property ai_warnlist_search : Bool = false
+  property ai_warnlist_recommendations : Bool = false
   property dearrow_show_original : Bool = true
   property search_privacy : Bool = false
 

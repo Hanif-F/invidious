@@ -41,6 +41,7 @@
 </div>
 
 <% Invidious::Frontend::ChannelAvatars.prepare(env, trending) %>
+<% if trending.empty? && env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
 <div class="pure-g media-grid">
 <% trending.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>

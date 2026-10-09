@@ -90,6 +90,9 @@ def get_about_info(ucid) : AboutChannel
       # TODO: Maybe separate verified author from verified artist?
       author_verified = author_badge.try { |badge| badge == "CHECK_CIRCLE_FILLED" || badge == "AUDIO_BADGE" } || false
       ucid = initdata["metadata"]["channelMetadataRenderer"]["externalId"].as_s
+      if handle = Invidious::AiSList.channel_handle(initdata, ucid)
+        Invidious::AiSList.runtime.resolver.observe({ucid => handle})
+      end
 
       # Raises a KeyError on failure.
       # TODO: Check if `c4TabbedHeaderRenderer` still exists on some channels.

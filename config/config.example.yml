@@ -622,6 +622,15 @@ videojs:
   max_goal_buffer_length: 60
 
 default_user_preferences:
+  ## Opt-in AiSList channel filtering for discovery pages. The server downloads
+  ## the lists every six hours; missing handles may add up to two seconds per page.
+  #ai_blocklist_feeds: false
+  #ai_blocklist_search: false
+  #ai_blocklist_recommendations: false
+  #ai_warnlist_feeds: false
+  #ai_warnlist_search: false
+  #ai_warnlist_recommendations: false
+
   ## Opt-in community title replacements from DeArrow (no license key required).
   ## These defaults also apply to accounts that have not saved DeArrow settings.
   #dearrow_enabled: false

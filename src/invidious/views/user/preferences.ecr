@@ -291,6 +291,7 @@
         <fieldset class="preferences-section" id="preferences-enhancements">
             <legend><%= I18n.translate(locale, "ui_enhancements") %></legend>
             <p class="preference-section-intro"><%= I18n.translate(locale, "ui_enhancements_hint") %></p>
+            <%= rendered "components/ai-filter-preferences" %>
             <div class="preference-subgroup sponsorblock-preferences">
                 <h2>SponsorBlock</h2>
             <p><a href="/preferences/sponsorblock/channels"><%= I18n.translate(locale, "sb_channels") %></a></p>

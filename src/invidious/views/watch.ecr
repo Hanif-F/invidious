@@ -450,6 +450,7 @@
         <% if params.related_videos %>
         <section class="recommendations panel" aria-labelledby="recommendations-heading">
             <h2 class="panel-heading" id="recommendations-heading"><%= I18n.translate(locale, "ui_recommended") %></h2>
+            <% if related_videos.empty? && env.get?("ai_filtered_recommendations") == true %><%= rendered "components/ai-filter-empty" %><% end %>
             <% if !native_clip && !preview_clip && !plid && !related_videos.empty? %>
             <div class="continue-control"><label for="continue"><%= I18n.translate(locale, "preferences_continue_label") %></label> <input id="continue" name="continue" type="checkbox" <%= "checked" if params.continue %>></div>
             <% end %>

@@ -31,6 +31,7 @@
 <%- if items.empty? -%>
 <div class="h-box no-results-error">
     <div>
+        <% if env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
         <% if blocked_results %>
         <p><%= I18n.translate(locale, "Blocked channels hid these results") %></p>
         <% unblocked_query = query.to_http_params; unblocked_query["include_blocked"] = "1" %>

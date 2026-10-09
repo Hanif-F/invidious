@@ -28,6 +28,19 @@ ignored by Git.
 
 ## Coverage and limits
 
+AiSList fixtures use local lists and fake channel resolution to verify all six
+switches, guest/account persistence, JSON/YAML and export/import, exact channel
+identity, independent list status, preserved search pagination, and recommendation
+autoplay ordering. Browser coverage checks desktop/mobile and no-JavaScript forms:
+
+```sh
+node --test --test-name-pattern='AI channel filter|preferences sections' tests/frontend/ui.test.cjs
+```
+
+Parser, cache, concurrency, queue limits, retry timing and the shared two-second
+deadline are covered by `crystal spec spec/ai_slist_spec.cr` with fake fetchers and
+clocks. Database migration checks are documented in `tests/database/README.md`.
+
 Channel avatars reuse URLs in existing responses and the persistent `channel_avatars`
 cache (migration 21 for existing installations). Cache misses use an inline placeholder;
 there are no extra channel lookups, background fetches, or age-triggered refreshes.

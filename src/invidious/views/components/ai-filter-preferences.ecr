@@ -1,0 +1,29 @@
+<div class="preference-subgroup" id="preferences-ai-filter">
+    <h2><%= I18n.translate(locale, "ai_filter_title") %></h2>
+    <p class="preference-description"><%= I18n.translate(locale, "ai_filter_description") %></p>
+    <p class="preference-description"><%= I18n.translate(locale, "ai_filter_lookup_hint") %></p>
+    <% ai_lists = Invidious::AiSList.runtime.lists %>
+    <% {
+        {"blocklist", preferences.ai_blocklist_feeds, preferences.ai_blocklist_search, preferences.ai_blocklist_recommendations},
+        {"warnlist", preferences.ai_warnlist_feeds, preferences.ai_warnlist_search, preferences.ai_warnlist_recommendations},
+    }.each do |kind, feeds, search, recommendations| %>
+        <h3><%= I18n.translate(locale, "ai_filter_#{kind}") %></h3>
+        <% { {"feeds", feeds}, {"search", search}, {"recommendations", recommendations} }.each do |surface, enabled| %>
+        <div class="pure-control-group">
+            <label for="ai_<%= kind %>_<%= surface %>"><%= I18n.translate(locale, "ai_filter_#{surface}") %></label>
+            <input type="checkbox" name="ai_<%= kind %>_<%= surface %>" id="ai_<%= kind %>_<%= surface %>" <% if enabled %>checked<% end %>>
+        </div>
+        <% end %>
+        <% if snapshot = ai_lists.snapshot(kind) %>
+        <p class="preference-description ai-list-status">
+            <%= I18n.translate_count(locale, "ai_filter_channels", snapshot.entries.size) %> ·
+            <%= I18n.translate(locale, "ai_filter_updated") %>
+            <time datetime="<%= snapshot.updated_at.to_rfc3339 %>"><%= snapshot.updated_at.to_s("%F %T UTC") %></time>
+            <% if ai_lists.stale?(kind) %> · <%= I18n.translate(locale, "ai_filter_stale") %><% end %>
+        </p>
+        <% else %>
+        <p class="preference-description ai-list-status"><%= I18n.translate(locale, "ai_filter_unavailable") %></p>
+        <% end %>
+    <% end %>
+    <p class="preference-description"><%= I18n.translate(locale, "ai_filter_attribution") %> <a href="https://aisloplist.com/" rel="noopener noreferrer">AiSList</a> (<a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener noreferrer">CC BY-NC 4.0</a>). <a href="https://github.com/Override92/AiSList" rel="noopener noreferrer"><%= I18n.translate(locale, "ai_filter_source") %></a></p>
+</div>

@@ -199,6 +199,7 @@ def fetch_channel(ucid, pull_all_videos : Bool)
   LOGGER.trace("fetch_channel: #{ucid} : Downloading channel videos page")
   videos, continuation, avatars = IV::Channel::Tabs.get_refresh_videos(channel, auto_generated: !!auto_generated)
   Invidious::Database::ChannelAvatars.observe(avatars)
+  Invidious::AiSList.observe_items(videos)
 
   LOGGER.trace("fetch_channel: #{ucid} : Extracting videos from channel RSS feed")
   rss.xpath_nodes("//default:feed/default:entry", namespaces).each do |entry|

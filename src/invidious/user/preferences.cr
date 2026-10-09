@@ -98,6 +98,12 @@ struct Preferences
   @[YAML::Field(converter: Invidious::SponsorBlock::Colors)]
   property sponsorblock_colors : Hash(String, String) = CONFIG.default_user_preferences.sponsorblock_colors.dup
   property dearrow_enabled : Bool = CONFIG.default_user_preferences.dearrow_enabled
+  property ai_blocklist_feeds : Bool = CONFIG.default_user_preferences.ai_blocklist_feeds
+  property ai_blocklist_search : Bool = CONFIG.default_user_preferences.ai_blocklist_search
+  property ai_blocklist_recommendations : Bool = CONFIG.default_user_preferences.ai_blocklist_recommendations
+  property ai_warnlist_feeds : Bool = CONFIG.default_user_preferences.ai_warnlist_feeds
+  property ai_warnlist_search : Bool = CONFIG.default_user_preferences.ai_warnlist_search
+  property ai_warnlist_recommendations : Bool = CONFIG.default_user_preferences.ai_warnlist_recommendations
   property dearrow_show_original : Bool = CONFIG.default_user_preferences.dearrow_show_original
   property search_privacy : Bool = CONFIG.default_user_preferences.search_privacy
   property chat_show_timestamps : Bool = true

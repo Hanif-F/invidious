@@ -212,6 +212,7 @@ Invidious::Jobs.register Invidious::Jobs::NotificationJob.new(NOTIFICATION_CHANN
 Invidious::Jobs.register Invidious::Jobs::ClearExpiredItemsJob.new
 
 Invidious::Jobs.register Invidious::Jobs::InstanceListRefreshJob.new
+Invidious::Jobs.register Invidious::Jobs::AiSListRefreshJob.new
 
 Invidious::Jobs.start_all
 

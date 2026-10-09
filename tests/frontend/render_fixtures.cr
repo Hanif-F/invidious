@@ -320,6 +320,7 @@ raise "Density round trip failed" unless Preferences.from_json(Preferences.from_
 raise "Invalid YAML density accepted" unless Preferences.from_yaml("ui_density: unknown").ui_density == "balanced"
 
 require "./theme_checks"
+require "./ai_slist_checks"
 
 output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
 Dir.mkdir_p(output)
@@ -386,6 +387,7 @@ ensure
   Invidious::Themes::AVAILABLE.pop
 end
 puts "Rendered frontend fixtures to #{output}"
+check_ai_preferences
 
 # Account menus on recommendation cards without a PostgreSQL dependency.
 File.write("#{output}/watch-actions.html", watch_fixture(signed_in_env("/watch?v=2isYuQZMbdU"), nil))
@@ -583,3 +585,4 @@ File.write("#{output}/create-clip-diary.html", create_clip_fixture("diary", "id"
 require "./avatar_checks"
 require "./comment_avatar_checks"
 require "./popular_avatar_checks"
+check_ai_filtering(output)
