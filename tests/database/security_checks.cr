@@ -21,6 +21,10 @@ class SecurityTestEndpoint
     env = context
     Invidious::Routes::BeforeAll.handle(env)
     result = case env.request.path
+             when "/api/v1/ai/status"
+               Invidious::Routes::API::V1::AiChannels.status(env)
+             when "/api/v1/ai/channels"
+               Invidious::Routes::API::V1::AiChannels.channels(env)
              when "/api/v1/auth/playlists"
                Invidious::Routes::API::V1::Authenticated.list_playlists(env)
              when "/api/v1/auth/feed/rss"

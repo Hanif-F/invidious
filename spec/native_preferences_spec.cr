@@ -2,6 +2,18 @@ require "spec"
 require "../src/invidious/native_preferences"
 
 describe Invidious::NativePreferences do
+  it "accepts all canonical AI settings and rejects invalid values atomically" do
+    data = JSON.parse(%({"ai_filter_enabled":false,"theme":"keep"})).as_h
+    data.delete("theme")
+    Invidious::NativePreferences::AI_ACTIONS.each do |key|
+      data[key] = JSON::Any.new(key.ends_with?("other_pages_action") ? "replace_thumbnail" : "hide")
+    end
+    Invidious::NativePreferences.validate_patch(data)
+    [%({"ai_filter_enabled":"true"}), %({"ai_warnlist_other_pages_action":"hide"}), %({"ai_blocklist_search_action":null}),
+     %({"ai_blocklist_feeds_action":"invalid"}), %({"ai_warnlist_action":"hide"})].each do |body|
+      expect_raises(Exception) { Invidious::NativePreferences.validate_patch(JSON.parse(body).as_h) }
+    end
+  end
   it "accepts every shared codec and preserves it through unrelated sparse patches" do
     {"auto", "av1", "h264"}.each do |codec|
       stored = JSON.parse(%({"video_codec":"auto","theme":"diary","future":{"keep":true}})).as_h

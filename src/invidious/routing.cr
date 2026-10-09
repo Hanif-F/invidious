@@ -269,6 +269,8 @@ module Invidious::Routing
       {{namespace = Routes::API::V1}}
 
       # Videos
+      get "/api/v1/ai/status", {{namespace}}::AiChannels, :status
+      get "/api/v1/ai/channels", {{namespace}}::AiChannels, :channels
       get "/api/v1/sponsorblock/:id", {{namespace}}::SponsorBlock, :segments
       get "/api/v1/dearrow/:id", {{namespace}}::DeArrow, :title
       get "/api/v1/dearrow/:id/submissions", {{namespace}}::DeArrow, :submissions

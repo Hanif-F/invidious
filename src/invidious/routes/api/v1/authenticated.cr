@@ -66,6 +66,11 @@ module Invidious::Routes::API::V1::Authenticated
     PG_DB.transaction do |tx|
       conn = tx.connection
       stored = JSON.parse(conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", user.email, as: String)).as_h
+      if data.has_key?("ai_filter_enabled") || data.keys.any? { |key| Invidious::NativePreferences::AI_ACTIONS.includes?(key) }
+        # Freeze effective legacy/default choices before applying a sparse edit.
+        effective = JSON.parse(Preferences.from_json(stored.to_json).to_json).as_h
+        (["ai_filter_enabled"] + Invidious::NativePreferences::AI_ACTIONS).each { |key| stored[key] = effective[key] }
+      end
       Invidious::SponsorBlock.merge_patch(stored, data, names)
       raw = stored.to_json
       conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw, user.email)

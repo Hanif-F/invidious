@@ -589,3 +589,46 @@ storage; paired offline playback merges sources without changing the files.
 Save to files runs a local foreground export using Media3 Transformer 1.9.3:
 attempt MP4 transmux first, require explicit consent before H.264/AAC conversion,
 and fail rather than reduce unsupported resolution or frame rate.
+
+## AI channel filter
+
+The public `GET /api/v1/ai/status` returns a `lists` object keyed by `blocklist`
+and `warnlist`. Each entry contains `available` and `stale` booleans,
+`channelCount` (parsed, deduplicated entries), and `updatedAt` (last successful
+server download as an RFC3339 UTC string, or null). Failed refreshes keep the last
+successful list available with stale status.
+
+`GET /api/v1/ai/channels?ids=<comma-separated UC IDs>&lists=blocklist,warnlist`
+accepts 1–100 canonical IDs and one or both explicitly selected list kinds.
+Duplicate IDs/kinds are deduplicated; missing, unknown, invalid or oversized input
+returns HTTP 400. The response contains the same `lists` metadata and a `channels`
+object keyed by ID. Each channel has `matches` (an array of matching list kinds)
+and `resolved` (whether all requested lists were available and matching could
+complete). Partial positive matches remain usable when `resolved` is false;
+an unresolved empty array is not a confirmed nonmatch. No handles, account
+identifiers or viewing history are sent to AiSList.
+
+Both endpoints work without authentication, return `Cache-Control: no-store`,
+and reuse the existing list snapshots, resolver workers, bounded queue, seven-day
+handle cache, hourly negative cache and collection-wide two-second wait budget.
+Unavailable lists do not trigger metadata lookups. Public discovery responses
+remain unfiltered and unpersonalized.
+
+`PATCH /api/v1/auth/preferences` accepts `ai_filter_enabled` (boolean) and
+`ai_{blocklist|warnlist}_{feeds|search|recommendations|other_pages}_action`.
+Discovery actions accept `off`, `hide`, `replace_thumbnail`; `other_pages`
+accepts only `off` and `replace_thumbnail`. Wrong types and unsupported actions
+reject the entire patch with HTTP 400. Existing `GET:preferences` and
+`PATCH:preferences` permissions suffice. AI edits canonicalize effective
+legacy/default AI settings under the account lock before applying sparse deltas,
+without replacing unrelated preferences. The master switch pauses actions while
+retaining saved choices.
+
+Mobivious applies the settings locally, including background recommendation
+selection; explicit queues and library pages never hide AI matches. Matches are
+cached in memory for five minutes per instance, capped at 10,000 channels, and
+invalidated when list timestamps change. Pending classifications retry once after
+five seconds and on subsequent loads; missing routes, unavailable lists and
+network failures leave unresolved content visible. Saved downloads are excluded.
+Deploy this API extension with the Android update. Existing servers need migration
+22 for the caches; the extension itself adds no migration or token scopes.

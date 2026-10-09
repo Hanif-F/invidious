@@ -5,7 +5,9 @@ require "./sponsorblock"
 # Validate every field before the account transaction; retain all unrelated JSON.
 module Invidious::NativePreferences
   BOOLEANS = %w(watch_history save_player_pos dearrow_enabled dearrow_show_original
-    autoplay continue continue_autoplay video_loop listen local thin_mode related_videos extend_desc latest_only unseen_only notifications_only show_member_videos)
+    autoplay continue continue_autoplay video_loop listen local thin_mode related_videos extend_desc latest_only unseen_only notifications_only show_member_videos ai_filter_enabled)
+  AI_ACTIONS = %w(ai_blocklist_feeds_action ai_blocklist_search_action ai_blocklist_recommendations_action ai_blocklist_other_pages_action
+    ai_warnlist_feeds_action ai_warnlist_search_action ai_warnlist_recommendations_action ai_warnlist_other_pages_action)
   SPONSORBLOCK = %w(sponsorblock_enabled sponsorblock_modes sponsorblock_colors sponsorblock_channel_overrides)
   HOMES        = ["", "Popular", "Trending", "Subscriptions", "Playlists"]
   SORTS        = ["published", "published - reverse", "alphabetically", "alphabetically - reverse", "channel name", "channel name - reverse"]
@@ -17,6 +19,9 @@ module Invidious::NativePreferences
     data.each do |key, value|
       if BOOLEANS.includes?(key)
         value.as_bool
+      elsif AI_ACTIONS.includes?(key)
+        choices = key.ends_with?("_other_pages_action") ? %w(off replace_thumbnail) : %w(off hide replace_thumbnail)
+        raise "Invalid AI action" unless choices.includes?(value.as_s)
       elsif SPONSORBLOCK.includes?(key)
         sponsor[key] = value
       else

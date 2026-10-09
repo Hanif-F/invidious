@@ -111,3 +111,10 @@ browser signup defaults, preserved guest cookies across sign-in/sign-out, scoped
 and sorting, revoked sessions, account rename, current-profile response headers,
 unchanged native bearer behavior, rejected guest channel writes and account-only
 deletion cleanup. It reuses the existing schema; no browser-profile migration is needed.
+
+The account harness also runs `ai_native_checks.cr`: public classification/status
+routes through production middleware, bounded input validation, legacy AI action
+canonicalization, concurrent sparse preference edits, unrelated-field retention,
+atomic rejection and browser CSRF. Classification uses synthetic lists and fake
+channel resolution; no YouTube or GitHub request is permitted. Focused parser/API
+specs run with `crystal spec spec/ai_slist_spec.cr spec/ai_slist_api_spec.cr spec/native_preferences_spec.cr`.

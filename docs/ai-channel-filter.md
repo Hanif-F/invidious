@@ -24,7 +24,8 @@ page and excludes hidden recommendations from autoplay. Replacement retains the
 card and shows a warning instead of its image. Library/channel/queue pages never
 hide AI matches, change their order, or change their autoplay eligibility.
 The controls and the **List status and technical details** disclosure work without
-JavaScript. Public discovery APIs remain unpersonalized; native clients are unchanged.
+JavaScript. Public discovery APIs remain unpersonalized. Mobivious uses the public
+classification API described in [Mobile API](mobile-api.md#ai-channel-filter).
 
 Replacement thumbnails use a muted charcoal background and grey, regular-weight
 text: “Likely AI-generated” with “AiSList Blocklist”, or “Possibly AI-generated”
