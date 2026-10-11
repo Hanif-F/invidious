@@ -1,0 +1,30 @@
+# Copy to config/config.yml and replace all CHANGE_ME!! placeholders.
+# This is a local-development configuration, not a production secret file.
+database_url: postgres://kemal:CHANGE_ME!!@127.0.0.1:5432/invidious
+hmac_key: CHANGE_ME!!
+host_binding: 127.0.0.1
+port: 3000
+check_tables: false
+login_enabled: true
+registration_enabled: true
+captcha_enabled: true
+statistics_enabled: false
+
+# Deploy Companion separately and match its configured 16-character API key.
+# Omitted public_url uses the application's /companion proxy.
+invidious_companion:
+  - private_url: http://127.0.0.1:8282/companion
+invidious_companion_key: CHANGE_ME!!
+
+# Optional: dedicated 64-character hexadecimal key for DeArrow contributions.
+# dearrow_identity_key: CHANGE_ME!!
+
+default_user_preferences:
+  locale: en-US
+  quality: dash
+  video_codec: auto
+  watch_history: true
+  save_player_pos: false
+  sponsorblock_enabled: false
+  dearrow_enabled: false
+  ai_filter_enabled: false

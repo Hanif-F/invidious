@@ -1,9 +1,9 @@
 /docs/*
-!/docs/theming.md
-!/docs/dearrow-contributions.md
-!/docs/native-clips.md
-!/docs/mobile-api.md
-!/docs/ai-channel-filter.md
+!/docs/*.md
+!/docs/reference/
+!/docs/tools/
+!/docs/examples/
+/docs/tools/__pycache__/
 /dev/
 /lib/
 /bin/
