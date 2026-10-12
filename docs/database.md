@@ -10,6 +10,7 @@ PostgreSQL is mandatory. Application persistence is implemented in [database/](.
 | --- | --- |
 | `users` | Immutable `email` owner ID, mutable case-insensitive `username`, credential version/hash, preference JSON text, subscription/notification/watched arrays, private feed token and refresh flag |
 | `session_ids` | Browser or `v1:` API session identifier, owner, issued time and nullable expiry; revoked/deleted through account logic |
+| `tv_pairings` | Hashed TV approval codes, expiry/state, approving account/session and persisted polling interval; account deletion nulls ownership |
 | `auth_rate_limits` | HMAC-derived shared throttle key, attempts and window expiry |
 | `nonces` | Expiring signed-response nonces consumed by nonce-backed validation |
 | `playlists` | Local playlist/source legacy rows, author ownership, privacy enum, metadata and ordered occurrence-index array |
@@ -87,6 +88,6 @@ The Docker init hook only runs for a fresh PostgreSQL volume and does not execut
 
 ## Migration milestones
 
-Versions 1–9 create the original tables; 10 makes videos UNLOGGED; 11–13 add playback, blocking and identities; 14 detailed history; 15 membership metadata; 16 history duration; 17 secured account identities/sessions/throttles; 18 chat offsets; 19 clips; 20 saved sources/backfill; 21 avatars; 22 AiSList snapshots/handle cache. See the linked [migration inventory](reference/migrations.md) for exact implementations.
+Versions 1–9 create the original tables; 10 makes videos UNLOGGED; 11–13 add playback, blocking and identities; 14 detailed history; 15 membership metadata; 16 history duration; 17 secured account identities/sessions/throttles; 18 chat offsets; 19 clips; 20 saved sources/backfill; 21 avatars; 22 AiSList snapshots/handle cache; 23 TV pairing grants. See the linked [migration inventory](reference/migrations.md) for exact implementations.
 
 Back up and stop every writer before upgrades, especially the account-schema transition. Restore into a separate empty database for rollback; never point the prior binary's legacy schema checker at an upgraded production database. [Operations](operations.md) provides the full procedure.

@@ -23,6 +23,7 @@ module Invidious::Database
     Invidious::Database.check_table("session_ids", SessionId)
     Invidious::Database.check_table("users", User)
     Invidious::Database.check_table("auth_rate_limits")
+    Invidious::Database.check_table("tv_pairings")
     Invidious::Database.check_table("watch_history")
     Invidious::Database.check_table("playback_positions")
     Invidious::Database.check_table("chat_timing_offsets")

@@ -196,6 +196,12 @@ module Invidious::Database::Accounts
   end
 
   # Fixed windows are persisted and updated atomically across all instances.
+  def throttle_wait(key : String, limit : Int32) : Int32?
+    digest = OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, key)
+    expires = PG_DB.query_one?("SELECT expires_at FROM auth_rate_limits WHERE key = $1 AND attempts >= $2 AND expires_at > now()", digest, limit, as: Time)
+    expires ? {(expires - Time.utc).total_seconds.ceil.to_i, 1}.max : nil
+  end
+
   def throttle(key : String, limit : Int32, seconds : Int32) : Int32?
     digest = OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, key)
     PG_DB.exec("DELETE FROM auth_rate_limits WHERE expires_at <= now()")

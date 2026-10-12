@@ -67,6 +67,8 @@ module Invidious::Routing
     get "/login", Routes::Login, :login_page
     post "/login", Routes::Login, :login
     post "/signout", Routes::Login, :signout
+    get "/tv", Routes::TvPairing, :show
+    post "/tv", Routes::TvPairing, :submit
 
     get "/blocked_channels", Routes::BlockedChannels, :index
     post "/blocked_channels", Routes::BlockedChannels, :update
@@ -264,7 +266,13 @@ module Invidious::Routing
   #  API routes
   # -------------------
 
+  def register_tv_pairing_api_routes
+    post "/api/v1/tv/pairing/start", Routes::API::V1::TvPairing, :start
+    post "/api/v1/tv/pairing/token", Routes::API::V1::TvPairing, :token
+  end
+
   def register_api_v1_routes
+    self.register_tv_pairing_api_routes
     {% begin %}
       {{namespace = Routes::API::V1}}
 

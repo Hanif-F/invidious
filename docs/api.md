@@ -183,3 +183,7 @@ DeArrow writes are explicit and are not safely auto-retryable on ambiguous timeo
 Common JSON errors have `{"error":"message"}`. 400 generally means invalid request; 401 is used by native credential/account checks; 403 includes auth/scope/CSRF failures or disabled features; 404 includes absent and owner-hidden resources; 409 includes state/collision/conflict; 429 includes `Retry-After`; 5xx indicates server/upstream failures. Historical endpoints are not uniform: some return an empty enhancement result, some 500/503, and the legacy import swallows exceptions. Never infer success from body parsing alone.
 
 Treat additions as optional, preserve unknown preference keys through safe patches, follow returned URLs/continuations and renew tokens for added scopes. Do not cache private content in shared storage. [Route references](reference/routes.md) cover browser actions, RSS, manifests, images and media outside this JSON guide. [Troubleshooting](troubleshooting.md) explains common integration failures.
+
+## TV phone approval
+
+Public POST `/api/v1/tv/pairing/start` and `/api/v1/tv/pairing/token` use bounded JSON and no-store responses. Browser `/tv` requires explicit CSRF-protected approval. See [contract v1](tv-pairing.md) for exact states, throttling, native credentials and API-only/deployment behavior.

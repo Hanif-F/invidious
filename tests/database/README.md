@@ -118,3 +118,5 @@ canonicalization, concurrent sparse preference edits, unrelated-field retention,
 atomic rejection and browser CSRF. Classification uses synthetic lists and fake
 channel resolution; no YouTube or GitHub request is permitted. Focused parser/API
 specs run with `crystal spec spec/ai_slist_spec.cr spec/ai_slist_api_spec.cr spec/native_preferences_spec.cr`.
+
+`tv_pairing_checks.cr` runs in the account harness through production middleware, templates and registered HTTP routes. It verifies migration 23/fresh SQL, hashed codes, polling slowdown, states/expiry/cleanup, CSRF/account binding, IP/account limits, two concurrent redemptions, issuance rollback, session/credential revocation and deletion. A local HTTP flow follows browser login/approval through native token authentication. No deployed QR acceptance is implied. `PAIRING_PREVIEW_DIR` optionally saves the synthetic approval HTML with all CSRF values replaced. API-only preflight is separately checked with `crystal run tests/tv_pairing_api_only.cr -Dapi_only`, without a database.

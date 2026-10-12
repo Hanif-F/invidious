@@ -27,6 +27,7 @@ The existing detailed guides remain part of this handbook:
 - [Native clips](native-clips.md): editor, public links, ownership, range constraints and API.
 - [DeArrow contributions](dearrow-contributions.md): identity encryption, submissions and votes.
 - [SponsorBlock](sponsorblock.md): skipping modes, categories and per-channel overrides.
+- [TV phone approval](tv-pairing.md): contract v1, browser approval, native redemption and deployment prerequisites.
 - [Mobivious API](mobile-api.md): native authentication, safe preference patches, library, history, downloads, chat and classification contracts.
 - [Theming](theming.md): authoring interface and design guidance.
 
@@ -39,7 +40,7 @@ The existing detailed guides remain part of this handbook:
 | [Configuration defaults](reference/configuration.md) | Top-level settings and nested configuration structures, including instance preference defaults |
 | [Preference fields](reference/preferences.md) | Serialized user settings and legacy AI compatibility fields |
 | [SQL schema](reference/schema.md) | All fresh-install columns, indexes, defaults, keys and constraints |
-| [Migrations](reference/migrations.md) | All 22 versioned database migrations |
+| [Migrations](reference/migrations.md) | All 23 versioned database migrations |
 | [Source map](reference/source-map.md) | Application modules, templates, browser assets and project tooling |
 
 The [coverage map](documentation.md#coverage-map) ties each subsystem to its guide and implementation. Source-derived references can be regenerated and checked with the scripts in [tools](tools/). Examples use placeholders and do not contain deployment secrets.

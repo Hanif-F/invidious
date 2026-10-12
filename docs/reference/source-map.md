@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **365 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **371 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -133,6 +133,7 @@ Fresh-install table/index/constraint definitions.
 | [config/sql/playlists.sql](../../config/sql/playlists.sql) | playlists |
 | [config/sql/saved_playlists.sql](../../config/sql/saved_playlists.sql) | saved playlists |
 | [config/sql/session_ids.sql](../../config/sql/session_ids.sql) | session ids |
+| [config/sql/tv_pairings.sql](../../config/sql/tv_pairings.sql) | tv pairings |
 | [config/sql/users.sql](../../config/sql/users.sql) | users |
 | [config/sql/videos.sql](../../config/sql/videos.sql) | videos |
 | [config/sql/watch_history.sql](../../config/sql/watch_history.sql) | watch history |
@@ -258,6 +259,7 @@ PostgreSQL persistence, ownership checks, cache queries and migration infrastruc
 | [src/invidious/database/sessions.cr](../../src/invidious/database/sessions.cr) | sessions |
 | [src/invidious/database/statistics.cr](../../src/invidious/database/statistics.cr) | statistics |
 | [src/invidious/database/subscription_manager.cr](../../src/invidious/database/subscription_manager.cr) | subscription manager |
+| [src/invidious/database/tv_pairings.cr](../../src/invidious/database/tv_pairings.cr) | tv pairings |
 | [src/invidious/database/users.cr](../../src/invidious/database/users.cr) | users |
 | [src/invidious/database/videos.cr](../../src/invidious/database/videos.cr) | videos |
 | [src/invidious/database/watch_history.cr](../../src/invidious/database/watch_history.cr) | watch history |
@@ -289,6 +291,7 @@ Versioned transactional schema changes.
 | [src/invidious/database/migrations/0020_create_saved_playlists_table.cr](../../src/invidious/database/migrations/0020_create_saved_playlists_table.cr) | 0020 create saved playlists table |
 | [src/invidious/database/migrations/0021_create_channel_avatars_table.cr](../../src/invidious/database/migrations/0021_create_channel_avatars_table.cr) | 0021 create channel avatars table |
 | [src/invidious/database/migrations/0022_create_ai_slist_cache.cr](../../src/invidious/database/migrations/0022_create_ai_slist_cache.cr) | 0022 create ai slist cache |
+| [src/invidious/database/migrations/0023_create_tv_pairings.cr](../../src/invidious/database/migrations/0023_create_tv_pairings.cr) | 0023 create tv pairings |
 ## src/invidious/frontend
 
 Presentation helpers for cards, filters, history, channels and page data.
@@ -390,6 +393,7 @@ HTTP page handlers, authentication context, redirects, RSS and proxy handlers.
 | [src/invidious/routes/search.cr](../../src/invidious/routes/search.cr) | search |
 | [src/invidious/routes/sponsorblock_preferences.cr](../../src/invidious/routes/sponsorblock_preferences.cr) | sponsorblock preferences |
 | [src/invidious/routes/subscriptions.cr](../../src/invidious/routes/subscriptions.cr) | subscriptions |
+| [src/invidious/routes/tv_pairing.cr](../../src/invidious/routes/tv_pairing.cr) | tv pairing |
 | [src/invidious/routes/video_playback.cr](../../src/invidious/routes/video_playback.cr) | video playback |
 | [src/invidious/routes/watch.cr](../../src/invidious/routes/watch.cr) | watch |
 ## src/invidious/routes/api
@@ -414,6 +418,7 @@ JSON APIs, manifests and authenticated native contracts; see the API and route r
 | [src/invidious/routes/api/v1/native_library.cr](../../src/invidious/routes/api/v1/native_library.cr) | native library |
 | [src/invidious/routes/api/v1/search.cr](../../src/invidious/routes/api/v1/search.cr) | search |
 | [src/invidious/routes/api/v1/sponsorblock.cr](../../src/invidious/routes/api/v1/sponsorblock.cr) | sponsorblock |
+| [src/invidious/routes/api/v1/tv_pairing.cr](../../src/invidious/routes/api/v1/tv_pairing.cr) | tv pairing |
 | [src/invidious/routes/api/v1/videos.cr](../../src/invidious/routes/api/v1/videos.cr) | videos |
 ## src/invidious/search
 
@@ -525,6 +530,7 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | [src/invidious/views/user/sponsorblock_channels.ecr](../../src/invidious/views/user/sponsorblock_channels.ecr) | sponsorblock channels |
 | [src/invidious/views/user/subscription_manager.ecr](../../src/invidious/views/user/subscription_manager.ecr) | subscription manager |
 | [src/invidious/views/user/token_manager.ecr](../../src/invidious/views/user/token_manager.ecr) | token manager |
+| [src/invidious/views/user/tv_pairing.ecr](../../src/invidious/views/user/tv_pairing.ecr) | tv pairing |
 | [src/invidious/views/watch.ecr](../../src/invidious/views/watch.ecr) | watch |
 ## src/invidious/yt_backend
 

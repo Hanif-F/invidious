@@ -632,3 +632,7 @@ five seconds and on subsequent loads; missing routes, unavailable lists and
 network failures leave unresolved content visible. Saved downloads are excluded.
 Deploy this API extension with the Android update. Existing servers need migration
 22 for the caches; the extension itself adds no migration or token scopes.
+
+## TV phone approval
+
+[Contract v1](tv-pairing.md) adds public Start/Poll and explicit browser `/tv` approval. Success reuses native login credentials and scopes; existing tokens and manual login are unchanged. Migration 23 is required. Deployed availability is separate from local source verification.

@@ -32,7 +32,7 @@ All jobs live in the application process as fibers and stop when it stops. Regis
 | SubscribeToFeeds | Positive/enabled `use_pubsub_feeds` | Checks push subscriptions around once per minute; renews old/missing subscriptions |
 | PullPopularVideos | `popular_enabled` | Updates process-local popular snapshot every minute |
 | Notification | Always registered | PostgreSQL notification bridge and client connection coordination; retries after connection errors |
-| ClearExpiredItems | Always registered | Deletes expired videos/nonces/positions hourly, retries DB errors after ten minutes |
+| ClearExpiredItems | Always registered | Deletes expired videos/nonces/positions/TV grants hourly, retries DB errors after ten minutes |
 | InstanceListRefresh | Always registered | Alternative instance refresh every 30 minutes |
 | AiSListRefresh | Always registered | Restores/refreshes classifications, repeats every six hours and prunes long-expired handles |
 
@@ -61,7 +61,7 @@ All jobs live in the application process as fibers and stop when it stops. Regis
 
 `IV_DATABASE_URL` and `IV_STAGING_DATABASE_URL` above are operator-supplied variables for these examples. The application override is `INVIDIOUS_DATABASE_URL`. Do not paste a production URL into a disposable test harness.
 
-There are 22 current migrations. The account migration has an additional detailed procedure in [ACCOUNT_SECURITY.md](../ACCOUNT_SECURITY.md). `check_tables` does not supersede that process. Mixed old/new versions can alter shared schemas incorrectly and are not a supported upgrade shortcut.
+There are 23 current migrations. The account migration has an additional detailed procedure in [ACCOUNT_SECURITY.md](../ACCOUNT_SECURITY.md). `check_tables` does not supersede that process. Mixed old/new versions can alter shared schemas incorrectly and are not a supported upgrade shortcut.
 
 ## Restore and rollback
 

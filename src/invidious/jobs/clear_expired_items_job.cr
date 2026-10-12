@@ -11,6 +11,7 @@ class Invidious::Jobs::ClearExpiredItemsJob < Invidious::Jobs::BaseJob
         Invidious::Database::Videos.delete_expired
         Invidious::Database::Nonces.delete_expired
         Invidious::Database::PlaybackPositions.delete_expired
+        Invidious::Database::TvPairings.delete_expired
       rescue DB::Error
         failed = true
       end

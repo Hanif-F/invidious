@@ -4,7 +4,7 @@
 
 Generated from [src/invidious/routing.cr](../../src/invidious/routing.cr) by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-All **238 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
+All **242 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
 
 GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media proxies and configured companion routes remain. `/companion/*` requires a nonempty companion configuration. Notification registrations require `enable_user_notifications`. Public routes can still enforce resource privacy; `/api/v1/auth/*` always passes authentication. See [API conventions](../api.md), [security](../security.md), and [playback](../playback.md) for contracts.
 
@@ -36,6 +36,8 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | GET | `/login` | `Routes::Login.login_page` | [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr) |
 | POST | `/login` | `Routes::Login.login` | [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr) |
 | POST | `/signout` | `Routes::Login.signout` | [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr) |
+| GET | `/tv` | `Routes::TvPairing.show` | [src/invidious/routes/tv_pairing.cr](../../src/invidious/routes/tv_pairing.cr) |
+| POST | `/tv` | `Routes::TvPairing.submit` | [src/invidious/routes/tv_pairing.cr](../../src/invidious/routes/tv_pairing.cr) |
 | GET | `/blocked_channels` | `Routes::BlockedChannels.index` | [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr) |
 | POST | `/blocked_channels` | `Routes::BlockedChannels.update` | [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr) |
 | POST | `/dearrow_submit` | `Routes::DeArrowContributions.submit` | [src/invidious/routes/dearrow_contributions.cr](../../src/invidious/routes/dearrow_contributions.cr) |
@@ -210,6 +212,13 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | GET | `/companion/*` | `Routes::Companion.get_companion` | [src/invidious/routes/companion.cr](../../src/invidious/routes/companion.cr) |
 | POST | `/companion/*` | `Routes::Companion.post_companion` | [src/invidious/routes/companion.cr](../../src/invidious/routes/companion.cr) |
 | OPTIONS | `/companion/*` | `Routes::Companion.options_companion` | [src/invidious/routes/companion.cr](../../src/invidious/routes/companion.cr) |
+
+## Tv pairing api routes
+
+| Method | Path | Handler | Implementation |
+| --- | --- | --- | --- |
+| POST | `/api/v1/tv/pairing/start` | `Routes::API::V1::TvPairing.start` | [src/invidious/routes/api/v1/tv_pairing.cr](../../src/invidious/routes/api/v1/tv_pairing.cr) |
+| POST | `/api/v1/tv/pairing/token` | `Routes::API::V1::TvPairing.token` | [src/invidious/routes/api/v1/tv_pairing.cr](../../src/invidious/routes/api/v1/tv_pairing.cr) |
 
 ## Api v1 routes
 

@@ -115,6 +115,19 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 - Form: `csrf_token`.
 
+## Routes::TvPairing.show
+
+`GET /tv`. Source: [src/invidious/routes/tv_pairing.cr](../../src/invidious/routes/tv_pairing.cr).
+
+- Query: `user_code`.
+- Form: `user_code`.
+
+## Routes::TvPairing.submit
+
+`POST /tv`. Source: [src/invidious/routes/tv_pairing.cr](../../src/invidious/routes/tv_pairing.cr).
+
+- Form: `csrf_token`, `decision`, `user_code`.
+
 ## Routes::BlockedChannels.index
 
 `GET /blocked_channels`. Source: [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr).
@@ -717,6 +730,18 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 ## Routes::Companion.options_companion
 
 `OPTIONS /companion/*`. Source: [src/invidious/routes/companion.cr](../../src/invidious/routes/companion.cr).
+
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+
+## Routes::API::V1::TvPairing.start
+
+`POST /api/v1/tv/pairing/start`. Source: [src/invidious/routes/api/v1/tv_pairing.cr](../../src/invidious/routes/api/v1/tv_pairing.cr).
+
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+
+## Routes::API::V1::TvPairing.token
+
+`POST /api/v1/tv/pairing/token`. Source: [src/invidious/routes/api/v1/tv_pairing.cr](../../src/invidious/routes/api/v1/tv_pairing.cr).
 
 Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 

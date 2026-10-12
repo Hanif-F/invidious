@@ -96,6 +96,7 @@ require "./mobile_checks"
 require "./account_management_checks"
 require "./subscription_manager_checks"
 require "./browser_profile_checks"
+require "./tv_pairing_checks"
 
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
@@ -285,6 +286,7 @@ begin
   Invidious::Routes::Login.login_page(disabled)
   check(disabled.response.status_code == 403, "Login switch ignored")
   check_public_security
+  check_tv_pairing
   check_subscription_manager
 
   # Verify migration failure rolls back DDL rather than dropping/merging conflicts.
@@ -300,10 +302,11 @@ begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'username'", as: Int64) == 0, "Failed migration did not roll back DDL")
   PG_DB.exec("DROP SCHEMA public CASCADE")
   PG_DB.exec("CREATE SCHEMA public")
-  %w(users session_ids auth_rate_limits saved_playlists).each do |table|
+  %w(users session_ids auth_rate_limits saved_playlists tv_pairings).each do |table|
     PG_DB.using_connection { |conn| conn.as(PG::Connection).exec_all(File.read("config/sql/#{table}.sql")) }
   end
   store.check_schema
+  check(PG_DB.query_one("SELECT count(*) FROM tv_pairings", as: Int64) == 0, "Fresh pairing schema is not empty")
   check(PG_DB.query_one("SELECT count(*) FROM users", as: Int64) == 0, "Fresh schema is not empty")
   puts "Account migration, preservation, transactions, credentials, sessions, throttling, CSRF and forms passed"
 ensure

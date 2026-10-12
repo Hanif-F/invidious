@@ -30,3 +30,4 @@ Every registered migration runs in its own transaction and records its version i
 | 20 | Create saved playlists table | [src/invidious/database/migrations/0020_create_saved_playlists_table.cr](../../src/invidious/database/migrations/0020_create_saved_playlists_table.cr) |
 | 21 | Create channel avatars table | [src/invidious/database/migrations/0021_create_channel_avatars_table.cr](../../src/invidious/database/migrations/0021_create_channel_avatars_table.cr) |
 | 22 | Create ai slist cache | [src/invidious/database/migrations/0022_create_ai_slist_cache.cr](../../src/invidious/database/migrations/0022_create_ai_slist_cache.cr) |
+| 23 | Create tv pairings | [src/invidious/database/migrations/0023_create_tv_pairings.cr](../../src/invidious/database/migrations/0023_create_tv_pairings.cr) |

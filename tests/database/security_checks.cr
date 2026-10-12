@@ -21,6 +21,16 @@ class SecurityTestEndpoint
     env = context
     Invidious::Routes::BeforeAll.handle(env)
     result = case env.request.path
+             when "/api/v1/tv/pairing/start"
+               Invidious::Routes::API::V1::TvPairing.start(env)
+             when "/api/v1/tv/pairing/token"
+               Invidious::Routes::API::V1::TvPairing.token(env)
+             when "/tv"
+               if env.request.method == "POST"
+                 Invidious::Routes::TvPairing.submit(env)
+               else
+                 Invidious::Routes::TvPairing.show(env)
+               end
              when "/api/v1/ai/status"
                Invidious::Routes::API::V1::AiChannels.status(env)
              when "/api/v1/ai/channels"
