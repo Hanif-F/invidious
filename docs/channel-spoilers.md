@@ -26,6 +26,10 @@ The title uses the existing blue DeArrow button. With DeArrow enabled and a
 replacement available, clicks cycle **Hidden → DeArrow → Original → Hidden**.
 Otherwise they cycle **Hidden → Original → Hidden**. A hidden title stays hidden
 while its replacement loads; hover and keyboard focus alone never reveal it.
+With DeArrow enabled, hidden card titles prefetch replacements within 200 pixels
+of the viewport, and watch/embed titles fetch immediately. Prefetching keeps
+titles hidden and caches the result for the first click. Clicking before the
+request finishes waits for that same request.
 The explicit cycle is available even when the global original-title switch is
 off. Reveals are per displayed occurrence and reset on navigation or reload.
 

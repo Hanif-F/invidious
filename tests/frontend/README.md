@@ -39,6 +39,10 @@ dynamic queue occurrences in Chromium and Firefox. Run the fixture generator,
 The fixtures use SQLite; they do not exercise the production PostgreSQL row lock
 or cache fallback query. See [channel titles and thumbnails](../../docs/channel-spoilers.md).
 
+Hidden-title DeArrow checks cover viewport prefetching without revealing text,
+cached and pending first reveals, missing/failed replacements, request deduplication
+for dynamic duplicates, watch/embed masking, and no requests when DeArrow is disabled.
+
 Blank-delay regressions cover explicit `null` and older omitted fields, both
 themes, old uploads, manual title cycles and thumbnail navigation, guest cross-tab
 activation, and watch/embed/duplicate queues. The fixture harness verifies zero

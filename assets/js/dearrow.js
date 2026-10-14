@@ -88,8 +88,11 @@
 
     function replace(element) {
         var id = element.dataset.dearrowId;
+        var titleRequest = request(id);
+        // Hidden titles warm the shared cache; their reveal controls own rendering.
+        if (element.dataset.spoilerHidden === 'true') return;
         var original = element.textContent;
-        request(id).then(function (title) {
+        titleRequest.then(function (title) {
             if (!element.isConnected || !title || title === original || element.dataset.dearrowOriginal !== undefined || element.dataset.spoilerHidden === 'true') return;
             element.dataset.dearrowOriginal = original;
             element.textContent = title;
@@ -110,7 +113,6 @@
         if (root.matches('[data-dearrow-id]')) elements.push(root);
         elements = elements.concat(Array.from(root.querySelectorAll('[data-dearrow-id]')));
         elements.forEach(function (element) {
-            if (element.dataset.spoilerHidden === 'true') return;
             if (seen.has(element) || !/^[A-Za-z0-9_-]{11}$/.test(element.dataset.dearrowId)) return;
             seen.add(element);
             if (visible && !element.hasAttribute('data-dearrow-watch')) visible.observe(element);

@@ -177,6 +177,7 @@ async function pageFor(engine, options = {}) {
         }
         if (url.pathname.startsWith('/api/v1/sponsorblock/')) return route.fulfill({ status: options.sponsorblockError ? 503 : 200, contentType: 'application/json', body: JSON.stringify({segments: options.sponsorblockSegments || []}) });
         if (url.pathname.startsWith('/api/v1/dearrow/')) {
+            if (options.dearrowGate) await options.dearrowGate;
             if (options.dearrowError) return route.fulfill({ status: 503, body: '{}' });
             return route.fulfill({ contentType: 'application/json', body: JSON.stringify({title: options.dearrowMissing ? null : (options.dearrowTitle ?? 'A clear title <img src=x onerror=alert(1)>')}) });
         }
@@ -267,6 +268,19 @@ async function pageFor(engine, options = {}) {
     });
     await page.goto('https://invidious.test/' + (options.route || (fixture.startsWith('watch') ? 'watch?v=2isYuQZMbdU&list=PLfixture&index=2' : fixture.startsWith('preferences') ? 'preferences' : fixture.startsWith('search') ? 'search?q=light' : 'feed/popular')));
     return { page, context, errors, requests, chatWrites, preferenceWrites, queueCalls: () => queueCalls, transcriptCalls: () => transcriptCalls, chatCalls: () => chatCalls };
+}
+
+async function waitForDeArrowRequest(page, requests, id) {
+    const endpoint = '/api/v1/dearrow/' + id;
+    if (!requests.includes(endpoint)) await page.waitForRequest(request => new URL(request.url()).pathname === endpoint);
+}
+
+async function finishDeArrowPrefetch(page, requests, id, release) {
+    await waitForDeArrowRequest(page, requests, id);
+    const response = page.waitForResponse(response => new URL(response.url()).pathname === '/api/v1/dearrow/' + id);
+    release();
+    await (await response).finished();
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
 for (const engine of engines) {
@@ -5202,11 +5216,20 @@ for (const engine of engines) {
         await context.close();
     });
 
-    test(`${engine}: channel spoilers cycle Hidden DeArrow Original and stay hidden through failed lookups`, async () => {
-        for (const unavailable of [false, true]) {
-            const {page, context, errors, requests} = await pageFor(engine, {fixture: 'spoiler-cards-dearrow', dearrowTitle: 'Clear <title>', dearrowError: unavailable});
+    test(`${engine}: channel spoilers prefetch without revealing and cycle through cached or unavailable titles`, async () => {
+        for (const lookup of [{}, {dearrowMissing: true}, {dearrowError: true}]) {
+            let release;
+            const dearrowGate = new Promise(resolve => { release = resolve; });
+            const unavailable = lookup.dearrowMissing || lookup.dearrowError;
+            const {page, context, errors, requests} = await pageFor(engine, {fixture: 'spoiler-cards-dearrow', dearrowTitle: 'Clear <title>', dearrowGate, ...lookup});
             const title = page.locator('[data-spoiler-title]').first();
             const button = page.locator('.spoiler-title-reveal').first();
+            await finishDeArrowPrefetch(page, requests, '00000000000', release);
+            assert.equal(await title.textContent(), 'Title hidden');
+            assert.equal(await title.getAttribute('data-dearrow-original'), null);
+            assert.equal(await button.isEnabled(), true);
+            await button.hover();
+            await button.focus();
             assert.equal(await title.textContent(), 'Title hidden');
             await button.click();
             await page.waitForFunction(() => document.querySelector('[data-spoiler-title]').textContent !== 'Title hidden');
@@ -5222,6 +5245,63 @@ for (const engine of engines) {
             assert.deepEqual(errors, []);
             await context.close();
         }
+    });
+
+    test(`${engine}: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles`, async () => {
+        let release;
+        const dearrowGate = new Promise(resolve => { release = resolve; });
+        const {page, context, errors, requests} = await pageFor(engine, {fixture: 'spoiler-cards-indefinite-dearrow', dearrowTitle: 'Prefetched title', dearrowGate});
+        const title = page.locator('[data-spoiler-title]').first();
+        const button = page.locator('.spoiler-title-reveal').first();
+        await waitForDeArrowRequest(page, requests, '00000000000');
+        await button.click();
+        assert.equal(await button.isDisabled(), true);
+        assert.equal(await title.textContent(), 'Title hidden');
+        await title.evaluate(element => {
+            const row = element.closest('[data-dearrow-row]');
+            const duplicate = row.cloneNode(true);
+            duplicate.id = 'prefetch-duplicate';
+            duplicate.querySelectorAll('button').forEach(button => button.remove());
+            row.after(duplicate);
+        });
+        const duplicate = page.locator('#prefetch-duplicate [data-spoiler-title]');
+        const duplicateButton = page.locator('#prefetch-duplicate .spoiler-title-reveal');
+        await duplicateButton.waitFor();
+        await finishDeArrowPrefetch(page, requests, '00000000000', release);
+        await page.waitForFunction(() => document.querySelector('[data-spoiler-title]').textContent === 'Prefetched title');
+        assert.equal(await button.isEnabled(), true);
+        assert.equal(await duplicate.textContent(), 'Title hidden');
+        await duplicateButton.click();
+        await page.waitForFunction(() => document.querySelector('#prefetch-duplicate [data-spoiler-title]').textContent === 'Prefetched title');
+        assert.equal(requests.filter(url => url === '/api/v1/dearrow/00000000000').length, 1);
+        await duplicateButton.click();
+        assert.equal(await duplicate.textContent(), 'Original <title> 0');
+        assert.equal(await title.textContent(), 'Prefetched title');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: channel spoilers prefetch hidden cards only within the viewport margin`, async () => {
+        const {page, context, errors, requests} = await pageFor(engine, {fixture: 'spoiler-cards-indefinite-dearrow', dearrowTitle: 'Near viewport title'});
+        const id = 'p'.repeat(11);
+        await page.locator('[data-spoiler-title]').first().evaluate((element, id) => {
+            const row = element.closest('[data-dearrow-row]').cloneNode(true);
+            row.id = 'prefetch-offscreen';
+            row.querySelectorAll('button').forEach(button => button.remove());
+            row.querySelector('[data-spoiler-title]').dataset.dearrowId = id;
+            row.style.cssText = 'position:absolute;left:20px;width:300px;top:' + (innerHeight + 400) + 'px';
+            document.body.appendChild(row);
+        }, id);
+        const title = page.locator('#prefetch-offscreen [data-spoiler-title]');
+        await page.locator('#prefetch-offscreen .spoiler-title-reveal').waitFor({state: 'attached'});
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.ok(!requests.includes('/api/v1/dearrow/' + id));
+        await page.locator('#prefetch-offscreen').evaluate(row => { row.style.top = (innerHeight + 100) + 'px'; });
+        await waitForDeArrowRequest(page, requests, id);
+        assert.equal(await title.textContent(), 'Title hidden');
+        assert.equal(requests.filter(url => url === '/api/v1/dearrow/' + id).length, 1);
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 
     test(`${engine}: channel spoilers preserve no-JavaScript masking and account settings`, async () => {
@@ -5264,8 +5344,11 @@ for (const engine of engines) {
 
     test(`${engine}: channel spoilers mask watch posters, browser titles and dynamic queue occurrences`, async () => {
         const queue = JSON.parse(fs.readFileSync(path.join(generated, 'queue-spoiler.json')));
+        let release;
+        const dearrowGate = new Promise(resolve => { release = resolve; });
         const {page, context, errors, requests} = await pageFor(engine, {fixture: 'watch-spoiler-dearrow', realPlayer: true,
-            route: 'watch?v=2isYuQZMbdU&list=PLfixture', queue, dearrowTitle: 'Clear watch title', videoData: {params: {continue: false}}});
+            route: 'watch?v=2isYuQZMbdU&list=PLfixture', queue, dearrowGate, dearrowTitle: 'Clear watch title', videoData: {params: {continue: false}}});
+        await finishDeArrowPrefetch(page, requests, '2isYuQZMbdU', release);
         assert.equal(await page.title(), 'Title hidden - Invidious');
         assert.equal(await page.locator('meta[property="og:title"]').getAttribute('content'), 'Title hidden');
         assert.equal(await page.locator('meta[property="og:image"]').getAttribute('content'), '');
@@ -5287,10 +5370,12 @@ for (const engine of engines) {
         await rows.first().waitFor();
         assert.equal(await rows.count(), 2);
         assert.match(await rows.first().locator('[data-spoiler-title]').textContent(), /upload date unknown/);
+        await waitForDeArrowRequest(page, requests, '00000000000');
         await rows.first().locator('.spoiler-title-reveal').click();
         await page.waitForFunction(() => document.querySelector('#playlist [data-spoiler-title]').textContent === 'Clear watch title');
         assert.equal(await rows.first().locator('[data-spoiler-title]').textContent(), 'Clear watch title');
         assert.match(await rows.last().locator('[data-spoiler-title]').textContent(), /upload date unknown/);
+        assert.equal(requests.filter(url => url === '/api/v1/dearrow/00000000000').length, 1);
         await page.screenshot({path: path.join(artifacts, `${engine}-channel-spoilers-watch.png`)});
         assert.deepEqual(errors, []);
         await context.close();
@@ -5299,10 +5384,14 @@ for (const engine of engines) {
 
 for (const engine of engines) {
     test(`${engine}: channel spoilers keep embed overlays hidden until the DeArrow button is activated`, async () => {
-        const {page, context, errors} = await pageFor(engine, {fixture: 'embed-spoiler', embedFixture: 'embed-spoiler',
+        let release;
+        const dearrowGate = new Promise(resolve => { release = resolve; });
+        const {page, context, errors, requests} = await pageFor(engine, {fixture: 'embed-spoiler', embedFixture: 'embed-spoiler', dearrowGate,
             route: 'embed/2isYuQZMbdU', realPlayer: true, width: 390, dearrowTitle: 'Clear embed title',
             videoData: {params: {continue: false}}});
+        await finishDeArrowPrefetch(page, requests, '2isYuQZMbdU', release);
         assert.equal(await page.title(), 'Title hidden - Invidious');
+        assert.equal(await page.evaluate(() => player_data.title), 'Title hidden');
         await page.locator('.spoiler-poster-reveal').click();
         await page.evaluate(() => player.load());
         await page.waitForFunction(() => player.readyState() >= 1);
@@ -5340,7 +5429,9 @@ for (const engine of engines) {
             assert.equal(await titles.count(), 4);
             for (const label of await titles.allTextContents()) assert.match(label, /^Title hidden/);
             assert.equal(await page.locator('.spoiler-title-reveal').count(), 4);
-            assert.equal(requests.filter(url => url.startsWith('/api/v1/dearrow/')).length, 0);
+            if (replacement) {
+                await waitForDeArrowRequest(page, requests, '00000000000');
+            } else assert.equal(requests.filter(url => url.startsWith('/api/v1/dearrow/')).length, 0);
             const first = titles.first(), button = page.locator('.spoiler-title-reveal').first();
             await button.hover();
             assert.equal(await first.textContent(), 'Title hidden');
