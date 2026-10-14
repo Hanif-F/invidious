@@ -59,6 +59,12 @@ module Invidious::Routes::API::V1::Authenticated
         next if fields["enabled"]?.try(&.raw).nil? && (fields["modes"]?.try(&.as_h).try(&.empty?) != false)
         names[id] = user.preferences.sponsorblock_channel_overrides[id]?.try(&.name) || get_channel(id).author
       end
+      data["channel_spoiler_settings"]?.try(&.as_h).try &.each do |id, entry|
+        next if entry.raw.nil?
+        fields = entry.as_h
+        next unless fields["hide_title"].as_bool || fields["hide_thumbnail"].as_bool
+        names[id] = user.preferences.channel_spoiler_settings[id]?.try(&.name) || names[id]? || get_channel(id).author
+      end
     rescue
       return error_json(502, "Could not load this channel. Please try again.")
     end
@@ -71,7 +77,10 @@ module Invidious::Routes::API::V1::Authenticated
         effective = JSON.parse(Preferences.from_json(stored.to_json).to_json).as_h
         (["ai_filter_enabled"] + Invidious::NativePreferences::AI_ACTIONS).each { |key| stored[key] = effective[key] }
       end
-      Invidious::SponsorBlock.merge_patch(stored, data, names)
+      Invidious::SponsorBlock.merge_patch(stored, data.reject { |key, _| key == "channel_spoiler_settings" }, names)
+      if rules = data["channel_spoiler_settings"]?
+        Invidious::ChannelSpoilers.merge_patch(stored, rules, names)
+      end
       raw = stored.to_json
       conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw, user.email)
       if data["save_player_pos"]?.try(&.as_bool) == false
@@ -79,6 +88,8 @@ module Invidious::Routes::API::V1::Authenticated
       end
     end
     raw
+  rescue ex : ArgumentError
+    error_json(400, ex.message || "Invalid channel rules")
   end
 
   def self.set_chat_preferences(env)

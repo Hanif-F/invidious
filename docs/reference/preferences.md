@@ -50,6 +50,7 @@ Preference defaults usually refer to `CONFIG.default_user_preferences`; that com
 | `extend_desc` | `Bool` | `CONFIG.default_user_preferences.extend_desc` |
 | `save_player_pos` | `Bool` | `CONFIG.default_user_preferences.save_player_pos` |
 | `default_playlist` | `String?` | `nil` |
+| `channel_spoiler_settings` | `Hash(String, Invidious::ChannelSpoilers::Rule)` | `{} of String => Invidious::ChannelSpoilers::Rule` |
 | `sponsorblock_channel_overrides` | `Hash(String, Invidious::SponsorBlock::ChannelOverride)` | `{} of String => Invidious::SponsorBlock::ChannelOverride` |
 | `sponsorblock_enabled` | `Bool` | `CONFIG.default_user_preferences.sponsorblock_enabled` |
 | `sponsorblock_modes` | `Hash(String, String)` | `CONFIG.default_user_preferences.sponsorblock_modes.dup` |

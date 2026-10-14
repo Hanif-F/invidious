@@ -42,8 +42,8 @@ Account JSON/YAML preferences and existing full preferences GET/PUT and
 export/import include `channel_spoiler_settings`, a map keyed by channel ID. Each
 entry has `name`, `hide_title`, `hide_thumbnail`, and nullable positive integer
 `reveal_after_days`. Empty and invalid entries are discarded. Other preference
-saves preserve the map. No database migration is required. Public video metadata
-and native app interfaces keep their existing behavior.
+saves preserve the map. No database migration is required. Public video metadata keeps its existing behavior. Native apps can use the
+[sparse preference and cache-only publication APIs](mobile-api.md#native-channel-title-and-thumbnail-settings).
 
 Blank delays serialize explicitly as `null`; omitted delays in older saved rules
 also mean indefinite hiding. Both forms retain the same manual reveal controls.

@@ -4,7 +4,7 @@
 
 Generated from [src/invidious/routing.cr](../../src/invidious/routing.cr) by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-All **242 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
+All **245 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
 
 GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media proxies and configured companion routes remain. `/companion/*` requires a nonempty companion configuration. Notification registrations require `enable_user_notifications`. Public routes can still enforce resource privacy; `/api/v1/auth/*` always passes authentication. See [API conventions](../api.md), [security](../security.md), and [playback](../playback.md) for contracts.
 
@@ -45,6 +45,8 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | GET | `/video_actions` | `Routes::BlockedChannels.video_actions` | [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr) |
 | GET | `/preferences/sponsorblock/channels` | `Routes::SponsorBlockPreferences.show` | [src/invidious/routes/sponsorblock_preferences.cr](../../src/invidious/routes/sponsorblock_preferences.cr) |
 | POST | `/preferences/sponsorblock/channels` | `Routes::SponsorBlockPreferences.update` | [src/invidious/routes/sponsorblock_preferences.cr](../../src/invidious/routes/sponsorblock_preferences.cr) |
+| GET | `/preferences/spoilers/channels` | `Routes::ChannelSpoilerPreferences.show` | [src/invidious/routes/channel_spoiler_preferences.cr](../../src/invidious/routes/channel_spoiler_preferences.cr) |
+| POST | `/preferences/spoilers/channels` | `Routes::ChannelSpoilerPreferences.update` | [src/invidious/routes/channel_spoiler_preferences.cr](../../src/invidious/routes/channel_spoiler_preferences.cr) |
 | GET | `/preferences` | `Routes::PreferencesRoute.show` | [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr) |
 | POST | `/preferences` | `Routes::PreferencesRoute.update` | [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr) |
 | POST | `/preferences/timezone` | `Routes::PreferencesRoute.detect_timezone` | [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr) |
@@ -224,6 +226,7 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 
 | Method | Path | Handler | Implementation |
 | --- | --- | --- | --- |
+| GET | `/api/v1/spoilers/publications` | `Routes::API::V1::ChannelSpoilers.publications` | [src/invidious/routes/api/v1/channel_spoilers.cr](../../src/invidious/routes/api/v1/channel_spoilers.cr) |
 | GET | `/api/v1/ai/status` | `Routes::API::V1::AiChannels.status` | [src/invidious/routes/api/v1/ai_channels.cr](../../src/invidious/routes/api/v1/ai_channels.cr) |
 | GET | `/api/v1/ai/channels` | `Routes::API::V1::AiChannels.channels` | [src/invidious/routes/api/v1/ai_channels.cr](../../src/invidious/routes/api/v1/ai_channels.cr) |
 | GET | `/api/v1/sponsorblock/:id` | `Routes::API::V1::SponsorBlock.segments` | [src/invidious/routes/api/v1/sponsorblock.cr](../../src/invidious/routes/api/v1/sponsorblock.cr) |

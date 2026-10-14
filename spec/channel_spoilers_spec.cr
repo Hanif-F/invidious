@@ -2,6 +2,30 @@ require "spec"
 require "../src/invidious/channel_spoilers"
 
 describe Invidious::ChannelSpoilers do
+  it "merges native channel deltas without replacing other rules or unknown preferences" do
+    id = "UC" + "a" * 22
+    other = "UC" + "b" * 22
+    stored = JSON.parse({channel_spoiler_settings: {id => {name: "Studio", hide_title: true, hide_thumbnail: true, reveal_after_days: 7}, other => {name: "Other", hide_title: true, hide_thumbnail: false}}, future: {keep: true}}.to_json).as_h
+    delta = JSON.parse({id => {hide_title: false, hide_thumbnail: true, reveal_after_days: nil}}.to_json)
+    Invidious::ChannelSpoilers.validate_patch(delta)
+    Invidious::ChannelSpoilers.merge_patch(stored, delta, {id => "Stale name"})
+    rules = Invidious::ChannelSpoilers::Rules.normalize(stored["channel_spoiler_settings"])
+    rules[id].name.should eq("Studio")
+    rules[id].reveal_after_days.should be_nil
+    rules.has_key?(other).should be_true
+    stored["future"]["keep"].should eq(true)
+    Invidious::ChannelSpoilers.merge_patch(stored, JSON.parse({id => nil}.to_json), {} of String => String)
+    stored["channel_spoiler_settings"].as_h.has_key?(id).should be_false
+    Invidious::ChannelSpoilers.merge_patch(stored, JSON.parse({other => {hide_title: false, hide_thumbnail: false}}.to_json), {} of String => String)
+    stored["channel_spoiler_settings"].as_h.should be_empty
+  end
+
+  it "validates bounded distinct publication IDs" do
+    Invidious::ChannelSpoilers.publication_ids("aaaaaaaaaaa,bbbbbbbbbbb").should eq(%w(aaaaaaaaaaa bbbbbbbbbbb))
+    {nil, "", "invalid", "aaaaaaaaaaa,aaaaaaaaaaa", "aaaaaaaaaaa,", Array.new(101) { |i| i.to_s.rjust(11, '0') }.join(',')}.each do |ids|
+      expect_raises(ArgumentError) { Invidious::ChannelSpoilers.publication_ids(ids) }
+    end
+  end
   it "hides until the exact shared upload-age boundary, including future uploads" do
     uploaded = Time.utc(2026, 10, 1, 12, 30)
     rule = Invidious::ChannelSpoilers::Rule.new("Channel", true, true, 7)

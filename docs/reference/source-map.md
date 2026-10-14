@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **371 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **380 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -26,6 +26,7 @@ Base, player, feature and layout styles; minified third-party styles retain thei
 | File | Subject |
 | --- | --- |
 | [assets/css/carousel.css](../../assets/css/carousel.css) | carousel |
+| [assets/css/channel-spoilers.css](../../assets/css/channel-spoilers.css) | channel spoilers |
 | [assets/css/clips.css](../../assets/css/clips.css) | clips |
 | [assets/css/dearrow-contributions.css](../../assets/css/dearrow-contributions.css) | dearrow contributions |
 | [assets/css/dearrow.css](../../assets/css/dearrow.css) | dearrow |
@@ -50,6 +51,8 @@ Browser behavior; individual module responsibilities are described in frontend d
 | --- | --- |
 | [assets/js/_helpers.js](../../assets/js/_helpers.js) |  helpers |
 | [assets/js/browser-storage.js](../../assets/js/browser-storage.js) | browser storage |
+| [assets/js/channel-spoiler-preferences.js](../../assets/js/channel-spoiler-preferences.js) | channel spoiler preferences |
+| [assets/js/channel-spoilers.js](../../assets/js/channel-spoilers.js) | channel spoilers |
 | [assets/js/clip-editor.js](../../assets/js/clip-editor.js) | clip editor |
 | [assets/js/clip-loader.js](../../assets/js/clip-loader.js) | clip loader |
 | [assets/js/clip-player.js](../../assets/js/clip-player.js) | clip player |
@@ -184,6 +187,7 @@ Domain models and cross-cutting integrations, configuration and routing.
 | [src/invidious/ai_slist_api.cr](../../src/invidious/ai_slist_api.cr) | ai slist api |
 | [src/invidious/ai_slist_runtime.cr](../../src/invidious/ai_slist_runtime.cr) | ai slist runtime |
 | [src/invidious/browser_profiles.cr](../../src/invidious/browser_profiles.cr) | browser profiles |
+| [src/invidious/channel_spoilers.cr](../../src/invidious/channel_spoilers.cr) | channel spoilers |
 | [src/invidious/clips.cr](../../src/invidious/clips.cr) | clips |
 | [src/invidious/config.cr](../../src/invidious/config.cr) | config |
 | [src/invidious/dearrow.cr](../../src/invidious/dearrow.cr) | dearrow |
@@ -303,6 +307,7 @@ Presentation helpers for cards, filters, history, channels and page data.
 | [src/invidious/frontend/blocked_channels.cr](../../src/invidious/frontend/blocked_channels.cr) | blocked channels |
 | [src/invidious/frontend/channel_avatars.cr](../../src/invidious/frontend/channel_avatars.cr) | channel avatars |
 | [src/invidious/frontend/channel_page.cr](../../src/invidious/frontend/channel_page.cr) | channel page |
+| [src/invidious/frontend/channel_spoilers.cr](../../src/invidious/frontend/channel_spoilers.cr) | channel spoilers |
 | [src/invidious/frontend/comments_reddit.cr](../../src/invidious/frontend/comments_reddit.cr) | comments reddit |
 | [src/invidious/frontend/comments_youtube.cr](../../src/invidious/frontend/comments_youtube.cr) | comments youtube |
 | [src/invidious/frontend/member_videos.cr](../../src/invidious/frontend/member_videos.cr) | member videos |
@@ -375,6 +380,7 @@ HTTP page handlers, authentication context, redirects, RSS and proxy handlers.
 | [src/invidious/routes/account.cr](../../src/invidious/routes/account.cr) | account |
 | [src/invidious/routes/before_all.cr](../../src/invidious/routes/before_all.cr) | before all |
 | [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr) | blocked channels |
+| [src/invidious/routes/channel_spoiler_preferences.cr](../../src/invidious/routes/channel_spoiler_preferences.cr) | channel spoiler preferences |
 | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) | channels |
 | [src/invidious/routes/clips.cr](../../src/invidious/routes/clips.cr) | clips |
 | [src/invidious/routes/companion.cr](../../src/invidious/routes/companion.cr) | companion |
@@ -407,6 +413,7 @@ JSON APIs, manifests and authenticated native contracts; see the API and route r
 | [src/invidious/routes/api/v1/ai_channels.cr](../../src/invidious/routes/api/v1/ai_channels.cr) | ai channels |
 | [src/invidious/routes/api/v1/authenticated.cr](../../src/invidious/routes/api/v1/authenticated.cr) | authenticated |
 | [src/invidious/routes/api/v1/blocked_channels.cr](../../src/invidious/routes/api/v1/blocked_channels.cr) | blocked channels |
+| [src/invidious/routes/api/v1/channel_spoilers.cr](../../src/invidious/routes/api/v1/channel_spoilers.cr) | channel spoilers |
 | [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr) | channels |
 | [src/invidious/routes/api/v1/clips.cr](../../src/invidious/routes/api/v1/clips.cr) | clips |
 | [src/invidious/routes/api/v1/dearrow.cr](../../src/invidious/routes/api/v1/dearrow.cr) | dearrow |
@@ -481,6 +488,7 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | [src/invidious/views/components/ai-filter-empty.ecr](../../src/invidious/views/components/ai-filter-empty.ecr) | ai filter empty |
 | [src/invidious/views/components/ai-filter-preferences.ecr](../../src/invidious/views/components/ai-filter-preferences.ecr) | ai filter preferences |
 | [src/invidious/views/components/channel_info.ecr](../../src/invidious/views/components/channel_info.ecr) | channel info |
+| [src/invidious/views/components/channel_spoiler_scripts.ecr](../../src/invidious/views/components/channel_spoiler_scripts.ecr) | channel spoiler scripts |
 | [src/invidious/views/components/clip_dialog.ecr](../../src/invidious/views/components/clip_dialog.ecr) | clip dialog |
 | [src/invidious/views/components/clip_editor.ecr](../../src/invidious/views/components/clip_editor.ecr) | clip editor |
 | [src/invidious/views/components/clips.ecr](../../src/invidious/views/components/clips.ecr) | clips |
@@ -522,6 +530,7 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | [src/invidious/views/user/authorize_token.ecr](../../src/invidious/views/user/authorize_token.ecr) | authorize token |
 | [src/invidious/views/user/blocked_channels.ecr](../../src/invidious/views/user/blocked_channels.ecr) | blocked channels |
 | [src/invidious/views/user/change_password.ecr](../../src/invidious/views/user/change_password.ecr) | change password |
+| [src/invidious/views/user/channel_spoilers.ecr](../../src/invidious/views/user/channel_spoilers.ecr) | channel spoilers |
 | [src/invidious/views/user/clear_watch_history.ecr](../../src/invidious/views/user/clear_watch_history.ecr) | clear watch history |
 | [src/invidious/views/user/data_control.ecr](../../src/invidious/views/user/data_control.ecr) | data control |
 | [src/invidious/views/user/delete_account.ecr](../../src/invidious/views/user/delete_account.ecr) | delete account |

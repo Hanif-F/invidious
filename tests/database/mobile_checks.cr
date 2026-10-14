@@ -1,6 +1,7 @@
 require "./search_history_checks"
 require "./playlist_rss_checks"
 require "./ai_native_checks"
+require "./channel_spoiler_native_checks"
 
 def check_mobile_security
   CONFIG.login_enabled = true
@@ -20,6 +21,7 @@ def check_mobile_security
   check_mobile_sponsorblock(token, email, sid)
   check_mobile_preferences(token, email, sid)
   check_mobile_ai(token, email, sid)
+  check_mobile_channel_spoilers(token, email, sid)
   check_mobile_blocking(token, email, sid)
   check_mobile_search_history(token, email)
   check_mobile_playlist_rss(token, email, sid)

@@ -47,6 +47,46 @@ module Invidious::ChannelSpoilers
     publication((info["sourcePublished"]? || info["published"]?).try(&.as_s?))
   end
 
+  # Native edits replace one complete rule, never the account's whole map.
+  def validate_patch(value : JSON::Any)
+    entries = value.as_h
+    raise ArgumentError.new("Too many channel rules") if entries.size > 1000
+    entries.each do |id, entry|
+      raise ArgumentError.new("Invalid channel") unless id.matches?(/\AUC[A-Za-z0-9_-]{22}\z/)
+      next if entry.raw.nil?
+      fields = entry.as_h
+      raise ArgumentError.new("Invalid channel rule") unless (fields.keys - %w(hide_title hide_thumbnail reveal_after_days)).empty?
+      fields["hide_title"].as_bool
+      fields["hide_thumbnail"].as_bool
+      if days = fields["reveal_after_days"]?
+        raise ArgumentError.new("Invalid reveal delay") unless days.raw.nil? || (1..Int32::MAX).includes?(days.as_i64)
+      end
+    end
+  end
+
+  def merge_patch(stored : Hash(String, JSON::Any), value : JSON::Any, names : Hash(String, String))
+    rules = Rules.normalize(stored["channel_spoiler_settings"]? || JSON::Any.new(nil))
+    value.as_h.each do |id, entry|
+      fields = entry.as_h?
+      if fields.nil? || !(fields["hide_title"].as_bool || fields["hide_thumbnail"].as_bool)
+        rules.delete(id)
+      else
+        name = rules[id]?.try(&.name) || names[id]? || id
+        rules[id] = Rule.new(name[0, 200], fields["hide_title"].as_bool, fields["hide_thumbnail"].as_bool,
+          fields["reveal_after_days"]?.try(&.as_i64?).try(&.to_i32))
+      end
+    end
+    raise ArgumentError.new("Too many channel rules") if rules.size > 1000
+    stored["channel_spoiler_settings"] = JSON.parse(rules.to_json)
+  end
+
+  def publication_ids(raw : String?) : Array(String)
+    ids = (raw || "").split(',')
+    raise ArgumentError.new("Provide 1–100 distinct video IDs") unless (1..100).includes?(ids.size) &&
+                                                                       ids.uniq.size == ids.size && ids.all? { |id| id.matches?(/\A[A-Za-z0-9_-]{11}\z/) }
+    ids
+  end
+
   module Rules
     def self.normalize(raw : JSON::Any) : Hash(String, Rule)
       result = {} of String => Rule

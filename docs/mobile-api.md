@@ -636,3 +636,31 @@ Deploy this API extension with the Android update. Existing servers need migrati
 ## TV phone approval
 
 [Contract v1](tv-pairing.md) adds public Start/Poll and explicit browser `/tv` approval. Success reuses native login credentials and scopes; existing tokens and manual login are unchanged. Migration 23 is required. Deployed availability is separate from local source verification.
+
+## Native channel title and thumbnail settings
+
+`GET /api/v1/auth/preferences` includes the existing `channel_spoiler_settings`
+map. Native `PATCH /api/v1/auth/preferences` accepts per-channel deltas: canonical
+`UC` IDs mapped to complete `{hide_title, hide_thumbnail, reveal_after_days}`
+rules, or null to delete. The switches must be booleans; omitted/null delay means
+indefinite hiding, otherwise it must be an integer from 1 to 2,147,483,647.
+Disabling both switches removes the rule. Native clients cannot submit names or
+unknown rule fields. At most 1,000 active rules are retained. Invalid edits reject
+the whole patch. The server resolves names before the account transaction, then
+merges under the existing row lock, preserving other rules and unrelated JSON.
+Existing GET/PATCH preference scopes suffice; no migration/token renewal is needed.
+
+`GET /api/v1/spoilers/publications?ids=videoId,videoId` accepts 1–100 distinct valid
+11-character video IDs. It is public and returns
+`{"publications":{"videoId":<Unix seconds or null>}}`, including null misses, with
+`Cache-Control: no-store`. It uses `select_spoiler_dates` to read publication fields
+from existing video and channel caches only; it never refreshes metadata upstream.
+Known timestamps retain precision and date-only values use midnight UTC. Clients
+request only missing source dates for matching timed rules, batch requests and
+retain results/misses for the current content load. Unavailable dates/endpoints
+keep content hidden with an upload-date-unknown label. Public video metadata is
+unchanged; hiding is client presentation, not metadata access restriction.
+
+The account integration harness covers native scopes, browser CSRF, null/reset,
+concurrent channel edits, atomic rejection, unknown preference preservation and
+cache-only date precision/misses through the production handlers.

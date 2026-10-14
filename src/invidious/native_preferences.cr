@@ -1,5 +1,6 @@
 require "json"
 require "./sponsorblock"
+require "./channel_spoilers"
 
 # The native client exposes only preferences for capabilities it implements.
 # Validate every field before the account transaction; retain all unrelated JSON.
@@ -26,6 +27,8 @@ module Invidious::NativePreferences
         sponsor[key] = value
       else
         case key
+        when "channel_spoiler_settings"
+          Invidious::ChannelSpoilers.validate_patch(value)
         when "speed"
           speed = value.as_f? || value.as_i64.to_f
           raise "Invalid speed" unless speed.finite? && (0.25..2.0).includes?(speed)

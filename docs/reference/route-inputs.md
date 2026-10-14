@@ -171,6 +171,18 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 - Form: `action`, `channel`, `csrf_token`, `enabled`, `mode_#{category}`.
 
+## Routes::ChannelSpoilerPreferences.show
+
+`GET /preferences/spoilers/channels`. Source: [src/invidious/routes/channel_spoiler_preferences.cr](../../src/invidious/routes/channel_spoiler_preferences.cr).
+
+- Query: `channel`.
+
+## Routes::ChannelSpoilerPreferences.update
+
+`POST /preferences/spoilers/channels`. Source: [src/invidious/routes/channel_spoiler_preferences.cr](../../src/invidious/routes/channel_spoiler_preferences.cr).
+
+- Form: `action`, `channel`, `csrf_token`, `hide_thumbnail`, `hide_title`, `reveal_after_days`.
+
 ## Routes::PreferencesRoute.show
 
 `GET /preferences`. Source: [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr).
@@ -745,6 +757,12 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 
+## Routes::API::V1::ChannelSpoilers.publications
+
+`GET /api/v1/spoilers/publications`. Source: [src/invidious/routes/api/v1/channel_spoilers.cr](../../src/invidious/routes/api/v1/channel_spoilers.cr).
+
+- Query: `ids`.
+
 ## Routes::API::V1::AiChannels.status
 
 `GET /api/v1/ai/status`. Source: [src/invidious/routes/api/v1/ai_channels.cr](../../src/invidious/routes/api/v1/ai_channels.cr).
@@ -1119,7 +1137,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `PATCH /api/v1/auth/preferences`. Source: [src/invidious/routes/api/v1/authenticated.cr](../../src/invidious/routes/api/v1/authenticated.cr).
 
-- Local data keys: `save_player_pos`, `sponsorblock_channel_overrides`.
+- Local data keys: `channel_spoiler_settings`, `save_player_pos`, `sponsorblock_channel_overrides`.
 
 ## Routes::API::V1::Authenticated.set_chat_preferences
 

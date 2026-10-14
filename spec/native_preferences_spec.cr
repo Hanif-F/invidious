@@ -2,6 +2,18 @@ require "spec"
 require "../src/invidious/native_preferences"
 
 describe Invidious::NativePreferences do
+  it "accepts complete channel spoiler deltas and rejects invalid patches atomically" do
+    id = "UC" + "a" * 22
+    ["null", %({"hide_title":true,"hide_thumbnail":false}), %({"hide_title":true,"hide_thumbnail":true,"reveal_after_days":null}), %({"hide_title":true,"hide_thumbnail":true,"reveal_after_days":2147483647})].each do |entry|
+      Invidious::NativePreferences.validate_patch(JSON.parse(%({"channel_spoiler_settings":{"#{id}":#{entry}}})).as_h)
+    end
+    [%({"hide_title":"true","hide_thumbnail":false}), %({"hide_title":true}), %({"hide_title":true,"hide_thumbnail":false,"name":"Forged"}),
+     %({"hide_title":true,"hide_thumbnail":true,"reveal_after_days":0}), %({"hide_title":true,"hide_thumbnail":true,"reveal_after_days":1.5}),
+     %({"hide_title":true,"hide_thumbnail":true,"reveal_after_days":2147483648})].each do |entry|
+      expect_raises(Exception) { Invidious::NativePreferences.validate_patch(JSON.parse(%({"speed":1.5,"channel_spoiler_settings":{"#{id}":#{entry}}})).as_h) }
+    end
+    expect_raises(Exception) { Invidious::NativePreferences.validate_patch(JSON.parse(%({"channel_spoiler_settings":{"invalid":null}})).as_h) }
+  end
   it "accepts all canonical AI settings and rejects invalid values atomically" do
     data = JSON.parse(%({"ai_filter_enabled":false,"theme":"keep"})).as_h
     data.delete("theme")
