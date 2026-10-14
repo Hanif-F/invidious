@@ -22,6 +22,7 @@ def spoiler_cards_fixture(env)
 end
 
 def check_spoiler_preferences(output)
+  check_spoiler_preparation
   id = fixture_video.ucid
   prefs = spoiler_env("/").get("preferences").as(Preferences)
   raise "Old preference defaults changed" unless Preferences.from_json("{}").channel_spoiler_settings.empty?
@@ -94,4 +95,79 @@ def check_spoiler_preferences(output)
     {videoId: "00000000000", title: "Queue original", author: "Studio North", authorId: id, lengthSeconds: 720, index: i}
   }}.to_json)
   File.write("#{output}/queue-spoiler.json", {playlistHtml: template_playlist(queue, false, spoiler_env: queue_env), index: 1, nextVideo: "00000000000"}.to_json)
+
+  {false, true}.each do |dearrow|
+    env = spoiler_env("/feed/popular", dearrow: dearrow, days: nil)
+    html = spoiler_cards_fixture(env)
+    File.write("#{output}/spoiler-cards-indefinite-#{dearrow ? "dearrow" : "original"}.html", html)
+    old_config = Invidious::Frontend::ChannelSpoilers.config(env)
+    legacy = JSON.parse(old_config)
+    legacy["rules"].as_h.each_value { |rule| rule.as_h.delete("reveal_after_days") }
+    File.write("#{output}/spoiler-cards-legacy-#{dearrow ? "dearrow" : "original"}.html", html.sub(old_config, legacy.to_json.gsub("<", "\\u003c")))
+  end
+  diary_env = spoiler_env("/feed/popular", dearrow: true, days: nil)
+  diary_preferences = diary_env.get("preferences").as(Preferences)
+  diary_preferences.theme = "diary"
+  diary_env.set "preferences", diary_preferences
+  File.write("#{output}/spoiler-cards-indefinite-diary.html", spoiler_cards_fixture(diary_env))
+  File.write("#{output}/watch-spoiler-indefinite.html", watch_fixture(spoiler_env("/watch?v=#{video.id}", dearrow: true, days: nil), "PLfixture", supplied_video: video, account: true))
+  File.write("#{output}/embed-spoiler-indefinite.html", watch_fixture(spoiler_env("/embed/#{video.id}", dearrow: true, days: nil), nil, true, supplied_video: video))
+  File.write("#{output}/queue-spoiler-indefinite.json", {playlistHtml: template_playlist(queue, false, spoiler_env: spoiler_env("/", days: nil)), index: 1, nextVideo: "00000000000"}.to_json)
+  inactive = signed_in_env("/feed/popular")
+  html = browse_fixture(inactive)
+  raise "Inactive masking assets or markup" if html.includes?("channel-spoiler-config") || html.includes?("data-spoiler-title") || html.includes?("/js/channel-spoilers.js")
+  File.write("#{output}/spoiler-cards-inactive.html", html)
+
+  many = spoiler_env("/")
+  preferences = many.get("preferences").as(Preferences)
+  preferences.channel_spoiler_settings = (0...500).to_h { |index| {"UC#{index.to_s.rjust(22, '0')}", Invidious::ChannelSpoilers::Rule.new("Channel #{index} with a long display name", true, true, 7)} }
+  many.set "preferences", preferences
+  before = preferences.channel_spoiler_settings.to_json.bytesize
+  after = JSON.parse(Invidious::Frontend::ChannelSpoilers.config(many))["rules"].to_json.bytesize
+  raise "Runtime includes channel names" if JSON.parse(Invidious::Frontend::ChannelSpoilers.config(many))["rules"].as_h.values.any? { |entry| entry.as_h.has_key?("name") }
+  puts "Channel masking runtime rules (500 channels): #{before} -> #{after} bytes; no channel names sent to the masking runtime"
+end
+
+def check_spoiler_preparation
+  id = fixture_video.ucid
+  known = Time.utc(2026, 10, 1)
+  candidates = [
+    Invidious::Frontend::ChannelSpoilers::Candidate.new("known", id, known),
+    Invidious::Frontend::ChannelSpoilers::Candidate.new("cached", id),
+    Invidious::Frontend::ChannelSpoilers::Candidate.new("cached", id),
+    Invidious::Frontend::ChannelSpoilers::Candidate.new("missing", id),
+    Invidious::Frontend::ChannelSpoilers::Candidate.new("unrelated", "UC" + "z" * 22),
+  ]
+  env = spoiler_env("/")
+  requests = [] of Array(String)
+  Invidious::Frontend::ChannelSpoilers.prepare_candidates(env, candidates) do |ids|
+    requests << ids
+    {"cached" => known.as(Time?)}
+  end
+  raise "Unnecessary date lookup" unless requests == [["cached", "missing"]]
+  Invidious::Frontend::ChannelSpoilers.prepare_candidates(env, candidates) { |ids| requests << ids; {} of String => Time? }
+  raise "Date lookup repeated misses" unless requests.size == 1
+  raise "Supplied date lost" unless Invidious::Frontend::ChannelSpoilers.publication(env, "known", nil) == known
+  raise "Cached date lost" unless Invidious::Frontend::ChannelSpoilers.publication(env, "cached", nil) == known
+  raise "Unknown date fabricated" unless Invidious::Frontend::ChannelSpoilers.publication(env, "missing", nil).nil?
+
+  inactive = signed_in_env("/")
+  prefs = inactive.get("preferences").as(Preferences)
+  prefs.channel_spoiler_settings = {} of String => Invidious::ChannelSpoilers::Rule
+  inactive.set "preferences", prefs
+  Invidious::Frontend::ChannelSpoilers.prepare_candidates(inactive, candidates) { |ids| requests << ids; {} of String => Time? }
+  raise "Inactive rules queried dates" unless requests.size == 1
+  Invidious::Frontend::ChannelSpoilers.prepare_candidates(spoiler_env("/"), [Invidious::Frontend::ChannelSpoilers::Candidate.new("known", id, known)]) { |ids| requests << ids; {} of String => Time? }
+  raise "Known dates queried" unless requests.size == 1
+
+  guest = fixture_env("/")
+  Invidious::Frontend::ChannelSpoilers.prepare_candidates(guest, candidates) { |ids| requests << ids; {} of String => Time? }
+  raise "Inactive guest queried dates" unless requests.size == 1
+  guest.request.cookies << HTTP::Cookie.new("iv_spoilers_guest", "1")
+  Invidious::Frontend::ChannelSpoilers.prepare_candidates(guest, candidates) do |ids|
+    requests << ids
+    {} of String => Time?
+  end
+  raise "Guest fallback did not batch missing dates" unless requests.last == ["cached", "missing", "unrelated"]
+  puts "Channel masking date reads: zero for inactive/known dates; one filtered batch with memoized misses"
 end

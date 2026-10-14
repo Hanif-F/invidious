@@ -39,6 +39,16 @@ dynamic queue occurrences in Chromium and Firefox. Run the fixture generator,
 The fixtures use SQLite; they do not exercise the production PostgreSQL row lock
 or cache fallback query. See [channel titles and thumbnails](../../docs/channel-spoilers.md).
 
+Blank-delay regressions cover explicit `null` and older omitted fields, both
+themes, old uploads, manual title cycles and thumbnail navigation, guest cross-tab
+activation, and watch/embed/duplicate queues. The fixture harness verifies zero
+fallback reads for inactive/known dates, filtered batches, memoized misses and
+the reduced runtime config. Browser counters verify zero inactive masking scans
+and a single scan for a batch of 1,000 nested insertions.
+`node tests/frontend/channel-spoilers.test.cjs` also checks these DOM budgets
+without a browser. Set `SPOILER_BASELINE_SCRIPT` to a previous copy of
+`channel-spoilers.js` to report the before/after inactive scanning counts.
+
 AiSList fixtures use local lists and fake channel resolution to verify the global
 master switch, eight independent per-page actions, replacement-only library pages,
 legacy preference conversion, instance defaults, paused-choice preservation,

@@ -1,6 +1,6 @@
 <% if clips.empty? %><p class="h-box"><%= I18n.translate(locale, "clips_empty") %></p><% end %>
 <% Invidious::Frontend::AiChannels.prepare_ids(env, clips.map(&.ucid)) %>
-<% Invidious::Frontend::ChannelSpoilers.prepare_ids(env, clips.map(&.video_id)) %>
+<% Invidious::Frontend::ChannelSpoilers.prepare(env, clips) %>
 <div class="pure-g media-grid clip-library">
 <% clips.each do |clip| %>
     <article class="pure-u-1 pure-u-md-1-2 pure-u-lg-1-4 media-item clip-card">

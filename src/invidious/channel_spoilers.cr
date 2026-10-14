@@ -10,6 +10,7 @@ module Invidious::ChannelSpoilers
     property name : String
     property hide_title : Bool
     property hide_thumbnail : Bool
+    @[JSON::Field(emit_null: true)]
     property reveal_after_days : Int32?
 
     def initialize(@name : String, @hide_title : Bool, @hide_thumbnail : Bool, @reveal_after_days : Int32? = nil)

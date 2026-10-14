@@ -903,5 +903,6 @@
     "spoilers_reveal_thumbnail": "Reveal original thumbnail",
     "spoilers_next_original": "Show original title",
     "spoilers_next_dearrow": "Show DeArrow title",
-    "spoilers_loading": "Loading title"
+    "spoilers_loading": "Loading title",
+    "spoilers_manage_channels": "Manage channel settings"
 }

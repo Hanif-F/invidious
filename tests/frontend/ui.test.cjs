@@ -5330,3 +5330,120 @@ for (const engine of engines) {
         await context.close();
     });
 }
+
+for (const engine of engines) {
+    test(`${engine}: channel spoilers reveal indefinite rules with explicit or omitted delays in both themes`, async () => {
+        for (const fixture of ['spoiler-cards-indefinite-original', 'spoiler-cards-indefinite-dearrow', 'spoiler-cards-legacy-original', 'spoiler-cards-legacy-dearrow', 'spoiler-cards-indefinite-diary']) {
+            const replacement = !fixture.endsWith('original');
+            const {page, context, errors, requests} = await pageFor(engine, {fixture, width: 390, dearrowTitle: 'Clear replacement'});
+            const titles = page.locator('[data-spoiler-title]');
+            assert.equal(await titles.count(), 4);
+            for (const label of await titles.allTextContents()) assert.match(label, /^Title hidden/);
+            assert.equal(await page.locator('.spoiler-title-reveal').count(), 4);
+            assert.equal(requests.filter(url => url.startsWith('/api/v1/dearrow/')).length, 0);
+            const first = titles.first(), button = page.locator('.spoiler-title-reveal').first();
+            await button.hover();
+            assert.equal(await first.textContent(), 'Title hidden');
+            await button.click();
+            await page.waitForFunction(() => !document.querySelector('[data-spoiler-title]').textContent.startsWith('Title hidden'));
+            assert.equal(await first.textContent(), replacement ? 'Clear replacement' : 'Original <title> 0');
+            if (replacement) { await button.click(); assert.equal(await first.textContent(), 'Original <title> 0'); }
+            await button.click();
+            assert.equal(await first.textContent(), 'Title hidden');
+            assert.equal(requests.filter(url => url === '/api/v1/dearrow/00000000000').length, replacement ? 1 : 0);
+            const thumbnail = page.locator('[data-spoiler-thumbnail]').first();
+            const before = page.url();
+            await thumbnail.click();
+            assert.equal(page.url(), before);
+            assert.equal(await thumbnail.locator('img').count(), 1);
+            await page.reload();
+            assert.equal(await first.textContent(), 'Title hidden');
+            assert.equal(await thumbnail.locator('img').count(), 0);
+            await thumbnail.locator('..').focus();
+            await page.keyboard.press('Enter');
+            await thumbnail.locator('img').waitFor();
+            assert.equal(page.url(), before);
+            if (fixture.endsWith('diary')) await page.screenshot({path: path.join(artifacts, `${engine}-spoilers-indefinite-diary.png`)});
+            await thumbnail.click();
+            await page.waitForURL(url => url.pathname === '/watch');
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional`, async () => {
+        const queue = JSON.parse(fs.readFileSync(path.join(generated, 'queue-spoiler-indefinite.json')));
+        const watch = await pageFor(engine, {fixture: 'watch-spoiler-indefinite', queue, realPlayer: true, dearrowTitle: 'Clear indefinite title'});
+        assert.equal(await watch.page.title(), 'Title hidden - Invidious');
+        await watch.page.locator('.spoiler-poster-reveal').click();
+        assert.equal(await watch.page.evaluate(() => player.paused()), true);
+        const button = watch.page.locator('.watch-heading > [data-dearrow-row] > .spoiler-title-reveal');
+        await button.click();
+        await watch.page.waitForFunction(() => document.title === 'Clear indefinite title - Invidious');
+        await button.click();
+        assert.equal(await watch.page.title(), 'A journey through light, color, and motion - Invidious');
+        await button.click();
+        assert.equal(await watch.page.title(), 'Title hidden - Invidious');
+        const rows = watch.page.locator('#playlist .queue-row');
+        await rows.first().waitFor();
+        assert.equal(await rows.count(), 2);
+        await rows.first().locator('.spoiler-title-reveal').click();
+        await watch.page.waitForFunction(() => document.querySelector('#playlist [data-spoiler-title]').textContent === 'Clear indefinite title');
+        assert.match(await rows.last().locator('[data-spoiler-title]').textContent(), /^Title hidden/);
+        assert.deepEqual(watch.errors, []);
+        await watch.context.close();
+        const embed = await pageFor(engine, {fixture: 'embed-spoiler-indefinite', embedFixture: 'embed-spoiler-indefinite',
+            route: 'embed/2isYuQZMbdU', realPlayer: true, dearrowMissing: true});
+        assert.equal(await embed.page.title(), 'Title hidden - Invidious');
+        await embed.page.locator('.spoiler-poster-reveal').click();
+        await embed.page.evaluate(() => player.load());
+        const reveal = embed.page.locator('.vjs-overlay:visible .spoiler-title-reveal').first();
+        await reveal.click();
+        await embed.page.waitForFunction(() => document.title === 'A journey through light, color, and motion - Invidious');
+        await reveal.click();
+        assert.equal(await embed.page.title(), 'Title hidden - Invidious');
+        assert.deepEqual(embed.errors, []);
+        await embed.context.close();
+    });
+
+    test(`${engine}: channel spoilers skip inactive work and batch large subtree insertions`, async () => {
+        const initScript = `window.spoilerScans=0; const originalQuery=Element.prototype.querySelectorAll;
+            Element.prototype.querySelectorAll=function(selector){if(selector==='[data-spoiler-title], [data-spoiler-thumbnail]') window.spoilerScans++; return originalQuery.call(this,selector);};`;
+        for (const fixture of ['spoiler-cards-inactive', 'spoiler-cards-indefinite-original']) {
+            const {page, context, errors, requests} = await pageFor(engine, {fixture, initScript});
+            if (fixture.endsWith('inactive')) {
+                assert.equal(await page.locator('#channel-spoiler-config, [data-spoiler-title], [data-spoiler-thumbnail]').count(), 0);
+                assert.ok(!requests.some(url => url.startsWith('/js/channel-spoilers.js') || url.startsWith('/css/channel-spoilers.css')));
+            }
+            const scans = await page.evaluate(async () => {
+                window.spoilerScans = 0;
+                const parent = document.createElement('div'); document.body.appendChild(parent);
+                for (let index = 0; index < 1000; index++) parent.appendChild(document.createElement('div'));
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                return window.spoilerScans;
+            });
+            assert.equal(scans, fixture.endsWith('inactive') ? 0 : 1);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: channel spoilers activate blank-delay guest rules in an already open inactive tab`, async () => {
+        const fixture = 'spoiler-cards-guest';
+        const body = fs.readFileSync(path.join(generated, fixture + '.html'), 'utf8');
+        const id = body.match(/data-spoiler-channel="([^"]+)"/)[1];
+        const {page, context, errors} = await pageFor(engine, {fixture});
+        assert.equal(await page.evaluate(() => typeof window.InvidiousSpoilers), 'undefined');
+        const second = await context.newPage();
+        await second.goto('https://invidious.test/feed/popular');
+        const reloaded = page.waitForEvent('load');
+        await second.evaluate(id => localStorage.setItem('iv:browser:v2:guest:channel_spoiler_settings', JSON.stringify({[id]:{name:'Channel',hide_title:true,hide_thumbnail:true,reveal_after_days:null}})), id);
+        await reloaded;
+        assert.equal(await page.locator('.spoiler-title-reveal').count(), 4);
+        assert.equal(await page.locator('[data-spoiler-title]').first().textContent(), 'Title hidden');
+        await page.locator('[data-spoiler-thumbnail]').first().click();
+        assert.equal(await page.locator('[data-spoiler-thumbnail]').first().locator('img').count(), 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}

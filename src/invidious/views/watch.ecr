@@ -5,7 +5,7 @@
 <% title = HTML.escape(spoiler_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, spoiler_date.nil?) : original_title) %>
 <% display_thumbnail = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :thumbnail) ? "" : thumbnail %>
 <% env.set "spoiler_page", {"channel" => video.ucid, "published" => spoiler_date.try(&.to_unix), "title" => original_title, "thumbnail" => thumbnail}.to_json %>
-<% Invidious::Frontend::ChannelSpoilers.prepare_ids(env, related_videos.compact_map { |rv| rv["id"]? }) %>
+<% Invidious::Frontend::ChannelSpoilers.prepare_recommendations(env, related_videos) %>
 <% watch_url = native_clip ? native_clip.permalink : "/watch?v=#{video.id}" %>
 <% author = HTML.escape(video.author) %>
 

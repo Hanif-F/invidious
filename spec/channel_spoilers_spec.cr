@@ -19,6 +19,18 @@ describe Invidious::ChannelSpoilers do
     Invidious::ChannelSpoilers::Rule.new.active?(nil).should be_false
   end
 
+  it "emits an explicit null timer and accepts previously omitted timers" do
+    id = "UC" + "a" * 22
+    rule = Invidious::ChannelSpoilers::Rule.new("Channel", true, true)
+    JSON.parse(rule.to_json).as_h.has_key?("reveal_after_days").should be_true
+    JSON.parse(rule.to_json)["reveal_after_days"].raw.should be_nil
+    ["", ",\"reveal_after_days\":null"].each do |timer|
+      saved = Invidious::ChannelSpoilers::Rules.normalize(JSON.parse(%({"#{id}":{"hide_title":true,"hide_thumbnail":true#{timer}}})))[id]
+      saved.reveal_after_days.should be_nil
+      saved.active?(Time.utc(2010, 1, 1)).should be_true
+    end
+  end
+
   it "preserves timezone precision and rejects sentinel and synthetic publication dates" do
     Invidious::ChannelSpoilers.publication("2026-10-01T12:30:00+07:00").should eq(Time.utc(2026, 10, 1, 5, 30))
     Invidious::ChannelSpoilers.publication("2026-10-01").should eq(Time.utc(2026, 10, 1))

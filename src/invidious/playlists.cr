@@ -582,7 +582,7 @@ end
 # The DOM carries occurrence indices; video IDs alone are not unique in playlists.
 def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil, spoiler_env = nil)
   if spoiler_env
-    Invidious::Frontend::ChannelSpoilers.prepare_ids(spoiler_env, playlist["videos"].as_a.map { |video| video["videoId"].as_s })
+    Invidious::Frontend::ChannelSpoilers.prepare_queue(spoiler_env, playlist["videos"].as_a)
   end
   plid = playlist[mix ? "mixId" : "playlistId"].as_s
   String.build do |html|
@@ -615,7 +615,7 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
                 %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
               end
       channel = video["authorId"]?.try(&.as_s?) || ""
-      date = video["published"]?.try(&.as_i64?).try { |epoch| Invidious::ChannelSpoilers.publication(Time.unix(epoch)) }
+      date = Invidious::Frontend::ChannelSpoilers.queue_date(video)
       html << (spoiler_env ? Invidious::Frontend::ChannelSpoilers.thumbnail(spoiler_env, id, channel, date, image) : image)
       html << Invidious::Frontend::WatchedIndicator.render(id, video["lengthSeconds"].as_i, watched.includes?(id))
       html << "</span>"
