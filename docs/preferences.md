@@ -1,5 +1,9 @@
 # Preferences
 
+Per-channel title and thumbnail hiding is available from Preferences and channel
+or watch pages. Both switches share an optional upload-age delay, with explicit
+thumbnail reveal and DeArrow title cycling. See [channel titles and thumbnails](channel-spoilers.md).
+
 [Documentation index](README.md)
 
 Open `/preferences` and save the form to apply settings. Guests store serialized preferences in the `PREFS` cookie, normally expiring after two years. Signed-in users store JSON in `users.preferences`. Defaults come from `default_user_preferences`, with converters and compatibility rules in [preferences.cr](../src/invidious/user/preferences.cr).

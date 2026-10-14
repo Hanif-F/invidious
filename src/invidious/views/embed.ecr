@@ -1,19 +1,25 @@
+<% spoiler_date = Invidious::ChannelSpoilers.video_publication(video.info) %>
+<% env.set "spoiler_page", {"channel" => video.ucid, "published" => spoiler_date.try(&.to_unix), "title" => video.title, "thumbnail" => thumbnail}.to_json %>
+<% display_thumbnail = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :thumbnail) ? "" : thumbnail %>
+<% display_title = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :title) ? Invidious::Frontend::ChannelSpoilers.label(env, :title, spoiler_date.nil?) : video.title %>
 <!DOCTYPE html>
 <html lang="<%= preferences.locale %>">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="thumbnail" content="<%= thumbnail %>">
+    <meta name="thumbnail" content="<%= display_thumbnail %>">
+    <script id="browser-profile" type="application/json"><%= {scope: Invidious::BrowserProfiles.render_scope(env), cookieDomain: Invidious::Authentication.cookie_domain(env), saveError: I18n.translate(preferences.locale, "browser_save_error")}.to_json.gsub("<", "\\u003c") %></script>
+    <script src="/js/browser-storage.js?v=<%= ASSET_COMMIT %>"></script>
+    <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
+    <%= rendered "components/channel_spoiler_scripts" %>
     <%= rendered "components/player_sources" %>
     <link rel="stylesheet" href="/videojs/videojs-overlay/videojs-overlay.css?v=<%= ASSET_COMMIT %>">
     <script src="/videojs/videojs-overlay/videojs-overlay.js?v=<%= ASSET_COMMIT %>"></script>
     <link rel="stylesheet" href="/css/default.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/css/embed.css?v=<%= ASSET_COMMIT %>">
-    <title><%= HTML.escape(video.title) %> - Invidious</title>
-    <script id="browser-profile" type="application/json"><%= {scope: Invidious::BrowserProfiles.render_scope(env), cookieDomain: Invidious::Authentication.cookie_domain(env), saveError: I18n.translate(preferences.locale, "browser_save_error")}.to_json.gsub("<", "\\u003c") %></script>
-    <script src="/js/browser-storage.js?v=<%= ASSET_COMMIT %>"></script>
-    <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
+    <title><%= HTML.escape(display_title) %> - Invidious</title>
+
 </head>
 
 <body class="dark-theme">
@@ -47,6 +53,10 @@
 </script>
 
 <%= rendered "components/player" %>
+<% if preferences.dearrow_enabled %>
+<script id="dearrow-config" type="application/json"><%= {"showOriginal" => preferences.dearrow_show_original}.to_json %></script>
+<script src="/js/dearrow.js?v=<%= ASSET_COMMIT %>" defer></script>
+<% end %>
 <script src="/js/embed.js?v=<%= ASSET_COMMIT %>"></script>
 </body>
 </html>

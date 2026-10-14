@@ -13,7 +13,7 @@
     <p id="dearrow-status" tabindex="-1" role="status" aria-live="polite"></p>
     <section id="dearrow-editor">
         <h3><%= I18n.translate(locale, "dearrow_original") %></h3>
-        <div id="dearrow-original" class="dearrow-row"><span dir="auto"><%= HTML.escape(video.title) %></span><div class="dearrow-votes"></div></div>
+        <div id="dearrow-original" class="dearrow-row"><span dir="auto" data-dearrow-row><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, video.title, Invidious::ChannelSpoilers.video_publication(video.info), false, false) %></span><div class="dearrow-votes"></div></div>
         <form id="dearrow-draft-form">
             <label for="dearrow-draft"><%= I18n.translate(locale, "dearrow_custom") %></label>
             <input id="dearrow-draft" type="text" maxlength="110" required placeholder="<%= I18n.translate(locale, "dearrow_input") %>" autocomplete="off">

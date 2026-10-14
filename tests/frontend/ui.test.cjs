@@ -134,7 +134,7 @@ async function pageFor(engine, options = {}) {
         const url = new URL(route.request().url());
         requests.push(url.pathname + url.search);
         if (route.request().isNavigationRequest()) {
-            let body = fs.readFileSync(path.join(generated, (url.pathname.startsWith('/embed/') ? 'embed-mobile' : options.profile?.fixture || fixture) + '.html'), 'utf8');
+            let body = fs.readFileSync(path.join(generated, (url.pathname.startsWith('/embed/') ? options.embedFixture || 'embed-mobile' : options.profile?.fixture || fixture) + '.html'), 'utf8');
             const scope = options.profile?.scope || fixtureScope;
             body = body.replace(/(<script id="browser-profile"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) =>
                 start + JSON.stringify({...JSON.parse(data), scope}) + end);
@@ -2497,7 +2497,7 @@ test('UI asset additions report the advisory 35KB compressed target', () => {
     }
     // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
     delta += Math.max(0, ...themeBytes);
-    for (const file of ['js/dearrow.js', 'js/player-mobile.js', 'js/player-stats.js', 'js/player-stream-menu.js', 'js/dearrow-loader.js', 'js/clip-loader.js', 'js/player-chapters.js', 'css/dearrow.css']) {
+    for (const file of ['js/dearrow.js', 'js/channel-spoilers.js', 'css/channel-spoilers.css', 'js/player-mobile.js', 'js/player-stats.js', 'js/player-stream-menu.js', 'js/dearrow-loader.js', 'js/clip-loader.js', 'js/player-chapters.js', 'css/dearrow.css']) {
         const bytes = gzipSync(fs.readFileSync(path.join(root, 'assets', file))).length;
         delta += bytes;
         totalShared += bytes;
@@ -5165,5 +5165,168 @@ for (const engine of engines) {
             assert.deepEqual(errors, []);
             await context.close();
         }
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'spoiler-cards-original', width: 390});
+        const cards = page.locator('.media-item');
+        assert.match(await cards.nth(0).locator('[data-spoiler-title]').textContent(), /^Title hidden$/);
+        assert.match(await cards.nth(1).locator('[data-spoiler-title]').textContent(), /^Original <title> 1$/);
+        assert.match(await cards.nth(2).locator('[data-spoiler-title]').textContent(), /upload date unknown/);
+        assert.match(await cards.nth(2).locator('.spoiler-placeholder').textContent(), /upload date unknown/);
+        assert.equal(await cards.nth(0).locator('.thumbnail img').count(), 0);
+        const before = page.url();
+        await cards.nth(0).locator('[data-spoiler-thumbnail]').click();
+        assert.equal(page.url(), before);
+        assert.equal(await cards.nth(0).locator('.thumbnail img').count(), 1);
+        const icon = cards.nth(0).locator('.spoiler-title-reveal');
+        await icon.hover();
+        assert.equal(await cards.nth(0).locator('[data-spoiler-title]').textContent(), 'Title hidden');
+        await icon.focus();
+        await page.keyboard.press('Enter');
+        assert.equal(await cards.nth(0).locator('[data-spoiler-title]').textContent(), 'Original <title> 0');
+        await icon.click();
+        assert.equal(await cards.nth(0).locator('[data-spoiler-title]').textContent(), 'Title hidden');
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+        await page.screenshot({path: path.join(artifacts, `${engine}-channel-spoilers-mobile.png`)});
+        await page.reload();
+        assert.equal(await cards.nth(0).locator('.thumbnail img').count(), 0);
+        await cards.nth(0).locator('.thumbnail > a').focus();
+        await page.keyboard.press('Enter');
+        await cards.nth(0).locator('.thumbnail img').waitFor();
+        assert.equal(page.url(), before);
+        assert.equal(await cards.nth(0).locator('.thumbnail img').count(), 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: channel spoilers cycle Hidden DeArrow Original and stay hidden through failed lookups`, async () => {
+        for (const unavailable of [false, true]) {
+            const {page, context, errors, requests} = await pageFor(engine, {fixture: 'spoiler-cards-dearrow', dearrowTitle: 'Clear <title>', dearrowError: unavailable});
+            const title = page.locator('[data-spoiler-title]').first();
+            const button = page.locator('.spoiler-title-reveal').first();
+            assert.equal(await title.textContent(), 'Title hidden');
+            await button.click();
+            await page.waitForFunction(() => document.querySelector('[data-spoiler-title]').textContent !== 'Title hidden');
+            assert.equal(await title.textContent(), unavailable ? 'Original <title> 0' : 'Clear <title>');
+            if (!unavailable) {
+                await button.click();
+                assert.equal(await title.textContent(), 'Original <title> 0');
+            }
+            await button.click();
+            assert.equal(await title.textContent(), 'Title hidden');
+            assert.equal(requests.filter(url => url === '/api/v1/dearrow/00000000000').length, 1);
+            assert.equal(await title.locator('img, script').count(), 0);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: channel spoilers preserve no-JavaScript masking and account settings`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'spoiler-cards-original', javascript: false});
+        assert.equal(await page.locator('[data-spoiler-title]').first().textContent(), 'Title hidden');
+        assert.equal(await page.locator('.spoiler-title-reveal').count(), 0);
+        assert.match(await page.locator('.spoiler-placeholder').nth(1).textContent(), /upload date unknown/);
+        assert.deepEqual(errors, []);
+        await context.close();
+        const editor = await pageFor(engine, {fixture: 'spoiler-editor-account', javascript: false, width: 320});
+        assert.equal(await editor.page.locator('[name="hide_title"]').isChecked(), true);
+        assert.equal(await editor.page.locator('[name="hide_thumbnail"]').isChecked(), true);
+        assert.equal(await editor.page.locator('[name="reveal_after_days"]').inputValue(), '7');
+        assert.equal(await editor.page.locator('.spoiler-channel-form').getAttribute('method'), 'post');
+        assert.equal(await editor.page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+        assert.deepEqual(editor.errors, []);
+        await editor.context.close();
+    });
+
+    test(`${engine}: channel spoilers save guest rules and apply before initial rendering`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'spoiler-editor-guest', width: 390});
+        await page.locator('[name="hide_title"]').check();
+        await page.locator('[name="hide_thumbnail"]').check();
+        await page.locator('[name="reveal_after_days"]').fill('7');
+        await page.locator('.spoiler-channel-form [value="save"]').click();
+        const saved = await page.evaluate(() => window.InvidiousStorage.local.get('channel_spoiler_settings'));
+        const id = Object.keys(saved)[0];
+        assert.equal(saved[id].reveal_after_days, 7);
+        assert.equal(saved[id].name, 'Studio <North>');
+        await page.reload();
+        assert.equal(await page.locator('[name="hide_title"]').isChecked(), true);
+        await context.route('**/feed/popular', route => route.fulfill({contentType: 'text/html', body: fs.readFileSync(path.join(generated, 'spoiler-cards-guest.html'))}));
+        await page.goto('https://invidious.test/feed/popular');
+        assert.equal(await page.locator('[data-spoiler-title]').first().textContent(), 'Title hidden');
+        assert.equal(await page.locator('[data-spoiler-thumbnail]').first().locator('img').count(), 0);
+        assert.match(await page.locator('[data-spoiler-title]').nth(2).textContent(), /upload date unknown/);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: channel spoilers mask watch posters, browser titles and dynamic queue occurrences`, async () => {
+        const queue = JSON.parse(fs.readFileSync(path.join(generated, 'queue-spoiler.json')));
+        const {page, context, errors, requests} = await pageFor(engine, {fixture: 'watch-spoiler-dearrow', realPlayer: true,
+            route: 'watch?v=2isYuQZMbdU&list=PLfixture', queue, dearrowTitle: 'Clear watch title', videoData: {params: {continue: false}}});
+        assert.equal(await page.title(), 'Title hidden - Invidious');
+        assert.equal(await page.locator('meta[property="og:title"]').getAttribute('content'), 'Title hidden');
+        assert.equal(await page.locator('meta[property="og:image"]').getAttribute('content'), '');
+        assert.equal(await page.evaluate(() => player_data.title), 'Title hidden');
+        assert.equal(await page.evaluate(() => player.poster()), '');
+        assert.ok(!requests.some(url => url.startsWith('/api/v1/storyboards/')));
+        await page.locator('.spoiler-poster-reveal').click();
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        assert.match(await page.evaluate(() => player.poster()), /maxres.jpg$/);
+        const heading = page.locator('.watch-heading > [data-dearrow-row] > .spoiler-title-reveal');
+        await heading.click();
+        await page.waitForFunction(() => document.title === 'Clear watch title - Invidious');
+        assert.equal(await page.evaluate(() => player_data.title), 'Clear watch title');
+        await heading.click();
+        assert.equal(await page.title(), 'A journey through light, color, and motion - Invidious');
+        await heading.click();
+        assert.equal(await page.title(), 'Title hidden - Invidious');
+        const rows = page.locator('#playlist .queue-row');
+        await rows.first().waitFor();
+        assert.equal(await rows.count(), 2);
+        assert.match(await rows.first().locator('[data-spoiler-title]').textContent(), /upload date unknown/);
+        await rows.first().locator('.spoiler-title-reveal').click();
+        await page.waitForFunction(() => document.querySelector('#playlist [data-spoiler-title]').textContent === 'Clear watch title');
+        assert.equal(await rows.first().locator('[data-spoiler-title]').textContent(), 'Clear watch title');
+        assert.match(await rows.last().locator('[data-spoiler-title]').textContent(), /upload date unknown/);
+        await page.screenshot({path: path.join(artifacts, `${engine}-channel-spoilers-watch.png`)});
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: channel spoilers keep embed overlays hidden until the DeArrow button is activated`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'embed-spoiler', embedFixture: 'embed-spoiler',
+            route: 'embed/2isYuQZMbdU', realPlayer: true, width: 390, dearrowTitle: 'Clear embed title',
+            videoData: {params: {continue: false}}});
+        assert.equal(await page.title(), 'Title hidden - Invidious');
+        await page.locator('.spoiler-poster-reveal').click();
+        await page.evaluate(() => player.load());
+        await page.waitForFunction(() => player.readyState() >= 1);
+        const button = page.locator('.vjs-overlay:visible .spoiler-title-reveal').first();
+        await button.waitFor();
+        assert.equal(await page.locator('.vjs-overlay:visible [data-spoiler-title]').first().textContent(), 'Title hidden');
+        await button.click();
+        await page.waitForFunction(() => document.title === 'Clear embed title - Invidious');
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: channel spoilers mask a guest watch title and poster before player setup`, async () => {
+        const id = JSON.parse(fs.readFileSync(path.join(generated, 'watch-spoiler-guest.html'), 'utf8')
+            .match(/<script id="channel-spoiler-config"[^>]*>([\s\S]*?)<\/script>/)[1]).page.channel;
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-spoiler-guest', realPlayer: true,
+            route: 'watch?v=2isYuQZMbdU', initScript: `localStorage.setItem('iv:browser:v2:guest:channel_spoiler_settings', JSON.stringify({[${JSON.stringify(id)}]:{name:'Channel',hide_title:true,hide_thumbnail:true,reveal_after_days:7}}));`});
+        assert.equal(await page.title(), 'Title hidden - Invidious');
+        assert.equal(await page.evaluate(() => player_data.title), 'Title hidden');
+        assert.equal(await page.evaluate(() => player.poster()), '');
+        assert.equal(await page.locator('meta[property="og:title"]').getAttribute('content'), 'Title hidden');
+        assert.equal(await page.locator('meta[property="og:image"]').getAttribute('content'), '');
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 }

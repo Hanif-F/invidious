@@ -87,6 +87,9 @@ struct Preferences
   property extend_desc : Bool = CONFIG.default_user_preferences.extend_desc
   property save_player_pos : Bool = CONFIG.default_user_preferences.save_player_pos
   property default_playlist : String? = nil
+  @[JSON::Field(converter: Invidious::ChannelSpoilers::Rules)]
+  @[YAML::Field(converter: Invidious::ChannelSpoilers::Rules)]
+  property channel_spoiler_settings : Hash(String, Invidious::ChannelSpoilers::Rule) = {} of String => Invidious::ChannelSpoilers::Rule
   @[JSON::Field(converter: Invidious::SponsorBlock::ChannelOverrides)]
   @[YAML::Field(converter: Invidious::SponsorBlock::ChannelOverrides)]
   property sponsorblock_channel_overrides : Hash(String, Invidious::SponsorBlock::ChannelOverride) = {} of String => Invidious::SponsorBlock::ChannelOverride

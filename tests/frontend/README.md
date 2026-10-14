@@ -28,6 +28,17 @@ ignored by Git.
 
 ## Coverage and limits
 
+Channel title/thumbnail settings cover shared upload-age boundaries, unknown-date
+labels, account JSON/YAML/API/export/import persistence and global-form
+preservation. Browser checks exercise scoped guest saves, click/keyboard thumbnail
+reveal without navigation, Hidden → DeArrow → Original cycling, failed DeArrow
+lookups, no-JavaScript masking, watch/guest/embed posters and titles, and duplicate
+dynamic queue occurrences in Chromium and Firefox. Run the fixture generator,
+`crystal spec spec/channel_spoilers_spec.cr`, and
+`node --test --test-name-pattern='channel spoilers' tests/frontend/ui.test.cjs`.
+The fixtures use SQLite; they do not exercise the production PostgreSQL row lock
+or cache fallback query. See [channel titles and thumbnails](../../docs/channel-spoilers.md).
+
 AiSList fixtures use local lists and fake channel resolution to verify the global
 master switch, eight independent per-page actions, replacement-only library pages,
 legacy preference conversion, instance defaults, paused-choice preservation,

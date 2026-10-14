@@ -126,20 +126,16 @@
               end
             -%>
 
+            <% spoiler_date = Invidious::Frontend::ChannelSpoilers.date(item) %>
+            <% normal_thumbnail = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, item.ucid.to_s)
+                Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale)
+              elsif thin_mode
+                %(<span class="thumbnail-placeholder video-placeholder"></span>)
+              else
+                %(<img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/#{item.id}/mqdefault.jpg" alt="">) + (item_watched ? %(<div class="watched-overlay"></div>) : "")
+              end %>
             <div class="thumbnail video-thumbnail">
-                <%- if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, item.ucid.to_s) -%>
-                    <a tabindex="-1" href="<%= link_url %>"><%= Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale) %></a>
-                <%- elsif !thin_mode -%>
-                    <a tabindex="-1" href="<%= link_url %>">
-                        <img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= item.id %>/mqdefault.jpg" alt="" />
-
-                        <% if item_watched %>
-                            <div class="watched-overlay"></div>
-                        <% end %>
-                    </a>
-                <%- else -%>
-                    <div class="thumbnail-placeholder video-placeholder"></div>
-                <%- end -%>
+                <a tabindex="-1" href="<%= link_url %>"><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, item.id, item.ucid.to_s, spoiler_date, normal_thumbnail) %></a>
 
                 <%= Invidious::Frontend::WatchedIndicator.render(item.id, item.length_seconds, !!item_watched) %>
 
@@ -185,7 +181,7 @@
             <div class="video-card-details">
 
             <div class="video-card-row" data-dearrow-row>
-                <a href="<%= link_url %>"><p dir="auto" data-dearrow-id="<%= HTML.escape(item.id) %>"><%= HTML.escape(item.title) %></p></a>
+                <a href="<%= link_url %>"><p dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, item.id, item.ucid.to_s, item.title, spoiler_date) %></p></a>
             </div>
 
             <div class="video-card-row flexible channel-attribution">

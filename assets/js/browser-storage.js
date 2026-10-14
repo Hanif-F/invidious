@@ -85,6 +85,16 @@ window.InvidiousStorage = (function () {
                 fontFamily: ['proportionalSansSerif', 'monospaceSansSerif', 'proportionalSerif', 'monospaceSerif', 'casual', 'script', 'small-caps'],
                 fontPercent: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4]};
             Object.keys(choices).forEach(function (name) { if (choices[name].includes(value[name])) clean[name] = value[name]; });
+        } else if (key === 'channel_spoiler_settings') {
+            Object.keys(value).slice(0, 1000).forEach(function (id) {
+                var entry = value[id];
+                if (!/^UC[A-Za-z0-9_-]{22}$/.test(id) || !object(entry)) return;
+                var title = entry.hide_title === true, thumbnail = entry.hide_thumbnail === true;
+                var days = entry.reveal_after_days === undefined ? null : entry.reveal_after_days;
+                if ((!title && !thumbnail) || days !== null && (!Number.isInteger(days) || days < 1 || days > 2147483647)) return;
+                clean[id] = {name: typeof entry.name === 'string' ? entry.name.slice(0, 200) : id,
+                    hide_title: title, hide_thumbnail: thumbnail, reveal_after_days: days};
+            });
         } else if (key === 'sponsorblock_channel_overrides') {
             Object.keys(value).slice(0, 1000).forEach(function (id) {
                 var entry = value[id];

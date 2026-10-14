@@ -12,7 +12,7 @@ module Invidious::Routes::BeforeAll
   private COMPANION_CSP = CompanionCSP.new
 
   def self.handle(env)
-    if env.request.cookies.has_key?("SID") || env.request.cookies.has_key?("PREFS") || env.request.headers.has_key?("Authorization") || env.request.path == "/feed/private"
+    if env.request.cookies.has_key?("SID") || env.request.cookies.has_key?("PREFS") || env.request.cookies.has_key?("iv_spoilers_guest") || env.request.headers.has_key?("Authorization") || env.request.path == "/feed/private"
       Authentication.no_store(env)
     end
     preferences = Preferences.from_json("{}")

@@ -33,6 +33,7 @@
         }
         return requests.get(id);
     }
+    if (window.InvidiousSpoilers) window.InvidiousSpoilers.bindDeArrow(request);
 
     function originalOnInteraction(element, original, replacement) {
         var row = element.closest('[data-dearrow-row]');
@@ -89,7 +90,7 @@
         var id = element.dataset.dearrowId;
         var original = element.textContent;
         request(id).then(function (title) {
-            if (!element.isConnected || !title || title === original || element.dataset.dearrowOriginal !== undefined) return;
+            if (!element.isConnected || !title || title === original || element.dataset.dearrowOriginal !== undefined || element.dataset.spoilerHidden === 'true') return;
             element.dataset.dearrowOriginal = original;
             element.textContent = title;
             if (element.hasAttribute('data-dearrow-watch')) document.title = title + ' - Invidious';
@@ -109,6 +110,7 @@
         if (root.matches('[data-dearrow-id]')) elements.push(root);
         elements = elements.concat(Array.from(root.querySelectorAll('[data-dearrow-id]')));
         elements.forEach(function (element) {
+            if (element.dataset.spoilerHidden === 'true') return;
             if (seen.has(element) || !/^[A-Za-z0-9_-]{11}$/.test(element.dataset.dearrowId)) return;
             seen.add(element);
             if (visible && !element.hasAttribute('data-dearrow-watch')) visible.observe(element);

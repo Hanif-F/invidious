@@ -45,6 +45,7 @@
 
 <% Invidious::Frontend::ChannelAvatars.prepare_ids(env, watched.compact_map(&.channel_id)) %>
 <% Invidious::Frontend::AiChannels.prepare_ids(env, watched.compact_map(&.channel_id)) %>
+<% Invidious::Frontend::ChannelSpoilers.prepare_ids(env, watched.map(&.video_id)) %>
 <% previous_group = "" %>
 <div class="history-groups">
     <% watched.each do |entry| %>
@@ -60,15 +61,15 @@
         <div class="pure-u-1 pure-u-md-1-4 media-item" data-kind="video">
             <div class="h-box media-card">
                 <div class="thumbnail video-thumbnail">
-                    <% if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, entry.channel_id || "") %>
-                    <a style="width:100%" href="/watch?v=<%= HTML.escape(item) %>" aria-label="<%= I18n.translate(locale, "ui_open_video") %> <%= HTML.escape(entry.title || item) %>"><%= Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale) %></a>
-                    <% elsif !env.get("preferences").as(Preferences).thin_mode %>
-                    <a style="width:100%" href="/watch?v=<%= HTML.escape(item) %>" aria-label="<%= I18n.translate(locale, "ui_open_video") %> <%= HTML.escape(item) %>">
-                        <img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= HTML.escape(item) %>/mqdefault.jpg" alt="" />
-                    </a>
-                    <% else %>
-                    <div class="thumbnail-placeholder video-placeholder"></div>
-                    <% end %>
+                    <% history_date = Invidious::ChannelSpoilers.publication(entry.release_date) %>
+                    <% history_image = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, entry.channel_id || "")
+                        Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale)
+                      elsif env.get("preferences").as(Preferences).thin_mode
+                        %(<span class="thumbnail-placeholder video-placeholder"></span>)
+                      else
+                        %(<img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/#{HTML.escape(item)}/mqdefault.jpg" alt="">)
+                      end %>
+                    <a style="width:100%" href="/watch?v=<%= HTML.escape(item) %>" aria-label="<%= I18n.translate(locale, "ui_open_video") %>"><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, item, entry.channel_id || "", history_date, history_image) %></a>
 
                     <%= Invidious::Frontend::WatchedIndicator.render(item, entry.length_seconds, true) %>
 
@@ -83,7 +84,7 @@
                 <% history_channel_id = entry.channel_id || "" %>
                 <% history_avatar = Invidious::Frontend::ChannelAvatars.show?(env, history_channel_id) %>
                 <div class="video-card-details">
-                <p data-dearrow-row><a href="/watch?v=<%= HTML.escape(item) %>" dir="auto" data-dearrow-id="<%= HTML.escape(item) %>"><%= HTML.escape(entry.title || "#{I18n.translate(locale, "ui_open_video")} (#{item})") %></a></p>
+                <p data-dearrow-row><a href="/watch?v=<%= HTML.escape(item) %>" dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, item, entry.channel_id || "", entry.title || "#{I18n.translate(locale, "ui_open_video")} (#{item})", history_date) %></a></p>
                 <p>
                     <% if channel_id = entry.channel_id %>
                     <a class="channel-name-link" href="/channel/<%= URI.encode_www_form(channel_id) %>"><% if history_avatar %><%= Invidious::Frontend::ChannelAvatars.render(env, history_channel_id, name: entry.channel_name) %><% end %><span dir="auto"><%= HTML.escape(entry.channel_name || channel_id) %></span></a>

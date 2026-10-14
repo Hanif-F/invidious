@@ -239,6 +239,7 @@ module Invidious::Routes::PreferencesRoute
       default_playlist:               default_playlist,
       search_privacy:                 search_privacy,
       sponsorblock_channel_overrides: previous.sponsorblock_channel_overrides,
+      channel_spoiler_settings:        previous.channel_spoiler_settings,
       sponsorblock_enabled:           env.params.body["sponsorblock_enabled"]? == "on",
       sponsorblock_modes:             Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_mode_#{category}"]? || previous.sponsorblock_modes[category]} },
       sponsorblock_colors:            Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_color_#{category}"]? || previous.sponsorblock_colors[category]} },

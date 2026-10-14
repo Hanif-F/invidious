@@ -63,6 +63,30 @@ module Invidious::Database::Videos
     metadata
   end
 
+  # Presentation-only fallback for lists that omit upload dates. Read both
+  # existing caches in one query; never refresh videos or channels here.
+  def select_spoiler_metadata(ids : Array(String)) : Hash(String, JSON::Any)
+    metadata = {} of String => JSON::Any
+    return metadata if ids.empty?
+    PG_DB.query_all(<<-SQL, ids, as: {String, String}).each do |id, info|
+      SELECT id, info FROM videos WHERE id = ANY($1)
+      UNION ALL
+      SELECT id, json_build_object('ucid', ucid, 'publishedIsKnown', published >= '2005-01-01',
+        'sourcePublished', to_char(published AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::text
+      FROM channel_videos WHERE id = ANY($1)
+      SQL
+      begin
+        parsed = JSON.parse(info)
+        next unless parsed.as_h?
+        if !metadata.has_key?(id) || !Invidious::ChannelSpoilers.video_publication(metadata[id].as_h)
+          metadata[id] = parsed
+        end
+      rescue JSON::ParseException | TypeCastError
+      end
+    end
+    metadata
+  end
+
   # Only read metadata already cached locally; never refresh videos from YouTube.
   def select_titles(ids : Array(String)) : Hash(String, String)
     titles = {} of String => String

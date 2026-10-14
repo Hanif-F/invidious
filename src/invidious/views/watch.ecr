@@ -1,18 +1,24 @@
 <% ucid = video.ucid %>
-<% title = HTML.escape(native_clip ? native_clip.title : video.title) %>
+<% spoiler_date = Invidious::ChannelSpoilers.video_publication(video.info) %>
+<% original_title = native_clip ? native_clip.title : video.title %>
+<% spoiler_title_hidden = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :title) %>
+<% title = HTML.escape(spoiler_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, spoiler_date.nil?) : original_title) %>
+<% display_thumbnail = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :thumbnail) ? "" : thumbnail %>
+<% env.set "spoiler_page", {"channel" => video.ucid, "published" => spoiler_date.try(&.to_unix), "title" => original_title, "thumbnail" => thumbnail}.to_json %>
+<% Invidious::Frontend::ChannelSpoilers.prepare_ids(env, related_videos.compact_map { |rv| rv["id"]? }) %>
 <% watch_url = native_clip ? native_clip.permalink : "/watch?v=#{video.id}" %>
 <% author = HTML.escape(video.author) %>
 
 
 <% content_for "header" do %>
-<meta name="thumbnail" content="<%= thumbnail %>">
+<meta name="thumbnail" content="<%= display_thumbnail %>">
 <meta name="description" content="<%= HTML.escape(video.short_description) %>">
 <meta name="keywords" content="<%= video.keywords.join(",") %>">
 <meta property="og:site_name" content="<%= author %> | Invidious">
 <meta property="og:url" content="<%= HOST_URL %><%= watch_url %>">
 <% if native_clip %><link rel="canonical" href="<%= HOST_URL %><%= watch_url %>"><% end %>
 <meta property="og:title" content="<%= title %>">
-<meta property="og:image" content="<%= HOST_URL %>/vi/<%= video.id %>/maxres.jpg">
+<meta property="og:image" content="<%= display_thumbnail.empty? ? "" : HOST_URL + display_thumbnail %>">
 <meta property="og:description" content="<%= HTML.escape(video.short_description) %>">
 <meta property="og:type" content="video.other">
 <% unless native_clip %>
@@ -26,7 +32,7 @@
 <meta name="twitter:url" content="<%= HOST_URL %><%= watch_url %>">
 <meta name="twitter:title" content="<%= title %>">
 <meta name="twitter:description" content="<%= HTML.escape(video.short_description) %>">
-<meta name="twitter:image" content="<%= HOST_URL %>/vi/<%= video.id %>/maxres.jpg">
+<meta name="twitter:image" content="<%= display_thumbnail.empty? ? "" : HOST_URL + display_thumbnail %>">
 <% unless native_clip %>
 <meta name="twitter:player" content="<%= HOST_URL %>/embed/<%= video.id %>">
 <meta name="twitter:player:width" content="1280">
@@ -184,14 +190,14 @@
     <div class="watch-primary">
         <header class="watch-heading">
             <% if native_clip %>
-            <h1 dir="auto"><%= title %></h1>
+            <div data-dearrow-row><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, true, false, "h1") %></div>
             <p><%= I18n.translate(locale, "clips_by") %> <%= HTML.escape(native_clip.creator) %> · <%= native_clip.start_time %>–<%= native_clip.end_time %> s</p>
-            <p dir="auto"><a href="/watch?v=<%= video.id %>"><%= HTML.escape(video.title) %></a></p>
+            <p dir="auto" data-dearrow-row><a href="/watch?v=<%= video.id %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, video.title, spoiler_date) %></a></p>
             <p class="js-only"><label><input id="clip-loop" type="checkbox" <%= "checked" if params.video_loop %>> <%= I18n.translate(locale, "clips_loop") %></label></p>
             <p><a class="pure-button" href="/watch?v=<%= video.id %>&t=<%= native_clip.start_time %>"><%= I18n.translate(locale, "clips_full_video") %></a>
             <% if user && user.email == native_clip.owner %><a href="/delete_clip?id=<%= native_clip.id %>"><%= I18n.translate(locale, "clips_delete") %></a><% end %></p>
             <% else %>
-            <div data-dearrow-row><h1 dir="auto" data-dearrow-id="<%= HTML.escape(video.id) %>" data-dearrow-watch><%= title %></h1></div>
+            <div data-dearrow-row><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, true, true, "h1") %></div>
             <%= rendered "components/dearrow_contributions" %>
             <% end %>
     <% if !video.is_listed %>
@@ -229,6 +235,7 @@
                 <span class="channel-name" dir="auto"><%= author %><% if video.author_verified %> <i class="icon ion-md-checkmark-circle" title="<%= I18n.translate(locale, "ui_verified") %>"></i><% end %></span>
             </a>
             <a href="/preferences/sponsorblock/channels?channel=<%= video.ucid %>"><%= I18n.translate(locale, "sb_channel_settings") %></a>
+            <p><a href="/preferences/spoilers/channels?channel=<%= video.ucid %>"><%= I18n.translate(locale, "spoilers_settings") %></a></p>
             <div><% sub_count_text = video.sub_count_text %><%= rendered "components/subscribe_widget" %></div>
         </div>
         <div class="watch-actions">
@@ -438,7 +445,7 @@
             <header class="queue-heading">
                 <h2><%= I18n.translate(locale, "ui_playing_playlist") %></h2>
                 <a id="queue-title" href="/<%= plid.starts_with?("RD") ? "mix" : "playlist" %>?list=<%= plid %>"><%= I18n.translate(locale, "ui_open_playlist") %></a>
-                <p class="queue-context"><span id="queue-count"></span><span id="queue-current" data-dearrow-row><%= I18n.translate(locale, "ui_now_playing") %>: <span data-dearrow-id="<%= HTML.escape(video.id) %>"><%= title %></span></span></p>
+                <p class="queue-context"><span id="queue-count"></span><span id="queue-current" data-dearrow-row><%= I18n.translate(locale, "ui_now_playing") %>: <%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date) %></span></p>
             </header>
             <div id="queue-navigation" class="queue-navigation" hidden></div>
             <p id="queue-status" class="queue-status" role="status"></p>
@@ -458,12 +465,20 @@
                 <% if rv["id"]? %>
                 <article class="recommendation" data-video-id="<%= rv["id"] %>" data-channel-id="<%= HTML.escape(rv["ucid"]? || "") %>">
                     <div class="thumbnail video-thumbnail">
-                        <% if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, rv["ucid"]? || "") %><a tabindex="-1" href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><%= Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale) %></a><% elsif !preferences.thin_mode %><a tabindex="-1" href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/<%= rv["id"] %>/mqdefault.jpg" alt=""></a><% else %><div class="thumbnail-placeholder video-placeholder"></div><% end %>
+                        <% rv_date = Invidious::ChannelSpoilers.publication(rv["published"]?) %>
+                        <% rv_thumbnail = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, rv["ucid"]? || "")
+                            Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale)
+                          elsif preferences.thin_mode
+                            %(<span class="thumbnail-placeholder video-placeholder"></span>)
+                          else
+                            %(<img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/#{rv["id"]}/mqdefault.jpg" alt="">)
+                          end %>
+                        <a tabindex="-1" href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, rv["id"], rv["ucid"]? || "", rv_date, rv_thumbnail) %></a>
                         <%= Invidious::Frontend::WatchedIndicator.render(rv["id"], rv["length_seconds"]?.try(&.to_i?), !!env.get?("user").try(&.as(User).watched.includes?(rv["id"]))) %>
                         <% if (length = rv["length_seconds"]?.try &.to_i?) && length > 0 %><div class="bottom-right-overlay"><span class="length"><%= recode_length_seconds(length) %></span></div><% end %>
                     </div>
                     <div>
-                        <h3 data-dearrow-row><a href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><span dir="auto" data-dearrow-id="<%= HTML.escape(rv["id"]) %>"><%= HTML.escape(rv["title"]) %></span></a></h3>
+                        <h3 data-dearrow-row><a href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, rv["id"], rv["ucid"]? || "", rv["title"], rv_date) %></a></h3>
                         <p dir="auto"><% if !(rv["ucid"]? || "").empty? %><a href="/channel/<%= rv["ucid"] %>"><%= HTML.escape(rv["author"]? || "") %></a><% else %><%= HTML.escape(rv["author"]? || "") %><% end %><% if rv["author_verified"]? == "true" %> <i class="icon ion-md-checkmark-circle" title="<%= I18n.translate(locale, "ui_verified") %>"></i><% end %></p>
                         <% if count = rv["short_view_count"]?.presence %><p><%= I18n.translate_count(locale, "generic_views_count", short_text_to_number(count), I18n::NumberFormatting::Short) %></p><% end %>
                         <% if date = rv["published"]?.try { |value| Time.parse_rfc3339(value) rescue nil } %><p><%= I18n.translate(locale, "`x` ago", recode_date(date, locale)) %></p><% end %>

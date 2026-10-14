@@ -575,12 +575,15 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
   return videos
 end
 
-def template_playlist(playlist, listen, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil)
-  template_queue(playlist, listen, false, thin_mode, editable, watched, ai_thumbnails: ai_thumbnails, locale: locale)
+def template_playlist(playlist, listen, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil, spoiler_env = nil)
+  template_queue(playlist, listen, false, thin_mode, editable, watched, ai_thumbnails: ai_thumbnails, locale: locale, spoiler_env: spoiler_env)
 end
 
 # The DOM carries occurrence indices; video IDs alone are not unique in playlists.
-def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil)
+def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil, spoiler_env = nil)
+  if spoiler_env
+    Invidious::Frontend::ChannelSpoilers.prepare_ids(spoiler_env, playlist["videos"].as_a.map { |video| video["videoId"].as_s })
+  end
   plid = playlist[mix ? "mixId" : "playlistId"].as_s
   String.build do |html|
     html << %(<div class="queue-metadata" hidden data-title="#{HTML.escape(playlist["title"].as_s)}")
@@ -604,16 +607,20 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       html << ">"
       html << %(<a href="#{HTML.escape(url)}"><span class="queue-number">#{index >= 0 ? (index + 1).to_s : ""}</span>)
       html << %(<span class="queue-thumbnail">)
-      if ai_kind = ai_thumbnails[video["authorId"]?.try(&.as_s?) || ""]?
-        html << Invidious::Frontend::AiThumbnail.render(ai_kind, locale, compact: true)
-      elsif thin_mode
-        html << %(<span class="thumbnail-placeholder video-placeholder"></span>)
-      else
-        html << %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
-      end
+      image = if ai_kind = ai_thumbnails[video["authorId"]?.try(&.as_s?) || ""]?
+                Invidious::Frontend::AiThumbnail.render(ai_kind, locale, compact: true)
+              elsif thin_mode
+                %(<span class="thumbnail-placeholder video-placeholder"></span>)
+              else
+                %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
+              end
+      channel = video["authorId"]?.try(&.as_s?) || ""
+      date = video["published"]?.try(&.as_i64?).try { |epoch| Invidious::ChannelSpoilers.publication(Time.unix(epoch)) }
+      html << (spoiler_env ? Invidious::Frontend::ChannelSpoilers.thumbnail(spoiler_env, id, channel, date, image) : image)
       html << Invidious::Frontend::WatchedIndicator.render(id, video["lengthSeconds"].as_i, watched.includes?(id))
       html << "</span>"
-      html << %(<span><span class="queue-title" dir="auto"><span data-dearrow-id="#{HTML.escape(id)}">#{title}</span></span><span class="queue-meta" dir="auto">#{author})
+      title_html = spoiler_env ? Invidious::Frontend::ChannelSpoilers.title(spoiler_env, id, channel, video["title"].as_s, date) : %(<span data-dearrow-id="#{HTML.escape(id)}">#{title}</span>)
+      html << %(<span><span class="queue-title" dir="auto">#{title_html}</span><span class="queue-meta" dir="auto">#{author})
       length = video["lengthSeconds"].as_i
       html << " · #{recode_length_seconds(length)}" if length > 0
       html << "</span></span></a></li>"

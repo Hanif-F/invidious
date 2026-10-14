@@ -68,7 +68,8 @@ function create_notification_stream(subscriptions) {
             notification_text = notification_text.replace('`x`', notification.author);
 
             var system_notification = new Notification(notification_text, {
-                body: notification.title,
+                body: window.InvidiousSpoilers && window.InvidiousSpoilers.decision(notification.authorId, notification.published, 'title').hidden
+                    ? window.InvidiousSpoilers.decision(notification.authorId, notification.published, 'title').label : notification.title,
                 icon: '/ggpht' + new URL(notification.authorThumbnails[2].url).pathname,
                 img: '/ggpht' + new URL(notification.authorThumbnails[4].url).pathname
             });

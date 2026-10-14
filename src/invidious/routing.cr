@@ -78,6 +78,8 @@ module Invidious::Routing
 
     get "/preferences/sponsorblock/channels", Routes::SponsorBlockPreferences, :show
     post "/preferences/sponsorblock/channels", Routes::SponsorBlockPreferences, :update
+    get "/preferences/spoilers/channels", Routes::ChannelSpoilerPreferences, :show
+    post "/preferences/spoilers/channels", Routes::ChannelSpoilerPreferences, :update
 
     # User preferences
     get "/preferences", Routes::PreferencesRoute, :show

@@ -1,0 +1,40 @@
+<% content_for "header" do %><title><%= I18n.translate(locale, "spoilers_settings") %> - Invidious</title><% end %>
+<div class="h-box" id="channel-spoilers" data-guest="<%= !user %>">
+    <h1><%= I18n.translate(locale, "spoilers_settings") %></h1>
+    <p><%= I18n.translate(locale, "spoilers_hint") %></p>
+    <% unless user %><p><%= I18n.translate(locale, "spoilers_guest") %></p><noscript><p><%= I18n.translate(locale, "spoilers_guest_js") %></p></noscript><% end %>
+    <div id="spoiler-controls" <%= "hidden" unless user %>>
+        <p id="spoiler-save-status" role="status"></p>
+        <form class="pure-form pure-form-stacked" method="get" action="/preferences/spoilers/channels">
+            <label for="spoiler-channel"><%= I18n.translate(locale, "sb_channel_input") %></label>
+            <input id="spoiler-channel" name="channel" type="text" required>
+            <button type="submit" class="pure-button"><%= I18n.translate(locale, "sb_channel_edit") %></button>
+        </form>
+        <% if channel_id %>
+        <h2><a href="/channel/<%= channel_id %>" dir="auto"><%= HTML.escape(entry.name) %></a></h2>
+        <form class="pure-form pure-form-stacked spoiler-channel-form" method="post" action="/preferences/spoilers/channels" data-name="<%= HTML.escape(entry.name) %>">
+            <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
+            <input type="hidden" name="channel" value="<%= channel_id %>">
+            <label><input type="checkbox" name="hide_thumbnail" <%= "checked" if entry.hide_thumbnail %>> <%= I18n.translate(locale, "spoilers_hide_thumbnail") %></label>
+            <label><input type="checkbox" name="hide_title" <%= "checked" if entry.hide_title %>> <%= I18n.translate(locale, "spoilers_hide_title") %></label>
+            <label for="spoiler-days"><%= I18n.translate(locale, "spoilers_days") %></label>
+            <input id="spoiler-days" name="reveal_after_days" type="number" min="1" max="2147483647" step="1" value="<%= entry.reveal_after_days %>" aria-describedby="spoiler-days-hint">
+            <p id="spoiler-days-hint"><%= I18n.translate(locale, "spoilers_days_hint") %></p>
+            <button class="pure-button pure-button-primary" type="submit" name="action" value="save"><%= I18n.translate(locale, "Save preferences") %></button>
+            <button class="pure-button" type="submit" name="action" value="reset" formnovalidate><%= I18n.translate(locale, "sb_channel_reset") %></button>
+        </form>
+        <% end %>
+        <h2><%= I18n.translate(locale, "sb_configured_channels") %></h2>
+        <div id="spoiler-saved-channels" data-edit="<%= I18n.translate(locale, "sb_channel_edit") %>" data-reset="<%= I18n.translate(locale, "sb_channel_reset") %>" data-empty="<%= I18n.translate(locale, "sb_channels_empty") %>">
+        <% if preferences.channel_spoiler_settings.empty? %><p><%= I18n.translate(locale, "sb_channels_empty") %></p><% end %>
+        <% preferences.channel_spoiler_settings.to_a.sort_by { |id, saved| saved.name.downcase }.each do |id, saved| %>
+            <p><a href="/channel/<%= id %>" dir="auto"><%= HTML.escape(saved.name) %></a> · <a href="/preferences/spoilers/channels?channel=<%= id %>"><%= I18n.translate(locale, "sb_channel_edit") %></a></p>
+            <form method="post" action="/preferences/spoilers/channels">
+                <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>"><input type="hidden" name="channel" value="<%= id %>">
+                <button class="pure-button" type="submit" name="action" value="reset"><%= I18n.translate(locale, "sb_channel_reset") %></button>
+            </form>
+        <% end %>
+        </div>
+    </div>
+</div>
+<script src="/js/channel-spoiler-preferences.js?v=<%= ASSET_COMMIT %>" defer></script>

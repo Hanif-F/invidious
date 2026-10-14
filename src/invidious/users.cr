@@ -14,6 +14,7 @@ def create_user(sid, email, password)
     email:         email,
     preferences:   Preferences.new(CONFIG.default_user_preferences.to_tuple.merge({
       sponsorblock_channel_overrides: {} of String => Invidious::SponsorBlock::ChannelOverride,
+      channel_spoiler_settings:       {} of String => Invidious::ChannelSpoilers::Rule,
       chat_show_timestamps:           true,
       chat_font_scale:                100,
       chat_width_px:                  440,

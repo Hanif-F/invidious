@@ -1,6 +1,15 @@
 'use strict';
 var player_data = JSON.parse(document.getElementById('player_data').textContent);
 var video_data = JSON.parse(document.getElementById('video_data').textContent);
+var spoilerVideo = document.getElementById('player');
+var spoilerOriginalPoster = spoilerVideo.dataset.spoilerPoster;
+var spoilerChannel = spoilerVideo.dataset.spoilerChannel;
+var spoilerPublished = spoilerVideo.dataset.spoilerPublished ? Number(spoilerVideo.dataset.spoilerPublished) : NaN;
+if (window.InvidiousSpoilers) {
+    window.InvidiousSpoilers.player(player_data, spoilerVideo.dataset.spoilerChannel,
+        spoilerVideo.dataset.spoilerPublished ? Number(spoilerVideo.dataset.spoilerPublished) : NaN);
+    if (player_data.spoiler_thumbnail_hidden) spoilerVideo.removeAttribute('poster');
+}
 const CONFIG = JSON.parse(document.getElementById('config').textContent);
 
 var options = {
@@ -64,6 +73,23 @@ if (CONFIG.videojs.max_goal_buffer_length) {
 }
 
 var player = videojs('player', options);
+if (player_data.spoiler_thumbnail_hidden) {
+    var spoilerPoster = document.createElement('button');
+    spoilerPoster.type = 'button'; spoilerPoster.className = 'spoiler-poster-reveal';
+    spoilerPoster.textContent = window.InvidiousSpoilers.decision(spoilerChannel, spoilerPublished, 'thumbnail').label;
+    player.el().appendChild(spoilerPoster);
+    spoilerPoster.addEventListener('click', function (event) {
+        event.preventDefault(); event.stopPropagation();
+        player.poster(spoilerOriginalPoster);
+        player_data.thumbnail = spoilerOriginalPoster;
+        if (window.shareOptions) shareOptions.image = player_data.thumbnail;
+        player_data.spoiler_thumbnail_hidden = false;
+        enableVideoThumbnails();
+        spoilerPoster.remove();
+    });
+    // Autoplay is independent of hiding. A poster must never obscure playback.
+    player.on('playing', function () { spoilerPoster.hidden = true; });
+}
 if (!video_data.params.listen && video_data.params.quality === 'dash') {
     InvidiousStreamMenus.initializeQualitySelection(player, function () { return video_data.params; });
 }
@@ -344,7 +370,7 @@ var shareOptions = {
 };
 
 if (location.pathname.startsWith('/embed/')) {
-    var overlay_content = '<h1><a rel="noopener noreferrer" target="_blank" href="' + location.origin + '/watch?v=' + video_data.id + '">' + player_data.title + '</a></h1>';
+    var overlay_content = '<h1 data-dearrow-row><a rel="noopener noreferrer" target="_blank" href="' + location.origin + '/watch?v=' + video_data.id + '">' + player_data.spoiler_overlay + '</a></h1>';
     player.overlay({
         overlays: [
             { start: 'loadstart', content: overlay_content, end: 'playing', align: 'top'},
@@ -580,10 +606,16 @@ if (video_data.params.autoplay) {
     });
 }
 
-player.vttThumbnails({
-    src: location.origin + '/api/v1/storyboards/' + video_data.id + '?height=90',
-    showTimestamp: true
-});
+var videoThumbnailsInitialized = false;
+function enableVideoThumbnails() {
+    if (videoThumbnailsInitialized) return;
+    videoThumbnailsInitialized = true;
+    player.vttThumbnails({
+        src: location.origin + '/api/v1/storyboards/' + video_data.id + '?height=90',
+        showTimestamp: true
+    });
+}
+if (!player_data.spoiler_thumbnail_hidden) enableVideoThumbnails();
 
 // Enable annotations
 if (!video_data.params.listen && video_data.params.annotations) {

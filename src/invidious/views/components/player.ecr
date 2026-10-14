@@ -2,7 +2,10 @@
 <%
     invidious_companion_check_id = invidious_companion_encrypt(video.id) if invidious_companion
 %>
-<video style="width:100%;background-color:#000" playsinline poster="<%= thumbnail %>"
+<% player_spoiler_date = Invidious::ChannelSpoilers.video_publication(video.info) %>
+<% player_title_hidden = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, player_spoiler_date, :title) %>
+<% player_thumbnail_hidden = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, player_spoiler_date, :thumbnail) %>
+<video data-spoiler-channel="<%= video.ucid %>" data-spoiler-published="<%= player_spoiler_date.try(&.to_unix) %>" data-spoiler-poster="<%= thumbnail %>" style="width:100%;background-color:#000" playsinline poster="<%= player_thumbnail_hidden ? "" : thumbnail %>"
     id="player" class="on-video_player video-js player-style-<%= params.player_style %>"
     preload="<% if params.preload %>auto<% else %>none<% end %>"
     <% if params.autoplay %>autoplay<% end %>
@@ -106,10 +109,11 @@
     "stats_formats" => (fmt_stream + adaptive_fmts).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate contentLength audioQuality isDrc audioTrack).includes?(key) } },
     "chapters" => Invidious::Videos::Chapters.parse(video.short_description, video.live_now ? 0 : video.length_seconds),
     "aspect_ratio" => aspect_ratio,
-    "title" => env.get?("native_clip_title").try(&.as(String)) || video.title,
+    "title" => player_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, player_spoiler_date.nil?) : (env.get?("native_clip_title").try(&.as(String)) || video.title),
+    "spoiler_overlay" => Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, env.get?("native_clip_title").try(&.as(String)) || video.title, player_spoiler_date, true),
     "clip_unavailable" => I18n.translate(locale, "clips_unavailable"),
     "description" => HTML.escape(video.short_description),
-    "thumbnail" => thumbnail,
+    "thumbnail" => player_thumbnail_hidden ? "" : thumbnail,
     "preferred_caption_found" => !preferred_captions.empty?
 }.to_pretty_json.gsub("<", "\\u003c")
 %>

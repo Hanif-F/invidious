@@ -324,3 +324,18 @@ test('one notification tab owns each profile lease; expired owners close and acc
     assert.equal(bobPage.api.local.get('notification_count'), 0);
     assert.equal(JSON.parse(b.local.getItem(prefix + alice + ':notification_count')), 1);
 });
+
+test('channel spoiler rules reject malformed timers and remain isolated from account profiles', () => {
+    const b = browser();
+    const p = b.page();
+    const rule = {name: 'Channel <name>', hide_title: true, hide_thumbnail: true, reveal_after_days: 7};
+    assert.equal(p.api.local.set('channel_spoiler_settings', {[channel]: rule}), true);
+    assert.deepEqual(plain(p.api.local.get('channel_spoiler_settings')), {[channel]: rule});
+    for (const days of [-1, 0, 1.5, '7', true, 2147483648]) {
+        assert.deepEqual(plain(p.api.normalize('channel_spoiler_settings', {[channel]: {...rule, reveal_after_days: days}})), {});
+    }
+    assert.deepEqual(plain(p.api.normalize('channel_spoiler_settings', {invalid: rule})), {});
+    const account = b.page(alice);
+    assert.equal(account.api.local.get('channel_spoiler_settings'), undefined);
+    assert.deepEqual(plain(b.page().api.local.get('channel_spoiler_settings')), {[channel]: rule});
+});
