@@ -44,7 +44,7 @@ module Invidious::Routes::Channels
         begin
           playlist = get_playlist(channel.ucid.sub("UC", "UULF"))
           items = get_playlist_videos(playlist, offset: 0)
-        rescue ex : InfoException
+        rescue InfoException
           # playlist doesnt exist.
           items = [] of PlaylistVideo
         end
@@ -124,7 +124,7 @@ module Invidious::Routes::Channels
       begin
         playlist = get_playlist(channel.ucid.sub("UC", "UUSH"))
         items = get_playlist_videos(playlist, offset: 0)
-      rescue ex : InfoException
+      rescue InfoException
         # playlist doesnt exist.
         items = [] of PlaylistVideo
       end
@@ -159,7 +159,7 @@ module Invidious::Routes::Channels
       begin
         playlist = get_playlist(channel.ucid.sub("UC", "UULV"))
         items = get_playlist_videos(playlist, offset: 0)
-      rescue ex : InfoException
+      rescue InfoException
         # playlist doesnt exist.
         items = [] of PlaylistVideo
       end
@@ -398,7 +398,7 @@ module Invidious::Routes::Channels
     begin
       resolved_url = YoutubeAPI.resolve_url("https://www.youtube.com#{env.request.path}#{yt_url_params.size > 0 ? "?#{yt_url_params}" : ""}")
       ucid = resolved_url["endpoint"]["browseEndpoint"]["browseId"]
-    rescue ex : InfoException | KeyError
+    rescue InfoException | KeyError
       return error_template(404, I18n.translate(locale, "This channel does not exist."))
     end
 

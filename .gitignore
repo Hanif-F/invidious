@@ -25,3 +25,6 @@
 /tests/frontend/.generated/
 /tests/frontend/artifacts/
 /tests/frontend/node_modules/
+
+# Spectator's local failed-example cache
+/.spectator-failures

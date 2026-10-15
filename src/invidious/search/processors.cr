@@ -43,7 +43,7 @@ module Invidious::Search
     def subscriptions(text : String, user : Invidious::User, page : Int32) : Array(ChannelVideo)
       return [] of ChannelVideo if text.strip.empty? || user.subscriptions.empty?
 
-      return PG_DB.query_all("
+      return PG_DB.query_all(<<-SQL,
         SELECT id,title,published,updated,ucid,author,length_seconds,live_now,premiere_timestamp,views,members_only
         FROM (
           SELECT *,
@@ -52,7 +52,8 @@ module Invidious::Search
           as document
           FROM channel_videos WHERE ucid = ANY($1)
         ) v_search WHERE v_search.document @@ plainto_tsquery($2)
-        ORDER BY published DESC, id ASC LIMIT 20 OFFSET $3;",
+        ORDER BY published DESC, id ASC LIMIT 20 OFFSET $3;
+        SQL
         user.subscriptions, text, (page.clamp(1, Int32::MAX).to_i64 - 1) * 20,
         as: ChannelVideo
       )

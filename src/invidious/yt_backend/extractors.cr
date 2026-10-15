@@ -43,8 +43,8 @@ private module Parsers
       begin
         return parse_internal(*args)
       rescue ex
-        LOGGER.debug("#{{{@type.name}}}: Failed to render item.")
-        LOGGER.debug("#{{{@type.name}}}: Got exception: #{ex.message}")
+        LOGGER.debug("#{{{ @type.name }}}: Failed to render item.")
+        LOGGER.debug("#{{{ @type.name }}}: Got exception: #{ex.message}")
         ProblematicTimelineItem.new(
           parse_exception: ex
         )
@@ -155,7 +155,6 @@ private module Parsers
         when "Premium"
           # TODO: Potentially available as item_contents["topStandaloneBadge"]["metadataBadgeRenderer"]
           badges |= VideoBadges::Premium
-        else nil # Ignore
         end
       end
 
@@ -179,7 +178,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -246,7 +245,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -295,7 +294,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -340,7 +339,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -401,7 +400,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -473,7 +472,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -502,7 +501,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -533,7 +532,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -634,7 +633,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -663,6 +662,10 @@ private module Parsers
         thumbnail_view_model = item_contents.dig(
           "contentImage", "thumbnailViewModel"
         )
+        # TODO: This is an useless assignment, is not used anywhere
+        # so check if it can be used somewhere later.
+        #
+        # ameba:disable Lint/UselessAssign
         thumbnail = thumbnail_view_model.dig("image", "sources", 0, "url").as_s
 
         video_id = item_contents["contentId"].as_s
@@ -752,9 +755,9 @@ private module Parsers
         video_count = thumbnail_view_model.dig("overlays").as_a
           .compact_map(&.dig?("thumbnailOverlayBadgeViewModel", "thumbnailBadges").try &.as_a)
           .flatten
-          .find(nil, &.dig?("thumbnailBadgeViewModel", "text").try { |node|
+          .find(nil, &.dig?("thumbnailBadgeViewModel", "text").try do |node|
             {"episodes", "videos", "lessons"}.any? { |str| node.as_s.ends_with?(str) }
-          })
+          end)
           .try &.dig("thumbnailBadgeViewModel", "text").as_s.to_i(strict: false)
 
         metadata = item_contents.dig("metadata", "lockupMetadataViewModel")
@@ -803,10 +806,10 @@ private module Parsers
         # ]
         #
         metadata_rows = metadata.dig?("metadata", "contentMetadataViewModel", "metadataRows").try &.as_a
-        metadata_parts = metadata_rows.try &.find { |row|
+        metadata_parts = metadata_rows.try &.find do |row|
           parts = row["metadataParts"]?.try &.as_a
           parts && !parts.any? { |item| item.dig?("text", "content").try &.as_s == "View full playlist" }
-        }.try &.["metadataParts"].as_a
+        end.try &.["metadataParts"].as_a
 
         if author_info = metadata_parts.try &.find(&.dig?("text", "commandRuns"))
              .try &.["text"]
@@ -844,7 +847,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -906,7 +909,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -935,7 +938,7 @@ private module Parsers
     end
 
     def self.parser_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 end
@@ -1022,7 +1025,7 @@ private module Extractors
     end
 
     def self.extractor_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -1063,7 +1066,7 @@ private module Extractors
     end
 
     def self.extractor_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 
@@ -1097,7 +1100,7 @@ private module Extractors
     end
 
     def self.extractor_name
-      return {{@type.name}}
+      return {{ @type.name }}
     end
   end
 end

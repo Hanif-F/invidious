@@ -97,11 +97,12 @@ require "./account_management_checks"
 require "./subscription_manager_checks"
 require "./browser_profile_checks"
 require "./tv_pairing_checks"
+require "./upstream_merge_checks"
 
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
   PG_DB.exec("CREATE TABLE invidious_migrations (id bigserial PRIMARY KEY, version bigint NOT NULL)")
-  Invidious::Database::Migrator.migrations.map(&.new(PG_DB)).sort_by(&.version).each do |migration|
+  Invidious::Database::Migrator.migrations.map(&.new(PG_DB)).sort_by!(&.version).each do |migration|
     migration.migrate if migration.version < 17
   end
   legacy_hash = Crypto::Bcrypt::Password.create("old", cost: 4).to_s
@@ -115,7 +116,7 @@ begin
   PG_DB.exec("INSERT INTO playlists (id, author, title, video_count) VALUES ('PLlegacy', 'Legacy Name!', 'Legacy subscription', 8)")
   PG_DB.exec("INSERT INTO playlists (id, author, title, video_count) VALUES ('RDabcdefghijk', 'Legacy Name!', 'Legacy mix', -1)")
   PG_DB.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256("Legacy Name!")} AS #{MATERIALIZED_VIEW_SQL.call("Legacy Name!")}")
-  linked = %w(watch_history playback_positions blocked_channels dearrow_identities playlists)
+  linked = %w[watch_history playback_positions blocked_channels dearrow_identities playlists]
   snapshots = linked.to_h { |table| {table, PG_DB.query_one("SELECT json_agg(t)::text FROM #{table} t", as: String)} }
   migration = Invidious::Database::Migrator.new(PG_DB)
   migration.migrate
@@ -146,7 +147,7 @@ begin
   check(store.change(user.email, sid, "wrong", username: "Stolen").nil?, "Incorrect password changed username")
   # Two requests competing for the same case-insensitive username.
   outcomes = Channel(Bool).new(2)
-  %w(Racing racing).each do |name|
+  %w[Racing racing].each do |name|
     spawn do
       begin
         store.register(name, new_password, Preferences.from_json("{}"))
@@ -172,7 +173,7 @@ begin
   race_results = Array.new(2) { raced.receive }
   check(race_results.compact.count { |value| Invidious::Database::SessionIDs.select_email(value) != nil } == 1, "Concurrent old-password login survived change")
   new_password = "the next strong account password"
-  sid = race_results.compact.find { |value| Invidious::Database::SessionIDs.select_email(value) != nil }.not_nil!
+  sid = race_results.compact.find! { |value| Invidious::Database::SessionIDs.select_email(value) != nil }
   must_fail("Revoked parent minted a new API token") { generate_token(user.email, [":*"], nil, HMAC_KEY, "old-browser") }
   api = JSON.parse(generate_token(user.email, [":*"], nil, HMAC_KEY, sid))["session"].as_s
   check(Invidious::Database::SessionIDs.select_email(api) == user.email, "API token creation failed")
@@ -288,6 +289,7 @@ begin
   check_public_security
   check_tv_pairing
   check_subscription_manager
+  check_upstream_history_imports_and_feeds
 
   # Verify migration failure rolls back DDL rather than dropping/merging conflicts.
   PG_DB.exec("DROP SCHEMA public CASCADE")
@@ -302,7 +304,7 @@ begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'username'", as: Int64) == 0, "Failed migration did not roll back DDL")
   PG_DB.exec("DROP SCHEMA public CASCADE")
   PG_DB.exec("CREATE SCHEMA public")
-  %w(users session_ids auth_rate_limits saved_playlists tv_pairings).each do |table|
+  %w[users session_ids auth_rate_limits saved_playlists tv_pairings].each do |table|
     PG_DB.using_connection { |conn| conn.as(PG::Connection).exec_all(File.read("config/sql/#{table}.sql")) }
   end
   store.check_schema

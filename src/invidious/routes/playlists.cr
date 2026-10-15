@@ -117,7 +117,7 @@ module Invidious::Routes::Playlists
     playlist = Invidious::Database::Playlists.select(id: plid)
     subscribed = Database::SavedPlaylists.exists?(user.email, plid)
     if subscribed && (!playlist || playlist.author != user.email)
-      cached = Database::SavedPlaylists.list(user.email).find { |item| item["playlistId"].as_s == plid }.not_nil!
+      cached = Database::SavedPlaylists.list(user.email).find! { |item| item["playlistId"].as_s == plid }
       playlist = InvidiousPlaylist.new({id: plid, title: cached["title"].as_s, author: user.email,
                                         description: "", video_count: 0, created: Time.utc, updated: Time.utc,
                                         privacy: PlaylistPrivacy::Private, index: [] of Int64})
@@ -195,7 +195,7 @@ module Invidious::Routes::Playlists
 
     begin
       items = get_playlist_videos(playlist, offset: (page - 1) * 100)
-    rescue ex
+    rescue
       items = [] of PlaylistVideo
     end
 
@@ -286,7 +286,7 @@ module Invidious::Routes::Playlists
     begin
       query = Invidious::Search::Query.new(env.params.query, :playlist, region)
       items = query.process.select(SearchVideo).map(&.as(SearchVideo))
-    rescue ex
+    rescue
       items = [] of SearchVideo
     end
 

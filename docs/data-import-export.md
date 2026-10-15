@@ -38,11 +38,11 @@ The export does **not** include passwords, browser sessions, API tokens, private
 
 ## Import semantics and verification
 
-The Invidious importer merges/deduplicates subscriptions and watched IDs, imports compatible details, replaces supplied preference objects and creates playlists with new local IDs. Repeated playlist imports can create duplicates. It resolves subscription IDs and fetches available playlist videos; imports do not guarantee preservation of every unreachable source.
+The Invidious importer merges/deduplicates subscriptions and watched IDs, imports compatible details, replaces supplied preference objects and creates playlists with new local IDs. Every supplied watched ID must be an 11-character YouTube video ID; an invalid ID rejects the watched-ID section before it is saved. Repeated playlist imports can create duplicates. It resolves subscription IDs and fetches available playlist videos; imports do not guarantee preservation of every unreachable source.
 
 Positions are imported only when the resulting preferences enable `save_player_pos`; turning that preference off clears existing positions. Entries are validated for IDs, nonnegative positions and timestamps. Chat offsets are validated per record. Invalid detail fields can be ignored. Import is not one all-or-nothing account transaction: earlier supported sections may have been saved when a later section fails.
 
-Legacy `POST /api/v1/auth/import/invidious` catches import exceptions and returns 204, so a 204 alone does not prove complete import success. Inspect the resulting subscriptions/history/preferences/playlists and retain the source export until checked. Browser import errors also do not imply earlier work was rolled back.
+`POST /api/v1/auth/import/invidious` returns 204 after successful import, 400 for invalid watched-video IDs, and 500 for other import failures. Individual unsupported or unreachable records may still be skipped by their import handlers. Inspect the resulting subscriptions/history/preferences/playlists and retain the source export until checked. API and browser import errors do not imply earlier sections were rolled back.
 
 ## Subscription exports
 

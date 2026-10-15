@@ -118,7 +118,7 @@ AI status fields are `available`, `stale`, `channelCount`, `updatedAt`; channel 
 | `GET /chat_timing/:id` | `{offsetMs}`; zero default |
 | `PUT /chat_timing/:id` | `{offsetMs:integer}` ±3,600,000; zero clears; returns offset |
 | `GET /export/invidious` | Supported portable account JSON |
-| `POST /import/invidious` | Legacy portable JSON import; 204 does not establish full success |
+| `POST /import/invidious` | Portable JSON import; 204 success, 400 invalid video ID, 500 other import errors |
 | `POST /account/username` | `{password, username}`; replacement credentials |
 | `POST /account/password` | `{password, newPassword, passwordConfirmation}`; replacement credentials |
 | `POST /account/delete` | `{password}`; 204 |
@@ -185,7 +185,7 @@ DeArrow writes are explicit and are not safely auto-retryable on ambiguous timeo
 
 ## Errors and client compatibility
 
-Common JSON errors have `{"error":"message"}`. 400 generally means invalid request; 401 is used by native credential/account checks; 403 includes auth/scope/CSRF failures or disabled features; 404 includes absent and owner-hidden resources; 409 includes state/collision/conflict; 429 includes `Retry-After`; 5xx indicates server/upstream failures. Historical endpoints are not uniform: some return an empty enhancement result, some 500/503, and the legacy import swallows exceptions. Never infer success from body parsing alone.
+Common JSON errors have `{"error":"message"}`. 400 generally means invalid request; 401 is used by native credential/account checks; 403 includes auth/scope/CSRF failures or disabled features; 404 includes absent and owner-hidden resources; 409 includes state/collision/conflict; 429 includes `Retry-After`; 5xx indicates server/upstream failures. Historical endpoints are not uniform: some return an empty enhancement result or 500/503. Imports report invalid watched-video IDs as 400 and other failures as 500; earlier import sections can already have been saved. Never infer success from body parsing alone.
 
 Treat additions as optional, preserve unknown preference keys through safe patches, follow returned URLs/continuations and renew tokens for added scopes. Do not cache private content in shared storage. [Route references](reference/routes.md) cover browser actions, RSS, manifests, images and media outside this JSON guide. [Troubleshooting](troubleshooting.md) explains common integration failures.
 

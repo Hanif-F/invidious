@@ -1,7 +1,7 @@
 # Loaded by accounts.cr after migration, against its guarded disposable database.
 # Exercise production authentication, before filters, and route implementations.
 DEARROW_TEST_WRITES = [] of String
-DEARROW_TEST_CLIENT = Invidious::DeArrow::Contributions.new(->(method : String, path : String, body : String?) {
+DEARROW_TEST_CLIENT = Invidious::DeArrow::Contributions.new(->(method : String, _path : String, body : String?) {
   if method == "POST"
     DEARROW_TEST_WRITES << body.not_nil!
     HTTP::Client::Response.new(200)
@@ -75,6 +75,8 @@ class SecurityTestEndpoint
                else
                  Invidious::Routes::API::V1::Authenticated.get_preferences(env)
                end
+             when "/api/v1/auth/import/invidious"
+               Invidious::Routes::API::V1::Authenticated.import_invidious(env)
              when "/api/v1/mobile/registration"
                Invidious::Routes::API::V1::Mobile.registration(env)
              when "/api/v1/mobile/register"
@@ -183,7 +185,7 @@ def check_public_security
 
   result = security_request("GET", "/api/v1/auth/tokens", bearer: restricted)
   check(result.response.status_code == 200, "Restricted token cannot list API tokens")
-  sessions = JSON.parse(result.get("test_result").as(String)).as_a.map { |entry| entry["session"].as_s }
+  sessions = JSON.parse(result.get("test_result").as(String)).as_a.map(&.["session"].as_s)
   check(sessions == [api_id], "API token listing exposed browser credentials or another user's tokens")
   check(result.response.headers["Cache-Control"] == "private, no-store", "Token response may be cached")
   denied = security_request("GET", "/api/v1/auth/preferences", bearer: restricted)

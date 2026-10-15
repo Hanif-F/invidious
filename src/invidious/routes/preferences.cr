@@ -6,7 +6,7 @@ module Invidious::Routes::PreferencesRoute
     return error_json(403, "No such user") unless user
     begin
       validate_request(env.params.body["csrf_token"]?, env.get("sid").as(String), env.request, HMAC_KEY, user.preferences.locale)
-    rescue ex
+    rescue
       return error_json(403, "Invalid CSRF token")
     end
     zone = Invidious::History.timezone(env.params.body["timezone"]?)
@@ -278,9 +278,9 @@ module Invidious::Routes::PreferencesRoute
     preferences.ai_filter_enabled = ai_filter_form ? env.params.body["ai_filter_enabled"]? == "on" : previous.ai_filter_enabled
     {% for kind in {"blocklist", "warnlist"} %}
       {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
-        preferences.ai_{{kind.id}}_{{surface.id}}_action = ai_filter_form ?
-          (env.params.body["ai_{{kind.id}}_{{surface.id}}_action"]? || previous.ai_{{kind.id}}_{{surface.id}}_action) :
-          previous.ai_{{kind.id}}_{{surface.id}}_action
+        preferences.ai_{{ kind.id }}_{{ surface.id }}_action = ai_filter_form ?
+          (env.params.body["ai_{{ kind.id }}_{{ surface.id }}_action"]? || previous.ai_{{ kind.id }}_{{ surface.id }}_action) :
+          previous.ai_{{ kind.id }}_{{ surface.id }}_action
       {% end %}
     {% end %}
 
@@ -462,7 +462,6 @@ module Invidious::Routes::PreferencesRoute
               response: error_template(415, "Uploaded file is too large")
             )
           end
-        else nil # Ignore
         end
       end
     end

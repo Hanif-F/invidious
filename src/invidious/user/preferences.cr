@@ -114,32 +114,32 @@ struct Preferences
   {% for kind in {"blocklist", "warnlist"} %}
     @[JSON::Field(presence: true, converter: Preferences::AiListAction)]
     @[YAML::Field(presence: true, converter: Preferences::AiListAction)]
-    property ai_{{kind.id}}_action : String = CONFIG.default_user_preferences.ai_{{kind.id}}_action
+    property ai_{{ kind.id }}_action : String = CONFIG.default_user_preferences.ai_{{ kind.id }}_action
     @[JSON::Field(ignore: true)]
     @[YAML::Field(ignore: true)]
-    @ai_{{kind.id}}_action_present : Bool = false
+    @ai_{{ kind.id }}_action_present : Bool = false
 
     {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
       @[JSON::Field(presence: true)]
       @[YAML::Field(presence: true)]
-      property ai_{{kind.id}}_{{surface.id}} : Bool = CONFIG.default_user_preferences.ai_{{kind.id}}_{{surface.id}}
+      property ai_{{ kind.id }}_{{ surface.id }} : Bool = CONFIG.default_user_preferences.ai_{{ kind.id }}_{{ surface.id }}
       @[JSON::Field(ignore: true)]
       @[YAML::Field(ignore: true)]
-      @ai_{{kind.id}}_{{surface.id}}_present : Bool = false
+      @ai_{{ kind.id }}_{{ surface.id }}_present : Bool = false
 
       @[JSON::Field(ignore_serialize: true, converter: Preferences::AiFilterAction)]
       @[YAML::Field(ignore_serialize: true, converter: Preferences::AiFilterAction)]
-      property ai_{{kind.id}}_{{surface.id}}_action : String? = nil
+      property ai_{{ kind.id }}_{{ surface.id }}_action : String? = nil
 
-      def ai_{{kind.id}}_{{surface.id}}_action : String
-        action = @ai_{{kind.id}}_{{surface.id}}_action
+      def ai_{{ kind.id }}_{{ surface.id }}_action : String
+        action = @ai_{{ kind.id }}_{{ surface.id }}_action
         unless action
-          unless @ai_{{kind.id}}_{{surface.id}}_present || @ai_{{kind.id}}_action_present
-            action = CONFIG.default_user_preferences.ai_{{kind.id}}_{{surface.id}}_action
+          unless @ai_{{ kind.id }}_{{ surface.id }}_present || @ai_{{ kind.id }}_action_present
+            action = CONFIG.default_user_preferences.ai_{{ kind.id }}_{{ surface.id }}_action
           end
-          action ||= @ai_{{kind.id}}_{{surface.id}} ? {{surface == "other_pages" ? "replace_thumbnail" : "@ai_#{kind.id}_action".id}} : "off"
+          action ||= @ai_{{ kind.id }}_{{ surface.id }} ? {{ surface == "other_pages" ? "replace_thumbnail" : "@ai_#{kind.id}_action".id }} : "off"
         end
-        AiFilterAction.normalize(action, other_pages: {{surface == "other_pages"}})
+        AiFilterAction.normalize(action, other_pages: {{ surface == "other_pages" }})
       end
     {% end %}
   {% end %}
@@ -154,7 +154,7 @@ struct Preferences
     return configured unless configured.nil?
     {% for kind in {"blocklist", "warnlist"} %}
       {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
-        return true unless ai_{{kind.id}}_{{surface.id}}_action == "off"
+        return true unless ai_{{ kind.id }}_{{ surface.id }}_action == "off"
       {% end %}
     {% end %}
     false
@@ -165,7 +165,7 @@ struct Preferences
     json.field "ai_filter_enabled", ai_filter_enabled
     {% for kind in {"blocklist", "warnlist"} %}
       {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
-        json.field "ai_{{kind.id}}_{{surface.id}}_action", ai_{{kind.id}}_{{surface.id}}_action
+        json.field "ai_{{ kind.id }}_{{ surface.id }}_action", ai_{{ kind.id }}_{{ surface.id }}_action
       {% end %}
     {% end %}
   end
@@ -175,8 +175,8 @@ struct Preferences
     ai_filter_enabled.to_yaml(yaml)
     {% for kind in {"blocklist", "warnlist"} %}
       {% for surface in {"feeds", "search", "recommendations", "other_pages"} %}
-        yaml.scalar "ai_{{kind.id}}_{{surface.id}}_action"
-        ai_{{kind.id}}_{{surface.id}}_action.to_yaml(yaml)
+        yaml.scalar "ai_{{ kind.id }}_{{ surface.id }}_action"
+        ai_{{ kind.id }}_{{ surface.id }}_action.to_yaml(yaml)
       {% end %}
     {% end %}
   end
@@ -185,7 +185,7 @@ struct Preferences
   protected def comparison_values
     {% begin %}
       {
-        {{@type.instance_vars.reject { |var| var.annotation(::JSON::Field) && var.annotation(::JSON::Field)[:ignore] }.map(&.name).splat}},
+        {{ @type.instance_vars.reject { |var| var.annotation(::JSON::Field) && var.annotation(::JSON::Field)[:ignore] }.map(&.name).splat }},
       }
     {% end %}
   end
@@ -364,7 +364,7 @@ struct Preferences
     def self.from_json(value : JSON::PullParser) : String
       begin
         value.read_string
-      rescue ex
+      rescue
         if value.read_bool
           "dark"
         else
@@ -488,7 +488,7 @@ struct Preferences
         value.read_array do
           result << HTML.escape(value.read_string[0, 100])
         end
-      rescue ex
+      rescue
         result = [HTML.escape(value.read_string[0, 100]), ""]
       end
 
@@ -517,7 +517,7 @@ struct Preferences
 
           result << HTML.escape(item.value[0, 100])
         end
-      rescue ex
+      rescue
         if node.is_a?(YAML::Nodes::Scalar)
           result = [HTML.escape(node.value[0, 100]), ""]
         else

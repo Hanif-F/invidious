@@ -42,7 +42,7 @@ end
 # Makes and yields a temporary file with the given prefix
 private def make_temporary_file(prefix, contents = nil, &)
   tempfile = File.tempfile(prefix, "static_assets_handler_spec", dir: "spec/http_server/handlers/static_assets_handler")
-  file_link = "/#{File.basename(tempfile.path)}"
+  file_link = "/#{URI.encode_path_segment(File.basename(tempfile.path))}"
   yield tempfile, file_link
 ensure
   tempfile.try &.delete
@@ -59,7 +59,7 @@ end
 
 # Get relative file path to a file within the static_assets_handler folder
 macro get_file_path(basename)
-  "spec/http_server/handlers/static_assets_handler/#{ {{basename}} }"
+  "spec/http_server/handlers/static_assets_handler/#{ {{ basename }} }"
 end
 
 Spectator.describe StaticAssetsHandler do

@@ -107,6 +107,11 @@ PATCH, unrelated sparse PATCH, older browser forms, current browser forms and
 native GET. It verifies strict integer validation, atomic invalid-patch rejection
 and isolation from other accounts, using existing preference scopes and schema.
 
+`upstream_merge_checks.cr` runs in the same guarded account harness. It checks
+portable-import video-ID validation and error statuses, detailed-history/progress
+and audio/seek preference preservation, plus parameterized subscription filtering
+for empty, populated and malformed legacy watched arrays and paginated results.
+
 `browser_profile_checks.cr` runs in the account harness through production middleware.
 The native account-management checks also verify mobile `profileId` and preference
 response metadata, unchanged browser identity, stable profiles through credential

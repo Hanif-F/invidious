@@ -10,7 +10,7 @@ module Invidious::Routes::Watch
     return error_template(404, "Clip not found.") if native_clip_id && !native_clip
     preview_clip = env.params.query["clip_preview"]? == "1"
     if native_clip
-      %w(t start end time_continue list index continuation raw clip_preview).each { |key| env.params.query.delete_all(key) }
+      %w[t start end time_continue list index continuation raw clip_preview].each { |key| env.params.query.delete_all(key) }
       env.params.query["v"] = native_clip.video_id
       env.set "native_clip_title", native_clip.title
     end
@@ -126,7 +126,7 @@ module Invidious::Routes::Watch
         if source == "youtube"
           begin
             comment_html = JSON.parse(Comments.fetch_youtube(id, nil, "html", locale, preferences.thin_mode, region))["contentHtml"]
-          rescue ex
+          rescue
             if preferences.comments[1] == "reddit"
               comments, reddit_thread = Comments.fetch_reddit(id)
               comment_html = Frontend::Comments.template_reddit(comments, locale)
@@ -142,7 +142,7 @@ module Invidious::Routes::Watch
 
             comment_html = Comments.fill_links(comment_html, "https", "www.reddit.com")
             comment_html = Comments.replace_links(comment_html)
-          rescue ex
+          rescue
             if preferences.comments[1] == "youtube"
               comment_html = JSON.parse(Comments.fetch_youtube(id, nil, "html", locale, preferences.thin_mode, region))["contentHtml"]
             end
@@ -187,14 +187,14 @@ module Invidious::Routes::Watch
 
     captions = video.captions
 
-    preferred_captions = captions.select { |caption|
+    preferred_captions = captions.select do |caption|
       params.preferred_captions.includes?(caption.name) ||
         params.preferred_captions.includes?(caption.language_code.split("-")[0])
-    }
-    preferred_captions.sort_by! { |caption|
+    end
+    preferred_captions.sort_by! do |caption|
       (params.preferred_captions.index(caption.name) ||
         params.preferred_captions.index(caption.language_code.split("-")[0])).not_nil!
-    }
+    end
     captions = captions - preferred_captions
 
     aspect_ratio = "16:9"
