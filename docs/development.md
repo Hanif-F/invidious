@@ -53,6 +53,15 @@ Run `bin/ameba` after development shards install when linting is relevant. The o
 
 Focused tests are useful for parsers and isolated changes, for example `crystal spec spec/chapters_spec.cr spec/sponsorblock_spec.cr`. Specs using mocks require the submodule. Use real builds where link/runtime dependencies matter; a no-codegen pass alone does not test linkage or live startup.
 
+Seek interval verification on 15 October 2026 passed full linked GUI and API-only
+builds, 28 focused preference/chapter/spoiler/audio specs, production frontend
+fixture checks, six Chromium/Firefox settings/seeking journeys, the storage/player
+Node suites, and the complete guarded PostgreSQL account harness. The full
+`crystal spec -Dskip_videojs_download` command stops at the existing undefined
+`Invidious::Frontend::ChannelSpoilers` reference in `playlists.cr:585`, because
+`spec/spec_helper.cr` omits that frontend helper. A temporary unchanged HEAD
+snapshot reproduced the same failure. It is outside this preference addition.
+
 ## Frontend fixtures and browser tests
 
 With Crystal/Shards, Node.js, FFmpeg and browser dependencies installed:

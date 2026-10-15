@@ -44,6 +44,7 @@ Preference defaults usually refer to `CONFIG.default_user_preferences`; that com
 | `related_videos` | `Bool` | `CONFIG.default_user_preferences.related_videos` |
 | `sort` | `String` | `CONFIG.default_user_preferences.sort` |
 | `speed` | `Float32` | `CONFIG.default_user_preferences.speed` |
+| `seek_seconds` | `Int32` | `Invidious::Videos::SeekPreferences.normalize(CONFIG.default_user_preferences.seek_seconds)` |
 | `thin_mode` | `Bool` | `CONFIG.default_user_preferences.thin_mode` |
 | `ui_density` | `String` | `CONFIG.default_user_preferences.ui_density` |
 | `unseen_only` | `Bool` | `CONFIG.default_user_preferences.unseen_only` |

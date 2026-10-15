@@ -28,6 +28,16 @@ ignored by Git.
 
 ## Coverage and limits
 
+Seek interval checks exercise all four values, strict saved-value fallback,
+JSON/YAML/config and backup round trips, account API and signed-out cookie saves,
+older forms that omit the field, and shared watch/embed player configuration.
+Run `crystal spec spec/native_preferences_spec.cr`, the fixture generator, and
+`node --test --test-name-pattern='seek interval|playback shortcuts' tests/frontend/ui.test.cjs`.
+Chromium and Firefox cover no-JavaScript settings, keyboard/media keys and mobile
+tap batches at 0.5× and 2×. The guarded PostgreSQL account harness additionally
+checks production native PATCH ↔ web form round trips, atomic rejection, sparse
+preservation and account isolation. See `tests/database/README.md`.
+
 Preferred audio coverage checks guest/account/JSON/YAML/export/import persistence,
 query precedence, no-JavaScript settings saves, regional language matching,
 original/Stable Volume fallback, and duplicate itags across dubbed/DRC tracks.

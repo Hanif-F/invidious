@@ -36,6 +36,18 @@ Registered theme options are Modern Neon (the default) and Diary. Theme rotation
 
 Playback preferences include autoplay/preload, listen/local proxy, quality/DASH quality, codec, speed, loop, continue/continue-autoplay, related videos, annotations, captions/comments source priority, expanded description, VR, player style and position saving. Defaults include autoplay false, DASH quality, codec `auto`, speed 1, watch history true and `save_player_pos` false.
 
+**Seek interval** (`seek_seconds`) accepts integer 5, 10, 20 or 30, default 10.
+It applies to mobile double-taps, arrows, J/L and fixed media-key jumps in video
+timeline seconds, independently of playback speed. Android shares the account
+field for taps, accessibility, PiP and Media3 commands. Signed-out web users use
+the existing PREFS cookie; Android guests save per instance on their device.
+Invalid/missing saved values use 10. Native PATCH rejects invalid values/types
+atomically; older web forms that omit the field preserve it. JSON/YAML and portable
+exports/imports retain it. Clients refresh on the existing account refresh/page
+load schedule, without live push. Deploy backend support before distributing the
+Android update; older servers retain Android's 10-second fallback and reject
+unsupported account saves. No new endpoint, token scope or migration is required.
+
 `video_codec` accepts `auto`, `av1` or `h264`; invalid input becomes `auto`. Availability and decoding support determine what can actually play. Caption language preferences accept up to three selections in supported native patches; comments prioritize YouTube/Reddit. `save_player_pos` is an explicit opt-in independent of watch history, and disabling it deletes stored account positions.
 
 `preferred_audio` selects the initial audio track for DASH video and audio-only playback on watch and embed pages. The default `original` uses original audio without Stable Volume; `original_stable` requests its Stable Volume variant. Language tags such as `id`, `en` and `pt-BR` select regular audio in that language. General languages can match regional variants; specific regional choices require an exact match. Missing languages or Stable Volume tracks fall back to regular original audio. Unsupported values become `original`. Where original identity is unknown, the existing playable default is retained. Manual player changes last for the current video, including buffer refreshes, and do not overwrite this preference. Progressive video with one embedded audio track retains that audio. The native sparse PATCH accepts canonical `preferred_audio` choices with the existing preference scopes; invalid values reject the entire patch.

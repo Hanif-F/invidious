@@ -105,6 +105,7 @@
     "stats_formats" => (fmt_stream + adaptive_fmts).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate contentLength audioQuality audioTrack).includes?(key) }.merge({"isDrc" => JSON::Any.new(Invidious::Videos::AudioMetadata.stable_volume?(fmt))}) },
     "chapters" => Invidious::Videos::Chapters.parse(video.short_description, video.live_now ? 0 : video.length_seconds),
     "aspect_ratio" => aspect_ratio,
+    "seek_seconds" => preferences.seek_seconds,
     "title" => player_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, player_spoiler_date.nil?) : (env.get?("native_clip_title").try(&.as(String)) || video.title),
     "spoiler_overlay" => Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, env.get?("native_clip_title").try(&.as(String)) || video.title, player_spoiler_date, true),
     "clip_unavailable" => I18n.translate(locale, "clips_unavailable"),

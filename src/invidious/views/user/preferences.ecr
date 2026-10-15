@@ -145,6 +145,16 @@
             </div>
 
             <div class="pure-control-group">
+                <label for="seek_seconds"><%= I18n.translate(locale, "preferences_seek_seconds_label") %></label>
+                <select name="seek_seconds" id="seek_seconds" aria-describedby="seek_seconds_help">
+                    <% Invidious::Videos::SeekPreferences::CHOICES.each do |option| %>
+                        <option value="<%= option %>" <% if preferences.seek_seconds == option %>selected<% end %>><%= I18n.translate_count(locale, "generic_count_seconds", option) %></option>
+                    <% end %>
+                </select>
+                <p class="preference-description" id="seek_seconds_help"><%= I18n.translate(locale, "preferences_seek_seconds_help") %></p>
+            </div>
+
+            <div class="pure-control-group">
                 <label for="video_codec"><%= I18n.translate(locale, "preferences_video_codec_label") %></label>
                 <select name="video_codec" id="video_codec" aria-describedby="video_codec_help">
                     <% {"auto", "av1", "h264"}.each do |option| %>

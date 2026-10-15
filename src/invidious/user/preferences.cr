@@ -82,6 +82,9 @@ struct Preferences
   @[JSON::Field(converter: Preferences::ProcessString)]
   property sort : String = CONFIG.default_user_preferences.sort
   property speed : Float32 = CONFIG.default_user_preferences.speed
+  @[JSON::Field(converter: Invidious::Videos::SeekPreferences)]
+  @[YAML::Field(converter: Invidious::Videos::SeekPreferences)]
+  property seek_seconds : Int32 = Invidious::Videos::SeekPreferences.normalize(CONFIG.default_user_preferences.seek_seconds)
   property thin_mode : Bool = CONFIG.default_user_preferences.thin_mode
   @[JSON::Field(converter: Preferences::UIDensity)]
   @[YAML::Field(converter: Preferences::UIDensity)]

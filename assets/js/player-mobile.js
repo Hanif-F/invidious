@@ -209,9 +209,9 @@
         function queue(direction) {
             if (!pending) {
                 if (!bounds()) return;
-                pending = {origin: player.currentTime(), delta: 0, playing: !player.paused()}; player.pause();
+                pending = {origin: player.currentTime(), delta: 0, step: seekSeconds, playing: !player.paused()}; player.pause();
             }
-            pending.delta += direction * 10;
+            pending.delta += direction * pending.step;
             var destination = target();
             if (destination === null) { cancel(true); return; }
             var delta = Math.round((destination - pending.origin) * 10) / 10;

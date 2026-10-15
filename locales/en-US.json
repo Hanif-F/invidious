@@ -472,6 +472,8 @@
     "generic_count_hours_plural": "{{count}} hours",
     "generic_count_minutes": "{{count}} minute",
     "generic_count_minutes_plural": "{{count}} minutes",
+    "preferences_seek_seconds_label": "Seek interval:",
+    "preferences_seek_seconds_help": "Applies to taps, keyboard and media seek controls. Uses video seconds at any playback speed.",
     "generic_count_seconds": "{{count}} second",
     "generic_count_seconds_plural": "{{count}} seconds",
     "Fallback comments: ": "Fallback comments: ",

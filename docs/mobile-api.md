@@ -199,6 +199,12 @@ At least one field is required. Supported fields are:
 - `speed`: finite JSON number from 0.25 to 2.0; `quality_dash`: the existing web
   DASH quality values (`auto`, `best`, resolution values from `144p` through `4320p`,
   or `worst`). Android applies resolution choices as ceilings.
+- `seek_seconds`: integer 5, 10, 20 or 30, default/fallback 10. Invalid patches
+  reject atomically. Account preferences JSON, browser PREFS cookies, config
+  defaults and imports/exports preserve it. Android guest choices remain local
+  per instance. Fixed-distance jumps use video seconds independent of playback
+  speed. Existing endpoints/scopes suffice; no migration. Deploy backend support
+  before distributing Android; old servers omit it and reject unsupported saves.
 - `video_codec`: `auto`, `av1` or `h264`, shared with the website's Preferred video
   codec setting. Native patches reject invalid strings and non-string values.
   Android applies the captured preference to DASH playback, respecting the target

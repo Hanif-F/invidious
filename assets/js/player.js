@@ -1,5 +1,6 @@
 'use strict';
 var player_data = JSON.parse(document.getElementById('player_data').textContent);
+var seekSeconds = [5, 10, 20, 30].indexOf(player_data.seek_seconds) !== -1 ? player_data.seek_seconds : 10;
 var video_data = JSON.parse(document.getElementById('video_data').textContent);
 var spoilerVideo = document.getElementById('player');
 var spoilerOriginalPoster = spoilerVideo.dataset.spoilerPoster;
@@ -394,7 +395,7 @@ function isMobile() {
     return window.matchMedia('(pointer: coarse)').matches;
 }
 // The plugin's override bypasses its UA gate after our primary-pointer check.
-if (isMobile()) player.mobileUi({ forceForTesting: true, fullscreen: { enterOnRotate: false, exitOnRotate: false }, touchControls: { seekSeconds: 10 } });
+if (isMobile()) player.mobileUi({ forceForTesting: true, fullscreen: { enterOnRotate: false, exitOnRotate: false }, touchControls: { seekSeconds: seekSeconds } });
 
 // Enable VR video support
 if (!video_data.params.listen && video_data.vr && video_data.params.vr_mode) {
@@ -910,17 +911,17 @@ addEventListener('keydown', function (e) {
 
         case 'ArrowRight':
         case 'MediaFastForward':
-            action = skip_seconds.bind(this, 5 * player.playbackRate());
+            action = skip_seconds.bind(this, seekSeconds);
             break;
         case 'ArrowLeft':
         case 'MediaTrackPrevious':
-            action = skip_seconds.bind(this, -5 * player.playbackRate());
+            action = skip_seconds.bind(this, -seekSeconds);
             break;
         case 'l':
-            action = skip_seconds.bind(this, 10 * player.playbackRate());
+            action = skip_seconds.bind(this, seekSeconds);
             break;
         case 'j':
-            action = skip_seconds.bind(this, -10 * player.playbackRate());
+            action = skip_seconds.bind(this, -seekSeconds);
             break;
 
         case '0':

@@ -474,6 +474,8 @@ require "./member_checks"
 check_member_preferences
 require "./codec_checks"
 check_codec_preferences
+require "./seek_checks"
+check_seek_preferences
 require "./audio_checks"
 check_audio_preferences
 File.write("#{output}/search-members-hidden.html", member_search_fixture(false))

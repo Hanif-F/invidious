@@ -130,6 +130,11 @@ Native JSON helper requests require `application/json`, object bodies and a 16 K
 
 ## Authenticated history, subscriptions and library
 
+The shared `seek_seconds` preference accepts integer 5, 10, 20 or 30 video seconds
+(default 10). GET includes it; native PATCH rejects invalid values with 400.
+Existing preference scopes and JSON storage apply. See [preferences](preferences.md)
+for browser cookies, account sync and compatibility.
+
 | Method/path after `/api/v1/auth` | Input/result |
 | --- | --- |
 | `GET /history` | Watched-ID array; page/max_results; details=true adds detail entries; also organized=true returns `{entries,total,hasMore,today,timezone}` with optional q |

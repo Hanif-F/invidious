@@ -2,6 +2,7 @@ require "json"
 require "./sponsorblock"
 require "./channel_spoilers"
 require "./videos/audio_preferences"
+require "./videos/seek_preferences"
 
 # The native client exposes only preferences for capabilities it implements.
 # Validate every field before the account transaction; retain all unrelated JSON.
@@ -35,6 +36,8 @@ module Invidious::NativePreferences
           raise "Invalid speed" unless speed.finite? && (0.25..2.0).includes?(speed)
         when "quality_dash"
           raise "Invalid quality" unless QUALITIES.includes?(value.as_s)
+        when "seek_seconds"
+          raise "Invalid seek interval" unless Invidious::Videos::SeekPreferences::CHOICES.includes?(value.as_i64)
         when "video_codec"
           raise "Invalid video codec" unless {"auto", "av1", "h264"}.includes?(value.as_s)
         when "preferred_audio"

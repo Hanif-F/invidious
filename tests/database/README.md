@@ -102,6 +102,11 @@ subscription/history scopes, permission denials, shared-score equality,
 cross-account isolation, private/no-store headers, untouched browser preferences
 and read-only history. Native tokens need no new scopes or renewal.
 
+`mobile_checks.cr` exercises every `seek_seconds` value through production bearer
+PATCH, unrelated sparse PATCH, older browser forms, current browser forms and
+native GET. It verifies strict integer validation, atomic invalid-patch rejection
+and isolation from other accounts, using existing preference scopes and schema.
+
 `browser_profile_checks.cr` runs in the account harness through production middleware.
 The native account-management checks also verify mobile `profileId` and preference
 response metadata, unchanged browser identity, stable profiles through credential

@@ -57,6 +57,8 @@ struct ConfigPreferences
   property related_videos : Bool = true
   property sort : String = "published"
   property speed : Float32 = 1.0_f32
+  @[YAML::Field(converter: Invidious::Videos::SeekPreferences)]
+  property seek_seconds : Int32 = 10
   property thin_mode : Bool = false
   @[YAML::Field(converter: Preferences::UIDensity)]
   property ui_density : String = "balanced"

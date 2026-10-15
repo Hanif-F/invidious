@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **381 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **382 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -471,6 +471,7 @@ Video metadata, captions/transcripts, chapters, music, downloads and archived ch
 | [src/invidious/videos/music.cr](../../src/invidious/videos/music.cr) | music |
 | [src/invidious/videos/parser.cr](../../src/invidious/videos/parser.cr) | parser |
 | [src/invidious/videos/regions.cr](../../src/invidious/videos/regions.cr) | regions |
+| [src/invidious/videos/seek_preferences.cr](../../src/invidious/videos/seek_preferences.cr) | seek preferences |
 | [src/invidious/videos/storyboard.cr](../../src/invidious/videos/storyboard.cr) | storyboard |
 | [src/invidious/videos/transcript.cr](../../src/invidious/videos/transcript.cr) | transcript |
 | [src/invidious/videos/video_preferences.cr](../../src/invidious/videos/video_preferences.cr) | video preferences |

@@ -2919,7 +2919,7 @@ for (const engine of engines) {
         assert.ok(Math.abs(await page.evaluate(() => player.volume()) - 0.5) < 0.01);
         await page.evaluate(() => player.currentTime(1));
         await page.keyboard.press('ArrowRight');
-        await page.waitForFunction(() => Math.abs(player.currentTime() - Math.min(6, player.duration())) < 0.1);
+        await page.waitForFunction(() => Math.abs(player.currentTime() - Math.min(11, player.duration())) < 0.1);
         await page.keyboard.press('ArrowLeft');
         assert.ok(await page.evaluate(() => player.currentTime()) < 2);
         const input = page.locator('input[name="q"]').first();
@@ -5621,6 +5621,63 @@ for (const engine of engines) {
             assert.equal(source.searchParams.get('audio_track'),'id.3');
             assert.equal(source.searchParams.get('is_drc'),'false');
             assert.deepEqual(errors,[]); await context.close();
+        }
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: seek interval settings submit all choices without JavaScript`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture:'preferences', width:390, javascript:false});
+        const select = page.getByLabel('Seek interval:', {exact:true});
+        assert.equal(await select.inputValue(), '10');
+        assert.deepEqual(await select.locator('option').evaluateAll(nodes => nodes.map(node => [node.value, node.textContent.trim()])),
+            ['5','10','20','30'].map(value => [value, `${value} seconds`]));
+        await select.selectOption('30');
+        await select.scrollIntoViewIfNeeded();
+        await page.screenshot({path:path.join(artifacts, `${engine}-seek-interval-setting.png`)});
+        const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
+        await page.getByRole('button', {name:'Save preferences', exact:true}).click();
+        assert.equal(new URLSearchParams((await posted).postData()).get('seek_seconds'), '30');
+        assert.deepEqual(errors, []); await context.close();
+    });
+
+    test(`${engine}: seek intervals use video seconds for keyboard media keys and mobile taps`, async () => {
+        for (const seconds of [5,10,20,30]) {
+            const {page, context, errors} = await pageFor(engine, {fixture:'watch-single', route:'watch?v=2isYuQZMbdU',
+                realPlayer:true, touch:true, mobileUserAgent:true, width:390, height:800,
+                playerData:{seek_seconds:seconds}, videoData:{params:{continue:false}}});
+            await page.waitForFunction(() => typeof player !== 'undefined' && player.getChild('TouchOverlay'));
+            // Synthetic timeline keeps the fixture's short media from truncating larger jumps.
+            // Production keyboard/touch handlers, batch timer and player state remain active.
+            await page.evaluate(() => {
+                player.pause(); player.hasStarted(true); player.userActive(true);
+                let position = 100;
+                player.currentTime = value => value === undefined ? position : (position = value);
+                player.duration = () => 240;
+                player.seekable = () => ({length:1, start:() => 0, end:() => 240});
+                document.activeElement.blur();
+            });
+            for (const speed of [.5,2]) {
+                await page.evaluate(speed => player.playbackRate(speed), speed);
+                for (const [key, direction] of [['ArrowRight',1],['ArrowLeft',-1],['l',1],['j',-1],['MediaFastForward',1],['MediaTrackPrevious',-1]]) {
+                    await page.evaluate(() => player.currentTime(100));
+                    await page.evaluate(key => document.body.dispatchEvent(new KeyboardEvent('keydown', {key, bubbles:true})), key);
+                    assert.equal(await page.evaluate(() => player.currentTime()), 100 + direction * seconds, `${seconds}s at ${speed}x: ${key}`);
+                }
+                await page.evaluate(() => player.currentTime(239));
+                await page.keyboard.press('ArrowRight'); assert.equal(await page.evaluate(() => player.currentTime()), 240);
+                await page.evaluate(() => player.currentTime(1));
+                await page.keyboard.press('j'); assert.equal(await page.evaluate(() => player.currentTime()), 0);
+                await page.evaluate(() => player.currentTime(100));
+                const box = await page.locator('.vjs-touch-overlay').boundingBox();
+                const tap = direction => page.touchscreen.tap(box.x + box.width * (direction > 0 ? .85 : .15), box.y + box.height / 3);
+                await tap(1); await tap(1);
+                await page.waitForFunction(seconds => document.querySelector('.mobile-seek-feedback').textContent === `+${seconds} s`, seconds);
+                await tap(1); await tap(-1);
+                await page.waitForFunction(seconds => player.currentTime() === 100 + seconds && document.querySelector('.mobile-seek-feedback').textContent === '', seconds);
+                assert.equal(await page.evaluate(() => player.paused()), true);
+            }
+            assert.deepEqual(errors, []); await context.close();
         }
     });
 }

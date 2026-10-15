@@ -137,6 +137,7 @@ Values below are **code defaults**, expressed as Crystal literals, rather than d
 | `related_videos` | `Bool` | `true` |
 | `sort` | `String` | `"published"` |
 | `speed` | `Float32` | `1.0_f32` |
+| `seek_seconds` | `Int32` | `10` |
 | `thin_mode` | `Bool` | `false` |
 | `ui_density` | `String` | `"balanced"` |
 | `unseen_only` | `Bool` | `false` |

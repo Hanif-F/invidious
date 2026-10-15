@@ -961,6 +961,9 @@ default_user_preferences:
   ##
   #speed: 1.0
 
+  # Fixed seek jumps in video seconds, at every playback speed: 5, 10, 20 or 30.
+  #seek_seconds: 10
+
   ##
   ## Allow 360° videos to be played.
   ##

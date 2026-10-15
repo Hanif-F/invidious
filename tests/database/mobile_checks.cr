@@ -99,6 +99,7 @@ def check_mobile_security
 end
 
 def check_mobile_preferences(token, email, sid)
+  check_mobile_seek_interval(token, email, sid)
   path = "/api/v1/auth/preferences"
   before = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
   before["future_native_settings"] = JSON.parse(%({"preserve":[1,2,3]}))
@@ -157,6 +158,43 @@ def check_mobile_preferences(token, email, sid)
   end
   check(security_request("PATCH", path, sid: sid, body: %({"speed":1})).response.status_code == 403, "Native core settings bypassed browser CSRF")
   puts "Native core settings, shared reads, unknown preference preservation, atomic rejection and CSRF passed"
+end
+
+def check_mobile_seek_interval(token, email, sid)
+  path = "/api/v1/auth/preferences"
+  others = PG_DB.query_all("SELECT email, preferences FROM users WHERE email <> $1", email, as: {String, String})
+  Invidious::Videos::SeekPreferences::CHOICES.each do |seconds|
+    previous = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+    result = security_request("PATCH", path, bearer: token, body: {seek_seconds: seconds}.to_json)
+    check(result.response.status_code == 200, "Native seek interval patch failed")
+    saved = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+    previous.each { |key, value| check(saved[key] == value, "Seek interval patch overwrote #{key}") unless key == "seek_seconds" }
+    check(Invidious::Database::Users.select!(email: email).preferences.seek_seconds == seconds, "Android seek interval missing from web account")
+    result = security_request("PATCH", path, bearer: token, body: %({"speed":1.5}))
+    check(result.response.status_code == 200, "Unrelated sparse seek save failed")
+    check(JSON.parse(result.get("test_result").as(String))["seek_seconds"].as_i == seconds, "Sparse patch erased seek interval")
+    csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+    result = security_request("POST", "/preferences", sid: sid,
+      body: URI::Params.encode({"csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
+    check(result.response.status_code == 302, "Older web form failed")
+    read = security_request("GET", path, bearer: token)
+    check(JSON.parse(read.get("test_result").as(String))["seek_seconds"].as_i == seconds, "Older web form erased seek interval")
+    web_seconds = seconds == 5 ? 30 : 5
+    csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+    result = security_request("POST", "/preferences", sid: sid,
+      body: URI::Params.encode({"seek_seconds" => web_seconds.to_s, "csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
+    check(result.response.status_code == 302, "Web seek interval form failed")
+    read = security_request("GET", path, bearer: token)
+    check(JSON.parse(read.get("test_result").as(String))["seek_seconds"].as_i == web_seconds, "Web seek interval missing from Android read")
+    before_invalid = Invidious::Database::Users.preference_json(email)
+    {"0", "15", "5.0", "5.5", "null", "true", %q("20"), "[]", "{}"}.each do |raw|
+      invalid = security_request("PATCH", path, bearer: token, body: %({"speed":2,"seek_seconds":#{raw}}))
+      check(invalid.response.status_code == 400, "Invalid seek interval accepted")
+      check(Invidious::Database::Users.preference_json(email) == before_invalid, "Invalid interval partially applied")
+    end
+    others.each { |owner, preferences| check(Invidious::Database::Users.preference_json(owner) == preferences, "Seek interval changed another account") }
+  end
+  puts "Seek interval native/web account roundtrips, old forms, sparse saves, validation and isolation passed"
 end
 
 def check_mobile_sponsorblock(token, email, sid)

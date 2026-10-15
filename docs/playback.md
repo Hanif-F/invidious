@@ -54,8 +54,8 @@ Page-wide shortcuts avoid focused inputs, links/buttons, menus, dialogs and edit
 | Space or `k` | Play/pause |
 | `m` | Mute |
 | Up/down arrows | Volume ±10% |
-| Left/right arrows | Seek ±5 seconds multiplied by playback rate |
-| `j` / `l` | Seek ±10 seconds multiplied by playback rate |
+| Left/right arrows | Seek by the selected interval in video seconds |
+| `j` / `l` | Seek by the selected interval in video seconds |
 | Top-row `0`–`9` | Seek to 0%–90%; numeric keypad ignored |
 | `c` / `f` | Captions/fullscreen |
 | Shift+`n` (`N`) | Next video when available |
@@ -65,7 +65,14 @@ Page-wide shortcuts avoid focused inputs, links/buttons, menus, dialogs and edit
 | `w` / `o` | Cycle caption window/text opacity |
 | Enter | Active manual SponsorBlock skip prompt, when focus permits |
 
-The existing `P` previous-video branch is a TODO; do not expect previous-video keyboard navigation. On desktop, wheel changes volume only while hovering the volume control. Mobile settings use a full-viewport dialog. Double-tapping an outer third queues signed 10-second seek steps; subsequent taps accumulate and commit after 500 ms inactivity while preserving playback state. These enhancements need JavaScript.
+The existing `P` previous-video branch is a TODO; do not expect previous-video keyboard navigation. On desktop, wheel changes volume only while hovering the volume control. Mobile settings use a full-viewport dialog. Double-tapping an outer third queues signed seek steps; subsequent taps accumulate and commit after 500 ms inactivity while preserving playback state. These enhancements need JavaScript.
+
+Playback preferences offer a Seek interval of 5, 10 (default), 20 or 30 seconds.
+The shared player configuration supplies `seek_seconds` to watch, embed and clips,
+including mobile tap batches and existing fixed-distance media-key actions.
+Every jump uses video timeline seconds at any playback speed and keeps existing
+seek bounds. Chapter jumps, frame steps, percentage shortcuts and queue navigation
+retain their own behavior. See [preferences](preferences.md) for storage and sync.
 
 ## Captions, transcripts, chapters and annotations
 

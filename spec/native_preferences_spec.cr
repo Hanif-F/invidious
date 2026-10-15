@@ -2,6 +2,21 @@ require "spec"
 require "../src/invidious/native_preferences"
 
 describe Invidious::NativePreferences do
+  it "accepts only supported integer seek intervals and preserves sparse saves" do
+    Invidious::Videos::SeekPreferences::CHOICES.each do |seconds|
+      patch = JSON.parse({seek_seconds: seconds}.to_json).as_h
+      Invidious::NativePreferences.validate_patch(patch)
+      saved = JSON.parse(%({"theme":"diary","future":true})).as_h
+      Invidious::SponsorBlock.merge_patch(saved, patch, {} of String => String)
+      Invidious::SponsorBlock.merge_patch(saved, JSON.parse(%({"speed":2})).as_h, {} of String => String)
+      saved["seek_seconds"].as_i.should eq(seconds)
+      saved["theme"].as_s.should eq("diary")
+      saved["future"].as_bool.should be_true
+    end
+    {"0", "15", "-5", "31", "5.0", "5.5", "null", "true", %q("20"), "[]", "{}"}.each do |raw|
+      expect_raises(Exception) { Invidious::NativePreferences.validate_patch(JSON.parse(%({"seek_seconds":#{raw}})).as_h) }
+    end
+  end
   it "accepts canonical preferred audio choices and preserves unrelated preferences" do
     (["original", "original_stable"] + Invidious::Videos::AudioPreferences::LANGUAGES.keys).each do |preference|
       patch = JSON.parse({"preferred_audio" => preference}.to_json).as_h

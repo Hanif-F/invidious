@@ -149,6 +149,7 @@ module Invidious::Routes::PreferencesRoute
     dark_mode ||= CONFIG.default_user_preferences.dark_mode
 
     previous = env.get("preferences").as(Preferences)
+    seek_seconds = env.params.body["seek_seconds"]?.try { |value| Invidious::Videos::SeekPreferences.normalize(value.to_i64? || 10) } || previous.seek_seconds
     video_codec = Preferences::VideoCodec.normalize(env.params.body["video_codec"]? || previous.video_codec)
     preferred_audio = Invidious::Videos::AudioPreferences.normalize(env.params.body["preferred_audio"]? || previous.preferred_audio)
     selection = env.params.body["theme"]?
@@ -230,6 +231,7 @@ module Invidious::Routes::PreferencesRoute
       related_videos:                 related_videos,
       sort:                           sort,
       speed:                          speed,
+      seek_seconds:                   seek_seconds,
       thin_mode:                      thin_mode,
       ui_density:                     ui_density,
       unseen_only:                    unseen_only,
