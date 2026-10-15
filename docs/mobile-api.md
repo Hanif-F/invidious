@@ -204,6 +204,14 @@ At least one field is required. Supported fields are:
   Android applies the captured preference to DASH playback, respecting the target
   resolution before preferring a codec for fixed quality presets. Changes apply
   to the next video; in-player choices remain local to the current occurrence.
+- `preferred_audio`: `original`, `original_stable`, or a canonical tag from
+  `Invidious::Videos::AudioPreferences::LANGUAGES`, such as `id`, `pt-BR` or
+  `zh-Hans`. Invalid tags and non-string values reject the whole native patch.
+  The field is shared with the website. Android captures it for the next playback
+  occurrence, including audio-only mode; missing tracks fall back to regular
+  original audio and manual choices remain local to the current occurrence.
+  This extends the native allowlist beyond commit `2ea80795`. Existing scopes and
+  storage suffice; no migration or renewed sign-in is needed.
 - `captions`: up to three bounded language-name strings, in priority order, matching
   the web names; empty strings mean no preferred language. `comments`: up to two
   sources (`youtube`, `reddit`, or empty). Android edits YouTube visibility while

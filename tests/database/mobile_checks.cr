@@ -132,10 +132,26 @@ def check_mobile_preferences(token, email, sid)
     check(JSON.parse(read.get("test_result").as(String))["video_codec"].as_s == codec, "Web codec was not returned to Android")
     other_accounts.each { |owner, preferences| check(Invidious::Database::Users.preference_json(owner) == preferences, "Codec sync changed another account") }
   end
+  {"original", "original_stable", "id", "pt-BR", "es-419", "zh-Hans"}.each do |preference|
+    previous = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+    result = security_request("PATCH", path, bearer: token, body: {preferred_audio: preference}.to_json)
+    check(result.response.status_code == 200, "Native preferred audio patch failed")
+    saved = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+    previous.each { |key, value| check(saved[key] == value, "Audio patch overwrote #{key}") unless key == "preferred_audio" }
+    check(Invidious::Database::Users.select!(email: email).preferences.preferred_audio == preference, "Android audio was not visible to the web account")
+    csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+    result = security_request("POST", "/preferences", sid: sid,
+      body: URI::Params.encode({"preferred_audio" => preference, "csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
+    check(result.response.status_code == 302, "Web preferred audio form failed")
+    read = security_request("GET", path, bearer: token)
+    check(JSON.parse(read.get("test_result").as(String))["preferred_audio"].as_s == preference, "Web audio was not returned to Android")
+    other_accounts.each { |owner, preferences| check(Invidious::Database::Users.preference_json(owner) == preferences, "Audio sync changed another account") }
+  end
   after = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
   [%({"continue":"true"}), %({"continue_autoplay":null}), %({"video_loop":1}), %({"speed":0,"related_videos":true}), %({"region":"invalid"}), %({"captions":["<script>"]}),
    %({"max_results":1501}), %({"feed_menu":["unknown"]}), %({"comments":["other"]}), %({"video_codec":"vp9"}), %({"video_codec":null}),
-   %({"video_codec":true}), %({"video_codec":123}), %({"video_codec":[]}), %({"video_codec":{}}), %({"video_codec":"AV1"})].each do |invalid|
+   %({"video_codec":true}), %({"video_codec":123}), %({"video_codec":[]}), %({"video_codec":{}}), %({"video_codec":"AV1"}), %({"preferred_audio":"unknown","speed":1.25}), %({"preferred_audio":"PT_br"}),
+   %({"preferred_audio":null}), %({"preferred_audio":true}), %({"preferred_audio":123}), %({"preferred_audio":[]}), %({"preferred_audio":{}})].each do |invalid|
     check(security_request("PATCH", path, bearer: token, body: invalid).response.status_code == 400, "Invalid native core preferences accepted")
     check(JSON.parse(Invidious::Database::Users.preference_json(email)).as_h == after, "Rejected native settings partially applied")
   end

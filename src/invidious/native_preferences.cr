@@ -1,6 +1,7 @@
 require "json"
 require "./sponsorblock"
 require "./channel_spoilers"
+require "./videos/audio_preferences"
 
 # The native client exposes only preferences for capabilities it implements.
 # Validate every field before the account transaction; retain all unrelated JSON.
@@ -36,6 +37,9 @@ module Invidious::NativePreferences
           raise "Invalid quality" unless QUALITIES.includes?(value.as_s)
         when "video_codec"
           raise "Invalid video codec" unless {"auto", "av1", "h264"}.includes?(value.as_s)
+        when "preferred_audio"
+          preference = value.as_s
+          raise "Invalid preferred audio" unless {"original", "original_stable"}.includes?(preference) || Invidious::Videos::AudioPreferences::LANGUAGES.has_key?(preference)
         when "dark_mode"
           raise "Invalid color mode" unless {"", "light", "dark"}.includes?(value.as_s)
         when "ui_density"

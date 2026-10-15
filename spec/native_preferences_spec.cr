@@ -2,6 +2,26 @@ require "spec"
 require "../src/invidious/native_preferences"
 
 describe Invidious::NativePreferences do
+  it "accepts canonical preferred audio choices and preserves unrelated preferences" do
+    (["original", "original_stable"] + Invidious::Videos::AudioPreferences::LANGUAGES.keys).each do |preference|
+      patch = JSON.parse({"preferred_audio" => preference}.to_json).as_h
+      Invidious::NativePreferences.validate_patch(patch)
+      stored = JSON.parse(%({"theme":"diary","future":{"keep":true},"speed":1.5})).as_h
+      Invidious::SponsorBlock.merge_patch(stored, patch, {} of String => String)
+      stored["preferred_audio"].should eq(preference)
+      stored["theme"].should eq("diary")
+      stored["future"]["keep"].should eq(true)
+      stored["speed"].should eq(1.5)
+    end
+  end
+
+  it "rejects unsupported preferred audio tags and non-string values" do
+    [%q(""), %q("unknown"), %q("en.4"), %q("PT_br"), %q("Original"), "null", "true", "123", "[]", "{}"].each do |value|
+      expect_raises(Exception) do
+        Invidious::NativePreferences.validate_patch(JSON.parse(%({"speed":1.5,"preferred_audio":#{value}})).as_h)
+      end
+    end
+  end
   it "accepts complete channel spoiler deltas and rejects invalid patches atomically" do
     id = "UC" + "a" * 22
     ["null", %({"hide_title":true,"hide_thumbnail":false}), %({"hide_title":true,"hide_thumbnail":true,"reveal_after_days":null}), %({"hide_title":true,"hide_thumbnail":true,"reveal_after_days":2147483647})].each do |entry|
