@@ -125,6 +125,7 @@ Values below are **code defaults**, expressed as Crystal literals, rather than d
 | `notifications_only` | `Bool` | `false` |
 | `player_style` | `String` | `"invidious"` |
 | `video_codec` | `String` | `"auto"` |
+| `preferred_audio` | `String` | `"original"` |
 | `quality` | `String` | `"dash"` |
 | `quality_dash` | `String` | `"auto"` |
 | `default_home` | `String?` | `"Popular"` |

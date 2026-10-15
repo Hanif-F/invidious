@@ -150,6 +150,7 @@ module Invidious::Routes::PreferencesRoute
 
     previous = env.get("preferences").as(Preferences)
     video_codec = Preferences::VideoCodec.normalize(env.params.body["video_codec"]? || previous.video_codec)
+    preferred_audio = Invidious::Videos::AudioPreferences.normalize(env.params.body["preferred_audio"]? || previous.preferred_audio)
     selection = env.params.body["theme"]?
     theme_random = selection ? selection == "random" : previous.theme_random
     theme = selection && selection != "random" ? Invidious::Themes.normalize(selection) : previous.theme
@@ -219,6 +220,7 @@ module Invidious::Routes::PreferencesRoute
       quality:                        quality,
       quality_dash:                   quality_dash,
       video_codec:                    video_codec,
+      preferred_audio:                preferred_audio,
       default_home:                   default_home,
       feed_menu:                      feed_menu,
       automatic_instance_redirect:    automatic_instance_redirect,
@@ -239,7 +241,7 @@ module Invidious::Routes::PreferencesRoute
       default_playlist:               default_playlist,
       search_privacy:                 search_privacy,
       sponsorblock_channel_overrides: previous.sponsorblock_channel_overrides,
-      channel_spoiler_settings:        previous.channel_spoiler_settings,
+      channel_spoiler_settings:       previous.channel_spoiler_settings,
       sponsorblock_enabled:           env.params.body["sponsorblock_enabled"]? == "on",
       sponsorblock_modes:             Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_mode_#{category}"]? || previous.sponsorblock_modes[category]} },
       sponsorblock_colors:            Invidious::SponsorBlock::CATEGORIES.to_h { |category, _| {category, env.params.body["sponsorblock_color_#{category}"]? || previous.sponsorblock_colors[category]} },

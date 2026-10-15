@@ -175,6 +175,18 @@
                     </select>
                 </div>
             <% end %>
+            <div class="pure-control-group">
+                <label for="preferred_audio"><%= I18n.translate(locale, "preferences_preferred_audio_label") %></label>
+                <select name="preferred_audio" id="preferred_audio" aria-describedby="preferred_audio_help">
+                    <% {"original", "original_stable"}.each do |option| %>
+                        <option value="<%= option %>" <%= "selected" if preferences.preferred_audio == option %>><%= I18n.translate(locale, "preferences_preferred_audio_option_" + option) %></option>
+                    <% end %>
+                    <% Invidious::Videos::AudioPreferences::LANGUAGES.to_a.sort_by { |_, name| I18n.translate(locale, name).downcase }.each do |tag, name| %>
+                        <option value="<%= tag %>" <%= "selected" if preferences.preferred_audio == tag %>><%= HTML.escape(I18n.translate(locale, name)) %></option>
+                    <% end %>
+                </select>
+                <p class="preference-description" id="preferred_audio_help"><%= I18n.translate(locale, "preferences_preferred_audio_help") %></p>
+            </div>
             <div class="pure-control-group preference-multi-row">
                 <span class="preference-row-label"><%= I18n.translate(locale, "preferences_captions_label") %></span>
                 <div class="preference-multi-options">

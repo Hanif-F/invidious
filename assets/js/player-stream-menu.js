@@ -8,6 +8,7 @@
     var labels = data.stream_labels || {};
     var formats = data.stats_formats || [];
     var qualityStates = new WeakMap();
+    var audioStates = new WeakMap();
 
     function number(value) {
         value = Number(value);
@@ -184,7 +185,7 @@
     }
 
     function qualityState(player) {
-        if (!qualityStates.has(player)) qualityStates.set(player, {codec: '', quality: 'auto', mode: 'auto', selected: []});
+        if (!qualityStates.has(player)) qualityStates.set(player, {codec: '', quality: 'auto', mode: 'auto', selected: [], revision: 0});
         return qualityStates.get(player);
     }
 
@@ -297,6 +298,7 @@
 
     function selectAutoQuality(player) {
         var state = qualityState(player);
+        state.revision++;
         state.mode = 'auto'; state.selected = [];
         updateQualitySelection(player);
     }
@@ -305,12 +307,14 @@
         var state = qualityState(player);
         var entry = qualityEntries(player).find(function (entry) { return entry.level === level; });
         if (!entry) return;
+        state.revision++;
         state.mode = 'manual'; state.selected = [describeQuality(entry)];
         updateQualitySelection(player);
     }
 
     function qualitySelection(player) {
-        return {auto: isAutoQuality(player), selected: qualityEntries(player).filter(function (entry) { return entry.level.enabled; }).map(describeQuality)};
+        return {auto: isAutoQuality(player), revision: qualityState(player).revision,
+            selected: qualityEntries(player).filter(function (entry) { return entry.level.enabled; }).map(describeQuality)};
     }
 
     function restoreQualitySelection(player, selection) {
@@ -442,43 +446,42 @@
         );
     }
 
+    function audioLanguage(value) {
+        return String(value || '').split('.')[0].replace(/_/g, '-').toLowerCase();
+    }
+
     function audioFormat(player, track) {
-        var trackLabel = track.label || '';
-        var audioFormats = formats.filter(function (format) { return format.audioTrack && !format.height; });
-        var representationItags = audioRepresentationItags(player, track);
-        var exact = audioFormats.find(function (format) {
-            return format.itag != null && (representationItags.indexOf(String(format.itag)) >= 0 ||
-                String(format.itag) === String(track.id));
-        });
-        if (exact) return exact;
-
-        var stableHint = /(?:stable volume|\bdrc\b)/i.test(trackLabel);
-        var candidates = audioFormats.filter(function (format) { return formatIsStable(format) === stableHint; });
-        var bitrateMatch = trackLabel.match(/\[(\d+)k\]/);
-        if (bitrateMatch) {
-            exact = candidates.find(function (format) {
-                var bitrate = positiveNumber(format.bitrate);
-                return bitrate !== null && (bitrate === Number(bitrateMatch[1]) ||
-                    Math.round(bitrate / 1000) === Number(bitrateMatch[1]));
+        var candidates = formats.filter(function (format) { return format.audioTrack && !format.height; });
+        var language = audioLanguage(track.language);
+        if (language) {
+            candidates = candidates.filter(function (format) {
+                var tag = audioLanguage(format.audioTrack.id);
+                return tag === language || tag.indexOf(language + '-') === 0;
             });
-            if (exact) return exact;
         }
-
-        var trackName = normalizedAudioName(trackLabel);
+        var trackName = normalizedAudioName(track.label);
         var named = candidates.filter(function (format) {
-            var formatName = normalizedAudioName(format.audioTrack.displayName);
-            return trackName && formatName && (trackName === formatName ||
-                trackName.indexOf(formatName) >= 0 || formatName.indexOf(trackName) >= 0);
+            var name = normalizedAudioName(format.audioTrack.displayName);
+            return name && trackName && (name === trackName || trackName.indexOf(name) >= 0 || name.indexOf(trackName) >= 0);
         });
-        if (named.length === 1) return named[0];
-
-        var language = String(track.language || '').toLocaleLowerCase();
-        var byLanguage = candidates.filter(function (format) {
-            var identity = String(format.audioTrack.id || '').toLocaleLowerCase();
-            return language && (identity === language || identity.indexOf(language + '.') === 0 ||
-                identity.indexOf(language + '-') === 0);
+        if (named.length) candidates = named;
+        var itags = audioRepresentationItags(player, track);
+        var exact = candidates.filter(function (format) {
+            return format.audioTrack.id === track.id || (format.itag != null &&
+                (itags.indexOf(String(format.itag)) >= 0 || String(format.itag) === String(track.id)));
         });
-        return byLanguage.length === 1 ? byLanguage[0] : {};
+        var stableHint = /(?:stable volume|\bdrc\b)/i.test(track.label || '');
+        if (exact.length === 1 && (!stableHint || formatIsStable(exact[0]))) return exact[0];
+        if (exact.length) candidates = exact;
+        candidates = candidates.filter(function (format) { return formatIsStable(format) === stableHint; });
+        var bitrateMatch = String(track.label || '').match(/\[(\d+)k\]/);
+        if (bitrateMatch) {
+            candidates = candidates.filter(function (format) {
+                var bitrate = positiveNumber(format.bitrate);
+                return bitrate !== null && (bitrate === Number(bitrateMatch[1]) || Math.round(bitrate / 1000) === Number(bitrateMatch[1]));
+            });
+        }
+        return candidates.length === 1 ? candidates[0] : {};
     }
 
     function audioInfo(player, track, originalIndex) {
@@ -491,6 +494,7 @@
         return {
             track: track, format: format, name: name, stable: stable, original: original,
             identity: audioTrack.id || track.language || name,
+            language: audioLanguage(audioTrack.id || track.language),
             bitrate: positiveNumber(format.bitrate) || 0, originalIndex: originalIndex
         };
     }
@@ -528,22 +532,22 @@
         }).join(' · ');
     }
 
-    function audioOption(entry, stable, tier) {
+    function audioOption(player, entry, stable, tier) {
         return {
             primary: audioPrimary(entry, stable, tier),
             secondary: secondary(entry.format, entry.bitrate), selected: entry.track.enabled,
-            select: function () { entry.track.enabled = true; }, track: entry.track
+            select: function () { selectAudioTrack(player, entry.track); }, track: entry.track
         };
     }
 
-    function audioTierOptions(entries, stable) {
+    function audioTierOptions(player, entries, stable) {
         entries.sort(function (a, b) { return b.bitrate - a.bitrate || a.originalIndex - b.originalIndex; });
         if (!entries.length) return [];
         var active = entries.find(function (entry) { return entry.track.enabled; });
         var known = entries.filter(function (entry) { return entry.bitrate > 0; });
         var distinctBitrates = Array.from(new Set(known.map(function (entry) { return entry.bitrate; })));
         if (distinctBitrates.length < 2) {
-            return [audioOption(active || known[0] || entries[0], stable, '')];
+            return [audioOption(player, active || known[0] || entries[0], stable, '')];
         }
 
         var high = known[0];
@@ -553,11 +557,11 @@
         return kept.map(function (entry) {
             var tier = entry === high ? (labels.high_bitrate || 'High Bitrate') :
                 entry === low ? (labels.low_bitrate || 'Low Bitrate') : '';
-            return audioOption(entry, stable, tier);
+            return audioOption(player, entry, stable, tier);
         });
     }
 
-    function audioOptions(player) {
+    function audioEntries(player) {
         var entries = Array.from(player.audioTracks ? player.audioTracks() : []).map(function (track, index) {
             return audioInfo(player, track, index);
         });
@@ -570,15 +574,20 @@
                     (entry.track.language && entry.track.language === original.track.language);
             });
         });
+        return entries;
+    }
+
+    function audioOptions(player) {
+        var entries = audioEntries(player);
         var regular = entries.filter(function (entry) { return entry.original && !entry.stable; });
         var stable = entries.filter(function (entry) { return entry.original && entry.stable; });
         var dubs = entries.filter(function (entry) { return !entry.original; });
         // If old manifests expose no identity metadata, preserve their current order.
         if (!regular.length && !stable.length) return entries.map(function (entry) {
             return {primary: entry.name, secondary: secondary(entry.format, entry.bitrate), selected: entry.track.enabled,
-                select: function () { entry.track.enabled = true; }, track: entry.track};
+                select: function () { selectAudioTrack(player, entry.track); }, track: entry.track};
         });
-        var options = audioTierOptions(regular, false).concat(audioTierOptions(stable, true));
+        var options = audioTierOptions(player, regular, false).concat(audioTierOptions(player, stable, true));
         if (dubs.length) {
             options.push({divider: true, primary: labels.dubbed_audio || 'Dubbed Audio'});
             var groups = new Map();
@@ -591,10 +600,89 @@
                 return group.find(function (entry) { return entry.track.enabled; }) || group[0];
             }).sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (entry) {
                 options.push({primary: entry.name, secondary: secondary(entry.format, entry.bitrate), selected: entry.track.enabled,
-                    select: function () { entry.track.enabled = true; }, track: entry.track});
+                    select: function () { selectAudioTrack(player, entry.track); }, track: entry.track});
             });
         }
         return options;
+    }
+
+    function describeAudio(entry) {
+        return {identity: entry.identity, language: entry.language, stable: entry.stable, bitrate: entry.bitrate,
+            id: entry.track.id, label: entry.track.label};
+    }
+
+    function selectAudioTrack(player, track) {
+        var entry = audioEntries(player).find(function (candidate) { return candidate.track === track; });
+        if (!entry) return;
+        var state = audioStates.get(player) || {};
+        state.manual = describeAudio(entry);
+        audioStates.set(player, state);
+        track.enabled = true;
+    }
+
+    function preserveAudioSelection(player) {
+        var active = Array.from(player.audioTracks()).find(function (track) { return track.enabled; });
+        if (active) selectAudioTrack(player, active);
+    }
+
+    function applyAudioPreference(player, params) {
+        var entries = audioEntries(player);
+        if (!entries.length) return false;
+        var state = audioStates.get(player) || {};
+        audioStates.set(player, state);
+        var candidates;
+        if (state.manual) {
+            var selected = state.manual;
+            candidates = entries.filter(function (entry) {
+                return entry.identity === selected.identity && entry.stable === selected.stable && entry.bitrate === selected.bitrate &&
+                    (entry.bitrate > 0 || entry.track.label === selected.label);
+            });
+            if (!candidates.length) candidates = entries.filter(function (entry) {
+                return entry.track.id === selected.id && entry.track.label === selected.label &&
+                    entry.language === selected.language && entry.stable === selected.stable;
+            });
+            if (!candidates.length) candidates = entries.filter(function (entry) { return entry.original && !entry.stable; });
+            if (!candidates.length) return false;
+        } else {
+            var preference = params.preferred_audio || 'original';
+            var regular = entries.filter(function (entry) { return entry.original && !entry.stable; });
+            if (preference === 'original_stable') {
+                candidates = entries.filter(function (entry) { return entry.original && entry.stable; });
+            } else if (preference !== 'original') {
+                var tag = audioLanguage(preference);
+                candidates = entries.filter(function (entry) { return !entry.stable && entry.language === tag; });
+                if (!candidates.length && tag.indexOf('-') < 0) candidates = entries.filter(function (entry) {
+                    return !entry.stable && entry.language.split('-')[0] === tag;
+                });
+            }
+            if (!candidates || !candidates.length) candidates = regular;
+            // Unknown original identity must not turn a guessed dub into a preference.
+            if (!candidates.length) return false;
+        }
+        candidates.sort(function (a, b) { return b.bitrate - a.bitrate || a.originalIndex - b.originalIndex; });
+        candidates[0].track.enabled = true;
+        return true;
+    }
+
+    function initializeAudioSelection(player, params) {
+        var tracks = player.audioTracks(), queued = false, disposed = false;
+        function update() {
+            if (queued || disposed) return;
+            queued = true;
+            // Let VHS finish adding/enabling its default tracks before choosing.
+            Promise.resolve().then(function () {
+                queued = false;
+                if (!disposed) applyAudioPreference(player, typeof params === 'function' ? params() : params);
+            });
+        }
+        tracks.on(['addtrack', 'removetrack'], update);
+        player.on('loadedmetadata', update);
+        player.on('dispose', function () {
+            disposed = true;
+            tracks.off(['addtrack', 'removetrack'], update);
+            audioStates.delete(player);
+        });
+        update();
     }
 
     function selectedText(options) {
@@ -672,6 +760,10 @@
         restoreQualitySelection: restoreQualitySelection,
         rankedQualityLevels: rankedQualityLevels,
         audioOptions: audioOptions,
+        applyAudioPreference: applyAudioPreference,
+        initializeAudioSelection: initializeAudioSelection,
+        selectAudioTrack: selectAudioTrack,
+        preserveAudioSelection: preserveAudioSelection,
         selectedText: selectedText,
         formatBytes: formatBytes,
         formatBitrate: formatBitrate

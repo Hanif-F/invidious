@@ -193,7 +193,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `POST /preferences`. Source: [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr).
 
-- Form: `admin_default_home`, `admin_feed_menu[#{index}]`, `ai_blocklist_action`, `ai_blocklist_feeds`, `ai_blocklist_other_pages`, `ai_blocklist_recommendations`, `ai_blocklist_search`, `ai_filter_enabled`, `ai_filter_form_version`, `ai_warnlist_action`, `ai_warnlist_feeds`, `ai_warnlist_other_pages`, `ai_warnlist_recommendations`, `ai_warnlist_search`, `ai_{{kind.id}}_{{surface.id}}_action`, `annotations`, `annotations_subscribed`, `automatic_instance_redirect`, `autoplay`, `captcha_enabled`, `captions[#{i}]`, `comments[#{i}]`, `continue`, `continue_autoplay`, `dark_mode`, `dearrow_enabled`, `dearrow_show_original`, `default_home`, `default_playlist`, `extend_desc`, `feed_menu[#{index}]`, `latest_only`, `listen`, `local`, `locale`, `login_enabled`, `max_results`, `modified_source_code_url`, `notifications_only`, `player_style`, `popular_enabled`, `preload`, `quality`, `quality_dash`, `region`, `registration_enabled`, `related_videos`, `save_player_pos`, `search_privacy`, `show_member_videos`, `show_nick`, `sort`, `speed`, `sponsorblock_color_#{category}`, `sponsorblock_enabled`, `sponsorblock_mode_#{category}`, `statistics_enabled`, `theme`, `theme_random_interval_hours`, `thin_mode`, `timezone`, `ui_density`, `unseen_only`, `video_codec`, `video_loop`, `vr_mode`, `watch_history`.
+- Form: `admin_default_home`, `admin_feed_menu[#{index}]`, `ai_blocklist_action`, `ai_blocklist_feeds`, `ai_blocklist_other_pages`, `ai_blocklist_recommendations`, `ai_blocklist_search`, `ai_filter_enabled`, `ai_filter_form_version`, `ai_warnlist_action`, `ai_warnlist_feeds`, `ai_warnlist_other_pages`, `ai_warnlist_recommendations`, `ai_warnlist_search`, `ai_{{kind.id}}_{{surface.id}}_action`, `annotations`, `annotations_subscribed`, `automatic_instance_redirect`, `autoplay`, `captcha_enabled`, `captions[#{i}]`, `comments[#{i}]`, `continue`, `continue_autoplay`, `dark_mode`, `dearrow_enabled`, `dearrow_show_original`, `default_home`, `default_playlist`, `extend_desc`, `feed_menu[#{index}]`, `latest_only`, `listen`, `local`, `locale`, `login_enabled`, `max_results`, `modified_source_code_url`, `notifications_only`, `player_style`, `popular_enabled`, `preferred_audio`, `preload`, `quality`, `quality_dash`, `region`, `registration_enabled`, `related_videos`, `save_player_pos`, `search_privacy`, `show_member_videos`, `show_nick`, `sort`, `speed`, `sponsorblock_color_#{category}`, `sponsorblock_enabled`, `sponsorblock_mode_#{category}`, `statistics_enabled`, `theme`, `theme_random_interval_hours`, `thin_mode`, `timezone`, `ui_density`, `unseen_only`, `video_codec`, `video_loop`, `vr_mode`, `watch_history`.
 
 ## Routes::PreferencesRoute.detect_timezone
 
@@ -677,7 +677,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `GET /latest_version`. Source: [src/invidious/routes/video_playback.cr](../../src/invidious/routes/video_playback.cr).
 
-- Query: `id`, `itag`, `local`, `region`, `title`.
+- Query: `audio_track`, `id`, `is_drc`, `itag`, `local`, `region`, `title`.
 
 ## Routes::Images.ggpht
 

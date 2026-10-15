@@ -44,6 +44,8 @@ struct ConfigPreferences
   property player_style : String = "invidious"
   @[YAML::Field(converter: Preferences::VideoCodec)]
   property video_codec : String = "auto"
+  @[YAML::Field(converter: Invidious::Videos::AudioPreferences)]
+  property preferred_audio : String = "original"
   property quality : String = "dash"
   property quality_dash : String = "auto"
   property default_home : String? = "Popular"

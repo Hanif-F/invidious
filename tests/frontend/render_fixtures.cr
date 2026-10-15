@@ -474,6 +474,8 @@ require "./member_checks"
 check_member_preferences
 require "./codec_checks"
 check_codec_preferences
+require "./audio_checks"
+check_audio_preferences
 File.write("#{output}/search-members-hidden.html", member_search_fixture(false))
 File.write("#{output}/search-members-shown.html", member_search_fixture(true))
 File.write("#{output}/search-members-empty.html", member_search_fixture(false, true))
@@ -599,3 +601,5 @@ require "./popular_avatar_checks"
 require "./spoiler_checks"
 check_spoiler_preferences(output)
 check_ai_filtering(output)
+
+check_audio_playback(output)

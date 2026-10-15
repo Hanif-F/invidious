@@ -28,6 +28,16 @@ ignored by Git.
 
 ## Coverage and limits
 
+Preferred audio coverage checks guest/account/JSON/YAML/export/import persistence,
+query precedence, no-JavaScript settings saves, regional language matching,
+original/Stable Volume fallback, and duplicate itags across dubbed/DRC tracks.
+Audio-only sources and `/latest_version` retain the exact track identity with and
+without Companion/proxy configuration. DASH lifecycle checks cover late tracks,
+manual selection and buffer refresh. Run `crystal spec spec/audio_preferences_spec.cr
+spec/audio_metadata_spec.cr`, the fixture generator, `node --test
+tests/frontend/stream-menu.test.cjs`, and the `preferred audio` browser tests.
+These use synthetic tracks; live upstream audio decoding still needs a device check.
+
 Channel title/thumbnail settings cover shared upload-age boundaries, unknown-date
 labels, account JSON/YAML/API/export/import persistence and global-form
 preservation. Browser checks exercise scoped guest saves, click/keyboard thumbnail

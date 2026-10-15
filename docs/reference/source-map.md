@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **380 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **381 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -459,6 +459,7 @@ Video metadata, captions/transcripts, chapters, music, downloads and archived ch
 | File | Subject |
 | --- | --- |
 | [src/invidious/videos/audio_metadata.cr](../../src/invidious/videos/audio_metadata.cr) | audio metadata |
+| [src/invidious/videos/audio_preferences.cr](../../src/invidious/videos/audio_preferences.cr) | audio preferences |
 | [src/invidious/videos/caption.cr](../../src/invidious/videos/caption.cr) | caption |
 | [src/invidious/videos/chapters.cr](../../src/invidious/videos/chapters.cr) | chapters |
 | [src/invidious/videos/clip.cr](../../src/invidious/videos/clip.cr) | clip |

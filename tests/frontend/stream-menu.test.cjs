@@ -281,3 +281,101 @@ test('codec preference applies to newly discovered levels without losing Auto or
     assert.deepEqual(player.qualityLevels().map(level => level.enabled), [false,true,true]);
     assert.equal(menus.selectedQualityText(player), 'Auto');
 });
+
+function audioPlayer(formats) {
+    const tracks = formats.map((format, i) => {
+        const track = {id: 'track-' + i, language: format.audioTrack.id.split('.')[0],
+            label: format.audioTrack.displayName + (format.isDrc ? ' Stable Volume' : '') + ` [${format.bitrate}k]`,
+            kind: format.audioTrack.audioIsDefault ? 'main' : 'alternative'};
+        let enabled = i === 0;
+        Object.defineProperty(track, 'enabled', {get: () => enabled, set: value => {
+            if (value) tracks.forEach(other => { if (other !== track) other.enabled = false; });
+            enabled = value;
+        }});
+        return track;
+    });
+    return {audioTracks: () => tracks};
+}
+function audioFormat(tag, bitrate = 128000, original = false, stable = false) {
+    return {itag:140, bitrate, mimeType:'audio/mp4', isDrc:stable,
+        audioTrack:{id:tag, displayName:tag.startsWith('en') ? 'English original' : tag, audioIsDefault:original}};
+}
+
+test('preferred audio distinguishes duplicate itags by language, bitrate and DRC', () => {
+    const formats = [audioFormat('id.3', 96000), audioFormat('en-US.4', 128000, true),
+        audioFormat('en-US.4', 64000, true), audioFormat('en-US.4', 120000, true, true)];
+    const menus = menusFor(formats);
+    for (const [preference, index] of [['original',1], ['original_stable',3], ['id',0], ['en',1], ['fr',1], ['en-GB',1]]) {
+        const player = audioPlayer(formats);
+        assert.equal(menus.applyAudioPreference(player, {preferred_audio:preference}), true);
+        assert.equal(player.audioTracks()[index].enabled, true, preference);
+    }
+    const player = audioPlayer(formats.slice(0,3));
+    menus.applyAudioPreference(player, {preferred_audio:'original_stable'});
+    assert.equal(player.audioTracks()[1].enabled, true);
+});
+
+test('regional audio is exact while general languages accept regional tracks', () => {
+    const formats = [audioFormat('en.4',128000,true),audioFormat('pt-PT.3',96000),audioFormat('pt-BR.3',120000)];
+    const menus = menusFor(formats), player = audioPlayer(formats);
+    for (const [preference,index] of [['pt-PT',1],['pt-BR',2],['pt',2],['es-MX',0]]) {
+        menus.applyAudioPreference(player,{preferred_audio:preference});
+        assert.equal(player.audioTracks()[index].enabled,true,preference);
+    }
+    const missing = audioPlayer(formats.slice(0,2));
+    menus.applyAudioPreference(missing,{preferred_audio:'pt-BR'});
+    assert.equal(missing.audioTracks()[0].enabled,true);
+});
+
+test('manual audio choices survive preference updates and recreated tracks', () => {
+    const formats = [audioFormat('en.4',128000,true), audioFormat('id.3',96000), audioFormat('en.4',120000,true,true)];
+    const menus = menusFor(formats), player = audioPlayer(formats);
+    menus.applyAudioPreference(player,{preferred_audio:'original_stable'});
+    menus.audioOptions(player).find(option => option.track === player.audioTracks()[1]).select();
+    menus.applyAudioPreference(player,{preferred_audio:'original_stable'});
+    assert.equal(player.audioTracks()[1].enabled,true);
+    const replacement = audioPlayer(formats);
+    player.audioTracks = replacement.audioTracks;
+    menus.applyAudioPreference(player,{preferred_audio:'original_stable'});
+    assert.equal(player.audioTracks()[1].enabled,true);
+    player.audioTracks = () => replacement.audioTracks().filter(track => track.language === 'en');
+    assert.equal(menus.applyAudioPreference(player,{preferred_audio:'original_stable'}),true);
+    assert.equal(player.audioTracks()[0].enabled,true);
+    player.audioTracks = replacement.audioTracks;
+    menus.applyAudioPreference(player,{preferred_audio:'original_stable'});
+    assert.equal(player.audioTracks()[1].enabled,true);
+});
+
+test('audio identity absence preserves the existing default and lifecycle handles late tracks', async () => {
+    const menus = menusFor([]), player = {audioTracks: () => [{id:'unknown',label:'Audio',enabled:true}]};
+    assert.equal(menus.applyAudioPreference(player,{preferred_audio:'id'}),false);
+    const formats = [audioFormat('en.4',128000,true),audioFormat('id.3',96000)];
+    const late = menusFor(formats), populated = audioPlayer(formats), tracks = populated.audioTracks();
+    let onTrack, onMetadata, onDispose, detached = false;
+    const list = [tracks[0]];
+    list.on = (_,callback) => { onTrack=callback; };
+    list.off = () => { detached=true; };
+    const lifecycle = {audioTracks: () => list, on: (event,callback) => {
+        if (event === 'loadedmetadata') onMetadata=callback;
+        if (event === 'dispose') onDispose=callback;
+    }};
+    late.initializeAudioSelection(lifecycle,{preferred_audio:'id'});
+    await Promise.resolve();
+    list.push(tracks[1]); onTrack(); await Promise.resolve();
+    assert.equal(tracks[1].enabled,true);
+    late.selectAudioTrack(lifecycle,tracks[0]); onMetadata(); await Promise.resolve();
+    assert.equal(tracks[0].enabled,true);
+    onDispose(); onTrack(); await Promise.resolve();
+    assert.equal(detached,true);
+});
+
+test('a reused legacy audio ID cannot restore a different language over original audio', () => {
+    const menus=menusFor([]);
+    let tracks=[{id:'1',label:'Audio',language:'id',enabled:true}];
+    const player={audioTracks: () => tracks};
+    menus.selectAudioTrack(player,tracks[0]);
+    tracks=[{id:'1',label:'Audio',language:'fr',enabled:true},
+        {id:'main',label:'Original',language:'en',kind:'main',enabled:false}];
+    menus.applyAudioPreference(player,{preferred_audio:'id'});
+    assert.equal(tracks[1].enabled,true);
+});

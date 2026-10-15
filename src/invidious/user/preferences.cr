@@ -66,6 +66,10 @@ struct Preferences
   @[YAML::Field(converter: Preferences::VideoCodec)]
   property video_codec : String = CONFIG.default_user_preferences.video_codec
 
+  @[JSON::Field(converter: Invidious::Videos::AudioPreferences)]
+  @[YAML::Field(converter: Invidious::Videos::AudioPreferences)]
+  property preferred_audio : String = CONFIG.default_user_preferences.preferred_audio
+
   @[JSON::Field(converter: Preferences::ProcessString)]
   property quality : String = CONFIG.default_user_preferences.quality
   @[JSON::Field(converter: Preferences::ProcessString)]

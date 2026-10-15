@@ -12,6 +12,8 @@ Quality menus include resolution, FPS, codec and bitrate where known. Codec pref
 
 Audio menus retain track identity/language and distinguish original/DRC or Stable Volume variants. An itag alone may not uniquely identify an audio track. Missing metadata should not be invented as a language/bitrate/codec guarantee. Physical decoding and browser fullscreen behavior require device checks beyond synthetic fixture tests.
 
+The Preferred audio track setting selects Original Audio, Original Audio (Stable Volume), or a language, including regional variants. It applies to DASH and audio-only playback on watch/embed pages. Missing choices fall back to regular original audio; a general language can match regional tracks, while a specific variant must match exactly. Manual audio choices override the saved preference for the current video and survive buffer refreshes. Audio-only quality changes retain the selected language and processing variant. `/latest_version` accepts optional `audio_track` (the complete upstream track ID, or empty for legacy audio) and `is_drc=true|false` selectors alongside `itag`; these resolve against server metadata before Companion delegation. A vanished variant falls back to original audio. Requests without these selectors retain existing behavior.
+
 Desktop volume persists per browser profile, independently from account preference JSON. It defaults to 100%; mute does not persist. Coarse-pointer mobile players use website volume 100% and device volume controls. Guest speed changes update guest preferences; account speed uses a CSRF-protected sparse PATCH. Volume query parameters and old volume preference fields do not control current persistence.
 
 ## Watch and embed query options
@@ -27,6 +29,7 @@ Desktop volume persists per browser profile, independently from account preferen
 | `continue`, `continue_autoplay` | Next-video continuation and autoplay policy |
 | `listen`, `local` | Audio-only and instance proxy preference |
 | `quality`, `quality_dash`, `video_codec` | Stream/quality/codec choices |
+| `preferred_audio` | Initial audio choice: `original`, `original_stable`, or a supported language tag |
 | `speed` | Playback rate, optionally suffixed `x` |
 | `subtitles` | Comma-separated preferred caption languages |
 | `comments` | Comma-separated comment-source priority |

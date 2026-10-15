@@ -926,6 +926,12 @@ default_user_preferences:
   ## Default: auto
   #video_codec: auto
 
+  ## Preferred audio for DASH video and audio-only playback.
+  ## Accepted values: original, original_stable, or a supported language tag
+  ## (for example id, en, pt-BR). Missing choices fall back to regular original audio.
+  ## Default: original
+  #preferred_audio: original
+
   ##
   ## Default video quality.
   ##

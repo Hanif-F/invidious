@@ -35,6 +35,7 @@ Preference defaults usually refer to `CONFIG.default_user_preferences`; that com
 | `notifications_only` | `Bool` | `CONFIG.default_user_preferences.notifications_only` |
 | `player_style` | `String` | `CONFIG.default_user_preferences.player_style` |
 | `video_codec` | `String` | `CONFIG.default_user_preferences.video_codec` |
+| `preferred_audio` | `String` | `CONFIG.default_user_preferences.preferred_audio` |
 | `quality` | `String` | `CONFIG.default_user_preferences.quality` |
 | `quality_dash` | `String` | `CONFIG.default_user_preferences.quality_dash` |
 | `default_home` | `String?` | `CONFIG.default_user_preferences.default_home` |

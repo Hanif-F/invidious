@@ -285,7 +285,15 @@ module Invidious::Routes::VideoPlayback
   # YouTube /videoplayback links expire after 6 hours,
   # so we have a mechanism here to redirect to the latest version
   def self.latest_version(env)
-    if CONFIG.invidious_companion.present?
+    audio_track = env.params.query["audio_track"]?
+    is_drc = env.params.query["is_drc"]?
+    audio_selection = !audio_track.nil? || !is_drc.nil?
+    if audio_selection && (!(audio_track || "").matches?(/\A[A-Za-z0-9_.-]{0,100}\z/) || (is_drc && !{"true", "false"}.includes?(is_drc)))
+      return error_template(400, "Invalid audio selector")
+    end
+    # Companion's itag-only redirect cannot distinguish dubbed/DRC copies.
+    # Resolve explicit selectors here using the server's refreshed metadata.
+    if CONFIG.invidious_companion.present? && !audio_selection
       invidious_companion = CONFIG.invidious_companion.sample
       return env.redirect "#{invidious_companion.public_url}/latest_version?#{env.params.query}"
     end
@@ -319,7 +327,9 @@ module Invidious::Routes::VideoPlayback
       return error_template(500, ex)
     end
 
-    if itag.nil?
+    if audio_selection
+      fmt = Invidious::Videos::AudioPreferences.resolve(video.audio_streams, itag, audio_track || "", is_drc == "true")
+    elsif itag.nil?
       fmt = video.fmt_stream[-1]?
     else
       fmt = video.fmt_stream.find(nil) { |f| f["itag"].as_i == itag } || video.adaptive_fmts.find(nil) { |f| f["itag"].as_i == itag }
@@ -331,7 +341,11 @@ module Invidious::Routes::VideoPlayback
     end
 
     if local
-      url = URI.parse(url).request_target.not_nil!
+      url = if audio_selection && URI.parse(url).host
+              HttpServer::Utils.proxy_video_url(url, region: region)
+            else
+              URI.parse(url).request_target.not_nil!
+            end
       url += "&title=#{URI.encode_www_form(title, space_to_plus: false)}" if title
     end
 

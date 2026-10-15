@@ -3739,6 +3739,7 @@ for (const engine of engines) {
                     ['os-l','English original [60000k] Stable Volume',false], ['fr-h','French [100000k]',false],
                     ['fr-l','French [50000k]',false]
                 ].forEach(([id,label,enabled]) => player.audioTracks().addTrack(new videojs.AudioTrack({id, kind:id.startsWith('fr') || id.startsWith('os') ? 'alternative' : 'main', label, language:id.startsWith('fr') ? 'fr' : 'en', enabled})));
+                InvidiousStreamMenus.selectAudioTrack(player, Array.from(player.audioTracks()).find(track => track.id === 'oa-m'));
             });
         };
 
@@ -5536,5 +5537,90 @@ for (const engine of engines) {
         assert.equal(await page.locator('[data-spoiler-thumbnail]').first().locator('img').count(), 1);
         assert.deepEqual(errors, []);
         await context.close();
+    });
+}
+
+for (const engine of engines) {
+    test(`${engine}: preferred audio settings save without JavaScript and include regional choices`, async () => {
+        const {page,context,errors} = await pageFor(engine,{fixture:'preferences',width:390,javascript:false});
+        const select = page.getByLabel('Preferred audio track:',{exact:true});
+        assert.equal(await select.inputValue(),'original');
+        const options = await select.locator('option').evaluateAll(nodes => nodes.map(node => ({value:node.value,text:node.textContent})));
+        assert.deepEqual(options.slice(0,2),[{value:'original',text:'Original Audio'},{value:'original_stable',text:'Original Audio (Stable Volume)'}]);
+        assert.ok(options.some(option => option.value === 'pt-BR' && option.text === 'Portuguese (Brazil)'));
+        assert.ok(options.some(option => option.value === 'es-ES' && option.text === 'Spanish (Spain)'));
+        assert.equal(options.some(option => option.text.includes('auto-generated')),false);
+        assert.deepEqual(options.slice(2).map(option => option.text.toLowerCase()),options.slice(2).map(option => option.text.toLowerCase()).sort());
+        assert.match(await page.locator('#preferred_audio_help').textContent(),/original audio if your choice is unavailable/);
+        await select.focus(); assert.equal(await select.evaluate(el => document.activeElement === el),true);
+        await select.selectOption('pt-BR');
+        await select.scrollIntoViewIfNeeded();
+        await page.screenshot({path:path.join(artifacts,`${engine}-preferred-audio-setting.png`)});
+        const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
+        await page.getByRole('button',{name:'Save preferences',exact:true}).click();
+        assert.equal(new URLSearchParams((await posted).postData()).get('preferred_audio'),'pt-BR');
+        assert.deepEqual(errors,[]); await context.close();
+    });
+
+    test(`${engine}: preferred audio selects late DASH tracks and preserves manual choices on watch and embed`, async () => {
+        const formats = [
+            {itag:140,bitrate:128000,audioTrack:{id:'en-US.4',displayName:'English original',audioIsDefault:true}},
+            {itag:140,bitrate:120000,isDrc:true,audioTrack:{id:'en-US.4',displayName:'English original',audioIsDefault:true}},
+            {itag:140,bitrate:96000,audioTrack:{id:'id.3',displayName:'Indonesian',audioIsDefault:false}}
+        ];
+        for (const embed of [false,true]) {
+            const {page,context,errors} = await pageFor(engine,{fixture:embed ? 'embed-mobile' : 'watch-single',
+                route:embed ? 'embed/2isYuQZMbdU' : 'watch?v=2isYuQZMbdU', realPlayer:true,
+                videoData:{params:{quality:'dash',preferred_audio:'id'}},playerData:{stats_formats:formats}});
+            await page.evaluate(() => {
+                player.audioTracks().addTrack(new videojs.AudioTrack({id:'regular',kind:'main',label:'English original [128000k]',language:'en-US',enabled:true}));
+            });
+            await page.waitForFunction(() => Array.from(player.audioTracks()).find(track => track.id === 'regular').enabled);
+            await page.evaluate(() => {
+                player.audioTracks().addTrack(new videojs.AudioTrack({id:'dub',kind:'alternative',label:'Indonesian [96000k]',language:'id'}));
+                player.audioTracks().addTrack(new videojs.AudioTrack({id:'stable',kind:'alternative',label:'English original Stable Volume [120000k]',language:'en-US'}));
+            });
+            await page.waitForFunction(() => Array.from(player.audioTracks()).find(track => track.id === 'dub').enabled);
+            await page.evaluate(() => {
+                InvidiousStreamMenus.audioOptions(player).find(option => option.track?.id === 'stable').select();
+                player.trigger('loadedmetadata');
+            });
+            await page.waitForFunction(() => Array.from(player.audioTracks()).find(track => track.id === 'stable').enabled);
+            await page.evaluate(() => {
+                player.one('loadstart',() => {
+                    const list=player.audioTracks();
+                    Array.from(list).forEach(track => list.removeTrack(track));
+                    list.addTrack(new videojs.AudioTrack({id:'new-regular',kind:'main',label:'English original [128000k]',language:'en-US',enabled:true}));
+                    list.addTrack(new videojs.AudioTrack({id:'new-dub',kind:'alternative',label:'Indonesian [96000k]',language:'id'}));
+                    list.addTrack(new videojs.AudioTrack({id:'new-stable',kind:'alternative',label:'English original Stable Volume [120000k]',language:'en-US'}));
+                });
+                player.refreshBuffer();
+            });
+            await page.waitForFunction(() => Array.from(player.audioTracks()).some(track => track.id === 'new-stable' && track.enabled));
+            assert.deepEqual(errors,[]); await context.close();
+        }
+    });
+
+    test(`${engine}: preferred audio-only sources keep track identity when switching quality`, async () => {
+        for (const embed of [false,true]) {
+            const fixture = `${embed ? 'embed' : 'watch'}-audio-id`;
+            const {page,context,errors} = await pageFor(engine,{fixture,embedFixture:fixture,
+                route:embed ? 'embed/2isYuQZMbdU' : 'watch?v=2isYuQZMbdU', realPlayer:true});
+            await page.evaluate(() => player.load());
+            await page.waitForFunction(() => player.currentSource().src.includes('audio_track=id.3'));
+            let source = new URL(await page.evaluate(() => player.currentSource().src), 'https://invidious.test');
+            assert.equal(source.searchParams.get('is_drc'),'false');
+            assert.equal(source.searchParams.get('audio_track'),'id.3');
+            await page.evaluate(() => {
+                const menu=player.controlBar.getChild('qualitySelector');
+                const low=menu.items.find(item => item.source.label === '64000k');
+                low.handleClick();
+            });
+            await page.waitForFunction(() => player.currentSource().label === '64000k');
+            source = new URL(await page.evaluate(() => player.currentSource().src), 'https://invidious.test');
+            assert.equal(source.searchParams.get('audio_track'),'id.3');
+            assert.equal(source.searchParams.get('is_drc'),'false');
+            assert.deepEqual(errors,[]); await context.close();
+        }
     });
 }

@@ -15,27 +15,23 @@
         <source src="<%= URI.parse(hlsvp).request_target %><% if params.local %>?local=true<% end %>" type="application/x-mpegURL" label="livestream">
     <% else %>
         <% if params.listen %>
-            <% # default to 128k m4a stream
-               best_m4a_stream_index = 0
-               best_m4a_stream_bitrate = 0
-               audio_streams.each_with_index do |fmt, i|
-                 bandwidth = fmt["bitrate"].as_i
-                 if (fmt["mimeType"].as_s.starts_with?("audio/mp4") && bandwidth > best_m4a_stream_bitrate)
-                   best_m4a_stream_bitrate = bandwidth
-                   best_m4a_stream_index = i
-                 end
-               end
-
-               audio_streams.each_with_index do |fmt, i|
-                src_url  = "/latest_version?id=#{video.id}&itag=#{fmt["itag"]}"
-                src_url += "&local=true" if params.local
-                src_url = invidious_companion.public_url.to_s + src_url +
-                            "&check=#{invidious_companion_check_id}" if (invidious_companion)
+            <% listening_streams = Invidious::Videos::AudioPreferences.select(audio_streams, params.preferred_audio)
+               best_audio = Invidious::Videos::AudioPreferences.best(listening_streams)
+               best_audio_index = listening_streams.index(best_audio) || 0
+               listening_streams.each_with_index do |fmt, i|
+                source_params = URI::Params.new
+                source_params["id"] = video.id
+                source_params["itag"] = fmt["itag"].to_s
+                source_params["audio_track"] = Invidious::Videos::AudioPreferences.identity(fmt)
+                source_params["is_drc"] = Invidious::Videos::AudioMetadata.stable_volume?(fmt).to_s
+                source_params["local"] = "true" if params.local
+                source_params["region"] = params.region.not_nil! if params.region
+                src_url = "/latest_version?#{source_params}"
 
                 bitrate = fmt["bitrate"]
                 mimetype = HTML.escape(fmt["mimeType"].as_s)
 
-                selected = (i == best_m4a_stream_index)
+                selected = (i == best_audio_index)
             %>
                 <source src="<%= src_url %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='<%= mimetype %>' label="<%= bitrate %>k" selected="<%= selected %>">
                 <% if !params.local && !CONFIG.disabled?("local") %>
@@ -106,7 +102,7 @@
     "stream_labels" => %w(auto unknown_codec high_bitrate medium_bitrate low_bitrate stable_volume original_audio dubbed_audio).to_h { |key| {key, I18n.translate(locale, "player_stream_#{key}")} },
     "refresh_buffer" => I18n.translate(locale, "player_refresh_buffer"),
     "stats_labels" => %w(identity title close details copy disable unavailable waiting resolution viewport quality codecs fps bitrate frames buffer bandwidth bytes requests state stalls live help copied fallback).to_h { |key| {key, I18n.translate(locale, "stats_#{key}")} },
-    "stats_formats" => (fmt_stream + adaptive_fmts).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate contentLength audioQuality isDrc audioTrack).includes?(key) } },
+    "stats_formats" => (fmt_stream + adaptive_fmts).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate contentLength audioQuality audioTrack).includes?(key) }.merge({"isDrc" => JSON::Any.new(Invidious::Videos::AudioMetadata.stable_volume?(fmt))}) },
     "chapters" => Invidious::Videos::Chapters.parse(video.short_description, video.live_now ? 0 : video.length_seconds),
     "aspect_ratio" => aspect_ratio,
     "title" => player_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, player_spoiler_date.nil?) : (env.get?("native_clip_title").try(&.as(String)) || video.title),

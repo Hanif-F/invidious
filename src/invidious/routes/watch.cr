@@ -203,6 +203,7 @@ module Invidious::Routes::Watch
 
     if params.raw
       if params.listen
+        audio_streams = Invidious::Videos::AudioPreferences.select(audio_streams, params.preferred_audio)
         url = audio_streams[0]["url"].as_s
 
         if params.quality.ends_with? "k"

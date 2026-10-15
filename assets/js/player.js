@@ -92,6 +92,7 @@ if (player_data.spoiler_thumbnail_hidden) {
 }
 if (!video_data.params.listen && video_data.params.quality === 'dash') {
     InvidiousStreamMenus.initializeQualitySelection(player, function () { return video_data.params; });
+    InvidiousStreamMenus.initializeAudioSelection(player, function () { return video_data.params; });
 }
 if (video_data.params.controls) player.addClass('vjs-buffer-refreshable');
 
@@ -122,6 +123,7 @@ player.refreshBuffer = function () {
     var quality = oldLevels.length ? InvidiousStreamMenus.qualitySelection(player) : null;
     var audio = Array.from(player.audioTracks()).find(function (track) { return track.enabled; });
     var selectedAudio = audio && {id: audio.id, label: audio.label, language: audio.language};
+    if (selectedAudio) InvidiousStreamMenus.preserveAudioSelection(player);
     var caption = Array.from(player.textTracks()).find(function (track) {
         return (track.kind === 'captions' || track.kind === 'subtitles') && track.mode === 'showing';
     });
@@ -144,11 +146,19 @@ player.refreshBuffer = function () {
         // Once restored, the shared selection state handles later renditions.
         // Metadata arriving late must not overwrite a newer manual/Auto choice.
         if (qualityRestored || !quality || !levels || !levels.length) return;
+        if (InvidiousStreamMenus.qualitySelection(player).revision !== quality.revision) {
+            qualityRestored = true;
+            return;
+        }
         qualityRestored = InvidiousStreamMenus.restoreQualitySelection(player, quality);
     }
 
     function restoreAudio() {
         if (audioRestored) return;
+        if (InvidiousStreamMenus.applyAudioPreference(player, video_data.params)) {
+            audioRestored = true;
+            return;
+        }
         var replacement = Array.from(audioTracks).find(function (track) { return matches(track, selectedAudio); });
         if (!replacement) return;
         replacement.enabled = true;
