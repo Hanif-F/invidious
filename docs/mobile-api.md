@@ -705,3 +705,20 @@ unchanged; hiding is client presentation, not metadata access restriction.
 The account integration harness covers native scopes, browser CSRF, null/reset,
 concurrent channel edits, atomic rejection, unknown preference preservation and
 cache-only date precision/misses through the production handlers.
+
+
+## Native annotations and 360° viewing
+
+The native preference PATCH allowlist accepts boolean `annotations` (default
+false), `annotations_subscribed` (false), and `vr_mode` (true), sharing the existing
+web preferences. Sparse updates preserve unrelated fields and require only the
+existing preference scopes. No migration or token renewal is needed.
+
+Public video JSON includes nullable top-level `projectionType` from the same
+metadata used by the web watch page. Download catalogs use that serializer too.
+`EQUIRECTANGULAR` identifies equirectangular video and `MESH` uses the web player's
+YouTube EAC convention. Existing per-adaptive-format projection fields remain.
+The public `/api/v1/annotations/:id` XML endpoint keeps its contract; direct
+responses without a redirect header now retain their status/body, including 404
+for missing archives. Search filter contracts are unchanged. Native clients can use `movie`/`show`, `duration=medium` and canonical
+comma-separated features without additional server endpoints.

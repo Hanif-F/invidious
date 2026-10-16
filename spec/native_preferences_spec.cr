@@ -2,6 +2,22 @@ require "spec"
 require "../src/invidious/native_preferences"
 
 describe Invidious::NativePreferences do
+  it "validates native annotation and projection defaults as sparse booleans" do
+    %w(annotations annotations_subscribed vr_mode).each do |key|
+      {true, false}.each do |value|
+        patch = JSON.parse({key => value}.to_json).as_h
+        Invidious::NativePreferences.validate_patch(patch)
+        stored = JSON.parse(%({"theme":"diary","future":42})).as_h
+        Invidious::SponsorBlock.merge_patch(stored, patch, {} of String => String)
+        stored[key].as_bool.should eq(value)
+        stored["future"].as_i.should eq(42)
+      end
+      {"null", "1", %q("false")}.each do |value|
+        expect_raises(Exception) { Invidious::NativePreferences.validate_patch(JSON.parse(%({"#{key}":#{value}})).as_h) }
+      end
+    end
+  end
+
   it "accepts only boolean original-title choices" do
     {true, false}.each do |value|
       Invidious::NativePreferences.validate_patch(JSON.parse({show_original_title: value}.to_json).as_h)

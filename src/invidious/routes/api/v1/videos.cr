@@ -272,6 +272,14 @@ module Invidious::Routes::API::V1::Videos
     return HTML.unescape(vtt_file)
   end
 
+  def self.annotation_archive_response(location : HTTP::Client::Response, &fetch : String -> HTTP::Client::Response) : HTTP::Client::Response
+    if target = location.headers["Location"]?
+      yield target
+    else
+      location
+    end
+  end
+
   def self.annotations(env)
     env.response.content_type = "text/xml"
 
@@ -301,11 +309,9 @@ module Invidious::Routes::API::V1::Videos
 
         location = make_client(INTERNET_ARCHIVE_URL, &.get("/download/youtubeannotations_#{index}/#{video_id[0, 2]}.tar/#{file}"))
 
-        if !location.headers["Location"]?
-          env.response.status_code = location.status_code
-        end
-
-        response = make_client(URI.parse(location.headers["Location"]), &.get(location.headers["Location"]))
+        # Missing archives can be returned directly without a redirect header.
+        # Preserve their status (and direct XML responses) instead of raising on Location.
+        response = annotation_archive_response(location) { |target| make_client(URI.parse(target), &.get(target)) }
 
         if response.body.empty?
           haltf env, 404

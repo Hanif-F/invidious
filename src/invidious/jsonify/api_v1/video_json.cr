@@ -72,6 +72,7 @@ module Invidious::JSONify::APIv1
       json.field "liveNow", video.live_now
       json.field "liveChatReplay", video.live_chat_replay?
       json.field "isPostLiveDvr", video.post_live_dvr
+      json.field "projectionType", video.projection_type
       json.field "isUpcoming", video.upcoming?
 
       if video.premiere_timestamp

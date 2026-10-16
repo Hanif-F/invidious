@@ -7,7 +7,7 @@ require "./videos/seek_preferences"
 # The native client exposes only preferences for capabilities it implements.
 # Validate every field before the account transaction; retain all unrelated JSON.
 module Invidious::NativePreferences
-  BOOLEANS = %w(watch_history save_player_pos dearrow_enabled dearrow_show_original show_original_title
+  BOOLEANS = %w(annotations annotations_subscribed vr_mode watch_history save_player_pos dearrow_enabled dearrow_show_original show_original_title
     autoplay continue continue_autoplay video_loop listen local thin_mode related_videos extend_desc latest_only unseen_only notifications_only show_member_videos ai_filter_enabled)
   AI_ACTIONS = %w(ai_blocklist_feeds_action ai_blocklist_search_action ai_blocklist_recommendations_action ai_blocklist_other_pages_action
     ai_warnlist_feeds_action ai_warnlist_search_action ai_warnlist_recommendations_action ai_warnlist_other_pages_action)
