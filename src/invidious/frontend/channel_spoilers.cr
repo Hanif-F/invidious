@@ -62,6 +62,17 @@ module Invidious::Frontend::ChannelSpoilers
   end
 
   def prepare(env, items)
+    ids = [] of String
+    items.each do |item|
+      if item.is_a?(SearchVideo | ChannelVideo | PlaylistVideo | MixVideo)
+        ids << item.id
+      elsif item.is_a?(Invidious::Database::WatchHistory::Entry | InvidiousClip)
+        ids << item.video_id
+      elsif item.is_a?(String)
+        ids << item
+      end
+    end
+    Invidious::OriginalTitles.prepare(env, ids)
     return unless cache_enabled?(env)
     candidates = [] of Candidate
     items.each do |item|
@@ -77,6 +88,7 @@ module Invidious::Frontend::ChannelSpoilers
   end
 
   def prepare_recommendations(env, items)
+    Invidious::OriginalTitles.prepare(env, items.compact_map { |item| item["id"]? })
     return unless cache_enabled?(env)
     candidates = [] of Candidate
     items.each do |item|
@@ -92,6 +104,7 @@ module Invidious::Frontend::ChannelSpoilers
   end
 
   def prepare_queue(env, videos : Array(JSON::Any))
+    Invidious::OriginalTitles.prepare(env, videos.map { |video| video["videoId"].as_s })
     return unless cache_enabled?(env)
     prepare_candidates(env, videos.map { |video| Candidate.new(video["videoId"].as_s, video["authorId"]?.try(&.as_s?) || "", queue_date(video)) })
   end
@@ -118,7 +131,8 @@ module Invidious::Frontend::ChannelSpoilers
     %( data-spoiler-#{kind} data-spoiler-channel="#{HTML.escape(ucid)}" data-spoiler-published="#{published.try(&.to_unix)}" data-spoiler-hidden="#{hidden?(env, ucid, published, kind)}")
   end
 
-  def title(env, id : String, ucid : String, original : String, published : Time?, watch = false, dearrow = true, tag = "span") : String
+  def title(env, id : String, ucid : String, original : String, published : Time?, watch = false, dearrow = true, tag = "span", *, custom = false) : String
+    original = Invidious::OriginalTitles.title(env, id, original) unless custom
     base = %( dir="auto"#{dearrow ? " data-dearrow-id=\"#{HTML.escape(id)}\"" : ""}#{watch ? " data-dearrow-watch" : ""})
     return %(<#{tag}#{base}>#{HTML.escape(original)}</#{tag}>) unless applies?(env, ucid, :title)
     date = publication(env, id, published)

@@ -11,7 +11,7 @@
                 %(<img class="thumbnail" loading="lazy" src="/vi/#{clip.video_id}/mqdefault.jpg" alt="">)
               end %>
             <a href="<%= clip.permalink %>"><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, clip.video_id, clip.ucid, nil, clip_thumbnail) %></a>
-            <div data-dearrow-row><h3 dir="auto"><a href="<%= clip.permalink %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.title, nil, false, false) %></a></h3></div>
+            <div data-dearrow-row><h3 dir="auto"><a href="<%= clip.permalink %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.title, nil, false, false, custom: true) %></a></h3></div>
             <p><%= (clip.end_time - clip.start_time).round(3) %> s · <time datetime="<%= clip.created_at.to_rfc3339 %>"><%= clip.created_at.to_s("%Y-%m-%d") %></time></p>
             <p dir="auto" data-dearrow-row><a href="/watch?v=<%= clip.video_id %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.video_title, nil) %></a></p>
             <p><a href="/channel/<%= clip.ucid %>"><%= HTML.escape(clip.channel_name) %></a> · <%= I18n.translate(locale, "clips_by") %> <%= HTML.escape(clip.creator) %></p>

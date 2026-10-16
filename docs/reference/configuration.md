@@ -134,6 +134,7 @@ Values below are **code defaults**, expressed as Crystal literals, rather than d
 | `region` | `String` | `"US"` |
 | `timezone` | `String?` | `nil` |
 | `show_member_videos` | `Bool` | `false` |
+| `show_original_title` | `Bool` | `true` |
 | `related_videos` | `Bool` | `true` |
 | `sort` | `String` | `"published"` |
 | `speed` | `Float32` | `1.0_f32` |

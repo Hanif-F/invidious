@@ -2,6 +2,16 @@ require "spec"
 require "../src/invidious/native_preferences"
 
 describe Invidious::NativePreferences do
+  it "accepts only boolean original-title choices" do
+    {true, false}.each do |value|
+      Invidious::NativePreferences.validate_patch(JSON.parse({show_original_title: value}.to_json).as_h)
+    end
+    {"null", "1", "\"false\""}.each do |value|
+      expect_raises(Exception) do
+        Invidious::NativePreferences.validate_patch(JSON.parse(%({"speed":1.5,"show_original_title":#{value}})).as_h)
+      end
+    end
+  end
   it "accepts only supported integer seek intervals and preserves sparse saves" do
     Invidious::Videos::SeekPreferences::CHOICES.each do |seconds|
       patch = JSON.parse({seek_seconds: seconds}.to_json).as_h

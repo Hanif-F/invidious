@@ -228,6 +228,7 @@ module Invidious::Routes::PreferencesRoute
       region:                         region,
       timezone:                       Invidious::History.timezone(env.params.body["timezone"]? || previous.timezone),
       show_member_videos:             env.params.body["show_member_videos"]? == "on",
+      show_original_title:            env.params.body["show_original_title_present"]? == "1" ? env.params.body["show_original_title"]? == "on" : previous.show_original_title,
       related_videos:                 related_videos,
       sort:                           sort,
       speed:                          speed,

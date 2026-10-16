@@ -13,6 +13,7 @@ module Invidious::Database
 
     Invidious::Database.check_table("channels", InvidiousChannel)
     Invidious::Database.check_table("channel_avatars")
+    Invidious::Database.check_table("original_video_titles")
     Invidious::Database.check_table("ai_slist_snapshots")
     Invidious::Database.check_table("channel_handles")
     Invidious::Database.check_table("channel_videos", ChannelVideo)

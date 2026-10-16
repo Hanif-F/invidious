@@ -28,6 +28,15 @@ ignored by Git.
 
 ## Coverage and limits
 
+Original-title checks cover default-on settings, guest/account/JSON/YAML/backup
+persistence, old forms, API query precedence and HTTP rejection, RSS title selection,
+watch/embed metadata, custom clips and spoiler/DeArrow original state. Upstream
+lookups are injected; fixtures never contact YouTube. Run the fixture generator,
+`crystal spec spec/original_titles_spec.cr spec/native_preferences_spec.cr`, and
+`node --test --test-name-pattern='original.title' tests/frontend/ui.test.cjs`.
+The resolver specs cover bounded concurrency, coalescing, cache TTLs/failures and
+response deadlines; PostgreSQL storage is covered by the guarded database harness.
+
 Seek interval checks exercise all four values, strict saved-value fallback,
 JSON/YAML/config and backup round trips, account API and signed-out cookie saves,
 older forms that omit the field, and shared watch/embed player configuration.

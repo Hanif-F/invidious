@@ -1,7 +1,8 @@
 <% spoiler_date = Invidious::ChannelSpoilers.video_publication(video.info) %>
-<% env.set "spoiler_page", {"channel" => video.ucid, "published" => spoiler_date.try(&.to_unix), "title" => video.title, "thumbnail" => thumbnail}.to_json %>
+<% original_title = Invidious::OriginalTitles.title(env, video.id, video.title) %>
+<% env.set "spoiler_page", {"channel" => video.ucid, "published" => spoiler_date.try(&.to_unix), "title" => original_title, "thumbnail" => thumbnail}.to_json %>
 <% display_thumbnail = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :thumbnail) ? "" : thumbnail %>
-<% display_title = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :title) ? Invidious::Frontend::ChannelSpoilers.label(env, :title, spoiler_date.nil?) : video.title %>
+<% display_title = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :title) ? Invidious::Frontend::ChannelSpoilers.label(env, :title, spoiler_date.nil?) : original_title %>
 <!DOCTYPE html>
 <html lang="<%= preferences.locale %>">
 

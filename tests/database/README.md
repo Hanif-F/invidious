@@ -1,3 +1,16 @@
+Original-title cache tests require an **empty** database named
+`invidious_original_titles_test`:
+
+```sh
+ORIGINAL_TITLES_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_original_titles_test crystal run tests/database/original_video_titles.cr
+```
+
+The guarded harness checks migration 24, durable positive/negative entries, expiry,
+memory fallback during cache outages and idempotent fresh-install SQL. The account
+harness also checks native PATCH ↔ web form title-preference synchronization,
+strict types, sparse preservation and account isolation. Destroy test databases
+after use.
+
 Run the block-list integration checks against a disposable PostgreSQL database named `invidious_blocking_test`:
 
 ```sh

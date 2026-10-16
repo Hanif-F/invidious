@@ -28,7 +28,14 @@ class Kemal::RouteHandler
   private def process_request(context)
     raise Kemal::Exceptions::RouteNotFound.new(context) unless context.route_found?
     return if context.response.closed?
+    if Invidious::OriginalTitles.read_request?(context) && !Invidious::OriginalTitles.valid_query?(context)
+      context.response.content_type = "application/json"
+      context.response.status_code = 400
+      context.response.print({error: "show_original_title must be true or false."}.to_json)
+      return context
+    end
     content = context.route.handler.call(context)
+    content = Invidious::OriginalTitles.response(context, content) if content.is_a?(String)
 
     if !Kemal.config.error_handlers.empty? && Kemal.config.error_handlers.has_key?(context.response.status_code) && exclude_match?(context)
       raise Kemal::Exceptions::CustomException.new(context)

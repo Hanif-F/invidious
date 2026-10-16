@@ -77,6 +77,7 @@ struct Preferences
   property default_home : String? = CONFIG.default_user_preferences.default_home
   property feed_menu : Array(String) = CONFIG.default_user_preferences.feed_menu
   property show_member_videos : Bool = CONFIG.default_user_preferences.show_member_videos
+  property show_original_title : Bool = CONFIG.default_user_preferences.show_original_title
   property related_videos : Bool = CONFIG.default_user_preferences.related_videos
 
   @[JSON::Field(converter: Preferences::ProcessString)]

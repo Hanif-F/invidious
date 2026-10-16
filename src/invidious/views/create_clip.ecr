@@ -5,7 +5,7 @@
 <% end %>
 <div class="clip-fallback">
     <h1><%= I18n.translate(locale, "clips_create") %></h1>
-    <p dir="auto"><a href="/watch?v=<%= video.id %>"><%= HTML.escape(video.title) %></a></p>
+    <p dir="auto"><a href="/watch?v=<%= video.id %>"><%= HTML.escape(Invidious::OriginalTitles.title(env, video.id, video.title)) %></a></p>
     <% if error %><p role="alert"><%= HTML.escape(error) %></p><% end %>
     <%= rendered "components/clip_editor" %>
 </div>

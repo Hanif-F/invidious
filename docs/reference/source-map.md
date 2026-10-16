@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **383 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **388 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -131,6 +131,7 @@ Fresh-install table/index/constraint definitions.
 | [config/sql/clips.sql](../../config/sql/clips.sql) | clips |
 | [config/sql/dearrow_identities.sql](../../config/sql/dearrow_identities.sql) | dearrow identities |
 | [config/sql/nonces.sql](../../config/sql/nonces.sql) | nonces |
+| [config/sql/original_video_titles.sql](../../config/sql/original_video_titles.sql) | original video titles |
 | [config/sql/playback_positions.sql](../../config/sql/playback_positions.sql) | playback positions |
 | [config/sql/playlist_videos.sql](../../config/sql/playlist_videos.sql) | playlist videos |
 | [config/sql/playlists.sql](../../config/sql/playlists.sql) | playlists |
@@ -201,6 +202,7 @@ Domain models and cross-cutting integrations, configuration and routing.
 | [src/invidious/mixes.cr](../../src/invidious/mixes.cr) | mixes |
 | [src/invidious/native_playlists.cr](../../src/invidious/native_playlists.cr) | native playlists |
 | [src/invidious/native_preferences.cr](../../src/invidious/native_preferences.cr) | native preferences |
+| [src/invidious/original_titles.cr](../../src/invidious/original_titles.cr) | original titles |
 | [src/invidious/playlists.cr](../../src/invidious/playlists.cr) | playlists |
 | [src/invidious/routing.cr](../../src/invidious/routing.cr) | routing |
 | [src/invidious/rss.cr](../../src/invidious/rss.cr) | rss |
@@ -257,6 +259,7 @@ PostgreSQL persistence, ownership checks, cache queries and migration infrastruc
 | [src/invidious/database/migration.cr](../../src/invidious/database/migration.cr) | migration |
 | [src/invidious/database/migrator.cr](../../src/invidious/database/migrator.cr) | migrator |
 | [src/invidious/database/nonces.cr](../../src/invidious/database/nonces.cr) | nonces |
+| [src/invidious/database/original_video_titles.cr](../../src/invidious/database/original_video_titles.cr) | original video titles |
 | [src/invidious/database/playback_positions.cr](../../src/invidious/database/playback_positions.cr) | playback positions |
 | [src/invidious/database/playlists.cr](../../src/invidious/database/playlists.cr) | playlists |
 | [src/invidious/database/saved_playlists.cr](../../src/invidious/database/saved_playlists.cr) | saved playlists |
@@ -296,6 +299,7 @@ Versioned transactional schema changes.
 | [src/invidious/database/migrations/0021_create_channel_avatars_table.cr](../../src/invidious/database/migrations/0021_create_channel_avatars_table.cr) | 0021 create channel avatars table |
 | [src/invidious/database/migrations/0022_create_ai_slist_cache.cr](../../src/invidious/database/migrations/0022_create_ai_slist_cache.cr) | 0022 create ai slist cache |
 | [src/invidious/database/migrations/0023_create_tv_pairings.cr](../../src/invidious/database/migrations/0023_create_tv_pairings.cr) | 0023 create tv pairings |
+| [src/invidious/database/migrations/0024_create_original_video_titles.cr](../../src/invidious/database/migrations/0024_create_original_video_titles.cr) | 0024 create original video titles |
 ## src/invidious/frontend
 
 Presentation helpers for cards, filters, history, channels and page data.
@@ -334,6 +338,7 @@ Shared rendering, errors, tokens, localization, logging and HTTP handlers.
 | [src/invidious/helpers/logger.cr](../../src/invidious/helpers/logger.cr) | logger |
 | [src/invidious/helpers/macros.cr](../../src/invidious/helpers/macros.cr) | macros |
 | [src/invidious/helpers/membership.cr](../../src/invidious/helpers/membership.cr) | membership |
+| [src/invidious/helpers/original_titles.cr](../../src/invidious/helpers/original_titles.cr) | original titles |
 | [src/invidious/helpers/serialized_yt_data.cr](../../src/invidious/helpers/serialized_yt_data.cr) | serialized yt data |
 | [src/invidious/helpers/tokens.cr](../../src/invidious/helpers/tokens.cr) | tokens |
 | [src/invidious/helpers/utils.cr](../../src/invidious/helpers/utils.cr) | utils |

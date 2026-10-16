@@ -1,4 +1,6 @@
 {
+    "preferences_show_original_title_label": "Show original title",
+    "preferences_show_original_title_help": "Show video titles in their original language when available. DeArrow may still replace them.",
     "ai_filter_details": "List status and technical details",
     "ai_filter_action_off": "Off",
     "ai_filter_recommendations_hint": "Suggested videos beside or below the player. Hidden recommendations are also excluded from autoplay.",

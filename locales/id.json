@@ -1,4 +1,6 @@
 {
+    "preferences_show_original_title_label": "Tampilkan judul asli",
+    "preferences_show_original_title_help": "Tampilkan judul video dalam bahasa aslinya jika tersedia. DeArrow mungkin masih menggantinya.",
     "dearrow_reveal_original": "Tampilkan judul asli",
     "preferences_dearrow_enabled_label": "Ganti judul video dengan DeArrow",
     "preferences_dearrow_show_original_label": "Tampilkan judul asli melalui ikon DeArrow (sorot, fokus, atau ketuk)",

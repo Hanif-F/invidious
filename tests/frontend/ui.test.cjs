@@ -52,6 +52,55 @@ async function assertQuietAiThumbnails(page, count, selector = '.ai-thumbnail') 
 }
 
 for (const engine of engines) {
+    test(`${engine}: original titles remain literal in watch, embed and custom clips`, async () => {
+        const original = '原題 <日本語> & café';
+        for (const fixture of ['original-title-watch', 'original-title-embed', 'original-title-clip']) {
+            const {page, context, errors, requests} = await pageFor(engine, {fixture, javascript: false, width: 390});
+            const data = JSON.parse(await page.locator('#player_data').textContent());
+            if (fixture !== 'original-title-clip') {
+                assert.equal(data.title, original);
+                assert.equal(await page.title(), original + ' - Invidious');
+            } else {
+                assert.notEqual(await page.locator('h1').textContent(), original);
+                assert.equal(data.title, await page.locator('h1').textContent());
+            }
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+            assert.ok(!requests.some(url => /oembed/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: original-title setting defaults on and submits explicit on and off`, async () => {
+        for (const enabled of [true, false]) {
+            const {page, context, errors} = await pageFor(engine, {fixture: 'preferences', javascript: false, width: 390});
+            const toggle = page.locator('#preferences-browsing #show_original_title');
+            assert.equal(await toggle.isChecked(), true);
+            assert.equal(await page.locator('label[for=show_original_title]').textContent(), 'Show original title');
+            assert.match(await page.locator('#show_original_title_help').textContent(), /DeArrow may still replace them/);
+            if (enabled) await page.locator('#preferences-browsing').screenshot({path: path.join(artifacts, `${engine}-original-title-setting.png`)});
+            await toggle.setChecked(enabled);
+            const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
+            await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
+            const fields = new URLSearchParams((await posted).postData());
+            assert.equal(fields.get('show_original_title_present'), '1');
+            assert.equal(fields.get('show_original_title'), enabled ? 'on' : null);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: DeArrow can replace an original title and reveal it again`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'original-title-dearrow', dearrowTitle: 'Community title'});
+        await page.waitForFunction(() => document.querySelector('h1').textContent === 'Community title');
+        const heading = page.locator('h1');
+        assert.equal(await heading.getAttribute('data-dearrow-original'), '原題 <日本語> & café');
+        await heading.locator('..').locator('.dearrow-reveal').hover();
+        assert.equal(await heading.textContent(), '原題 <日本語> & café');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
     test(`${engine}: subscription sorting details, GET forms and mobile layouts work without JavaScript`, async () => {
         for (const fixture of ['avatars-manager-modern-neon', 'avatars-manager-diary', 'subscriptions-relevance', 'subscriptions-most-watched', 'subscriptions-rtl', 'subscriptions-empty']) {
             const {page, context, errors, requests} = await pageFor(engine, {fixture, route: 'subscription_manager', width: 320, javascript: false});

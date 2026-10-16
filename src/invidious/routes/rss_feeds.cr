@@ -99,6 +99,8 @@ module Invidious::Routes::Feeds
       haltf env, status_code: 403
     end
 
+    env.set "original_titles_enabled", user.preferences.show_original_title
+
     max_results = env.params.query["max_results"]?.try &.to_i?.try &.clamp(0, MAX_ITEMS_PER_PAGE)
     max_results ||= user.preferences.max_results
     max_results ||= CONFIG.default_user_preferences.max_results
@@ -153,6 +155,10 @@ module Invidious::Routes::Feeds
       user = env.get?("user").try &.as(User)
       return error_atom(404, "Playlist does not exist.") unless playlist && (!playlist.privacy.private? || playlist.author == user.try(&.email))
       env.response.headers["Cache-Control"] = "private, no-store" if playlist.privacy.private?
+      if playlist.privacy.private?
+        owner = Invidious::Database::Users.select(email: playlist.author)
+        env.set "original_titles_enabled", owner.preferences.show_original_title if owner
+      end
       return Invidious::RSS.playlist(playlist)
     end
 

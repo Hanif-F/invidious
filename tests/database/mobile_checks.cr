@@ -100,6 +100,7 @@ end
 
 def check_mobile_preferences(token, email, sid)
   check_mobile_seek_interval(token, email, sid)
+  check_mobile_original_titles(token, email, sid)
   path = "/api/v1/auth/preferences"
   before = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
   before["future_native_settings"] = JSON.parse(%({"preserve":[1,2,3]}))
@@ -360,4 +361,33 @@ def check_mobile_blocking(token, email, sid)
   search_video = SearchVideo.new({title: "Member", id: "2isYuQZMbdU", author: "Author", ucid: first, published: Time.utc, views: 0_i64, description_html: "", length_seconds: 10, premiere_timestamp: nil, author_verified: false, author_thumbnail: nil, badges: VideoBadges::MembersOnly})
   check(JSON.parse(search_video.to_json("en-US", nil))["isMember"].as_bool, "Search/channel membership missing")
   puts "Native blocking, shared web state, scopes, CSRF, isolation and membership serialization passed"
+end
+
+def check_mobile_original_titles(token, email, sid)
+  path = "/api/v1/auth/preferences"
+  {true, false}.each do |enabled|
+    before = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+    others = PG_DB.query_all("SELECT email, preferences FROM users WHERE email <> $1", email, as: {String, String})
+    patched = security_request("PATCH", path, bearer: token, body: {show_original_title: enabled}.to_json)
+    check(patched.response.status_code == 200, "Original-title sparse patch failed")
+    saved = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
+    check(saved["show_original_title"] == enabled, "Original-title choice was not stored")
+    before.each { |key, value| check(saved[key] == value, "Original-title patch overwrote #{key}") unless key == "show_original_title" }
+    check(Invidious::Database::Users.select!(email: email).preferences.show_original_title == enabled, "Native original-title choice was not visible to web")
+    {"null", "1", "\"false\""}.each do |invalid|
+      rejected = security_request("PATCH", path, bearer: token, body: %({"speed":1.25,"show_original_title":#{invalid}}))
+      check(rejected.response.status_code == 400, "Invalid original-title type accepted")
+      check(JSON.parse(Invidious::Database::Users.preference_json(email)).as_h == saved, "Rejected original-title patch changed preferences")
+    end
+    page = security_request("GET", "/preferences", sid)
+    csrf = page.get("csrf_token").as(String)
+    fields = {"show_original_title_present" => "1", "csrf_token" => csrf}
+    fields["show_original_title"] = "on" unless enabled
+    posted = security_request("POST", "/preferences", sid, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded")
+    check(posted.response.status_code == 302, "Web original-title save failed")
+    read = security_request("GET", path, bearer: token)
+    check(JSON.parse(read.get("test_result").as(String))["show_original_title"] == !enabled, "Web original-title choice was not visible to API")
+    others.each { |owner, preferences| check(Invidious::Database::Users.preference_json(owner) == preferences, "Original-title change affected another account") }
+  end
+  puts "Original-title native/web account roundtrips, strict types, sparse preservation and isolation passed"
 end

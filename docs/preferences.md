@@ -56,6 +56,23 @@ Feed/library choices include `latest_only`, `unseen_only`, `notifications_only`,
 
 `show_member_videos` defaults false and controls visibility rather than entitlement. `search_privacy` changes browser search submission. Manual channel blocks are stored separately from preferences. Detailed behavior is in [playback](playback.md), [discovery](search-and-feeds.md) and [accounts](accounts-and-library.md).
 
+**Show original title** (`show_original_title`) is in Browsing & feeds → Video pages
+and defaults true, including older account preferences and guest cookies that omit
+the field. It selects a video's non-translated title when available across browsing,
+history, queues, watch/embed pages and video-bearing API responses. Turning it off
+retains the existing upstream title; it does not request a translation in the UI's
+language. Custom clip titles, playlist names and channel names are preserved.
+DeArrow may still replace the selected title, and spoiler rules still hide it.
+
+Original titles come from server-side YouTube oEmbed requests, using the configured
+outbound proxy. A separate cache retains successes for six hours, unavailable
+titles for ten minutes and transient failures for thirty seconds. Cold responses
+wait up to five additional seconds with at most four outbound lookups per process;
+failed or unfinished lookups retain the existing title. Migration 24 creates the
+cache and requires no metadata backfill. Older preference forms that omit this
+control preserve the saved choice. JSON/YAML preferences and portable backups
+retain it; the native sparse PATCH accepts only booleans.
+
 ## Enhancements
 
 SponsorBlock stores `sponsorblock_enabled`, category `sponsorblock_modes`, `sponsorblock_colors` and `sponsorblock_channel_overrides`. Defaults are disabled with manual category modes. Account saves, guest settings and temporary watch-page changes have different persistence boundaries. See [SponsorBlock](sponsorblock.md).

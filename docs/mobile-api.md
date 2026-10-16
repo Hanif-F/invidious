@@ -187,13 +187,40 @@ schema migration is introduced; the secure account/session schema from prior
 migrations is required. Existing mobile login responses and web routes remain
 compatible. Production deployment and release publication are separate actions.
 
+### Original video titles
+
+`show_original_title` defaults true. Native preference GET/POST and boolean sparse
+PATCH share the web account field. This server change does not add Android or TV
+settings UI. Deploy migration 24 before the backend; existing preference scopes
+suffice and no renewed sign-in is required.
+
+Video-bearing read APIs accept `show_original_title=true|false`, including video
+metadata/recommendations, search, channel listings, feeds, history, clips' source
+videos and playlists/mixes. The explicit query value overrides the request's saved
+preference; omitted values use existing account/cookie/instance defaults. Other
+values and duplicate parameters return 400. The existing `title` field contains the
+selected title; response shapes and DeArrow endpoints are unchanged.
+
+Bearer authentication applies only to `/api/v1/auth/*`. Public metadata endpoints
+do not load a bearer token's account preferences: clients must read their saved
+preference and pass it on public requests, especially when false. For example,
+`GET /api/v1/search?q=music&show_original_title=false` preserves current titles.
+Guest clients can keep the choice locally and send it in the same way.
+
+Original-title lookups use YouTube oEmbed, with a shared cache and a five-second
+response budget. Unavailable, failed or unfinished lookups retain the current title.
+Turning the setting off bypasses these lookups. Title selection precedes any
+client-side DeArrow replacement or spoiler hiding; custom clip/playlist names are
+preserved. Account-owned private RSS feeds use their owner's preference; public
+feeds use instance defaults, with the same explicit query override.
+
 ## Safe preference updates
 
 `PATCH /api/v1/auth/preferences` accepts only settings supported by the native app.
 At least one field is required. Supported fields are:
 
 - Booleans: `watch_history`, `save_player_pos`, `dearrow_enabled`,
-  `dearrow_show_original`, `autoplay`, `continue`, `continue_autoplay`, `video_loop`, `listen`, `local`, `thin_mode`,
+  `dearrow_show_original`, `show_original_title`, `autoplay`, `continue`, `continue_autoplay`, `video_loop`, `listen`, `local`, `thin_mode`,
   `related_videos`, `extend_desc`, `latest_only`, `unseen_only`, `notifications_only`,
   `show_member_videos`.
 - `speed`: finite JSON number from 0.25 to 2.0; `quality_dash`: the existing web

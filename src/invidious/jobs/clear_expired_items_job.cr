@@ -9,6 +9,7 @@ class Invidious::Jobs::ClearExpiredItemsJob < Invidious::Jobs::BaseJob
 
       begin
         Invidious::Database::Videos.delete_expired
+        Invidious::Database::OriginalVideoTitles.delete_expired
         Invidious::Database::Nonces.delete_expired
         Invidious::Database::PlaybackPositions.delete_expired
         Invidious::Database::TvPairings.delete_expired

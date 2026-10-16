@@ -54,6 +54,7 @@ struct ConfigPreferences
   property region : String = "US"
   property timezone : String? = nil
   property show_member_videos : Bool = false
+  property show_original_title : Bool = true
   property related_videos : Bool = true
   property sort : String = "published"
   property speed : Float32 = 1.0_f32

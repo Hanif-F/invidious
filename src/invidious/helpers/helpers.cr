@@ -82,7 +82,7 @@ module Helpers
 
             video = get_video(video_id)
             video.published = published
-            response = JSON.parse(video.to_json(locale, nil))
+            response = JSON.parse(Invidious::OriginalTitles.notification(env, video.to_json(locale, nil)))
 
             env.response.puts "id: #{id}"
             env.response.puts "data: #{response.to_json}"
@@ -108,7 +108,7 @@ module Helpers
             case topic
             when .match(/UC[A-Za-z0-9_-]{22}/)
               Invidious::Database::ChannelVideos.select_notfications(topic, since_unix).each do |video|
-                response = JSON.parse(video.to_json(locale))
+                response = JSON.parse(Invidious::OriginalTitles.notification(env, video.to_json(locale)))
 
                 env.response.puts "id: #{id}"
                 env.response.puts "data: #{response.to_json}"
@@ -141,7 +141,7 @@ module Helpers
 
           video = get_video(video_id)
           video.published = Time.unix(published)
-          response = JSON.parse(video.to_json(locale, nil))
+          response = JSON.parse(Invidious::OriginalTitles.notification(env, video.to_json(locale, nil)))
 
           env.response.puts "id: #{id}"
           env.response.puts "data: #{response.to_json}"

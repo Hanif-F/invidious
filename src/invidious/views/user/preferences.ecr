@@ -267,6 +267,12 @@
             </div>
             <div class="preference-subgroup">
                 <h2><%= I18n.translate(locale, "ui_video_pages") %></h2>
+            <div class="pure-control-group">
+                <input type="hidden" name="show_original_title_present" value="1">
+                <label for="show_original_title"><%= I18n.translate(locale, "preferences_show_original_title_label") %></label>
+                <input name="show_original_title" id="show_original_title" type="checkbox" aria-describedby="show_original_title_help" <% if preferences.show_original_title %>checked<% end %>>
+                <p class="preference-description" id="show_original_title_help"><%= I18n.translate(locale, "preferences_show_original_title_help") %></p>
+            </div>
             <div class="pure-control-group preference-multi-row">
                 <span class="preference-row-label"><%= I18n.translate(locale, "preferences_comments_label") %></span>
                 <div class="preference-multi-options">

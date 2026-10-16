@@ -7,7 +7,7 @@
 %>
 <dialog id="clip-dialog" aria-labelledby="clip-heading">
     <header class="clip-header">
-        <div><h2 id="clip-heading"><%= I18n.translate(locale, "clips_create") %></h2><p dir="auto"><%= HTML.escape(video.title) %></p></div>
+        <div><h2 id="clip-heading"><%= I18n.translate(locale, "clips_create") %></h2><p dir="auto"><%= HTML.escape(Invidious::OriginalTitles.title(env, video.id, video.title)) %></p></div>
         <button type="button" id="clip-close" class="pure-button"><%= I18n.translate(locale, "dearrow_close") %></button>
     </header>
     <%= rendered "components/clip_editor" %>

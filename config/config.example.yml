@@ -622,6 +622,10 @@ videojs:
   max_goal_buffer_length: 60
 
 default_user_preferences:
+  ## Prefer non-translated video titles. DeArrow may still replace the result.
+  ## Missing preferences on older accounts/guest cookies inherit this default.
+  #show_original_title: true
+
   ## AiSList channel filtering. Off pauses every action without clearing choices.
   ## If omitted, enablement is inferred from active actions (all off by default).
   #ai_filter_enabled: false

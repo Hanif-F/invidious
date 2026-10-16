@@ -1,6 +1,6 @@
 <% ucid = video.ucid %>
 <% spoiler_date = Invidious::ChannelSpoilers.video_publication(video.info) %>
-<% original_title = native_clip ? native_clip.title : video.title %>
+<% original_title = native_clip ? native_clip.title : Invidious::OriginalTitles.title(env, video.id, video.title) %>
 <% spoiler_title_hidden = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :title) %>
 <% title = HTML.escape(spoiler_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, spoiler_date.nil?) : original_title) %>
 <% display_thumbnail = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :thumbnail) ? "" : thumbnail %>
@@ -190,7 +190,7 @@
     <div class="watch-primary">
         <header class="watch-heading">
             <% if native_clip %>
-            <div data-dearrow-row><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, true, false, "h1") %></div>
+            <div data-dearrow-row><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, true, false, "h1", custom: true) %></div>
             <p><%= I18n.translate(locale, "clips_by") %> <%= HTML.escape(native_clip.creator) %> · <%= native_clip.start_time %>–<%= native_clip.end_time %> s</p>
             <p dir="auto" data-dearrow-row><a href="/watch?v=<%= video.id %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, video.title, spoiler_date) %></a></p>
             <p class="js-only"><label><input id="clip-loop" type="checkbox" <%= "checked" if params.video_loop %>> <%= I18n.translate(locale, "clips_loop") %></label></p>
@@ -445,7 +445,7 @@
             <header class="queue-heading">
                 <h2><%= I18n.translate(locale, "ui_playing_playlist") %></h2>
                 <a id="queue-title" href="/<%= plid.starts_with?("RD") ? "mix" : "playlist" %>?list=<%= plid %>"><%= I18n.translate(locale, "ui_open_playlist") %></a>
-                <p class="queue-context"><span id="queue-count"></span><span id="queue-current" data-dearrow-row><%= I18n.translate(locale, "ui_now_playing") %>: <%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date) %></span></p>
+                <p class="queue-context"><span id="queue-count"></span><span id="queue-current" data-dearrow-row><%= I18n.translate(locale, "ui_now_playing") %>: <%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, custom: !!native_clip) %></span></p>
             </header>
             <div id="queue-navigation" class="queue-navigation" hidden></div>
             <p id="queue-status" class="queue-status" role="status"></p>

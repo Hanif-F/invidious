@@ -74,3 +74,8 @@ Each `invidious_companion` entry has `private_url` and optional `public_url`. `p
 `./invidious --help` includes Kemal's options and application options: `-c/--channel-threads`, `-f/--feed-threads`, `-o/--output`, `-l/--log-level`, `-k/--colorize`, `-v/--version`, and `--migrate`. Application configuration and a working database connection are initialized before CLI handling, including the version/migration path.
 
 Compile-time flags are separate: `api_only`, `skip_videojs_download`, `minified_player_dependencies`, `skip_version_check` and release/production controls. See [development](development.md) for exact build commands and [operations](operations.md) for rollout procedure.
+
+The `default_user_preferences.show_original_title` boolean defaults true and also
+applies to older preferences that omit it. Set it to false to retain existing
+upstream video titles by default. Migration 24 creates the optional original-title
+cache; [preferences](preferences.md) describes lookup limits and DeArrow behavior.

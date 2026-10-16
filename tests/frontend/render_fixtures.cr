@@ -67,10 +67,13 @@ YT_POOL              = YoutubeConnectionPool.new(URI.parse("https://www.youtube.
 GGPHT_POOL           = YoutubeConnectionPool.new(URI.parse("https://yt3.ggpht.com"), capacity: 1)
 COMPANION_POOL       = CompanionConnectionPool.new(capacity: 1)
 
+FIXTURE_ORIGINAL_TITLES = Invidious::OriginalTitles::Client.new(->(_id : String) { Invidious::OriginalTitles::Result.new(nil, 10.minutes) })
+
 def fixture_env(path, theme = "dark", thin = false, density = "balanced", locale = "en-US", visual_theme = "modern-neon")
   preferences = Preferences.from_json({"theme" => visual_theme, "dark_mode" => theme, "thin_mode" => thin, "ui_density" => density, "locale" => locale, "comments" => ["", ""], "preload" => false}.to_json)
   env = HTTP::Server::Context.new(HTTP::Request.new("GET", path), HTTP::Server::Response.new(IO::Memory.new))
   env.set "preferences", preferences
+  env.set "original_title_selection", Invidious::OriginalTitles::Selection.new(preferences.show_original_title, FIXTURE_ORIGINAL_TITLES)
   env.set "current_page", path
   env
 end
@@ -605,3 +608,6 @@ check_spoiler_preferences(output)
 check_ai_filtering(output)
 
 check_audio_playback(output)
+
+require "./original_title_checks"
+check_original_titles(output)
