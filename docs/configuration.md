@@ -58,7 +58,7 @@ Each `invidious_companion` entry has `private_url` and optional `public_url`. `p
 | `disable_proxy` | Boolean or list containing `dash`, `livestreams`, `downloads`, `local` |
 | `disable_abusable_api` | Rejects selected public video, clip and transcript metadata endpoints with 403 |
 | `dmca_content` | Video ID list restricting download availability |
-| `use_innertube_for_captions` | Selects transcript-backed captions instead of timedtext conversion |
+| `use_innertube_for_captions` | Selects transcript-backed captions instead of timedtext conversion in the legacy backend; configured Companion handles selected untranslated caption tracks first |
 | `videojs` | Buffer targets `goal_buffer_length` and `max_goal_buffer_length` |
 
 `jobs` parses generated per-job `enable` objects, but this checkout's startup does not copy them into each job object's configuration. Do not rely on nested `jobs.*.enable` to stop work. Top-level registration switches above are effective. This limitation is documented from [jobs.cr](../src/invidious/jobs.cr), [base_job.cr](../src/invidious/jobs/base_job.cr) and [startup](../src/invidious.cr).

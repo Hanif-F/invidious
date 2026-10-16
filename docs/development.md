@@ -53,6 +53,12 @@ Run `bin/ameba` after development shards install when linting is relevant. The o
 
 Focused tests are useful for parsers and isolated changes, for example `crystal spec spec/chapters_spec.cr spec/sponsorblock_spec.cr`. Specs using mocks require the submodule. Use real builds where link/runtime dependencies matter; a no-codegen pass alone does not test linkage or live startup.
 
+Caption delivery checks use `crystal spec spec/caption_delivery_spec.cr` and
+`crystal run tests/caption_delivery_routes.cr`. The latter executes the production
+caption route with synthetic metadata and upstream transports, without PostgreSQL,
+accounts or YouTube. It covers private Companion routing/signing, selectors,
+attachment names, empty/malformed responses, translation and legacy backends.
+
 Seek interval verification on 15 October 2026 passed full linked GUI and API-only
 builds, 28 focused preference/chapter/spoiler/audio specs, production frontend
 fixture checks, six Chromium/Firefox settings/seeking journeys, the storage/player

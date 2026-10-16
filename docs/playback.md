@@ -76,7 +76,7 @@ retain their own behavior. See [preferences](preferences.md) for storage and syn
 
 ## Captions, transcripts, chapters and annotations
 
-Captions expose available labels/language codes and VTT track responses. The server uses timedtext conversion by default or Innertube transcript extraction when configured. Transcript selection uses its dedicated API; translation support differs by backend. The transcript UI supports text/timestamp navigation when upstream supplies data.
+Captions expose available labels/language codes and VTT track responses. Selected untranslated tracks use the configured Companion's private caption endpoint with a generated request check; public API URLs and attachment filenames stay unchanged. Without Companion, or for translation requests, the existing timedtext/Innertube backend remains in use. Empty/header-only, malformed and failed upstream responses return an error instead of a silent caption track. A modern Companion with captions enabled is required for the Companion path. Transcript selection uses its dedicated API; translation support differs by backend. The transcript UI supports text/timestamp navigation when upstream supplies data.
 
 Manual chapter boundaries come from labeled description lines such as `1:23 Introduction` or `1:02:03 Finale`. Two distinct valid timestamps are sufficient; neither a zero timestamp nor ten-second sections is required. Automatic YouTube chapters and comment timestamps do not supply these chapters. The UI shows current chapter, ticks and combined SponsorBlock hover labels.
 
