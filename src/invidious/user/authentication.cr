@@ -12,10 +12,76 @@ module Invidious::Authentication
     env.response.headers["Pragma"] = "no-cache"
   end
 
+  # Resolve identity once per request. Scope and CSRF authorization remain the
+  # responsibility of AuthHandler and the individual account routes.
+  def resolve_user(env, *, bearer = false) : User?
+    return env.get?("authentication_user").try(&.as(User)) if env.get?("authentication_resolved")
+    env.set "header_x-forwarded-host", env.request.headers["X-Forwarded-Host"]?
+
+    if bearer && (authorization = env.request.headers["Authorization"]?)
+      env.set "authentication_bearer", true
+      raise InfoException.new("Invalid bearer token") unless authorization.starts_with?("Bearer ") && authorization.bytesize <= 16_384
+      token = JSON.parse(URI.decode_www_form(authorization.lchop("Bearer ")))
+      session = token["session"].as_s
+      # Form/CSRF credentials must never become general instance access passes.
+      raise InfoException.new("Invalid bearer token") if !session.starts_with?("v1:") || token["nonce"]?
+      scopes, _, _ = validate_request(token, session, env.request, HMAC_KEY, check_scope: false)
+      env.set "session", session
+      env.set "scopes", scopes
+    elsif sid = env.request.cookies["SID"]?.try(&.value)
+      if sid.starts_with?("v1:")
+        clear_session(env)
+        env.set "authentication_resolved", true
+        return
+      end
+      session = sid
+      env.set "sid", sid
+      env.set "session", sid
+    end
+
+    if session && (email = Database::SessionIDs.select_email(session))
+      user = Database::Users.select(email: email)
+    end
+    if user
+      env.set "authentication_user", user
+      # Bearer identity is published to account routes only after AuthHandler
+      # checks their scopes. Passing the instance gate grants ordinary content
+      # access, not private playlist reads or account-specific API behavior.
+      env.set "user", user unless env.get?("authentication_bearer")
+    elsif session && !env.get?("authentication_bearer")
+      clear_session(env)
+    end
+    env.set "authentication_resolved", true
+    user
+  end
+
+  def safe_login_return(value : String?) : String
+    destination = BotProtection.safe_return(value)
+    return "/" if {"/login", "/signup"}.includes?(URI.parse(URI.decode(destination)).path)
+    destination
+  rescue
+    "/"
+  end
+
+  def login_url(destination : String) : String
+    "/login?referer=#{URI.encode_www_form(safe_login_return(destination))}"
+  end
+
+  def login_referer(env) : String
+    safe_login_return(env.params.query["referer"]? || get_referer(env, "/feed/subscriptions", unroll: false))
+  end
+
+  # Companion receives playback headers, never the instance's account secrets.
+  def proxy_headers(env) : HTTP::Headers
+    headers = env.request.headers.dup
+    {"Authorization", "Cookie", "X-CSRF-Token"}.each { |name| headers.delete(name) }
+    headers
+  end
+
   # Pass an explicit token when streaming multipart data; do not consume its body here.
   def valid_session_csrf?(env, token : String?) : Bool
     sid = env.get?("sid").try(&.as(String)) || env.request.cookies["SID"]?.try(&.value)
-    return false unless sid && !sid.starts_with?("v1:")
+    return false if !sid || sid.starts_with?("v1:")
     validate_request(token, sid, env.request, HMAC_KEY)
     true
   rescue
@@ -40,7 +106,7 @@ module Invidious::Authentication
   end
 
   def clear_session(env)
-    env.response.cookies << User::Cookies.sid(cookie_domain(env), "").tap { |cookie| cookie.expires = Time.unix(0) }
+    env.response.cookies << User::Cookies.sid(cookie_domain(env), "").tap(&.expires=(Time.unix(0)))
     env.response.cookies << HTTP::Cookie.new("AUTH_CSRF", "", path: "/", expires: Time.unix(0), http_only: true)
     BrowserProfiles.publish(env, "guest")
   end

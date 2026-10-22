@@ -67,6 +67,20 @@ CREATE TABLE IF NOT EXISTS public.blocked_channels
 GRANT ALL ON TABLE public.blocked_channels TO current_user;
 ```
 
+## bot_protection_settings
+
+Source: [config/sql/bot_protection_settings.sql](../../config/sql/bot_protection_settings.sql).
+
+```sql
+CREATE TABLE IF NOT EXISTS public.bot_protection_settings (
+    singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
+    enabled boolean NOT NULL DEFAULT false,
+    duration_hours integer NOT NULL DEFAULT 12 CHECK (duration_hours IN (1, 12, 24)),
+    revision bigint NOT NULL DEFAULT 1 CHECK (revision > 0)
+);
+INSERT INTO public.bot_protection_settings (singleton) VALUES (true) ON CONFLICT DO NOTHING;
+```
+
 ## channel_avatars
 
 Source: [config/sql/channel_avatars.sql](../../config/sql/channel_avatars.sql).

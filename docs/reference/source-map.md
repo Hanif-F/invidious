@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **388 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **400 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -41,6 +41,7 @@ Base, player, feature and layout styles; minified third-party styles retain thei
 | [assets/css/quality-selector.css](../../assets/css/quality-selector.css) | quality selector |
 | [assets/css/search.css](../../assets/css/search.css) | search |
 | [assets/css/theme-picker.css](../../assets/css/theme-picker.css) | theme picker |
+| [assets/css/verification.css](../../assets/css/verification.css) | verification |
 | [assets/css/video-actions.css](../../assets/css/video-actions.css) | video actions |
 | [assets/css/videojs-youtube-annotations.min.css](../../assets/css/videojs-youtube-annotations.min.css) | videojs youtube annotations.min |
 ## assets/js
@@ -50,6 +51,7 @@ Browser behavior; individual module responsibilities are described in frontend d
 | File | Subject |
 | --- | --- |
 | [assets/js/_helpers.js](../../assets/js/_helpers.js) |  helpers |
+| [assets/js/bot-protection.js](../../assets/js/bot-protection.js) | bot protection |
 | [assets/js/browser-storage.js](../../assets/js/browser-storage.js) | browser storage |
 | [assets/js/channel-spoiler-preferences.js](../../assets/js/channel-spoiler-preferences.js) | channel spoiler preferences |
 | [assets/js/channel-spoilers.js](../../assets/js/channel-spoilers.js) | channel spoilers |
@@ -83,6 +85,7 @@ Browser behavior; individual module responsibilities are described in frontend d
 | [assets/js/themes.js](../../assets/js/themes.js) | themes |
 | [assets/js/timezone.js](../../assets/js/timezone.js) | timezone |
 | [assets/js/transcript.js](../../assets/js/transcript.js) | transcript |
+| [assets/js/verification.js](../../assets/js/verification.js) | verification |
 | [assets/js/video-actions.js](../../assets/js/video-actions.js) | video actions |
 | [assets/js/videojs-youtube-annotations.min.js](../../assets/js/videojs-youtube-annotations.min.js) | videojs youtube annotations.min |
 | [assets/js/watch.js](../../assets/js/watch.js) | watch |
@@ -123,6 +126,7 @@ Fresh-install table/index/constraint definitions.
 | [config/sql/annotations.sql](../../config/sql/annotations.sql) | annotations |
 | [config/sql/auth_rate_limits.sql](../../config/sql/auth_rate_limits.sql) | auth rate limits |
 | [config/sql/blocked_channels.sql](../../config/sql/blocked_channels.sql) | blocked channels |
+| [config/sql/bot_protection_settings.sql](../../config/sql/bot_protection_settings.sql) | bot protection settings |
 | [config/sql/channel_avatars.sql](../../config/sql/channel_avatars.sql) | channel avatars |
 | [config/sql/channel_handles.sql](../../config/sql/channel_handles.sql) | channel handles |
 | [config/sql/channel_videos.sql](../../config/sql/channel_videos.sql) | channel videos |
@@ -187,6 +191,7 @@ Domain models and cross-cutting integrations, configuration and routing.
 | [src/invidious/ai_slist.cr](../../src/invidious/ai_slist.cr) | ai slist |
 | [src/invidious/ai_slist_api.cr](../../src/invidious/ai_slist_api.cr) | ai slist api |
 | [src/invidious/ai_slist_runtime.cr](../../src/invidious/ai_slist_runtime.cr) | ai slist runtime |
+| [src/invidious/bot_protection.cr](../../src/invidious/bot_protection.cr) | bot protection |
 | [src/invidious/browser_profiles.cr](../../src/invidious/browser_profiles.cr) | browser profiles |
 | [src/invidious/channel_spoilers.cr](../../src/invidious/channel_spoilers.cr) | channel spoilers |
 | [src/invidious/clips.cr](../../src/invidious/clips.cr) | clips |
@@ -300,6 +305,7 @@ Versioned transactional schema changes.
 | [src/invidious/database/migrations/0022_create_ai_slist_cache.cr](../../src/invidious/database/migrations/0022_create_ai_slist_cache.cr) | 0022 create ai slist cache |
 | [src/invidious/database/migrations/0023_create_tv_pairings.cr](../../src/invidious/database/migrations/0023_create_tv_pairings.cr) | 0023 create tv pairings |
 | [src/invidious/database/migrations/0024_create_original_video_titles.cr](../../src/invidious/database/migrations/0024_create_original_video_titles.cr) | 0024 create original video titles |
+| [src/invidious/database/migrations/0025_bot_protection.cr](../../src/invidious/database/migrations/0025_bot_protection.cr) | 0025 bot protection |
 ## src/invidious/frontend
 
 Presentation helpers for cards, filters, history, channels and page data.
@@ -349,8 +355,11 @@ HTTP utilities and static asset serving.
 
 | File | Subject |
 | --- | --- |
+| [src/invidious/http_server/bot_protection_handler.cr](../../src/invidious/http_server/bot_protection_handler.cr) | bot protection handler |
+| [src/invidious/http_server/required_login_handler.cr](../../src/invidious/http_server/required_login_handler.cr) | required login handler |
 | [src/invidious/http_server/static_assets_handler.cr](../../src/invidious/http_server/static_assets_handler.cr) | static assets handler |
 | [src/invidious/http_server/utils.cr](../../src/invidious/http_server/utils.cr) | utils |
+| [src/invidious/http_server/verified_response.cr](../../src/invidious/http_server/verified_response.cr) | verified response |
 ## src/invidious/jobs
 
 Long-running background refresh and cleanup fibers.
@@ -405,6 +414,7 @@ HTTP page handlers, authentication context, redirects, RSS and proxy handlers.
 | [src/invidious/routes/sponsorblock_preferences.cr](../../src/invidious/routes/sponsorblock_preferences.cr) | sponsorblock preferences |
 | [src/invidious/routes/subscriptions.cr](../../src/invidious/routes/subscriptions.cr) | subscriptions |
 | [src/invidious/routes/tv_pairing.cr](../../src/invidious/routes/tv_pairing.cr) | tv pairing |
+| [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr) | verification |
 | [src/invidious/routes/video_playback.cr](../../src/invidious/routes/video_playback.cr) | video playback |
 | [src/invidious/routes/watch.cr](../../src/invidious/routes/watch.cr) | watch |
 ## src/invidious/routes/api
@@ -488,6 +498,7 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | File | Subject |
 | --- | --- |
 | [src/invidious/views/add_playlist_items.ecr](../../src/invidious/views/add_playlist_items.ecr) | add playlist items |
+| [src/invidious/views/admin/bot_protection.ecr](../../src/invidious/views/admin/bot_protection.ecr) | bot protection |
 | [src/invidious/views/channel.ecr](../../src/invidious/views/channel.ecr) | channel |
 | [src/invidious/views/channel_clips.ecr](../../src/invidious/views/channel_clips.ecr) | channel clips |
 | [src/invidious/views/channel_search.ecr](../../src/invidious/views/channel_search.ecr) | channel search |
@@ -548,6 +559,7 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | [src/invidious/views/user/subscription_manager.ecr](../../src/invidious/views/user/subscription_manager.ecr) | subscription manager |
 | [src/invidious/views/user/token_manager.ecr](../../src/invidious/views/user/token_manager.ecr) | token manager |
 | [src/invidious/views/user/tv_pairing.ecr](../../src/invidious/views/user/tv_pairing.ecr) | tv pairing |
+| [src/invidious/views/verification.ecr](../../src/invidious/views/verification.ecr) | verification |
 | [src/invidious/views/watch.ecr](../../src/invidious/views/watch.ecr) | watch |
 ## src/invidious/yt_backend
 

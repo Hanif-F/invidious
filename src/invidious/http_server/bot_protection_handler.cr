@@ -8,18 +8,22 @@ class Invidious::HttpServer::BotProtectionHandler < Kemal::Handler
     if {"GET", "HEAD"}.includes?(method)
       return true if {"/verify", "/api/v1/verification", "/privacy", "/licenses", "/api/v1/stats",
                       "/login", "/signup", "/api/v1/mobile/registration", "/admin/bot-protection"}.includes?(path)
-      # Check actual local files, not extensions: /vi/id/a.jpg still contacts YouTube.
-      decoded = URI.decode(path)
-      if decoded.starts_with?('/') && !decoded.starts_with?("//") && !decoded.includes?('\\') &&
-         !decoded.each_char.any? { |c| c.ord < 32 || c.ord == 127 } && !decoded.split('/').includes?("..")
-        return true if File.file?(File.join("assets", decoded.lchop('/')))
-      end
+      return true if local_asset?(request)
     elsif method == "POST"
       return true if {"/api/v1/verification/complete", "/login", "/signup", "/signout",
                       "/api/v1/mobile/login", "/api/v1/mobile/register", "/admin/bot-protection"}.includes?(path)
     end
     # These handlers independently authenticate their subscription signatures.
     {"GET", "POST"}.includes?(method) && path.starts_with?("/feed/webhook/")
+  end
+
+  # Check actual local files, not extensions: /vi/id/a.jpg still contacts YouTube.
+  def self.local_asset?(request : HTTP::Request) : Bool
+    return false unless {"GET", "HEAD"}.includes?(request.method)
+    decoded = URI.decode(request.path)
+    return false unless decoded.starts_with?('/') && !decoded.starts_with?("//") && !decoded.includes?('\\') &&
+                        !decoded.each_char.any? { |c| c.ord < 32 || c.ord == 127 } && !decoded.split('/').includes?("..")
+    File.file?(File.join("assets", decoded.lchop('/')))
   end
 
   def self.media_or_api?(path : String) : Bool

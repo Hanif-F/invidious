@@ -98,6 +98,19 @@ require "./subscription_manager_checks"
 require "./browser_profile_checks"
 require "./tv_pairing_checks"
 require "./upstream_merge_checks"
+require "./required_login_checks"
+
+if ARGV.includes?("--required-login-only")
+  begin
+    check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
+    PG_DB.exec("CREATE TABLE invidious_migrations (id bigserial PRIMARY KEY, version bigint NOT NULL)")
+    Invidious::Database::Migrator.new(PG_DB).migrate
+    check_required_login
+  ensure
+    PG_DB.close
+  end
+  exit
+end
 
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
@@ -290,6 +303,7 @@ begin
   check_tv_pairing
   check_subscription_manager
   check_upstream_history_imports_and_feeds
+  check_required_login
 
   # Verify migration failure rolls back DDL rather than dropping/merging conflicts.
   PG_DB.exec("DROP SCHEMA public CASCADE")

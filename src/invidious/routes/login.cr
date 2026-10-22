@@ -9,7 +9,7 @@ module Invidious::Routes::Login
 
   def self.render_form(env, signup : Bool, error : String? = nil, username = "")
     locale = env.get("preferences").as(Preferences).locale
-    referer = get_referer(env, "/feed/subscriptions")
+    referer = Authentication.login_referer(env)
     Authentication.no_store(env)
     return env.redirect referer if env.get?("user")
     return error_template(403, "Login has been disabled by administrator.") unless CONFIG.login_enabled
@@ -70,7 +70,7 @@ module Invidious::Routes::Login
     end
     if sid
       Authentication.set_session(env, sid)
-      return env.redirect get_referer(env, "/feed/subscriptions")
+      return env.redirect Authentication.login_referer(env)
     end
     env.response.status_code = signup ? 400 : 401
     render_form(env, signup, error, username.byte_slice(0, 254))

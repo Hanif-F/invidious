@@ -28,8 +28,14 @@ Values below are **code defaults**, expressed as Crystal literals, rather than d
 | `use_pubsub_feeds` | `Bool \| Int32` | `false` |
 | `popular_enabled` | `Bool` | `true` |
 | `captcha_enabled` | `Bool` | `true` |
+| `turnstile_site_key` | `String` | `""` |
+| `turnstile_secret_key` | `String` | `""` |
+| `turnstile_signing_key` | `String` | `""` |
+| `turnstile_allowed_hostnames` | `Array(String)` | `[] of String` |
+| `turnstile_companion_private` | `Bool` | `false` |
 | `auth_trusted_proxies` | `Array(String)` | `[] of String` |
 | `login_enabled` | `Bool` | `true` |
+| `login_required` | `Bool` | `false` |
 | `registration_enabled` | `Bool` | `true` |
 | `statistics_enabled` | `Bool` | `false` |
 | `admins` | `Array(String)` | `[] of String` |

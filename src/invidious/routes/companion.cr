@@ -8,7 +8,7 @@ module Invidious::Routes::Companion
 
     begin
       COMPANION_POOL.client do |wrapper|
-        wrapper.client.get(url, env.request.headers) do |resp|
+        wrapper.client.get(url, Authentication.proxy_headers(env)) do |resp|
           return self.proxy_companion(env, resp)
         end
       end
@@ -25,7 +25,7 @@ module Invidious::Routes::Companion
 
     begin
       COMPANION_POOL.client do |wrapper|
-        wrapper.client.post(url, env.request.headers, env.request.body) do |resp|
+        wrapper.client.post(url, Authentication.proxy_headers(env), env.request.body) do |resp|
           return self.proxy_companion(env, resp)
         end
       end
@@ -41,7 +41,7 @@ module Invidious::Routes::Companion
 
     begin
       COMPANION_POOL.client do |wrapper|
-        wrapper.client.options(url, env.request.headers) do |resp|
+        wrapper.client.options(url, Authentication.proxy_headers(env)) do |resp|
           return self.proxy_companion(env, resp)
         end
       end

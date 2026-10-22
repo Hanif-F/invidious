@@ -4,7 +4,7 @@
 
 Generated from [src/invidious/routing.cr](../../src/invidious/routing.cr) by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-All **245 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
+All **253 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
 
 GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media proxies and configured companion routes remain. `/companion/*` requires a nonempty companion configuration. Notification registrations require `enable_user_notifications`. Public routes can still enforce resource privacy; `/api/v1/auth/*` always passes authentication. See [API conventions](../api.md), [security](../security.md), and [playback](../playback.md) for contracts.
 
@@ -13,6 +13,14 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 
 | Method | Path | Handler | Implementation |
 | --- | --- | --- | --- |
+| GET | `/verify` | `Routes::Verification.page` | [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr) |
+| GET | `/api/v1/verification` | `Routes::Verification.status` | [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr) |
+| POST | `/api/v1/verification/complete` | `Routes::Verification.complete` | [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr) |
+| GET | `/admin/bot-protection` | `Routes::Verification.admin` | [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr) |
+| POST | `/admin/bot-protection` | `Routes::Verification.admin` | [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr) |
+| GET | `/login` | `Routes::Login.login_page` | [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr) |
+| POST | `/login` | `Routes::Login.login` | [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr) |
+| POST | `/signout` | `Routes::Login.signout` | [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr) |
 | GET | `/` | `Routes::Misc.home` | [src/invidious/routes/misc.cr](../../src/invidious/routes/misc.cr) |
 | GET | `/privacy` | `Routes::Misc.privacy` | [src/invidious/routes/misc.cr](../../src/invidious/routes/misc.cr) |
 | GET | `/licenses` | `Routes::Misc.licenses` | [src/invidious/routes/misc.cr](../../src/invidious/routes/misc.cr) |

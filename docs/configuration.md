@@ -45,7 +45,7 @@ Each `invidious_companion` entry has `private_url` and optional `public_url`. `p
 
 | Settings | Effect |
 | --- | --- |
-| `login_enabled`, `registration_enabled`, `captcha_enabled` | Account access and optional registration challenge |
+| `login_enabled`, `login_required`, `registration_enabled`, `captcha_enabled` | Account access, optional required login, signup and registration challenge |
 | `popular_enabled` | Popular refresh registration and feed behavior |
 | `statistics_enabled` | Statistics collection; when disabled, `/api/v1/stats` still returns software metadata |
 | `enable_user_notifications` | Registers browser notification control and authenticated stream endpoints |
@@ -62,6 +62,36 @@ Each `invidious_companion` entry has `private_url` and optional `public_url`. `p
 | `videojs` | Buffer targets `goal_buffer_length` and `max_goal_buffer_length` |
 
 `jobs` parses generated per-job `enable` objects, but this checkout's startup does not copy them into each job object's configuration. Do not rely on nested `jobs.*.enable` to stop work. Top-level registration switches above are effective. This limitation is documented from [jobs.cr](../src/invidious/jobs.cr), [base_job.cr](../src/invidious/jobs/base_job.cr) and [startup](../src/invidious.cr).
+
+### Private instances and whitelist access
+
+In **Preferences → Administration → Instance access**, enable **Require login**
+(`login_required: true`, default false) to require an account for dynamic content,
+including pages, embeds, APIs, images, downloads, manifests and the built-in
+Companion proxy. YAML and `INVIDIOUS_LOGIN_REQUIRED` can also set it. Login remains
+enabled while required login is on, including when `login_enabled: false` is
+supplied in deployment configuration or an admin form.
+
+Disable **Registration enabled** (`registration_enabled: false`) for user whitelist
+mode. Both web and native signup are rejected; existing and manually provisioned
+accounts can still sign in. There is no separate whitelist or account-creation UI.
+Required login and signup are independent: visitors can still register when
+registration is enabled.
+
+Login/signup, mobile sign-in/registration discovery, TV pairing bootstrap/polling,
+bot verification and actual local static files remain reachable. Private RSS feeds
+and subscription webhooks retain their existing token/signature checks. Other
+anonymous page requests redirect to login with a local return destination;
+API/media requests return HTTP 401 with `{"error":"login_required","loginUrl":"/login?referer=..."}`.
+API clients can use their existing bearer tokens, and CORS preflights remain
+content-free. Authenticated account APIs retain their scope and CSRF requirements.
+
+The gate covers requests to Invidious. Use the built-in proxy and keep Companion's
+own listener private; a separately public Companion is outside this access check.
+Proxy/CDN caches must respect `private, no-store` and must not serve previously
+cached public content after enabling required login. Purge such caches when
+switching an instance from public to private. Admin preferences follow the
+existing config-file persistence and environment-override behavior.
 
 ## Presentation and defaults
 

@@ -193,6 +193,7 @@ class Config
   property auth_trusted_proxies : Array(String) = [] of String
 
   property login_enabled : Bool = true
+  property login_required : Bool = false
   property registration_enabled : Bool = true
   property statistics_enabled : Bool = false
   property admins : Array(String) = [] of String
@@ -401,6 +402,9 @@ class Config
         exit(1)
       end
     end
+
+    # A private instance must always retain a working sign-in entry point.
+    config.login_enabled = true if config.login_required
 
     return config
   end

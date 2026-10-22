@@ -87,12 +87,22 @@ or oversized requests 400, disabled login 403, and throttling 429 with `Retry-Af
 JSON is limited to 16 KiB; passwords are never placed in URLs or server logs.
 Invidious's existing auth middleware returns 403 for expired/revoked bearer tokens.
 
+Instances may enable `login_required` (default false). Registration discovery adds
+`loginRequired`; when true, send the existing bearer token on content API and
+media/proxy requests as well as authenticated account APIs. No new scopes or token
+renewal are needed for ordinary content access. Clients that omit credentials on
+formerly public requests must add them to use private instances. HTTP 401 JSON
+`{"error":"login_required","loginUrl":"/login?referer=..."}` indicates the
+instance gate rejected missing/invalid credentials; authenticated account scope
+and CSRF failures retain their existing HTTP 403 behavior. Mobile login,
+registration discovery/signup and TV pairing bootstrap/polling remain reachable.
+
 ## Native registration and account management
 
 Public `GET /api/v1/mobile/registration` returns:
 
 ```json
-{"loginEnabled":true,"registrationEnabled":true,"captcha":{"image":"data:image/png;base64,...","token":"<single-use challenge>"}}
+{"loginEnabled":true,"loginRequired":false,"registrationEnabled":true,"captcha":{"image":"data:image/png;base64,...","token":"<single-use challenge>"}}
 ```
 
 `captcha` is null when not required or registration is disabled. Availability

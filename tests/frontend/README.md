@@ -28,6 +28,13 @@ ignored by Git.
 
 ## Coverage and limits
 
+Required-login admin controls have public/private fixtures and a mobile-width,
+JavaScript-disabled browser check. It verifies the existing registration switch
+explains whitelist mode, checkbox submission and state, and guest visibility.
+Run `node --test required-login-admin.test.cjs` after fixture generation. The guarded
+account harness separately verifies real middleware, CSRF, admin persistence,
+signup and credential enforcement without the deployed server.
+
 Original-title checks cover default-on settings, guest/account/JSON/YAML/backup
 persistence, old forms, API query precedence and HTTP rejection, RSS title selection,
 watch/embed metadata, custom clips and spoiler/DeArrow original state. Upstream

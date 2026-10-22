@@ -88,32 +88,17 @@ class AuthHandler < Kemal::Handler
 
     Invidious::Authentication.no_store(env)
     begin
-      if token = env.request.headers["Authorization"]?
-        token = JSON.parse(URI.decode_www_form(token.lchop("Bearer ")))
-        session = URI.decode_www_form(token["session"].as_s)
-        scopes, _, _ = validate_request(token, session, env.request, HMAC_KEY, nil)
-
-        if email = Invidious::Database::SessionIDs.select_email(session)
-          user = Invidious::Database::Users.select!(email: email)
-        end
-      elsif sid = env.request.cookies["SID"]?.try &.value
-        if sid.starts_with? "v1:"
-          raise "Cannot use token as SID"
-        end
-
-        if email = Invidious::Database::SessionIDs.select_email(sid)
-          user = Invidious::Database::Users.select!(email: email)
-          Invidious::BrowserProfiles.publish(env, Invidious::BrowserProfiles.account_scope(user.email))
-        else
-          Invidious::Authentication.clear_session(env)
-        end
-
+      user = Invidious::Authentication.resolve_user(env, bearer: true)
+      if env.get?("authentication_bearer")
+        scopes = env.get("scopes").as(Array(String))
+        scope = "#{env.request.method}:#{env.request.path.lchop("/api/v1/auth/").lstrip("/")}"
+        raise "Invalid scope" unless scopes_include_scope(scopes, scope)
+      else
         if !{"GET", "HEAD", "OPTIONS"}.includes?(env.request.method) && !Invidious::Authentication.valid_session_csrf?(env)
           raise "Invalid CSRF token"
         end
-
         scopes = [":*"]
-        session = sid
+        Invidious::BrowserProfiles.publish(env, Invidious::BrowserProfiles.account_scope(user.email)) if user
       end
 
       if !user
@@ -123,8 +108,6 @@ class AuthHandler < Kemal::Handler
 
       env.set "scopes", scopes
       env.set "user", user
-      env.set "session", session
-
       call_next env
     rescue ex
       env.response.content_type = "application/json"

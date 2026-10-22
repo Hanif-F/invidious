@@ -125,6 +125,17 @@ portable-import video-ID validation and error statuses, detailed-history/progres
 and audio/seek preference preservation, plus parameterized subscription filtering
 for empty, populated and malformed legacy watched arrays and paginated results.
 
+`required_login_checks.cr` exercises the production login gate, bot/auth middleware,
+static assets and account routes. It covers default-off behavior, all-method
+anonymous blocking before upstream work, redirects and safe return queries,
+browser/native credential expiry and revocation, bearer precedence, scope/CSRF
+isolation, streaming cache headers, credential filtering, web/mobile signup and
+whitelist mode, signed RSS/webhooks, TV bootstrap, environment settings and admin
+persistence. Admin-save tests use a temporary config directory, never the live
+instance configuration. The harness requires no running Invidious server.
+Use the same guarded empty database with `--required-login-only` to run just this
+suite after applying the normal migrations.
+
 `browser_profile_checks.cr` runs in the account harness through production middleware.
 The native account-management checks also verify mobile `profileId` and preference
 response metadata, unchanged browser identity, stable profiles through credential

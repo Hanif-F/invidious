@@ -362,6 +362,9 @@ https_only: false
 ##
 #registration_enabled: true
 
+## Disable registration for user whitelist mode: only existing or manually
+## provisioned accounts can sign in. This also blocks native/mobile signup.
+
 ##
 ## Allow/Forbid users to log-in.
 ##
@@ -369,6 +372,19 @@ https_only: false
 ## Default: true
 ##
 #login_enabled: true
+
+##
+## Require an authenticated account for all dynamic content, including API,
+## images, downloads, embeds and the built-in Companion proxy. Login/bootstrap
+## endpoints and local static assets remain reachable. Signed private RSS feeds
+## and subscription webhooks retain their existing authentication.
+## When enabled, login_enabled is kept true to prevent administrator lockout.
+## Use a private Companion; a separate public listener is outside this gate.
+##
+## Accepted values: true, false
+## Default: false
+##
+#login_required: false
 
 ##
 ## Enable/Disable the captcha challenge on the login page.
@@ -391,6 +407,7 @@ https_only: false
 ##   - popular_enabled
 ##   - captcha_enabled
 ##   - login_enabled
+##   - login_required
 ##   - registration_enabled
 ##   - statistics_enabled
 ## Default user preferences:

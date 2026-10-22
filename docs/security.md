@@ -24,6 +24,21 @@ Tokens are signed JSON containing session/scopes/optional expiry/signature, with
 
 Native login grants a defined 30-day capability set. It deliberately excludes generic token listing/minting and account export/import. Dedicated native account/session/token-management routes require their own scopes, and sensitive credential/token issuance operations require password confirmation. Profile IDs and `X-Invidious-Account-Profile` are storage metadata, not credentials.
 
+`login_required` optionally gates all dynamic content before bot protection or
+route execution. Browser sessions and API/media bearer tokens must have a live
+database session; bearer signature/expiry checks also apply. Supplied invalid
+bearer credentials never fall back to cookies. Ordinary content access does not
+require new token scopes, while account endpoints still enforce existing scopes,
+ownership and CSRF. Form tokens cannot serve as general access credentials.
+Passing the instance gate does not publish bearer account identity on public API
+routes; private playlists remain available through the scoped authenticated APIs.
+Anonymous pages redirect to login; API/media failures return no-store HTTP 401
+JSON with `error: "login_required"` and `loginUrl`. See
+[configuration](configuration.md#private-instances-and-whitelist-access) for
+bootstrap and signed-integration exceptions and the Companion deployment boundary.
+Bot verification remains independent of account login; see
+[bot protection](bot-protection.md) and its [deployment checks](bot-protection-rollout.md).
+
 ## Throttling and proxies
 
 Authentication is limited by shared PostgreSQL windows: 10 attempts per username and 100 per IP per 15 minutes, plus 10 signup attempts per IP per hour. Attempts include successful authentication. CAPTCHA challenge issuance has its own native limit. HTTP 429 includes Retry-After; there is no permanent account lockout.
@@ -35,6 +50,11 @@ Authentication is limited by shared PostgreSQL windows: 10 attempts per username
 Private local playlists require owner authorization across pages, API, embeds, indexed series and redirects. Public/unlisted accessibility does not grant edit rights. Clip deletion, block management, positions/history and session revocation are account-scoped. Account deletion removes owned playlists/videos transactionally; declared foreign keys cascade newer account tables.
 
 Responses carrying SID/PREFS/Authorization and private feeds receive no-store context, and authenticated API responses/errors are `private, no-store`. Some transient public handlers also set no-store. Configure proxy/CDN bypass for authenticated/personalized requests and respect response headers. Test the same private URL as two users and anonymously through the real cache; local application tests cannot establish external cache policy.
+
+With required login enabled, dynamic responses enforce `private, no-store` and
+vary on Cookie/Authorization even when a streaming upstream supplies cache
+headers. Browser account cookies, Authorization and CSRF headers are removed from
+outbound Companion proxy requests.
 
 ## Browser and network protections
 

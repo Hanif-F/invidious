@@ -72,7 +72,9 @@ def sign_token(key, hash)
   return Base64.urlsafe_encode(OpenSSL::HMAC.digest(:sha256, key, string_to_sign)).strip
 end
 
-def validate_request(token, session, request, key, locale = nil)
+# The instance login gate can validate identity without imposing new content
+# scopes on existing tokens. Account operations must retain scope validation.
+def validate_request(token, session, request, key, locale = nil, *, check_scope = true)
   case token
   when String
     token = JSON.parse(URI.decode_www_form(token)).as_h
@@ -93,7 +95,7 @@ def validate_request(token, session, request, key, locale = nil)
 
   scopes = token["scopes"].as_a.map(&.as_s)
   scope = "#{request.method}:#{request.path.lchop("/api/v1/auth/").lstrip("/")}"
-  if !scopes_include_scope(scopes, scope)
+  if check_scope && !scopes_include_scope(scopes, scope)
     raise InfoException.new("Invalid scope")
   end
 

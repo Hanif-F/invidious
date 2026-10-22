@@ -6,6 +6,48 @@ Generated from registered handlers under [src/invidious/routes](../../src/invidi
 
 This companion to the [route list](routes.md) records literal input names read directly by each registered handler, including browser forms. These are observed names, not a required-field schema. A dash means no literal reads of that kind in this method. Shared helpers add inputs: search filters, video query overrides, authentication/CSRF, pagination, native JSON wrappers and preference converters. Read the linked implementation and the narrative API guides for validation, defaults, nested objects and response schemas. `data[...]` includes locally parsed objects and may include internal data; it is listed separately to avoid treating it as a guaranteed request field.
 
+## Routes::Verification.page
+
+`GET /verify`. Source: [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr).
+
+- Query: `client`, `return`.
+
+## Routes::Verification.status
+
+`GET /api/v1/verification`. Source: [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr).
+
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+
+## Routes::Verification.complete
+
+`POST /api/v1/verification/complete`. Source: [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr).
+
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+
+## Routes::Verification.admin
+
+`GET /admin/bot-protection`; `POST /admin/bot-protection`. Source: [src/invidious/routes/verification.cr](../../src/invidious/routes/verification.cr).
+
+- Form: `duration_hours`, `enabled`.
+
+## Routes::Login.login_page
+
+`GET /login`; `GET /login`. Source: [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr).
+
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+
+## Routes::Login.login
+
+`POST /login`; `POST /login`. Source: [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr).
+
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+
+## Routes::Login.signout
+
+`POST /signout`; `POST /signout`. Source: [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr).
+
+- Form: `csrf_token`.
+
 ## Routes::Misc.home
 
 `GET /`. Source: [src/invidious/routes/misc.cr](../../src/invidious/routes/misc.cr).
@@ -97,24 +139,6 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 
-## Routes::Login.login_page
-
-`GET /login`. Source: [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr).
-
-Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
-
-## Routes::Login.login
-
-`POST /login`. Source: [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr).
-
-Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
-
-## Routes::Login.signout
-
-`POST /signout`. Source: [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr).
-
-- Form: `csrf_token`.
-
 ## Routes::TvPairing.show
 
 `GET /tv`. Source: [src/invidious/routes/tv_pairing.cr](../../src/invidious/routes/tv_pairing.cr).
@@ -193,7 +217,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `POST /preferences`. Source: [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr).
 
-- Form: `admin_default_home`, `admin_feed_menu[#{index}]`, `ai_blocklist_action`, `ai_blocklist_feeds`, `ai_blocklist_other_pages`, `ai_blocklist_recommendations`, `ai_blocklist_search`, `ai_filter_enabled`, `ai_filter_form_version`, `ai_warnlist_action`, `ai_warnlist_feeds`, `ai_warnlist_other_pages`, `ai_warnlist_recommendations`, `ai_warnlist_search`, `ai_{{ kind.id }}_{{ surface.id }}_action`, `annotations`, `annotations_subscribed`, `automatic_instance_redirect`, `autoplay`, `captcha_enabled`, `captions[#{i}]`, `comments[#{i}]`, `continue`, `continue_autoplay`, `dark_mode`, `dearrow_enabled`, `dearrow_show_original`, `default_home`, `default_playlist`, `extend_desc`, `feed_menu[#{index}]`, `latest_only`, `listen`, `local`, `locale`, `login_enabled`, `max_results`, `modified_source_code_url`, `notifications_only`, `player_style`, `popular_enabled`, `preferred_audio`, `preload`, `quality`, `quality_dash`, `region`, `registration_enabled`, `related_videos`, `save_player_pos`, `search_privacy`, `seek_seconds`, `show_member_videos`, `show_nick`, `show_original_title`, `show_original_title_present`, `sort`, `speed`, `sponsorblock_color_#{category}`, `sponsorblock_enabled`, `sponsorblock_mode_#{category}`, `statistics_enabled`, `theme`, `theme_random_interval_hours`, `thin_mode`, `timezone`, `ui_density`, `unseen_only`, `video_codec`, `video_loop`, `vr_mode`, `watch_history`.
+- Form: `admin_default_home`, `admin_feed_menu[#{index}]`, `ai_blocklist_action`, `ai_blocklist_feeds`, `ai_blocklist_other_pages`, `ai_blocklist_recommendations`, `ai_blocklist_search`, `ai_filter_enabled`, `ai_filter_form_version`, `ai_warnlist_action`, `ai_warnlist_feeds`, `ai_warnlist_other_pages`, `ai_warnlist_recommendations`, `ai_warnlist_search`, `ai_{{ kind.id }}_{{ surface.id }}_action`, `annotations`, `annotations_subscribed`, `automatic_instance_redirect`, `autoplay`, `captcha_enabled`, `captions[#{i}]`, `comments[#{i}]`, `continue`, `continue_autoplay`, `dark_mode`, `dearrow_enabled`, `dearrow_show_original`, `default_home`, `default_playlist`, `extend_desc`, `feed_menu[#{index}]`, `latest_only`, `listen`, `local`, `locale`, `login_enabled`, `login_required`, `max_results`, `modified_source_code_url`, `notifications_only`, `player_style`, `popular_enabled`, `preferred_audio`, `preload`, `quality`, `quality_dash`, `region`, `registration_enabled`, `related_videos`, `save_player_pos`, `search_privacy`, `seek_seconds`, `show_member_videos`, `show_nick`, `show_original_title`, `show_original_title_present`, `sort`, `speed`, `sponsorblock_color_#{category}`, `sponsorblock_enabled`, `sponsorblock_mode_#{category}`, `statistics_enabled`, `theme`, `theme_random_interval_hours`, `thin_mode`, `timezone`, `ui_density`, `unseen_only`, `video_codec`, `video_loop`, `vr_mode`, `watch_history`.
 
 ## Routes::PreferencesRoute.detect_timezone
 

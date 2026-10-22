@@ -23,7 +23,7 @@ module Invidious::Routes::API::V1::Mobile
       end
     end
     captcha = enabled && CONFIG.captcha_enabled ? User::Captcha.generate_image(HMAC_KEY, "POST:api/v1/mobile/register") : nil
-    {loginEnabled: CONFIG.login_enabled, registrationEnabled: enabled,
+    {loginEnabled: CONFIG.login_enabled, loginRequired: CONFIG.login_required, registrationEnabled: enabled,
      captcha: captcha.try { |value| {image: value[:question], token: value[:tokens][0]} }}.to_json
   end
 

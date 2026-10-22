@@ -550,8 +550,15 @@
                 </div>
 
                 <div class="pure-control-group">
+                    <label for="login_required"><%= I18n.translate(locale, "Require login: ") %></label>
+                    <input name="login_required" id="login_required" type="checkbox" aria-describedby="login-required-help" <% if CONFIG.login_required %>checked<% end %>>
+                    <p id="login-required-help" class="preference-description"><%= I18n.translate(locale, "Require an account to access this instance. Login stays enabled while this is on.") %></p>
+                </div>
+
+                <div class="pure-control-group">
                     <label for="registration_enabled"><%= I18n.translate(locale, "Registration enabled: ") %></label>
-                    <input name="registration_enabled" id="registration_enabled" type="checkbox" <% if CONFIG.registration_enabled %>checked<% end %>>
+                    <input name="registration_enabled" id="registration_enabled" type="checkbox" aria-describedby="registration-enabled-help" <% if CONFIG.registration_enabled %>checked<% end %>>
+                    <p id="registration-enabled-help" class="preference-description"><%= I18n.translate(locale, "Disable registration for user whitelist mode: only accounts you create manually can sign in.") %></p>
                 </div>
 
                 <div class="pure-control-group">

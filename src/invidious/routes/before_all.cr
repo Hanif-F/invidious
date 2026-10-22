@@ -85,17 +85,11 @@ module Invidious::Routes::BeforeAll
 
     # AuthHandler has already authenticated bearer requests. Never replace that
     # identity with an unrelated browser cookie on the same request.
-    if env.request.path.starts_with?("/api/v1/auth/") && env.request.headers.has_key?("Authorization")
-      preferences = env.get("user").as(User).preferences
-    elsif env.request.cookies.has_key? "SID"
-      sid = env.request.cookies["SID"].value
-
-      if sid.starts_with? "v1:"
-        raise "Cannot use token as SID"
-      end
-
-      if email = Database::SessionIDs.select_email(sid)
-        user = Database::Users.select!(email: email)
+    if env.get?("authentication_bearer")
+      preferences = env.get("authentication_user").as(User).preferences
+    else
+      if user = Authentication.resolve_user(env)
+        sid = env.get("sid").as(String)
         csrf_token = generate_response(sid, {
           ":authorize_token",
           ":playlist_ajax",
@@ -123,8 +117,6 @@ module Invidious::Routes::BeforeAll
         env.set "sid", sid
         env.set "csrf_token", csrf_token
         env.set "user", user
-      else
-        Authentication.clear_session(env)
       end
     end
 

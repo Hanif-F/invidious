@@ -171,7 +171,7 @@ check(PG_DB.query_one("SELECT count(*) FROM bot_protection_settings", as: Int64)
 check(!Protection.settings.enabled && Protection.settings.duration_hours == 12, "Unsafe install defaults")
 check(Protection.readiness.empty?, "Fixture configuration not ready: #{Protection.readiness}")
 
-server = HTTP::Server.new([Invidious::HttpServer::BotProtectionHandler.new, BotTestEndpoint.new])
+server = HTTP::Server.new([Invidious::HttpServer::RequiredLoginHandler.new, Invidious::HttpServer::BotProtectionHandler.new, BotTestEndpoint.new])
 address = server.bind_tcp("127.0.0.1", 0)
 spawn { server.listen }
 base = "http://127.0.0.1:#{address.port}"
@@ -321,6 +321,17 @@ begin
   PG_DB.exec("UPDATE bot_protection_settings SET enabled = true, revision = revision + 1")
   sleep 1.05.seconds
   check(Protection.settings.enabled, "Settings cache exceeded one second")
+  CONFIG.login_required = true
+  login_redirect = request(base, "/watch")
+  check(login_redirect.status_code == 303 && login_redirect.headers["Location"].starts_with?("/login?"), "Bot challenge ran before required login")
+  denied_api = request(base, "/api/v1/videos/test")
+  check(denied_api.status_code == 401 && JSON.parse(denied_api.body)["error"] == "login_required", "Bot challenge replaced API login failure")
+  check(request(base, "/login").status_code == 200, "Combined gates blocked login")
+  check(request(base, "/api/v1/verification").status_code == 200, "Combined gates blocked verification bootstrap")
+  recovery = request(base, "/admin/bot-protection", headers: HTTP::Headers{"Cookie" => "SID=sid-wingress"})
+  check(recovery.status_code == 200, "Required login prevented signed-in administrator bot recovery")
+  check(request(base, "/watch", token: Protection.issue(Protection.settings).token).status_code == 303, "Bot pass bypassed account login")
+  CONFIG.login_required = false
   PG_DB.using_connection { |conn| conn.as(PG::Connection).exec_all(File.read("config/sql/bot_protection_settings.sql")) }
   restarted = IO::Memory.new
   result = Process.run(PROGRAM_NAME, ["--read-policy"], output: restarted)

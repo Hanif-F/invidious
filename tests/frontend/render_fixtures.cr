@@ -524,7 +524,12 @@ File.write("#{output}/preferences-signed-in-no-nick.html", preferences_fixture(e
 CONFIG.admins << "viewer@example.test"
 begin
   File.write("#{output}/preferences-admin.html", preferences_fixture(signed_in_env("/preferences")))
+  CONFIG.login_required = true
+  CONFIG.registration_enabled = false
+  File.write("#{output}/preferences-admin-private.html", preferences_fixture(signed_in_env("/preferences")))
 ensure
+  CONFIG.login_required = false
+  CONFIG.registration_enabled = true
   CONFIG.admins.delete("viewer@example.test")
 end
 File.write("#{output}/preferences-rtl.html", preferences_fixture(fixture_env("/preferences", "dark", locale: "ar")))
