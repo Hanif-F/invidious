@@ -143,3 +143,31 @@ channel resolution; no YouTube or GitHub request is permitted. Focused parser/AP
 specs run with `crystal spec spec/ai_slist_spec.cr spec/ai_slist_api_spec.cr spec/native_preferences_spec.cr`.
 
 `tv_pairing_checks.cr` runs in the account harness through production middleware, templates and registered HTTP routes. It verifies migration 23/fresh SQL, hashed codes, polling slowdown, states/expiry/cleanup, CSRF/account binding, IP/account limits, two concurrent redemptions, issuance rollback, session/credential revocation and deletion. A local HTTP flow follows browser login/approval through native token authentication. No deployed QR acceptance is implied. `PAIRING_PREVIEW_DIR` optionally saves the synthetic approval HTML with all CSRF values replaced. API-only preflight is separately checked with `crystal run tests/tv_pairing_api_only.cr -Dapi_only`, without a database.
+
+Turnstile protection uses an isolated **empty** database named
+`invidious_bot_protection_test` (the harness refuses other names and resets its
+schema). It mocks Siteverify and never contacts YouTube or Cloudflare:
+
+```sh
+BOT_PROTECTION_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_bot_protection_test crystal run tests/database/bot_protection.cr
+BOT_PROTECTION_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_bot_protection_test crystal run tests/database/bot_protection.cr -Dapi_only
+crystal run tests/frontend/render_fixtures.cr
+cd tests/frontend && node --test bot-protection.test.cjs
+```
+
+The browser checks use Playwright Chromium, test retry/native events/cookies and
+playback/iframe recovery. Use Cloudflare test keys in a separate manual browser
+smoke environment before production activation; production hostname/action checks
+remain strict and are never relaxed for test keys. A real Companion deployment
+must separately be checked for public ports or alternate routes.
+
+Optional live widget smoke (uses the published always-pass Cloudflare sitekey,
+with a mocked instance exchange and no production credentials):
+
+```sh
+cd tests/frontend && node turnstile-provider-smoke.cjs
+```
+
+This checks that the real widget loads under the verification-page CSP and emits
+the native completion event. It does not replace a production hostname/key and
+playback smoke before activation.

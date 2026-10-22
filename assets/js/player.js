@@ -243,6 +243,7 @@ var controlBar = player.getChild('controlBar');
 controlBar.addChild(refreshButton, {}, controlBar.children().indexOf(controlBar.getChild('captionsButton')));
 
 player.on('error', function () {
+    if (window.InvidiousVerification) window.InvidiousVerification.check();
     if (video_data.params.quality === 'dash') return;
 
     var localNotDisabled = (

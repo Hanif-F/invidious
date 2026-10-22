@@ -1094,3 +1094,17 @@ dearrow_identity_key: ""
 # rate limits. Leave empty for direct connections. Configure the proxy to
 # replace/append X-Forwarded-For correctly; never trust arbitrary clients.
 # auth_trusted_proxies: ["127.0.0.1/32", "::1/128"]
+
+# Instance access verification. Policy (enabled/duration/revision) is stored in
+# PostgreSQL and defaults to disabled. Create a Managed Turnstile widget for the
+# exact instance hostname(s), then enable at /admin/bot-protection after testing.
+# Works with DNS-only Cloudflare. Never put the secret in client configuration.
+turnstile_site_key: ""
+turnstile_secret_key: ""
+# Independent persistent random pass key (32+ characters). If empty, hmac_key is
+# used and must be at least 32 characters before protection can be enabled.
+turnstile_signing_key: ""
+turnstile_allowed_hostnames: []
+# Set true only after confirming Companion has NO public port/hostname, and every
+# configured Companion omits public_url (uses the built-in /companion proxy).
+turnstile_companion_private: false

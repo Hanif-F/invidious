@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Verify access - Invidious</title>
+<link rel="stylesheet" href="/css/verification.css">
+<script id="verification-config" type="application/json"><%= {siteKey: CONFIG.turnstile_site_key, native: native, returnUrl: destination, enabled: policy.enabled, ready: ready}.to_json.gsub("<", "\\u003c") %></script>
+<script src="/js/verification.js" defer></script>
+<% if policy.enabled && ready %><script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=invidiousTurnstileReady&amp;render=explicit" defer></script><% end %>
+</head><body><main class="verification-panel"><h1>Verify access</h1>
+<p>Complete this check to browse and play videos. No account is required.</p>
+<div id="turnstile-widget"></div><p id="verification-status" role="status" aria-live="polite"><%= !policy.enabled ? "Verification is currently disabled." : (ready ? "Loading verification…" : "Verification is not configured. Contact the administrator or retry later.") %></p>
+<button id="verification-retry" type="button" hidden>Retry verification</button>
+<noscript>JavaScript is required to complete verification.</noscript>
+<p><a href="/login?referer=%2Fadmin%2Fbot-protection">Administrator sign-in</a> · <a href="/admin/bot-protection">Bot protection settings</a> · <a href="/privacy">Privacy</a></p>
+</main></body></html>

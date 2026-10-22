@@ -13,7 +13,7 @@
         <a href="#preferences-browsing"><%= I18n.translate(locale, "ui_browsing_feeds") %></a>
         <a href="#preferences-enhancements"><%= I18n.translate(locale, "ui_enhancements") %></a>
         <% if env.get?("user") %><a href="#preferences-library"><%= I18n.translate(locale, "ui_library_account") %></a><% end %>
-        <% if env.get?("user") && CONFIG.admins.includes?(env.get?("user").as(Invidious::User).email) %><a href="#preferences-administration"><%= I18n.translate(locale, "ui_administration") %></a><% end %>
+        <% if env.get?("user") && Invidious::Authentication.admin?(env.get("user").as(Invidious::User)) %><a href="#preferences-administration"><%= I18n.translate(locale, "ui_administration") %></a><% end %>
     </nav>
     <form class="pure-form pure-form-aligned preferences-form" action="/preferences?referer=<%= URI.encode_www_form(referer) %>" method="post">
         <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
@@ -499,9 +499,10 @@
             </div>
         </fieldset>
         <% end %>
-        <% if env.get?("user") && CONFIG.admins.includes?(env.get?("user").as(Invidious::User).email) %>
+        <% if env.get?("user") && Invidious::Authentication.admin?(env.get("user").as(Invidious::User)) %>
         <fieldset class="preferences-section" id="preferences-administration">
             <legend><%= I18n.translate(locale, "ui_administration") %></legend>
+            <p><a href="/admin/bot-protection">Bot protection</a></p>
             <p class="preference-section-intro"><%= I18n.translate(locale, "ui_administration_hint") %></p>
             <div class="preference-subgroup">
                 <h2><%= I18n.translate(locale, "ui_instance_defaults") %></h2>

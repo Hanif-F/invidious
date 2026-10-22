@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bot protection - Invidious</title><link rel="stylesheet" href="/css/verification.css"></head>
+<body><main class="verification-panel"><h1>Bot protection</h1>
+<% if message %><p role="status"><%= HTML.escape(message) %></p><% end %>
+<p>Configuration: <strong><%= problems.empty? ? "Ready" : "Not ready" %></strong></p>
+<% unless problems.empty? %><ul><% problems.each do |problem| %><li><%= HTML.escape(problem) %></li><% end %></ul><% end %>
+<form action="/admin/bot-protection" method="post">
+<input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
+<p><label><input type="checkbox" name="enabled" <%= policy.enabled ? "checked" : "" %>> Require verification for browsing and playback</label></p>
+<p><label for="duration_hours">Verification duration</label> <select id="duration_hours" name="duration_hours"><% {1, 12, 24}.each do |hours| %><option value="<%= hours %>" <%= policy.duration_hours == hours ? "selected" : "" %>><%= hours %> hours</option><% end %></select></p>
+<p>Saving a changed setting invalidates all previous verification passes. Signed-in users also verify. Existing passes continue to work during provider outages.</p>
+<button type="submit">Save settings</button>
+</form><p><a href="/preferences#preferences-administration">Preferences</a> · <a href="/login">Account sign-in</a></p>
+</main></body></html>

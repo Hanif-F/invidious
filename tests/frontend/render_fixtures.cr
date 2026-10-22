@@ -611,3 +611,18 @@ check_audio_playback(output)
 
 require "./original_title_checks"
 check_original_titles(output)
+
+# Standalone verification pages never require content data or database access.
+def verification_fixture(native = false)
+  policy = Invidious::BotProtection::Settings.new(true, 12, 1_i64)
+  destination = "/watch?v=abcdefghijk&t=42"
+  ready = true
+  previous_site_key = CONFIG.turnstile_site_key
+  CONFIG.turnstile_site_key = "1x00000000000000000000AA"
+  render "src/invidious/views/verification.ecr"
+ensure
+  CONFIG.turnstile_site_key = previous_site_key || ""
+end
+
+File.write("#{output}/verification-browser.html", verification_fixture)
+File.write("#{output}/verification-native.html", verification_fixture(true))

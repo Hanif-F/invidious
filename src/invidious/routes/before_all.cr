@@ -109,6 +109,7 @@ module Invidious::Routes::BeforeAll
           ":watch_ajax",
           ":preferences/timezone",
           "POST:preferences",
+          "POST:admin/bot-protection",
           "POST:data_control",
           "POST:subscribe_playlist",
           "POST:toggle_theme",

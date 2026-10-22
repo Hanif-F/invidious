@@ -16,6 +16,17 @@ module Invidious::Routing
   {% end %}
 
   def register_all
+    # Bootstrap and administrator recovery also exist on API-only builds.
+    get "/verify", Routes::Verification, :page
+    get "/api/v1/verification", Routes::Verification, :status
+    post "/api/v1/verification/complete", Routes::Verification, :complete
+    get "/admin/bot-protection", Routes::Verification, :admin
+    post "/admin/bot-protection", Routes::Verification, :admin
+    {% if flag?(:api_only) %}
+      get "/login", Routes::Login, :login_page
+      post "/login", Routes::Login, :login
+      post "/signout", Routes::Login, :signout
+    {% end %}
     {% unless flag?(:api_only) %}
       get "/", Routes::Misc, :home
       get "/privacy", Routes::Misc, :privacy

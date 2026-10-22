@@ -1,5 +1,3 @@
-{% skip_file if flag?(:api_only) %}
-
 module Invidious::Routes::Login
   def self.login_page(env)
     render_form(env, false)

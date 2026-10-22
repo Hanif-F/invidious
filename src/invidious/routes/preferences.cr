@@ -291,7 +291,7 @@ module Invidious::Routes::PreferencesRoute
       Invidious::Database::Users.update_preferences(user)
       Invidious::Database::PlaybackPositions.clear(user.email) unless preferences.save_player_pos
 
-      if CONFIG.admins.includes? user.email
+      if Authentication.admin?(user)
         CONFIG.default_user_preferences.default_home = env.params.body["admin_default_home"]?.try &.as(String) || CONFIG.default_user_preferences.default_home
 
         admin_feed_menu = [] of String

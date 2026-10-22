@@ -722,3 +722,93 @@ The public `/api/v1/annotations/:id` XML endpoint keeps its contract; direct
 responses without a redirect header now retain their status/body, including 404
 for missing archives. Search filter contracts are unchanged. Native clients can use `movie`/`show`, `duration=medium` and canonical
 comma-separated features without additional server endpoints.
+
+## Instance access verification (Turnstile)
+
+An administrator can enable Turnstile for all browsing and playback, including
+signed-in accounts. An account token does not bypass this gate. Protection is
+initially disabled; unchanged Android clients cannot use an enabled instance.
+This backend contract does not add Android UI or change registration CAPTCHA.
+
+Discover the policy without account authentication:
+
+```http
+GET /api/v1/verification
+```
+
+```json
+{"enabled":true,"required":true,"verified":false,"expiresAt":null,"duration":43200,"siteKey":"PUBLIC_SITE_KEY","challengeUrl":"/verify?client=native","verificationHeader":"X-Invidious-Verification"}
+```
+
+`duration` and Unix `expiresAt` are in seconds. `required` means this request has
+no valid pass and the instance is enabled. Send an existing pass in the supported
+header to check it. This endpoint never returns the secret or echoes a pass.
+
+Open `/verify?client=native` on the instance origin in a JavaScript-enabled WebView.
+The instance hosts a Managed widget and validates it server-side. Listen on that
+page's `window` for `invidious-verification-complete`:
+
+```javascript
+window.addEventListener('invidious-verification-complete', function (event) {
+    // Forward only through your app's trusted bridge for this instance origin.
+    appBridge.acceptVerification(event.detail.verificationToken, event.detail.expiresAt);
+});
+```
+
+The event detail is `{verificationToken, expiresAt, enabled}`. When protection is
+disabled, both credentials are null and `enabled` is false. Never trust events
+from arbitrary origins, inject a bridge into external pages, or put credentials
+in callback URLs. A native completion does not set the browser verification cookie.
+Apps may also exchange an instance-widget Turnstile token themselves:
+
+```http
+POST /api/v1/verification/complete
+Content-Type: application/json
+
+{"turnstileToken":"SINGLE_USE_TURNSTILE_RESPONSE","transport":"native"}
+```
+
+```json
+{"verificationToken":"INSTANCE_SIGNED_PASS","expiresAt":1792700000}
+```
+
+Store the pass securely per instance. Send it separately from account credentials:
+
+```http
+GET /api/v1/videos/2Yq9rVkhniI
+Authorization: Bearer ACCOUNT_TOKEN_IF_NEEDED
+X-Invidious-Verification: INSTANCE_SIGNED_PASS
+```
+
+Apply the header to protected API, image, caption, manifest and same-origin media
+requests, including HEAD and Range requests. CORS OPTIONS requests are answered
+locally with no protected content. **Do not forward this header on redirects to
+external media hosts**, including Googlevideo or another instance. Configure the
+HTTP player's redirect policy accordingly; never append the pass to a media URL.
+The server strips verification credentials before upstream proxy forwarding.
+Companion must remain private and use the protected same-origin `/companion` path.
+
+Protected API/media requests return JSON, never HTML challenges:
+
+```json
+{"error":"verification_expired","verification":{"enabled":true,"required":true,"verified":false,"expiresAt":null,"duration":43200,"siteKey":"PUBLIC_SITE_KEY","challengeUrl":"/verify?client=native","verificationHeader":"X-Invidious-Verification"},"challengeUrl":"/verify?return=%2Fwatch%3Fv%3D2Yq9rVkhniI"}
+```
+
+HTTP 403 uses `verification_required` for absent/forged/obsolete-policy passes or
+`verification_expired` for an authentic expired pass. The
+`X-Invidious-Verification-Required` response header carries the same code. Pause
+playback, retain position, verify again and retry the original request. Do not
+retry an expired Turnstile response: it lasts five minutes and is single-use.
+Reusing an **instance pass** during its lifetime is intentional; it is a bearer
+credential, independent of account, IP and user agent. Policy changes invalidate
+it, even if its expiry is in the future.
+
+Completion returns 403 `verification_failed` for invalid/expired/duplicate
+challenges, 400 `invalid_request` for malformed input, 409
+`verification_policy_changed` if settings changed during validation, or 503
+`verification_unavailable` for provider outages. Retry with a fresh challenge;
+existing unexpired instance passes continue working without contacting Cloudflare.
+For the website, `transport:"browser"` sets a host-only Secure, HttpOnly,
+SameSite=Lax cookie and returns `expiresAt` plus a validated local `returnUrl`.
+Browser completion requires a same-instance Origin header. Never return cookie
+passes in JavaScript or grant account privileges through verification.

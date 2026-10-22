@@ -3,6 +3,10 @@ require "socket"
 module Invidious::Authentication
   extend self
 
+  def admin?(user : User) : Bool
+    CONFIG.admins.any? { |name| name.downcase == user.username.downcase }
+  end
+
   def no_store(env)
     env.response.headers["Cache-Control"] = "private, no-store"
     env.response.headers["Pragma"] = "no-cache"

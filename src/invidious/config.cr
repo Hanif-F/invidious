@@ -181,6 +181,15 @@ class Config
   property use_pubsub_feeds : Bool | Int32 = false
   property popular_enabled : Bool = true
   property captcha_enabled : Bool = true
+
+  # Keys are deployment secrets/configuration; policy lives in PostgreSQL.
+  property turnstile_site_key : String = ""
+  property turnstile_secret_key : String = ""
+  # Optional independent pass key; otherwise use the persistent instance HMAC key.
+  property turnstile_signing_key : String = ""
+  property turnstile_allowed_hostnames : Array(String) = [] of String
+  # Operator attestation: Companion has no public listener or alternative public route.
+  property turnstile_companion_private : Bool = false
   property auth_trusted_proxies : Array(String) = [] of String
 
   property login_enabled : Bool = true

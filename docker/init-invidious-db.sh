@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eou pipefail
 
+psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/bot_protection_settings.sql
+
 psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/channels.sql
 psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/channel_avatars.sql
 psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < config/sql/original_video_titles.sql
