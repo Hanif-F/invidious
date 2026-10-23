@@ -51,7 +51,7 @@ module Invidious::Routes::Search
     show_members = Frontend::SearchPreferences.apply(env, uri_params, preferences.show_member_videos, !!(Kemal.config.ssl || CONFIG.https_only))
     env.set "show_member_videos", show_members
     env.response.headers["Cache-Control"] = "private, no-store"
-    return env.redirect("/search?#{uri_params}") if reset_members
+    return env.redirect("/search?#{uri_params}") if reset_members && env.request.method == "GET"
 
     region = uri_params["region"]? || preferences.region
 
@@ -98,6 +98,7 @@ module Invidious::Routes::Search
       page_nav_html = Frontend::Pagination.nav_numeric(locale,
         base_url: "/search?#{query.to_http_params}",
         current_page: query.page,
+        post: preferences.search_privacy,
         show_next: (upstream_count >= 20)
       )
 

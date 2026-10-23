@@ -19,6 +19,9 @@ Keep escaping/context correct when adding titles, descriptions, identities or JS
 | `browser-storage.js` | Validated guest/account storage profiles, legacy migration, fallbacks, stale-tab guards and deletion cleanup |
 | `_helpers.js` | Shared browser helpers, requests and storage integration |
 | `handlers.js`, `interface.js` | General interface events and helper behavior |
+| `ui.js`, `preferences.js` | Profile-guarded requests, action feedback, searchable preferences, previews and explicit Save/Discard |
+| `browse.js`, `library.js` | Server-rendered Load more, GET restoration, explicit search filters, selection/batch actions and owned-playlist reordering |
+| `player-dock.js` | Desktop watch-page docking of the existing player without replacing its media element |
 | `themes.js`, `timezone.js` | Color-mode updates/CSRF POST and supported timezone detection |
 | `player.js` | Video.js initialization, playback/resume, volume, keyboard shortcuts and lifecycle sync |
 | `player-ui.js`, `player-mobile.js` | Shared player UI, mobile settings and touch gestures |
@@ -72,3 +75,53 @@ Dialogs and menus need focus handling, Escape/Tab behavior, visible labels and a
 On supported newer Crystal versions, [StaticAssetsHandler](../src/invidious/http_server/static_assets_handler.cr) serves/caches assets; older builds use Kemal static handling. Static cache lifetime is 2,629,800 seconds. `ASSET_COMMIT` supplies query cache busting from the last Git commit touching assets. A stale deployed asset build needs an updated cache identity/restart or deployment cache refresh, not a change to account JSON.
 
 Frontend test setup/limits are in [development](development.md) and [tests/frontend/README.md](../tests/frontend/README.md). The [source map](reference/source-map.md) enumerates every stylesheet, script and template.
+
+## Browsing and library interactions
+
+Paginated listings expose a stable `data-browse-items` region. Load more requests
+the existing HTML page with the same cookies and filters, imports its result
+markup, and initializes the new controls without executing fetched scripts.
+Continuation tokens remain opaque. Empty filtered pages can still offer another
+batch; history batches merge adjacent date groups. Appending does not add a
+browser history entry. Explicit search filters replace results and update GET
+URLs in place; typing never requests suggestions or results.
+
+Ordinary GET listings save up to ten tab-local restoration descriptors through
+`InvidiousStorage`: page URLs/tokens, preference identity and scroll position.
+Browser restoration is the fast path; a new document reconstructs loaded pages
+when necessary. Each descriptor supports up to 100 loaded batches. HTML and media
+are not stored. POST/private searches retain continuation state in page memory
+only, use POST for filters and pagination, and do not save queries in restoration
+storage or history state. If the browser discards such a document, its search
+must be submitted again. Changed visibility/order preferences invalidate saved
+descriptors; ordinary player or color-mode changes do not.
+
+Signed-in video lists and subscription management expose explicit selection mode.
+Select all means all currently loaded eligible rows; new batches start unselected.
+Batch operations run sequentially, preserve failed selections, and report partial
+success. Removals/unsubscriptions confirm the action and count. Playlist additions
+are never automatically retried after an ambiguous response.
+
+Owned playlists support drag/drop and Move up/down among loaded rows. The web
+`playlist_ajax` action `move_video_before` accepts POST body fields `source`,
+`anchor` (decimal occurrence IDs as strings), and `placement=before|after`, plus
+the existing CSRF token and playlist ID query parameter. It locks the playlist,
+rechecks ownership and occurrence membership, and changes only its order and
+updated timestamp. Stale occurrences return 409; the browser refreshes the list.
+Duplicate video IDs and unloaded entries retain their distinct occurrences.
+
+## Preferences and watching
+
+Preferences search hides nonmatching rows/sections without disabling their form
+fields. A sticky Save/Discard bar tracks drafts and previews color mode/density.
+The ordinary POST route retains redirects; `redirect=false` returns canonical
+`preferences` plus a fingerprint. The enhanced form reads back the authoritative
+form/cookie before reporting Saved, keeps failed drafts, and reloads after a
+locale change. Saving clears browse restoration state.
+
+At desktop widths (1100px and above), a player that has started playback docks
+when its inline space scrolls above the header. It retains its media element and
+playback state, with play/pause, mute, return and dismiss controls. Dismiss lasts
+for that watch-page visit. Audio-only, fullscreen, picture-in-picture and narrow
+layouts use the inline player. Transcript following scrolls only its own viewport;
+manual interaction/search turns following off until explicitly re-enabled.

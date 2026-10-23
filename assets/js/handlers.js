@@ -12,7 +12,8 @@
     addEventListener('click', function (e) {
         if (!e || !e.target) return;
 
-        var t = e.target;
+        var t = e.target.closest('[data-onclick]');
+        if (!t) return;
         var handler_name = t.getAttribute('data-onclick');
 
         switch (handler_name) {
@@ -47,79 +48,50 @@
         el.onmouseleave = function () { toggle_classes(classOnLeave, classOnEnter); };
     });
 
-    document.querySelectorAll('[data-onsubmit="return_false"]').forEach(function (el) {
-        el.onsubmit = function () { return false; };
+    var actions = {
+        mark_watched: function (target) { return mark_watched(target); },
+        mark_unwatched: function (target) { return mark_unwatched(target); },
+        add_playlist_video: function (target) { return add_playlist_video(target); },
+        add_playlist_item: function (target) { return add_playlist_item(target); },
+        remove_playlist_item: function (target) { return remove_playlist_item(target); },
+        revoke_token: revoke_token,
+        remove_subscription: remove_subscription
+    };
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        var target = event.submitter || form.querySelector('[data-onclick]');
+        var action = target && actions[target.dataset.onclick];
+        if (!action) return;
+        event.preventDefault();
+        action(target);
     });
-
-    document.querySelectorAll('[data-onclick="mark_watched"]').forEach(function (el) {
-        el.onclick = function () { mark_watched(el); };
+    document.addEventListener('click', function (event) {
+        var target = event.target.closest('[data-onclick]');
+        if (!target) return;
+        if (target.dataset.onclick === 'notification_requestPermission') Notification.requestPermission();
+        else if (actions[target.dataset.onclick] && (!target.form || target.type === 'button')) {
+            event.preventDefault(); actions[target.dataset.onclick](target);
+        }
     });
-    document.querySelectorAll('[data-onclick="mark_unwatched"]').forEach(function (el) {
-        el.onclick = function () { mark_unwatched(el); };
-    });
-    document.querySelectorAll('[data-onclick="add_playlist_video"]').forEach(function (el) {
-        el.onclick = function () { add_playlist_video(el); };
-    });
-    document.querySelectorAll('[data-onclick="add_playlist_item"]').forEach(function (el) {
-        el.onclick = function () { add_playlist_item(el); };
-    });
-    document.querySelectorAll('[data-onclick="remove_playlist_item"]').forEach(function (el) {
-        el.onclick = function () { remove_playlist_item(el); };
-    });
-    document.querySelectorAll('[data-onclick="revoke_token"]').forEach(function (el) {
-        el.onclick = function () { revoke_token(el); };
-    });
-    document.querySelectorAll('[data-onclick="remove_subscription"]').forEach(function (el) {
-        el.onclick = function () { remove_subscription(el); };
-    });
-    document.querySelectorAll('[data-onclick="notification_requestPermission"]').forEach(function (el) {
-        el.onclick = function () { Notification.requestPermission(); };
-    });
-
     function revoke_token(target) {
-        var row = target.parentNode.parentNode.parentNode.parentNode.parentNode;
-        row.style.display = 'none';
-        var count = document.getElementById('count');
-        count.textContent--;
-
-        var url = '/token_ajax?action=revoke_token&redirect=false' +
-            '&referer=' + encodeURIComponent(location.href) +
-            '&session=' + target.getAttribute('data-session');
-
-        var payload = 'csrf_token=' + target.parentNode.querySelector('input[name="csrf_token"]').value;
-
-        helpers.xhr('POST', url, {payload: payload}, {
-            onNon200: function (xhr) {
-                count.textContent++;
-                row.style.display = '';
-            }
-        });
+        var row = target.closest('.token-row') || target.parentNode.parentNode.parentNode.parentNode.parentNode;
+        return InvidiousUI.action('token:' + target.dataset.session, target, function () {
+            return InvidiousUI.post('/token_ajax?action=revoke_token&redirect=false&session=' + encodeURIComponent(target.dataset.session), {});
+        }, function () { InvidiousUI.removeRows([row]); });
     }
-
     function remove_subscription(target) {
-        var row = target.parentNode.parentNode.parentNode.parentNode.parentNode;
-        row.style.display = 'none';
-        var count = document.getElementById('count');
-        count.textContent--;
-
-        var url = '/subscription_ajax?action=remove_subscriptions&redirect=false' +
-            '&referer=' + encodeURIComponent(location.href) +
-            '&c=' + target.getAttribute('data-ucid');
-
-        var payload = 'csrf_token=' + target.parentNode.querySelector('input[name="csrf_token"]').value;
-
-        helpers.xhr('POST', url, {payload: payload}, {
-            onNon200: function (xhr) {
-                count.textContent++;
-                row.style.display = '';
-            }
-        });
+        var row = target.closest('.subscription-row');
+        return InvidiousUI.action('subscription:' + target.dataset.ucid, target, function () {
+            return InvidiousUI.post('/subscription_ajax?action=remove_subscriptions&redirect=false&c=' + encodeURIComponent(target.dataset.ucid), {});
+        }, function () { if (row) InvidiousUI.removeRows([row]); });
     }
 
     // Handle keypresses
     addEventListener('keydown', function (event) {
         // Ignore modifier keys
-        if (event.ctrlKey || event.metaKey) return;
+        if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.metaKey || event.altKey ||
+            event.target.closest('input, textarea, select, button, a, summary, [contenteditable], dialog') ||
+            document.querySelector('dialog[open], .video-context[open]')) return;
 
         // Ignore shortcuts if any text input is focused
         let focused_tag = document.activeElement.tagName.toLowerCase();

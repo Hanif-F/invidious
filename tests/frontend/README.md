@@ -26,6 +26,24 @@ npm test
 artifacts, not pixel comparison assertions. Generated fixtures and artifacts are
 ignored by Git.
 
+## Desktop QoL interactions
+
+`node --test qol.test.cjs` exercises production templates/scripts in Chromium and
+Firefox: Load more failures and duplicate occurrences, new-card menus, Back
+reconstruction, filtered-empty private POST pagination, explicit search filters,
+settings search/drafts/canonical saves, partially successful batch removals,
+stable playlist occurrence moves, stale profiles, real-player docking, transcript
+following and narrow layouts. The fixture generator also checks canonical
+guest/account preference responses and CSRF rejection. The normal npm suite and
+frontend CI run these checks. Asset reporting measures compressed sizes without
+a byte target.
+
+Playlist reordering's real transaction, ownership, CSRF, stale-anchor and
+concurrency checks run inside the guarded accounts database harness, including
+`--qol-only` for an empty disposable `invidious_accounts_test` database. See the
+[database harness documentation](../database/README.md). Native device fullscreen,
+picture-in-picture and OS media behavior still require physical-device checks.
+
 ## Coverage and limits
 
 Required-login admin controls have public/private fixtures and a mobile-width

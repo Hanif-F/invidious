@@ -6,6 +6,8 @@
     var watched = new Set();
     var ready = !sync;
     var loading = false;
+    var confirmed = new Map();
+    var refreshAgain = false;
 
     function render() {
         if (!ready) return;
@@ -13,7 +15,7 @@
         document.querySelectorAll('.watched-indicator').forEach(function (indicator) {
             var id = indicator.dataset.id;
             var position = (sync ? positions : local)[id];
-            var isWatched = sync ? watched.has(id) : indicator.dataset.watched === 'true';
+            var isWatched = confirmed.has(id) ? confirmed.get(id) : sync ? watched.has(id) : indicator.dataset.watched === 'true';
             var total = Number(indicator.dataset.length);
             indicator.hidden = position === undefined && !isWatched;
             if (indicator.hidden) return;
@@ -29,19 +31,21 @@
 
     function refresh() {
         if (!sync) { render(); return; }
-        if (loading || !window.InvidiousStorage.isCurrent()) return;
+        if (!window.InvidiousStorage.isCurrent()) return;
+        if (loading) { refreshAgain = true; return; }
         loading = true;
-        function failed() { loading = false; }
+        function finished() { loading = false; if (refreshAgain) { refreshAgain = false; refresh(); } }
         helpers.xhr('GET', '/api/v1/auth/playback', {}, {
             on200: function (response) {
-                loading = false;
-                if (!response || !response.positions || !Array.isArray(response.watched)) return;
+                if (!response || !response.positions || !Array.isArray(response.watched)) { finished(); return; }
                 positions = response.positions;
                 watched = new Set(response.watched);
+                confirmed.forEach(function (value, id) { if (watched.has(id) === value) confirmed.delete(id); });
                 ready = true;
                 render();
+                finished();
             },
-            onError: failed, onTimeout: failed, onNon200: failed
+            onError: finished, onTimeout: finished, onNon200: finished
         });
     }
 
@@ -58,6 +62,11 @@
         if (document.visibilityState === 'visible') refresh();
     });
     window.addEventListener('pageshow', function (event) { if (event.persisted) refresh(); });
+    document.addEventListener('iv:library-change', refresh);
+    document.addEventListener('iv:watched-change', function (event) {
+        confirmed.set(event.detail.id, event.detail.watched);
+        render();
+    });
     window.addEventListener('storage', function (event) { if (!sync && helpers.storage.matchesEvent(event, 'save_player_pos')) render(); });
     refresh();
 })();

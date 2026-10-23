@@ -48,18 +48,18 @@
 <% Invidious::Frontend::AiChannels.prepare_ids(env, watched.compact_map(&.channel_id)) %>
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, watched) %>
 <% previous_group = "" %>
-<div class="history-groups">
+<div class="history-groups" data-browse-items>
     <% watched.each do |entry| %>
         <% item = entry.video_id %>
         <% group = Invidious::History.group(entry.latest_watched, history_today) %>
         <% if group != previous_group %>
             <% unless previous_group.empty? %></div></section><% end %>
-            <section class="history-group">
+            <section class="history-group" data-history-group="<%= HTML.escape(group) %>">
             <h2><%= I18n.translate(locale, group) %></h2>
             <div class="pure-g media-grid">
             <% previous_group = group %>
         <% end %>
-        <div class="pure-u-1 pure-u-md-1-4 media-item" data-kind="video">
+        <div class="pure-u-1 pure-u-md-1-4 media-item" data-video-id="<%= HTML.escape(item) %>" data-kind="video">
             <div class="h-box media-card">
                 <div class="thumbnail video-thumbnail">
                     <% history_date = Invidious::ChannelSpoilers.publication(entry.release_date) %>

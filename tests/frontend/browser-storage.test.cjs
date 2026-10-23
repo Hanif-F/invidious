@@ -339,3 +339,19 @@ test('channel spoiler rules reject malformed timers and remain isolated from acc
     assert.equal(account.api.local.get('channel_spoiler_settings'), undefined);
     assert.deepEqual(plain(b.page().api.local.get('channel_spoiler_settings')), {[channel]: rule});
 });
+
+test('browse restoration keeps bounded GET descriptors in the owning tab/profile only', () => {
+    const b = browser(), p = b.page();
+    const entry = {id:'view',url:'/search?q=ordinary',fingerprint:'a'.repeat(64),scroll:420,
+        pages:[{url:'/search?q=ordinary&page=2',method:'GET'}]};
+    assert.equal(p.api.session.set('browse_state',{views:[entry]}),true);
+    assert.deepEqual(plain(p.api.session.get('browse_state')),{views:[entry]});
+    assert.equal(b.page(alice).api.session.get('browse_state'),undefined);
+    const clean = b.page().api.normalize('browse_state',{views:[entry,
+        {...entry,id:'post',pages:[{url:'/search',method:'POST',body:'q=private'}]},
+        {...entry,id:'external',pages:[{url:'//other.test/search',method:'GET'}]},
+        {...entry,id:'huge',pages:Array(101).fill(entry.pages[0])}]});
+    assert.deepEqual(plain(clean),{views:[entry]});
+    assert.equal(p.api.normalize('navigation_collapsed','yes'),undefined);
+    assert.equal(p.api.normalize('navigation_collapsed',true),true);
+});

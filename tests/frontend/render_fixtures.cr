@@ -155,14 +155,15 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
   end
 end
 
-def browse_fixture(env)
+def browse_fixture(env, valid_ids = false)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   items = (0...12).map do |i|
-    SearchVideo.new({title: ["The art of noticing", "An ordinary day, beautifully observed", "Finding color in unexpected places"][i % 3], id: preferences.dearrow_enabled ? i.to_s.rjust(11, '0') : "fixture#{i}", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})
+    SearchVideo.new({title: ["The art of noticing", "An ordinary day, beautifully observed", "Finding color in unexpected places"][i % 3], id: (preferences.dearrow_enabled || valid_ids) ? i.to_s.rjust(11, '0') : "fixture#{i}", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: 123456_i64, description_html: "A new perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})
   end
   navbar_search = true
-  page_nav_html = "<nav class=page-navigation><a class=pure-button href=?page=2>Next page</a></nav>"
+  current_page = env.params.query["page"]?.try(&.to_i?) || 1
+  page_nav_html = Invidious::Frontend::Pagination.nav_numeric(locale, base_url: env.request.resource, current_page: current_page, show_next: current_page < 3)
   render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
 end
 
@@ -591,3 +592,53 @@ end
 
 File.write("#{output}/verification-browser.html", verification_fixture)
 File.write("#{output}/verification-native.html", verification_fixture(true))
+
+# QoL cases use the production pagination and search templates, including POST
+# pagination and filtered-empty pages; no upstream search requests are made.
+def qol_search_fixture(env, page : Int32, empty = false)
+  preferences = env.get("preferences").as(Preferences)
+  locale = preferences.locale
+  params = URI::Params{"q" => "light", "page" => page.to_s, "duration" => "short"}
+  query = Invidious::Search::Query.new(params, :regular, preferences.region)
+  items = [] of SearchVideo
+  unless empty
+    items << SearchVideo.new({title: "A matching video", id: "aaaaaaaaaaa", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: 12_i64, description_html: "A perspective.", length_seconds: 30, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None})
+  end
+  blocked_results = false
+  member_results = false
+  redirect_url = "/redirect"
+  env.set "search", "light"
+  page_nav_html = Invidious::Frontend::Pagination.nav_numeric(locale, base_url: "/search?#{params}", current_page: page, show_next: page < 3, post: preferences.search_privacy)
+  navbar_search = true
+  render "src/invidious/views/search.ecr", "src/invidious/views/template.ecr"
+end
+
+File.write("#{output}/qol-browse.html", browse_fixture(signed_in_env("/feed/popular"), true))
+File.write("#{output}/qol-browse-next.html", browse_fixture(signed_in_env("/feed/popular?page=2"), true))
+File.write("#{output}/qol-browse-end.html", browse_fixture(signed_in_env("/feed/popular?page=3"), true))
+{false, true}.each do |private_search|
+  (1..3).each do |page|
+    env = signed_in_env("/search")
+    prefs = env.get("preferences").as(Preferences)
+    prefs.search_privacy = private_search
+    env.set "preferences", prefs
+    File.write("#{output}/qol-search-#{private_search}-#{page}.html", qol_search_fixture(env, page, page == 2))
+  end
+end
+require "./qol_checks"
+check_qol_preferences
+
+def qol_playlist_fixture
+  env = signed_in_env("/playlist?list=IVfixture")
+  env.set "remove_playlist_items", "IVfixture"
+  locale = "en-US"
+  items = (0...4).map do |i|
+    PlaylistVideo.new({title: "Occurrence #{i + 1}", id: "aaaaaaaaaaa", author: "Studio North", ucid: "UCfixture", length_seconds: 720, published: Time.utc,
+                       plid: "IVfixture", index: 9_007_199_254_740_993_i64 + i * 2, live_now: false, members_only: false})
+  end
+  navbar_search = true
+  page_nav_html = ""
+  render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
+end
+
+File.write("#{output}/qol-playlist.html", qol_playlist_fixture)

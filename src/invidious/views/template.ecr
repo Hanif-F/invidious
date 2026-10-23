@@ -12,6 +12,8 @@
     <script id="browser-profile" type="application/json"><%= {scope: Invidious::BrowserProfiles.render_scope(env), cookieDomain: Invidious::Authentication.cookie_domain(env), saveError: I18n.translate(locale, "browser_save_error")}.to_json.gsub("<", "\\u003c") %></script>
     <script src="/js/browser-storage.js?v=<%= ASSET_COMMIT %>"></script>
     <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
+    <script id="ui-config" type="application/json"><%= {"csrf" => env.get?("csrf_token").try(&.as(String)) || "", "signedIn" => !!env.get?("user"), "unseenOnly" => preferences.unseen_only, "privateSearch" => preferences.search_privacy, "browseFingerprint" => Invidious::Frontend::Misc.browse_fingerprint(preferences), "fingerprint" => OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, preferences.to_json), "words" => %w(error saved retry saving unsaved no_matches settings_search discard clear_search load_more end loading clear_filters shortcuts navigation select count select_all clear_selection add_playlist watched unwatched remove unsubscribe confirm_bulk progress partial check_playlist move_up move_down dock_return dock_dismiss play_pause mute follow search_focus close playback_keys navigation_toggle results_updated selection_label operation apply no_playlists page_only drag).to_h { |key| {key, I18n.translate(locale, "ux_#{key}")} }}.to_json.gsub("<", "\\u003c") %></script>
+    <script src="/js/ui.js?v=<%= ASSET_COMMIT %>"></script>
     <% if expiry = env.get?("verification_expiry") %>
     <script id="verification-access" type="application/json"><%= expiry.as(String).to_i64 %></script>
     <script src="/js/bot-protection.js?v=<%= ASSET_COMMIT %>"></script>
@@ -33,6 +35,7 @@
     <link rel="stylesheet" href="/css/video-actions.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/css/carousel.css?v=<%= ASSET_COMMIT %>">
     <link rel="stylesheet" href="/themes/diary/theme.css?v=<%= ASSET_COMMIT %>">
+    <link rel="stylesheet" href="/css/ui.css?v=<%= ASSET_COMMIT %>">
 
 </head>
 
@@ -118,7 +121,7 @@
             </header>
             <div class="app-layout">
                 <nav class="navigation-rail" aria-label="<%= I18n.translate(locale, "ui_navigation") %>"><%= rendered "components/navigation" %></nav>
-                <main id="main-content" tabindex="-1">
+                <main id="main-content" tabindex="-1" data-browse-region>
 
             <% if CONFIG.banner %>
                 <div class="h-box">
@@ -192,6 +195,12 @@
         </div>
     </div>
     <%= rendered "components/video-actions-dialog" %>
+    <aside id="ui-notice" class="ui-notice" hidden><span role="status"></span><button type="button" class="pure-button" aria-label="<%= I18n.translate(locale, "Close") %>" data-ui-dismiss>×</button></aside>
+    <dialog id="shortcut-help" aria-labelledby="shortcut-heading">
+        <form method="dialog"><button class="pure-button dialog-close" aria-label="<%= I18n.translate(locale, "Close") %>">×</button></form>
+        <h2 id="shortcut-heading"><%= I18n.translate(locale, "ux_shortcuts") %></h2>
+        <dl><dt>/</dt><dd><%= I18n.translate(locale, "ux_search_focus") %></dd><dt>?</dt><dd><%= I18n.translate(locale, "ux_shortcuts") %></dd><dt>Escape</dt><dd><%= I18n.translate(locale, "Close") %></dd><dt>K / Space · J / L · M · F · C</dt><dd><%= I18n.translate(locale, "ux_playback_keys") %></dd></dl>
+    </dialog>
     <% if preferences.dearrow_enabled %>
         <script id="dearrow-config" type="application/json"><%= {"showOriginal" => preferences.dearrow_show_original, "originalLabel" => I18n.translate(locale, "dearrow_reveal_original")}.to_json.gsub("<", "\\u003c") %></script>
         <script src="/js/dearrow.js?v=<%= ASSET_COMMIT %>" defer></script>
@@ -206,6 +215,10 @@
     <script src="/js/timezone.js?v=<%= ASSET_COMMIT %>" defer></script>
     <% end %>
     <script src="/js/interface.js?v=<%= ASSET_COMMIT %>" defer></script>
+    <script src="/js/preferences.js?v=<%= ASSET_COMMIT %>" defer></script>
+    <script src="/js/browse.js?v=<%= ASSET_COMMIT %>" defer></script>
+    <script src="/js/library.js?v=<%= ASSET_COMMIT %>" defer></script>
+    <script src="/js/player-dock.js?v=<%= ASSET_COMMIT %>" defer></script>
     <% if env.get? "user" %>
         <script src="/js/sse.js?v=<%= ASSET_COMMIT %>"></script>
         <script id="notification_data" type="application/json">

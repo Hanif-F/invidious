@@ -90,6 +90,33 @@ module Invidious::Database::Playlists
     PG_DB.exec(request, index, id)
   end
 
+  # Stable occurrence IDs, rather than video IDs or visible positions, preserve
+  # duplicate videos and entries on pages the browser has not loaded.
+  def move_video(id : String, owner : String, source : Int64, anchor : Int64, after : Bool) : Symbol
+    result = :missing
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      row = conn.query_one?("SELECT author, index FROM playlists WHERE id = $1 FOR UPDATE", id, as: {String, Array(Int64)})
+      if row
+        author, order = row
+        if author != owner
+          result = :forbidden
+        elsif !order.includes?(source) || !order.includes?(anchor)
+          result = :conflict
+        else
+          unless source == anchor
+            order.delete(source)
+            position = order.index(anchor).not_nil!
+            order.insert(after ? position + 1 : position, source)
+            conn.exec("UPDATE playlists SET index = $1, updated = now() WHERE id = $2", order, id)
+          end
+          result = :ok
+        end
+      end
+    end
+    result
+  end
+
   # -------------------
   #  Select
   # -------------------

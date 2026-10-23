@@ -321,6 +321,11 @@ module Invidious::Routes::PreferencesRoute
       end
     end
 
+    if env.params.query["redirect"]? == "false"
+      env.response.content_type = "application/json"
+      env.response.headers["Cache-Control"] = "private, no-store"
+      return {preferences: preferences, fingerprint: OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, preferences.to_json)}.to_json
+    end
     env.redirect referer
   end
 

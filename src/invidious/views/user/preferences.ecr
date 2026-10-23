@@ -7,6 +7,12 @@
         <h1><%= I18n.translate(locale, "Preferences") %></h1>
         <p><%= I18n.translate(locale, "ui_preferences_intro") %></p>
     </header>
+    <div class="preferences-search pure-form">
+        <label for="preferences-search"><%= I18n.translate(locale, "ux_settings_search") %></label>
+        <input type="search" id="preferences-search" autocomplete="off">
+        <button type="button" class="pure-button" id="preferences-clear-search"><%= I18n.translate(locale, "ux_clear_search") %></button>
+    </div>
+    <p id="preferences-no-matches" role="status" hidden><%= I18n.translate(locale, "ux_no_matches") %></p>
     <nav class="preference-nav" aria-label="<%= I18n.translate(locale, "Preferences") %>">
         <a href="#preferences-appearance"><%= I18n.translate(locale, "ui_appearance") %></a>
         <a href="#preferences-playback"><%= I18n.translate(locale, "ui_playback") %></a>
@@ -542,7 +548,9 @@
         </fieldset>
         <% end %>
         <div class="pure-controls preferences-save">
-            <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Save preferences") %></button>
+            <button type="submit" class="pure-button pure-button-primary" aria-label="<%= I18n.translate(locale, "Save preferences") %>"><span class="save-label-full" aria-hidden="true"><%= I18n.translate(locale, "Save preferences") %></span><span class="save-label-short" aria-hidden="true"><%= I18n.translate(locale, "ux_save_short") %></span></button>
+            <button type="button" class="pure-button" id="preferences-discard" aria-label="<%= I18n.translate(locale, "ux_discard") %>"><span class="save-label-full" aria-hidden="true"><%= I18n.translate(locale, "ux_discard") %></span><span class="save-label-short" aria-hidden="true"><%= I18n.translate(locale, "ux_discard_short") %></span></button>
+            <span id="preferences-status" role="status"></span>
         </div>
     </form>
 </div>

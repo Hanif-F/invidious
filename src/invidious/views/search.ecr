@@ -10,37 +10,50 @@
 
 <!-- Search redirection and filtering UI -->
 <% member_reset = query.to_http_params; member_reset.delete_all("show_member_videos"); member_reset["reset_member_videos"] = "1" %>
-<%= Invidious::Frontend::SearchFilters.generate(query.filters, query.text, query.page, locale, query.include_blocked, !!env.get?("user"), Invidious::Frontend::MemberVideos.show?(env), "/search?#{member_reset}") %>
+<%= Invidious::Frontend::SearchFilters.generate(query.filters, query.text, query.page, locale, query.include_blocked, !!env.get?("user"), Invidious::Frontend::MemberVideos.show?(env), "/search?#{member_reset}", search_privacy) %>
 <div class="active-filters">
 <% query.filters.to_iv_params.each do |key, value| %>
     <% value.split(",").each do |option| %>
         <%
             remaining = query.to_http_params
+            remaining.delete_all("page")
             if key == "features" && value.split(",").size > 1
                 remaining[key] = value.split(",").reject { |feature| feature == option }.join(",")
             else
                 remaining.delete(key)
             end
         %>
+        <% if search_privacy %>
+        <form action="/search" method="post" class="filter-chip">
+            <% remaining.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %>
+            <button class="pure-button" type="submit" aria-label="<%= I18n.translate(locale, "ui_remove_filter") %>: <%= HTML.escape(I18n.translate(locale, "search_filters_#{key}_option_#{option}")) %>"><%= I18n.translate(locale, "search_filters_#{key}_option_#{option}") %> ×</button>
+        </form>
+        <% else %>
         <a href="/search?<%= HTML.escape(remaining.to_s) %>" aria-label="<%= I18n.translate(locale, "ui_remove_filter") %>: <%= HTML.escape(I18n.translate(locale, "search_filters_#{key}_option_#{option}")) %>"><%= I18n.translate(locale, "search_filters_#{key}_option_#{option}") %> <span aria-hidden="true">×</span></a>
+        <% end %>
     <% end %>
 <% end %>
 </div>
-
+<% clear_params = query.to_http_params; %w(date type duration features sort page sp).each { |key| clear_params.delete_all(key) } %>
+<form action="/search" method="<%= search_privacy ? "post" : "get" %>" class="clear-filters">
+    <% clear_params.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %>
+    <button class="pure-button" type="submit"><%= I18n.translate(locale, "ux_clear_filters") %></button>
+</form>
 
 <%- if items.empty? -%>
+<div data-browse-items></div>
 <div class="h-box no-results-error">
     <div>
         <% if env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
         <% if blocked_results %>
         <p><%= I18n.translate(locale, "Blocked channels hid these results") %></p>
         <% unblocked_query = query.to_http_params; unblocked_query["include_blocked"] = "1" %>
-        <a href="/search?<%= HTML.escape(unblocked_query.to_s) %>"><%= I18n.translate(locale, "Include blocked channels") %></a>
+        <% if search_privacy %><form action="/search" method="post" class="filter-chip"><% unblocked_query.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %><button class="pure-button"><%= I18n.translate(locale, "Include blocked channels") %></button></form><% else %><a href="/search?<%= HTML.escape(unblocked_query.to_s) %>"><%= I18n.translate(locale, "Include blocked channels") %></a><% end %>
         <% end %>
         <% if member_results %>
         <p><%= I18n.translate(locale, "Members-only videos hid these results") %></p>
         <% member_query = query.to_http_params; member_query["show_member_videos"] = "1" %>
-        <a href="/search?<%= HTML.escape(member_query.to_s) %>"><%= I18n.translate(locale, "Show members-only videos") %></a>
+        <% if search_privacy %><form action="/search" method="post" class="filter-chip"><% member_query.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %><button class="pure-button"><%= I18n.translate(locale, "Show members-only videos") %></button></form><% else %><a href="/search?<%= HTML.escape(member_query.to_s) %>"><%= I18n.translate(locale, "Show members-only videos") %></a><% end %>
         <% end %>
         <%= I18n.translate(locale, "search_message_no_results") %><br/><br/>
         <%= I18n.translate(locale, "search_message_change_filters_or_query") %><br/><br/>

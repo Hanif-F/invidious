@@ -397,7 +397,17 @@ module Invidious::Routes::Playlists
       Invidious::Database::PlaylistVideos.delete(index, playlist_id)
       Invidious::Database::Playlists.update_video_removed(playlist_id, index)
     when "move_video_before"
-      # TODO: Playlist stub
+      source = env.params.body["source"]?.try(&.to_i64?)
+      anchor = env.params.body["anchor"]?.try(&.to_i64?)
+      placement = env.params.body["placement"]? || "before"
+      unless source && anchor && {"before", "after"}.includes?(placement)
+        return error_json(400, "Invalid playlist entry or placement")
+      end
+      case Invidious::Database::Playlists.move_video(playlist_id, user.email, source, anchor, placement == "after")
+      when :missing   then return error_json(404, "Playlist not found")
+      when :forbidden then return error_json(403, "Invalid user")
+      when :conflict  then return error_json(409, "Playlist entries changed; refresh the playlist")
+      end
     when nil
       return error_json(400, "Missing action")
     else

@@ -51,6 +51,20 @@ window.InvidiousStorage = (function () {
     }
 
     function normalize(key, value) {
+        if (key === 'navigation_collapsed') return typeof value === 'boolean' ? value : undefined;
+        if (key === 'browse_state') {
+            if (!object(value) || !Array.isArray(value.views)) return;
+            function path(text) { return typeof text === 'string' && text.length <= 32768 && /^\/(?!\/)/.test(text); }
+            return {views: value.views.slice(-10).filter(function (entry) {
+                return object(entry) && typeof entry.id === 'string' && entry.id.length <= 100 && path(entry.url) &&
+                    typeof entry.fingerprint === 'string' && /^[a-f0-9]{64}$/.test(entry.fingerprint) &&
+                    number(entry.scroll, 0, 1e9) && Array.isArray(entry.pages) && entry.pages.length <= 100 &&
+                    entry.pages.every(function (page) { return object(page) && path(page.url) && page.method === 'GET' && page.body === undefined; });
+            }).map(function (entry) {
+                return {id: entry.id, url: entry.url, fingerprint: entry.fingerprint, scroll: entry.scroll,
+                    pages: entry.pages.map(function (page) { return {url: page.url, method: 'GET'}; })};
+            })};
+        }
         if (key === 'invidious_player_volume') return number(value, 0, 1) ? value : undefined;
         if (key === 'dark_mode') return ['', 'light', 'dark'].includes(value) ? value : undefined;
         if (key === 'notification_count') return Number.isSafeInteger(value) && value >= 0 ? value : undefined;

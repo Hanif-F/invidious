@@ -52,10 +52,20 @@ function show_youtube_replies(event) {
     target.setAttribute('data-sub-text', sub_text);
 }
 
+function comments_failure(container, fallback, retry) {
+    if (Array.isArray(fallback)) container.replaceChildren(...fallback);
+    else container.innerHTML = fallback;
+    container.querySelectorAll('.comments-error').forEach(function (element) { element.remove(); });
+    var message = document.createElement('p');
+    message.className = 'comments-error';
+    InvidiousUI.status(message, InvidiousUI.label('error'), retry);
+    container.prepend(message);
+}
+
 function get_youtube_comments() {
     var comments = document.getElementById('comments');
 
-    var fallback = comments.innerHTML;
+    var fallback = Array.from(comments.childNodes);
     comments.innerHTML = spinnerHTML;
 
     var baseUrl = video_data.base_url || '/api/v1/comments/'+ video_data.id
@@ -81,15 +91,13 @@ function get_youtube_comments() {
 
             document.getElementById("try-reddit-comments-link").onclick = swap_comments;
         } else {
-            comments.innerHTML = fallback; 
+            comments_failure(comments, fallback, get_youtube_comments);
         }
 
     };
 
-    if (video_data.params.comments[1] === 'youtube')
-        onNon200 = function (xhr) {};
 
-    helpers.xhr('GET', url, {retries: 5, entity_name: 'comments'}, {
+    helpers.xhr('GET', url, {}, {
         on200: function (response) {
             var commentInnerHtml = ' \
             <div> \
@@ -127,20 +135,18 @@ function get_youtube_comments() {
             }
         },
         onNon200: onNon200, // declared above
-        onError: function (xhr) {
-            comments.innerHTML = spinnerHTML;
-        },
-        onTimeout: function (xhr) {
-            comments.innerHTML = spinnerHTML;
-        }
+        onError: onNon200,
+        onTimeout: onNon200
     });
 }
 
 function get_youtube_replies(target, load_more, load_replies) {
     var continuation = target.getAttribute('data-continuation');
+    if (target.dataset.loading) return;
+    target.dataset.loading = 'true';
 
     var body = target.parentNode.parentNode;
-    var fallback = body.innerHTML;
+    var fallback = Array.from(body.childNodes);
     body.innerHTML = spinnerHTML;
     var baseUrl = video_data.base_url || '/api/v1/comments/'+ video_data.id
     var url = baseUrl +
@@ -153,6 +159,13 @@ function get_youtube_replies(target, load_more, load_replies) {
         url += '&ucid=' + video_data.ucid
     }
     if (load_replies) url += '&action=action_get_comment_replies';
+    function failed() {
+        delete target.dataset.loading;
+        comments_failure(body, fallback, function () {
+            var restored = body.querySelector('[data-continuation]');
+            if (restored) get_youtube_replies(restored, load_more, load_replies);
+        });
+    }
 
     helpers.xhr('GET', url, {}, {
         on200: function (response) {
@@ -180,12 +193,6 @@ function get_youtube_replies(target, load_more, load_replies) {
                 body.appendChild(div);
             }
         },
-        onNon200: function (xhr) {
-            body.innerHTML = fallback;
-        },
-        onTimeout: function (xhr) {
-            console.warn('Pulling comments failed');
-            body.innerHTML = fallback;
-        }
+        onNon200: failed, onTimeout: failed, onError: failed
     });
 }

@@ -1,3 +1,14 @@
+Playlist ordering checks run with the production account harness against an
+**empty disposable** database named `invidious_accounts_test`:
+
+```sh
+ACCOUNT_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_accounts_test crystal run tests/database/accounts.cr -- --qol-only
+```
+
+They cover owner/CSRF enforcement, stable 64-bit occurrence IDs, duplicate videos,
+unloaded entries, stale anchors and concurrent reorders/additions. The normal
+account harness and its frontend CI database job include these checks too.
+
 Original-title cache tests require an **empty** database named
 `invidious_original_titles_test`:
 

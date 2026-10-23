@@ -1,0 +1,53 @@
+/* Diary interaction layer. Shared tokens follow light/dark/system appearance. */
+[hidden] { display: none !important; }
+.ui-notice { position: fixed; inset-inline: 16px; bottom: 16px; margin: auto; max-width: 680px; z-index: 1200; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; color: var(--text); background: var(--surface-raised, var(--surface)); border: 2px solid var(--accent); box-shadow: 0 4px 20px #0003; border-radius: 8px; }
+.ui-retry { margin-inline-start: 8px; }
+.library-toolbar button, .preferences-save button, .navigation-tools button, .browse-controls button { white-space: normal; max-width: 100%; overflow-wrap: anywhere; }
+.preferences-search { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-block: 20px; }
+.preferences-search input { min-width: 0; flex: 1 1 220px; }
+.preferences-page .preferences-save { position: sticky; bottom: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 0; padding: 16px; background: var(--surface); border: 2px solid var(--line); border-radius: 8px; }
+.preferences-save [role=status] { flex: 1 1 180px; }
+.save-label-short { display: none; }
+.preference-nav a, .preferences-form input, .preferences-form select { scroll-margin-block-end: 25vh; }
+@media (max-width: 640px) {
+    .preferences-page .preferences-save { gap: 8px; padding: 8px; }
+    .preferences-save button { flex: 1; }
+    .preferences-save [role=status] { flex-basis: 100%; max-height: 20vh; overflow-y: auto; }
+    .save-label-full { display: none; }
+    .save-label-short { display: inline; }
+}
+.browse-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0; }
+[data-browse-region][aria-busy=true] .browse-controls { opacity: .75; }
+.navigation-tools { display: flex; gap: 8px; margin-block: 12px; flex-wrap: wrap; }
+.navigation-tools button { min-height: 44px; }
+#shortcut-help { width: min(580px, calc(100vw - 32px)); max-height: 80vh; overflow: auto; color: var(--text); background: var(--surface); border: 2px solid var(--line); border-radius: 12px; }
+#shortcut-help dt { font-family: monospace; margin-top: 16px; }
+#shortcut-help dd { margin: 6px 0 0; }
+@media (min-width: 1100px) {
+    body[data-nav-collapsed=true]:not([data-page=watch]) .navigation-rail { width: 64px; padding-inline: 6px; }
+    body[data-nav-collapsed=true]:not([data-page=watch]) .app-layout { grid-template-columns: 76px minmax(0, 1fr); }
+    body[data-nav-collapsed=true] .navigation-rail .navigation-link { overflow: hidden; font-size: 0; min-height: 48px; justify-content: center; padding-inline: 6px; }
+    body[data-nav-collapsed=true] .navigation-rail .navigation-link span { font-size: 22px; }
+    body[data-nav-collapsed=true] .navigation-rail .navigation-heading { font-size: 0; margin: 8px 0; }
+}
+.library-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px; margin-block: 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; }
+.library-toolbar select { max-width: min(100%, 260px); }
+.library-toolbar[data-selecting=false] { border: 0; background: transparent; padding: 0; }
+.library-toolbar [role=status] { flex-basis: 100%; }
+.library-checkbox { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--surface); font-size: 14px; }
+.library-checkbox input { width: 20px; height: 20px; }
+[data-selected=true] { outline: 3px solid var(--accent); outline-offset: -3px; }
+.playlist-order { display: flex; align-items: center; gap: 8px; padding: 6px; }
+.playlist-drag { cursor: grab; touch-action: auto; -webkit-user-drag: element; }
+.playlist-drag[draggable=false] { -webkit-user-drag: none; cursor: default; opacity: .5; }
+.is-dragging { opacity: .6; }
+.watch-player.is-docked { aspect-ratio: 16 / 9; }
+.watch-player.is-docked #player-container { position: fixed; width: 400px; height: 225px; inset-block-start: auto; inset-block-end: 78px; inset-inline-end: 24px; inset-inline-start: auto; z-index: 100; max-width: calc(100vw - 48px); }
+.dock-controls { position: fixed; width: 400px; max-width: calc(100vw - 48px); inset-inline-end: 24px; bottom: 24px; z-index: 101; display: flex; gap: 4px; padding: 4px; box-sizing: border-box; background: var(--surface); border: 1px solid var(--line); border-radius: 0 0 8px 8px; }
+.dock-controls button { min-width: 44px; min-height: 44px; }
+.dock-controls [data-dock=return] { flex: 1; }
+.is-docked .vjs-control-bar, .is-docked .vjs-big-play-button { display: none !important; }
+.transcript-line.is-active { background: var(--selected); border-inline-start: 3px solid var(--accent); }
+.transcript-toolbar .transcript-follow { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 1099px) { .navigation-tools [data-rail-toggle] { display: none; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto !important; } }

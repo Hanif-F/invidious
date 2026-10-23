@@ -238,18 +238,16 @@ if (queue_toggle) {
 function get_reddit_comments() {
     var comments = document.getElementById('comments');
 
-    var fallback = comments.innerHTML;
+    var fallback = Array.from(comments.childNodes);
     comments.innerHTML = spinnerHTML;
 
     var url = '/api/v1/comments/' + video_data.id +
         '?source=reddit&format=html' +
         '&hl=' + video_data.preferences.locale;
 
-    var onNon200 = function (xhr) { comments.innerHTML = fallback; };
-    if (video_data.params.comments[1] === 'youtube')
-        onNon200 = function (xhr) {};
+    var onNon200 = function () { comments_failure(comments, fallback, get_reddit_comments); };
 
-    helpers.xhr('GET', url, {retries: 5, entity_name: ''}, {
+    helpers.xhr('GET', url, {}, {
         on200: function (response) {
             comments.innerHTML = ' \
             <div> \
@@ -280,7 +278,7 @@ function get_reddit_comments() {
             comments.children[0].children[0].children[0].onclick = toggle_comments;
             comments.children[0].children[1].children[0].onclick = swap_comments;
         },
-        onNon200: onNon200, // declared above
+        onNon200: onNon200, onError: onNon200, onTimeout: onNon200
     });
 }
 

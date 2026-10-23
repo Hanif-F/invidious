@@ -174,6 +174,7 @@ for (const engine of engines) {
     test(`${engine}: sorting keeps subscription removal working`, async () => {
         const {page, context, errors, requests} = await pageFor(engine, {fixture: 'subscriptions-relevance', route: 'subscription_manager'});
         await page.locator('[data-onclick="remove_subscription"]').first().click();
+        await page.waitForFunction(() => document.querySelectorAll('.subscription-row').length === 2);
         assert.equal(await page.locator('.subscription-row:visible').count(), 2);
         assert.ok(requests.some(url => url.startsWith('/subscription_ajax?action=remove_subscriptions')));
         assert.equal(await page.locator('#count').textContent(), '2');
@@ -226,7 +227,7 @@ async function pageFor(engine, options = {}) {
     await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         requests.push(url.pathname + url.search);
-        if (route.request().isNavigationRequest()) {
+        if (route.request().isNavigationRequest() || (route.request().headers().accept || '').includes('text/html')) {
             let body = fs.readFileSync(path.join(generated, (url.pathname.startsWith('/embed/') ? options.embedFixture || 'embed-mobile' : options.profile?.fixture || fixture) + '.html'), 'utf8');
             const scope = options.profile?.scope || fixtureScope;
             body = body.replace(/(<script id="browser-profile"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) =>
@@ -1674,7 +1675,7 @@ for (const engine of engines) {
             for (const width of [320, 1440]) {
                 const {page, context, errors} = await pageFor(engine, {fixture, width, javascript: false});
                 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `${fixture} overflows at ${width}`);
-                const save = await page.locator('.preferences-save button').boundingBox();
+                const save = await page.locator('.preferences-save button[type=submit]').boundingBox();
                 assert.ok(save && save.x >= 0 && save.x + save.width <= width, `${fixture}: Save is clipped`);
                 if (width === 320 && fixture !== 'preferences-rtl') {
                     await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
@@ -2212,7 +2213,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: cached history titles and compact desktop playlist library`, async () => {
-        const history = await pageFor(engine, { fixture: 'history' });
+        const history = await pageFor(engine, { fixture: 'history', route: 'feed/history' });
         const cards = history.page.locator('.media-card');
         assert.match(await cards.nth(0).textContent(), /A journey through light/);
         assert.match(await cards.nth(1).textContent(), /Light <study> & color/);
@@ -2226,11 +2227,12 @@ for (const engine of engines) {
         await history.page.screenshot({ path: path.join(artifacts, `history-${engine}.png`), fullPage: true });
         await history.page.route('**/watch_ajax?**', route => route.fulfill({ status: 500, body: '{}' }));
         await cards.nth(0).locator('[data-onclick="mark_unwatched"]').click();
-        await history.page.waitForFunction(() => document.querySelector('.history-group').style.display === '');
+        await history.page.locator('#ui-notice .ui-retry').waitFor();
         assert.equal(await history.page.locator('.history-group').first().isVisible(), true);
         await history.page.route('**/watch_ajax?**', route => route.fulfill({ status: 200, body: '{}' }));
         await cards.nth(0).locator('[data-onclick="mark_unwatched"]').click();
-        assert.equal(await history.page.locator('.history-group').first().isVisible(), false);
+        await history.page.waitForFunction(() => document.querySelectorAll('.history-group').length === 2);
+        assert.equal(await history.page.locator('.history-group h2').first().textContent(), 'Yesterday');
         await history.context.close();
         for (const fixture of ['history-empty', 'history-thin']) {
             const variant = await pageFor(engine, { fixture, width: 390, javascript: false });
@@ -2515,7 +2517,7 @@ test('library navigation survives custom feed settings without channel managemen
     assert.ok(!html.includes('<img'));
 });
 
-test('UI asset additions report the advisory 35KB compressed target', () => {
+test('UI asset additions report compressed sizes without a target', () => {
     const baseline = require('./asset-baseline.json');
     let delta = 0;
     let totalShared = 0;
@@ -2524,13 +2526,12 @@ test('UI asset additions report the advisory 35KB compressed target', () => {
         totalShared += compressed;
         delta += compressed - originalBytes;
     }
-    for (const file of ['js/dearrow.js', 'js/channel-spoilers.js', 'css/channel-spoilers.css', 'js/player-mobile.js', 'js/player-stats.js', 'js/player-stream-menu.js', 'js/dearrow-loader.js', 'js/clip-loader.js', 'js/player-chapters.js', 'css/dearrow.css']) {
+    for (const file of ['js/dearrow.js', 'js/channel-spoilers.js', 'css/channel-spoilers.css', 'js/player-mobile.js', 'js/player-stats.js', 'js/player-stream-menu.js', 'js/dearrow-loader.js', 'js/clip-loader.js', 'js/player-chapters.js', 'css/dearrow.css', 'js/ui.js', 'js/preferences.js', 'js/browse.js', 'js/library.js', 'js/player-dock.js', 'css/ui.css']) {
         const bytes = gzipSync(fs.readFileSync(path.join(root, 'assets', file))).length;
         delta += bytes;
         totalShared += bytes;
     }
     assert.ok(Number.isFinite(delta) && delta > 0, "Asset inventory must report valid sizes");
-    console.log(`Advisory target: 35840 gzip bytes; difference: ${delta - 35840} bytes (visual variety may exceed target).`);
     console.log(`Inventoried initial assets (shared plus Diary): ${totalShared} gzip bytes.`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
 });
@@ -2563,12 +2564,12 @@ for (const engine of engines) {
         const menu = page.locator('.video-context').first();
         await menu.locator('summary').click();
         await menu.locator('[data-video-action=block]').click();
-        await page.locator('#video-actions-notice').waitFor({ state: 'visible' });
+        await page.locator('#ui-notice .ui-retry').waitFor({ state: 'visible' });
         assert.equal(await page.locator('.media-item:visible').count(), 12);
         fail = false;
-        await menu.locator('summary').click();
-        await menu.locator('[data-video-action=block]').click();
+        await page.locator('#ui-notice .ui-retry').click();
         await page.locator('#video-actions-undo').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('#ui-notice').isVisible(), false);
         assert.equal(await page.locator('.media-item:visible').count(), 0);
         await page.locator('#video-actions-undo').click();
         await page.locator('.media-item').first().waitFor({ state: 'visible' });
@@ -2673,6 +2674,7 @@ for (const engine of engines) {
             assert.doesNotMatch(await reset.getAttribute('href'), /[?&]show_member_videos=/);
             await toggle.check();
             await page.locator('#filters-apply button').click();
+            await page.waitForURL(url => url.searchParams.getAll('show_member_videos').join(',') === '0,1');
             assert.deepEqual(new URL(page.url()).searchParams.getAll('show_member_videos'), ['0', '1']);
             assert.deepEqual(errors, []);
             await context.close();
@@ -3493,6 +3495,7 @@ for (const engine of engines) {
         assert.equal(await page.evaluate(() => player.paused()), false);
         await page.keyboard.press('Escape');
         await panel.waitFor({state: 'hidden'});
+        await page.waitForFunction(() => document.querySelector('.vjs-mobile-settings') === document.activeElement);
         assert.equal(await page.locator('.vjs-mobile-settings').evaluate(el => el === document.activeElement), true);
         await page.evaluate(() => { player.pause(); player.currentTime(.5); });
         await skip.waitFor({state: 'visible'});
@@ -4078,6 +4081,7 @@ for (const engine of engines) {
             await dialog.evaluate(el => el.scrollTop = 0);
             await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-contributions-${width}.png`)});
             await page.keyboard.press('Escape');
+            await page.waitForFunction(() => !document.querySelector('#dearrow-dialog').open && document.querySelector('#dearrow-open') === document.activeElement);
             assert.equal(await dialog.isVisible(), false);
             assert.equal(await page.locator('#dearrow-open').evaluate(el => el === document.activeElement), true);
             assert.deepEqual(errors, []);

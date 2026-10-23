@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **400 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **406 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -40,6 +40,7 @@ Base, player, feature and layout styles; minified third-party styles retain thei
 | [assets/css/pure-min.css](../../assets/css/pure-min.css) | pure min |
 | [assets/css/quality-selector.css](../../assets/css/quality-selector.css) | quality selector |
 | [assets/css/search.css](../../assets/css/search.css) | search |
+| [assets/css/ui.css](../../assets/css/ui.css) | ui |
 | [assets/css/verification.css](../../assets/css/verification.css) | verification |
 | [assets/css/video-actions.css](../../assets/css/video-actions.css) | video actions |
 | [assets/css/videojs-youtube-annotations.min.css](../../assets/css/videojs-youtube-annotations.min.css) | videojs youtube annotations.min |
@@ -51,6 +52,7 @@ Browser behavior; individual module responsibilities are described in frontend d
 | --- | --- |
 | [assets/js/_helpers.js](../../assets/js/_helpers.js) |  helpers |
 | [assets/js/bot-protection.js](../../assets/js/bot-protection.js) | bot protection |
+| [assets/js/browse.js](../../assets/js/browse.js) | browse |
 | [assets/js/browser-storage.js](../../assets/js/browser-storage.js) | browser storage |
 | [assets/js/channel-spoiler-preferences.js](../../assets/js/channel-spoiler-preferences.js) | channel spoiler preferences |
 | [assets/js/channel-spoilers.js](../../assets/js/channel-spoilers.js) | channel spoilers |
@@ -65,10 +67,12 @@ Browser behavior; individual module responsibilities are described in frontend d
 | [assets/js/embed.js](../../assets/js/embed.js) | embed |
 | [assets/js/handlers.js](../../assets/js/handlers.js) | handlers |
 | [assets/js/interface.js](../../assets/js/interface.js) | interface |
+| [assets/js/library.js](../../assets/js/library.js) | library |
 | [assets/js/live-chat.js](../../assets/js/live-chat.js) | live chat |
 | [assets/js/notifications.js](../../assets/js/notifications.js) | notifications |
 | [assets/js/pagination.js](../../assets/js/pagination.js) | pagination |
 | [assets/js/player-chapters.js](../../assets/js/player-chapters.js) | player chapters |
+| [assets/js/player-dock.js](../../assets/js/player-dock.js) | player dock |
 | [assets/js/player-mobile.js](../../assets/js/player-mobile.js) | player mobile |
 | [assets/js/player-stats.js](../../assets/js/player-stats.js) | player stats |
 | [assets/js/player-stream-menu.js](../../assets/js/player-stream-menu.js) | player stream menu |
@@ -76,6 +80,7 @@ Browser behavior; individual module responsibilities are described in frontend d
 | [assets/js/player.js](../../assets/js/player.js) | player |
 | [assets/js/playlist_widget.js](../../assets/js/playlist_widget.js) | playlist widget |
 | [assets/js/post.js](../../assets/js/post.js) | post |
+| [assets/js/preferences.js](../../assets/js/preferences.js) | preferences |
 | [assets/js/silvermine-videojs-quality-selector.min.js](../../assets/js/silvermine-videojs-quality-selector.min.js) | silvermine videojs quality selector.min |
 | [assets/js/sponsorblock-preferences.js](../../assets/js/sponsorblock-preferences.js) | sponsorblock preferences |
 | [assets/js/sponsorblock.js](../../assets/js/sponsorblock.js) | sponsorblock |
@@ -84,6 +89,7 @@ Browser behavior; individual module responsibilities are described in frontend d
 | [assets/js/themes.js](../../assets/js/themes.js) | themes |
 | [assets/js/timezone.js](../../assets/js/timezone.js) | timezone |
 | [assets/js/transcript.js](../../assets/js/transcript.js) | transcript |
+| [assets/js/ui.js](../../assets/js/ui.js) | ui |
 | [assets/js/verification.js](../../assets/js/verification.js) | verification |
 | [assets/js/video-actions.js](../../assets/js/video-actions.js) | video actions |
 | [assets/js/videojs-youtube-annotations.min.js](../../assets/js/videojs-youtube-annotations.min.js) | videojs youtube annotations.min |

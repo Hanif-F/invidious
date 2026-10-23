@@ -2,7 +2,7 @@
 <% Invidious::Frontend::AiChannels.prepare_ids(env, clips.map(&.ucid)) %>
 <% Invidious::Frontend::ViewCounts.prepare(env, clips) %>
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, clips) %>
-<div class="pure-g media-grid clip-library">
+<div class="pure-g media-grid clip-library" data-browse-items>
 <% clips.each do |clip| %>
     <article class="pure-u-1 pure-u-md-1-2 pure-u-lg-1-4 media-item clip-card">
         <div class="h-box">

@@ -99,6 +99,19 @@ require "./browser_profile_checks"
 require "./tv_pairing_checks"
 require "./upstream_merge_checks"
 require "./required_login_checks"
+require "./playlist_order_checks"
+
+if ARGV.includes?("--qol-only")
+  begin
+    check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
+    PG_DB.exec("CREATE TABLE invidious_migrations (id bigserial PRIMARY KEY, version bigint NOT NULL)")
+    Invidious::Database::Migrator.new(PG_DB).migrate
+    check_playlist_order
+  ensure
+    PG_DB.close
+  end
+  exit
+end
 
 if ARGV.includes?("--required-login-only")
   begin
@@ -304,6 +317,7 @@ begin
   check_subscription_manager
   check_upstream_history_imports_and_feeds
   check_required_login
+  check_playlist_order
 
   # Verify migration failure rolls back DDL rather than dropping/merging conflicts.
   PG_DB.exec("DROP SCHEMA public CASCADE")

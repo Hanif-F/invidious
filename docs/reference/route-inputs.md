@@ -217,6 +217,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `POST /preferences`. Source: [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr).
 
+- Query: `redirect`.
 - Form: `admin_default_home`, `admin_feed_menu[#{index}]`, `ai_blocklist_action`, `ai_blocklist_feeds`, `ai_blocklist_other_pages`, `ai_blocklist_recommendations`, `ai_blocklist_search`, `ai_filter_enabled`, `ai_filter_form_version`, `ai_warnlist_action`, `ai_warnlist_feeds`, `ai_warnlist_other_pages`, `ai_warnlist_recommendations`, `ai_warnlist_search`, `ai_{{ kind.id }}_{{ surface.id }}_action`, `annotations`, `annotations_subscribed`, `automatic_instance_redirect`, `autoplay`, `captcha_enabled`, `captions[#{i}]`, `comments[#{i}]`, `continue`, `continue_autoplay`, `dark_mode`, `dearrow_enabled`, `dearrow_show_original`, `default_home`, `default_playlist`, `extend_desc`, `feed_menu[#{index}]`, `latest_only`, `listen`, `local`, `locale`, `login_enabled`, `login_required`, `max_results`, `modified_source_code_url`, `notifications_only`, `player_style`, `popular_enabled`, `preferred_audio`, `preload`, `quality`, `quality_dash`, `region`, `registration_enabled`, `related_videos`, `save_player_pos`, `search_privacy`, `seek_seconds`, `show_member_videos`, `show_nick`, `show_original_title`, `show_original_title_present`, `sort`, `speed`, `sponsorblock_color_#{category}`, `sponsorblock_enabled`, `sponsorblock_mode_#{category}`, `statistics_enabled`, `thin_mode`, `timezone`, `ui_density`, `unseen_only`, `video_codec`, `video_loop`, `vr_mode`, `watch_history`.
 
 ## Routes::PreferencesRoute.detect_timezone
@@ -373,7 +374,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 `POST /playlist_ajax`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
 
 - Query: `action`, `playlist_id`, `redirect`, `set_video_id`, `video_id`.
-- Form: `csrf_token`.
+- Form: `anchor`, `csrf_token`, `placement`, `source`.
 
 ## Routes::Feeds.view_all_playlists_redirect
 

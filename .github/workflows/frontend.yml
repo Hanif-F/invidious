@@ -47,11 +47,12 @@ jobs:
         run: |
           crystal run tests/frontend/render_fixtures.cr
           ffmpeg -f lavfi -i color=c=0x303a53:s=320x180:r=12 -t 4 -an -c:v libvpx -y tests/frontend/.generated/fixture.webm
+          ffmpeg -f lavfi -i color=c=0x303a53:s=320x180:r=12 -t 8 -an -c:v libvpx -y tests/frontend/.generated/clip-fixture.webm
       - name: Install browser test dependencies
         working-directory: tests/frontend
         run: npm ci --ignore-scripts && npx playwright install --with-deps chromium firefox
       - name: Check frontend behavior and responsive layouts
-        run: node --test tests/frontend/ui.test.cjs
+        run: npm test --prefix tests/frontend
       - name: Save visual snapshots
         if: always()
         uses: actions/upload-artifact@v4

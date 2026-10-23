@@ -1,6 +1,7 @@
 'use strict';
 (function () {
-    var menus = document.querySelectorAll('.video-context');
+    var menus = [];
+    var initialized = new WeakSet();
     function closeMenu(menu, restoreFocus) {
         menu.open = false;
         delete menu.querySelector('.video-context-actions').dataset.positioned;
@@ -21,7 +22,11 @@
     }
     window.addEventListener('resize', function () { menus.forEach(function (menu) { if (menu.open) positionMenu(menu); }); });
     document.addEventListener('scroll', function () { menus.forEach(function (menu) { if (menu.open) positionMenu(menu); }); }, true);
+    function initMenus() {
+    menus = Array.from(document.querySelectorAll('.video-context'));
     menus.forEach(function (menu) {
+        if (initialized.has(menu)) return;
+        initialized.add(menu);
         menu.classList.add('js-video-context');
         menu.addEventListener('toggle', function () {
             menu.querySelector('summary').setAttribute('aria-expanded', String(menu.open));
@@ -61,6 +66,9 @@
             }
         });
     });
+    }
+    initMenus();
+    document.addEventListener('iv:content-added', initMenus);
     document.addEventListener('click', function (event) {
         menus.forEach(function (menu) { if (!menu.contains(event.target)) closeMenu(menu, false); });
     });
@@ -87,22 +95,8 @@
     var discovery = ['/feed/popular', '/feed/trending', '/'].indexOf(location.pathname) !== -1 ||
         location.pathname.startsWith('/hashtag/') || (location.pathname === '/search' && !includeBlocked);
 
-    async function request(url, data) {
-        if (!window.InvidiousStorage.isCurrent()) throw new Error(words.error);
-        var options = { credentials: 'same-origin', headers: { 'Accept': 'application/json' } };
-        if (data) {
-            options.method = 'POST';
-            options.body = new URLSearchParams(Object.assign({ csrf_token: words.csrf }, data));
-        }
-        var controller = new AbortController();
-        options.signal = controller.signal;
-        var timeout = setTimeout(function () { controller.abort(); }, 15000);
-        try {
-            var response = await fetch(url, options);
-            if (!window.InvidiousStorage.checkResponse(response)) throw new Error(words.error);
-            if (!response.ok || response.redirected) throw new Error(words.error);
-            return await response.json();
-        } finally { clearTimeout(timeout); }
+    function request(url, data) {
+        return data ? InvidiousUI.post(url, data) : InvidiousUI.request(url);
     }
     function message(text, allowUndo) {
         clearTimeout(noticeTimeout);
@@ -122,6 +116,8 @@
         }
     }
     async function setBlocked(ucid, name, blocked) {
+        includeBlocked = new URLSearchParams(location.search).get('include_blocked') === '1' || !!document.querySelector('#filters input[name=include_blocked]:checked');
+        discovery = ['/feed/popular', '/feed/trending', '/'].includes(location.pathname) || location.pathname.startsWith('/hashtag/') || (location.pathname === '/search' && !includeBlocked);
         if (busyChannels.has(ucid)) return;
         busyChannels.add(ucid);
         var buttons = Array.from(menus).filter(function (menu) { return menu.dataset.channelId === ucid; })
@@ -145,11 +141,16 @@
                 hiddenCards.delete(ucid);
                 lastBlock = null;
             }
+            document.dispatchEvent(new Event('iv:library-change'));
             updateAutoplay();
+            InvidiousUI.dismissNotice();
             message(blocked ? words.blocked : words.unblocked, blocked);
             if (blocked) undo.focus();
             else if (buttons[0]) buttons[0].closest("details").querySelector("summary").focus();
-        } catch (_) { message(words.error, !!lastBlock); }
+        } catch (_) {
+            notice.hidden = true;
+            InvidiousUI.notice(words.error, function () { setBlocked(ucid, name, blocked); });
+        }
         finally { busyChannels.delete(ucid); buttons.forEach(function (button) { button.disabled = false; }); }
     }
     undo.addEventListener('click', async function () {
@@ -180,22 +181,21 @@
         await request('/playlist_ajax?action=add_video&redirect=false&video_id=' + encodeURIComponent(selectedVideo) + '&playlist_id=' + encodeURIComponent(select.value), {});
         status.textContent = words.saved;
     }
-    menus.forEach(function (menu) {
-        menu.addEventListener('click', function (event) {
-            var action = event.target.closest('[data-video-action]');
-            if (!action || action.disabled) return;
-            closeMenu(menu, true);
-            if (action.dataset.videoAction === 'playlist') {
-                selectedVideo = menu.dataset.videoId;
-                returnFocus = menu.querySelector('summary');
-                document.getElementById('video-playlist-create-details').open = false;
-                createForm.reset();
-                dialog.showModal();
-                loadPlaylists();
-            } else {
-                setBlocked(menu.dataset.channelId, menu.dataset.channelName, action.dataset.videoAction === 'block');
-            }
-        });
+    document.addEventListener('click', function (event) {
+        var action = event.target.closest('[data-video-action]');
+        var menu = action && action.closest('.video-context');
+        if (!menu || action.disabled) return;
+        closeMenu(menu, true);
+        if (action.dataset.videoAction === 'playlist') {
+            selectedVideo = menu.dataset.videoId;
+            returnFocus = menu.querySelector('summary');
+            document.getElementById('video-playlist-create-details').open = false;
+            createForm.reset();
+            dialog.showModal();
+            loadPlaylists();
+        } else {
+            setBlocked(menu.dataset.channelId, menu.dataset.channelName, action.dataset.videoAction === 'block');
+        }
     });
     dialog.addEventListener('close', function () { if (returnFocus) returnFocus.focus(); });
     // Keep the selected video stable until the current request finishes.
@@ -211,7 +211,7 @@
         event.preventDefault();
         if (pending || !select.value) return;
         busy(true);
-        try { await addVideo(); } catch (_) { status.textContent = words.error; }
+        try { await addVideo(); } catch (_) { status.textContent = InvidiousUI.label('check_playlist'); }
         finally { busy(false); }
     });
     createForm.addEventListener('submit', async function (event) {
