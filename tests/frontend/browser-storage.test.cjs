@@ -215,9 +215,9 @@ test('account deletion purges only its own profile and leaves guest and other ac
 
 test('guest playback speed preserves other guest preferences and account calls never write PREFS', () => {
     const b = browser(), p = b.page();
-    b.cookies.set('PREFS', JSON.stringify({theme: 'diary', volume: 7, speed: 1, password: 'discarded'}));
-    assert.equal(p.api.guestSpeed(1.5, {theme: 'modern-neon', speed: 1}), true);
-    assert.deepEqual(JSON.parse(b.cookies.get('PREFS')), {theme: 'diary', speed: 1.5});
+    b.cookies.set('PREFS', JSON.stringify({theme: 'diary', theme_random: true, theme_random_interval_hours: 6, theme_random_next_at: 1800000000, dark_mode: 'dark', volume: 7, speed: 1, password: 'discarded'}));
+    assert.equal(p.api.guestSpeed(1.5, {dark_mode: 'light', speed: 1}), true);
+    assert.deepEqual(JSON.parse(b.cookies.get('PREFS')), {dark_mode: 'dark', speed: 1.5});
     assert.equal(b.page(alice).api.guestSpeed(2), false);
     assert.equal(JSON.parse(b.cookies.get('PREFS')).speed, 1.5);
 });

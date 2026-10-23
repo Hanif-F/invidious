@@ -1,8 +1,6 @@
 {
   "revision": "f19196ca7bcf54b4f5efc59013b34656780a31d0",
   "gzipBytes": {
-    "themes/modern-neon/theme.css": 0,
-    "css/theme-picker.css": 0,
     "js/interface.js": 0,
     "js/player-ui.js": 0,
     "js/watch.js": 1555,
@@ -15,9 +13,5 @@
     "themes/diary/doodles.svg": 0,
     "css/video-actions.css": 0,
     "js/video-actions.js": 0
-  },
-  "previewGzipBytes": {
-    "themes/modern-neon/preview.webp": 0,
-    "themes/diary/preview.webp": 0
   }
 }

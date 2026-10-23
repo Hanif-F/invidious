@@ -219,7 +219,7 @@ img.thumbnail {
   aspect-ratio: 16 / 9;
 }
 
-/* AiSList thumbnails intentionally keep the same quiet palette in every theme. */
+/* AiSList thumbnails intentionally keep a quiet palette in every color mode. */
 body .ai-thumbnail {
   display: flex;
   flex-direction: column;
@@ -1081,13 +1081,9 @@ body .preferences-form .pure-control-group > .preference-row-label {
 .preferences-form .pure-control-group > input[type=checkbox] { justify-self: start; margin: 0; }
 .preferences-form .pure-control-group > input:not([type=checkbox]),
 .preferences-form .pure-control-group > select { justify-self: start; width: min(100%, 26rem); min-width: 0; }
-.preferences-form #theme_random_interval_hours { width: min(100%, 8rem); }
 .preferences-form .pure-control-group > input[type=color] { width: 64px; }
 .preferences-form .preference-description { width: auto; max-width: 70ch; padding: 0; margin: 0; display: block; }
 .preferences-form .pure-control-group > .preference-description { grid-column: 2; }
-.preferences-form .theme-picker { min-width: 0; margin: 0 0 12px; padding: 0; border: 0; background: transparent; }
-.preferences-form .theme-picker > legend { width: auto; margin: 0 0 6px; font-size: 1rem; }
-.preferences-form .theme-picker > .preference-description { margin-bottom: 16px; }
 .preferences-form .theme-options { grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 12px; }
 .preferences-form .preference-multi-options { display: flex; flex-wrap: wrap; gap: 10px; min-width: 0; }
 .preferences-form .preference-option { display: grid; gap: 4px; flex: 1 1 130px; min-width: 0; max-width: 210px; }

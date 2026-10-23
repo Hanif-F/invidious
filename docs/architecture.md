@@ -44,7 +44,7 @@ Player dependencies are resolved during compilation unless `-Dskip_videojs_downl
 
 [handlers.cr](../src/invidious/helpers/handlers.cr) installs selective compression, API CORS, optional abusable-endpoint blocking, authentication and frame restrictions. `/api/v1/auth/*` requests authenticate before route execution. Bearer credentials take precedence over a browser SID when both are present. Cookie writes validate CSRF; token requests validate method/path scopes.
 
-[before_all.cr](../src/invidious/routes/before_all.cr) builds request context: guest or account preferences, locale, theme, user/session where applicable, browser profile, current page and security headers. Query overrides such as `hl`, `dark_mode` and `thin_mode` alter rendering for that request. Media/image proxy paths return early from much of the page-context work.
+[before_all.cr](../src/invidious/routes/before_all.cr) builds request context: guest or account preferences, locale, color mode, user/session where applicable, browser profile, current page and security headers. Query overrides such as `hl`, `dark_mode` and `thin_mode` alter rendering for that request. Media/image proxy paths return early from much of the page-context work.
 
 Route handlers obtain upstream/cache/domain data, enforce resource ownership, invoke presentation helpers and return an ECR page, JSON, XML/Atom, VTT, a redirect or a media stream. [routing.cr](../src/invidious/routing.cr) is the complete route registry. Browser AJAX endpoints coexist with the versioned API; they are not interchangeable contracts.
 

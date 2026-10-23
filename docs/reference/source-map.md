@@ -40,7 +40,6 @@ Base, player, feature and layout styles; minified third-party styles retain thei
 | [assets/css/pure-min.css](../../assets/css/pure-min.css) | pure min |
 | [assets/css/quality-selector.css](../../assets/css/quality-selector.css) | quality selector |
 | [assets/css/search.css](../../assets/css/search.css) | search |
-| [assets/css/theme-picker.css](../../assets/css/theme-picker.css) | theme picker |
 | [assets/css/verification.css](../../assets/css/verification.css) | verification |
 | [assets/css/video-actions.css](../../assets/css/video-actions.css) | video actions |
 | [assets/css/videojs-youtube-annotations.min.css](../../assets/css/videojs-youtube-annotations.min.css) | videojs youtube annotations.min |
@@ -93,12 +92,11 @@ Browser behavior; individual module responsibilities are described in frontend d
 | [assets/js/watched_widget.js](../../assets/js/watched_widget.js) | watched widget |
 ## assets/themes
 
-Theme stylesheets; companion previews, fonts and SVG artwork live alongside them.
+Diary styling, with local fonts and SVG artwork alongside its stylesheet.
 
 | File | Subject |
 | --- | --- |
 | [assets/themes/diary/theme.css](../../assets/themes/diary/theme.css) | theme |
-| [assets/themes/modern-neon/theme.css](../../assets/themes/modern-neon/theme.css) | theme |
 ## config/migrate-scripts
 
 Historical shell migrations retained for legacy upgrades; not the modern migration runner.
@@ -212,7 +210,6 @@ Domain models and cross-cutting integrations, configuration and routing.
 | [src/invidious/routing.cr](../../src/invidious/routing.cr) | routing |
 | [src/invidious/rss.cr](../../src/invidious/rss.cr) | rss |
 | [src/invidious/sponsorblock.cr](../../src/invidious/sponsorblock.cr) | sponsorblock |
-| [src/invidious/themes.cr](../../src/invidious/themes.cr) | themes |
 | [src/invidious/trending.cr](../../src/invidious/trending.cr) | trending |
 | [src/invidious/users.cr](../../src/invidious/users.cr) | users |
 | [src/invidious/videos.cr](../../src/invidious/videos.cr) | videos |
@@ -326,6 +323,7 @@ Presentation helpers for cards, filters, history, channels and page data.
 | [src/invidious/frontend/search_filters.cr](../../src/invidious/frontend/search_filters.cr) | search filters |
 | [src/invidious/frontend/search_preferences.cr](../../src/invidious/frontend/search_preferences.cr) | search preferences |
 | [src/invidious/frontend/subscription_manager.cr](../../src/invidious/frontend/subscription_manager.cr) | subscription manager |
+| [src/invidious/frontend/view_counts.cr](../../src/invidious/frontend/view_counts.cr) | view counts |
 | [src/invidious/frontend/watch_page.cr](../../src/invidious/frontend/watch_page.cr) | watch page |
 | [src/invidious/frontend/watched_indicator.cr](../../src/invidious/frontend/watched_indicator.cr) | watched indicator |
 ## src/invidious/helpers
@@ -385,6 +383,7 @@ Public JSON serialization and channel-avatar enrichment.
 | [src/invidious/jsonify/api_v1/channel_avatars.cr](../../src/invidious/jsonify/api_v1/channel_avatars.cr) | channel avatars |
 | [src/invidious/jsonify/api_v1/common.cr](../../src/invidious/jsonify/api_v1/common.cr) | common |
 | [src/invidious/jsonify/api_v1/video_json.cr](../../src/invidious/jsonify/api_v1/video_json.cr) | video json |
+| [src/invidious/jsonify/api_v1/video_metadata.cr](../../src/invidious/jsonify/api_v1/video_metadata.cr) | video metadata |
 ## src/invidious/routes
 
 HTTP page handlers, authentication context, redirects, RSS and proxy handlers.
@@ -491,6 +490,7 @@ Video metadata, captions/transcripts, chapters, music, downloads and archived ch
 | [src/invidious/videos/storyboard.cr](../../src/invidious/videos/storyboard.cr) | storyboard |
 | [src/invidious/videos/transcript.cr](../../src/invidious/videos/transcript.cr) | transcript |
 | [src/invidious/videos/video_preferences.cr](../../src/invidious/videos/video_preferences.cr) | video preferences |
+| [src/invidious/videos/view_counts.cr](../../src/invidious/videos/view_counts.cr) | view counts |
 ## src/invidious/views
 
 Server-rendered ECR pages and reusable UI components; see frontend documentation.

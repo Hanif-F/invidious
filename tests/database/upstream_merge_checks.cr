@@ -1,6 +1,6 @@
 # Runs only inside accounts.cr's guarded disposable PostgreSQL database.
 def check_upstream_history_imports_and_feeds
-  prefs = Preferences.from_json(%({"save_player_pos":true,"preferred_audio":"id","seek_seconds":20,"theme":"diary"}))
+  prefs = Preferences.from_json(%({"save_player_pos":true,"preferred_audio":"id","seek_seconds":20,"dark_mode":"dark"}))
   sid = Invidious::Database::Accounts.register("UpstreamMerge", "a separate upstream regression password", prefs)
   email = Invidious::Database::SessionIDs.select_email(sid).not_nil!
   token = generate_token(email, ["POST:import/invidious"], nil, HMAC_KEY, sid)
@@ -15,17 +15,17 @@ def check_upstream_history_imports_and_feeds
   check(response.response.status_code == 204, "Valid upstream history import failed")
   user = Invidious::Database::Users.select!(email: email)
   check(user.watched == [ids[1], ids[0]], "Imported history lost recency/deduplication")
-  check(user.preferences.preferred_audio == "id" && user.preferences.seek_seconds == 20 && user.preferences.theme == "diary", "Import lost fork preferences")
+  check(user.preferences.preferred_audio == "id" && user.preferences.seek_seconds == 20 && user.preferences.dark_mode == "dark", "Import lost fork preferences")
   check(Invidious::Database::PlaybackPositions.select(email, ids[0]).not_nil![:position_seconds] == 42, "Import lost playback progress")
   check(PG_DB.query_one("SELECT title FROM watch_history WHERE email=$1 AND video_id=$2", email, ids[0], as: String) == "Imported detail", "Import lost detailed history")
 
   before = user.watched
   ["short", "invalid'watch", "abcdefghijk\n"].each do |invalid|
-    body = {watch_history: [ids[2], invalid], preferences: {theme: "modern-neon"}}.to_json
+    body = {watch_history: [ids[2], invalid], preferences: {dark_mode: "light"}}.to_json
     response = security_request("POST", "/api/v1/auth/import/invidious", bearer: token, body: body)
     check(response.response.status_code == 400, "Invalid imported video ID did not return 400")
     saved = Invidious::Database::Users.select!(email: email)
-    check(saved.watched == before && saved.preferences.theme == "diary", "Invalid history changed history or preferences")
+    check(saved.watched == before && saved.preferences.dark_mode == "dark", "Invalid history changed history or preferences")
   end
   response = security_request("POST", "/api/v1/auth/import/invidious", bearer: token, body: "{broken")
   check(response.response.status_code == 500, "Unexpected import failure did not return the upstream error response")

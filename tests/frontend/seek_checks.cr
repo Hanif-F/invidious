@@ -16,17 +16,17 @@ def check_seek_preferences
     raise "Seek YAML roundtrip" unless Preferences.from_yaml(prefs.to_yaml).seek_seconds == seconds
     raise "Seek config roundtrip" unless ConfigPreferences.from_yaml({seek_seconds: seconds}.to_yaml).seek_seconds == seconds
 
-    env = theme_post_env("seek_seconds=#{seconds}")
+    env = preferences_post_env("seek_seconds=#{seconds}")
     Invidious::Routes::PreferencesRoute.update(env)
     cookie = Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))
     raise "Guest seek save" unless cookie.seek_seconds == seconds
-    env = theme_post_env("")
+    env = preferences_post_env("")
     env.set "preferences", cookie
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Older form erased seek interval" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).seek_seconds == seconds
 
     user = signed_in_env("/preferences").get("user").as(User)
-    env = theme_post_env("seek_seconds=#{seconds}")
+    env = preferences_post_env("seek_seconds=#{seconds}")
     env.set "user", user
     Invidious::Routes::PreferencesRoute.update(env)
     saved = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
@@ -36,7 +36,7 @@ def check_seek_preferences
     Invidious::NativePreferences.validate_patch(patch)
     stored = JSON.parse(saved.to_json).as_h
     Invidious::SponsorBlock.merge_patch(stored, patch, {} of String => String)
-    env = theme_post_env(stored.to_json, "application/json")
+    env = preferences_post_env(stored.to_json, "application/json")
     env.set "user", user
     Invidious::Routes::API::V1::Authenticated.set_preferences(env)
     user.preferences = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))

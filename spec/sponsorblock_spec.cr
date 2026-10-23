@@ -29,13 +29,13 @@ describe "SponsorBlock native preference deltas" do
   it "merges category deltas and preserves other channels and unknown preferences" do
     a = "UC" + "a" * 22
     b = "UC" + "b" * 22
-    stored = JSON.parse({theme: "diary", future: {keep: true}, sponsorblock_modes: {sponsor: "manual", intro: "marker"}, sponsorblock_channel_overrides: {
+    stored = JSON.parse({dark_mode: "dark", future: {keep: true}, sponsorblock_modes: {sponsor: "manual", intro: "marker"}, sponsorblock_channel_overrides: {
       a => {name: "Existing", enabled: false, modes: {sponsor: "manual"}}, b => {name: "Other", enabled: true, modes: {} of String => String},
     }}.to_json).as_h
     data = JSON.parse({sponsorblock_modes: {sponsor: "auto"}, sponsorblock_colors: {intro: "#123ABC"}, sponsorblock_channel_overrides: {a => {enabled: nil, modes: {intro: "marker"}}}}.to_json).as_h
     Invidious::SponsorBlock.validate_patch(data)
     Invidious::SponsorBlock.merge_patch(stored, data, {} of String => String)
-    stored["theme"].as_s.should eq("diary")
+    stored["dark_mode"].as_s.should eq("dark")
     stored["future"]["keep"].as_bool.should be_true
     stored["sponsorblock_modes"]["intro"].as_s.should eq("marker")
     stored["sponsorblock_modes"]["sponsor"].as_s.should eq("auto")

@@ -18,10 +18,6 @@ Preference defaults usually refer to `CONFIG.default_user_preferences`; that com
 | `continue` | `Bool` | `CONFIG.default_user_preferences.continue` |
 | `continue_autoplay` | `Bool` | `CONFIG.default_user_preferences.continue_autoplay` |
 | `dark_mode` | `String` | `CONFIG.default_user_preferences.dark_mode` |
-| `theme` | `String` | `Invidious::Themes.normalize(CONFIG.default_user_preferences.theme)` |
-| `theme_random` | `Bool` | `CONFIG.default_user_preferences.theme_random` |
-| `theme_random_interval_hours` | `Int32` | `CONFIG.default_user_preferences.theme_random_interval_hours` |
-| `theme_random_next_at` | `Int64?` | `nil` |
 | `latest_only` | `Bool` | `CONFIG.default_user_preferences.latest_only` |
 | `listen` | `Bool` | `CONFIG.default_user_preferences.listen` |
 | `local` | `Bool` | `CONFIG.default_user_preferences.local` |

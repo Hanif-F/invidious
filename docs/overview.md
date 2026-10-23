@@ -4,7 +4,7 @@
 
 Invidious is a server-rendered alternative interface to YouTube. Users browse videos, channels, playlists, comments and feeds through an Invidious instance. The instance obtains upstream information, renders HTML, provides JSON APIs and proxies selected media and images. It also stores local accounts and libraries independently of Google accounts.
 
-This fork adds account security and native client workflows, synchronized playback positions, detailed watch history, channel blocking, native clips, saved playlist references, archived chat replay, richer stream metadata, SponsorBlock, DeArrow, AI channel filtering, channel-avatar caching and visual themes. The [feature catalog](features.md) describes each capability and its dependencies.
+This fork adds account security and native client workflows, synchronized playback positions, detailed watch history, channel blocking, native clips, saved playlist references, archived chat replay, richer stream metadata, SponsorBlock, DeArrow, AI channel filtering, channel-avatar caching and Diary styling with light/dark/system color modes. The [feature catalog](features.md) describes each capability and its dependencies.
 
 ## System components
 
@@ -15,7 +15,7 @@ This fork adds account security and native client workflows, synchronized playba
 | PostgreSQL | Persistent accounts and libraries, subscriptions, metadata caches and migrations | [database layer](../src/invidious/database), [SQL](../config/sql) |
 | Invidious Companion | Video extraction and playback metadata supplied by a separately deployed service | [connection pools](../src/invidious/yt_backend/connection_pool.cr), [companion routes](../src/invidious/routes/companion.cr) |
 | ECR templates | HTML pages and reusable components compiled into the application | [views](../src/invidious/views) |
-| Browser assets | Video.js player, progressive enhancements, themes and styles | [assets](../assets) |
+| Browser assets | Video.js player, browser interactions, Diary styling and shared styles | [assets](../assets) |
 | Background jobs | Subscription refresh, statistics, popular videos, notifications and cache maintenance | [jobs](../src/invidious/jobs) |
 
 There is no separate frontend application build or required Node.js runtime for serving the site. Node.js is used by browser tests. SQLite is a linked dependency used for imports and some test harnesses; PostgreSQL is the application database.
@@ -30,7 +30,7 @@ Video metadata is cached and can be re-fetched. The server does not archive the 
 
 ## Rendering and network boundaries
 
-Many browsing pages and forms work without JavaScript. Interactive playback features, replay chat, dynamic comments, enhanced clip editing and automatic synchronization use JavaScript. Treat the upstream README's broad no-JavaScript claim as a description of the basic browsing interface, not every enhancement in this fork.
+The current web interface combines server-rendered HTML with browser JavaScript for interactive playback, replay chat, dynamic comments, clip editing and automatic synchronization.
 
 Playback may go through the instance, through a configured public companion endpoint, or directly to Google media hosts, depending on stream type and preferences. Browser privacy therefore depends on configuration as well as the interface. Thumbnails and avatars normally use local proxy paths. Optional community services are accessed by the server; DeArrow submissions occur only after a user's action. See [integrations](integrations.md).
 

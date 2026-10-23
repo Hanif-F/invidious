@@ -33,8 +33,8 @@ request finishes waits for that same request.
 The explicit cycle is available even when the global original-title switch is
 off. Reveals are per displayed occurrence and reset on navigation or reload.
 
-Signed-in settings are account preferences and work for initial rendering without
-JavaScript. Guest settings use this browser's isolated guest storage and require
+Signed-in settings are account preferences used for initial rendering.
+Guest settings use this browser's isolated guest storage and require
 JavaScript. Reveal interactions also require JavaScript. Account saves never copy
 guest settings. Storage errors are reported on the guest settings page.
 

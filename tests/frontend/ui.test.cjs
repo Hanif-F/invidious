@@ -146,7 +146,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: subscription sorting details, GET forms and mobile layouts work without JavaScript`, async () => {
-        for (const fixture of ['avatars-manager-modern-neon', 'avatars-manager-diary', 'subscriptions-relevance', 'subscriptions-most-watched', 'subscriptions-rtl', 'subscriptions-empty']) {
+        for (const fixture of ['avatars-manager-diary', 'subscriptions-relevance', 'subscriptions-most-watched', 'subscriptions-rtl', 'subscriptions-empty']) {
             const {page, context, errors, requests} = await pageFor(engine, {fixture, route: 'subscription_manager', width: 320, javascript: false});
             assert.deepEqual(await page.locator('#subscription-sort option').evaluateAll(options => options.map(option => option.value)), ['alphabetical', 'latest', 'most_watched', 'relevance']);
             assert.equal(await page.locator('label[for="subscription-sort"]').isVisible(), true);
@@ -351,7 +351,6 @@ async function pageFor(engine, options = {}) {
         }
         if (options.storyboards && url.pathname.startsWith('/api/v1/storyboards/')) return route.fulfill({contentType:'text/vtt', body:'WEBVTT\n\n00:00.000 --> 00:04.000\nhttps://invidious.test/vi/fixture/preview.jpg#xywh=0,0,160,90\n'});
         if (url.pathname.startsWith('/api/v1/captions/')) return route.fulfill({ contentType: 'text/vtt', body: 'WEBVTT\n\n00:00.000 --> 00:04.000\nFixture captions\n' });
-        if (url.pathname === '/themes/fixture-theme/theme.css') return route.fulfill({ contentType: 'text/css', body: 'body { --fixture-theme: active; }' });
         if (/^\/(css|js|fonts|videojs|themes)\//.test(url.pathname)) {
             const file = path.join(root, 'assets', url.pathname);
             if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: '' });
@@ -378,7 +377,7 @@ async function finishDeArrowPrefetch(page, requests, id, release) {
 
 for (const engine of engines) {
     test(`${engine}: native clip cards, tab, attribution and no-JavaScript library`, async () => {
-        for (const fixture of ['clips-library', 'clips-diary', 'clips-rtl', 'channel-clips', 'clips-empty']) {
+        for (const fixture of ['clips-library', 'clips-rtl', 'channel-clips', 'clips-empty']) {
             const {page, context, errors} = await pageFor(engine, {fixture, width: 390, javascript: false});
             if (fixture !== 'clips-empty') {
                 assert.match(await page.locator('.clip-card h3').textContent(), /Moment <script>/);
@@ -422,7 +421,7 @@ for (const engine of engines) {
         await nojs.context.close();
     });
     test(`${engine}: clip popup preserves playback, timestamps, drafts and keyboard focus`, async () => {
-        const {page, context, requests, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark'});
+        const {page, context, requests, errors} = await pageFor(engine, {fixture:'watch-clips-diary-dark'});
         assert.ok(!requests.some(url => /\/(clip-editor.js|clips.css)/.test(url)));
         await page.evaluate(() => { player.currentTime(3600.9); player.play(); });
         const watchURL = page.url();
@@ -473,7 +472,7 @@ for (const engine of engines) {
         assert.deepEqual(errors, []); await context.close();
     });
     test(`${engine}: clip popup publishes once, recovers errors and shows a safe share result`, async () => {
-        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark', initScript: () => Object.defineProperty(navigator, 'clipboard', {value: undefined, configurable:true})});
+        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-diary-dark', initScript: () => Object.defineProperty(navigator, 'clipboard', {value: undefined, configurable:true})});
         let calls = 0, received;
         await page.route('**/api/v1/auth/clips', async route => {
             calls++; received = JSON.parse(route.request().postData());
@@ -514,7 +513,7 @@ for (const engine of engines) {
         assert.deepEqual(errors, []); await context.close();
     });
     test(`${engine}: closing during publishing preserves the pending draft and unseen result`, async () => {
-        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark'});
+        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-diary-dark'});
         let release, submitted, calls = 0;
         const sent = new Promise(resolve => { submitted = resolve; });
         const response = new Promise(resolve => { release = resolve; });
@@ -535,7 +534,7 @@ for (const engine of engines) {
         assert.equal(calls, 1); assert.deepEqual(errors, []); await context.close();
     });
     test(`${engine}: clip popup preview uses its playhead and never changes source resume data`, async () => {
-        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark', realPlayer:true,
+        const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-diary-dark', realPlayer:true,
             initScript: () => localStorage.setItem('save_player_pos', JSON.stringify({'2isYuQZMbdU': 123}))});
         await page.evaluate(() => { player.muted(true); player.currentTime(1); });
         await page.locator('#create-clip').click();
@@ -561,7 +560,7 @@ for (const engine of engines) {
         assert.deepEqual(errors, []); await context.close();
     });
     test(`${engine}: clip popup themes, RTL, short videos and responsive actions`, async () => {
-        for (const fixture of ['watch-clips-modern-neon-dark', 'watch-clips-modern-neon-light', 'watch-clips-diary-dark', 'watch-clips-diary-light', 'watch-clips-rtl', 'watch-clips-short']) {
+        for (const fixture of ['watch-clips-diary-dark', 'watch-clips-diary-light', 'watch-clips-rtl', 'watch-clips-short']) {
             for (const width of [1440, 390, 320]) {
                 const {page, context, errors} = await pageFor(engine, {fixture, width, height:844, touch:width < 500});
                 await page.locator('#create-clip').click(); await page.waitForFunction(() => document.getElementById('clip-dialog').open);
@@ -573,7 +572,7 @@ for (const engine of engines) {
                 const footer = await page.locator('.clip-footer').boundingBox();
                 assert.ok(footer.y + footer.height <= 845);
                 await page.locator('#clip-title').fill('Responsive clip');
-                if (width === 390 || (width === 1440 && fixture === 'watch-clips-modern-neon-dark')) await page.screenshot({path:path.join(artifacts, `${engine}-${fixture}-popup-${width}.png`)});
+                if (width === 390 || (width === 1440 && fixture === 'watch-clips-diary-dark')) await page.screenshot({path:path.join(artifacts, `${engine}-${fixture}-popup-${width}.png`)});
                 await page.locator('.clip-body').evaluate(el => { el.scrollTop = el.scrollHeight; });
                 assert.equal(await page.locator('#clip-close').isVisible(), true);
                 assert.deepEqual(errors, []); await context.close();
@@ -582,7 +581,7 @@ for (const engine of engines) {
     });
     test(`${engine}: clip popup enlarged text and landscape keep fields and actions reachable`, async () => {
         for (const [width, height, touch] of [[1440, 900, false], [390, 844, true], [844, 390, true]]) {
-            const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark', width, height, touch});
+            const {page, context, errors} = await pageFor(engine, {fixture:'watch-clips-diary-dark', width, height, touch});
             await page.locator('#create-clip').click(); await page.waitForFunction(() => document.getElementById('clip-dialog').open);
             await page.addStyleTag({content:'html { font-size: 200% !important; }'});
             assert.equal(await page.locator('#clip-dialog').evaluate(el => el.scrollWidth > el.clientWidth + 1), false);
@@ -601,12 +600,12 @@ for (const engine of engines) {
         const referer = new URL(new URL(guest.page.url()).searchParams.get('referer'), 'https://invidious.test');
         assert.equal(referer.searchParams.get('create_clip'), '1'); assert.equal(referer.searchParams.get('t'), '65');
         await guest.context.close();
-        const returned = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark', route:'watch?v=2isYuQZMbdU&create_clip=1&t=65'});
+        const returned = await pageFor(engine, {fixture:'watch-clips-diary-dark', route:'watch?v=2isYuQZMbdU&create_clip=1&t=65'});
         await returned.page.waitForFunction(() => document.getElementById('clip-dialog').open);
         assert.equal(await returned.page.locator('#clip-start').inputValue(), '00:50');
         assert.equal(new URL(returned.page.url()).searchParams.has('create_clip'), false);
         await returned.context.close();
-        const fallback = await pageFor(engine, {fixture:'watch-clips-modern-neon-dark'});
+        const fallback = await pageFor(engine, {fixture:'watch-clips-diary-dark'});
         await fallback.page.route('**/js/clip-editor.js?*', route => route.abort());
         await fallback.page.locator('#create-clip').click(); await fallback.page.waitForURL('**/create_clip?*');
         assert.equal(new URL(fallback.page.url()).searchParams.get('videoId'), '2isYuQZMbdU');
@@ -1342,7 +1341,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: Diary chat overlay has no frame or reserved heading band`, async () => {
-        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat-diary', realPlayer: true});
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true});
         await page.locator('.chat-message').first().waitFor();
         await page.locator('#chat-settings summary').click();
         await page.locator('#chat-overlay-mode').check();
@@ -1411,83 +1410,81 @@ for (const engine of engines) {
     });
 
     test(`${engine}: AI channel filter controls, status and empty results work without JavaScript`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const enabled of [false, true]) {
-                for (const width of [320, 390, 1440]) {
-                    const fixture = `preferences-ai-filter-${theme}${enabled ? '' : '-paused'}`;
-                    const {page, context, errors, requests} = await pageFor(engine, {fixture, width, javascript: false});
-                    const root = page.locator('#preferences-ai-filter');
-                    const master = root.getByRole('checkbox', {name: 'Enable AI Channel Filter', exact: true});
-                    assert.equal(await root.locator('input[type=checkbox]').count(), 1);
-                    assert.equal(await master.isChecked(), enabled);
-                    assert.equal(await root.locator('.ai-filter-page-group').count(), 4);
-                    assert.equal(await root.locator('select').count(), 8);
-                    assert.equal(await root.locator('.ai-filter-paused').isVisible(), !enabled);
-                    assert.match(await root.textContent(), /community classifications.*may be incorrect/s);
-                    assert.match(await page.locator('#ai-filter-search-hint').textContent(), /within a channel or your subscriptions/);
-                    assert.match(await page.locator('#ai-filter-recommendations-hint').textContent(), /excluded from autoplay/);
-                    for (const kind of ['blocklist', 'warnlist']) {
-                        for (const surface of ['feeds', 'search', 'recommendations', 'other_pages']) {
-                            const field = `ai_${kind}_${surface}_action`;
-                            const control = page.locator(`#${field}`);
-                            assert.equal(await page.locator(`label[for="${field}"]`).count(), 1);
-                            assert.equal(await control.isEnabled(), true);
-                            assert.ok((await control.getAttribute('aria-describedby')).includes(`ai-filter-${surface}-hint`));
-                            assert.deepEqual(await control.locator('option').evaluateAll(options => options.map(o => o.value)),
-                                surface === 'other_pages' ? ['off', 'replace_thumbnail'] : ['off', 'hide', 'replace_thumbnail']);
-                        }
+        for (const enabled of [false, true]) {
+            for (const width of [320, 390, 1440]) {
+                const fixture = `preferences-ai-filter-diary${enabled ? '' : '-paused'}`;
+                const {page, context, errors, requests} = await pageFor(engine, {fixture, width, javascript: false});
+                const root = page.locator('#preferences-ai-filter');
+                const master = root.getByRole('checkbox', {name: 'Enable AI Channel Filter', exact: true});
+                assert.equal(await root.locator('input[type=checkbox]').count(), 1);
+                assert.equal(await master.isChecked(), enabled);
+                assert.equal(await root.locator('.ai-filter-page-group').count(), 4);
+                assert.equal(await root.locator('select').count(), 8);
+                assert.equal(await root.locator('.ai-filter-paused').isVisible(), !enabled);
+                assert.match(await root.textContent(), /community classifications.*may be incorrect/s);
+                assert.match(await page.locator('#ai-filter-search-hint').textContent(), /within a channel or your subscriptions/);
+                assert.match(await page.locator('#ai-filter-recommendations-hint').textContent(), /excluded from autoplay/);
+                for (const kind of ['blocklist', 'warnlist']) {
+                    for (const surface of ['feeds', 'search', 'recommendations', 'other_pages']) {
+                        const field = `ai_${kind}_${surface}_action`;
+                        const control = page.locator(`#${field}`);
+                        assert.equal(await page.locator(`label[for="${field}"]`).count(), 1);
+                        assert.equal(await control.isEnabled(), true);
+                        assert.ok((await control.getAttribute('aria-describedby')).includes(`ai-filter-${surface}-hint`));
+                        assert.deepEqual(await control.locator('option').evaluateAll(options => options.map(o => o.value)),
+                            surface === 'other_pages' ? ['off', 'replace_thumbnail'] : ['off', 'hide', 'replace_thumbnail']);
                     }
-                    assert.equal(await page.locator('#ai_blocklist_feeds_action').inputValue(), 'hide');
-                    assert.equal(await page.locator('#ai_blocklist_search_action').inputValue(), 'replace_thumbnail');
-                    assert.equal(await page.locator('#ai_blocklist_recommendations_action').inputValue(), 'off');
-                    assert.equal(await page.locator('#ai_warnlist_search_action').inputValue(), 'hide');
-                    assert.equal(await page.locator('#ai_warnlist_other_pages_action').inputValue(), 'off');
-                    // Native checkbox and disclosure keyboard interactions work without scripts.
-                    await master.focus();
-                    await master.press('Space');
-                    assert.equal(await master.isChecked(), !enabled);
-                    await master.press('Space');
-                    assert.equal(await master.isChecked(), enabled);
-                    await master.press('Tab');
-                    assert.equal(await page.locator('#ai_blocklist_feeds_action').evaluate(el => el === document.activeElement), true);
-                    const disclosure = root.locator('details');
-                    assert.equal(await disclosure.getAttribute('open'), null);
-                    const summary = disclosure.locator('summary');
-                    await summary.focus();
-                    await summary.press('Enter');
-                    assert.equal(await disclosure.getAttribute('open'), '');
-                    const statuses = await root.locator('.ai-list-status').allTextContents();
-                    assert.equal(statuses.length, 2);
-                    assert.match(statuses[0], /1 channel.*Last successful update:/s);
-                    assert.doesNotMatch(statuses[0], /Update overdue/);
-                    assert.match(statuses[1], /Update overdue or failed/);
-                    await summary.press('Enter');
-                    await master.uncheck();
-                    assert.equal(await root.locator('.ai-filter-paused').isVisible(), true);
-                    await page.locator('#ai_blocklist_feeds_action').selectOption('replace_thumbnail');
-                    await page.locator('#ai_blocklist_search_action').selectOption('hide');
-                    await page.locator('#ai_warnlist_other_pages_action').selectOption('replace_thumbnail');
-                    assert.equal(await page.locator('#ai_blocklist_recommendations_action').inputValue(), 'off');
-                    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
-                    if (width === 390 && enabled) {
-                        await root.screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-${theme}-390.png`)});
-                    }
-                    if (width === 1440 && enabled) {
-                        await root.screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-${theme}-1440.png`)});
-                    }
-                    const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
-                    await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
-                    const data = new URLSearchParams((await posted).postData());
-                    assert.equal(data.get('ai_filter_form_version'), '2');
-                    assert.equal(data.has('ai_filter_enabled'), false);
-                    assert.equal(data.get('ai_blocklist_feeds_action'), 'replace_thumbnail');
-                    assert.equal(data.get('ai_blocklist_search_action'), 'hide');
-                    assert.equal(data.get('ai_blocklist_recommendations_action'), 'off');
-                    assert.equal(data.get('ai_warnlist_other_pages_action'), 'replace_thumbnail');
-                    assert.ok(!requests.some(url => /aisloplist|raw\.githubusercontent/.test(url)));
-                    assert.deepEqual(errors, []);
-                    await context.close();
                 }
+                assert.equal(await page.locator('#ai_blocklist_feeds_action').inputValue(), 'hide');
+                assert.equal(await page.locator('#ai_blocklist_search_action').inputValue(), 'replace_thumbnail');
+                assert.equal(await page.locator('#ai_blocklist_recommendations_action').inputValue(), 'off');
+                assert.equal(await page.locator('#ai_warnlist_search_action').inputValue(), 'hide');
+                assert.equal(await page.locator('#ai_warnlist_other_pages_action').inputValue(), 'off');
+                // Native checkbox and disclosure keyboard interactions work without scripts.
+                await master.focus();
+                await master.press('Space');
+                assert.equal(await master.isChecked(), !enabled);
+                await master.press('Space');
+                assert.equal(await master.isChecked(), enabled);
+                await master.press('Tab');
+                assert.equal(await page.locator('#ai_blocklist_feeds_action').evaluate(el => el === document.activeElement), true);
+                const disclosure = root.locator('details');
+                assert.equal(await disclosure.getAttribute('open'), null);
+                const summary = disclosure.locator('summary');
+                await summary.focus();
+                await summary.press('Enter');
+                assert.equal(await disclosure.getAttribute('open'), '');
+                const statuses = await root.locator('.ai-list-status').allTextContents();
+                assert.equal(statuses.length, 2);
+                assert.match(statuses[0], /1 channel.*Last successful update:/s);
+                assert.doesNotMatch(statuses[0], /Update overdue/);
+                assert.match(statuses[1], /Update overdue or failed/);
+                await summary.press('Enter');
+                await master.uncheck();
+                assert.equal(await root.locator('.ai-filter-paused').isVisible(), true);
+                await page.locator('#ai_blocklist_feeds_action').selectOption('replace_thumbnail');
+                await page.locator('#ai_blocklist_search_action').selectOption('hide');
+                await page.locator('#ai_warnlist_other_pages_action').selectOption('replace_thumbnail');
+                assert.equal(await page.locator('#ai_blocklist_recommendations_action').inputValue(), 'off');
+                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+                if (width === 390 && enabled) {
+                    await root.screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-diary-390.png`)});
+                }
+                if (width === 1440 && enabled) {
+                    await root.screenshot({path: path.join(artifacts, `${engine}-ai-filter-section-diary-1440.png`)});
+                }
+                const posted = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/preferences');
+                await page.getByRole('button', {name: 'Save preferences', exact: true}).click();
+                const data = new URLSearchParams((await posted).postData());
+                assert.equal(data.get('ai_filter_form_version'), '2');
+                assert.equal(data.has('ai_filter_enabled'), false);
+                assert.equal(data.get('ai_blocklist_feeds_action'), 'replace_thumbnail');
+                assert.equal(data.get('ai_blocklist_search_action'), 'hide');
+                assert.equal(data.get('ai_blocklist_recommendations_action'), 'off');
+                assert.equal(data.get('ai_warnlist_other_pages_action'), 'replace_thumbnail');
+                assert.ok(!requests.some(url => /aisloplist|raw\.githubusercontent/.test(url)));
+                assert.deepEqual(errors, []);
+                await context.close();
             }
         }
         const search = await pageFor(engine, {fixture: 'search-ai-empty', route: 'search?q=videos&page=2', width: 390, javascript: false});
@@ -1509,38 +1506,36 @@ for (const engine of engines) {
     });
 
     test(`${engine}: AI channel filter global Off restores cards, recommendations and queue thumbnails`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const width of [320, 1440]) {
-                for (const surface of ['search', 'playlist', 'watch']) {
-                    const fixture = `${surface}-ai-paused-${theme}`;
-                    const {page, context, errors} = await pageFor(engine, {fixture, width, javascript: false});
-                    assert.equal(await page.locator('.ai-thumbnail').count(), 0);
-                    if (surface === 'watch') {
-                        assert.equal(await page.locator('.recommendation').count(), 3);
-                        assert.equal(JSON.parse(await page.locator('#video_data').textContent()).next_video, 'aia00000000');
-                    } else {
-                        assert.equal(await page.locator('.media-card').count(), 3);
-                        assert.equal(await page.locator('.media-card img.thumbnail').count(), 3);
-                    }
-                    assert.deepEqual(errors, []);
-                    await context.close();
+        for (const width of [320, 1440]) {
+            for (const surface of ['search', 'playlist', 'watch']) {
+                const fixture = `${surface}-ai-paused-diary`;
+                const {page, context, errors} = await pageFor(engine, {fixture, width, javascript: false});
+                assert.equal(await page.locator('.ai-thumbnail').count(), 0);
+                if (surface === 'watch') {
+                    assert.equal(await page.locator('.recommendation').count(), 3);
+                    assert.equal(JSON.parse(await page.locator('#video_data').textContent()).next_video, 'aia00000000');
+                } else {
+                    assert.equal(await page.locator('.media-card').count(), 3);
+                    assert.equal(await page.locator('.media-card img.thumbnail').count(), 3);
                 }
-                const queue = JSON.parse(fs.readFileSync(path.join(generated, `queue-ai-paused-${theme}.json`)));
-                const fixture = theme === 'diary' ? 'watch-diary-dark' : 'watch-dark';
-                const {page, context, errors} = await pageFor(engine, {fixture, queue, width});
-                await page.locator('.queue-row').first().waitFor({state: 'attached'});
-                assert.equal(await page.locator('#playlist .ai-thumbnail').count(), 0);
-                assert.equal(await page.locator('.queue-row').count(), 4);
-                assert.equal(await page.locator('.queue-row img').count(), 4);
-                assert.deepEqual(await page.locator('.queue-row').evaluateAll(rows => rows.map(row => row.dataset.index)), ['0', '1', '2', '3']);
                 assert.deepEqual(errors, []);
                 await context.close();
             }
+            const queue = JSON.parse(fs.readFileSync(path.join(generated, `queue-ai-paused-diary.json`)));
+            const fixture = 'watch-dark';
+            const {page, context, errors} = await pageFor(engine, {fixture, queue, width});
+            await page.locator('.queue-row').first().waitFor({state: 'attached'});
+            assert.equal(await page.locator('#playlist .ai-thumbnail').count(), 0);
+            assert.equal(await page.locator('.queue-row').count(), 4);
+            assert.equal(await page.locator('.queue-row img').count(), 4);
+            assert.deepEqual(await page.locator('.queue-row').evaluateAll(rows => rows.map(row => row.dataset.index)), ['0', '1', '2', '3']);
+            assert.deepEqual(errors, []);
+            await context.close();
         }
         // Store the production guest cookies in a real browser, including after
         // pausing and resuming, to catch size limits as well as serialization.
         const cookies = JSON.parse(fs.readFileSync(path.join(generated, 'ai-preferences-cookies.json')));
-        const {page, context} = await pageFor(engine, {fixture: 'preferences-ai-filter-modern-neon-paused', javascript: false});
+        const {page, context} = await pageFor(engine, {fixture: 'preferences-ai-filter-diary-paused', javascript: false});
         for (const [state, value] of Object.entries(cookies)) {
             await context.addCookies([{name: 'PREFS', value, url: 'https://invidious.test', sameSite: 'Lax'}]);
             await page.reload();
@@ -1555,34 +1550,32 @@ for (const engine of engines) {
     });
 
     test(`${engine}: AI channel filter replacement is quiet, keeps Discovery results and works in thin mode`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const thin of [false, true]) {
-                for (const width of [320, 1440]) {
-                    const suffix = `${theme}${thin ? '-thin' : ''}`;
-                    for (const surface of ['search', 'watch']) {
-                        const {page, context, errors, requests} = await pageFor(engine, {fixture: `${surface}-ai-thumbnails-${suffix}`, route: surface === 'search' ? 'search?q=videos' : 'watch?v=2isYuQZMbdU', width, javascript: false});
-                        await assertQuietAiThumbnails(page, 2);
-                        const cards = page.locator(surface === 'search' ? '.media-card' : '.recommendation');
-                        assert.equal(await cards.count(), 3);
-                        assert.equal(await cards.nth(0).locator('img.thumbnail').count(), 0);
-                        assert.equal(await cards.nth(1).locator('img.thumbnail').count(), 0);
-                        assert.match(await cards.nth(0).locator('.ai-thumbnail').textContent(), /Likely AI-generated.*AiSList Blocklist/);
-                        assert.match(await cards.nth(1).locator('.ai-thumbnail').textContent(), /Possibly AI-generated.*AiSList Warnlist/);
-                        assert.equal(await cards.nth(2).locator('img.thumbnail').count(), thin ? 0 : 1);
-                        assert.ok(!requests.some(url => /\/vi\/ai[ab]00000000\//.test(url)));
-                        if (surface === 'watch') {
-                            const data = JSON.parse(await page.locator('#video_data').textContent());
-                            assert.equal(data.next_video, 'aia00000000');
-                        } else {
-                            const title = cards.first().locator('[data-dearrow-row] a');
-                            await title.focus();
-                            assert.equal(await title.evaluate(el => el === document.activeElement), true);
-                            assert.equal(await title.getAttribute('href'), '/watch?v=aia00000000');
-                        }
-                        if (width === 320 && !thin) await cards.first().screenshot({path: path.join(artifacts, `${engine}-ai-${surface}-${theme}.png`)});
-                        assert.deepEqual(errors, []);
-                        await context.close();
+        for (const thin of [false, true]) {
+            for (const width of [320, 1440]) {
+                const suffix = `diary${thin ? '-thin' : ''}`;
+                for (const surface of ['search', 'watch']) {
+                    const {page, context, errors, requests} = await pageFor(engine, {fixture: `${surface}-ai-thumbnails-${suffix}`, route: surface === 'search' ? 'search?q=videos' : 'watch?v=2isYuQZMbdU', width, javascript: false});
+                    await assertQuietAiThumbnails(page, 2);
+                    const cards = page.locator(surface === 'search' ? '.media-card' : '.recommendation');
+                    assert.equal(await cards.count(), 3);
+                    assert.equal(await cards.nth(0).locator('img.thumbnail').count(), 0);
+                    assert.equal(await cards.nth(1).locator('img.thumbnail').count(), 0);
+                    assert.match(await cards.nth(0).locator('.ai-thumbnail').textContent(), /Likely AI-generated.*AiSList Blocklist/);
+                    assert.match(await cards.nth(1).locator('.ai-thumbnail').textContent(), /Possibly AI-generated.*AiSList Warnlist/);
+                    assert.equal(await cards.nth(2).locator('img.thumbnail').count(), thin ? 0 : 1);
+                    assert.ok(!requests.some(url => /\/vi\/ai[ab]00000000\//.test(url)));
+                    if (surface === 'watch') {
+                        const data = JSON.parse(await page.locator('#video_data').textContent());
+                        assert.equal(data.next_video, 'aia00000000');
+                    } else {
+                        const title = cards.first().locator('[data-dearrow-row] a');
+                        await title.focus();
+                        assert.equal(await title.evaluate(el => el === document.activeElement), true);
+                        assert.equal(await title.getAttribute('href'), '/watch?v=aia00000000');
                     }
+                    if (width === 320 && !thin) await cards.first().screenshot({path: path.join(artifacts, `${engine}-ai-${surface}-diary.png`)});
+                    assert.deepEqual(errors, []);
+                    await context.close();
                 }
             }
         }
@@ -1595,18 +1588,16 @@ for (const engine of engines) {
             ['playlist', 'playlist?list=PLfixture', 2, 3], ['playlist', 'playlist?list=PLfixture', 2, 3, true],
             ['mix', 'mix?list=RDfixture', 2, 3], ['mix', 'mix?list=RDfixture', 2, 3, true]
         ];
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const [surface, route, replacements, total, thin] of cases) {
-                const {page, context, errors, requests} = await pageFor(engine, {fixture: `${surface}-ai-thumbnails-${theme}${thin ? '-thin' : ''}`, route, width: 320, javascript: false});
-                assert.equal(await page.locator('.media-card').count(), total);
-                await assertQuietAiThumbnails(page, replacements);
-                assert.equal(await page.locator('.ai-thumbnail').locator('xpath=ancestor::a[1]').count(), replacements);
-                assert.ok(!requests.some(url => /\/vi\/ai[ab]00000000\//.test(url)));
-                if (surface === 'playlist') assert.deepEqual(await page.locator('.playlist-position').allTextContents(), ['1', '2', '3']);
-                if (surface === 'history') assert.equal(await page.locator('[data-onclick="mark_unwatched"]').count(), total);
-                assert.deepEqual(errors, []);
-                await context.close();
-            }
+        for (const [surface, route, replacements, total, thin] of cases) {
+            const {page, context, errors, requests} = await pageFor(engine, {fixture: `${surface}-ai-thumbnails-diary${thin ? '-thin' : ''}`, route, width: 320, javascript: false});
+            assert.equal(await page.locator('.media-card').count(), total);
+            await assertQuietAiThumbnails(page, replacements);
+            assert.equal(await page.locator('.ai-thumbnail').locator('xpath=ancestor::a[1]').count(), replacements);
+            assert.ok(!requests.some(url => /\/vi\/ai[ab]00000000\//.test(url)));
+            if (surface === 'playlist') assert.deepEqual(await page.locator('.playlist-position').allTextContents(), ['1', '2', '3']);
+            if (surface === 'history') assert.equal(await page.locator('[data-onclick="mark_unwatched"]').count(), total);
+            assert.deepEqual(errors, []);
+            await context.close();
         }
         for (const fixture of ['clips-ai-thumbnails', 'channel-clips-ai-thumbnails']) {
             const {page, context, errors} = await pageFor(engine, {fixture, width: 320, javascript: false});
@@ -1619,28 +1610,26 @@ for (const engine of engines) {
     });
 
     test(`${engine}: AI channel filter watch queues preserve duplicate occurrences and advancement`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const thin of [false, true]) {
-                for (const width of [320, 1440]) {
-                    const queue = JSON.parse(fs.readFileSync(path.join(generated, `queue-ai-thumbnails-${theme}${thin ? '-thin' : ''}.json`)));
-                    const fixture = theme === 'diary' ? 'watch-diary-dark' : 'watch-dark';
-                    const {page, context, errors, requests} = await pageFor(engine, {fixture, queue, width});
-                    await page.locator('.queue-row').first().waitFor({state: 'attached'});
-                    if (width === 320) await page.locator('#queue-toggle').click();
-                    await assertQuietAiThumbnails(page, 3, '#playlist .ai-thumbnail');
-                    assert.equal(await page.locator('.queue-row').count(), 4);
-                    assert.deepEqual(await page.locator('.queue-row').evaluateAll(rows => rows.map(row => row.dataset.index)), ['0', '1', '2', '3']);
-                    assert.equal(await page.locator('.queue-row[data-video-id="2isYuQZMbdU"]').count(), 2);
-                    assert.equal(await page.locator('.queue-row').nth(1).locator('img').count(), 0);
-                    assert.ok(!requests.some(url => /\/vi\/previous001\//.test(url)));
-                    assert.equal(await page.locator('#playlist [aria-current]').getAttribute('href'), '/watch?v=2isYuQZMbdU&list=PLfixture&index=2');
-                    const next = new URL(await page.locator('#queue-navigation [data-direction="next"]').getAttribute('href'), 'https://invidious.test');
-                    assert.equal(next.searchParams.get('v'), 'nextvideo01');
-                    assert.equal(next.searchParams.get('index'), '3');
-                    if (width === 320 && !thin) await page.locator('#playlist-panel').screenshot({path: path.join(artifacts, `${engine}-ai-queue-${theme}.png`)});
-                    assert.deepEqual(errors, []);
-                    await context.close();
-                }
+        for (const thin of [false, true]) {
+            for (const width of [320, 1440]) {
+                const queue = JSON.parse(fs.readFileSync(path.join(generated, `queue-ai-thumbnails-diary${thin ? '-thin' : ''}.json`)));
+                const fixture = 'watch-dark';
+                const {page, context, errors, requests} = await pageFor(engine, {fixture, queue, width});
+                await page.locator('.queue-row').first().waitFor({state: 'attached'});
+                if (width === 320) await page.locator('#queue-toggle').click();
+                await assertQuietAiThumbnails(page, 3, '#playlist .ai-thumbnail');
+                assert.equal(await page.locator('.queue-row').count(), 4);
+                assert.deepEqual(await page.locator('.queue-row').evaluateAll(rows => rows.map(row => row.dataset.index)), ['0', '1', '2', '3']);
+                assert.equal(await page.locator('.queue-row[data-video-id="2isYuQZMbdU"]').count(), 2);
+                assert.equal(await page.locator('.queue-row').nth(1).locator('img').count(), 0);
+                assert.ok(!requests.some(url => /\/vi\/previous001\//.test(url)));
+                assert.equal(await page.locator('#playlist [aria-current]').getAttribute('href'), '/watch?v=2isYuQZMbdU&list=PLfixture&index=2');
+                const next = new URL(await page.locator('#queue-navigation [data-direction="next"]').getAttribute('href'), 'https://invidious.test');
+                assert.equal(next.searchParams.get('v'), 'nextvideo01');
+                assert.equal(next.searchParams.get('index'), '3');
+                if (width === 320 && !thin) await page.locator('#playlist-panel').screenshot({path: path.join(artifacts, `${engine}-ai-queue-diary.png`)});
+                assert.deepEqual(errors, []);
+                await context.close();
             }
         }
     });
@@ -1698,71 +1687,40 @@ for (const engine of engines) {
             }
         }
     });
-    test(`${engine}: theme cards render and submit without JavaScript`, async () => {
-        const { page, context } = await pageFor(engine, { fixture: 'preferences', javascript: false, width: 390 });
-        assert.equal(await page.getByRole('radio', { name: 'Scrapbook' }).count(), 0);
-        assert.equal(await page.getByRole('radio', { name: 'Cinematic' }).count(), 0);
-        const radio = page.getByRole('radio', { name: 'Modern Neon' });
-        assert.equal(await radio.isChecked(), true);
-        assert.equal(await page.locator('body').getAttribute('data-theme'), 'modern-neon');
-        assert.equal(await page.locator('.theme-option').filter({ has: radio }).locator('.theme-card-selected').isVisible(), true);
-        await radio.scrollIntoViewIfNeeded();
-        const preview = page.locator('.theme-option').filter({ has: radio }).locator('img');
-        await preview.waitFor();
-        assert.equal(await preview.evaluate(img => img.complete && img.naturalWidth > 0), true);
-        await radio.focus();
-        await page.keyboard.press('Space');
-        await page.locator('.theme-picker').screenshot({ path: path.join(artifacts, `${engine}-theme-picker.png`) });
-        const posted = page.waitForRequest(request => request.method() === 'POST');
-        await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
-        assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'modern-neon');
-        await context.close();
-    });
-    test(`${engine}: alternative theme loads in isolation and supports keyboard selection`, async () => {
-        const { page, context, requests } = await pageFor(engine, { fixture: 'preferences-alternative' });
-        assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
-        assert.equal(await page.getByRole('radio', { name: 'Fixture Theme' }).isChecked(), true);
-        assert.ok(requests.some(url => url.startsWith('/themes/fixture-theme/theme.css')));
-        assert.ok(!requests.some(url => url.startsWith('/themes/modern-neon/theme.css')));
-        await page.getByRole('radio', { name: 'Fixture Theme' }).focus();
-        await page.keyboard.press('ArrowRight');
-        assert.equal(await page.getByRole('radio', { name: 'Random', exact: true }).isChecked(), true);
-        assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
-        await page.locator('#toggle_theme').click();
-        assert.equal(await page.locator('body').getAttribute('data-theme'), 'fixture-theme');
-        await context.close();
-    });
-    test(`${engine}: Diary selection submits without JavaScript and loads alone`, async () => {
-        const { page, context, requests } = await pageFor(engine, { fixture: 'preferences-diary', javascript: false, width: 390 });
-        const radio = page.getByRole('radio', { name: 'Diary', exact: true });
-        assert.equal(await radio.isChecked(), true);
-        for (const img of await page.locator('.theme-card img').all()) {
-            assert.equal(await img.evaluate(el => el.complete && el.naturalWidth > 0), true);
+    test(`${engine}: Diary is the only design and color preferences submit with and without JavaScript`, async () => {
+        for (const javascript of [true, false]) {
+            const { page, context, requests, errors } = await pageFor(engine, { fixture: 'preferences', javascript, width: 390 });
+            assert.equal(await page.locator('[name="theme"], [name^="theme_random"], .theme-picker, .theme-card').count(), 0);
+            assert.equal(await page.locator('body').getAttribute('data-theme'), null);
+            assert.deepEqual(requests.filter(url => /^\/themes\/.*\.css/.test(url)).map(url => url.split('?')[0]), ['/themes/diary/theme.css']);
+            assert.ok(!requests.some(url => url.includes('preview.webp') || url.includes('theme-picker')));
+            await page.locator('#dark_mode').selectOption('light');
+            const posted = page.waitForRequest(request => request.method() === 'POST');
+            await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
+            const data = new URLSearchParams((await posted).postData());
+            assert.equal(data.get('dark_mode'), 'light');
+            for (const key of ['theme', 'theme_random', 'theme_random_interval_hours', 'theme_random_next_at']) assert.equal(data.has(key), false);
+            assert.deepEqual(errors, []);
+            await context.close();
         }
-        assert.ok(requests.some(url => url.startsWith('/themes/diary/theme.css')));
-        assert.ok(!requests.some(url => url.startsWith('/themes/modern-neon/theme.css')));
-        const posted = page.waitForRequest(request => request.method() === 'POST');
-        await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
-        assert.equal(new URLSearchParams((await posted).postData()).get('theme'), 'diary');
-        await context.close();
     });
-    test(`${engine}: Diary palettes, mode toggle and keyboard selection`, async () => {
+    test(`${engine}: Diary palettes, mode toggle and keyboard color selection`, async () => {
         for (const [mode, systemTheme, expected] of [['light', 'dark', 'light'], ['dark', 'light', 'dark'], ['auto', 'dark', 'dark'], ['auto', 'light', 'light']]) {
-            const { page, context } = await pageFor(engine, { fixture: `browse-diary-${mode}`, systemTheme });
+            const { page, context } = await pageFor(engine, { fixture: `browse-${mode}`, systemTheme });
             assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).colorScheme), expected);
             await page.locator('#toggle_theme').click();
-            assert.equal(await page.locator('body').getAttribute('data-theme'), 'diary');
+            assert.equal(await page.locator('link[href*="/themes/"]').getAttribute('href'), '/themes/diary/theme.css?v=fixture');
             assert.equal(await page.locator('body').getAttribute('data-density'), 'balanced');
             await context.close();
         }
         const { page, context } = await pageFor(engine, { fixture: 'preferences' });
-        await page.getByRole('radio', { name: 'Modern Neon' }).focus();
-        await page.keyboard.press('ArrowRight');
-        assert.equal(await page.getByRole('radio', { name: 'Diary', exact: true }).isChecked(), true);
+        await page.locator('#dark_mode').focus();
+        await page.keyboard.press('ArrowUp');
+        assert.equal(await page.locator('#dark_mode').inputValue(), 'light');
         await context.close();
     });
     test(`${engine}: Diary local lettering loads and decorations stay noninteractive`, async () => {
-        const { page, context, requests } = await pageFor(engine, { fixture: 'browse-diary-light' });
+        const { page, context, requests } = await pageFor(engine, { fixture: 'browse-light' });
         await page.evaluate(() => document.fonts.ready);
         assert.deepEqual(await page.evaluate(() => [...document.fonts].filter(font => ['Dudu', 'Helvetica Punk'].includes(font.family.replace(/["']/g, ''))).map(font => font.status)), ['loaded', 'loaded']);
         assert.ok(requests.some(url => url.includes('/themes/diary/Dudu_Calligraphy.ttf')));
@@ -1775,7 +1733,7 @@ for (const engine of engines) {
     });
     test(`${engine}: Diary preserves real player controls`, async () => {
         for (const width of [390, 1440]) {
-            const { page, context, errors } = await pageFor(engine, { fixture: 'watch-diary-light', realPlayer: true, width, touch: width === 390 });
+            const { page, context, errors } = await pageFor(engine, { fixture: 'watch-light', realPlayer: true, width, touch: width === 390 });
             await page.waitForFunction(() => window.player && typeof player.play === 'function');
             await page.evaluate(() => { player.muted(true); player.play(); });
             await page.waitForFunction(() => player.currentTime() > 0.1);
@@ -1789,17 +1747,17 @@ for (const engine of engines) {
     });
     test(`${engine}: Diary responsive paper layouts`, async () => {
         for (const width of [320, 390, 768, 1024, 1440, 1920]) {
-            for (const fixture of ['browse-diary-light', 'browse-diary-dark', 'browse-diary-compact', 'browse-diary-thin', 'watch-diary-light', 'watch-diary-dark', 'watch-diary-rtl', 'preferences-diary', 'search-diary', 'playlist-diary', 'history-diary', 'playlist-library-diary', 'login-diary', 'error-diary', 'channel-diary']) {
+            for (const fixture of ['browse-light', 'browse-dark', 'browse-diary-compact', 'browse-diary-thin', 'watch-light', 'watch-dark', 'watch-diary-rtl', 'preferences-diary', 'search-diary', 'playlist-diary', 'history', 'playlist-library', 'login-diary', 'error-diary', 'channel-diary']) {
                 const { page, context, errors } = await pageFor(engine, { fixture, width });
                 await page.evaluate(() => document.fonts.ready);
-                assert.equal(await page.locator('body').getAttribute('data-theme'), 'diary', `${fixture} must exercise Diary`);
+                assert.equal(await page.locator('link[href*="/themes/"]').getAttribute('href'), '/themes/diary/theme.css?v=fixture', `${fixture} must exercise Diary`);
                 assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${fixture} overflows at ${width}`);
                 assert.deepEqual(errors, []);
                 if ([320, 1440].includes(width)) {
                     await page.locator('img.thumbnail').evaluateAll(images => Promise.all(images.filter(img => img.getBoundingClientRect().top < innerHeight).map(img => img.decode())));
                     await page.screenshot({ path: path.join(artifacts, `${engine}-${fixture}-${width}.png`) });
                 }
-                if (fixture === 'browse-diary-light' && width === 320) {
+                if (fixture === 'browse-light' && width === 320) {
                     await page.addStyleTag({ content: 'html { font-size: 200%; }' });
                     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Diary enlarged text overflows');
                     await page.keyboard.press('Tab');
@@ -1996,7 +1954,9 @@ for (const engine of engines) {
         assert.equal(await page.locator('.index-link').getAttribute('href'), '/');
         assert.equal((await page.locator('.navigation-menu > summary').textContent()).trim(), '☰');
         assert.equal(await page.locator('.user-field a[href*="preferences"]').count(), 0);
-        assert.ok((await page.locator('.index-link').boundingBox()).height <= 40);
+        const brand = await page.locator('.index-link').boundingBox();
+        const mark = await page.locator('.brand-mark').boundingBox();
+        assert.ok(Math.abs((mark.y + mark.height / 2) - (brand.y + brand.height / 2)) <= 1, 'brand icon and text stay centered on one row');
         await page.setViewportSize({ width: 390, height: 844 });
         await page.locator('.navigation-menu > summary').click();
         for (const feed of ['history', 'subscriptions', 'playlists']) assert.equal(await page.locator(`.navigation-menu a[href="/feed/${feed}"]`).isVisible(), true);
@@ -2021,7 +1981,7 @@ for (const engine of engines) {
         assert.equal(await noNick.page.locator('header a[href="/account"]').count(), 0);
         await noNick.context.close();
 
-        for (const fixture of ['preferences', 'preferences-diary', 'preferences-rtl', 'preferences-signed-in', 'preferences-diary-signed-in']) {
+        for (const fixture of ['preferences', 'preferences-diary', 'preferences-rtl', 'preferences-signed-in']) {
             for (const [width, javascript] of [[320, false], [390, true]]) {
             const {page, context, errors} = await pageFor(engine, {fixture, width, height: 640, javascript});
             const header = page.locator('.navbar');
@@ -2061,8 +2021,8 @@ for (const engine of engines) {
 
     test(`${engine}: header stays visible on tablet and desktop pages`, async () => {
         const cases = [
-            ...['preferences', 'preferences-diary', 'preferences-signed-in', 'preferences-diary-signed-in'].flatMap(fixture => [768, 1024, 1440].map(width => [fixture, width])),
-            ...['watch-dark', 'watch-diary-light'].flatMap(fixture => [1024, 1440].map(width => [fixture, width])),
+            ...['preferences', 'preferences-diary', 'preferences-signed-in'].flatMap(fixture => [768, 1024, 1440].map(width => [fixture, width])),
+            ...['watch-dark', 'watch-light'].flatMap(fixture => [1024, 1440].map(width => [fixture, width])),
             ['preferences-rtl', 1440], ['browse-signed-in', 1920]
         ];
         for (const [fixture, width] of cases) {
@@ -2106,7 +2066,7 @@ for (const engine of engines) {
 
     test(`${engine}: sticky header covers thumbnails while video menus can overlap it`, async () => {
         const cases = [
-            ['browse-diary-light', '.media-item[data-kind=video] .bottom-right-overlay .length'],
+            ['browse-light', '.media-item[data-kind=video] .bottom-right-overlay .length'],
             ['playlist-diary-editable', '.media-item[data-kind=playlist-video] .top-left-overlay .ion-md-trash'],
             ['browse-diary-thin', '.media-item[data-kind=video] .video-placeholder']
         ];
@@ -2128,7 +2088,7 @@ for (const engine of engines) {
             await context.close();
         }
 
-        const {page, context, errors} = await pageFor(engine, {fixture: 'browse-diary-light', width: 1280, height: 500});
+        const {page, context, errors} = await pageFor(engine, {fixture: 'browse-light', width: 1280, height: 500});
         await page.keyboard.press('Tab');
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
         const skipLink = await page.locator('.skip-link').evaluate(element => {
@@ -2438,42 +2398,10 @@ for (const engine of engines) {
         await context.close();
     });
 
-    test(`${engine}: Random is the leftmost accessible theme choice and submits without JavaScript`, async () => {
-        const { page, context } = await pageFor(engine, { fixture: 'preferences', javascript: false });
-        const random = page.locator('#theme-random');
-        assert.equal(await page.locator('.theme-option input').first().getAttribute('value'), 'random');
-        assert.equal(await page.locator('label[for="theme-random"] svg').count(), 1);
-        await random.check();
-        await page.locator('#theme_random_interval_hours').fill('12');
-        const posted = page.waitForRequest(request => request.method() === 'POST');
-        await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
-        const data = new URLSearchParams((await posted).postData());
-        assert.equal(data.get('theme'), 'random');
-        assert.equal(data.get('theme_random_interval_hours'), '12');
-        await context.close();
-    });
-
-    test(`${engine}: Random remains selected and open pages do not change at the deadline`, async () => {
-        const selection = await pageFor(engine, { fixture: 'preferences-random' });
-        assert.equal(await selection.page.locator('#theme-random').isChecked(), true);
-        await selection.page.locator('#theme-random').focus();
-        await selection.page.keyboard.press('ArrowRight');
-        assert.equal(await selection.page.locator('#theme-modern-neon').isChecked(), true);
-        await selection.context.close();
-        const { page, context, requests } = await pageFor(engine, { fixture: 'browse-random' });
-        const theme = await page.locator('body').getAttribute('data-theme');
-        const navigations = requests.length;
-        await page.clock.install();
-        await page.clock.fastForward(7 * 60 * 60 * 1000);
-        assert.equal(await page.locator('body').getAttribute('data-theme'), theme);
-        assert.equal(requests.length, navigations);
-        await context.close();
-    });
-
-    test(`${engine}: System follows live appearance changes and cycles independently of visual themes`, async () => {
-        for (const fixture of ['browse-auto', 'browse-diary-auto']) {
+    test(`${engine}: System follows live appearance changes and color modes synchronize across tabs`, async () => {
+        for (const fixture of ['browse-auto']) {
             const { page, context, requests, errors } = await pageFor(engine, { fixture, systemTheme: 'dark' });
-            const activeTheme = await page.locator('body').getAttribute('data-theme');
+            const stylesheet = await page.locator('link[href*="/themes/"]').getAttribute('href');
             const scheme = () => page.locator('body').evaluate(el => getComputedStyle(el).colorScheme);
             assert.equal(await scheme(), 'dark');
             await page.emulateMedia({ colorScheme: 'light' });
@@ -2483,7 +2411,7 @@ for (const engine of engines) {
                 await page.locator('#toggle_theme').click();
                 assert.equal(await scheme(), css);
                 assert.equal(await page.locator('#toggle_theme').getAttribute('data-mode'), mode || 'system');
-                assert.equal(await page.locator('body').getAttribute('data-theme'), activeTheme);
+                assert.equal(await page.locator('link[href*="/themes/"]').getAttribute('href'), stylesheet);
                 assert.ok(await page.locator('body').evaluate(el => el.classList.contains('extra-class')));
             }
             assert.ok(requests.some(url => url === '/toggle_theme?redirect=false&mode='));
@@ -2505,7 +2433,7 @@ for (const engine of engines) {
         }
     });
 
-    test(`${engine}: signed-in theme controls submit CSRF by POST with and without JavaScript`, async () => {
+    test(`${engine}: signed-in color-mode controls submit CSRF by POST with and without JavaScript`, async () => {
         for (const javascript of [true, false]) {
             const { page, context, errors } = await pageFor(engine, { fixture: 'browse-signed-in', javascript });
             const request = page.waitForRequest(req => new URL(req.url()).pathname === '/toggle_theme');
@@ -2518,7 +2446,7 @@ for (const engine of engines) {
         }
     });
 
-    test(`${engine}: theme switching preserves density and page layout`, async () => {
+    test(`${engine}: color-mode switching preserves density and page layout`, async () => {
         const { page, context, errors } = await pageFor(engine, { fixture: 'browse-compact' });
         await page.locator('#toggle_theme').click();
         assert.equal(await page.locator('body').getAttribute('data-density'), 'compact');
@@ -2591,19 +2519,11 @@ test('UI asset additions report the advisory 35KB compressed target', () => {
     const baseline = require('./asset-baseline.json');
     let delta = 0;
     let totalShared = 0;
-    const themeTotals = [];
-    const themeBytes = [];
     for (const [file, originalBytes] of Object.entries(baseline.gzipBytes)) {
-        const current = fs.readFileSync(path.join(root, 'assets', file));
-        const compressed = gzipSync(current).length;
-        if (/^themes\/[^/]+\/theme\.css$/.test(file)) themeTotals.push(compressed);
-        else totalShared += compressed;
-        const added = compressed - originalBytes;
-        if (/^themes\/[^/]+\/theme\.css$/.test(file)) themeBytes.push(added);
-        else delta += added;
+        const compressed = gzipSync(fs.readFileSync(path.join(root, 'assets', file))).length;
+        totalShared += compressed;
+        delta += compressed - originalBytes;
     }
-    // Only one theme stylesheet is loaded: budget the largest alongside shared assets.
-    delta += Math.max(0, ...themeBytes);
     for (const file of ['js/dearrow.js', 'js/channel-spoilers.js', 'css/channel-spoilers.css', 'js/player-mobile.js', 'js/player-stats.js', 'js/player-stream-menu.js', 'js/dearrow-loader.js', 'js/clip-loader.js', 'js/player-chapters.js', 'css/dearrow.css']) {
         const bytes = gzipSync(fs.readFileSync(path.join(root, 'assets', file))).length;
         delta += bytes;
@@ -2611,19 +2531,8 @@ test('UI asset additions report the advisory 35KB compressed target', () => {
     }
     assert.ok(Number.isFinite(delta) && delta > 0, "Asset inventory must report valid sizes");
     console.log(`Advisory target: 35840 gzip bytes; difference: ${delta - 35840} bytes (visual variety may exceed target).`);
-    console.log(`Inventoried initial assets (shared plus largest theme): ${totalShared + Math.max(...themeTotals)} gzip bytes.`);
+    console.log(`Inventoried initial assets (shared plus Diary): ${totalShared} gzip bytes.`);
     console.log(`Initial UI asset increase: ${delta} gzip bytes; transcript loaded on demand.`);
-});
-
-// Picker previews are lazy-loaded on preferences, not part of the site-wide CSS/JS budget.
-test('Theme preview images stay within the aggregate 12KB-per-theme budget', () => {
-    const baseline = require('./asset-baseline.json');
-    let delta = 0;
-    for (const [file, originalBytes] of Object.entries(baseline.previewGzipBytes)) {
-        delta += gzipSync(fs.readFileSync(path.join(root, 'assets', file))).length - originalBytes;
-    }
-    const budget = Object.keys(baseline.previewGzipBytes).length * 12 * 1024;
-    assert.ok(delta <= budget, `${delta} preview bytes added (budget ${budget})`);
 });
 
 for (const engine of engines) {
@@ -3087,42 +2996,35 @@ for (const engine of engines) {
         await context.close();
     });
 
-    test(`${engine}: DeArrow icon stays fixed with wrapping, RTL, themes, and touch`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            const {page, context, errors} = await pageFor(engine, {fixture: 'browse-dearrow', width: 390, touch: true});
-            await page.waitForSelector('.dearrow-reveal');
-            await page.evaluate(async theme => {
-                document.body.dataset.theme = theme;
-                const stylesheet = document.querySelector('link[href*="/themes/"]');
-                await new Promise(resolve => { stylesheet.onload = resolve; stylesheet.href = '/themes/' + theme + '/theme.css'; });
-                await document.fonts.ready;
-            }, theme);
-            const title = page.locator('[data-dearrow-id]').first();
-            const row = title.locator('xpath=ancestor::*[@data-dearrow-row][1]');
-            const button = row.locator('.dearrow-reveal');
-            const replacement = await title.textContent();
-            const original = await title.getAttribute('data-dearrow-original');
-            assert.equal(await button.evaluate(el => !!el.closest('a')), false);
-            const url = page.url();
-            for (const direction of ['ltr', 'rtl']) {
-                await page.evaluate(dir => document.documentElement.dir = dir, direction);
-                await row.evaluate(el => el.style.fontSize = '24px');
-                await button.scrollIntoViewIfNeeded();
-                const before = await button.boundingBox();
-                await button.tap();
-                assert.equal(await title.textContent(), original);
-                assert.equal(await button.getAttribute('aria-pressed'), 'true');
-                assert.deepEqual(await button.boundingBox(), before);
-                await button.tap();
-                assert.equal(await title.textContent(), replacement);
-                assert.deepEqual(await button.boundingBox(), before);
-                assert.equal(page.url(), url);
-                assert.equal(await row.evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
-            }
-            await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-${theme}-touch.png`)});
-            assert.deepEqual(errors, []);
-            await context.close();
+    test(`${engine}: DeArrow icon stays fixed with wrapping, RTL and touch`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'browse-dearrow', width: 390, touch: true});
+        await page.waitForSelector('.dearrow-reveal');
+        await page.evaluate(() => document.fonts.ready);
+        const title = page.locator('[data-dearrow-id]').first();
+        const row = title.locator('xpath=ancestor::*[@data-dearrow-row][1]');
+        const button = row.locator('.dearrow-reveal');
+        const replacement = await title.textContent();
+        const original = await title.getAttribute('data-dearrow-original');
+        assert.equal(await button.evaluate(el => !!el.closest('a')), false);
+        const url = page.url();
+        for (const direction of ['ltr', 'rtl']) {
+            await page.evaluate(dir => document.documentElement.dir = dir, direction);
+            await row.evaluate(el => el.style.fontSize = '24px');
+            await button.scrollIntoViewIfNeeded();
+            const before = await button.boundingBox();
+            await button.tap();
+            assert.equal(await title.textContent(), original);
+            assert.equal(await button.getAttribute('aria-pressed'), 'true');
+            assert.deepEqual(await button.boundingBox(), before);
+            await button.tap();
+            assert.equal(await title.textContent(), replacement);
+            assert.deepEqual(await button.boundingBox(), before);
+            assert.equal(page.url(), url);
+            assert.equal(await row.evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
         }
+        await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-diary-touch.png`)});
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 
     test(`${engine}: DeArrow targets stay fixed across title lengths and page layouts`, async () => {
@@ -3427,7 +3329,7 @@ for (const engine of engines) {
         assert.deepEqual(errors, []);
         await context.close();
     });
-    test(`${engine}: preference Save remains visible throughout all themes`, async () => {
+    test(`${engine}: preference Save remains visible throughout Diary preferences`, async () => {
         for (const fixture of ['preferences', 'preferences-diary']) {
             for (const width of [390, 1440]) {
                 const {page, context} = await pageFor(engine, {fixture, width, javascript:false});
@@ -4201,24 +4103,22 @@ for (const engine of engines) {
 
 for (const engine of engines) {
     test(`${engine}: DeArrow contribution themes, empty results and loading errors`, async () => {
-        for (const theme of ['light', 'diary']) {
-            const {page, context, errors} = await pageFor(engine, {fixture: 'watch-dearrow-contributions-' + theme, width: 390, height: 844});
-            let fail = true;
-            await page.route('**/api/v1/dearrow/*/submissions', route => route.fulfill({status: fail ? 503 : 200, contentType: 'application/json', body: fail ? '{"error":"Temporary failure"}' : '{"titles":[]}'}));
-            await page.locator('#dearrow-open').click();
-            await page.waitForFunction(() => document.querySelector('#dearrow-status').textContent.includes('Temporary failure'));
-            fail = false;
-            await page.locator('#dearrow-refresh').click();
-            await page.waitForFunction(() => document.querySelector('#dearrow-titles').textContent.includes('No community'));
-            assert.equal(await page.locator('#dearrow-original button').first().isEnabled(), true);
-            assert.equal(await page.locator('#dearrow-original button').last().isDisabled(), true);
-            await page.locator('#dearrow-dialog').evaluate(el => { el.style.fontSize = '24px'; el.dir = 'rtl'; });
-            assert.equal(await page.locator('#dearrow-dialog').evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
-            await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-${theme}.png`)});
-            await page.locator('#dearrow-close').click();
-            assert.deepEqual(errors, []);
-            await context.close();
-        }
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-dearrow-contributions-light', width: 390, height: 844});
+        let fail = true;
+        await page.route('**/api/v1/dearrow/*/submissions', route => route.fulfill({status: fail ? 503 : 200, contentType: 'application/json', body: fail ? '{"error":"Temporary failure"}' : '{"titles":[]}'}));
+        await page.locator('#dearrow-open').click();
+        await page.waitForFunction(() => document.querySelector('#dearrow-status').textContent.includes('Temporary failure'));
+        fail = false;
+        await page.locator('#dearrow-refresh').click();
+        await page.waitForFunction(() => document.querySelector('#dearrow-titles').textContent.includes('No community'));
+        assert.equal(await page.locator('#dearrow-original button').first().isEnabled(), true);
+        assert.equal(await page.locator('#dearrow-original button').last().isDisabled(), true);
+        await page.locator('#dearrow-dialog').evaluate(el => { el.style.fontSize = '24px'; el.dir = 'rtl'; });
+        assert.equal(await page.locator('#dearrow-dialog').evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
+        await page.screenshot({path: path.join(artifacts, `${engine}-dearrow-light.png`)});
+        await page.locator('#dearrow-close').click();
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 }
 
@@ -4263,7 +4163,7 @@ for (const engine of engines) {
     });
 
     test(`${engine}: mobile volume stays device controlled with neutral translucent controls`, async () => {
-        for (const fixture of ['watch-dark', 'watch-light', 'watch-diary-dark', 'watch-diary-light', 'embed-mobile']) {
+        for (const fixture of ['watch-dark', 'watch-light', 'embed-mobile']) {
             const {page, context, errors} = await pageFor(engine, {fixture, realPlayer: true, touch: true, width: 390, height: 844,
                 initScript: () => localStorage.setItem('invidious_player_volume', '.25')});
             await page.waitForFunction(() => window.player && player.volume);
@@ -4319,27 +4219,25 @@ for (const engine of engines) {
         }
     });
 
-    test(`${engine}: channel playlists match library sizing in every theme`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            const channel = await pageFor(engine, {fixture: `channel-playlists-${theme}`});
-            const library = await pageFor(engine, {fixture: `library-${theme}`});
-            for (const width of [390, 768, 1440]) {
-                for (const density of ['balanced', 'compact']) {
-                    const dimensions = [];
-                    for (const view of [channel, library]) {
-                        await view.page.setViewportSize({width, height: 1000});
-                        await view.page.evaluate(async d => { document.body.dataset.density = d; await document.fonts.ready; }, density);
-                        await view.page.waitForTimeout(100);
-                        dimensions.push(await view.page.locator('.playlist-library img').first().evaluate(el => ({width: el.offsetWidth, height: el.offsetHeight})));
-                    }
-                    for (const axis of ['width', 'height']) assert.ok(Math.abs(dimensions[0][axis] - dimensions[1][axis]) < .1, `${theme} ${width} ${density} ${axis}`);
+    test(`${engine}: channel playlists match library sizing in Diary`, async () => {
+        const channel = await pageFor(engine, {fixture: `channel-playlists-diary`});
+        const library = await pageFor(engine, {fixture: `library-diary`});
+        for (const width of [390, 768, 1440]) {
+            for (const density of ['balanced', 'compact']) {
+                const dimensions = [];
+                for (const view of [channel, library]) {
+                    await view.page.setViewportSize({width, height: 1000});
+                    await view.page.evaluate(async d => { document.body.dataset.density = d; await document.fonts.ready; }, density);
+                    await view.page.waitForTimeout(100);
+                    dimensions.push(await view.page.locator('.playlist-library img').first().evaluate(el => ({width: el.offsetWidth, height: el.offsetHeight})));
                 }
+                for (const axis of ['width', 'height']) assert.ok(Math.abs(dimensions[0][axis] - dimensions[1][axis]) < .1, `diary ${width} ${density} ${axis}`);
             }
-            await channel.page.screenshot({path: path.join(artifacts, `${engine}-${theme}-channel-playlists.png`)});
-            assert.deepEqual(channel.errors, []);
-            assert.deepEqual(library.errors, []);
-            await channel.context.close(); await library.context.close();
         }
+        await channel.page.screenshot({path: path.join(artifacts, `${engine}-diary-channel-playlists.png`)});
+        assert.deepEqual(channel.errors, []);
+        assert.deepEqual(library.errors, []);
+        await channel.context.close(); await library.context.close();
     });
 }
 
@@ -4836,45 +4734,43 @@ test('manual chapter template serializes titles safely for watch and embed', () 
 for (const engine of engines) {
     for (const width of [390, 1440]) {
         test(`${engine}: production thumbnail progress spans history, all card types and thin layouts at ${width}px`, async () => {
-            for (const theme of ['modern-neon', 'diary']) {
-                for (const thin of [false, true]) {
-                    const suffix = theme + '-' + (thin ? 'thin' : 'normal');
-                    const history = await pageFor(engine, {fixture: 'history-progress-' + suffix, route: 'feed/history', width,
-                        playback: {positions: {'2isYuQZMbdU': 492, nextvideo01: 100}, watched: ['2isYuQZMbdU', 'previous001', 'nextvideo01']}});
-                    const partial = history.page.locator('.watched-indicator[data-id="2isYuQZMbdU"]');
-                    await partial.waitFor({state: 'visible'});
-                    assert.equal(await partial.evaluate(el => el.style.width), '49%');
-                    assert.equal(await history.page.locator('.watched-indicator[data-id="previous001"]').evaluate(el => el.style.width), '100%');
-                    assert.equal(await history.page.locator('.watched-indicator[data-id="nextvideo01"]').isVisible(), false);
-                    assert.equal(history.requests.filter(url => url === '/api/v1/auth/playback').length, 1);
-                    assert.equal(history.requests.some(url => url.startsWith('/api/v1/videos/')), false);
-                    if (thin) {
-                        assert.equal(await history.page.locator('.media-card img').count(), 0);
-                        const remove = await history.page.locator('.media-card button').first().boundingBox();
-                        const bar = await partial.boundingBox();
-                        assert.ok(remove.y + remove.height <= bar.y, 'History actions must not cover the thin-mode progress bar');
-                    }
-                    assert.equal(await history.page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-                    if (theme === 'modern-neon') await history.page.screenshot({path: path.join(artifacts, `${engine}-history-progress-${width}-${thin}.png`), fullPage: true});
-                    assert.deepEqual(history.errors, []);
-                    await history.context.close();
-
-                    const cards = await pageFor(engine, {fixture: 'cards-progress-' + suffix, route: 'playlist?list=PLfixture', width,
-                        playback: {positions: {progress001: 492}, watched: ['progress001']}});
-                    const indicators = cards.page.locator('.watched-indicator');
-                    await indicators.first().waitFor({state: 'visible'});
-                    assert.deepEqual(await indicators.evaluateAll(els => els.map(el => el.style.width)), ['49%', '49%', '49%', '49%']);
-                    for (const indicator of await indicators.all()) assert.equal(await indicator.isVisible(), true);
-                    if (thin) assert.equal(await cards.page.locator('.media-card img').count(), 0);
-                    assert.deepEqual(cards.errors, []);
-                    await cards.context.close();
+            for (const thin of [false, true]) {
+                const suffix = 'diary-' + (thin ? 'thin' : 'normal');
+                const history = await pageFor(engine, {fixture: 'history-progress-' + suffix, route: 'feed/history', width,
+                    playback: {positions: {'2isYuQZMbdU': 492, nextvideo01: 100}, watched: ['2isYuQZMbdU', 'previous001', 'nextvideo01']}});
+                const partial = history.page.locator('.watched-indicator[data-id="2isYuQZMbdU"]');
+                await partial.waitFor({state: 'visible'});
+                assert.equal(await partial.evaluate(el => el.style.width), '49%');
+                assert.equal(await history.page.locator('.watched-indicator[data-id="previous001"]').evaluate(el => el.style.width), '100%');
+                assert.equal(await history.page.locator('.watched-indicator[data-id="nextvideo01"]').isVisible(), false);
+                assert.equal(history.requests.filter(url => url === '/api/v1/auth/playback').length, 1);
+                assert.equal(history.requests.some(url => url.startsWith('/api/v1/videos/')), false);
+                if (thin) {
+                    assert.equal(await history.page.locator('.media-card img').count(), 0);
+                    const remove = await history.page.locator('.media-card button').first().boundingBox();
+                    const bar = await partial.boundingBox();
+                    assert.ok(remove.y + remove.height <= bar.y, 'History actions must not cover the thin-mode progress bar');
                 }
+                assert.equal(await history.page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+                await history.page.screenshot({path: path.join(artifacts, `${engine}-history-progress-${width}-${thin}.png`), fullPage: true});
+                assert.deepEqual(history.errors, []);
+                await history.context.close();
+
+                const cards = await pageFor(engine, {fixture: 'cards-progress-' + suffix, route: 'playlist?list=PLfixture', width,
+                    playback: {positions: {progress001: 492}, watched: ['progress001']}});
+                const indicators = cards.page.locator('.watched-indicator');
+                await indicators.first().waitFor({state: 'visible'});
+                assert.deepEqual(await indicators.evaluateAll(els => els.map(el => el.style.width)), ['49%', '49%', '49%', '49%']);
+                for (const indicator of await indicators.all()) assert.equal(await indicator.isVisible(), true);
+                if (thin) assert.equal(await cards.page.locator('.media-card img').count(), 0);
+                assert.deepEqual(cards.errors, []);
+                await cards.context.close();
             }
         });
 
         test(`${engine}: production queue and recommendation progress survives thin mode and refresh at ${width}px`, async () => {
             for (const thin of [false, true]) {
-                const suffix = 'modern-neon-' + (thin ? 'thin' : 'normal');
+                const suffix = 'diary-' + (thin ? 'thin' : 'normal');
                 const response = thin ? JSON.parse(fs.readFileSync(path.join(generated, 'queue-thin.json'))) : queue;
                 const session = await pageFor(engine, {fixture: 'watch-progress-' + suffix, width, queue: response,
                     playback: {positions: {'2isYuQZMbdU': 120}, watched: []}});
@@ -4997,21 +4893,19 @@ for (const engine of engines) {
     test(`${engine}: Popular avatars learned during channel refreshes render without metadata lookups`, async () => {
         const expected = JSON.parse(fs.readFileSync(path.join(root, 'spec/invidious/channels/fixtures/popular_avatars/expected_avatars.json')));
         const entries = Object.entries(expected);
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const width of [390, 1440]) {
-                const {page, context, requests, errors} = await pageFor(engine, {fixture: `popular-avatars-${theme}`, route: 'feed/popular', width});
-                const links = page.locator('.channel-name-link');
-                assert.equal(await links.count(), 2);
-                assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['Linus Tech Tips', 'MrBeast']);
-                for (const [index, [id, avatar]] of entries.entries()) {
-                    assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
-                    assert.equal(await links.nth(index).locator('img').getAttribute('src'), avatar);
-                }
-                await assertAvatarCardLayout(page);
-                assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos|comments)|avatar.*lookup/.test(url)));
-                assert.deepEqual(errors, []);
-                await context.close();
+        for (const width of [390, 1440]) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `popular-avatars-diary`, route: 'feed/popular', width});
+            const links = page.locator('.channel-name-link');
+            assert.equal(await links.count(), 2);
+            assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['Linus Tech Tips', 'MrBeast']);
+            for (const [index, [id, avatar]] of entries.entries()) {
+                assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
+                assert.equal(await links.nth(index).locator('img').getAttribute('src'), avatar);
             }
+            await assertAvatarCardLayout(page);
+            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos|comments)|avatar.*lookup/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
         }
         const {page, context, requests, errors} = await pageFor(engine, {fixture: 'popular-avatars-thin', route: 'feed/popular', width: 390});
         assert.equal(await page.locator('.channel-avatar').count(), 0);
@@ -5023,8 +4917,8 @@ for (const engine of engines) {
     test(`${engine}: channel avatars learned from comments and community posts render on another page without metadata lookups`, async () => {
         const expected = JSON.parse(fs.readFileSync(path.join(root, 'spec/invidious/comments/fixtures/expected_avatars.json')));
         const entries = Object.entries({...expected.modern, ...expected.community});
-        for (const theme of ['modern-neon', 'diary']) {
-            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-comments-${theme}`, route: 'feed/subscriptions', width: 390});
+        {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-comments-diary`, route: 'feed/subscriptions', width: 390});
             const links = page.locator('.channel-name-link');
             assert.equal(await links.count(), entries.length);
             for (const [index, [id, avatar]] of entries.entries()) {
@@ -5067,130 +4961,120 @@ for (const engine of engines) {
 
     test(`${engine}: channel avatars learned from recommendations render on another page without metadata lookups`, async () => {
         const ids = ['UCX6OQ3DkcsbYNE6H8uQQuVA', 'UCIPPMRA040LQr5QPyJEbmXA'];
-        for (const theme of ['modern-neon', 'diary']) {
-            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-recommendations-${theme}`, route: 'feed/subscriptions', width: 390});
-            const links = page.locator('.channel-name-link');
-            assert.equal(await links.count(), 2);
-            assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['MrBeast', 'MrBeast Gaming']);
-            for (const [index, id] of ids.entries()) {
-                assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
-                assert.match(await links.nth(index).locator('img').getAttribute('src'), /^\/ggpht\/.+=s88/);
-            }
-            await assertAvatarCardLayout(page);
-            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
-            assert.deepEqual(errors, []);
-            await context.close();
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-recommendations-diary`, route: 'feed/subscriptions', width: 390});
+        const links = page.locator('.channel-name-link');
+        assert.equal(await links.count(), 2);
+        assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['MrBeast', 'MrBeast Gaming']);
+        for (const [index, id] of ids.entries()) {
+            assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
+            assert.match(await links.nth(index).locator('img').getAttribute('src'), /^\/ggpht\/.+=s88/);
         }
+        await assertAvatarCardLayout(page);
+        assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 
     test(`${engine}: real modern recommendations preserve creator links, duration and collaboration labels`, async () => {
         const fixture = JSON.parse(fs.readFileSync(path.join(root, 'spec/invidious/frontend/fixtures/recommendation_avatar_lockups.json')));
-        for (const theme of ['modern-neon', 'diary']) {
-            const {page, context, requests, errors} = await pageFor(engine, {fixture: `watch-recommendations-${theme}`, route: 'watch?v=2isYuQZMbdU', width: 390});
-            const cards = page.locator('.recommendation');
-            assert.deepEqual(await cards.evaluateAll(nodes => nodes.map(node => node.dataset.videoId)), fixture.map(item => item.lockupViewModel.contentId));
-            assert.deepEqual((await cards.locator('h3').allTextContents()).map(text => text.trim()), fixture.map(item => item.lockupViewModel.metadata.lockupMetadataViewModel.title.content));
-            assert.deepEqual(await cards.locator('.length').allTextContents(), ['15:41', '16:19', '20:14']);
-            assert.equal(await cards.nth(0).getAttribute('data-channel-id'), 'UCX6OQ3DkcsbYNE6H8uQQuVA');
-            assert.equal(await cards.nth(1).locator('a[href="/channel/UCIPPMRA040LQr5QPyJEbmXA"]').count(), 1);
-            assert.equal(await cards.nth(2).getAttribute('data-channel-id'), '');
-            assert.ok((await cards.nth(2).innerText()).includes('MrBeast 2 and MrBeast'));
-            assert.equal(await cards.nth(2).locator('a[href^="/channel/"]').count(), 0);
-            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
-            assert.deepEqual(errors, []);
-            await context.close();
-        }
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: `watch-recommendations-diary`, route: 'watch?v=2isYuQZMbdU', width: 390});
+        const cards = page.locator('.recommendation');
+        assert.deepEqual(await cards.evaluateAll(nodes => nodes.map(node => node.dataset.videoId)), fixture.map(item => item.lockupViewModel.contentId));
+        assert.deepEqual((await cards.locator('h3').allTextContents()).map(text => text.trim()), fixture.map(item => item.lockupViewModel.metadata.lockupMetadataViewModel.title.content));
+        assert.deepEqual(await cards.locator('.length').allTextContents(), ['15:41', '16:19', '20:14']);
+        assert.equal(await cards.nth(0).getAttribute('data-channel-id'), 'UCX6OQ3DkcsbYNE6H8uQQuVA');
+        assert.equal(await cards.nth(1).locator('a[href="/channel/UCIPPMRA040LQr5QPyJEbmXA"]').count(), 1);
+        assert.equal(await cards.nth(2).getAttribute('data-channel-id'), '');
+        assert.ok((await cards.nth(2).innerText()).includes('MrBeast 2 and MrBeast'));
+        assert.equal(await cards.nth(2).locator('a[href^="/channel/"]').count(), 0);
+        assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 
     test(`${engine}: channel avatars recovered from a real playlist response render without metadata lookups`, async () => {
         const ids = ['UCfLdIEPs1tYj4ieEdJnyNyw', 'UCwppdrjsBPAZg5_cUwQjfMQ'];
-        for (const theme of ['modern-neon', 'diary']) {
-            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-real-${theme}`, width: 390});
-            const links = page.locator('.channel-name-link');
-            assert.equal(await links.count(), 2);
-            assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['Lauv', 'Charlie Puth']);
-            for (const [index, id] of ids.entries()) {
-                assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
-                assert.match(await links.nth(index).locator('img').getAttribute('src'), /^\/ggpht\/.+=s88/);
-            }
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-real-diary`, width: 390});
+        const links = page.locator('.channel-name-link');
+        assert.equal(await links.count(), 2);
+        assert.deepEqual((await links.locator('.channel-name').allTextContents()).map(text => text.trim()), ['Lauv', 'Charlie Puth']);
+        for (const [index, id] of ids.entries()) {
+            assert.equal(await links.nth(index).getAttribute('href'), `/channel/${id}`);
+            assert.match(await links.nth(index).locator('img').getAttribute('src'), /^\/ggpht\/.+=s88/);
+        }
+        await assertAvatarCardLayout(page);
+        assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles`, async () => {
+        for (const width of [320, 390, 768, 1440]) {
+            const { page, context, requests, errors } = await pageFor(engine, { fixture: `avatars-diary`, width });
+            assert.equal(await page.locator('.channel-avatar').count(), 4);
+            assert.equal(await page.locator('.channel-avatar img').count(), 3);
+            assert.equal(await page.locator('.channel-avatar-36').count(), 4);
+            const images = page.locator('.channel-avatar img');
+            assert.match(await images.nth(0).getAttribute('src'), /\/ggpht\/direct=s88/);
+            assert.match(await images.nth(1).getAttribute('src'), /\/ggpht\/cached=s88/);
+            assert.equal(await images.nth(0).getAttribute('alt'), '');
+            assert.equal(await images.nth(0).getAttribute('loading'), 'lazy');
+            assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), ['A', 'C', 'U', 'C']);
+            assert.equal(await images.nth(0).evaluate(img => {
+                const rect = img.getBoundingClientRect();
+                return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === img;
+            }), true, 'real avatar covers the initial');
+            const geometry = await page.locator('.channel-avatar').first().evaluate(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height, radius: getComputedStyle(el).borderRadius }));
+            assert.deepEqual(geometry, { width: 36, height: 36, radius: '50%' });
             await assertAvatarCardLayout(page);
+            const firstCard = page.locator('.media-card').first();
+            assert.ok(await firstCard.locator('[data-dearrow-id]').evaluate(el => el.getBoundingClientRect().height > parseFloat(getComputedStyle(el).lineHeight)), 'long title wraps');
+            assert.ok(await firstCard.locator('.channel-name').evaluate(el => el.getBoundingClientRect().height > parseFloat(getComputedStyle(el).lineHeight)), 'long creator name wraps');
+            assert.match(await page.locator('.channel-name').first().textContent(), /<script> & details/);
+            assert.equal(await page.locator('.media-card script').count(), 0);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
             assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
+            if (width === 390) await page.screenshot({path: path.join(artifacts, `${engine}-avatars-diary-mobile.png`), fullPage: true});
+            if (width === 1440) await page.screenshot({path: path.join(artifacts, `${engine}-avatars-diary-desktop.png`), fullPage: true});
+            await firstCard.locator('[data-dearrow-row] > a').focus();
+            await page.keyboard.press('Tab');
+            assert.equal(await firstCard.locator('.channel-name-link').evaluate(el => el === document.activeElement), true);
+            await page.keyboard.press('Tab');
+            const summary = firstCard.locator('.video-context summary');
+            assert.equal(await summary.evaluate(el => el === document.activeElement), true);
+            await page.keyboard.press('Enter');
+            await firstCard.locator('.video-context-actions').waitFor({state: 'visible'});
+            await page.keyboard.press('Enter');
             assert.deepEqual(errors, []);
             await context.close();
         }
     });
 
-    test(`${engine}: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const width of [320, 390, 768, 1440]) {
-                const { page, context, requests, errors } = await pageFor(engine, { fixture: `avatars-${theme}`, width });
-                assert.equal(await page.locator('.channel-avatar').count(), 4);
-                assert.equal(await page.locator('.channel-avatar img').count(), 3);
-                assert.equal(await page.locator('.channel-avatar-36').count(), 4);
-                const images = page.locator('.channel-avatar img');
-                assert.match(await images.nth(0).getAttribute('src'), /\/ggpht\/direct=s88/);
-                assert.match(await images.nth(1).getAttribute('src'), /\/ggpht\/cached=s88/);
-                assert.equal(await images.nth(0).getAttribute('alt'), '');
-                assert.equal(await images.nth(0).getAttribute('loading'), 'lazy');
-                assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), ['A', 'C', 'U', 'C']);
-                assert.equal(await images.nth(0).evaluate(img => {
-                    const rect = img.getBoundingClientRect();
-                    return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === img;
-                }), true, 'real avatar covers the initial');
-                const geometry = await page.locator('.channel-avatar').first().evaluate(el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height, radius: getComputedStyle(el).borderRadius }));
-                assert.deepEqual(geometry, { width: 36, height: 36, radius: '50%' });
-                await assertAvatarCardLayout(page);
-                const firstCard = page.locator('.media-card').first();
-                assert.ok(await firstCard.locator('[data-dearrow-id]').evaluate(el => el.getBoundingClientRect().height > parseFloat(getComputedStyle(el).lineHeight)), 'long title wraps');
-                assert.ok(await firstCard.locator('.channel-name').evaluate(el => el.getBoundingClientRect().height > parseFloat(getComputedStyle(el).lineHeight)), 'long creator name wraps');
-                assert.match(await page.locator('.channel-name').first().textContent(), /<script> & details/);
-                assert.equal(await page.locator('.media-card script').count(), 0);
-                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-                assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)|avatar.*lookup/.test(url)));
-                if (width === 390) await page.screenshot({path: path.join(artifacts, `${engine}-avatars-${theme}-mobile.png`), fullPage: true});
-                if (width === 1440) await page.screenshot({path: path.join(artifacts, `${engine}-avatars-${theme}-desktop.png`), fullPage: true});
-                await firstCard.locator('[data-dearrow-row] > a').focus();
-                await page.keyboard.press('Tab');
-                assert.equal(await firstCard.locator('.channel-name-link').evaluate(el => el === document.activeElement), true);
-                await page.keyboard.press('Tab');
-                const summary = firstCard.locator('.video-context summary');
-                assert.equal(await summary.evaluate(el => el === document.activeElement), true);
-                await page.keyboard.press('Enter');
-                await firstCard.locator('.video-context-actions').waitFor({state: 'visible'});
-                await page.keyboard.press('Enter');
-                assert.deepEqual(errors, []);
-                await context.close();
-            }
-        }
-    });
-
     test(`${engine}: channel avatars fit compact rows, history and subscription manager without JavaScript`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const kind of ['search', 'playlist', 'history', 'manager']) {
-                const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-${kind}-${theme}`, width: 320, javascript: false});
-                const size = kind === 'manager' ? 40 : kind === 'history' ? 36 : 24;
-                assert.ok(await page.locator(`.channel-avatar-${size}`).count() > 0);
-                assert.equal(await page.locator('.channel-avatar').first().evaluate(el => el.getBoundingClientRect().width), size);
-                assert.equal(await page.locator('.channel-avatar-initial').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize)), size / 2);
-                assert.equal(await page.locator('.channel-avatar-initial').first().textContent(), kind === 'manager' ? 'A' : kind === 'history' ? 'S' : 'A');
-                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-                if (kind === 'manager') {
-                    assert.equal(await page.locator('form[action^="/subscription_ajax"]').count(), 3);
-                    assert.equal(await page.locator('.deleted .channel-avatar img').count(), 0);
-                    assert.match(await page.locator('.channel-name-link').first().textContent(), /<script> & details/);
-                } else {
-                    await assertAvatarCardLayout(page);
-                    const summary = page.locator('.media-card .video-context summary').first();
-                    if (await summary.count()) {
-                        await summary.focus();
-                        await page.keyboard.press('Enter');
-                        assert.equal(await summary.evaluate(el => el.parentElement.open), true);
-                    }
+        for (const kind of ['search', 'playlist', 'history', 'manager']) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-${kind}-diary`, width: 320, javascript: false});
+            const size = kind === 'manager' ? 40 : kind === 'history' ? 36 : 24;
+            assert.ok(await page.locator(`.channel-avatar-${size}`).count() > 0);
+            assert.equal(await page.locator('.channel-avatar').first().evaluate(el => el.getBoundingClientRect().width), size);
+            assert.equal(await page.locator('.channel-avatar-initial').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize)), size / 2);
+            assert.equal(await page.locator('.channel-avatar-initial').first().textContent(), kind === 'manager' ? 'A' : kind === 'history' ? 'S' : 'A');
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+            if (kind === 'manager') {
+                assert.equal(await page.locator('form[action^="/subscription_ajax"]').count(), 3);
+                assert.equal(await page.locator('.deleted .channel-avatar img').count(), 0);
+                assert.match(await page.locator('.channel-name-link').first().textContent(), /<script> & details/);
+            } else {
+                await assertAvatarCardLayout(page);
+                const summary = page.locator('.media-card .video-context summary').first();
+                if (await summary.count()) {
+                    await summary.focus();
+                    await page.keyboard.press('Enter');
+                    assert.equal(await summary.evaluate(el => el.parentElement.open), true);
                 }
-                assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
-                assert.deepEqual(errors, []);
-                await context.close();
             }
+            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
+            assert.deepEqual(errors, []);
+            await context.close();
         }
     });
 
@@ -5223,56 +5107,52 @@ for (const engine of engines) {
             return channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
         };
         const colors = [];
-        for (const theme of ['modern-neon', 'diary']) {
-            for (const mode of ['dark', 'light']) {
-                const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatar-initials-${theme}-${mode}`, width: 390, javascript: false});
-                assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), expected);
-                assert.equal(await page.locator('.channel-avatar img').count(), 0);
-                await assertAvatarCardLayout(page);
-                const styles = await page.locator('.channel-avatar-initial').evaluateAll(elements => elements.map(el => {
-                    const initial = getComputedStyle(el), avatar = getComputedStyle(el.parentElement);
-                    return {text: initial.color, background: avatar.backgroundColor, font: initial.fontFamily, centered: initial.placeItems, direction: el.dir};
-                }));
-                assert.equal(styles[0].background, styles[1].background, 'uppercase and lowercase share a color');
-                assert.equal(styles[2].background, styles[3].background, 'equivalent accents share a color');
-                assert.equal(new Set(styles.map(style => style.background)).size, 6);
-                for (const style of styles) {
-                    const foreground = luminance(style.text), background = luminance(style.background);
-                    assert.ok((Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05) >= 4.5, 'readable initial contrast');
-                    assert.match(style.font, /system-ui/);
-                    assert.equal(style.centered, 'center');
-                    assert.equal(style.direction, 'auto');
-                }
-                const backgrounds = styles.map(style => style.background);
-                if (colors.length) assert.deepEqual(backgrounds, colors, 'colors stable across themes and modes');
-                else colors.push(...backgrounds);
-                assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-                assert.ok(!requests.some(url => url.startsWith('/ggpht') || /\/api\/v1\/(channels|videos)/.test(url)));
-                if (mode === 'light') {
-                    await page.setViewportSize({width: 1440, height: 1000});
-                    await assertAvatarCardLayout(page);
-                    await page.screenshot({path: path.join(artifacts, `${engine}-avatar-initials-${theme}.png`), fullPage: true});
-                }
-                assert.deepEqual(errors, []);
-                await context.close();
+        for (const mode of ['dark', 'light']) {
+            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatar-initials-diary-${mode}`, width: 390, javascript: false});
+            assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), expected);
+            assert.equal(await page.locator('.channel-avatar img').count(), 0);
+            await assertAvatarCardLayout(page);
+            const styles = await page.locator('.channel-avatar-initial').evaluateAll(elements => elements.map(el => {
+                const initial = getComputedStyle(el), avatar = getComputedStyle(el.parentElement);
+                return {text: initial.color, background: avatar.backgroundColor, font: initial.fontFamily, centered: initial.placeItems, direction: el.dir};
+            }));
+            assert.equal(styles[0].background, styles[1].background, 'uppercase and lowercase share a color');
+            assert.equal(styles[2].background, styles[3].background, 'equivalent accents share a color');
+            assert.equal(new Set(styles.map(style => style.background)).size, 6);
+            for (const style of styles) {
+                const foreground = luminance(style.text), background = luminance(style.background);
+                assert.ok((Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05) >= 4.5, 'readable initial contrast');
+                assert.match(style.font, /system-ui/);
+                assert.equal(style.centered, 'center');
+                assert.equal(style.direction, 'auto');
             }
+            const backgrounds = styles.map(style => style.background);
+            if (colors.length) assert.deepEqual(backgrounds, colors, 'colors stable across color modes');
+            else colors.push(...backgrounds);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+            assert.ok(!requests.some(url => url.startsWith('/ggpht') || /\/api\/v1\/(channels|videos)/.test(url)));
+            if (mode === 'light') {
+                await page.setViewportSize({width: 1440, height: 1000});
+                await assertAvatarCardLayout(page);
+                await page.screenshot({path: path.join(artifacts, `${engine}-avatar-initials-diary.png`), fullPage: true});
+            }
+            assert.deepEqual(errors, []);
+            await context.close();
         }
     });
 
     test(`${engine}: failed avatar images keep placeholders and never retry metadata`, async () => {
-        for (const theme of ['modern-neon', 'diary']) {
-            const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-${theme}`, width: 1440, brokenAvatars: true});
-            await page.waitForFunction(() => Array.from(document.querySelectorAll('.channel-avatar img')).every(img => img.hidden));
-            assert.equal(await page.locator('.channel-avatar-initial:visible').count(), 4);
-            assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), ['A', 'C', 'U', 'C']);
-            await assertAvatarCardLayout(page);
-            const before = requests.length;
-            await page.waitForTimeout(100);
-            assert.equal(requests.length, before);
-            assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
-            assert.deepEqual(errors, []);
-            await context.close();
-        }
+        const {page, context, requests, errors} = await pageFor(engine, {fixture: `avatars-diary`, width: 1440, brokenAvatars: true});
+        await page.waitForFunction(() => Array.from(document.querySelectorAll('.channel-avatar img')).every(img => img.hidden));
+        assert.equal(await page.locator('.channel-avatar-initial:visible').count(), 4);
+        assert.deepEqual(await page.locator('.channel-avatar-initial').allTextContents(), ['A', 'C', 'U', 'C']);
+        await assertAvatarCardLayout(page);
+        const before = requests.length;
+        await page.waitForTimeout(100);
+        assert.equal(requests.length, before);
+        assert.ok(!requests.some(url => /\/api\/v1\/(channels|videos)/.test(url)));
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 }
 
@@ -5515,8 +5395,8 @@ for (const engine of engines) {
 }
 
 for (const engine of engines) {
-    test(`${engine}: channel spoilers reveal indefinite rules with explicit or omitted delays in both themes`, async () => {
-        for (const fixture of ['spoiler-cards-indefinite-original', 'spoiler-cards-indefinite-dearrow', 'spoiler-cards-legacy-original', 'spoiler-cards-legacy-dearrow', 'spoiler-cards-indefinite-diary']) {
+    test(`${engine}: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary`, async () => {
+        for (const fixture of ['spoiler-cards-indefinite-original', 'spoiler-cards-indefinite-dearrow', 'spoiler-cards-legacy-original', 'spoiler-cards-legacy-dearrow']) {
             const replacement = !fixture.endsWith('original');
             const {page, context, errors, requests} = await pageFor(engine, {fixture, width: 390, dearrowTitle: 'Clear replacement'});
             const titles = page.locator('[data-spoiler-title]');
@@ -5548,7 +5428,7 @@ for (const engine of engines) {
             await page.keyboard.press('Enter');
             await thumbnail.locator('img').waitFor();
             assert.equal(page.url(), before);
-            if (fixture.endsWith('diary')) await page.screenshot({path: path.join(artifacts, `${engine}-spoilers-indefinite-diary.png`)});
+            if (fixture === 'spoiler-cards-indefinite-dearrow') await page.screenshot({path: path.join(artifacts, `${engine}-spoilers-indefinite-diary.png`)});
             await thumbnail.click();
             await page.waitForURL(url => url.pathname === '/watch');
             assert.deepEqual(errors, []);

@@ -2,6 +2,13 @@ struct Preferences
   include JSON::Serializable
   include YAML::Serializable
 
+  # Old preference documents remain readable; sparse saves retire only these keys.
+  RETIRED_THEME_FIELDS = %w(theme theme_random theme_random_interval_hours theme_random_next_at)
+
+  def self.remove_retired_theme_fields(fields : Hash(String, JSON::Any))
+    fields.reject! { |key, _| RETIRED_THEME_FIELDS.includes?(key) }
+  end
+
   property annotations : Bool = CONFIG.default_user_preferences.annotations
   property annotations_subscribed : Bool = CONFIG.default_user_preferences.annotations_subscribed
   property preload : Bool = CONFIG.default_user_preferences.preload
@@ -21,16 +28,6 @@ struct Preferences
   @[JSON::Field(converter: Preferences::BoolToString)]
   @[YAML::Field(converter: Preferences::BoolToString)]
   property dark_mode : String = CONFIG.default_user_preferences.dark_mode
-  @[JSON::Field(converter: Preferences::Theme)]
-  @[YAML::Field(converter: Preferences::Theme)]
-  property theme : String = Invidious::Themes.normalize(CONFIG.default_user_preferences.theme)
-  property theme_random : Bool = CONFIG.default_user_preferences.theme_random
-  @[JSON::Field(converter: Preferences::ThemeInterval)]
-  @[YAML::Field(converter: Preferences::ThemeInterval)]
-  property theme_random_interval_hours : Int32 = CONFIG.default_user_preferences.theme_random_interval_hours
-  @[JSON::Field(converter: Preferences::ThemeDeadline)]
-  @[YAML::Field(converter: Preferences::ThemeDeadline)]
-  property theme_random_next_at : Int64? = nil
   property latest_only : Bool = CONFIG.default_user_preferences.latest_only
   property listen : Bool = CONFIG.default_user_preferences.listen
   property local : Bool = CONFIG.default_user_preferences.local
@@ -272,66 +269,6 @@ struct Preferences
 
     def self.to_yaml(value : String, yaml : YAML::Nodes::Builder)
       yaml.scalar normalize(value)
-    end
-  end
-
-  module ThemeDeadline
-    def self.from_json(value : JSON::PullParser) : Int64?
-      JSON::Any.new(value).as_i64?.try { |time| time > 0 ? time : nil }
-    end
-
-    def self.to_json(value : Int64?, json : JSON::Builder)
-      value.to_json(json)
-    end
-
-    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Int64?
-      node.is_a?(YAML::Nodes::Scalar) ? node.value.to_i64?.try { |time| time > 0 ? time : nil } : nil
-    end
-
-    def self.to_yaml(value : Int64?, yaml : YAML::Nodes::Builder)
-      value.to_yaml(yaml)
-    end
-  end
-
-  # Use a dedicated converter: the general integer converter clamps page sizes.
-  module ThemeInterval
-    def self.normalize(value : Int) : Int32
-      (1..168).includes?(value) ? value.to_i32 : 6
-    end
-
-    def self.from_json(value : JSON::PullParser) : Int32
-      raw = JSON::Any.new(value)
-      normalize(raw.as_i64? || 6)
-    end
-
-    def self.to_json(value : Int32, json : JSON::Builder)
-      json.number normalize(value)
-    end
-
-    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Int32
-      normalize(node.is_a?(YAML::Nodes::Scalar) ? (node.value.to_i64? || 6) : 6)
-    end
-
-    def self.to_yaml(value : Int32, yaml : YAML::Nodes::Builder)
-      yaml.scalar normalize(value)
-    end
-  end
-
-  module Theme
-    def self.from_json(value : JSON::PullParser) : String
-      Invidious::Themes.normalize(value.read_string)
-    end
-
-    def self.to_json(value : String, json : JSON::Builder)
-      json.string Invidious::Themes.normalize(value)
-    end
-
-    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : String
-      node.is_a?(YAML::Nodes::Scalar) ? Invidious::Themes.normalize(node.value) : Invidious::Themes::DEFAULT
-    end
-
-    def self.to_yaml(value : String, yaml : YAML::Nodes::Builder)
-      yaml.scalar Invidious::Themes.normalize(value)
     end
   end
 

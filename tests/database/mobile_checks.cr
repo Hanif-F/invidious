@@ -8,7 +8,7 @@ def check_mobile_security
   PG_DB.exec("DELETE FROM auth_rate_limits")
   password = "a separate mobile account password"
   store = Invidious::Database::Accounts
-  sid = store.register("MobileAlice", password, Preferences.from_json(%({"save_player_pos":true,"theme":"diary"})))
+  sid = store.register("MobileAlice", password, Preferences.from_json(%({"save_player_pos":true,"dark_mode":"dark"})))
   email = Invidious::Database::SessionIDs.select_email(sid).not_nil!
   login = security_request("POST", "/api/v1/mobile/login", body: {username: "mobilealice", password: password}.to_json)
   check(login.response.status_code == 200, "Native sign-in failed")
@@ -44,12 +44,16 @@ def check_mobile_security
 
   stored = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
   stored["future_setting"] = JSON.parse(%({"untouched":true}))
+  Preferences::RETIRED_THEME_FIELDS.each { |key| stored[key] = JSON::Any.new("legacy") }
   PG_DB.exec("UPDATE users SET preferences = $1, watched = ARRAY['aaaaaaaaaaa','bbbbbbbbbbb','ccccccccccc'] WHERE email = $2", stored.to_json, email)
   Invidious::Database::PlaybackPositions.upsert(email, "aaaaaaaaaaa", 50)
   patch = security_request("PATCH", "/api/v1/auth/preferences", bearer: token, body: %({"save_player_pos":false,"watch_history":false}))
   check(patch.response.status_code == 200, "Native settings merge failed")
   after = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
-  check(after["future_setting"] == stored["future_setting"] && after["theme"] == stored["theme"], "Native settings destroyed unrelated preferences")
+  check(Preferences::RETIRED_THEME_FIELDS.none? { |key| after.has_key?(key) }, "Native sparse save retained obsolete theme fields")
+  response = JSON.parse(patch.get("test_result").as(String)).as_h
+  check(Preferences::RETIRED_THEME_FIELDS.none? { |key| response.has_key?(key) }, "Native sparse response exposed obsolete theme fields")
+  check(after["future_setting"] == stored["future_setting"] && after["dark_mode"] == stored["dark_mode"], "Native settings destroyed unrelated preferences")
   check(Invidious::Database::PlaybackPositions.select_all(email).empty?, "Disabling positions failed to clear saved positions")
   { %({"theme":"dark"}), %({"watch_history":"false"}), "{}" }.each do |invalid|
     check(security_request("PATCH", "/api/v1/auth/preferences", bearer: token, body: invalid).response.status_code == 400, "Invalid preference patch accepted")
@@ -214,7 +218,7 @@ def check_mobile_sponsorblock(token, email, sid)
   prefs = Preferences.from_json(raw.to_json)
   check(prefs.sponsorblock_enabled && prefs.sponsorblock_modes["sponsor"] == "auto" && prefs.sponsorblock_colors["sponsor"] == "#123456", "Global SponsorBlock values differ")
   check(prefs.sponsorblock_channel_overrides[id].name == "Studio" && prefs.sponsorblock_channel_overrides[id].enabled.nil? && prefs.sponsorblock_channel_overrides[id].modes == {"intro" => "marker"}, "Channel replacement/inheritance failed")
-  check(raw["future_sponsorblock_test"]["keep"].as_bool && raw["dearrow_enabled"] == stored["dearrow_enabled"] && raw["theme"] == stored["theme"], "SponsorBlock destroyed unrelated preferences")
+  check(raw["future_sponsorblock_test"]["keep"].as_bool && raw["dearrow_enabled"] == stored["dearrow_enabled"] && raw["dark_mode"] == stored["dark_mode"], "SponsorBlock destroyed unrelated preferences")
   check(prefs.sponsorblock_channel_overrides.has_key?(other), "SponsorBlock lost other channels")
   before = raw.to_json
   { %({"sponsorblock_modes":{"intro":"wrong"}}), %({"sponsorblock_colors":{"intro":"red"}}), %({"sponsorblock_enabled":"true"}), %({"sponsorblock_channel_overrides":{"UCbad":null}}), "x" * 16_385 }.each do |invalid|
@@ -293,7 +297,7 @@ def check_mobile_dearrow(token, email, sid)
   patch = security_request("PATCH", "/api/v1/auth/preferences", bearer: token, body: %({"dearrow_enabled":true,"dearrow_show_original":false}))
   check(patch.response.status_code == 200, "DeArrow preference patch failed")
   prefs = JSON.parse(Invidious::Database::Users.preference_json(email))
-  check(prefs["dearrow_enabled"].as_bool && !prefs["dearrow_show_original"].as_bool && prefs["theme"].as_s == "diary" && prefs["save_player_pos"].as_bool, "DeArrow patch lost unrelated settings")
+  check(prefs["dearrow_enabled"].as_bool && !prefs["dearrow_show_original"].as_bool && prefs["dark_mode"].as_s == "dark" && prefs["save_player_pos"].as_bool, "DeArrow patch lost unrelated settings")
   CONFIG.dearrow_identity_key = ""
   check(security_request("POST", path, bearer: token, body: %({"action":"submit","title":"Draft","confirmed":true})).response.status_code == 503, "Unavailable storage accepted native write")
   check(!JSON.parse(security_request("GET", identity_path, bearer: token).get("test_result").as(String))["ready"].as_bool, "Missing key reported ready")

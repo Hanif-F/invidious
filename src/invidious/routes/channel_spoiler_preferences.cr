@@ -66,6 +66,7 @@ module Invidious::Routes::ChannelSpoilerPreferences
         saved[id] = Invidious::ChannelSpoilers::Rule.new(name || id, title, thumbnail, days)
       end
       raw["channel_spoiler_settings"] = JSON.parse(saved.to_json)
+      Preferences.remove_retired_theme_fields(raw)
       conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw.to_json, user.email)
     end
     env.redirect PATH

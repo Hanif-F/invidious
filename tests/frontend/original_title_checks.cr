@@ -20,17 +20,17 @@ def check_original_titles(output)
   {true, false}.each do |enabled|
     body = "save_player_pos=on&show_original_title_present=1"
     body += "&show_original_title=on" if enabled
-    env = theme_post_env(body)
+    env = preferences_post_env(body)
     Invidious::Routes::PreferencesRoute.update(env)
     prefs = Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))
     raise "Guest title choice lost" unless prefs.show_original_title == enabled && Preferences.from_yaml(prefs.to_yaml).show_original_title == enabled
     user = signed_in_env("/preferences").get("user").as(User)
-    env = theme_post_env(body)
+    env = preferences_post_env(body)
     env.set "user", user
     Invidious::Routes::PreferencesRoute.update(env)
     raw = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)
     raise "Account title choice lost" unless Preferences.from_json(raw).show_original_title == enabled
-    api = theme_post_env(prefs.to_json, "application/json")
+    api = preferences_post_env(prefs.to_json, "application/json")
     api.set "user", user
     Invidious::Routes::API::V1::Authenticated.set_preferences(api)
     stored = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)
@@ -43,7 +43,7 @@ def check_original_titles(output)
     exported = JSON.parse(Invidious::User::Export.to_invidious(export_user))
     Invidious::User::Import.from_invidious(user, {preferences: exported["preferences"]}.to_json)
     raise "Backup title choice lost" unless user.preferences.show_original_title == enabled
-    old = theme_post_env("save_player_pos=on")
+    old = preferences_post_env("save_player_pos=on")
     old.set "preferences", prefs
     Invidious::Routes::PreferencesRoute.update(old)
     raise "Old form reset title choice" unless Preferences.from_json(URI.decode_www_form(old.response.cookies["PREFS"].value)).show_original_title == enabled

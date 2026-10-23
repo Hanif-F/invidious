@@ -70,6 +70,8 @@ snapshot reproduced the same failure. It is outside this preference addition.
 
 ## Frontend fixtures and browser tests
 
+This fork neither requires nor discourages JavaScript. Features have no blanket obligation to provide JavaScript-disabled fallbacks. The current frontend architecture is described in [frontend](frontend.md).
+
 With Crystal/Shards, Node.js, FFmpeg and browser dependencies installed:
 
 ```sh
@@ -111,7 +113,7 @@ The account/clip/avatar harnesses additionally require an empty database. Read [
 
 ## Choosing checks for a change
 
-Parser/model changes need focused specs and full compile checking. Route/auth/database changes need matching PostgreSQL/production-route harnesses. Templates/player/styles/storage need fixture rendering and relevant Node/browser coverage, including mobile/RTL/no-JavaScript where supported. Schema changes need both fresh SQL and a numbered migration, plus migration tracking/backfill tests. API-only builds catch accidental GUI assumptions. Documentation updates need reference regeneration and local link/coverage checks.
+Parser/model changes need focused specs and full compile checking. Route/auth/database changes need matching PostgreSQL/production-route harnesses. Templates/player/styles/storage need fixture rendering and relevant Node/browser coverage, including mobile, RTL and keyboard interactions. Schema changes need both fresh SQL and a numbered migration, plus migration tracking/backfill tests. API-only builds catch accidental GUI assumptions. Documentation updates need reference regeneration and local link/coverage checks.
 
 Keep tests meaningful: fixture/browser passes do not certify real upstream parsing forever, physical codec decoding or deployed proxy security. Historical known failures in `SECURITY_READINESS.md` are prior observations, not current test execution results.
 

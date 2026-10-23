@@ -67,8 +67,7 @@
 - Lightweight
 - No ads
 - No tracking
-- No JavaScript required
-- Light/Dark themes
+- Diary design with Light/Dark/System color modes
 - Customizable homepage
 - Subscriptions independent from Google
 - Notifications for all subscribed channels
@@ -165,10 +164,11 @@ PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
 EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
-### Visual themes
+### Appearance
 
-Choose a visual theme in **Preferences → Appearance → Theme**. See the
-[theming guide](docs/theming.md) to add a theme or replace its preview image.
+Diary is the site’s design. Choose Light, Dark, or System in
+**Preferences → Appearance**, or use the header color-mode toggle. See the
+[Diary styling guide](docs/theming.md) for maintenance details.
 
 ### Fork playlist subscriptions and native RSS
 

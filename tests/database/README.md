@@ -107,7 +107,7 @@ read-only channel/history cache queries, distinct viewing counts, account timezo
 and 90-day decay, unwatched-upload freshness at seven days, future/premiere/member
 filtering, account isolation, browser sort persistence, OPML export and unsubscribe.
 Ranking and malformed-cookie cases also have focused Crystal specs; the frontend
-harness checks the production manager at mobile widths, in RTL and without JavaScript.
+harness checks the production manager at mobile widths and in RTL.
 
 The same account harness exercises optional native `include_stats=true` responses
 through production auth middleware: ordinary response compatibility, existing

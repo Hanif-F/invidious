@@ -75,8 +75,8 @@ def check_channel_avatars
   puts "Avatar request-budget, cache precedence, suppression and video-fetch checks passed"
 end
 
-def avatar_cards_fixture(theme = "modern-neon", path = "/feed/popular", thin = false, locale = "en-US", compact = false)
-  env = fixture_env(path, "dark", thin, compact ? "compact" : "balanced", locale, theme)
+def avatar_cards_fixture(path = "/feed/popular", thin = false, locale = "en-US", compact = false)
+  env = fixture_env(path, "dark", thin, compact ? "compact" : "balanced", locale)
   items = [
     SearchVideo.new({title: "An avatar already in this response beside a long creator name", id: "avatar00001", author: "A creator with a long name <script> & details", ucid: "UCdirect", published: Time.utc - 2.days, views: 100_i64, description_html: "", length_seconds: 1000, premiere_timestamp: nil, author_verified: true, author_thumbnail: "https://yt3.ggpht.com/direct=s48", badges: VideoBadges::None}),
     ChannelVideo.new({title: "A subscription with a cached avatar", id: "avatar00002", author: "Cached creator", ucid: "UCcached", published: Time.utc, updated: Time.utc, views: 100_i64, length_seconds: 1000, live_now: false, premiere_timestamp: nil, members_only: false}),
@@ -88,8 +88,8 @@ def avatar_cards_fixture(theme = "modern-neon", path = "/feed/popular", thin = f
   render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
 end
 
-def avatar_initials_fixture(theme = "modern-neon", mode = "dark")
-  env = fixture_env("/feed/popular", mode, visual_theme: theme)
+def avatar_initials_fixture(mode = "dark")
+  env = fixture_env("/feed/popular", mode)
   locale = env.get("preferences").as(Preferences).locale
   names = ["Zip Tie Tuning", "zebra", "éclair", "e\u0301cole", "журнал", "عالم", "山田", "किरण", "ßeta", "123 live", "😊 creator", ".Zip", "", "Blue", "Cyan", "Dawn", "Emerald", "Forest", "Amber"]
   items = names.map_with_index do |name, index|
@@ -100,10 +100,9 @@ def avatar_initials_fixture(theme = "modern-neon", mode = "dark")
   render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
 end
 
-def avatar_manager_fixture(theme = "modern-neon", thin = false, sort_by = "alphabetical", locale = "en-US", empty = false)
+def avatar_manager_fixture(thin = false, sort_by = "alphabetical", locale = "en-US", empty = false)
   env = signed_in_env("/subscription_manager")
   preferences = env.get("preferences").as(Preferences)
-  preferences.theme = theme
   preferences.thin_mode = thin
   preferences.locale = locale
   env.set "preferences", preferences
@@ -196,8 +195,8 @@ def check_real_avatar_extraction
   puts "Real response avatar extraction, native serialization, cache reuse and zero-metadata-request checks passed"
 end
 
-def real_avatar_fixture(theme)
-  env = fixture_env("/playlist", visual_theme: theme)
+def real_avatar_fixture
+  env = fixture_env("/playlist")
   locale = env.get("preferences").as(Preferences).locale
   items = real_avatar_items
   navbar_search = true
@@ -271,8 +270,8 @@ def check_recommendation_avatar_cache
   puts "Recommendation avatar API, cache reuse, main-creator precedence and request-budget checks passed"
 end
 
-def recommendation_avatar_fixture(theme)
-  env = fixture_env("/feed/subscriptions", visual_theme: theme)
+def recommendation_avatar_fixture
+  env = fixture_env("/feed/subscriptions")
   locale = env.get("preferences").as(Preferences).locale
   items = recommendation_avatar_video.related_videos.first(2).map do |video|
     ChannelVideo.new({title: video["title"], id: video["id"], author: video["author"], ucid: video["ucid"],
@@ -286,24 +285,20 @@ end
 
 check_recommendation_avatar_cache
 avatar_output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
-{"modern-neon", "diary"}.each do |theme|
-  File.write("#{avatar_output}/avatars-recommendations-#{theme}.html", recommendation_avatar_fixture(theme))
-  File.write("#{avatar_output}/watch-recommendations-#{theme}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU", visual_theme: theme), nil, supplied_video: recommendation_avatar_video))
-end
+File.write("#{avatar_output}/avatars-recommendations-diary.html", recommendation_avatar_fixture)
+File.write("#{avatar_output}/watch-recommendations-diary.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil, supplied_video: recommendation_avatar_video))
 # Keep existing fixture caches available after the cache-failure check above.
 Invidious::Database::ChannelAvatars.observe(Invidious::ChannelAvatars.from_items(real_avatar_items))
 Invidious::Database::ChannelAvatars.observe({"UCdirect" => "https://yt3.ggpht.com/direct=s88"})
 Invidious::Database::ChannelAvatars.observe({"UCcached" => "https://yt3.ggpht.com/cached=s88", "UCfixture" => "https://yt3.ggpht.com/history=s88"})
-{"modern-neon", "diary"}.each do |theme|
-  File.write("#{avatar_output}/avatars-real-#{theme}.html", real_avatar_fixture(theme))
-  File.write("#{avatar_output}/avatars-#{theme}.html", avatar_cards_fixture(theme))
-  File.write("#{avatar_output}/avatars-search-#{theme}.html", avatar_cards_fixture(theme, "/search"))
-  File.write("#{avatar_output}/avatars-playlist-#{theme}.html", avatar_cards_fixture(theme, "/playlist"))
-  File.write("#{avatar_output}/avatars-manager-#{theme}.html", avatar_manager_fixture(theme))
-  File.write("#{avatar_output}/avatars-history-#{theme}.html", history_fixture(theme))
-  {"dark", "light"}.each do |mode|
-    File.write("#{avatar_output}/avatar-initials-#{theme}-#{mode}.html", avatar_initials_fixture(theme, mode))
-  end
+File.write("#{avatar_output}/avatars-real-diary.html", real_avatar_fixture)
+File.write("#{avatar_output}/avatars-diary.html", avatar_cards_fixture)
+File.write("#{avatar_output}/avatars-search-diary.html", avatar_cards_fixture("/search"))
+File.write("#{avatar_output}/avatars-playlist-diary.html", avatar_cards_fixture("/playlist"))
+File.write("#{avatar_output}/avatars-manager-diary.html", avatar_manager_fixture)
+File.write("#{avatar_output}/avatars-history-diary.html", history_fixture)
+{"dark", "light"}.each do |mode|
+  File.write("#{avatar_output}/avatar-initials-diary-#{mode}.html", avatar_initials_fixture(mode))
 end
 File.write("#{avatar_output}/avatars-channel.html", avatar_cards_fixture(path: "/channel/UCdirect"))
 File.write("#{avatar_output}/avatars-thin.html", avatar_cards_fixture(thin: true))

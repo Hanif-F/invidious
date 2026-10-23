@@ -64,7 +64,7 @@ The following inventory covers the user-visible capabilities implemented in this
 | Feature | Behavior | Details |
 | --- | --- | --- |
 | Preferences | Account JSON or guest cookie; playback, navigation, privacy, feed and interface settings | [Preferences](preferences.md) |
-| Themes | Modern Neon (default) and Diary designs; independent light/dark mode and random theme rotation | [Preferences](preferences.md), [theming](theming.md) |
+| Appearance | Diary design with Light, Dark and System color modes | [Preferences](preferences.md), [theming](theming.md) |
 | Localization | Locale JSON, Accept-Language selection, per-request override and English fallback, RTL support | [Frontend](frontend.md) |
 | Thin/compact layouts | Thin mode reduces imagery; UI density selects balanced/compact layouts | [Preferences](preferences.md) |
 | Manual channel blocks | Per-account blocks applied on supported personalized browser/native surfaces; direct access remains possible | [Accounts](accounts-and-library.md) |

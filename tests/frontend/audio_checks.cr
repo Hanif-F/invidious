@@ -30,21 +30,21 @@ def check_audio_preferences
     raise "Explicit original override lost" unless Invidious::Videos.process_video_params(URI::Params.parse("preferred_audio=original"), prefs).preferred_audio == "original"
     raise "Invalid audio override accepted" unless Invidious::Videos.process_video_params(URI::Params.parse("preferred_audio=invalid"), prefs).preferred_audio == "original"
 
-    env = theme_post_env("preferred_audio=#{audio}")
+    env = preferences_post_env("preferred_audio=#{audio}")
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Guest audio lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).preferred_audio == audio
-    env = theme_post_env("")
+    env = preferences_post_env("")
     env.set "preferences", prefs
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Older form erased audio" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).preferred_audio == audio
 
     user = signed_in_env("/preferences").get("user").as(User)
-    env = theme_post_env("preferred_audio=#{audio}")
+    env = preferences_post_env("preferred_audio=#{audio}")
     env.set "user", user
     Invidious::Routes::PreferencesRoute.update(env)
     saved = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
     raise "Account audio lost" unless saved.preferred_audio == audio
-    env = theme_post_env(prefs.to_json, "application/json")
+    env = preferences_post_env(prefs.to_json, "application/json")
     env.set "user", user
     Invidious::Routes::API::V1::Authenticated.set_preferences(env)
     saved = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))

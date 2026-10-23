@@ -16,7 +16,7 @@ Username uniqueness is case-insensitive. Immutable random owner IDs live in the 
 
 Login/signup forms use a fresh HttpOnly `AUTH_CSRF` binding and signed one-hour action token. Authenticated HTML forms use session-bound signed action tokens. Cookie-authenticated API POST/PUT/PATCH/DELETE requires CSRF; `GET /api/v1/auth/csrf` issues a one-hour token sent in `X-CSRF-Token`. Multipart imports validate before processing files; put CSRF first or use the header.
 
-Playlist subscription and theme toggle are POST actions. Old mutating GET links/scripts need updating. Bearer-only clients use validated scopes/signatures and do not need browser CSRF. Bearer authentication wins when an unrelated SID cookie is also supplied.
+Playlist subscription and color-mode toggle are POST actions. Old mutating GET links/scripts need updating. Bearer-only clients use validated scopes/signatures and do not need browser CSRF. Bearer authentication wins when an unrelated SID cookie is also supplied.
 
 ## API tokens and administration
 

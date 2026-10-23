@@ -95,7 +95,7 @@ existing config-file persistence and environment-override behavior.
 
 ## Presentation and defaults
 
-`default_user_preferences` seeds preference parsing; it does not overwrite every saved account field. `default_playlist` is YAML-ignored in that defaults structure; runtime timezone and random-theme deadline initialize unset rather than copying the similarly named default fields. [Preferences](preferences.md) and its field inventory explain exact runtime initialization and legacy AI conversion. `banner` displays an announcement; `modified_source_code_url` adds a footer link to the deployed fork's source; `admins` identifies accounts allowed to change supported instance settings in the preferences form.
+`default_user_preferences` seeds preference parsing; it does not overwrite every saved account field. `default_playlist` is YAML-ignored in that defaults structure; runtime timezone initializes unset rather than copying the similarly named default field. [Preferences](preferences.md) and its field inventory explain exact runtime initialization and legacy AI conversion. `banner` displays an announcement; `modified_source_code_url` adds a footer link to the deployed fork's source; `admins` identifies accounts allowed to change supported instance settings in the preferences form.
 
 `output` chooses `STDOUT` or an append-only log path; its parent directory is created when needed. `log_level` accepts the levels in [logger.cr](../src/invidious/helpers/logger.cr). `colorize_logs` toggles terminal colors. Avoid credentials in banners and maintain independent redaction at the reverse proxy.
 

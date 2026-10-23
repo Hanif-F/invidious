@@ -28,8 +28,8 @@ ignored by Git.
 
 ## Coverage and limits
 
-Required-login admin controls have public/private fixtures and a mobile-width,
-JavaScript-disabled browser check. It verifies the existing registration switch
+Required-login admin controls have public/private fixtures and a mobile-width
+browser check. It verifies the existing registration switch
 explains whitelist mode, checkbox submission and state, and guest visibility.
 Run `node --test required-login-admin.test.cjs` after fixture generation. The guarded
 account harness separately verifies real middleware, CSRF, admin persistence,
@@ -49,13 +49,13 @@ JSON/YAML/config and backup round trips, account API and signed-out cookie saves
 older forms that omit the field, and shared watch/embed player configuration.
 Run `crystal spec spec/native_preferences_spec.cr`, the fixture generator, and
 `node --test --test-name-pattern='seek interval|playback shortcuts' tests/frontend/ui.test.cjs`.
-Chromium and Firefox cover no-JavaScript settings, keyboard/media keys and mobile
+Chromium and Firefox cover settings, keyboard/media keys and mobile
 tap batches at 0.5× and 2×. The guarded PostgreSQL account harness additionally
 checks production native PATCH ↔ web form round trips, atomic rejection, sparse
 preservation and account isolation. See `tests/database/README.md`.
 
 Preferred audio coverage checks guest/account/JSON/YAML/export/import persistence,
-query precedence, no-JavaScript settings saves, regional language matching,
+query precedence, settings saves, regional language matching,
 original/Stable Volume fallback, and duplicate itags across dubbed/DRC tracks.
 Audio-only sources and `/latest_version` retain the exact track identity with and
 without Companion/proxy configuration. DASH lifecycle checks cover late tracks,
@@ -68,7 +68,7 @@ Channel title/thumbnail settings cover shared upload-age boundaries, unknown-dat
 labels, account JSON/YAML/API/export/import persistence and global-form
 preservation. Browser checks exercise scoped guest saves, click/keyboard thumbnail
 reveal without navigation, Hidden → DeArrow → Original cycling, failed DeArrow
-lookups, no-JavaScript masking, watch/guest/embed posters and titles, and duplicate
+lookups, initial masking, watch/guest/embed posters and titles, and duplicate
 dynamic queue occurrences in Chromium and Firefox. Run the fixture generator,
 `crystal spec spec/channel_spoilers_spec.cr`, and
 `node --test --test-name-pattern='channel spoilers' tests/frontend/ui.test.cjs`.
@@ -79,8 +79,8 @@ Hidden-title DeArrow checks cover viewport prefetching without revealing text,
 cached and pending first reveals, missing/failed replacements, request deduplication
 for dynamic duplicates, watch/embed masking, and no requests when DeArrow is disabled.
 
-Blank-delay regressions cover explicit `null` and older omitted fields, both
-themes, old uploads, manual title cycles and thumbnail navigation, guest cross-tab
+Blank-delay regressions cover explicit `null` and older omitted fields, Diary,
+old uploads, manual title cycles and thumbnail navigation, guest cross-tab
 activation, and watch/embed/duplicate queues. The fixture harness verifies zero
 fallback reads for inactive/known dates, filtered batches, memoized misses and
 the reduced runtime config. Browser counters verify zero inactive masking scans
@@ -95,7 +95,7 @@ legacy preference conversion, instance defaults, paused-choice preservation,
 guest/account persistence, JSON/YAML and export/import,
 exact channel identity, overlap precedence, independent list status, preserved
 search pagination, and recommendation autoplay ordering. Browser coverage checks
-both themes, thin mode, desktop/mobile and no-JavaScript forms, subscriptions,
+Diary, thin mode, desktop/mobile forms, subscriptions,
 history, channels/scoped searches, playlists/mixes, clips and dynamically loaded
 queues with duplicate occurrences. Warning text stays regular-weight and muted;
 replaced thumbnails issue no original-image request:
@@ -136,12 +136,12 @@ Thin mode omits them, and a channel's own video listings do not repeat its avata
 Placeholders use the first Unicode letter cluster in the channel name, uppercased
 when it remains one cluster, or `#` for missing names and nonletter prefixes.
 Six fixed colors are selected deterministically from the initial. Inline text
-works without JavaScript and remains underneath real avatars for image failures;
+remains underneath real avatars for image failures;
 it requires no additional database queries, image assets, or requests.
 
 The avatar fixtures verify cache precedence and failure isolation, including the
-existing video fetch's request count. Browser checks cover both themes, mobile,
-RTL, compact lists, history, subscriptions, no-JavaScript rendering and image failures:
+existing video fetch's request count. Browser checks cover Diary, mobile,
+RTL, compact lists, history, subscriptions, initial rendering and image failures:
 
 ```sh
 node --test --test-name-pattern='channel avatars|failed avatar|real modern recommendations|recommendation.*autoplay|blocking.*recommendation' tests/frontend/ui.test.cjs
@@ -158,18 +158,20 @@ node --test --test-name-pattern='channel avatars|failed avatar|real modern recom
   retries, empty/end states and mobile queue placement.
 - Transcript deferred loading, safe text rendering, languages, search, timestamp
   seeking, per-page caching and error recovery.
-- Theme switching, system theme, thin mode, keyboard interaction and no-JavaScript
+- Color-mode switching, system appearance, thin mode, keyboard interaction and
   navigation. Responsive checks at 320, 390, 768, 1024, 1440 and 1920 pixels,
   including RTL and enlarged text.
-- History renders escaped saved metadata, linked channels, release/watch dates, grouped headings, and unknown-date fallbacks; removal failures restore cards and headings. Empty and thin-mode history also work without JavaScript;
-  playlist-library thumbnails use desktop cards while playlist entries keep their
-  list layout. Mobile queue scrolling survives browser-toolbar height changes.
+- History renders escaped saved metadata, linked channels, release/watch dates,
+  grouped headings, unknown-date fallbacks, and empty and thin-mode states;
+  removal failures restore cards and headings. Playlist-library thumbnails use
+  desktop cards while playlist entries keep their list layout. Mobile queue
+  scrolling survives browser-toolbar height changes.
 - Initial CSS/JavaScript gzip growth against the recorded pre-redesign revision
   in `asset-baseline.json`. Unchanged player assets are excluded; transcript code
-  is fetched only on request. The advisory 35 KiB target counts the largest selectable theme stylesheet plus shared
-  additions, since only one theme stylesheet loads per page. Other changed assets
-  are counted conservatively even when they do not all load on the same page. The
-  target is advisory rather than a failing threshold, including the shared rich stream-menu logic.
+  is fetched only on request. The measurement includes Diary’s
+  stylesheet plus shared additions. Other changed assets are counted conservatively even when they do not
+  all load on the same page. These measurements report size and growth for
+  performance review.
 
 These checks do not establish compatibility on physical Android/iOS devices or
 validate live upstream YouTube responses, private playlist authorization, live
@@ -181,25 +183,20 @@ The UI uses the existing renderers, routes and preference storage. `ui_density`
 accepts `balanced` (default) or `compact`. No database migration is required.
 New strings use the existing English fallback until translations are supplied.
 
-Theme fixtures also exercise registry fallback, configured defaults, JSON/YAML,
-anonymous form cookies, account form storage, authenticated preferences and
-preference export/import using in-memory SQLite tables. An additional theme is registered
-only in the fixture process to check asset isolation and keyboard selection.
+Appearance fixtures exercise legacy JSON/YAML/configuration parsing, anonymous
+form cookies, account form storage, authenticated preferences and preference
+export/import using in-memory SQLite tables. Retired selection and rotation fields
+are ignored on input and omitted from new output. Sparse saves retire those keys
+while preserving unrelated unknown fields.
 Diary fixtures cover light/dark/system modes, compact/thin layouts, RTL, enlarged
 text, search and playlist rows, channels, history, login, errors and preferences.
-Its CSS and doodles count toward the advisory 35 KiB asset target; lazy-loaded screenshot
-previews use the separate budget below.
-Diary also serves two theme-local fonts with `font-display: swap`: Dudu Calligraphy
-(73,684 bytes) and Helvetica Punk (319,064 bytes), totaling 392,748 bytes
-(383.5 KiB) before HTTP compression, separate from the CSS/JS budget. They are
-requested only by Diary. Handwriting covers short interface text; dense reading
-text and player controls retain system fonts. Browser checks await font loading
-before measuring Diary layouts and verify forced-colors decoration removal.
-The picker submits without JavaScript. See [theming](../../docs/theming.md).
-
-Lazy-loaded theme previews have a separate aggregate 12 KiB-per-theme allowance; the
-shared CSS/JavaScript advisory target remains 35 KiB. Modern Neon and Diary previews use
-the same 1280×720 browse framing, downsampled to 640×360 WebP screenshots.
+Its CSS and doodles are included in asset-size accounting. Diary serves two local
+fonts with `font-display: swap`: Dudu Calligraphy (73,684 bytes) and Helvetica Punk
+(319,064 bytes), totaling 392,748 bytes (383.5 KiB) before HTTP compression,
+separate from CSS/JavaScript measurements. Handwriting covers short interface text;
+dense reading text and player controls retain system fonts. Browser checks await
+font loading before measuring Diary layouts and verify forced-colors decoration
+removal. See [theming](../../docs/theming.md) for maintenance guidance.
 
 ## DeArrow
 
@@ -215,7 +212,7 @@ The same-origin `GET /api/v1/dearrow/:id` endpoint returns `{"title": string | n
 host using a four-character hash prefix, with a bounded in-memory cache and
 four upstream requests at most. Upstream failures return a null title, leaving
 the original visible. Browser requests are deferred until titles approach the
-viewport. JavaScript-disabled pages retain their original titles.
+viewport.
 
 Tests include ranking/trust rules, cache expiry and concurrency, guest/account/API
 preference persistence, dynamic queue updates, safe text insertion, original-title
@@ -226,18 +223,10 @@ simulate sessions; they do not validate a deployed PostgreSQL login session.
 New strings include English and Indonesian, with the existing English fallback
 for other locales. Thumbnail URLs and existing video API metadata are unchanged.
 
-Random themes use the existing preference storage: `theme` remains the active
-registered style, `theme_random` enables selection, `theme_random_interval_hours`
-accepts 1–168 (default 6), and `theme_random_next_at` holds a UTC epoch deadline.
-Named theme selection disables Random. The first interval keeps the current
-theme; overdue HTML navigation chooses once, excluding that theme. Account
-updates use a conditional write so overlapping requests share one result.
-
 Color mode remains `""` (System), `light`, or `dark`. The header cycles in that
 order and `/toggle_theme?mode=...` can persist an explicit mode (including empty).
 System follows browser-reported appearance live. Tests cover live media changes,
-real cross-tab storage events, Random selection without JavaScript, and no theme
-change on an open page after an elapsed interval. Physical Android/iOS, Windows,
+real cross-tab storage events, and preferences forms with and without JavaScript. Physical Android/iOS, Windows,
 and Linux desktop appearance integration still requires device testing.
 
 SponsorBlock checks cover category markers, manual Enter/click skipping, keyboard
@@ -248,7 +237,7 @@ replay. Checks cover independent and combined segments, loop persistence, reload
 reset, and isolation between tabs in the same browser context.
 Preference fixtures verify defaults, validation, JSON/YAML, guest cookies,
 account/API storage, and export/import. The fixed Save action is checked at three
-scroll positions across all themes on desktop and mobile with JavaScript disabled.
+scroll positions in Diary on desktop and mobile.
 Run `crystal spec spec/sponsorblock_spec.cr` for parser and cache checks, or
 `node --test --test-name-pattern='SponsorBlock|preference Save remains' tests/frontend/ui.test.cjs`
 for the focused browser checks after rendering fixtures.
@@ -313,7 +302,7 @@ Playlist publication dates are read only from the existing playlist response;
 missing or unrecognized dates remain hidden without fetching video details.
 The fixture checks cover initial and continuation responses, false date matches,
 and unchanged database columns. Channel playlists share the library grid across
-both registered themes. Browser checks compare responsive card dimensions
+Diary. Browser checks compare responsive card dimensions
 and verify neutral translucent mobile controls in watch and embed players.
 
 Channel SponsorBlock checks cover account preference roundtrips and export/import,
@@ -321,8 +310,7 @@ global-form preservation, per-category inheritance, enablement overrides in watc
 and embed players, invalid IDs, lookup failure, CSRF rejection, saving and resetting.
 Guests can edit channel overrides in localStorage using the existing channel lookup;
 these override global guest settings before watch/embed SponsorBlock initialization.
-Guest editing requires JavaScript, while account channel forms and core preferences
-retain their no-JavaScript behavior. Browser checks cover inheritance, enable/disable,
+Guest editing requires JavaScript. Browser checks cover inheritance, enable/disable,
 category modes, reset, reload persistence and safe channel-name rendering at mobile
 widths; guest actions never call authenticated APIs or write account database records.
 Rich stream-menu checks also verify that audio/quality icons sit inside centered
@@ -346,7 +334,7 @@ playable codecs when it is unavailable. Manual choices override the preference
 for the current video; choosing Auto restores it, including after buffer refresh.
 
 Codec fixture checks cover JSON/YAML, defaults, validation, guest/account/API
-saving and export/import. Browser checks verify the dropdown without JavaScript,
+saving and export/import. Browser checks verify the preferences dropdown,
 the actual first DASH rendition on watch and embed pages, and mobile selection
 restoration. Initial rendition checks use a local MPD and intercept media requests
 before decoding; they do not verify live codec decoding or physical device support.
@@ -394,7 +382,7 @@ thumbnail coexistence, and simulated touch input in Chromium and Firefox.
 
 Members-only filtering checks cover the default-hidden preference, anonymous and
 account form/API/import/export round trips, browser-local search overrides,
-no-JavaScript controls, filtered-empty search pagination, and cached/playlist
+form controls, filtered-empty search pagination, and cached/playlist
 membership metadata. Search choices use separate host-only cookies per profile and never
 enter account preferences. Public playlist/mix JSON remains unfiltered and adds
 an `isMember` flag; HTML queues and browsing cards respect the preference.
@@ -404,7 +392,7 @@ no per-video classification requests are made.
 
 Thumbnail progress uses one markup helper for history, browse/channel/feed/search
 cards, playlists, mixes, recommendations, and dynamic queues. Thin-mode video
-placeholders remain visible across all themes. The existing synced/local playback
+placeholders remain visible in Diary. The existing synced/local playback
 stores and percentage rules are unchanged. History migration 16 adds nullable
 `length_seconds`; recording and local-cache recovery persist positive durations,
 including through history import/export. Unknown durations remain unknown and do
@@ -415,7 +403,7 @@ page restoration, local storage updates, and desktop/mobile layouts.
 ## Native clips
 
 Clip fixtures cover public channel listings, My Clips, popup creation, escaped titles,
-creator attribution, themes, RTL, mobile forms, and no-JavaScript use. The real
+creator attribution, color modes, RTL, and desktop/mobile forms. The real
 player checks exercise fractional range bounds, loop toggling, canonical sharing,
 SponsorBlock, audio settings, source refresh, quality changes, and preservation of
 full-video resume data. `clip-player.test.cjs` also checks
@@ -425,7 +413,7 @@ for the API and disposable PostgreSQL route/integration checks.
 Popup checks exercise lazy asset loading, MM:SS/HH:MM:SS validation, hour crossings,
 range handles, one-second adjustments, preview playhead capture, draft recovery,
 main-player pause/resume, CSRF and publish failures, duplicate submissions, clipboard
-fallback, guest login return, theme/RTL/mobile layout, and the no-JavaScript form.
+fallback, guest login return, color-mode/RTL/mobile layout, and the standalone form.
 Run `node --test clip-editor.test.cjs clip-player.test.cjs` in this directory for
 browser-free checks, or select browser cases with
 `node --test --test-name-pattern='clip creation|clip popup|guests return' ui.test.cjs`.

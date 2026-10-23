@@ -30,21 +30,21 @@ def check_codec_preferences
     raise "Explicit Auto override lost" unless Invidious::Videos.process_video_params(URI::Params.parse("video_codec=auto"), prefs).video_codec == "auto"
     raise "Invalid codec override accepted" unless Invidious::Videos.process_video_params(URI::Params.parse("video_codec=invalid"), prefs).video_codec == "auto"
 
-    env = theme_post_env("video_codec=#{codec}")
+    env = preferences_post_env("video_codec=#{codec}")
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Guest codec lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).video_codec == codec
-    env = theme_post_env("")
+    env = preferences_post_env("")
     env.set "preferences", prefs
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Older form erased codec" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).video_codec == codec
 
     user = signed_in_env("/preferences").get("user").as(User)
-    env = theme_post_env("video_codec=#{codec}")
+    env = preferences_post_env("video_codec=#{codec}")
     env.set "user", user
     Invidious::Routes::PreferencesRoute.update(env)
     saved = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
     raise "Account codec lost" unless saved.video_codec == codec
-    env = theme_post_env(prefs.to_json, "application/json")
+    env = preferences_post_env(prefs.to_json, "application/json")
     env.set "user", user
     Invidious::Routes::API::V1::Authenticated.set_preferences(env)
     saved = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))

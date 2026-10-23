@@ -129,7 +129,7 @@ def make_config():
                     text += f"| `ai_{kind}_{surface}_action` | `String?` | `nil` |\n"
         text += "\n"
     text += ("`default_user_preferences.default_playlist` is annotated YAML-ignored and cannot seed a playlist through this structure. "
-             "Runtime user `timezone` and `theme_random_next_at` initialize to nil rather than copying the similarly named configuration fields. "
+             "Runtime user `timezone` initializes to nil rather than copying the similarly named configuration field. "
              "See the [runtime preference expressions](preferences.md) for exact initialization.\n")
     text += ("\n## Jobs\n\n`jobs` is generated from `BaseJob` subclasses. Each structure has `enable: true`. "
              "The current startup path registers fresh job objects without assigning `CONFIG.jobs` to their `cfg`; "
@@ -204,7 +204,7 @@ def make_source_map():
         "src": "Application entry point and startup wiring.",
         "assets/js": "Browser behavior; individual module responsibilities are described in frontend documentation.",
         "assets/css": "Base, player, feature and layout styles; minified third-party styles retain their upstream role.",
-        "assets/themes": "Theme stylesheets; companion previews, fonts and SVG artwork live alongside them.",
+        "assets/themes": "Diary styling, with local fonts and SVG artwork alongside its stylesheet.",
         "scripts": "Build, dependency, database, release and Git-hook tooling.",
         "config/sql": "Fresh-install table/index/constraint definitions.",
         "config/migrate-scripts": "Historical shell migrations retained for legacy upgrades; not the modern migration runner.",

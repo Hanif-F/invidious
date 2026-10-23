@@ -174,7 +174,7 @@ def check_public_security
   end
   password = "an isolated security test password"
   store = Invidious::Database::Accounts
-  alice_sid = store.register("SecurityAlice", password, Preferences.from_json(%({"save_player_pos":true,"theme":"diary"})))
+  alice_sid = store.register("SecurityAlice", password, Preferences.from_json(%({"save_player_pos":true,"dark_mode":"dark"})))
   bob_sid = store.register("SecurityBob", password, Preferences.from_json(%({"save_player_pos":true})))
   alice = Invidious::Database::Users.select!(email: Invidious::Database::SessionIDs.select_email(alice_sid).not_nil!)
   bob = Invidious::Database::Users.select!(email: Invidious::Database::SessionIDs.select_email(bob_sid).not_nil!)
@@ -203,30 +203,30 @@ def check_public_security
 
   reader = generate_token(alice.email, ["GET:preferences"], nil, HMAC_KEY, alice_sid)
   mixed = security_request("GET", "/api/v1/auth/preferences", bob_sid, reader)
-  check(JSON.parse(mixed.get("test_result").as(String))["theme"].as_s == "diary", "Browser cookie replaced bearer identity")
+  check(JSON.parse(mixed.get("test_result").as(String))["dark_mode"].as_s == "dark", "Browser cookie replaced bearer identity")
   csrf_response = security_request("GET", "/api/v1/auth/csrf", alice_sid)
   csrf = JSON.parse(csrf_response.get("test_result").as(String))["csrfToken"].as_s
   before = Invidious::Database::Users.select!(email: alice.email).preferences.to_json
   {nil, "invalid", generate_response(bob_sid, {"POST:*"}, HMAC_KEY), generate_response(alice_sid, {"POST:*"}, HMAC_KEY, -1.hour), generate_response(alice_sid, {"POST:tokens/unregister"}, HMAC_KEY)}.each do |invalid|
-    result = security_request("POST", "/api/v1/auth/preferences", alice_sid, body: %({"theme":"modern-neon"}), csrf: invalid)
+    result = security_request("POST", "/api/v1/auth/preferences", alice_sid, body: %({"dark_mode":"light"}), csrf: invalid)
     check(result.response.status_code == 403, "Invalid API CSRF accepted")
     check(Invidious::Database::Users.select!(email: alice.email).preferences.to_json == before, "Rejected API request mutated preferences")
   end
-  result = security_request("POST", "/api/v1/auth/preferences", alice_sid, body: %({"theme":"modern-neon","save_player_pos":true}), csrf: csrf)
+  result = security_request("POST", "/api/v1/auth/preferences", alice_sid, body: %({"dark_mode":"light","save_player_pos":true}), csrf: csrf)
   check(result.response.status_code == 204, "Valid API CSRF rejected")
   writer = generate_token(alice.email, ["POST:preferences"], nil, HMAC_KEY, alice_sid)
-  result = security_request("POST", "/api/v1/auth/preferences", bearer: writer, body: %({"theme":"diary","save_player_pos":true}))
+  result = security_request("POST", "/api/v1/auth/preferences", bearer: writer, body: %({"dark_mode":"dark","save_player_pos":true}))
   check(result.response.status_code == 204, "Bearer-only API writes now require browser CSRF")
-  check(Invidious::Database::Users.select!(email: bob.email).preferences.theme == bob.preferences.theme, "Preference write changed another account")
+  check(Invidious::Database::Users.select!(email: bob.email).preferences.dark_mode == bob.preferences.dark_mode, "Preference write changed another account")
   check(security_request("POST", "/api/v1/auth/preferences", body: "{}").response.status_code == 403, "Anonymous API write accepted")
 
   {"/preferences", "/subscribe_playlist?list=IVsecurity"}.each do |path|
-    result = security_request("POST", path, alice_sid, body: "theme=modern-neon", content_type: "application/x-www-form-urlencoded")
+    result = security_request("POST", path, alice_sid, body: "dark_mode=light", content_type: "application/x-www-form-urlencoded")
     check(result.response.status_code == 403, "Unprotected form mutation: #{path}")
   end
   before = Invidious::Database::Users.select!(email: alice.email).preferences.to_json
   boundary = "security-test-boundary"
-  import_data = %({"preferences":{"theme":"modern-neon","save_player_pos":true}})
+  import_data = %({"preferences":{"dark_mode":"light","save_player_pos":true}})
   file_part = "--#{boundary}\r\nContent-Disposition: form-data; name=\"import_invidious\"; filename=\"data.json\"\r\nContent-Type: application/json\r\n\r\n#{import_data}\r\n"
   token = generate_response(alice_sid, {"POST:data_control"}, HMAC_KEY)
   token_part = "--#{boundary}\r\nContent-Disposition: form-data; name=\"csrf_token\"\r\n\r\n#{token}\r\n"
@@ -236,9 +236,9 @@ def check_public_security
     check(Invidious::Database::Users.select!(email: alice.email).preferences.to_json == before, "Rejected import mutated preferences")
   end
   result = security_request("POST", "/data_control", alice_sid, body: token_part + file_part + "--#{boundary}--\r\n", content_type: "multipart/form-data; boundary=#{boundary}")
-  check(result.response.status_code == 302 && Invidious::Database::Users.select!(email: alice.email).preferences.theme == "modern-neon", "Valid import did not work")
+  check(result.response.status_code == 302 && Invidious::Database::Users.select!(email: alice.email).preferences.dark_mode == "light", "Valid import did not work")
   token = generate_response(alice_sid, {"POST:preferences"}, HMAC_KEY)
-  result = security_request("POST", "/preferences", alice_sid, body: URI::Params.encode({"theme" => "diary", "save_player_pos" => "on", "csrf_token" => token}), content_type: "application/x-www-form-urlencoded")
+  result = security_request("POST", "/preferences", alice_sid, body: URI::Params.encode({"dark_mode" => "dark", "save_player_pos" => "on", "csrf_token" => token}), content_type: "application/x-www-form-urlencoded")
   check(result.response.status_code == 302, "Valid preferences form rejected")
 
   PG_DB.exec("INSERT INTO playlists VALUES ('Secret', 'IVsecurity', $1, '', 2, now(), now(), 'Private', ARRAY[1,2]::bigint[])", alice.email)

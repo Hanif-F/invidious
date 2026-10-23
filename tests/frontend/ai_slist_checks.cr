@@ -67,7 +67,7 @@ def check_ai_preferences(output)
     body = HTTP::Params.new
     body[selected] = "on" unless selected.empty?
     actions.each_with_index { |key, bit| body[key] = index.bit(bit) == 1 ? "replace_thumbnail" : "hide" }
-    env = theme_post_env(body.to_s)
+    env = preferences_post_env(body.to_s)
     Invidious::Routes::PreferencesRoute.update(env)
     saved = Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))
     json = JSON.parse(saved.to_json)
@@ -76,14 +76,14 @@ def check_ai_preferences(output)
     raise "YAML roundtrip lost settings" unless Preferences.from_yaml(saved.to_yaml).to_json == saved.to_json
 
     user = signed_in_env("/preferences").get("user").as(User)
-    env = theme_post_env(body.to_s)
+    env = preferences_post_env(body.to_s)
     env.set "user", user
     Invidious::Routes::PreferencesRoute.update(env)
     stored = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)
     raise "Account switches coupled" unless keys.all? { |key| JSON.parse(stored)[key].as_bool == (key == selected) }
     raise "Account actions lost" unless actions.all? { |key| JSON.parse(stored)[key] == json[key] }
     raise "Account settings leaked to guest cookies" if env.response.cookies.has_key?("PREFS")
-    api = theme_post_env(saved.to_json, "application/json")
+    api = preferences_post_env(saved.to_json, "application/json")
     api.set "user", user
     Invidious::Routes::API::V1::Authenticated.set_preferences(api)
     user.preferences = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
@@ -174,7 +174,7 @@ def check_ai_page_preferences(output)
     next unless account
     user = signed_in_env("/preferences").get("user").as(User)
     user.preferences = paused
-    api = theme_post_env(paused.to_json, "application/json")
+    api = preferences_post_env(paused.to_json, "application/json")
     api.set "user", user
     Invidious::Routes::API::V1::Authenticated.set_preferences(api)
     user.preferences = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
@@ -191,7 +191,7 @@ def check_ai_page_preferences(output)
 end
 
 def save_ai_page_preferences(previous : Preferences, body : String, account : Bool) : Preferences
-  env = theme_post_env(body)
+  env = preferences_post_env(body)
   env.set "preferences", previous
   if account
     user = signed_in_env("/preferences").get("user").as(User)
@@ -260,83 +260,78 @@ def ai_mix_fixture(env, items)
 end
 
 def render_ai_thumbnail_fixtures(output, items, frontend, video, storage, lists, now)
-  {"modern-neon", "diary"}.each do |theme|
-    {false, true}.each do |thin|
-      suffix = "#{theme}#{thin ? "-thin" : ""}"
-      env = fixture_env("/search", "dark", thin, "compact", visual_theme: theme)
-      preferences = env.get("preferences").as(Preferences)
-      preferences.ai_blocklist_search = preferences.ai_warnlist_search = true
-      preferences.ai_blocklist_recommendations = preferences.ai_warnlist_recommendations = true
-      preferences.ai_blocklist_action = preferences.ai_warnlist_action = "replace_thumbnail"
-      env.set "preferences", preferences
-      filtered = frontend.filter(items, env, :search)
-      File.write("#{output}/search-ai-thumbnails-#{suffix}.html", ai_cards_fixture(env, filtered))
+  {false, true}.each do |thin|
+    suffix = "diary#{thin ? "-thin" : ""}"
+    env = fixture_env("/search", "dark", thin, "compact")
+    preferences = env.get("preferences").as(Preferences)
+    preferences.ai_blocklist_search = preferences.ai_warnlist_search = true
+    preferences.ai_blocklist_recommendations = preferences.ai_warnlist_recommendations = true
+    preferences.ai_blocklist_action = preferences.ai_warnlist_action = "replace_thumbnail"
+    env.set "preferences", preferences
+    filtered = frontend.filter(items, env, :search)
+    File.write("#{output}/search-ai-thumbnails-#{suffix}.html", ai_cards_fixture(env, filtered))
 
-      watch_env = fixture_env("/watch?v=2isYuQZMbdU", "dark", thin, visual_theme: theme)
-      watch_env.set "preferences", preferences
-      related = items.map { |item| {"id" => item.id, "title" => item.title, "author" => item.author, "ucid" => item.ucid, "author_handle" => item.author_handle.not_nil!, "author_verified" => "false", "length_seconds" => "60", "short_view_count" => "100"} }
-      filtered_related = frontend.recommendations(related, watch_env)
-      raise "Replaced autoplay target was removed" unless filtered_related.first["id"] == items.first.id
-      video.info["relatedVideos"] = JSON.parse(filtered_related.to_json)
-      File.write("#{output}/watch-ai-thumbnails-#{suffix}.html", watch_fixture(watch_env, nil, supplied_video: video))
-      paused_preferences = preferences
-      paused_preferences.ai_filter_enabled = false
-      paused_env = fixture_env("/search", "dark", thin, visual_theme: theme)
-      paused_env.set "preferences", paused_preferences
-      File.write("#{output}/search-ai-paused-#{suffix}.html", ai_cards_fixture(paused_env, frontend.filter(items, paused_env, :search)))
-      paused_watch = fixture_env("/watch?v=2isYuQZMbdU", "dark", thin, visual_theme: theme)
-      paused_watch.set "preferences", paused_preferences
-      video.info["relatedVideos"] = JSON.parse(frontend.recommendations(related, paused_watch).to_json)
-      File.write("#{output}/watch-ai-paused-#{suffix}.html", watch_fixture(paused_watch, nil, supplied_video: video))
+    watch_env = fixture_env("/watch?v=2isYuQZMbdU", "dark", thin)
+    watch_env.set "preferences", preferences
+    related = items.map { |item| {"id" => item.id, "title" => item.title, "author" => item.author, "ucid" => item.ucid, "author_handle" => item.author_handle.not_nil!, "author_verified" => "false", "length_seconds" => "60", "short_view_count" => "100"} }
+    filtered_related = frontend.recommendations(related, watch_env)
+    raise "Replaced autoplay target was removed" unless filtered_related.first["id"] == items.first.id
+    video.info["relatedVideos"] = JSON.parse(filtered_related.to_json)
+    File.write("#{output}/watch-ai-thumbnails-#{suffix}.html", watch_fixture(watch_env, nil, supplied_video: video))
+    paused_preferences = preferences
+    paused_preferences.ai_filter_enabled = false
+    paused_env = fixture_env("/search", "dark", thin)
+    paused_env.set "preferences", paused_preferences
+    File.write("#{output}/search-ai-paused-#{suffix}.html", ai_cards_fixture(paused_env, frontend.filter(items, paused_env, :search)))
+    paused_watch = fixture_env("/watch?v=2isYuQZMbdU", "dark", thin)
+    paused_watch.set "preferences", paused_preferences
+    video.info["relatedVideos"] = JSON.parse(frontend.recommendations(related, paused_watch).to_json)
+    File.write("#{output}/watch-ai-paused-#{suffix}.html", watch_fixture(paused_watch, nil, supplied_video: video))
 
-      library_env = fixture_env("/playlist?list=PLfixture", "dark", thin, "compact", visual_theme: theme)
-      ai_other_preferences(library_env)
-      playlist_items = items.map_with_index { |item, index| PlaylistVideo.new({title: item.title, id: item.id, author: item.author, ucid: item.ucid, length_seconds: 60, published: Time.utc, plid: "PLfixture", index: index.to_i64, live_now: false, members_only: false}) }
-      File.write("#{output}/playlist-ai-thumbnails-#{suffix}.html", ai_cards_fixture(library_env, playlist_items))
-      paused_library = fixture_env("/playlist?list=PLfixture", "dark", thin, visual_theme: theme)
-      paused_library_preferences = library_env.get("preferences").as(Preferences)
-      paused_library_preferences.ai_filter_enabled = false
-      paused_library.set "preferences", paused_library_preferences
-      File.write("#{output}/playlist-ai-paused-#{suffix}.html", ai_cards_fixture(paused_library, playlist_items))
+    library_env = fixture_env("/playlist?list=PLfixture", "dark", thin, "compact")
+    ai_other_preferences(library_env)
+    playlist_items = items.map_with_index { |item, index| PlaylistVideo.new({title: item.title, id: item.id, author: item.author, ucid: item.ucid, length_seconds: 60, published: Time.utc, plid: "PLfixture", index: index.to_i64, live_now: false, members_only: false}) }
+    File.write("#{output}/playlist-ai-thumbnails-#{suffix}.html", ai_cards_fixture(library_env, playlist_items))
+    paused_library = fixture_env("/playlist?list=PLfixture", "dark", thin)
+    paused_library_preferences = library_env.get("preferences").as(Preferences)
+    paused_library_preferences.ai_filter_enabled = false
+    paused_library.set "preferences", paused_library_preferences
+    File.write("#{output}/playlist-ai-paused-#{suffix}.html", ai_cards_fixture(paused_library, playlist_items))
 
-      File.write("#{output}/mix-ai-thumbnails-#{suffix}.html", ai_mix_fixture(fixture_env("/mix?list=RDfixture", "dark", thin, visual_theme: theme), items))
+    File.write("#{output}/mix-ai-thumbnails-#{suffix}.html", ai_mix_fixture(fixture_env("/mix?list=RDfixture", "dark", thin), items))
 
-      queue_env = fixture_env("/api/v1/playlists/PLfixture?format=html", "dark", thin, visual_theme: theme)
-      ai_other_preferences(queue_env)
-      queue_data = JSON.parse(queue_fixture(thin))
-      # Duplicate occurrences retain their original indices and advancement target.
-      source = JSON.parse({playlistId: "PLfixture", title: "AI queue", videoCount: 4, videos: [
-        {videoId: "2isYuQZMbdU", index: 0, title: "First", author: "Creator a", authorId: items[0].ucid, lengthSeconds: 60},
-        {videoId: "previous001", index: 1, title: "Warned", author: "Creator b", authorId: items[1].ucid, lengthSeconds: 60},
-        {videoId: "2isYuQZMbdU", index: 2, title: "Duplicate", author: "Creator a", authorId: items[0].ucid, lengthSeconds: 60},
-        {videoId: "nextvideo01", index: 3, title: "Safe", author: "Creator c", authorId: items[2].ucid, lengthSeconds: 60},
-      ]}.to_json)
-      original_source = source.to_json
-      replacements = frontend.prepare_queue(queue_env, source["videos"].as_a)
-      queue_data.as_h["playlistHtml"] = JSON::Any.new(template_playlist(source, false, thin, ai_thumbnails: replacements, locale: "en-US"))
-      raise "Queue classification mutated public source" unless source.to_json == original_source
-      File.write("#{output}/queue-ai-thumbnails-#{suffix}.json", queue_data.to_json)
-      paused_queue = fixture_env("/api/v1/playlists/PLfixture?format=html", "dark", thin, visual_theme: theme)
-      paused_queue.set "preferences", paused_library_preferences
-      paused_queue_data = JSON.parse(queue_data.to_json)
-      paused_replacements = frontend.prepare_queue(paused_queue, source["videos"].as_a)
-      raise "Paused queue still replaced thumbnails" unless paused_replacements.empty?
-      paused_queue_data.as_h["playlistHtml"] = JSON::Any.new(template_playlist(source, false, thin, ai_thumbnails: paused_replacements, locale: "en-US"))
-      File.write("#{output}/queue-ai-paused-#{suffix}.json", paused_queue_data.to_json)
+    queue_env = fixture_env("/api/v1/playlists/PLfixture?format=html", "dark", thin)
+    ai_other_preferences(queue_env)
+    queue_data = JSON.parse(queue_fixture(thin))
+    # Duplicate occurrences retain their original indices and advancement target.
+    source = JSON.parse({playlistId: "PLfixture", title: "AI queue", videoCount: 4, videos: [
+      {videoId: "2isYuQZMbdU", index: 0, title: "First", author: "Creator a", authorId: items[0].ucid, lengthSeconds: 60},
+      {videoId: "previous001", index: 1, title: "Warned", author: "Creator b", authorId: items[1].ucid, lengthSeconds: 60},
+      {videoId: "2isYuQZMbdU", index: 2, title: "Duplicate", author: "Creator a", authorId: items[0].ucid, lengthSeconds: 60},
+      {videoId: "nextvideo01", index: 3, title: "Safe", author: "Creator c", authorId: items[2].ucid, lengthSeconds: 60},
+    ]}.to_json)
+    original_source = source.to_json
+    replacements = frontend.prepare_queue(queue_env, source["videos"].as_a)
+    queue_data.as_h["playlistHtml"] = JSON::Any.new(template_playlist(source, false, thin, ai_thumbnails: replacements, locale: "en-US"))
+    raise "Queue classification mutated public source" unless source.to_json == original_source
+    File.write("#{output}/queue-ai-thumbnails-#{suffix}.json", queue_data.to_json)
+    paused_queue = fixture_env("/api/v1/playlists/PLfixture?format=html", "dark", thin)
+    paused_queue.set "preferences", paused_library_preferences
+    paused_queue_data = JSON.parse(queue_data.to_json)
+    paused_replacements = frontend.prepare_queue(paused_queue, source["videos"].as_a)
+    raise "Paused queue still replaced thumbnails" unless paused_replacements.empty?
+    paused_queue_data.as_h["playlistHtml"] = JSON::Any.new(template_playlist(source, false, thin, ai_thumbnails: paused_replacements, locale: "en-US"))
+    File.write("#{output}/queue-ai-paused-#{suffix}.json", paused_queue_data.to_json)
 
-      source.as_h["mixId"] = JSON::Any.new("RDfixture")
-      mix_html = template_mix(source, false, thin, ai_thumbnails: replacements, locale: "en-US")
-      raise "Mix queue lost replacement thumbnails" unless mix_html.scan("ai-thumbnail-compact").size == 3
-    end
-    sub_env = signed_in_env("/feed/subscriptions")
-    preferences = sub_env.get("preferences").as(Preferences)
-    preferences.theme = theme
-    sub_env.set "preferences", preferences
-    File.write("#{output}/subscriptions-ai-thumbnails-#{theme}.html", ai_subscriptions_fixture(sub_env, items))
-    File.write("#{output}/history-ai-thumbnails-#{theme}.html", history_fixture(theme, ai: true))
-    File.write("#{output}/channel-ai-thumbnails-#{theme}.html", diary_channel_fixture(theme, "dark", ai: true))
-    File.write("#{output}/channel-search-ai-thumbnails-#{theme}.html", diary_channel_fixture(theme, "dark", search: true, ai: true))
+    source.as_h["mixId"] = JSON::Any.new("RDfixture")
+    mix_html = template_mix(source, false, thin, ai_thumbnails: replacements, locale: "en-US")
+    raise "Mix queue lost replacement thumbnails" unless mix_html.scan("ai-thumbnail-compact").size == 3
   end
+  sub_env = signed_in_env("/feed/subscriptions")
+  File.write("#{output}/subscriptions-ai-thumbnails-diary.html", ai_subscriptions_fixture(sub_env, items))
+  File.write("#{output}/history-ai-thumbnails-diary.html", history_fixture(ai: true))
+  File.write("#{output}/channel-ai-thumbnails-diary.html", diary_channel_fixture("dark", ai: true))
+  File.write("#{output}/channel-search-ai-thumbnails-diary.html", diary_channel_fixture("dark", search: true, ai: true))
   storage.save_list("blocklist", "@blocked\n#{fixture_clip.ucid}\n", now)
   lists.restore
   File.write("#{output}/clips-ai-thumbnails.html", clips_fixture(ai: true))
@@ -497,12 +492,10 @@ def check_ai_filtering(output)
   env = fixture_env("/preferences")
   env.set "preferences", Preferences.from_json(%({"ai_blocklist_feeds":true,"ai_blocklist_search":true,"ai_blocklist_recommendations":true}))
   File.write("#{output}/preferences-ai-filter.html", preferences_fixture(env))
-  {"modern-neon", "diary"}.each do |theme|
-    {false, true}.each do |enabled|
-      setting_env = fixture_env("/preferences", visual_theme: theme)
-      setting_env.set "preferences", Preferences.from_json({theme: theme, dark_mode: "dark", ai_filter_enabled: enabled, ai_blocklist_feeds_action: "hide", ai_blocklist_search_action: "replace_thumbnail", ai_blocklist_recommendations_action: "off", ai_warnlist_search_action: "hide", ai_blocklist_other_pages_action: "replace_thumbnail"}.to_json)
-      File.write("#{output}/preferences-ai-filter-#{theme}#{enabled ? "" : "-paused"}.html", preferences_fixture(setting_env))
-    end
+  {false, true}.each do |enabled|
+    setting_env = fixture_env("/preferences")
+    setting_env.set "preferences", Preferences.from_json({dark_mode: "dark", ai_filter_enabled: enabled, ai_blocklist_feeds_action: "hide", ai_blocklist_search_action: "replace_thumbnail", ai_blocklist_recommendations_action: "off", ai_warnlist_search_action: "hide", ai_blocklist_other_pages_action: "replace_thumbnail"}.to_json)
+    File.write("#{output}/preferences-ai-filter-diary#{enabled ? "" : "-paused"}.html", preferences_fixture(setting_env))
   end
   search_env = fixture_env("/search?q=videos&page=2")
   search_env.set "preferences", env.get("preferences").as(Preferences)

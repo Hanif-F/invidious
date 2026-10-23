@@ -15,19 +15,19 @@ def check_member_preferences
     prefs = Preferences.from_json({show_member_videos: show}.to_json)
     raise "JSON preference lost" unless Preferences.from_json(prefs.to_json).show_member_videos == show
     raise "YAML preference lost" unless Preferences.from_yaml(prefs.to_yaml).show_member_videos == show
-    env = theme_post_env(show ? "show_member_videos=on" : "")
+    env = preferences_post_env(show ? "show_member_videos=on" : "")
     Invidious::Routes::PreferencesRoute.update(env)
     saved = Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))
     raise "Anonymous member preference lost" unless saved.show_member_videos == show
 
     user = signed_in_env("/preferences").get("user").as(User)
-    env = theme_post_env(show ? "show_member_videos=on" : "")
+    env = preferences_post_env(show ? "show_member_videos=on" : "")
     env.set "user", user
     Invidious::Routes::PreferencesRoute.update(env)
     saved = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
     raise "Account member preference lost" unless saved.show_member_videos == show
 
-    env = theme_post_env(prefs.to_json, "application/json")
+    env = preferences_post_env(prefs.to_json, "application/json")
     env.set "user", user
     Invidious::Routes::API::V1::Authenticated.set_preferences(env)
     saved = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))

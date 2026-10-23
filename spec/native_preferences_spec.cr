@@ -7,7 +7,7 @@ describe Invidious::NativePreferences do
       {true, false}.each do |value|
         patch = JSON.parse({key => value}.to_json).as_h
         Invidious::NativePreferences.validate_patch(patch)
-        stored = JSON.parse(%({"theme":"diary","future":42})).as_h
+        stored = JSON.parse(%({"dark_mode":"dark","future":42})).as_h
         Invidious::SponsorBlock.merge_patch(stored, patch, {} of String => String)
         stored[key].as_bool.should eq(value)
         stored["future"].as_i.should eq(42)
@@ -32,11 +32,11 @@ describe Invidious::NativePreferences do
     Invidious::Videos::SeekPreferences::CHOICES.each do |seconds|
       patch = JSON.parse({seek_seconds: seconds}.to_json).as_h
       Invidious::NativePreferences.validate_patch(patch)
-      saved = JSON.parse(%({"theme":"diary","future":true})).as_h
+      saved = JSON.parse(%({"dark_mode":"dark","future":true})).as_h
       Invidious::SponsorBlock.merge_patch(saved, patch, {} of String => String)
       Invidious::SponsorBlock.merge_patch(saved, JSON.parse(%({"speed":2})).as_h, {} of String => String)
       saved["seek_seconds"].as_i.should eq(seconds)
-      saved["theme"].as_s.should eq("diary")
+      saved["dark_mode"].as_s.should eq("dark")
       saved["future"].as_bool.should be_true
     end
     {"0", "15", "-5", "31", "5.0", "5.5", "null", "true", %q("20"), "[]", "{}"}.each do |raw|
@@ -47,10 +47,10 @@ describe Invidious::NativePreferences do
     (["original", "original_stable"] + Invidious::Videos::AudioPreferences::LANGUAGES.keys).each do |preference|
       patch = JSON.parse({"preferred_audio" => preference}.to_json).as_h
       Invidious::NativePreferences.validate_patch(patch)
-      stored = JSON.parse(%({"theme":"diary","future":{"keep":true},"speed":1.5})).as_h
+      stored = JSON.parse(%({"dark_mode":"dark","future":{"keep":true},"speed":1.5})).as_h
       Invidious::SponsorBlock.merge_patch(stored, patch, {} of String => String)
       stored["preferred_audio"].should eq(preference)
-      stored["theme"].should eq("diary")
+      stored["dark_mode"].should eq("dark")
       stored["future"]["keep"].should eq(true)
       stored["speed"].should eq(1.5)
     end
@@ -76,8 +76,7 @@ describe Invidious::NativePreferences do
     expect_raises(Exception) { Invidious::NativePreferences.validate_patch(JSON.parse(%({"channel_spoiler_settings":{"invalid":null}})).as_h) }
   end
   it "accepts all canonical AI settings and rejects invalid values atomically" do
-    data = JSON.parse(%({"ai_filter_enabled":false,"theme":"keep"})).as_h
-    data.delete("theme")
+    data = JSON.parse(%({"ai_filter_enabled":false})).as_h
     Invidious::NativePreferences::AI_ACTIONS.each do |key|
       data[key] = JSON::Any.new(key.ends_with?("other_pages_action") ? "replace_thumbnail" : "hide")
     end
@@ -89,14 +88,14 @@ describe Invidious::NativePreferences do
   end
   it "accepts every shared codec and preserves it through unrelated sparse patches" do
     {"auto", "av1", "h264"}.each do |codec|
-      stored = JSON.parse(%({"video_codec":"auto","theme":"diary","future":{"keep":true}})).as_h
+      stored = JSON.parse(%({"video_codec":"auto","dark_mode":"dark","future":{"keep":true}})).as_h
       patch = JSON.parse({"video_codec" => codec}.to_json).as_h
       Invidious::NativePreferences.validate_patch(patch)
       Invidious::SponsorBlock.merge_patch(stored, patch, {} of String => String)
       stored["video_codec"].should eq(codec)
       Invidious::SponsorBlock.merge_patch(stored, JSON.parse(%({"speed":1.5})).as_h, {} of String => String)
       stored["video_codec"].should eq(codec)
-      stored["theme"].should eq("diary")
+      stored["dark_mode"].should eq("dark")
       stored["future"]["keep"].should eq(true)
     end
   end
@@ -114,7 +113,7 @@ describe Invidious::NativePreferences do
   end
 
   it "rejects unknown fields, wrong types and oversized/out-of-range settings" do
-    invalid = ["{}", %({"continue":"true"}), %({"continue_autoplay":null}), %({"video_loop":1}), %({"show_member_videos":"false"}), %({"show_member_videos":null}), %({"theme":"diary"}), %({"autoplay":"false"}), %({"speed":0}), %({"speed":2.5}),
+    invalid = ["{}", %({"continue":"true"}), %({"continue_autoplay":null}), %({"video_loop":1}), %({"show_member_videos":"false"}), %({"show_member_videos":null}), %({"theme":"diary"}), %({"theme_random":true}), %({"theme_random_interval_hours":6}), %({"theme_random_next_at":1800000000}), %({"autoplay":"false"}), %({"speed":0}), %({"speed":2.5}),
                %({"speed":"1"}), %({"quality_dash":"fake"}), %({"video_codec":"vp9"}), %({"video_codec":"AV1"}), %({"video_codec":""}),
                %({"video_codec":null}), %({"video_codec":true}), %({"video_codec":123}), %({"video_codec":{}}), %({"video_codec":[]}),
                %({"dark_mode":true}), %({"ui_density":"wide"}),
@@ -126,13 +125,13 @@ describe Invidious::NativePreferences do
   end
 
   it "merges native values while preserving unknown preferences and nested SponsorBlock maps" do
-    stored = JSON.parse(%({"theme":"diary","future":{"keep":true},"speed":1,"sponsorblock_modes":{"sponsor":"manual"}})).as_h
+    stored = JSON.parse(%({"dark_mode":"dark","future":{"keep":true},"speed":1,"sponsorblock_modes":{"sponsor":"manual"}})).as_h
     patch = JSON.parse(%({"speed":1.5,"thin_mode":true,"sponsorblock_modes":{"intro":"auto"}})).as_h
     Invidious::NativePreferences.validate_patch(patch)
     Invidious::SponsorBlock.merge_patch(stored, patch, {} of String => String)
     stored["speed"].should eq(1.5)
     stored["thin_mode"].should eq(true)
-    stored["theme"].should eq("diary")
+    stored["dark_mode"].should eq("dark")
     stored["future"]["keep"].should eq(true)
     stored["sponsorblock_modes"]["sponsor"].should eq("manual")
     stored["sponsorblock_modes"]["intro"].should eq("auto")

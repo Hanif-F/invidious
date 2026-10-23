@@ -523,7 +523,6 @@ body[data-page=search] .media-item .media-card::before, body[data-page=playlist]
 [data-page=playlist] .media-item[data-kind=playlist-video] .media-card { --scrap: var(--gold-paper); --ink: var(--mustard); }
 footer { background: var(--surface); border-top: 4px double var(--coral); font-family: var(--reading); }
 footer::before { height: 55px; }
-.theme-card { border-radius: 2px; }
 [data-density=compact] .media-card { padding: 12px 8px 8px; }
 [data-density=compact] .media-card::after, [data-thin=true] .media-card::before, [data-thin=true] .media-card::after { display: none; }
 [data-thin=true] .media-card { border-bottom: 3px solid var(--ink); }

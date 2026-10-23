@@ -61,6 +61,6 @@ The shipped healthcheck probes `/api/v1/stats`. When statistics are disabled, th
 
 ## First use
 
-Browse search/channels anonymously, then choose Preferences to adjust locale, theme, player behavior and content visibility. Sign up for subscriptions, playlists, clips, account history and synchronized positions. Configure `save_player_pos` to opt into position sync; it defaults false. Enhancements such as SponsorBlock, DeArrow and AI page actions default off.
+Browse search/channels anonymously, then choose Preferences to adjust locale, color mode, player behavior and content visibility. Sign up for subscriptions, playlists, clips, account history and synchronized positions. Configure `save_player_pos` to opt into position sync; it defaults false. Enhancements such as SponsorBlock, DeArrow and AI page actions default off.
 
 For public service, complete [operations](operations.md) and [security](security.md): set the real public origin/TLS, trusted proxies, private database networking, persistent secrets and a verified backup. The sample service/container configuration is a starting point, not proof of deployment readiness.

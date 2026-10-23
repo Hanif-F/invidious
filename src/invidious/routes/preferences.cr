@@ -152,18 +152,6 @@ module Invidious::Routes::PreferencesRoute
     seek_seconds = env.params.body["seek_seconds"]?.try { |value| Invidious::Videos::SeekPreferences.normalize(value.to_i64? || 10) } || previous.seek_seconds
     video_codec = Preferences::VideoCodec.normalize(env.params.body["video_codec"]? || previous.video_codec)
     preferred_audio = Invidious::Videos::AudioPreferences.normalize(env.params.body["preferred_audio"]? || previous.preferred_audio)
-    selection = env.params.body["theme"]?
-    theme_random = selection ? selection == "random" : previous.theme_random
-    theme = selection && selection != "random" ? Invidious::Themes.normalize(selection) : previous.theme
-    interval = env.params.body["theme_random_interval_hours"]?
-    theme_random_interval_hours = interval ? Preferences::ThemeInterval.normalize(interval.to_i64? || 6) : previous.theme_random_interval_hours
-    theme_random_next_at = previous.theme_random_next_at
-    if !theme_random
-      theme_random_next_at = nil
-    elsif !previous.theme_random || theme_random_interval_hours != previous.theme_random_interval_hours
-      theme_random_next_at = Time.utc.to_unix + theme_random_interval_hours.to_i64 * 3600
-    end
-
     ui_density = env.params.body["ui_density"]? || env.get("preferences").as(Preferences).ui_density
     ui_density = Preferences::UIDensity.normalize(ui_density)
 
@@ -206,10 +194,6 @@ module Invidious::Routes::PreferencesRoute
       continue:                       continue,
       continue_autoplay:              continue_autoplay,
       dark_mode:                      dark_mode,
-      theme:                          theme,
-      theme_random:                   theme_random,
-      theme_random_interval_hours:    theme_random_interval_hours,
-      theme_random_next_at:           theme_random_next_at,
       latest_only:                    latest_only,
       listen:                         listen,
       local:                          local,
@@ -340,6 +324,14 @@ module Invidious::Routes::PreferencesRoute
     env.redirect referer
   end
 
+  private def self.next_color_mode(mode : String) : String
+    case mode
+    when ""      then "light"
+    when "light" then "dark"
+    else              ""
+    end
+  end
+
   def self.toggle_theme(env)
     if env.get?("user") && !Authentication.valid_session_csrf?(env)
       return error_template(403, "Invalid CSRF token")
@@ -355,14 +347,14 @@ module Invidious::Routes::PreferencesRoute
       user = user.as(User)
 
       requested = env.params.query["mode"]?
-      user.preferences.dark_mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : Invidious::Themes.next_mode(user.preferences.dark_mode)
+      user.preferences.dark_mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : next_color_mode(user.preferences.dark_mode)
 
       Invidious::Database::Users.update_preferences(user)
     else
       preferences = env.get("preferences").as(Preferences)
 
       requested = env.params.query["mode"]?
-      preferences.dark_mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : Invidious::Themes.next_mode(preferences.dark_mode)
+      preferences.dark_mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : next_color_mode(preferences.dark_mode)
 
       host = env.get("header_x-forwarded-host")
       if alt = CONFIG.alternative_domains.index(host)

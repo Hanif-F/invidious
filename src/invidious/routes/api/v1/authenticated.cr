@@ -31,7 +31,7 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
 
     begin
-      user.preferences = Invidious::Themes.prepare_schedule(user.preferences, Preferences.from_json(env.request.body || "{}"))
+      user.preferences = Preferences.from_json(env.request.body || "{}")
     rescue
     end
 
@@ -81,6 +81,7 @@ module Invidious::Routes::API::V1::Authenticated
       if rules = data["channel_spoiler_settings"]?
         Invidious::ChannelSpoilers.merge_patch(stored, rules, names)
       end
+      Preferences.remove_retired_theme_fields(stored)
       raw = stored.to_json
       conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw, user.email)
       if data["save_player_pos"]?.try(&.as_bool) == false

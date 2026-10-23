@@ -227,8 +227,8 @@ ensure
   PG_DB.exec("CREATE TABLE IF NOT EXISTS channel_avatars (ucid TEXT PRIMARY KEY, url TEXT NOT NULL, observed_at TEXT NOT NULL)")
 end
 
-def comment_avatar_cross_page_fixture(theme, thin = false)
-  env = fixture_env("/feed/subscriptions", thin: thin, visual_theme: theme)
+def comment_avatar_cross_page_fixture(thin = false)
+  env = fixture_env("/feed/subscriptions", thin: thin)
   locale = "en-US"
   modern = JSON.parse(Invidious::Comments.parse_youtube("2isYuQZMbdU", comment_avatar_fixture("modern_comments").as_h, "json", locale, true))["comments"].as_a
   community = JSON.parse(extract_channel_community(comment_avatar_fixture("community_posts").as_a, ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: locale, format: "json", thin_mode: true))["comments"].as_a.first(1)
@@ -260,10 +260,8 @@ output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
     File.write("#{output}/comment-avatar-#{kind}-#{thin}.json", responses["#{kind}-html-#{thin}"])
   end
 end
-{"modern-neon", "diary"}.each do |theme|
-  File.write("#{output}/avatars-comments-#{theme}.html", comment_avatar_cross_page_fixture(theme))
-end
-File.write("#{output}/avatars-comments-thin.html", comment_avatar_cross_page_fixture("modern-neon", true))
+File.write("#{output}/avatars-comments-diary.html", comment_avatar_cross_page_fixture())
+File.write("#{output}/avatars-comments-thin.html", comment_avatar_cross_page_fixture(true))
 expected = expected_comment_avatars("modern").merge(expected_comment_avatars("community"))
 raise "Real supplied avatars unavailable in shared cache" unless Invidious::Database::ChannelAvatars.select(expected.keys) == expected
 raise "Cross-page reuse requested metadata" unless YoutubeAPI.avatar_listing_calls == calls && Invidious::Videos::Parser.avatar_metadata_calls == metadata_calls

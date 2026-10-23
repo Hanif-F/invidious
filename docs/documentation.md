@@ -28,7 +28,7 @@ The handbook describes application behavior and operational workflows. Generated
 | AI classifications/actions/status/handle lookup | [AI filter](ai-channel-filter.md), [native API](mobile-api.md) | ai_slist modules/API/runtime/job/database and thumbnail rendering |
 | Avatars and safe shared cache enrichment | [Frontend](frontend.md), [native API](mobile-api.md) | helpers/frontend/jsonify/database/channel-avatar extraction |
 | Guest/account preferences, browser storage and local fallbacks | [Preferences](preferences.md), [frontend](frontend.md) | preferences, browser_profiles, browser-storage.js, native validation |
-| Themes, CSS, accessibility, localization and static caching | [Frontend](frontend.md), [theming](theming.md) | views, assets/css/themes/fonts, locales, i18n, static_assets_handler |
+| Diary styling, CSS, accessibility, localization and static caching | [Frontend](frontend.md), [theming](theming.md) | views, assets/css/themes/fonts, locales, i18n, static_assets_handler |
 | Portable data formats and backup omissions | [Import/export](data-import-export.md), [operations](operations.md) | user/imports/exports, data_control, native_library |
 | Tables, indexes, transactions, retention and migrations | [Database](database.md), [schema](reference/schema.md), [migrations](reference/migrations.md) | database, config/sql, migration runner |
 | Background jobs, logs, monitoring, upgrades and rollback | [Operations](operations.md), [troubleshooting](troubleshooting.md) | jobs, logger, config, SQL, account security procedure |

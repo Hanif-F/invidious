@@ -21,16 +21,14 @@ Browser/account state must go through `InvidiousStorage`, not raw unscoped stora
 | Fields | Behavior |
 | --- | --- |
 | `locale`, `region`, `timezone` | Translation, supported regional requests, and history/calendar grouping; invalid timezone resolves to unset/UTC behavior |
-| `dark_mode` | Empty/system, `light` or `dark`; separate from visual theme |
-| `theme` | Supported theme ID; invalid values normalize to the default |
-| `theme_random`, `theme_random_interval_hours`, `theme_random_next_at` | Automatic theme selection with persisted deadline; interval must be 1–168 hours, otherwise 6 |
+| `dark_mode` | Empty/system, `light` or `dark` within Diary |
 | `ui_density` | `balanced` or `compact`; invalid values normalize to balanced |
 | `thin_mode` | Reduced-image presentation; underlying content links/actions remain |
 | `default_home`, `feed_menu` | Home destination and feed navigation entries |
 | `show_nick` | Display username in supported navigation |
 | `automatic_instance_redirect` | Automatic fallback-instance behavior where supported |
 
-Registered theme options are Modern Neon (the default) and Diary. Theme rotation is applied during eligible document requests rather than by a permanent server timer. Theme-specific CSS/preview/font artwork lives in `assets/themes/`; [theming](theming.md) explains authoring.
+Diary is the only site design. Its CSS, fonts and artwork live in `assets/themes/diary/`; [theming](theming.md) explains maintenance. Legacy `theme`, `theme_random`, `theme_random_interval_hours`, and `theme_random_next_at` fields are ignored in old preferences and configuration, omitted from new serialized output, and removed on subsequent saves. No database migration is required.
 
 ## Playback and content
 
@@ -91,4 +89,4 @@ Archived-chat settings include timestamps, font scale, panel width, overlay enab
 
 `GET /api/v1/auth/preferences` returns the preference object. Legacy `POST` deserializes an entire replacement object; omitted fields can fall back to defaults and it does not behave like a sparse merge. Prefer supported native `PATCH` fields for clients that implement only part of the preference model: validation completes first, then stored JSON is locked/merged while retaining unrelated fields. Unsupported keys or invalid types return 400.
 
-Native PATCH intentionally excludes some web-only fields, including theme rotation. Chat uses its own PATCH route. Retrieve updated values after saving where useful. Cookie-authenticated writes need CSRF; bearer tokens need the exact method/path scope. Full native allowlists and schemas are in [mobile API](mobile-api.md#safe-preference-updates).
+Native PATCH intentionally excludes some web-only fields, including chat settings. Chat uses its own PATCH route. Retrieve updated values after saving where useful. Cookie-authenticated writes need CSRF; bearer tokens need the exact method/path scope. Full native allowlists and schemas are in [mobile API](mobile-api.md#safe-preference-updates).

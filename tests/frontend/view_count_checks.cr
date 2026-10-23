@@ -9,8 +9,8 @@ def view_count_playlist_responses(items)
   ].map { |response| JSON.parse(response.to_json).as_h }
 end
 
-def view_count_cards_fixture(thin = false, locale = "en-US", theme = "modern-neon")
-  env = fixture_env("/playlist?list=PLfixture", thin: thin, locale: locale, visual_theme: theme)
+def view_count_cards_fixture(thin = false, locale = "en-US")
+  env = fixture_env("/playlist?list=PLfixture", thin: thin, locale: locale)
   item = real_avatar_items.first
   zero = item
   zero.id = "zeroview001"
@@ -74,8 +74,8 @@ def check_view_counts(output)
 
   missing = JSON.parse(Invidious::JSONify::APIv1::VideoMetadata.enrich_json(%({"entries":[{"video_id":"missing0001"}]})))
   raise "Cache miss fabricated a count" if missing["entries"][0]["viewCount"]?
-  {"cards" => {false, "en-US", "modern-neon"}, "thin" => {true, "en-US", "modern-neon"}, "rtl" => {false, "ar", "diary"}}.each do |suffix, (thin, locale, theme)|
-    html = view_count_cards_fixture(thin, locale, theme)
+  {"cards" => {false, "en-US"}, "thin" => {true, "en-US"}, "rtl" => {false, "ar"}}.each do |suffix, (thin, locale)|
+    html = view_count_cards_fixture(thin, locale)
     raise "Unknown count was displayed" if html.includes?("0 views</p>") && html.scan("0 views</p>").size > 1
     File.write("#{output}/view-counts-#{suffix}.html", html)
   end

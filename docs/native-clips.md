@@ -19,9 +19,9 @@ Opening pauses the main player; closing resumes it only if it was already playin
 Closing keeps an unpublished draft for reopening within that page. Changing the
 range stops the previous preview, and closing unloads it. Preview playback never
 saves full-video resume positions. Guests sign in and return to the popup.
-The normal `/create_clip` form also works without JavaScript and is used if popup
-assets cannot load. It accepts formatted timestamps and existing numeric-second
-submissions, retaining typed fields after validation errors.
+The normal `/create_clip` form is used if popup assets cannot load. It accepts
+formatted timestamps and existing numeric-second submissions, retaining typed
+fields after validation errors.
 
 Published clips play the selected range on a loop, with a
 loop toggle and a link to the full video. Playback does not change full-video

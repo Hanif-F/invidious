@@ -69,8 +69,8 @@ COMPANION_POOL       = CompanionConnectionPool.new(capacity: 1)
 
 FIXTURE_ORIGINAL_TITLES = Invidious::OriginalTitles::Client.new(->(_id : String) { Invidious::OriginalTitles::Result.new(nil, 10.minutes) })
 
-def fixture_env(path, theme = "dark", thin = false, density = "balanced", locale = "en-US", visual_theme = "modern-neon")
-  preferences = Preferences.from_json({"theme" => visual_theme, "dark_mode" => theme, "thin_mode" => thin, "ui_density" => density, "locale" => locale, "comments" => ["", ""], "preload" => false}.to_json)
+def fixture_env(path, mode = "dark", thin = false, density = "balanced", locale = "en-US")
+  preferences = Preferences.from_json({"dark_mode" => mode, "thin_mode" => thin, "ui_density" => density, "locale" => locale, "comments" => ["", ""], "preload" => false}.to_json)
   env = HTTP::Server::Context.new(HTTP::Request.new("GET", path), HTTP::Server::Response.new(IO::Memory.new))
   env.set "preferences", preferences
   env.set "original_title_selection", Invidious::OriginalTitles::Selection.new(preferences.show_original_title, FIXTURE_ORIGINAL_TITLES)
@@ -174,12 +174,9 @@ def preferences_fixture(env)
   render "src/invidious/views/user/preferences.ecr", "src/invidious/views/template.ecr"
 end
 
-def playlist_library_fixture(visual_theme = "modern-neon")
+def playlist_library_fixture
   env = signed_in_env("/feed/playlists")
-  preferences = env.get("preferences").as(Preferences)
-  preferences.theme = visual_theme
-  env.set "preferences", preferences
-  locale = preferences.locale
+  locale = env.get("preferences").as(Preferences).locale
   items_created = (0...4).map do |i|
     SearchPlaylist.new({title: "Light and motion #{i + 1}", id: "PLfixture#{i}", author: "Studio North", ucid: "UCfixture", video_count: 12, videos: [] of SearchPlaylistVideo, thumbnail: "/vi/2isYuQZMbdU/mqdefault.jpg", author_verified: false})
   end
@@ -215,10 +212,9 @@ def navigation_fixture
   render "src/invidious/views/components/navigation.ecr"
 end
 
-def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "", sync = false, dearrow = false, ai = false, known_views = false)
+def history_fixture(empty = false, thin = false, history_query = "", sync = false, dearrow = false, ai = false, known_views = false)
   env = signed_in_env("/feed/history")
   preferences = env.get("preferences").as(Preferences)
-  preferences.theme = visual_theme
   preferences.thin_mode = thin
   env.set "preferences", preferences
   user = env.get("user").as(User)
@@ -256,8 +252,8 @@ def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, h
   render "src/invidious/views/feeds/history.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = false, search = false, privacy = false, empty = false, ai = false)
-  env = fixture_env("/channel/UCfixture", mode, visual_theme: visual_theme)
+def diary_channel_fixture(mode = "light", playlists = false, search = false, privacy = false, empty = false, ai = false)
+  env = fixture_env("/channel/UCfixture", mode)
   locale = "en-US"
   user = nil
   subscriptions = [] of String
@@ -298,8 +294,8 @@ def diary_channel_fixture(visual_theme = "diary", mode = "light", playlists = fa
   end
 end
 
-def diary_login_fixture(visual_theme = "diary", mode = "light", signup = false)
-  env = fixture_env("/login", mode, visual_theme: visual_theme)
+def diary_login_fixture(mode = "light", signup = false)
+  env = fixture_env("/login", mode)
   locale = "en-US"
   username = ""
   error = captcha = nil
@@ -309,8 +305,8 @@ def diary_login_fixture(visual_theme = "diary", mode = "light", signup = false)
   render "src/invidious/views/user/login.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_error_fixture(visual_theme = "diary", mode = "light")
-  env = fixture_env("/unavailable", mode, visual_theme: visual_theme)
+def diary_error_fixture(mode = "light")
+  env = fixture_env("/unavailable", mode)
   locale = "en-US"
   error_message = "<h1>This page is unavailable</h1><p>Please try again later.</p>"
   next_steps = "<a href=\"/\">Return home</a>"
@@ -318,8 +314,8 @@ def diary_error_fixture(visual_theme = "diary", mode = "light")
   render "src/invidious/views/error.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_playlist_fixture(visual_theme = "diary", mode = "light", editable = false)
-  env = fixture_env("/playlist?list=PLfixture", mode, visual_theme: visual_theme)
+def diary_playlist_fixture(mode = "light", editable = false)
+  env = fixture_env("/playlist?list=PLfixture", mode)
   env.set "remove_playlist_items", "PLfixture" if editable
   locale = "en-US"
   items = (0...6).map do |i|
@@ -335,19 +331,18 @@ raise "Invalid density accepted" unless Preferences.from_json(%({"ui_density":"u
 raise "Density round trip failed" unless Preferences.from_json(Preferences.from_json(%({"ui_density":"compact"})).to_json).ui_density == "compact"
 raise "Invalid YAML density accepted" unless Preferences.from_yaml("ui_density: unknown").ui_density == "balanced"
 
-require "./theme_checks"
+require "./appearance_checks"
 require "./ai_slist_checks"
 
 output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
 Dir.mkdir_p(output)
-{"dark", "light", ""}.each do |theme|
-  suffix = theme.empty? ? "auto" : theme
-  File.write("#{output}/watch-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", theme)))
-  File.write("#{output}/browse-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", theme)))
+{"dark", "light", ""}.each do |mode|
+  suffix = mode.empty? ? "auto" : mode
+  File.write("#{output}/watch-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode)))
+  File.write("#{output}/browse-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", mode)))
 end
 File.write("#{output}/watch-single.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil))
 File.write("#{output}/watch-chat.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil, chat: true))
-File.write("#{output}/watch-chat-diary.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU", "dark", visual_theme: "diary"), nil, chat: true))
 File.write("#{output}/watch-chat-only.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), nil, chat: true, chat_only: true))
 File.write("#{output}/watch-thin.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "dark", true)))
 File.write("#{output}/browse-compact.html", browse_fixture(fixture_env("/feed/popular", "dark", false, "compact")))
@@ -364,44 +359,18 @@ File.write("#{output}/history-search.html", history_fixture(history_query: "STUD
 File.write("#{output}/history-no-matches.html", history_fixture(history_query: "<unmatched>"))
 File.write("#{output}/history-thin.html", history_fixture(thin: true))
 File.write("#{output}/playlist-library.html", playlist_library_fixture)
-# Render Diary through the same production templates and preference resolution.
-{"dark", "light", ""}.each do |mode|
-  suffix = mode.empty? ? "auto" : mode
-  File.write("#{output}/browse-diary-#{suffix}.html", browse_fixture(fixture_env("/feed/popular", mode, visual_theme: "diary")))
-  File.write("#{output}/watch-diary-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode, visual_theme: "diary")))
-end
-File.write("#{output}/preferences-diary.html", preferences_fixture(fixture_env("/preferences", "light", visual_theme: "diary")))
-File.write("#{output}/browse-diary-compact.html", browse_fixture(fixture_env("/feed/popular", "light", false, "compact", visual_theme: "diary")))
-File.write("#{output}/browse-diary-thin.html", browse_fixture(fixture_env("/feed/popular", "light", true, visual_theme: "diary")))
-File.write("#{output}/watch-diary-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "light", false, "balanced", "ar", "diary")))
-File.write("#{output}/search-diary.html", browse_fixture(fixture_env("/search?q=light", "light", visual_theme: "diary")))
+File.write("#{output}/preferences-diary.html", preferences_fixture(fixture_env("/preferences", "light")))
+File.write("#{output}/browse-diary-compact.html", browse_fixture(fixture_env("/feed/popular", "light", false, "compact")))
+File.write("#{output}/browse-diary-thin.html", browse_fixture(fixture_env("/feed/popular", "light", true)))
+File.write("#{output}/watch-diary-rtl.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "light", false, "balanced", "ar")))
+File.write("#{output}/search-diary.html", browse_fixture(fixture_env("/search?q=light", "light")))
 File.write("#{output}/playlist-diary.html", diary_playlist_fixture)
 File.write("#{output}/playlist-diary-editable.html", diary_playlist_fixture(editable: true))
-File.write("#{output}/history-diary.html", history_fixture("diary"))
-File.write("#{output}/playlist-library-diary.html", playlist_library_fixture("diary"))
 File.write("#{output}/channel-diary.html", diary_channel_fixture)
 File.write("#{output}/login-diary.html", diary_login_fixture)
 File.write("#{output}/error-diary.html", diary_error_fixture)
-random_env = fixture_env("/preferences", "")
-random_preferences = random_env.get("preferences").as(Preferences)
-random_preferences.theme_random = true
-random_preferences.theme_random_next_at = Time.utc.to_unix + 21600
-random_env.set "preferences", random_preferences
-File.write("#{output}/preferences-random.html", preferences_fixture(random_env))
-File.write("#{output}/browse-random.html", browse_fixture(random_env))
-# Register an alternative only inside this fixture process; never ship it as an option.
-Invidious::Themes::AVAILABLE << Invidious::Themes::Theme.new("fixture-theme", "Fixture Theme", "/themes/fixture-theme/theme.css", "/themes/modern-neon/preview.webp")
-begin
-  env = fixture_env("/preferences")
-  preferences = env.get("preferences").as(Preferences)
-  preferences.theme = "fixture-theme"
-  env.set "preferences", preferences
-  File.write("#{output}/preferences-alternative.html", preferences_fixture(env))
-  check_theme_preferences
-  check_random_themes
-ensure
-  Invidious::Themes::AVAILABLE.pop
-end
+check_appearance_preferences
+check_color_modes
 puts "Rendered frontend fixtures to #{output}"
 check_ai_preferences(output)
 
@@ -465,10 +434,8 @@ check_dearrow_contributions(output)
 
 require "./playlist_volume_checks"
 check_playlist_volume
-Invidious::Themes::AVAILABLE.each do |theme|
-  File.write("#{output}/channel-playlists-#{theme.id}.html", diary_channel_fixture(theme.id, "dark", true))
-  File.write("#{output}/library-#{theme.id}.html", playlist_library_fixture(theme.id))
-end
+File.write("#{output}/channel-playlists-diary.html", diary_channel_fixture("dark", true))
+File.write("#{output}/library-diary.html", playlist_library_fixture)
 
 File.write("#{output}/channel-search.html", diary_channel_fixture(search: true))
 File.write("#{output}/channel-search-private.html", diary_channel_fixture(search: true, privacy: true))
@@ -490,17 +457,15 @@ File.write("#{output}/search-members-empty.html", member_search_fixture(false, t
 check_member_extraction
 
 require "./progress_fixtures"
-{"modern-neon", "diary"}.each do |theme|
-  {false, true}.each do |thin|
-    suffix = "#{theme}-#{thin ? "thin" : "normal"}"
-    File.write("#{output}/history-progress-#{suffix}.html", history_fixture(theme, thin: thin, sync: true))
-    File.write("#{output}/cards-progress-#{suffix}.html", progress_cards_fixture(theme, thin))
-    File.write("#{output}/watch-progress-#{suffix}.html", watch_fixture(progress_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", theme, thin)))
-  end
+{false, true}.each do |thin|
+  suffix = "diary-#{thin ? "thin" : "normal"}"
+  File.write("#{output}/history-progress-#{suffix}.html", history_fixture(thin: thin, sync: true))
+  File.write("#{output}/cards-progress-#{suffix}.html", progress_cards_fixture(thin))
+  File.write("#{output}/watch-progress-#{suffix}.html", watch_fixture(progress_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", thin)))
 end
 File.write("#{output}/history-progress-search.html", history_fixture(history_query: "STUDIO north", sync: true))
 
-File.write("#{output}/signup-account.html", diary_login_fixture("modern-neon", "dark", true))
+File.write("#{output}/signup-account.html", diary_login_fixture("dark", true))
 env = signed_in_env("/account")
 locale = "en-US"
 user = env.get("user").as(User)
@@ -512,13 +477,6 @@ File.write("#{output}/account-settings.html", render "src/invidious/views/user/a
 # Preferences states use the same template and form names as the live page.
 PG_DB.exec("INSERT INTO playlists (title, id, author) VALUES (?, ?, ?)", "Fixture playlist", "IVpreferences", "viewer@example.test")
 File.write("#{output}/preferences-signed-in.html", preferences_fixture(signed_in_env("/preferences")))
-{"diary"}.each do |theme|
-  env = signed_in_env("/preferences")
-  preferences = env.get("preferences").as(Preferences)
-  preferences.theme = theme
-  env.set "preferences", preferences
-  File.write("#{output}/preferences-#{theme}-signed-in.html", preferences_fixture(env))
-end
 env = signed_in_env("/preferences")
 preferences = env.get("preferences").as(Preferences)
 preferences.show_nick = false
@@ -546,10 +504,9 @@ def fixture_clip
                      video_duration: video.length_seconds, creator: "viewer"})
 end
 
-def clips_fixture(channel_page = false, empty = false, visual_theme = "modern-neon", locale = "en-US", ai = false, known_views = false)
-  env = channel_page ? fixture_env("/channel/#{fixture_clip.ucid}/clips", visual_theme: visual_theme, locale: locale) : signed_in_env("/feed/clips")
+def clips_fixture(channel_page = false, empty = false, locale = "en-US", ai = false, known_views = false)
+  env = channel_page ? fixture_env("/channel/#{fixture_clip.ucid}/clips", locale: locale) : signed_in_env("/feed/clips")
   preferences = env.get("preferences").as(Preferences)
-  preferences.theme = visual_theme
   preferences.locale = locale
   env.set "preferences", preferences
   ai_other_preferences(env) if ai
@@ -573,10 +530,9 @@ def clips_fixture(channel_page = false, empty = false, visual_theme = "modern-ne
   end
 end
 
-def create_clip_fixture(visual_theme = "modern-neon", locale = "en-US")
+def create_clip_fixture(locale = "en-US")
   env = signed_in_env("/create_clip?videoId=2isYuQZMbdU")
   preferences = env.get("preferences").as(Preferences)
-  preferences.theme = visual_theme
   preferences.locale = locale
   env.set "preferences", preferences
   video = fixture_video
@@ -590,14 +546,11 @@ def create_clip_fixture(visual_theme = "modern-neon", locale = "en-US")
 end
 
 File.write("#{output}/clip-watch.html", watch_fixture(signed_in_env(fixture_clip.permalink), nil, account: true, native_clip: fixture_clip))
-{"modern-neon", "diary"}.each do |theme|
-  {"dark", "light"}.each do |mode|
-    env = signed_in_env("/watch?v=2isYuQZMbdU")
-    preferences = env.get("preferences").as(Preferences)
-    preferences.theme = theme
-    preferences.dark_mode = mode
-    File.write("#{output}/watch-clips-#{theme}-#{mode}.html", watch_fixture(env, nil, account: true, clip_duration: 7205))
-  end
+{"dark", "light"}.each do |mode|
+  env = signed_in_env("/watch?v=2isYuQZMbdU")
+  preferences = env.get("preferences").as(Preferences)
+  preferences.dark_mode = mode
+  File.write("#{output}/watch-clips-diary-#{mode}.html", watch_fixture(env, nil, account: true, clip_duration: 7205))
 end
 env = signed_in_env("/watch?v=2isYuQZMbdU")
 env.get("preferences").as(Preferences).locale = "ar"
@@ -606,10 +559,9 @@ File.write("#{output}/watch-clips-short.html", watch_fixture(signed_in_env("/wat
 File.write("#{output}/clips-library.html", clips_fixture)
 File.write("#{output}/clips-empty.html", clips_fixture(empty: true))
 File.write("#{output}/channel-clips.html", clips_fixture(channel_page: true))
-File.write("#{output}/clips-diary.html", clips_fixture(visual_theme: "diary"))
 File.write("#{output}/clips-rtl.html", clips_fixture(locale: "ar"))
 File.write("#{output}/create-clip.html", create_clip_fixture)
-File.write("#{output}/create-clip-diary.html", create_clip_fixture("diary", "id"))
+File.write("#{output}/create-clip-diary.html", create_clip_fixture("id"))
 
 require "./avatar_checks"
 require "./comment_avatar_checks"

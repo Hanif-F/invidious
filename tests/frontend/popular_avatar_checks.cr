@@ -172,8 +172,8 @@ ensure
   YoutubeAPI.avatar_listing_fixture = nil
 end
 
-def popular_avatar_page_fixture(items, theme, thin = false)
-  env = fixture_env("/feed/popular", thin: thin, visual_theme: theme)
+def popular_avatar_page_fixture(items, thin = false)
+  env = fixture_env("/feed/popular", thin: thin)
   locale = "en-US"
   navbar_search = true
   Invidious::Jobs::PullPopularVideosJob::POPULAR_VIDEOS.set(items)
@@ -185,10 +185,8 @@ popular_metadata_calls = Invidious::Videos::Parser.avatar_metadata_calls
 popular_items = check_popular_avatar_refresh
 popular_calls = YoutubeAPI.avatar_listing_calls
 output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
-{"modern-neon", "diary"}.each do |theme|
-  File.write("#{output}/popular-avatars-#{theme}.html", popular_avatar_page_fixture(popular_items, theme))
-end
-File.write("#{output}/popular-avatars-thin.html", popular_avatar_page_fixture(popular_items, "modern-neon", true))
+File.write("#{output}/popular-avatars-diary.html", popular_avatar_page_fixture(popular_items))
+File.write("#{output}/popular-avatars-thin.html", popular_avatar_page_fixture(popular_items, true))
 api = Invidious::Routes::API::V1::Feeds.popular(fixture_env("/api/v1/popular")).not_nil!
 records = JSON.parse(api).as_a
 expected = popular_avatar_fixture("expected_avatars")

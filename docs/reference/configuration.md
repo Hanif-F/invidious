@@ -118,10 +118,6 @@ Values below are **code defaults**, expressed as Crystal literals, rather than d
 | `continue` | `Bool` | `false` |
 | `continue_autoplay` | `Bool` | `true` |
 | `dark_mode` | `String` | `""` |
-| `theme` | `String` | `Invidious::Themes::DEFAULT` |
-| `theme_random` | `Bool` | `false` |
-| `theme_random_interval_hours` | `Int32` | `6` |
-| `theme_random_next_at` | `Int64?` | `nil` |
 | `latest_only` | `Bool` | `false` |
 | `listen` | `Bool` | `false` |
 | `local` | `Bool` | `false` |
@@ -180,7 +176,7 @@ Values below are **code defaults**, expressed as Crystal literals, rather than d
 | `ai_warnlist_recommendations_action` | `String?` | `nil` |
 | `ai_warnlist_other_pages_action` | `String?` | `nil` |
 
-`default_user_preferences.default_playlist` is annotated YAML-ignored and cannot seed a playlist through this structure. Runtime user `timezone` and `theme_random_next_at` initialize to nil rather than copying the similarly named configuration fields. See the [runtime preference expressions](preferences.md) for exact initialization.
+`default_user_preferences.default_playlist` is annotated YAML-ignored and cannot seed a playlist through this structure. Runtime user `timezone` initializes to nil rather than copying the similarly named configuration field. See the [runtime preference expressions](preferences.md) for exact initialization.
 
 ## Jobs
 

@@ -2,7 +2,7 @@
 
 [Documentation index](README.md)
 
-The web interface uses compiled Crystal ECR templates, shared CSS and browser JavaScript. It is not a separate SPA. Page handlers render content first, then JavaScript adds playback, menus, dynamic content and storage/synchronization behavior. Many account/preferences/library forms remain usable without JavaScript; enhancement availability differs by feature.
+The current web interface uses compiled Crystal ECR templates, shared CSS and browser JavaScript. Page handlers render HTML; browser scripts handle playback, menus, dynamic content and storage/synchronization behavior.
 
 ## Templates and page data
 
@@ -47,11 +47,11 @@ Recognized persistent legacy values migrate only into guest storage without repl
 
 Storage denial/quota failure uses bounded cookie fallbacks for small validated settings and page memory for larger values. UI save status must distinguish durable success from page-only state. Volume, caption appearance, chat local state, fallback positions, notification ownership and continuation caches use this helper. Synced account preferences remain database-authoritative.
 
-## Styling and themes
+## Styling and appearance
 
-Base CSS defines layout, cards, navigation and appearance tokens; feature sheets cover the player, search, chat, clips, DeArrow, video actions and theme picker. Pure.css/responsive grids and Ionicons provide vendored foundation assets. [themes.cr](../src/invidious/themes.cr) is the registered ID/URL allowlist: `modern-neon` (default) and `diary`. Theme selection never constructs arbitrary URLs from user preferences.
+Base CSS defines layout, cards, navigation and appearance tokens; feature sheets cover the player, search, chat, clips, DeArrow and video actions. Pure.css/responsive grids and Ionicons provide vendored foundation assets. The main template loads [Diary’s stylesheet](../assets/themes/diary/theme.css) directly after the shared styles. Diary is the only site design.
 
-Light/dark/system mode is independent from the theme. Random rotation stores a deadline and chooses on eligible document navigation; it does not change an already open page when time elapses. Thin mode avoids applicable imagery, and compact density changes layout spacing. Theme previews, Diary fonts/SVG doodles and icons are ordinary runtime assets. See [theming](theming.md) for the existing authoring contract.
+Light/dark/system mode uses the existing preference, header toggle and browser synchronization. Thin mode avoids applicable imagery, and compact density changes layout spacing. Diary fonts/SVG doodles and icons are ordinary runtime assets. See [theming](theming.md) for styling and player compatibility guidance.
 
 ## Avatars, card visibility and progress
 
@@ -59,11 +59,13 @@ Channel avatars are learned from existing upstream responses and batch-persisted
 
 Membership flags come from existing response/cache metadata. Unknown membership stays visible until normal refresh learns it. Public playlist/mix JSON remains unfiltered, with `isMember`; browser cards/HTML queues use preferences. AI replacement removes image markup entirely while retaining titles/links/actions; player posters and aggregate playlist covers keep their existing behavior.
 
+The [view-count reference](reference/video-view-counts.md) documents count rendering and API fields.
+
 Progress indicators share a markup helper across supported cards/recommendations/history/queues. Account sync uses one uncached playback-state request per page/return. Unknown durations do not trigger per-item detail requests and cannot produce partial bars. Duplicate video occurrences get independent card markup with the same video progress state.
 
 ## Localization, accessibility and static assets
 
-[i18n.cr](../src/invidious/helpers/i18n.cr) defines enabled locales/regions, loads their JSON, falls back to `en-US` and supports formatting/interpolation. [i18next](../src/invidious/helpers/i18next.cr) handles plural behavior. A locale file's existence does not alone add it to the enabled selector. Add English keys before optional translations; unsupported locales/missing translations fall back as implemented. RTL, narrow screens, keyboard focus and non-JavaScript forms are tested by fixtures/browser checks.
+[i18n.cr](../src/invidious/helpers/i18n.cr) defines enabled locales/regions, loads their JSON, falls back to `en-US` and supports formatting/interpolation. [i18next](../src/invidious/helpers/i18next.cr) handles plural behavior. A locale file's existence does not alone add it to the enabled selector. Add English keys before optional translations; unsupported locales/missing translations fall back as implemented. RTL, narrow screens, keyboard focus and form interactions are tested by fixtures/browser checks.
 
 Dialogs and menus need focus handling, Escape/Tab behavior, visible labels and adequate touch layouts. Page-wide player shortcuts deliberately avoid interactive controls. Physical software keyboards, native fullscreen and OS/browser integration cannot be proven solely by synthetic tests.
 

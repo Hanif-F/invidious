@@ -6,11 +6,13 @@ def check_mobile_channel_spoilers(token, email, sid)
   raw = JSON.parse(original).as_h
   raw["channel_spoiler_settings"] = JSON.parse({id => {name: "Studio", hide_title: true, hide_thumbnail: true, reveal_after_days: 7}, other => {name: "Other", hide_title: true, hide_thumbnail: false}}.to_json)
   raw["future_spoiler_test"] = JSON.parse(%({"keep":true}))
+  Preferences::RETIRED_THEME_FIELDS.each { |key| raw[key] = JSON::Any.new("legacy") }
   PG_DB.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw.to_json, email)
   delta = {id => {hide_title: false, hide_thumbnail: true, reveal_after_days: nil}}
   result = security_request("PATCH", path, bearer: token, body: {channel_spoiler_settings: delta}.to_json)
   check(result.response.status_code == 200, "Native channel rule rejected existing preference scope")
   saved = JSON.parse(Invidious::Database::Users.preference_json(email))
+  check(Preferences::RETIRED_THEME_FIELDS.none? { |key| saved.as_h.has_key?(key) }, "Channel sparse save retained obsolete theme fields")
   check(saved["channel_spoiler_settings"][id]["name"] == "Studio", "Native rule lost server channel name")
   check(saved["channel_spoiler_settings"][other]["hide_title"].as_bool && saved["future_spoiler_test"]["keep"].as_bool, "Native rule replaced unrelated preferences")
   check(saved["channel_spoiler_settings"][id]["reveal_after_days"].raw.nil?, "Blank delay did not serialize null")

@@ -17,7 +17,7 @@ def check_dearrow_preferences
       body = "save_player_pos=on"
       body += "&dearrow_enabled=on" if enabled
       body += "&dearrow_show_original=on" if original
-      env = theme_post_env(body)
+      env = preferences_post_env(body)
       Invidious::Routes::PreferencesRoute.update(env)
       prefs = Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))
       raise "Guest preferences lost" unless prefs.dearrow_enabled == enabled && prefs.dearrow_show_original == original
@@ -25,7 +25,7 @@ def check_dearrow_preferences
       raise "YAML preferences lost" unless roundtrip.dearrow_enabled == enabled && roundtrip.dearrow_show_original == original
 
       user = signed_in_env("/preferences").get("user").as(User)
-      env = theme_post_env(body)
+      env = preferences_post_env(body)
       env.set "user", user
       Invidious::Routes::PreferencesRoute.update(env)
       stored = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)
@@ -33,7 +33,7 @@ def check_dearrow_preferences
       other = signed_in_env("/preferences").get("user").as(User)
       other.preferences = Preferences.from_json(stored)
       raise "Account preferences lost" unless other.preferences.dearrow_enabled == enabled && other.preferences.dearrow_show_original == original
-      api = theme_post_env(prefs.to_json, "application/json")
+      api = preferences_post_env(prefs.to_json, "application/json")
       api.set "user", other
       Invidious::Routes::API::V1::Authenticated.set_preferences(api)
       stored = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)
@@ -130,14 +130,12 @@ def check_dearrow_contributions(output)
   CONFIG.dearrow_identity_key = saved_key
   env = signed_in_env("/watch?v=2isYuQZMbdU")
   File.write("#{output}/watch-dearrow-contributions.html", watch_fixture(env, account: true))
-  {"light", "diary"}.each do |theme|
-    env = signed_in_env("/watch?v=2isYuQZMbdU")
-    prefs = env.get("preferences").as(Preferences)
-    prefs.dark_mode = "light"
-    prefs.theme = theme == "light" ? "modern-neon" : theme
-    env.set "preferences", prefs
-    File.write("#{output}/watch-dearrow-contributions-#{theme}.html", watch_fixture(env, account: true))
-  end
+  env = signed_in_env("/watch?v=2isYuQZMbdU")
+  prefs = env.get("preferences").as(Preferences)
+  prefs.dark_mode = "light"
+
+  env.set "preferences", prefs
+  File.write("#{output}/watch-dearrow-contributions-light.html", watch_fixture(env, account: true))
   env = signed_in_env("/preferences")
   page = preferences_fixture(env)
   raise "Private ID in preferences HTML" if page.includes?("c" * 64)

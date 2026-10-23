@@ -5,14 +5,14 @@ def check_browser_profiles
   accounts = Invidious::Database::Accounts
   registration = CONFIG.registration_enabled
   CONFIG.registration_enabled = true
-  alice_sid = accounts.register("ProfileAlice", password, Preferences.from_json(%({"theme":"diary","speed":1.5})))
+  alice_sid = accounts.register("ProfileAlice", password, Preferences.from_json(%({"dark_mode":"dark","speed":1.5})))
   bob_sid = accounts.register("ProfileBob", password, Preferences.from_json("{}"))
   alice_email = Invidious::Database::SessionIDs.select_email(alice_sid).not_nil!
   bob_email = Invidious::Database::SessionIDs.select_email(bob_sid).not_nil!
   alice = profiles.account_scope(alice_email)
   bob = profiles.account_scope(bob_email)
   check(alice.matches?(/\A[0-9a-f]{64}\z/) && alice != bob, "Browser profiles expose account identities or collide")
-  guest_prefs = URI.encode_www_form(%({"theme":"modern-neon","speed":0.75}))
+  guest_prefs = URI.encode_www_form(%({"dark_mode":"light","speed":0.75}))
   cookie_header = "PREFS=#{guest_prefs}; SEARCH_SHOW_MEMBER_VIDEOS=1; SEARCH_INCLUDE_BLOCKED_#{bob}=1"
   env = context("GET", "/preferences", cookies: "SID=#{alice_sid}; #{cookie_header}")
   Invidious::Routes::BeforeAll.handle(env)

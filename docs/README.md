@@ -11,7 +11,7 @@ This handbook documents **this repository's implementation**, including its fork
 | Use search, channels and feeds | [Discovery guide](search-and-feeds.md) |
 | Understand the player, streams and downloads | [Playback guide](playback.md) |
 | Manage accounts, subscriptions and playlists | [Accounts and library](accounts-and-library.md) |
-| Configure appearance and behavior | [Preferences](preferences.md), [theme authoring](theming.md) |
+| Configure appearance and behavior | [Preferences](preferences.md), [Diary styling](theming.md) |
 | Move user data | [Import and export](data-import-export.md) |
 | Build an API client | [API guide](api.md), [native/mobile API contract](mobile-api.md) |
 | Understand backend design and storage | [Architecture](architecture.md), [database](database.md) |

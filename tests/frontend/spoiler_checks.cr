@@ -30,7 +30,7 @@ def check_spoiler_preferences(output)
   raise "YAML rules lost" unless Preferences.from_yaml(prefs.to_yaml).channel_spoiler_settings[id].hide_thumbnail
   user = signed_in_env("/").get("user").as(User)
   user.preferences = prefs
-  update = theme_post_env("save_player_pos=on")
+  update = preferences_post_env("save_player_pos=on")
   update.set "user", user
   Invidious::Routes::PreferencesRoute.update(update)
   raise "Global preferences erased channel rules" unless user.preferences.channel_spoiler_settings[id].hide_title
@@ -39,7 +39,7 @@ def check_spoiler_preferences(output)
   export = Invidious::User::Export.to_invidious(export_user)
   Invidious::User::Import.from_invidious(user, {preferences: JSON.parse(export)["preferences"]}.to_json)
   raise "Import erased channel rules" unless user.preferences.channel_spoiler_settings[id].reveal_after_days == 7
-  api = theme_post_env(user.preferences.to_json, "application/json")
+  api = preferences_post_env(user.preferences.to_json, "application/json")
   api.set "user", user
   Invidious::Routes::API::V1::Authenticated.set_preferences(api)
   fetched = Preferences.from_json(Invidious::Routes::API::V1::Authenticated.get_preferences(api))
@@ -105,11 +105,6 @@ def check_spoiler_preferences(output)
     legacy["rules"].as_h.each_value { |rule| rule.as_h.delete("reveal_after_days") }
     File.write("#{output}/spoiler-cards-legacy-#{dearrow ? "dearrow" : "original"}.html", html.sub(old_config, legacy.to_json.gsub("<", "\\u003c")))
   end
-  diary_env = spoiler_env("/feed/popular", dearrow: true, days: nil)
-  diary_preferences = diary_env.get("preferences").as(Preferences)
-  diary_preferences.theme = "diary"
-  diary_env.set "preferences", diary_preferences
-  File.write("#{output}/spoiler-cards-indefinite-diary.html", spoiler_cards_fixture(diary_env))
   File.write("#{output}/watch-spoiler-indefinite.html", watch_fixture(spoiler_env("/watch?v=#{video.id}", dearrow: true, days: nil), "PLfixture", supplied_video: video, account: true))
   File.write("#{output}/embed-spoiler-indefinite.html", watch_fixture(spoiler_env("/embed/#{video.id}", dearrow: true, days: nil), nil, true, supplied_video: video))
   File.write("#{output}/queue-spoiler-indefinite.json", {playlistHtml: template_playlist(queue, false, spoiler_env: spoiler_env("/", days: nil)), index: 1, nextVideo: "00000000000"}.to_json)
