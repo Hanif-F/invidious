@@ -8,11 +8,55 @@ const playwright = require('playwright');
 const root = path.resolve(__dirname, '../..');
 const generated = process.env.FRONTEND_FIXTURES || path.join(__dirname, '.generated');
 const artifacts = path.join(__dirname, 'artifacts');
+
 const engines = (process.env.FRONTEND_BROWSERS || 'chromium,firefox').split(',');
 const browsers = {};
 const accountProfile = require('node:crypto').createHmac('sha256', 'frontend-fixtures').update('browser-profile:v2:viewer@example.test').digest('hex');
 fs.mkdirSync(artifacts, { recursive: true });
 const queue = JSON.parse(fs.readFileSync(path.join(generated, 'queue.json')));
+
+for (const engine of engines) {
+    test(`${engine}: view counts stay visible across cards, history, clips and dynamic queues`, async () => {
+        for (const [fixture, width] of [['view-counts-cards', 1440], ['view-counts-thin', 390], ['view-counts-rtl', 390]]) {
+            const {page, context, errors, requests} = await pageFor(engine, {fixture, width, javascript: false});
+            const counts = page.locator('.media-item .flex-right .video-data');
+            assert.equal(await counts.count(), 3);
+            if (fixture !== 'view-counts-rtl') {
+                assert.deepEqual(await counts.allTextContents(), ['106M views', '0 views', '12 watching']);
+            }
+            assert.equal(await page.locator('.media-item').nth(3).locator('.flex-right .video-data').count(), 0);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+            assert.ok(!requests.some(url => /^\/api\/v1\/videos\//.test(url)));
+            assert.deepEqual(errors, []);
+            await page.screenshot({path: path.join(artifacts, `${engine}-${fixture}.png`), fullPage: true});
+            await context.close();
+        }
+        for (const fixture of ['view-counts-history', 'view-counts-clips']) {
+            const {page, context, errors} = await pageFor(engine, {fixture, width: 390, javascript: false});
+            const counts = await page.locator('.video-data').allTextContents();
+            assert.deepEqual(counts, fixture === 'view-counts-history' ? ['1.2K views', '0 views'] : ['1.2K views']);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+        const watch = await pageFor(engine, {fixture: 'view-counts-watch', width: 390, javascript: false});
+        assert.equal(await watch.page.locator('#views').textContent(), '12 watching');
+        assert.match(await watch.page.locator('.recommendation').nth(0).textContent(), /0 views/);
+        assert.match(await watch.page.locator('.recommendation').nth(1).textContent(), /1\.2K watching/);
+        assert.doesNotMatch(await watch.page.locator('.recommendation').nth(2).textContent(), /\d+(?:\.\d+)?K? (?:views|watching)/);
+        assert.deepEqual(watch.errors, []);
+        await watch.context.close();
+        const countedQueue = JSON.parse(fs.readFileSync(path.join(generated, 'view-counts-queue.json')));
+        const {page, context, errors} = await pageFor(engine, {fixture: 'watch-dark', width: 390, queue: countedQueue});
+        await page.waitForFunction(() => document.querySelectorAll('.queue-row').length === 4);
+        const queueText = await page.locator('.queue-meta').allTextContents();
+        assert.equal(queueText.filter(text => text.includes('1.2K views')).length, 2);
+        assert.equal(queueText.filter(text => text.includes('0 views')).length, 1);
+        assert.ok(!queueText[3].includes('views'));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
 
 async function assertQuietAiThumbnails(page, count, selector = '.ai-thumbnail') {
     assert.equal(await page.locator(selector).count(), count);

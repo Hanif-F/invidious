@@ -15,6 +15,7 @@
 <% avatar_items = Invidious::Frontend::AiChannels.filter(avatar_items, env, :feeds) %>
 <% if avatar_items.empty? && env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
 <% Invidious::Frontend::ChannelAvatars.prepare(env, avatar_items) %>
+<% Invidious::Frontend::ViewCounts.prepare(env, avatar_items) %>
 <div class="pure-g media-grid">
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, avatar_items) %>
 <% avatar_items.each_with_index do |item, item_position| %>

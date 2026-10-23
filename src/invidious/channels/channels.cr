@@ -43,6 +43,13 @@ struct ChannelVideo
       json.field "publishedText", I18n.translate(locale, "`x` ago", recode_date(self.published, locale))
 
       json.field "viewCount", self.views
+      if count = Invidious::Videos::ViewCounts.from_item(self)
+        json.field "viewCountPrecision", count.precision
+        json.field "viewCountType", count.kind
+        json.field "viewCountText", count.text(locale)
+      else
+        json.field "viewCountPrecision", "unknown"
+      end
     end
   end
 
@@ -218,7 +225,7 @@ def fetch_channel(ucid, pull_all_videos : Bool)
 
     views = entry
       .xpath_node("media:group/media:community/media:statistics", namespaces)
-      .try &.["views"]?.try &.to_i64? || 0_i64
+      .try &.["views"]?.try &.to_i64?
 
     channel_video = videos
       .select(SearchVideo)
@@ -279,7 +286,7 @@ def fetch_channel(ucid, pull_all_videos : Bool)
           length_seconds:     video.length_seconds,
           live_now:           video.badges.live_now?,
           premiere_timestamp: video.premiere_timestamp,
-          views:              video.views,
+          views:              video.view_count_precision == "unknown" || video.view_count_type == "watching" ? nil : video.views,
           members_only:       video.members_only,
         })
 

@@ -2,6 +2,7 @@ require "../helpers/serialized_yt_data"
 require "../helpers/channel_avatars"
 require "../ai_slist"
 require "../videos/metadata"
+require "../videos/view_counts"
 
 # This file contains helper methods to parse the Youtube API json data into
 # neat little packages we can use
@@ -100,10 +101,9 @@ private module Parsers
       # Typically views are stored under a "simpleText" in the "viewCountText". However, for
       # livestreams and premiered it is stored under a "runs" array: [{"text":123}, {"text": "watching"}]
       # When view count is disabled the "viewCountText" is not present on InnerTube data.
-      # TODO change default value to nil and typical encoding type to tuple storing type (watchers, views, etc)
-      # and count
-      view_count_text = extract_text(item_contents["viewCountText"]?)
-      view_count, view_count_precision = Invidious::Videos::Metadata.count(view_count_text)
+      # Preserve availability and distinguish viewers from cumulative views.
+      count = Invidious::Videos::ViewCounts.from_renderer(item_contents)
+      view_count, view_count_precision = count.try(&.value), count.try(&.precision) || "unknown"
       description_html = item_contents["descriptionSnippet"]?.try { |t| parse_content(t, video_id) } || ""
 
       # The length information generally exist in "lengthText". However, the info can sometimes
@@ -174,6 +174,7 @@ private module Parsers
       })
       video.author_handle = Invidious::AiSList.author_handle(author_info, author_id)
       video.view_count_precision = view_count_precision
+      video.view_count_type = count.try(&.kind)
       video
     end
 
@@ -585,21 +586,17 @@ private module Parsers
         published = video_details_container
           .dig?("timestampText", "simpleText")
           .try { |t| Invidious::Videos::Metadata.publication_text(t.as_s?) } || Time.unix(0)
-
-        # View count
-        view_count_text = video_details_container.dig?("viewCountText", "simpleText")
       else
         author = author_fallback.name
         ucid = author_fallback.id
         published = Time.unix(0)
         title = item_contents.dig?("headline", "simpleText").try &.as_s || ""
       end
-      # View count
-
-      # View count used to be in the reelWatchEndpoint, but that changed?
-      view_count_text ||= item_contents.dig?("viewCountText", "simpleText")
-
-      view_count, view_count_precision = Invidious::Videos::Metadata.count(view_count_text.try(&.as_s?))
+      count = Invidious::Videos::ViewCounts.best([
+        Invidious::Videos::ViewCounts.from_renderer(item_contents),
+        video_details_container.try { |header| Invidious::Videos::ViewCounts.from_renderer(header) },
+      ].compact)
+      view_count, view_count_precision = count.try(&.value), count.try(&.precision) || "unknown"
 
       # Duration
 
@@ -629,6 +626,7 @@ private module Parsers
         badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
       })
       video.view_count_precision = view_count_precision
+      video.view_count_type = count.try(&.kind)
       video
     end
 
@@ -682,7 +680,8 @@ private module Parsers
         # Contains the views of the video and the published time of the video.
         metadata_parts = HelperExtractors.lockup_metadata_parts(metadata, author)
         published = HelperExtractors.get_lockup_published(metadata_parts) || Time.unix(0)
-        view_count, view_count_precision = Invidious::Videos::Metadata.count(HelperExtractors.get_lockup_short_view_count(metadata_parts))
+        count = Invidious::Videos::ViewCounts.from_renderer(item_contents)
+        view_count, view_count_precision = count.try(&.value), count.try(&.precision) || "unknown"
 
         length = Invidious::Videos::Membership.thumbnail_duration(thumbnail_view_model)
 
@@ -704,6 +703,7 @@ private module Parsers
         })
         video.author_handle = Invidious::AiSList.author_handle(metadata, author_id)
         video.view_count_precision = view_count_precision
+        video.view_count_type = count.try(&.kind)
         return video
         # If it's a playlist, it's content_type would be "LOCKUP_CONTENT_TYPE_PLAYLIST"
         # If it's a podcast, it's content_type would be "LOCKUP_CONTENT_TYPE_PODCAST"
@@ -879,9 +879,8 @@ private module Parsers
 
       title = item_contents.dig("overlayMetadata", "primaryText", "content").as_s
 
-      view_count, view_count_precision = Invidious::Videos::Metadata.count(
-        item_contents.dig?("overlayMetadata", "secondaryText", "content").try(&.as_s?)
-      )
+      count = Invidious::Videos::ViewCounts.from_renderer(item_contents)
+      view_count, view_count_precision = count.try(&.value), count.try(&.precision) || "unknown"
 
       # Only use metadata actually supplied with this card. Modern lockups usually
       # omit both fields; the channel endpoint can fill them from its local cache.
@@ -905,6 +904,7 @@ private module Parsers
         badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
       })
       video.view_count_precision = view_count_precision
+      video.view_count_type = count.try(&.kind)
       video
     end
 
@@ -1137,7 +1137,7 @@ module HelperExtractors
         return text.sub(/ (views|watching)\z/, "")
       end
     end
-    "0"
+    ""
   end
 
   def self.get_lockup_published(parts : Array(JSON::Any)) : Time?
@@ -1190,15 +1190,15 @@ module HelperExtractors
   # Retrieves the amount of views/viewers a video has.
   # Seems to be used on related videos only
   #
-  # Returns "0" when unable to parse
+  # Returns an empty string when the response omits the count.
   def self.get_short_view_count(container : JSON::Any) : String
     box = container["shortViewCountText"]?
-    return "0" if !box
+    return "" if !box
 
     # Simpletext: "4M views"
     # runs: {"text": "1.1K"},{"text":" watching"}
     return box["simpleText"]?.try &.as_s.sub(" views", "") ||
-      box.dig?("runs", 0, "text").try &.as_s || "0"
+      box.dig?("runs", 0, "text").try &.as_s || ""
   end
 
   # Retrieve lowest quality thumbnail from InnerTube data

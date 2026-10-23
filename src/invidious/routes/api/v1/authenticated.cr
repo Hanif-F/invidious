@@ -213,13 +213,13 @@ module Invidious::Routes::API::V1::Authenticated
     if env.params.query["details"]? == "true" && env.params.query["organized"]? == "true"
       today = Invidious::History.today(user.preferences.timezone)
       entries = Invidious::History.organize(Invidious::Database::WatchHistory.entries(user), user.watched, env.params.query["q"]? || "", today)
-      return Invidious::JSONify::APIv1::ChannelAvatars.enrich_json({
+      return Invidious::JSONify::APIv1::VideoMetadata.enrich_json({
         entries:  Invidious::History.page(entries, page, max_results),
         total:    entries.size,
         hasMore:  max_results > 0 && start_index + max_results < entries.size,
         today:    today,
         timezone: Invidious::History.timezone(user.preferences.timezone) || "UTC",
-      }.to_json)
+      }.to_json, env.get("preferences").as(Preferences).locale)
     end
     if start_index < user.watched.size
       watched = user.watched.reverse[start_index.to_i, max_results]
@@ -240,7 +240,7 @@ module Invidious::Routes::API::V1::Authenticated
         end
         entry
       end
-      return Invidious::JSONify::APIv1::ChannelAvatars.enrich_json(detailed.to_json)
+      return Invidious::JSONify::APIv1::VideoMetadata.enrich_json(detailed.to_json, env.get("preferences").as(Preferences).locale)
     end
 
     return watched.to_json
@@ -360,7 +360,7 @@ module Invidious::Routes::API::V1::Authenticated
 
     videos, notifications = get_subscription_feed(user, max_results, page)
 
-    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
+    Invidious::JSONify::APIv1::VideoMetadata.build(env.get("preferences").as(Preferences).locale) do |json|
       json.object do
         json.field "notifications" do
           json.array do
@@ -393,7 +393,7 @@ module Invidious::Routes::API::V1::Authenticated
     now = Time.utc
     stats = include_stats ? Invidious::Database::SubscriptionManager.select(user, user.preferences.show_member_videos, now) : nil
 
-    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
+    Invidious::JSONify::APIv1::VideoMetadata.build(env.get("preferences").as(Preferences).locale) do |json|
       json.array do
         subscriptions.each do |subscription|
           json.object do
@@ -422,7 +422,7 @@ module Invidious::Routes::API::V1::Authenticated
     page = (env.params.query["page"]?.try(&.to_i?) || 1).clamp(1, Int32::MAX)
     # Dedicated scope: query operators cannot switch to public/channel search.
     videos = Invidious::Search::Processors.subscriptions(env.params.query["q"]? || "", user, page)
-    Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
+    Invidious::JSONify::APIv1::VideoMetadata.build(env.get("preferences").as(Preferences).locale) do |json|
       json.array do
         videos.each &.to_json(locale, json)
       end
@@ -463,7 +463,7 @@ module Invidious::Routes::API::V1::Authenticated
       fields.merge!(Invidious::NativePlaylists.metadata(playlist, user.email))
       JSON::Any.new(fields)
     end
-    Invidious::JSONify::APIv1::ChannelAvatars.enrich_json((created + Database::SavedPlaylists.list(user.email)).to_json)
+    Invidious::JSONify::APIv1::VideoMetadata.enrich_json((created + Database::SavedPlaylists.list(user.email)).to_json, env.get("preferences").as(Preferences).locale)
   end
 
   def self.create_playlist(env)
@@ -603,11 +603,17 @@ module Invidious::Routes::API::V1::Authenticated
     Invidious::Database::PlaylistVideos.insert(playlist_video)
     Invidious::Database::Playlists.update_video_added(plid, playlist_video.index)
 
+    if count = Invidious::Videos::ViewCounts.from_item(video)
+      playlist_video.views = count.value
+      playlist_video.view_count_precision = count.precision
+      playlist_video.view_count_type = count.kind
+    end
+
     env.response.headers["Location"] = "#{HOST_URL}/api/v1/auth/playlists/#{plid}/videos/#{playlist_video.index.to_u64.to_s(16).upcase}"
     env.response.status_code = 201
 
     JSON.build do |json|
-      playlist_video.to_json(json, index: playlist.index.size)
+      playlist_video.to_json(json, index: playlist.index.size, locale: env.get("preferences").as(Preferences).locale)
     end
   end
 

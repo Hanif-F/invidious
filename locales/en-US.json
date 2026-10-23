@@ -57,6 +57,8 @@
     "generic_channels_count_plural": "{{count}} channels",
     "generic_views_count": "{{count}} view",
     "generic_views_count_plural": "{{count}} views",
+    "generic_watching_count": "{{count}} watching",
+    "generic_watching_count_plural": "{{count}} watching",
     "generic_videos_count": "{{count}} video",
     "generic_videos_count_plural": "{{count}} videos",
     "generic_playlists_count": "{{count}} playlist",

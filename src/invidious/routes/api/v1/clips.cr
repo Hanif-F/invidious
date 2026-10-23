@@ -5,20 +5,20 @@ module Invidious::Routes::API::V1::Clips
     env.response.content_type = "application/json"
     clip = Database::Clips.select(env.params.url["id"])
     return error_json(404, "Clip not found.") unless clip
-    clip.to_json
+    Invidious::JSONify::APIv1::VideoMetadata.enrich_json(clip.to_json, env.get("preferences").as(Preferences).locale)
   end
 
   def channel(env)
     env.response.content_type = "application/json"
     ucid = env.params.url["ucid"]
     return error_json(400, "Invalid channel ID.") unless ucid.matches?(/\AUC[a-zA-Z0-9_-]{22}\z/)
-    Database::Clips.list(ucid, owned: false, page: Invidious::Clips.page(env.params.query["page"]?)).to_json
+    Invidious::JSONify::APIv1::VideoMetadata.enrich_json(Database::Clips.list(ucid, owned: false, page: Invidious::Clips.page(env.params.query["page"]?)).to_json, env.get("preferences").as(Preferences).locale)
   end
 
   def index(env)
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
-    Database::Clips.list(user.email, owned: true, page: Invidious::Clips.page(env.params.query["page"]?)).to_json
+    Invidious::JSONify::APIv1::VideoMetadata.enrich_json(Database::Clips.list(user.email, owned: true, page: Invidious::Clips.page(env.params.query["page"]?)).to_json, env.get("preferences").as(Preferences).locale)
   end
 
   def create(env)
@@ -30,7 +30,7 @@ module Invidious::Routes::API::V1::Clips
         data["startTime"]?.try(&.to_s) || "", data["endTime"]?.try(&.to_s) || "")
       env.response.status_code = 201
       env.response.headers["Location"] = "#{HOST_URL}/api/v1/clips/#{clip.id}"
-      clip.to_json
+      Invidious::JSONify::APIv1::VideoMetadata.enrich_json(clip.to_json, env.get("preferences").as(Preferences).locale)
     rescue ex : ArgumentError | JSON::ParseException | TypeCastError
       error_json(400, ex)
     rescue ex : NotFoundException

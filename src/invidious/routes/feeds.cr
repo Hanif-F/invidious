@@ -239,7 +239,7 @@ module Invidious::Routes::Feeds
           live_now:           video.live_now,
           members_only:       video.members_only,
           premiere_timestamp: video.premiere_timestamp,
-          views:              video.views,
+          views:              Invidious::Videos::ViewCounts.from_item(video).try { |count| count.value if count.kind == "views" },
         })
 
         was_insert = Invidious::Database::ChannelVideos.insert(video, with_premiere_timestamp: true)

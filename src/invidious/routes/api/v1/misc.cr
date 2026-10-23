@@ -91,7 +91,8 @@ module Invidious::Routes::API::V1::Misc
     fields = Invidious::NativePlaylists.metadata(playlist, user.try(&.email))
     json_response.as_h.merge!(fields)
     Database::SavedPlaylists.refresh(user.email, fields) if user
-    response = Invidious::JSONify::APIv1::ChannelAvatars.enrich_json(json_response.to_json)
+    response = Invidious::JSONify::APIv1::VideoMetadata.enrich_json(json_response.to_json, env.get("preferences").as(Preferences).locale)
+    json_response = JSON.parse(response)
 
     if format == "html"
       env.response.headers["Cache-Control"] = "private, no-store"
@@ -169,6 +170,7 @@ module Invidious::Routes::API::V1::Misc
                 json.field "index", video.index
                 json.field "lengthSeconds", video.length_seconds
                 json.field "isMember", video.members_only
+                Invidious::Videos::ViewCounts.from_item(video).try &.to_json_fields(json, locale)
               end
             end
           end
@@ -187,7 +189,7 @@ module Invidious::Routes::API::V1::Misc
     end
     parsed = JSON.parse(response).as_h
     parsed.merge!(fields)
-    response = Invidious::JSONify::APIv1::ChannelAvatars.enrich_json(parsed.to_json)
+    response = Invidious::JSONify::APIv1::VideoMetadata.enrich_json(parsed.to_json, env.get("preferences").as(Preferences).locale)
 
     if format == "html"
       env.response.headers["Cache-Control"] = "private, no-store"

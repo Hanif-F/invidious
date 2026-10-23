@@ -30,8 +30,12 @@ module Invidious::JSONify::APIv1
       json.field "keywords", video.keywords
 
       json.field "viewCount", video.views
+      if count = Invidious::Videos::ViewCounts.from_item(video)
+        json.field "viewCountType", count.kind
+        json.field "viewCountText", count.text(locale)
+      end
       json.field "likeCount", video.likes
-      json.field "viewCountPrecision", video.info["viewCountPrecision"]?.try(&.as_s?) || "unknown"
+      json.field "viewCountPrecision", count.try(&.precision) || "unknown"
       json.field "likeCountPrecision", video.info["likeCountPrecision"]?.try(&.as_s?) || "unknown"
       json.field "dislikeCount", 0_i64
 
@@ -280,6 +284,11 @@ module Invidious::JSONify::APIv1
 
                 json.field "lengthSeconds", rv["length_seconds"]?.try &.to_i
                 json.field "viewCountText", rv["short_view_count"]?
+                if count = Invidious::Videos::ViewCounts.from_related(rv)
+                  json.field "viewCount", count.value
+                  json.field "viewCountPrecision", count.precision
+                  json.field "viewCountType", count.kind
+                end
                 json.field "published", rv["published"]?
                 if rv["published"]?.try &.presence
                   json.field "publishedText", I18n.translate(locale, "`x` ago", recode_date(Time.parse_rfc3339(rv["published"].to_s), locale))

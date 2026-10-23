@@ -1,4 +1,5 @@
 require "./base.cr"
+require "../videos/view_counts"
 
 module Invidious::Database::Videos
   extend self
@@ -61,6 +62,37 @@ module Invidious::Database::Videos
       end
     end
     metadata
+  end
+
+  # Read existing caches only, with the newest usable observation first. This
+  # must not use get_video, whose cache-miss/error path fetches from YouTube.
+  def select_view_counts(ids : Array(String), db = PG_DB) : Hash(String, Invidious::Videos::ViewCounts::Count)
+    counts = {} of String => Invidious::Videos::ViewCounts::Count
+    return counts if ids.empty?
+    db.query_all(<<-SQL, ids.uniq, as: {String, String?, Int64?, Bool?, Time?, Int32}).each do |id, info, views, live, _updated, _source|
+      SELECT id, info, NULL::bigint, FALSE, updated, 0 AS source_rank FROM videos WHERE id = ANY($1)
+      UNION ALL
+      SELECT id, NULL, views, live_now, updated, 1 AS source_rank FROM channel_videos WHERE id = ANY($1)
+      ORDER BY updated DESC NULLS LAST, source_rank
+      SQL
+      next if counts.has_key?(id)
+      count = if info
+                begin
+                  JSON.parse(info).as_h?.try { |data| Invidious::Videos::ViewCounts.from_info(data) }
+                rescue JSON::ParseException
+                  nil
+                end
+              elsif !live
+                # Legacy channel rows have no precision/type provenance. Never
+                # reuse an ambiguous live row as a cumulative view count.
+                Invidious::Videos::ViewCounts.numeric(views, kind: "views")
+              end
+      counts[id] = count if count
+    end
+    counts
+  rescue
+    # A cache outage must neither fail the page nor trigger an upstream retry.
+    counts || {} of String => Invidious::Videos::ViewCounts::Count
   end
 
   # Presentation-only fallback for lists that omit upload dates. Read both

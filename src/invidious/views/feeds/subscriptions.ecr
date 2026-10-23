@@ -26,6 +26,7 @@
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, videos + notifications) %>
 <% Invidious::Frontend::AiChannels.prepare(env, videos + notifications) %>
 <% Invidious::Frontend::ChannelAvatars.prepare(env, videos + notifications) %>
+<% Invidious::Frontend::ViewCounts.prepare(env, videos + notifications) %>
 
 <% if CONFIG.enable_user_notifications %>
 

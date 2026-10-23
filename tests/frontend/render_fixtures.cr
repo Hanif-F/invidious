@@ -215,7 +215,7 @@ def navigation_fixture
   render "src/invidious/views/components/navigation.ecr"
 end
 
-def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "", sync = false, dearrow = false, ai = false)
+def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, history_query = "", sync = false, dearrow = false, ai = false, known_views = false)
   env = signed_in_env("/feed/history")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = visual_theme
@@ -244,6 +244,9 @@ def history_fixture(visual_theme = "modern-neon", empty = false, thin = false, h
   watched.clear if empty
   user.watched.clear if empty
   history_count = watched.size
+  if known_views
+    env.set "view_counts", {"2isYuQZMbdU" => Invidious::Videos::ViewCounts::Count.new(1234_i64, "exact"), "previous001" => Invidious::Videos::ViewCounts::Count.new(0_i64, "exact")} of String => Invidious::Videos::ViewCounts::Count?
+  end
   history_clear_url = "/feed/history"
   locale = user.preferences.locale
   page = 1
@@ -543,7 +546,7 @@ def fixture_clip
                      video_duration: video.length_seconds, creator: "viewer"})
 end
 
-def clips_fixture(channel_page = false, empty = false, visual_theme = "modern-neon", locale = "en-US", ai = false)
+def clips_fixture(channel_page = false, empty = false, visual_theme = "modern-neon", locale = "en-US", ai = false, known_views = false)
   env = channel_page ? fixture_env("/channel/#{fixture_clip.ucid}/clips", visual_theme: visual_theme, locale: locale) : signed_in_env("/feed/clips")
   preferences = env.get("preferences").as(Preferences)
   preferences.theme = visual_theme
@@ -553,6 +556,9 @@ def clips_fixture(channel_page = false, empty = false, visual_theme = "modern-ne
   user = env.get?("user").try(&.as(User))
   subscriptions = [] of String
   clips = empty ? [] of InvidiousClip : [fixture_clip]
+  if known_views
+    env.set "view_counts", {fixture_clip.video_id => Invidious::Videos::ViewCounts::Count.new(1234_i64, "exact")} of String => Invidious::Videos::ViewCounts::Count?
+  end
   page_nav_html = ""
   navbar_search = true
   if channel_page
@@ -608,6 +614,8 @@ File.write("#{output}/create-clip-diary.html", create_clip_fixture("diary", "id"
 require "./avatar_checks"
 require "./comment_avatar_checks"
 require "./popular_avatar_checks"
+require "./view_count_checks"
+check_view_counts(output)
 require "./spoiler_checks"
 check_spoiler_preferences(output)
 check_ai_filtering(output)

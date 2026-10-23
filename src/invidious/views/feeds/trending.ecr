@@ -41,6 +41,7 @@
 </div>
 
 <% Invidious::Frontend::ChannelAvatars.prepare(env, trending) %>
+<% Invidious::Frontend::ViewCounts.prepare(env, trending) %>
 <% if trending.empty? && env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, trending) %>
 <div class="pure-g media-grid">

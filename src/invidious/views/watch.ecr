@@ -6,6 +6,7 @@
 <% display_thumbnail = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, spoiler_date, :thumbnail) ? "" : thumbnail %>
 <% env.set "spoiler_page", {"channel" => video.ucid, "published" => spoiler_date.try(&.to_unix), "title" => original_title, "thumbnail" => thumbnail}.to_json %>
 <% Invidious::Frontend::ChannelSpoilers.prepare_recommendations(env, related_videos) %>
+<% Invidious::Frontend::ViewCounts.prepare_recommendations(env, video, related_videos) %>
 <% watch_url = native_clip ? native_clip.permalink : "/watch?v=#{video.id}" %>
 <% author = HTML.escape(video.author) %>
 
@@ -220,7 +221,7 @@
         </h3>
     <% end %>
             <div class="video-stats">
-                <p id="views"><%= I18n.translate_count(locale, "generic_views_count", video.views, I18n::NumberFormatting::Short) %></p>
+                <% if count = Invidious::Frontend::ViewCounts.get(env, video.id) %><p id="views"><%= HTML.escape(count.text(locale)) %></p><% end %>
                 <p id="likes"><i class="icon ion-ios-thumbs-up" aria-hidden="true"></i> <%= number_with_separator(video.likes) %> <%= I18n.translate(locale, "ui_likes") %></p>
                 <p id="published-date"><% if video.premiere_timestamp.try &.> Time.utc %>
                     <%= I18n.translate(locale, "Premieres `x`", video.premiere_timestamp.not_nil!.to_s("%B %-d, %R UTC")) %>
@@ -480,7 +481,7 @@
                     <div>
                         <h3 data-dearrow-row><a href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, rv["id"], rv["ucid"]? || "", rv["title"], rv_date) %></a></h3>
                         <p dir="auto"><% if !(rv["ucid"]? || "").empty? %><a href="/channel/<%= rv["ucid"] %>"><%= HTML.escape(rv["author"]? || "") %></a><% else %><%= HTML.escape(rv["author"]? || "") %><% end %><% if rv["author_verified"]? == "true" %> <i class="icon ion-md-checkmark-circle" title="<%= I18n.translate(locale, "ui_verified") %>"></i><% end %></p>
-                        <% if count = rv["short_view_count"]?.presence %><p><%= I18n.translate_count(locale, "generic_views_count", short_text_to_number(count), I18n::NumberFormatting::Short) %></p><% end %>
+                        <% if count = Invidious::Frontend::ViewCounts.get(env, rv["id"]) %><p dir="auto"><%= HTML.escape(count.text(locale)) %></p><% end %>
                         <% if date = rv["published"]?.try { |value| Time.parse_rfc3339(value) rescue nil } %><p><%= I18n.translate(locale, "`x` ago", recode_date(date, locale)) %></p><% end %>
                     </div>
                         <% context_video_id = rv["id"]; context_channel_id = rv["ucid"]? || ""; context_channel_name = rv["author"]? || ""; endpoint_params = "?v=#{rv["id"]}" %>

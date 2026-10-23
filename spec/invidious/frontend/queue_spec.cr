@@ -1,6 +1,7 @@
 require "../../spec_helper"
 require "../../parsers_helper"
 require "../../../src/invidious/mixes"
+require "../../../src/invidious/frontend/channel_spoilers"
 
 private def queue_test_data
   JSON.parse({playlistId: "PLtest", mixId: "RDtest", title: "A <playlist>", videoCount: 2, videos: [

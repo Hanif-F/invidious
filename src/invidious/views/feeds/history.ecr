@@ -44,6 +44,7 @@
 <script src="/js/watched_widget.js"></script>
 
 <% Invidious::Frontend::ChannelAvatars.prepare_ids(env, watched.compact_map(&.channel_id)) %>
+<% Invidious::Frontend::ViewCounts.prepare(env, watched) %>
 <% Invidious::Frontend::AiChannels.prepare_ids(env, watched.compact_map(&.channel_id)) %>
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, watched) %>
 <% previous_group = "" %>
@@ -94,6 +95,7 @@
                 </p>
                 <p><%= I18n.translate(locale, "history_released") %>: <%= HTML.escape(entry.release_date || I18n.translate(locale, "history_date_unknown")) %></p>
                 <p><%= I18n.translate(locale, "history_watched") %>: <%= HTML.escape(entry.latest_watched || I18n.translate(locale, "history_watch_date_unknown")) %></p>
+                <% if count = Invidious::Frontend::ViewCounts.get(env, item) %><p class="video-data" dir="auto"><%= HTML.escape(count.text(locale)) %></p><% end %>
                 </div>
             </div>
         </div>

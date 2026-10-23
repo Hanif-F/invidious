@@ -1,6 +1,7 @@
 require "./frontend/watched_indicator"
 require "./frontend/ai_thumbnail"
 require "./helpers/channel_avatars"
+require "./videos/view_counts"
 
 struct PlaylistVideo
   include DB::Serializable
@@ -20,6 +21,12 @@ struct PlaylistVideo
   property index : Int64
   property live_now : Bool
   property members_only : Bool = false
+  @[DB::Field(ignore: true)]
+  property views : Int64? = nil
+  @[DB::Field(ignore: true)]
+  property view_count_precision : String? = nil
+  @[DB::Field(ignore: true)]
+  property view_count_type : String? = nil
 
   def to_xml(xml : XML::Builder)
     xml.element("entry") do
@@ -58,10 +65,10 @@ struct PlaylistVideo
   end
 
   def to_json(locale : String?, json : JSON::Builder)
-    to_json(json)
+    to_json(json, locale: locale)
   end
 
-  def to_json(json : JSON::Builder, index : Int32? = nil)
+  def to_json(json : JSON::Builder, index : Int32? = nil, *, locale : String? = nil)
     json.object do
       json.field "type", "video"
 
@@ -90,6 +97,7 @@ struct PlaylistVideo
       json.field "lengthSeconds", self.length_seconds
       json.field "liveNow", self.live_now
       json.field "isMember", self.members_only
+      Invidious::Videos::ViewCounts.from_item(self).try &.to_json_fields(json, locale)
     end
   end
 
@@ -510,6 +518,9 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
     contents ||= initial_data["response"]?.try &.["continuationContents"]["playlistVideoListContinuation"]["contents"].as_a
   end
 
+  contents = contents.try &.flat_map do |item|
+    item.dig?("playlistVideoListRenderer", "contents").try(&.as_a?) || [item]
+  end
   contents.try &.each do |item|
     if i = item["lockupViewModel"]?
       thumbnail_view_model = i.dig?(
@@ -565,7 +576,35 @@ def extract_playlist_videos(playlist_id : String, initial_data : Hash(String, JS
         index:          index || -1_i64,
       })
       video.published_known = !published.nil?
+      if count = Invidious::Videos::ViewCounts.from_renderer(i)
+        video.views = count.value
+        video.view_count_precision = count.precision
+        video.view_count_type = count.kind
+      end
       video.author_thumbnail = Invidious::ChannelAvatars.lockup_thumbnail(lockup_metadata_view_model, video.ucid)
+      videos << video
+    elsif i = item["playlistVideoRenderer"]?
+      endpoint = i.dig?("navigationEndpoint", "watchEndpoint")
+      byline = (i["shortBylineText"]? || i["longBylineText"]?).try(&.dig?("runs", 0))
+      length = extract_text(i["lengthText"]?)
+      video = PlaylistVideo.new({
+        title:          extract_text(i["title"]?) || "",
+        id:             i["videoId"]?.try(&.as_s?) || "",
+        author:         byline.try(&.["text"]?).try(&.as_s?) || "",
+        ucid:           byline.try(&.dig?("navigationEndpoint", "browseEndpoint", "browseId")).try(&.as_s?) || "",
+        length_seconds: length ? decode_length_seconds(length) : 0,
+        published:      Time.unix(0),
+        plid:           endpoint.try(&.["playlistId"]?).try(&.as_s?) || playlist_id,
+        index:          endpoint.try(&.["index"]?).try(&.as_i64?) || extract_text(i["index"]?).try(&.to_i64?).try(&.-(1)) || -1_i64,
+        live_now:       false,
+        members_only:   Invidious::Videos::Membership.detected?(i),
+      })
+      video.published_known = false
+      if count = Invidious::Videos::ViewCounts.from_renderer(i)
+        video.views = count.value
+        video.view_count_precision = count.precision
+        video.view_count_type = count.kind
+      end
       videos << video
     end
   rescue ex
@@ -623,6 +662,9 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       html << %(<span><span class="queue-title" dir="auto">#{title_html}</span><span class="queue-meta" dir="auto">#{author})
       length = video["lengthSeconds"].as_i
       html << " · #{recode_length_seconds(length)}" if length > 0
+      if count = Invidious::Videos::ViewCounts.from_api(video.as_h)
+        html << " · #{HTML.escape(count.text(locale))}"
+      end
       html << "</span></span></a></li>"
     end
     html << "</ol>"

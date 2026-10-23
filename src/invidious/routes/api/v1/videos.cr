@@ -22,7 +22,7 @@ module Invidious::Routes::API::V1::Videos
       return error_json(500, ex)
     end
 
-    return Invidious::JSONify::APIv1::ChannelAvatars.build do |json|
+    return Invidious::JSONify::APIv1::VideoMetadata.build(env.get("preferences").as(Preferences).locale) do |json|
       Invidious::JSONify::APIv1.video(video, json, locale: locale, proxy: proxy)
     end
   end

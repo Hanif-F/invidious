@@ -9,6 +9,12 @@ struct MixVideo
   property index : Int32
   property rdid : String
   property members_only : Bool = false
+  @[DB::Field(ignore: true)]
+  property views : Int64? = nil
+  @[DB::Field(ignore: true)]
+  property view_count_precision : String? = nil
+  @[DB::Field(ignore: true)]
+  property view_count_type : String? = nil
 end
 
 struct Mix
@@ -57,7 +63,7 @@ def fetch_mix(rdid, video_id, cookies = nil, locale = nil)
     length_seconds = decode_length_seconds(item["lengthText"]["simpleText"].as_s)
     index = item["navigationEndpoint"]["watchEndpoint"]["index"].as_i
 
-    videos << MixVideo.new({
+    video = MixVideo.new({
       title:          title,
       id:             id,
       author:         author,
@@ -67,6 +73,12 @@ def fetch_mix(rdid, video_id, cookies = nil, locale = nil)
       rdid:           rdid,
       members_only:   Invidious::Videos::Membership.detected?(item),
     })
+    if count = Invidious::Videos::ViewCounts.from_renderer(item)
+      video.views = count.value
+      video.view_count_precision = count.precision
+      video.view_count_type = count.kind
+    end
+    videos << video
   end
 
   if !cookies

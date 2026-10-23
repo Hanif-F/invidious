@@ -1,5 +1,6 @@
 <% if clips.empty? %><p class="h-box"><%= I18n.translate(locale, "clips_empty") %></p><% end %>
 <% Invidious::Frontend::AiChannels.prepare_ids(env, clips.map(&.ucid)) %>
+<% Invidious::Frontend::ViewCounts.prepare(env, clips) %>
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, clips) %>
 <div class="pure-g media-grid clip-library">
 <% clips.each do |clip| %>
@@ -14,6 +15,7 @@
             <div data-dearrow-row><h3 dir="auto"><a href="<%= clip.permalink %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.title, nil, false, false, custom: true) %></a></h3></div>
             <p><%= (clip.end_time - clip.start_time).round(3) %> s · <time datetime="<%= clip.created_at.to_rfc3339 %>"><%= clip.created_at.to_s("%Y-%m-%d") %></time></p>
             <p dir="auto" data-dearrow-row><a href="/watch?v=<%= clip.video_id %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.video_title, nil) %></a></p>
+            <% if count = Invidious::Frontend::ViewCounts.get(env, clip.video_id) %><p class="video-data" dir="auto"><%= HTML.escape(count.text(locale)) %></p><% end %>
             <p><a href="/channel/<%= clip.ucid %>"><%= HTML.escape(clip.channel_name) %></a> · <%= I18n.translate(locale, "clips_by") %> <%= HTML.escape(clip.creator) %></p>
             <% if env.get?("user").try(&.as(User).email) == clip.owner %><p><a href="/delete_clip?id=<%= clip.id %>"><%= I18n.translate(locale, "clips_delete") %></a></p><% end %>
         </div>

@@ -213,9 +213,9 @@
                     <% end %>
                 </div>
 
-                <% if item.responds_to?(:views) && item.views %>
+                <% if count = Invidious::Frontend::ViewCounts.get(env, item.id) %>
                 <div class="flex-right">
-                    <p class="video-data" dir="auto"><%= I18n.translate_count(locale, "generic_views_count", item.views || 0, I18n::NumberFormatting::Short) %></p>
+                    <p class="video-data" dir="auto"><%= HTML.escape(count.text(locale)) %></p>
                 </div>
                 <% end %>
             </div>

@@ -2,6 +2,7 @@ require "json"
 require "../helpers/channel_avatars"
 require "../ai_slist"
 require "./metadata"
+require "./view_counts"
 
 module Invidious::Videos::Parser
   extend self
@@ -54,13 +55,14 @@ module Invidious::Videos::Parser
       "ucid"             => JSON::Any.new(ucid || ""),
       "author_handle"    => JSON::Any.new(Invidious::AiSList.author_handle(channel_info, ucid || "") || ""),
       "length_seconds"   => JSON::Any.new(length || "0"),
-      "short_view_count" => JSON::Any.new(short_view_count || "0"),
+      "short_view_count" => JSON::Any.new(short_view_count || ""),
       "author_verified"  => JSON::Any.new(author_verified),
       "published"        => JSON::Any.new(published || ""),
     }
     if thumbnail = Invidious::ChannelAvatars.related_thumbnail(related, ucid || "")
       result["author_thumbnail"] = JSON::Any.new(thumbnail)
     end
+    add_related_count(result, Invidious::Videos::ViewCounts.from_renderer(related))
     result
   end
 
@@ -84,7 +86,15 @@ module Invidious::Videos::Parser
     if thumbnail = video.author_thumbnail
       result["author_thumbnail"] = JSON::Any.new(thumbnail)
     end
+    add_related_count(result, Invidious::Videos::ViewCounts.from_item(video))
     result
+  end
+
+  private def add_related_count(result : Hash(String, JSON::Any), count : Invidious::Videos::ViewCounts::Count?)
+    # Related-video cache hashes are intentionally string-valued.
+    result["view_count"] = JSON::Any.new(count.try(&.value.to_s) || "")
+    result["view_count_precision"] = JSON::Any.new(count.try(&.precision) || "unknown")
+    result["view_count_type"] = JSON::Any.new(count.try(&.kind) || "")
   end
 
   def extract_video_info(video_id : String)
@@ -219,22 +229,14 @@ module Invidious::Videos::Parser
 
     title = video_details["title"]?.try &.as_s
 
-    # We have to try to extract viewCount from videoPrimaryInfoRenderer first,
-    # then from videoDetails, as the latter is "0" for livestreams (we want
-    # to get the amount of viewers watching).
-    views_txt = extract_text(
-      video_primary_renderer
-        .try &.dig?("viewCount", "videoViewCountRenderer", "viewCount")
-    )
-    views_txt ||= video_details["viewCount"]?.try &.as_s || ""
-    views, views_precision = Invidious::Videos::Metadata.count(views_txt)
-    # Player videoDetails often retains the full total when the visible label is rounded.
-    if views_precision != "exact" && microformat.dig?("liveBroadcastDetails", "isLiveNow").try(&.as_bool?) != true
-      player_views, player_precision = Invidious::Videos::Metadata.count(video_details["viewCount"]?.try(&.as_s?))
-      if player_precision == "exact"
-        views, views_precision = player_views, player_precision
-      end
-    end
+    # Prefer an exact total already in the player response. For live videos,
+    # its zero can be a placeholder while the watch response supplies viewers.
+    view_count_renderer = video_primary_renderer.try &.dig?("viewCount", "videoViewCountRenderer")
+    primary_count = view_count_renderer.try { |renderer| Invidious::Videos::ViewCounts.from_renderer(renderer) }
+    player_count = Invidious::Videos::ViewCounts.from_text(video_details["viewCount"]?.try(&.as_s?))
+    player_count = nil if player_count.try(&.value) == 0 && primary_count.try(&.kind) == "watching"
+    count = Invidious::Videos::ViewCounts.best([primary_count, player_count].compact)
+    views, views_precision, count_type = count.try(&.value), count.try(&.precision) || "unknown", count.try(&.kind)
 
     length_txt = (microformat["lengthSeconds"]? || video_details["lengthSeconds"])
       .try &.as_s.to_i64
@@ -467,6 +469,7 @@ module Invidious::Videos::Parser
       "title"              => JSON::Any.new(title || ""),
       "views"              => JSON::Any.new(views || 0_i64),
       "viewCountPrecision" => JSON::Any.new(views_precision),
+      "viewCountType"      => JSON::Any.new(count_type),
       "likes"              => JSON::Any.new(likes || 0_i64),
       "likeCountPrecision" => JSON::Any.new(likes_precision),
       "lengthSeconds"      => JSON::Any.new(length_txt || 0_i64),
