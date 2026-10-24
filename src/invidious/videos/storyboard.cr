@@ -31,9 +31,12 @@ module Invidious::Videos
 
     # Parse the JSON structure from Youtube
     def self.from_yt_json(container : JSON::Any, length_seconds : Int32) : Array(Storyboard)
+      return [] of Storyboard unless data = container.as_h?
+
       # Livestream storyboards are a bit different
       # TODO: document exactly how
-      if storyboard = container.dig?("playerLiveStoryboardSpecRenderer", "spec").try &.as_s
+      live_renderer = data["playerLiveStoryboardSpecRenderer"]?.try(&.as_h?)
+      if storyboard = live_renderer.try(&.["spec"]?).try(&.as_s?).try(&.presence)
         return [Storyboard.new(
           url: URI.parse(storyboard.split("#")[0]),
           width: 106,
@@ -54,8 +57,8 @@ module Invidious::Videos
       #   |  80 #  45 #   95 #  10 #  10 #  10000 #      M$M #  rs$<sig2>
       #   | 160 #  90 #   95 #   5 #   5 #  10000 #      M$M #  rs$<sig3>
       #
-      storyboards = container.dig?("playerStoryboardSpecRenderer", "spec")
-        .try &.as_s.split("|")
+      renderer = data["playerStoryboardSpecRenderer"]?.try(&.as_h?)
+      storyboards = renderer.try(&.["spec"]?).try(&.as_s?).try(&.presence).try(&.split("|"))
 
       return [] of Storyboard if !storyboards
 

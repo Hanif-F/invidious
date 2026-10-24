@@ -82,6 +82,13 @@ Manual chapter boundaries come from labeled description lines such as `1:23 Intr
 
 Storyboards provide sprite thumbnails and VTT references for seek previews. Legacy annotations are fetched from the archive path and optionally cached. They may be missing independently of video playback. VR applies only to supported projection metadata and capable players. See [API](api.md) for selectors and response representations.
 
+Missing, null or incorrectly shaped storyboard containers/renderers produce an
+empty storyboard list. This includes newly ended livestream recordings whose
+preview metadata is not available yet; their video metadata and stream URLs stay
+usable. An unavailable requested preview returns 404. Unexpected video metadata
+serialization failures are logged and return an HTTP 500 JSON error, rather than
+an empty successful response.
+
 ## Queue, recommendations and clips
 
 Watch pages load playlist/mix queues using existing JSON/HTML endpoints. Current item state is occurrence-aware, so duplicate video IDs remain distinct. Owners can remove a local playlist occurrence. Removing the playing occurrence leaves its successor eligible rather than skipping it. Loading failures expose retry/end/empty states. Next-video continuation, recommendation autoplay and loop choices are separate preferences.

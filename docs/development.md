@@ -59,6 +59,13 @@ caption route with synthetic metadata and upstream transports, without PostgreSQ
 accounts or YouTube. It covers private Companion routing/signing, selectors,
 attachment names, empty/malformed responses, translation and legacy backends.
 
+`crystal run tests/video_metadata_routes.cr` runs the production Video storyboard
+accessor, parser, serializers, dispatcher and video/storyboard API routes with synthetic
+metadata and optional-cache boundaries. It covers missing/null/wrong-shaped
+preview metadata, valid live/recording previews and VTT, playable metadata without
+previews, retained 404s and logged JSON serialization errors without a database,
+accounts or YouTube.
+
 Seek interval verification on 15 October 2026 passed full linked GUI and API-only
 builds, 28 focused preference/chapter/spoiler/audio specs, production frontend
 fixture checks, six Chromium/Firefox settings/seeking journeys, the storage/player

@@ -16,14 +16,15 @@ module Invidious::Routes::API::V1::Videos
 
     begin
       video = get_video(id, region: region)
+
+      return Invidious::JSONify::APIv1::VideoMetadata.build(locale) do |json|
+        Invidious::JSONify::APIv1.video(video, json, locale: locale, proxy: proxy)
+      end
     rescue ex : NotFoundException
       return error_json(404, ex)
     rescue ex
+      LOGGER.error("Video API #{id}: #{ex.inspect_with_backtrace}")
       return error_json(500, ex)
-    end
-
-    return Invidious::JSONify::APIv1::VideoMetadata.build(env.get("preferences").as(Preferences).locale) do |json|
-      Invidious::JSONify::APIv1.video(video, json, locale: locale, proxy: proxy)
     end
   end
 
