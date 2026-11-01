@@ -1,7 +1,0 @@
-<% content_for "header" do %><title><%= I18n.translate(locale, "Popular") %> - Invidious</title><% end %>
-<header class="page-heading"><h1><%= I18n.translate(locale, "Popular") %></h1><p><%= I18n.translate(locale, "overhaul_popular_help") %></p></header>
-<% Invidious::Frontend::ChannelAvatars.prepare(env, items) %>
-<% Invidious::Frontend::ViewCounts.prepare(env, items) %>
-<% Invidious::Frontend::ChannelSpoilers.prepare(env, items) %>
-<div class="media-grid" data-browse-items><% items.each_with_index do |item, item_position| %><%= rendered "overhaul/item" %><% end %></div>
-<nav class="browse-pagination" aria-label="<%= I18n.translate(locale, "ui_navigation") %>"><%= page_nav_html %></nav>

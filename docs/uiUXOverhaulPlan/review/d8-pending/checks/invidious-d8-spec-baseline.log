@@ -1,7 +1,0 @@
-Showing last frame. Use --error-trace for full trace.
-
-In src/invidious/playlists.cr:626:5
-
- 626 | Invidious::Frontend::ChannelAvatars.prepare_ids(spoiler_env, avatar_ids)
-       ^----------------------------------
-Error: undefined constant Invidious::Frontend::ChannelAvatars

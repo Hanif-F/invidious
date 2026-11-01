@@ -5,7 +5,7 @@
 Browser pages share one design through [foundation.css](../assets/css/foundation.css)
 and the [shell](../src/invidious/views/overhaul/shell.ecr). The previous Diary
 stylesheet, fonts and doodles, Pure foundations and Ionicons font assets were
-retired in D8 after their consumers migrated. There is no theme registry or picker.
+removed after their consumers migrated. There is no theme registry or picker.
 
 ## Assets and components
 
@@ -59,11 +59,11 @@ browser commands, artifacts and limits. Use production templates for representat
 visual checks; component fixtures may exercise synthetic pagination without
 claiming that a production endpoint offers that continuation.
 
-Inspect screenshots alongside behavior checks. Measure compressed assets and
-representative request counts against the [overhaul baseline](uiUXOverhaulPlan/asset-baseline.json),
-explaining capability changes without inventing a fixed byte threshold. The
-[D8 acceptance](uiUXOverhaulPlan/d8-acceptance.md) records the complete regression,
-inspected visual matrix and final asset/request comparison.
+Inspect generated screenshots alongside behavior checks. The frontend asset
+inventory reports current CSS/JS bytes and gzip sizes, with icons/fonts and vendor
+player assets reported separately. When comparing revisions, measure representative
+request counts as well and explain capability changes without inventing a fixed
+byte threshold. See [asset reporting and limits](../tests/frontend/README.md#evidence-assets-and-limits).
 
 ## Older preferences
 

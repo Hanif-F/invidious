@@ -108,7 +108,7 @@ settings do not control native clips.
 
 ## Verification
 
-Run `crystal spec`, the normal/API-only builds, and the [frontend harness](../tests/frontend/README.md#native-clips). The [D6 clip checkpoint](uiUXOverhaulPlan/d6-clips-checkpoint.md) and [D8 acceptance](uiUXOverhaulPlan/d8-acceptance.md) retain same-media restoration, bounds, failure and complete regression evidence. Database/route checks require an **empty disposable**
+Run `crystal spec`, the normal/API-only builds, and the [frontend harness](../tests/frontend/README.md#native-clips), including same-media restoration, bounds and failure checks. Database/route checks require an **empty disposable**
 PostgreSQL database named `invidious_clips_test`:
 
 ```sh

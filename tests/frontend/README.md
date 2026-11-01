@@ -61,12 +61,7 @@ assume the `tests/frontend` directory unless stated otherwise.
 | `embed-surfaces.test.cjs` | Actual shared player, progressive/audio/DASH/HLS decode, masking, captions, iframe geometry and private recovery |
 | `embed-lifecycle.test.cjs` | Next-item ownership, exact decimal cursors, duplicate series, explicit read retry and cached/profile/disposal callbacks |
 
-The complete [D8 acceptance](../../docs/uiUXOverhaulPlan/d8-acceptance.md) records
-**902/902** passing in one terminal invocation, including 416 desktop, 284 retained
-UI and 22 QoL cases. Its [test reconciliation](../../docs/uiUXOverhaulPlan/d8-test-audit.md)
-accounts for all 349 original UI cases and explicit replacements. These are dated
-results, not a promise that future tests always have that count. Failed phases
-remain separate from the final pass. The full npm command is also used by
+The full npm command is also used by
 [frontend CI](../../.github/workflows/frontend.yml); it does not run every database
 harness. [Documentation CI](../../.github/workflows/documentation.yml) needs no app.
 
@@ -74,10 +69,8 @@ harness. [Documentation CI](../../.github/workflows/documentation.yml) needs no 
 
 The desktop matrix uses Chromium/Firefox at 1280×720, 1440×900 and 1920×1080,
 Light/Dark/System, RTL/enlarged text, forced colors, focus, reduced motion and
-long/incomplete content. The approved [D1 checkpoint](../../docs/uiUXOverhaulPlan/visual-checkpoint.md)
-remains the user visual direction. [Current inspected images](../../screenshots/README.md)
-and the [V01–V36 audit](../../docs/uiUXOverhaulPlan/d8-verification.md) identify final
-visual and behavioral evidence. Generating a screenshot does not constitute review.
+long/incomplete content. Inspect generated screenshots alongside behavioral
+results; generating a screenshot does not constitute review.
 Mobile website redesign is deferred; existing touch/media/embed compatibility
 checks remain in the retained suite.
 
@@ -219,12 +212,12 @@ visibility/redirects are verified by the guarded backend, not browser stubs.
 
 ## Evidence, assets and limits
 
-[D8 performance evidence](../../docs/uiUXOverhaulPlan/d8-acceptance.md) compares
-first-party CSS/JS gzip at level 9: 285,854 → 199,050 bytes (−86,804); icons/fonts
-and required vendor media assets are reported separately. Request counts compare
-the early D1 candidates with complete production behavior and are not latency,
-bandwidth or deployed transfer measurements. Thirty-eight retired files have no
-runtime references. All prior accepted evidence is preserved.
+The UI asset inventory test writes `artifacts/ui-asset-report.json` with current
+first-party CSS/JS file sizes and gzip sizes at level 9. Icons/fonts and required
+vendor player assets have separate totals and inventories. These are file sums,
+not per-page transfer, latency or deployed-server measurements. To compare
+revisions, generate a report from each and measure representative request counts
+alongside capability changes; there is no fixed byte threshold.
 
 Historical parser fixtures remain local reduced records. The 2026-10-05 playlist
 capture exposed 49 avatar-bearing cards previously ignored by extraction; its
@@ -238,9 +231,7 @@ pass; normal fixture generation does not rewrite the public JSON baseline.
 
 Node/browser fixtures do not prove deployed TLS/cache/proxy policy, live YouTube,
 Companion, Cloudflare, physical fullscreen/PiP, codec decoding or native apps.
-Chromium PiP is tested only where exposed; the retained evidence records the
-unsupported Firefox path. WebKit is outside the declared default suite; an older
-local attempt lacked its required host libraries. Mobile website redesign and
-real Android/iOS/TV acceptance remain outside this repository overhaul. The
-[user handoff](../../docs/uiUXOverhaulPlan/user-handoff.md) lists optional deployed
-checks and cache/rollback steps without claiming they were performed.
+PiP is tested only where exposed, and unsupported browsers retain their fallback
+controls. WebKit is outside the declared default suite. Mobile website redesign
+and real Android/iOS/TV acceptance are outside this suite. [Operations](../../docs/operations.md)
+describes deployment smoke checks, cache refresh and rollback.

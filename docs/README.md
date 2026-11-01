@@ -31,9 +31,9 @@ The existing detailed guides remain part of this handbook:
 - [Mobivious API](mobile-api.md): native authentication, safe preference patches, library, history, downloads, chat and classification contracts.
 - [Shared web styling](theming.md): tokens, components, icons and media lifecycle guidance.
 
-## Change plans and historical evidence
+## Historical documentation
 
-The [desktop overhaul plan](uiUXOverhaulPlan/README.md) records the repository implementation and its staged acceptance evidence. The [current interface gallery](../screenshots/README.md) uses synthetic production-template fixtures. The [user handoff](uiUXOverhaulPlan/user-handoff.md) covers building, asset caches, deployment and rollback; no remote deployment was performed. The [documentation archive](archive/README.md) separates dated rollout/release reports from current guidance. The [historical rollout pointer](bot-protection-rollout.md) preserves its old entry point.
+The [documentation archive](archive/README.md) separates dated rollout/release reports from current guidance. The [historical rollout pointer](bot-protection-rollout.md) preserves its old entry point. Use [operations](operations.md) for current deployment, asset-cache and rollback instructions.
 
 ## Complete source references
 

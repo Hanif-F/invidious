@@ -1,2 +1,0 @@
-<% if related_videos.empty? %><% if env.get?("ai_filtered_recommendations") == true %><%= rendered "components/ai-filter-empty" %><% else %><p class="muted"><%= I18n.translate(locale, "overhaul_no_recommendations") %></p><% end %><% end %>
-<% related_videos.each do |rv| %><% if rv["id"]? %><%= rendered "overhaul/watch_recommendation" %><% end %><% end %>

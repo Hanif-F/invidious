@@ -1,7 +1,0 @@
-In src/invidious/bot_protection.cr:21:25
-
- 21 | @@refreshed_at = Time.monotonic - 2.seconds
-                            ^--------
-Warning: Deprecated Time.monotonic. Use `Time.instant` instead.
-
-A total of 1 warnings were found.

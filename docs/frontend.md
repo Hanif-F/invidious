@@ -53,7 +53,7 @@ Storage denial/quota failure uses bounded cookie fallbacks for small validated s
 
 ## Styling and appearance
 
-[foundation.css](../assets/css/foundation.css) defines shared tokens, document layout, cards, navigation, forms, menus and dialogs. Feature sheets cover the player, watch utilities, chat, clips, DeArrow and verification. First-party icons use the local [Lucide sprite](../assets/icons/lucide.svg). The unused Diary theme, Pure stylesheets and Ionicons font assets were retired during D8; required Video.js/plugin assets remain.
+[foundation.css](../assets/css/foundation.css) defines shared tokens, document layout, cards, navigation, forms, menus and dialogs. Feature sheets cover the player, watch utilities, chat, clips, DeArrow and verification. First-party icons use the local [Lucide sprite](../assets/icons/lucide.svg). The unused Diary theme, Pure stylesheets and Ionicons font assets have been removed; required Video.js/plugin assets remain.
 
 Light/Dark/System uses the existing preference, header toggle and browser synchronization. Browser pages use one grid/row and player design. Older density, thin-mode and player-style values remain compatible with native and legacy preference submissions; browser Settings no longer edits them. Ordinary API playlist HTML still honors thin mode; explicitly requested desktop fragments share browser cards. See [styling](theming.md) for component and player guidance.
 
@@ -115,7 +115,7 @@ Duplicate video IDs and unloaded entries retain their distinct occurrences.
 
 ## Preferences and watching
 
-The category interface is the default `/preferences` destination. `settings.js` retains bounded category drafts in page memory, local metadata search makes no typing requests, and Save verifies its own canonical values/profile with a separate GET. Requests are canceled on component departure and stale results cannot replace a newer category. `settings-navigation.js` also replaces recognized historical anchor entries with current destinations; ordinary named links remain usable without that script. Explicit categories take precedence, and leaving with a dirty draft retains the departure warning. Category failures stay beside the owning navigation. See the [Settings ownership contract](uiUXOverhaulPlan/settings-ownership.md). The following whole-form POST behavior remains for cached legacy callers; the default route no longer renders that full form.
+The category interface is the default `/preferences` destination. `settings.js` retains bounded category drafts in page memory, local metadata search makes no typing requests, and Save verifies its own canonical values/profile with a separate GET. Requests are canceled on component departure and stale results cannot replace a newer category. `settings-navigation.js` also replaces recognized historical anchor entries with current destinations; ordinary named links remain usable without that script. Explicit categories take precedence, and leaving with a dirty draft retains the departure warning. Category failures stay beside the owning navigation. See [category ownership and writes](preferences.md#category-ownership-and-writes). The following whole-form POST behavior remains for cached legacy callers; the default route no longer renders that full form.
 
 Category search uses public labels, descriptions and option metadata, without
 enumerating private playlist titles. Save/Discard tracks only the active category;
@@ -136,7 +136,7 @@ tabs, layouts and the Settings hierarchy retain the existing media instance.
 Transcript following scrolls only its own viewport;
 manual interaction/search turns following off until explicitly re-enabled.
 
-The D6 masking runtime keeps metadata on watch/listing titles and thumbnails so
+The masking runtime keeps metadata on watch/listing titles and thumbnails so
 the first channel rule can activate in an open document. Empty rules retain a
 controller without masking observers/scans or date-cache reads. Guest rule
 changes update that document and player in place. Explicit reveals survive an
@@ -148,9 +148,8 @@ use a separate cache-only read after a relevant confirmed owner change. The
 coordinator performs no initial runtime GET, fetches no private identity and never
 rebuilds playlist membership to apply display choices. Unknown state suspends
 advancement and exposes read-only recovery while playback remains available.
-Cached-page/account transitions and enhancement coexistence are covered by
-[D6 acceptance](uiUXOverhaulPlan/d6-acceptance.md) and the full
-[D8 regression](uiUXOverhaulPlan/d8-acceptance.md).
+See [frontend verification](../tests/frontend/README.md#settings-visibility-and-enhancements)
+for cached-page/account transitions and enhancement coexistence checks.
 
 
 ## Embedded media ownership

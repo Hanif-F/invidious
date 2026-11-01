@@ -55,7 +55,7 @@
 
 ## Interface and documentation
 
-The [repository handbook](docs/README.md) describes this fork. The desktop interface uses one shared design with Light, Dark and System modes, category Settings, a tabbed watch panel and unified media controls. [Frontend guidance](docs/frontend.md) and [styling guidance](docs/theming.md) describe its implementation. See the [current fixture gallery](screenshots/README.md), [overhaul evidence](docs/uiUXOverhaulPlan/README.md) and [build/deployment handoff](docs/uiUXOverhaulPlan/user-handoff.md). Older upstream screenshots remain labeled as historical.
+The [repository handbook](docs/README.md) describes this fork. The desktop interface uses one shared design with Light, Dark and System modes, category Settings, a tabbed watch panel and unified media controls. [Frontend guidance](docs/frontend.md) and [styling guidance](docs/theming.md) describe its implementation. See [operations](docs/operations.md) for release contents, asset caches, deployment checks and rollback.
 
 ## Features
 

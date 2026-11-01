@@ -103,9 +103,30 @@ existing config-file persistence and environment-override behavior.
 
 ## Presentation and defaults
 
-`default_user_preferences` seeds preference parsing; it does not overwrite every saved account field. `default_playlist` is YAML-ignored in that defaults structure; runtime timezone initializes unset rather than copying the similarly named default field. [Preferences](preferences.md) and its field inventory explain exact runtime initialization and legacy AI conversion. `banner` displays an announcement; `modified_source_code_url` adds a footer link to the deployed fork's source; `admins` identifies accounts allowed to use `/admin/settings`. That separate form owns only its declared instance/access/default-feed keys and merges them into the configured YAML; it does not serialize runtime credentials. Environment-managed fields are read-only. Personal preference saves do not change instance configuration. See the [Settings ownership contract](uiUXOverhaulPlan/settings-ownership.md#instance-administration).
+`default_user_preferences` seeds preference parsing; it does not overwrite every saved account field. `default_playlist` is YAML-ignored in that defaults structure; runtime timezone initializes unset rather than copying the similarly named default field. [Preferences](preferences.md) and its field inventory explain exact runtime initialization and legacy AI conversion. `banner` displays an announcement; `modified_source_code_url` adds a footer link to the deployed fork's source; `admins` identifies accounts allowed to use `/admin/settings`.
 
 `output` chooses `STDOUT` or an append-only log path; its parent directory is created when needed. `log_level` accepts the levels in [logger.cr](../src/invidious/helpers/logger.cr). `colorize_logs` toggles terminal colors. Avoid credentials in banners and maintain independent redaction at the reverse proxy.
+
+## Instance administration
+
+`/admin/settings` has a separate administrator-only GET/POST handler, current-session
+CSRF, private/no-store responses and revision conflict detection. Its authoritative
+ownership and persistence rules are in [admin_settings.cr](../src/invidious/admin_settings.cr).
+Personal category and legacy preference saves ignore instance keys.
+
+The form owns `popular_enabled`, `captcha_enabled`, `login_enabled`,
+`login_required`, `registration_enabled`, `statistics_enabled`,
+`modified_source_code_url`, and only `default_home`/`feed_menu` under
+`default_user_preferences`. It reads the latest configured YAML and merges only
+those keys, retaining unrelated values rather than serializing runtime `CONFIG`
+or credentials. Environment-managed fields use running values and are read-only;
+inline environment configuration cannot be written to a file.
+
+Access changes require explicit confirmation, and requiring accounts keeps sign-in
+enabled. A lock and atomic replacement preserve file permissions and configured
+symlinks; YAML formatting/comments may normalize. Invalid input, a stale revision,
+or a missing/unwritable file retains the draft and reports failure. Verification-provider
+availability does not gate this authenticated recovery route.
 
 ## Command-line and build controls
 

@@ -1,9 +1,0 @@
-{
-  "scope": "242/242 cumulative run before the final whitespace-preserving age-field refinement; the final targeted subset verifies that refinement.",
-  "sha256": {
-    "assets/js/channel-spoiler-preferences.js": "3e480b2c4c61da571266cd70d481b46be3513ba36dd40c3161fd4f2955127de6",
-    "src/invidious/views/user/channel_spoilers.ecr": "ccd2f0894669a422a952e888bfd9b1583f43406294c085f48276c34a0678d876",
-    "tests/frontend/spoiler_checks.cr": "e10648329c7afe2e9b6c0b8f77db0af1f7c3ab98797be26b271da0feb655c3e1",
-    "tests/frontend/overhaul.test.cjs": "54d67d47f2d72d84ed9042ba92839559f6cc016d1fda7ad79985831fb2740346"
-  }
-}

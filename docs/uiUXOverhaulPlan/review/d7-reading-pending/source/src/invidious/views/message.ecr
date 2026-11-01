@@ -1,8 +1,0 @@
-<% content_for "header" do %>
-<meta name="description" content="<%= I18n.translate(locale, "An alternative front-end to YouTube") %>">
-<title>
-    Invidious
-</title>
-<% end %>
-
-<section class="reading-page status-panel" aria-labelledby="message-heading"><h1 id="message-heading"><%= I18n.translate(locale, "error_feed_unavailable") %></h1><p dir="auto"><%= HTML.escape(message) %></p><div class="toolbar"><a class="button" href="/feed/trending"><%= I18n.translate(locale, "Trending") %></a><a class="button" href="/search"><%= I18n.translate(locale, "search") %></a></div></section>

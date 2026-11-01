@@ -1,8 +1,0 @@
-{
-  "failedPhase": "resumed-2026-11-01-npm-full-final.log",
-  "actualProblem": "The old test posted a successful block but its runtime read returned the original unblocked projection; two contexts also used a channel ID rejected by native canonical validation.",
-  "fix": "Use valid channel IDs and exact production before/after snapshots for subscribed, owned playlist and explicitly included search contexts. Await the canonical enabled Unblock action, preserve row identity/count, then exercise canonical Undo without row removal.",
-  "runtimeChanged": false,
-  "fixtureSnapshot": "phases/block-context-final",
-  "finalCombinedRegression": "902/902 passed in resumed-2026-11-01-npm-current.log"
-}

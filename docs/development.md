@@ -66,8 +66,6 @@ preview metadata, valid live/recording previews and VTT, playable metadata witho
 previews, retained 404s and logged JSON serialization errors without a database,
 accounts or YouTube.
 
-The [D8 acceptance](uiUXOverhaulPlan/d8-acceptance.md) retains fresh normal/API-only linked application builds and the complete specs: 300 Spectator plus 137 standard examples pass. The older seek-interval report's missing frontend-helper compile failure has been resolved; it is not a current prerequisite or known failure.
-
 ## Frontend fixtures and browser tests
 
 The current frontend architecture is described in [frontend](frontend.md). Playback and dynamic editors require JavaScript. Ordinary navigation, category/account/import forms, reading/recovery pages and documented standalone fallbacks retain their specified no-JavaScript paths; test the applicable contract.

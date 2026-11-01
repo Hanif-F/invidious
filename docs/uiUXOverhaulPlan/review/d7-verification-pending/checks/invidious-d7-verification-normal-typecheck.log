@@ -1,9 +1,0 @@
-Showing last frame. Use --error-trace for full trace.
-
-In src/invidious/user/authentication.cr:76:72
-
- 76 | safe_login_return(env.params.query["referer"]? || get_referer(env, fallback, unroll: false))
-                                                                         ^-------
-Error: undefined method 'fallback' for Invidious::Authentication:Module
-
-If you declared 'fallback' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it.

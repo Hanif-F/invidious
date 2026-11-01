@@ -13,7 +13,6 @@ EXTRA_DOCS = (
     "ACCOUNT_SECURITY.md",
     "SECURITY_READINESS.md",
     "SPONSORBLOCK.md",
-    "screenshots/README.md",
     "tests/frontend/README.md",
     "tests/database/README.md",
 )

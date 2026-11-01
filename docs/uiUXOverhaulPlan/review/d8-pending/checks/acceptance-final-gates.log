@@ -1,7 +1,0 @@
-$ python3 docs/tools/generate_reference.py --check
-Checked 7 reference documents.
-exit=0
-$ crystal tool format --check src/invidious/frontend/settings.cr tests/frontend/render_fixtures.cr tests/frontend/library_checks.cr tests/frontend/member_checks.cr tests/database/required_login_checks.cr
-exit=0
-$ git diff --check
-exit=0

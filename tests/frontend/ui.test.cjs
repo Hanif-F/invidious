@@ -1641,8 +1641,7 @@ test('library navigation survives custom feed settings without channel managemen
     assert.ok(!html.includes('<img'));
 });
 
-test('UI asset inventory compares the overhaul baseline and separately reports icons, fonts and vendor player assets', () => {
-    const baseline = require('../../docs/uiUXOverhaulPlan/asset-baseline.json');
+test('UI asset inventory reports current CSS/JS, icons, fonts and vendor player assets', () => {
     const list = directory => fs.existsSync(path.join(root, directory)) ? fs.readdirSync(path.join(root, directory), {withFileTypes:true}).flatMap(entry => {
         const file = directory + '/' + entry.name;
         return entry.isDirectory() ? list(file) : entry.isFile() ? [file] : [];
@@ -1653,23 +1652,19 @@ test('UI asset inventory compares the overhaul baseline and separately reports i
     };
     const inventory = directories => Object.fromEntries(directories.flatMap(list).map(file => [file, measure(file)]));
     const total = files => Object.values(files).reduce((sum, file) => ({files:sum.files + 1,bytes:sum.bytes + file.bytes,gzipBytes:sum.gzipBytes + file.gzipBytes}), {files:0,bytes:0,gzipBytes:0});
-    const current = inventory(['assets/css', 'assets/js', 'assets/themes/diary']);
+    const current = inventory(['assets/css', 'assets/js']);
     const extra = inventory(['assets/icons', 'assets/fonts']);
     const vendor = inventory(['assets/videojs']);
-    const before = total(baseline.files), after = total(current);
     const report = {
-        scope:'File sums at gzip level 9, comparable with the recorded 22fc2a66 overhaul baseline; not per-page transfer or deployed-server measurements. Old Ionicons font files were outside that baseline; current icons/fonts and vendor player assets are reported separately.',
-        baselineRevision:baseline.revision, before, after,
-        delta:{bytes:after.bytes-before.bytes,gzipBytes:after.gzipBytes-before.gzipBytes},
-        removed:Object.keys(baseline.files).filter(file => !current[file]),
-        added:Object.keys(current).filter(file => !baseline.files[file]),
-        current, iconsAndFonts:{total:total(extra),files:extra}, vendorPlayer:{total:total(vendor),files:vendor}
+        scope:'Current file sums at gzip level 9, not per-page transfer or deployed-server measurements. First-party CSS/JS, icons/fonts and vendor player assets are reported separately.',
+        total:total(current), current,
+        iconsAndFonts:{total:total(extra),files:extra}, vendorPlayer:{total:total(vendor),files:vendor}
     };
     assert.ok(Object.keys(current).length > 30 && Object.keys(vendor).length > 0);
     assert.ok(Object.values(current).every(file => Number.isFinite(file.bytes) && Number.isFinite(file.gzipBytes)));
     assert.equal(Object.keys(extra).some(file => /ionicons|diary/i.test(file)), false);
     fs.writeFileSync(path.join(artifacts, 'ui-asset-report.json'), JSON.stringify(report, null, 2) + '\n');
-    console.log('Overhaul comparable assets: ' + JSON.stringify({before, after, delta:report.delta, iconsAndFonts:report.iconsAndFonts.total,vendorPlayer:report.vendorPlayer.total}));
+    console.log('UI asset inventory: ' + JSON.stringify({firstParty:report.total,iconsAndFonts:report.iconsAndFonts.total,vendorPlayer:report.vendorPlayer.total}));
 });
 
 for (const engine of engines) {

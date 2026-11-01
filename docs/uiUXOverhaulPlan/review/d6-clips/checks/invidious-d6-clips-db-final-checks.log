@@ -1,3 +1,0 @@
-Running migration: Invidious::Database::Migrations::CreateClipsTable
-No migrations to run.
-Native clip database, route, authorization, cache, pagination, and fresh-schema checks passed

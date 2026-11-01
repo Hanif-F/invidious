@@ -18,6 +18,49 @@ Saved account fields or guest cookie values are parsed over instance defaults. A
 
 Browser/account state must go through `InvidiousStorage`, not raw unscoped storage keys. Profile IDs are HMAC-derived ownership markers, not authentication tokens. Sign-in, signout, expiry and account switching change the active profile; stale tabs detect a mismatch and stop/reload instead of saving to the wrong account. See [frontend](frontend.md).
 
+## Category ownership and writes
+
+The authoritative ownership and validation manifest is [web_preferences.cr](../src/invidious/web_preferences.cr).
+`POST /preferences` with a `section` owns only that category's fields:
+
+| Category | Owned serialized fields |
+| --- | --- |
+| appearance | `dark_mode`, `show_nick` |
+| language | `locale`, `region`, `timezone` |
+| browsing | `default_home`, `feed_menu`, `show_member_videos`, `show_original_title`, `search_privacy`, `automatic_instance_redirect` |
+| playback | `preload`, `autoplay`, `continue`, `continue_autoplay`, `video_loop`, `listen`, `local`, `quality`, `quality_dash`, `video_codec`, `preferred_audio`, `speed`, `seek_seconds`, `vr_mode`, `annotations`, `annotations_subscribed` |
+| captions-comments | `captions`, `comments`, `related_videos`, `extend_desc` |
+| library | `watch_history`, `save_player_pos`, `max_results`, `sort`, `latest_only`, `unseen_only`, `notifications_only`, `default_playlist` |
+| sponsorblock | `sponsorblock_enabled`, `sponsorblock_modes`, `sponsorblock_colors` |
+| dearrow | `dearrow_enabled`, `dearrow_show_original` |
+| ai-filter | `ai_filter_enabled`, `ai_blocklist_feeds_action`, `ai_blocklist_search_action`, `ai_blocklist_recommendations_action`, `ai_blocklist_other_pages_action`, `ai_warnlist_feeds_action`, `ai_warnlist_search_action`, `ai_warnlist_recommendations_action`, `ai_warnlist_other_pages_action` |
+
+Account category writes validate and merge into the latest raw JSON under an
+account row lock. Unrelated, native-only and unknown fields survive, including
+unknown SponsorBlock map entries. An omitted checkbox means false only within
+the submitted category; omitted scalars, arrays and array positions retain their
+latest values. Invalid input rejects the whole transaction. Disabling position
+synchronization clears positions in the same transaction without disabling history.
+
+Guest writes merge the actual raw `PREFS` cookie. Fresh browsers inherit defaults
+through a sparse document; an oversized result is rejected rather than truncating
+unrelated fields. Account writes never import the guest cookie. The library
+category requires an account.
+
+Dedicated owners stay outside category replacement: chat fields use the chat
+endpoint, `channel_spoiler_settings` uses the channel visibility editor, and
+`sponsorblock_channel_overrides` uses the per-channel SponsorBlock editor. Manual
+blocks are separate database records, offsets are per video, and private DeArrow
+identity is outside preference JSON and ordinary page configuration. See
+[chat preferences](#chat-preferences), [channel visibility](channel-spoilers.md),
+[SponsorBlock](sponsorblock.md), [account blocks](accounts-and-library.md) and
+[DeArrow identity](dearrow-contributions.md) for their save and recovery behavior.
+
+Native/legacy `ui_density`, `thin_mode`, `player_style`, chat overlay and legacy AI
+fields remain readable/round-trippable without browser editors. The manifest's
+`DEDICATED` and `PRESERVED_ONLY` lists define these boundaries; only the explicitly
+retired theme keys described below are removed on saves.
+
 ## Appearance and navigation
 
 | Fields | Behavior |
@@ -89,7 +132,17 @@ Archived-chat settings include timestamps, font scale, panel width, overlay enab
 
 ## Browser drafts and save verification
 
-The category interface searches public field/category descriptions and option metadata locally and retains category drafts in page memory. It excludes private playlist names from the search index. Save/Discard affects the active category. `redirect=false` retains canonical preferences/fingerprint and adds owning category values/profile; an independent GET verifies those values before reporting Saved. Failed or unconfirmed saves retain the draft and offer reload. Language changes apply on subsequent pages. Ordinary HTML POST redirects and no-JavaScript category forms remain supported. Cached legacy full-form POSTs and their receipts remain server-compatible; the full-form template and browser controller have been retired. Dedicated chat, identity, block and channel-rule endpoints remain separate. See the [category ownership contract](uiUXOverhaulPlan/settings-ownership.md) for exact fields and compatibility behavior.
+The category interface searches public field/category descriptions and option metadata locally and retains at most nine category drafts in page memory. It excludes private playlist names from the search index and never serializes drafts into history or browser storage. Save/Discard affects the active category; Discard restores its last confirmed page snapshot, and leaving dirty drafts retains the departure warning. `redirect=false` retains canonical preferences/fingerprint and adds owning category values/profile; an independent `format=json` GET verifies those values before reporting Saved. An unrelated category change does not invalidate the save. Failed or unconfirmed saves retain the draft and offer reload without automatically retrying a write. The read-back also detects a guest cookie that the browser did not retain. Language changes apply on subsequent pages. Ordinary HTML POST redirects and no-JavaScript category forms remain supported.
+
+Cached legacy full-form POSTs and their canonical receipts remain server-compatible;
+their template and browser controller have been retired. Traditional checkboxes
+retain unchecked semantics, while omitted scalars, array positions and native-only
+choices come from the latest stored document. A presence marker distinguishes
+an unchecked legacy reduced-image control from omission. Recognized old AI forms
+retain their group semantics; version-2 forms own the master and canonical actions.
+Dedicated chat, identity, block and channel-rule data stays separate. Legacy saves,
+header color-mode changes and timezone detection use transactional compare-and-set
+with bounded retries after a known database conflict, preserving other fields.
 
 ## API update choices
 

@@ -4,8 +4,6 @@
 
 The application needs a working-directory installation with its binary, runtime assets/locales/config SQL, PostgreSQL, protected configuration and a separate Invidious Companion for playback. [Getting started](getting-started.md) covers local initialization; this guide covers maintaining the service.
 
-For this interface revision, the [user handoff](uiUXOverhaulPlan/user-handoff.md) adds matching binary/asset builds, cache refresh, compatibility and rollback notes. Local acceptance does not activate a deployment.
-
 ## Deployment forms
 
 The [Dockerfile](../docker/Dockerfile) uses multi-stage builds, pinned Crystal/OpenSSL build inputs, a nonroot runtime user and tini. It compiles tests/binary and copies runtime assets/config/locales. The checked-in [compose file](../docker-compose.yml) is for local development, has development database credentials, no companion service and mandatory secret placeholders. Record the actual image/digest and configuration used for a real deployment; a source Dockerfile does not describe a running remote host automatically.
@@ -14,11 +12,57 @@ The [Dockerfile](../docker/Dockerfile) uses multi-stage builds, pinned Crystal/O
 
 For a reverse proxy, set canonical `domain`, optional `external_port`, `https_only`, trusted proxy CIDRs and real TLS termination. Keep PostgreSQL/private companion interfaces private. Forward media range requests and permit expected streaming/long-lived responses. Avoid buffering SSE or rewriting private response caching. Configure request/upload size and connection/read time limits to fit real imports and media behavior. These controls belong to the deployment, not to `https_only` alone.
 
+## Release contents
+
+Build a committed revision from the complete checkout, with its Git metadata,
+locked shards and pinned player dependencies. Follow the [build instructions](development.md#dependencies-and-builds)
+and use `--release` for an optimized binary. The `skip_videojs_download` flag
+requires player assets to have been fetched already. A browser installation
+requires a normal build; `-Dapi_only` omits browser pages, including TV approval.
+Node.js, FFmpeg and Playwright are test tools and are not needed to serve requests.
+
+Keep the binary/image, `assets/`, `locales/` and `config/sql/` from the same
+revision. ECR templates are compiled into the binary, and relative runtime paths
+require the installation's working directory. Preserve deployment configuration
+and secrets separately. Retain the previous complete release for rollback.
+
+## Assets and browser caches
+
+`ASSET_COMMIT` is compiled from the most recent Git commit that changes `assets/`;
+it does not hash uncommitted edits. Commit asset changes before building and
+confirm generated CSS/JS URLs carry that asset revision. Static responses use
+`Cache-Control: max-age=2629800` (about one month).
+
+Deploy matching binaries and assets together, restart, and avoid mixing releases
+across instances. Purge applicable proxy/CDN asset entries if their query-key
+policy could reuse an older response, then reload with browser cache bypass and
+verify the versioned asset requests succeed. Cached pre-upgrade HTML can still
+name retired files; refresh it before treating those requests as current behavior.
+
+Use cache refresh rather than clearing all site data, which can remove sign-in
+and browser preferences. Keep HMAC unchanged to preserve browser profile identity.
+
 ## Health and monitoring
 
 `GET /api/v1/stats` returns software metadata even with statistics disabled. The shipped compose healthcheck uses this for HTTP liveness. With statistics enabled, it returns versioned aggregate users, metadata timestamps and available playback accounting. It is not an authenticated account test, full database integrity test or proof that companion media works.
 
-A useful staging smoke test checks the homepage/search, known channel, playable watch/embed video, a range media request, captions, signup/login, a private playlist, account preference save/history/position, native login and configured optional enhancements. Run it with controlled accounts/data; intentional upstream contribution writes need an actual user action.
+A staging smoke test should use controlled accounts/data and check:
+
+- Browse/search/Apply/Load more/Back, channel tabs, direct pagination,
+  Light/Dark/System, keyboard focus and versioned asset URLs.
+- Watch/embed progressive, adaptive and audio content through the real
+  Companion/proxy; check range requests, captions, audio identity, utility tabs,
+  Theater and the optional mini player.
+- Signup/login, subscriptions/notifications, history/positions, owned/saved/private
+  playlists and same-player clip previews.
+- Separate Settings category saves across reload, guest/account switching,
+  dedicated enhancement editors and administrator persistence.
+- Session/CSRF and private cache isolation, framed sign-in/verification recovery,
+  native login and TV code approval where those clients are used.
+
+Intentional upstream contribution writes need an actual user action. Local fixture
+tests do not establish live YouTube/Companion/Cloudflare behavior, proxy TLS/SSE/cache
+policy, physical fullscreen/PiP or device codec support; verify these on the deployment.
 
 Monitor response errors/latency, auth 403/429s, job failures/backoff, feed freshness, PostgreSQL disk/connection pressure, outbound access, companion failures and private cache behavior. Do not log credentials, full private feed URLs or decrypted identities. A software-only stats response cannot detect a stalled channel-refresh fiber.
 
@@ -67,7 +111,13 @@ The [migration inventory](reference/migrations.md) lists every registered migrat
 
 ## Restore and rollback
 
-Restore the backup into a **new empty database**, verify it in isolation, and point the matching previous application/config at it. Do not run the previous version's schema checker against the upgraded database. Keep the upgraded database for reconciliation if traffic resumed. A backup restore loses later writes; plan reconciliation and announce the maintenance boundary appropriately.
+Stop all application writers before changing releases. Restore the backup into a **new empty database**, verify it in isolation, and point the matching previous application/config at it. Do not run the previous version's schema checker against the upgraded database. Keep the upgraded database for reconciliation if traffic resumed. A backup restore loses later writes; plan reconciliation and announce the maintenance boundary appropriately.
+
+Activate the complete previous release with its matching assets, locales and SQL,
+restart, and [refresh asset caches](#assets-and-browser-caches). Recheck login,
+ownership/private data and media before reopening traffic. There is no automatic
+down-migration. Reverting a binary does not recreate preference keys removed by
+later saves; restoring the exact older state requires the protected database backup.
 
 DeArrow identity ciphertext needs its original key and account owner ID. Replacing its key breaks decryption; planned rotation requires explicit decrypt/re-encrypt with old/new keys under a controlled transactional procedure described in [contributions](dearrow-contributions.md). Keep HMAC consistent to preserve sessions/signatures, shared throttling and browser profile identities. Secret replacement has user-visible consequences even when SQL is unchanged.
 

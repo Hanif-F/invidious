@@ -17,7 +17,6 @@ on:
       - .git*
       - .editorconfig
 
-      - screenshots/*
       - assets/**
       - locales/*
       - config/**

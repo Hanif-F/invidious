@@ -1,10 +1,9 @@
 # Guarded database verification
 
 These harnesses mutate only their exactly named disposable databases. Read each
-guard before running; never use production data or a useful database. The
-[D8 acceptance](../../docs/uiUXOverhaulPlan/d8-acceptance.md) records the complete
-account harness, exact final empty-state guard and task-container cleanup. Focused
-modes below are useful for development but do not replace that complete run.
+guard before running; never use production data or a useful database. Focused
+modes below are useful for development but do not replace the complete account
+harness or its final empty-state guard and cleanup.
 
 Playlist ordering checks run with the production account harness against an
 **empty disposable** database named `invidious_accounts_test`:
@@ -206,7 +205,7 @@ playback smoke before activation.
 
 The account harness supports `--settings-only` against an **empty disposable** `invidious_accounts_test` database. It applies all migrations, then checks category and legacy HTTP/JSON/HTML behavior, CSRF/profile/role failures, raw/native/unknown preservation, guest cookie read-back/limits, independent playback cleanup, row-lock and compare-and-set races, and native/web round trips.
 
-It also runs the actual administrator handlers through authentication/content gates against a temporary YAML file: declared-key preservation, confirmation, stale revisions, external YAML edits, environment-managed fields, symlinks, permissions and failed drafts. It never writes the operator/repository configuration. The full required-login regression includes this admin check too. Browser component/visual evidence remains separate in the [overhaul progress log](../../docs/uiUXOverhaulPlan/progress.md); final full application/native/deployed verification is not implied by this harness.
+It also runs the actual administrator handlers through authentication/content gates against a temporary YAML file: declared-key preservation, confirmation, stale revisions, external YAML edits, environment-managed fields, symlinks, permissions and failed drafts. It never writes the operator/repository configuration. The full required-login regression includes this admin check too. [Frontend verification](../frontend/README.md) covers separate browser component and visual checks; full application/native/deployed verification is not implied by this harness.
 
 The same `--settings-only` run checks the dedicated DeArrow identity editor's
 private metadata, CSRF/profile/revision/confirmation, conditional concurrent imports,
@@ -216,7 +215,7 @@ role/profile/CSRF rejection, private identity isolation and a synthetic 502 that
 must make exactly one transport attempt. The injected transport never sends real
 upstream votes. Readiness/identity tests do not change ordinary preference data.
 
-The D7 account-surface subset also requires the same empty disposable database:
+The account-surface subset also requires the same empty disposable database:
 
 ```sh
 ACCOUNT_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_accounts_test crystal run tests/database/accounts.cr -- --account-surfaces-only

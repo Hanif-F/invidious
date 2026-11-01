@@ -40,7 +40,7 @@ Start with the exact HTTP status and an application log excerpt with credentials
 | Account switch leaves stale UI | Profile markers/storage guard should stop/reload stale tabs; inspect storage-denial warnings and avoid unscoped custom scripts |
 | Browser setting does not survive reload | Storage denied/full, cookie limits, current profile or intentionally page-only temporary state; UI should report persistence failure |
 | Avatar missing | Missing cached/observed URL intentionally renders placeholder; no extra avatar-only metadata request is made |
-| Old JS/CSS after deploy | Ship matching binary/assets from a committed revision, restart, and refresh the cache; static assets have a 2,629,800-second lifetime. See the [handoff](uiUXOverhaulPlan/user-handoff.md#assets-and-browser-caches) |
+| Old JS/CSS after deploy | Ship matching binary/assets from a committed revision, restart, and refresh the cache; static assets have a 2,629,800-second lifetime. See [asset cache handling](operations.md#assets-and-browser-caches) |
 | `--migrate` cannot find SQL | Working directory/config SQL runtime files; binary alone is not a complete installation |
 | Unix socket fails | Parent directory exists, service user permissions and quoted octal mode; configured path must not be a directory |
 | Builds fail fetching player dependencies | Network/package availability or prefetch pinned assets and use skip flag; skip alone does not supply missing runtime assets |
