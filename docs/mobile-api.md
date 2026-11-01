@@ -266,8 +266,9 @@ At least one field is required. Supported fields are:
   storage suffice; no migration or renewed sign-in is needed.
 - `captions`: up to three bounded language-name strings, in priority order, matching
   the web names; empty strings mean no preferred language. `comments`: up to two
-  sources (`youtube`, `reddit`, or empty). Android edits YouTube visibility while
-  retaining the web's Reddit choice; it does not implement Reddit comments.
+  sources (`youtube` or empty). New patches reject Reddit sources; stored legacy
+  `reddit` values normalize to `youtube` when read. The comments API returns 410
+  for `source=reddit`.
 - `dark_mode`: empty (system), `light` or `dark`; `ui_density`: `balanced` or
   `compact`; `default_home`: null, empty (Search), `Popular`, `Trending`,
   `Subscriptions` or `Playlists`; `feed_menu`: up to four of those string values.

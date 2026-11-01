@@ -5,12 +5,12 @@ module Invidious::Routes::Embed
     locale = env.get("preferences").as(Preferences).locale
     if plid = env.params.query["list"]?.try &.gsub(/[^a-zA-Z0-9_-]/, "")
       begin
-        playlist = get_playlist(plid)
+        playlist = Invidious::Playlists::Playlists.get_playlist(plid)
         if playlist.privacy.private? && playlist.author != env.get?("user").try(&.as(User).email)
-          return error_template(404, "Playlist does not exist.")
+          return Errors.error_template(404, "Playlist does not exist.")
         end
         offset = env.params.query["index"]?.try &.to_i? || 0
-        videos = get_playlist_videos(playlist, offset: offset)
+        videos = Invidious::Playlists::Playlists.get_playlist_videos(playlist, offset: offset)
         if videos.empty?
           url = "/playlist?list=#{plid}"
           raise NotFoundException.new(I18n.translate(locale, "error_video_not_in_playlist", url))
@@ -18,9 +18,9 @@ module Invidious::Routes::Embed
 
         first_playlist_video = videos[0].as(PlaylistVideo)
       rescue ex : NotFoundException
-        return error_template(404, ex)
+        return Errors.error_template(404, ex)
       rescue ex
-        return error_template(500, ex)
+        return Errors.error_template(500, ex)
       end
 
       url = "/embed/#{first_playlist_video.id}"
@@ -69,12 +69,12 @@ module Invidious::Routes::Embed
 
       if plid
         begin
-          playlist = get_playlist(plid)
+          playlist = Invidious::Playlists::Playlists.get_playlist(plid)
           if playlist.privacy.private? && playlist.author != env.get?("user").try(&.as(User).email)
-            return error_template(404, "Playlist does not exist.")
+            return Errors.error_template(404, "Playlist does not exist.")
           end
           offset = env.params.query["index"]?.try &.to_i? || 0
-          videos = get_playlist_videos(playlist, offset: offset)
+          videos = Invidious::Playlists::Playlists.get_playlist_videos(playlist, offset: offset)
           if videos.empty?
             url = "/playlist?list=#{plid}"
             raise NotFoundException.new(I18n.translate(locale, "error_video_not_in_playlist", url))
@@ -82,9 +82,9 @@ module Invidious::Routes::Embed
 
           first_playlist_video = videos[0].as(PlaylistVideo)
         rescue ex : NotFoundException
-          return error_template(404, ex)
+          return Errors.error_template(404, ex)
         rescue ex
-          return error_template(500, ex)
+          return Errors.error_template(500, ex)
         end
 
         url = "/embed/#{first_playlist_video.id}"
@@ -107,7 +107,7 @@ module Invidious::Routes::Embed
       env.params.query.delete_all("channel")
 
       if !video_id || video_id == "live_stream"
-        return error_template(500, "Video is unavailable.")
+        return Errors.error_template(500, "Video is unavailable.")
       end
 
       url = "/embed/#{video_id}"
@@ -140,22 +140,22 @@ module Invidious::Routes::Embed
     begin
       video = get_video(id, region: params.region)
     rescue ex : NotFoundException
-      return error_template(404, ex)
+      return Errors.error_template(404, ex)
     rescue ex
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
 
     preview_clip = env.params.query["clip_preview"]? == "1"
     if preview_clip
       if error = Invidious::Clips.source_error(video)
-        return error_template(400, error)
+        return Errors.error_template(400, error)
       end
       begin
         start_ms = Invidious::Clips::Validation.milliseconds(env.params.query["start"]? || "")
         end_ms = Invidious::Clips::Validation.milliseconds(env.params.query["end"]? || "")
         Invidious::Clips::Validation.range(start_ms, end_ms, video.length_seconds)
       rescue ex : ArgumentError
-        return error_template(400, ex)
+        return Errors.error_template(400, ex)
       end
       params.video_start = start_ms / 1000.0
       params.video_end = end_ms / 1000.0

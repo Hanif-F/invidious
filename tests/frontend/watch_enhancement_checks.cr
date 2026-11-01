@@ -83,7 +83,7 @@ def write_watch_enhancement_fixtures(output)
     end
     queue = JSON.parse({playlistId: "IVfixture", title: "Preserved occurrences", videoCount: 4, videos: queue_videos}.to_json)
     env.set "desktop_fragment", true
-    html = template_playlist(queue, false, false, true, spoiler_env: env)
+    html = Invidious::Playlists::Playlists.template_playlist(queue, false, false, true, spoiler_env: env)
     File.write("#{output}/d6-watch-content-queue.json", {playlistHtml: html, nextVideo: "nextvideo01", index: 3, currentIndex: 2,
                                                          positions: queue_videos.to_h { |item| {item[:indexId].to_i64(16).to_s, item[:index] + 1} }, total: 4, currentOccurrence: "9007199254740995", currentRemoved: false}.to_json)
   end

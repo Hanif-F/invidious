@@ -22,6 +22,9 @@ class SecurityTestEndpoint
     env = context
     Invidious::Routes::BeforeAll.handle(env)
     result = case env.request.path
+             when "/api/v1/comments/mergevideo1"
+               env.params.url["id"] = "mergevideo1"
+               Invidious::Routes::API::V1::Videos.comments(env)
              when "/api/v1/tv/pairing/start"
                Invidious::Routes::API::V1::TvPairing.start(env)
              when "/api/v1/tv/pairing/token"
@@ -238,9 +241,9 @@ def check_public_security
   bob_sid = store.register("SecurityBob", password, Preferences.from_json(%({"save_player_pos":true})))
   alice = Invidious::Database::Users.select!(email: Invidious::Database::SessionIDs.select_email(alice_sid).not_nil!)
   bob = Invidious::Database::Users.select!(email: Invidious::Database::SessionIDs.select_email(bob_sid).not_nil!)
-  restricted = generate_token(alice.email, ["GET:tokens", "POST:tokens/unregister"], nil, HMAC_KEY, alice_sid)
+  restricted = Invidious::Helpers::Tokens.generate_token(alice.email, ["GET:tokens", "POST:tokens/unregister"], nil, HMAC_KEY, alice_sid)
   api_id = JSON.parse(restricted)["session"].as_s
-  bob_token = generate_token(bob.email, [":*"], nil, HMAC_KEY, bob_sid)
+  bob_token = Invidious::Helpers::Tokens.generate_token(bob.email, [":*"], nil, HMAC_KEY, bob_sid)
   bob_api_id = JSON.parse(bob_token)["session"].as_s
 
   result = security_request("GET", "/api/v1/auth/tokens", bearer: restricted)
@@ -257,24 +260,24 @@ def check_public_security
     check(result.response.status_code == 204, "Revocation must not disclose foreign session existence")
     check(Invidious::Database::SessionIDs.select_email(target) == bob.email, "Cross-account session was revoked")
   end
-  sibling = JSON.parse(generate_token(alice.email, ["GET:preferences"], nil, HMAC_KEY, alice_sid))["session"].as_s
+  sibling = JSON.parse(Invidious::Helpers::Tokens.generate_token(alice.email, ["GET:preferences"], nil, HMAC_KEY, alice_sid))["session"].as_s
   security_request("POST", "/api/v1/auth/tokens/unregister", bearer: restricted, body: {session: sibling}.to_json)
   check(Invidious::Database::SessionIDs.select_email(sibling).nil?, "Own sibling token cannot be revoked")
 
-  reader = generate_token(alice.email, ["GET:preferences"], nil, HMAC_KEY, alice_sid)
+  reader = Invidious::Helpers::Tokens.generate_token(alice.email, ["GET:preferences"], nil, HMAC_KEY, alice_sid)
   mixed = security_request("GET", "/api/v1/auth/preferences", bob_sid, reader)
   check(JSON.parse(mixed.get("test_result").as(String))["dark_mode"].as_s == "dark", "Browser cookie replaced bearer identity")
   csrf_response = security_request("GET", "/api/v1/auth/csrf", alice_sid)
   csrf = JSON.parse(csrf_response.get("test_result").as(String))["csrfToken"].as_s
   before = Invidious::Database::Users.select!(email: alice.email).preferences.to_json
-  {nil, "invalid", generate_response(bob_sid, {"POST:*"}, HMAC_KEY), generate_response(alice_sid, {"POST:*"}, HMAC_KEY, -1.hour), generate_response(alice_sid, {"POST:tokens/unregister"}, HMAC_KEY)}.each do |invalid|
+  {nil, "invalid", Invidious::Helpers::Tokens.generate_response(bob_sid, {"POST:*"}, HMAC_KEY), Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:*"}, HMAC_KEY, -1.hour), Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:tokens/unregister"}, HMAC_KEY)}.each do |invalid|
     result = security_request("POST", "/api/v1/auth/preferences", alice_sid, body: %({"dark_mode":"light"}), csrf: invalid)
     check(result.response.status_code == 403, "Invalid API CSRF accepted")
     check(Invidious::Database::Users.select!(email: alice.email).preferences.to_json == before, "Rejected API request mutated preferences")
   end
   result = security_request("POST", "/api/v1/auth/preferences", alice_sid, body: %({"dark_mode":"light","save_player_pos":true}), csrf: csrf)
   check(result.response.status_code == 204, "Valid API CSRF rejected")
-  writer = generate_token(alice.email, ["POST:preferences"], nil, HMAC_KEY, alice_sid)
+  writer = Invidious::Helpers::Tokens.generate_token(alice.email, ["POST:preferences"], nil, HMAC_KEY, alice_sid)
   result = security_request("POST", "/api/v1/auth/preferences", bearer: writer, body: %({"dark_mode":"dark","save_player_pos":true}))
   check(result.response.status_code == 204, "Bearer-only API writes now require browser CSRF")
   check(Invidious::Database::Users.select!(email: bob.email).preferences.dark_mode == bob.preferences.dark_mode, "Preference write changed another account")
@@ -288,7 +291,7 @@ def check_public_security
   boundary = "security-test-boundary"
   import_data = %({"preferences":{"dark_mode":"light","save_player_pos":true}})
   file_part = "--#{boundary}\r\nContent-Disposition: form-data; name=\"import_invidious\"; filename=\"data.json\"\r\nContent-Type: application/json\r\n\r\n#{import_data}\r\n"
-  token = generate_response(alice_sid, {"POST:data_control"}, HMAC_KEY)
+  token = Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:data_control"}, HMAC_KEY)
   token_part = "--#{boundary}\r\nContent-Disposition: form-data; name=\"csrf_token\"\r\n\r\n#{token}\r\n"
   {file_part, file_part + token_part, token_part.sub(token, "invalid") + file_part}.each do |parts|
     result = security_request("POST", "/data_control", alice_sid, body: parts + "--#{boundary}--\r\n", content_type: "multipart/form-data; boundary=#{boundary}")
@@ -297,7 +300,7 @@ def check_public_security
   end
   result = security_request("POST", "/data_control", alice_sid, body: token_part + file_part + "--#{boundary}--\r\n", content_type: "multipart/form-data; boundary=#{boundary}")
   check(result.response.status_code == 302 && Invidious::Database::Users.select!(email: alice.email).preferences.dark_mode == "light", "Valid import did not work")
-  token = generate_response(alice_sid, {"POST:preferences"}, HMAC_KEY)
+  token = Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:preferences"}, HMAC_KEY)
   result = security_request("POST", "/preferences", alice_sid, body: URI::Params.encode({"dark_mode" => "dark", "save_player_pos" => "on", "csrf_token" => token}), content_type: "application/x-www-form-urlencoded")
   check(result.response.status_code == 302, "Valid preferences form rejected")
 

@@ -8,7 +8,7 @@ module Invidious::Routes::Watch
     region = env.params.query["region"]?
     native_clip_id = env.get?("native_clip_id").try(&.as(String))
     native_clip = env.get?("native_clip_id").try(&.as(String)).try { |clip_id| Database::Clips.select(clip_id) }
-    return error_template(404, "Clip not found.") if native_clip_id && !native_clip
+    return Errors.error_template(404, "Clip not found.") if native_clip_id && !native_clip
     preview_clip = env.params.query["clip_preview"]? == "1"
     if native_clip
       %w[t start end time_continue list index occurrence continuation raw clip_preview].each { |key| env.params.query.delete_all(key) }
@@ -29,11 +29,11 @@ module Invidious::Routes::Watch
       id = env.params.query["v"]
 
       if env.params.query["v"].empty?
-        return error_template(400, "Invalid parameters.")
+        return Errors.error_template(400, "Invalid parameters.")
       end
 
       unless validate_video_id(id)
-        return error_template(400, InvalidVideoID.new(id))
+        return Errors.error_template(400, InvalidVideoID.new(id))
       end
     else
       return env.redirect "/"
@@ -63,17 +63,17 @@ module Invidious::Routes::Watch
     rescue ex : NotFoundException
       return Routes::Clips.unavailable(env, native_clip) if native_clip
       LOGGER.error("get_video not found: #{id} : #{ex.message}")
-      return error_template(404, ex)
+      return Errors.error_template(404, ex)
     rescue ex
       return Routes::Clips.unavailable(env, native_clip) if native_clip
       LOGGER.error("get_video: #{id} : #{ex.message}")
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
 
     if native_clip || preview_clip
       if error = Invidious::Clips.source_error(video)
         return Routes::Clips.unavailable(env, native_clip) if native_clip
-        return error_template(400, error)
+        return Errors.error_template(400, error)
       end
       begin
         clip_start_ms = native_clip ? native_clip.start_ms : Invidious::Clips::Validation.milliseconds(env.params.query["start"]? || "")
@@ -81,7 +81,7 @@ module Invidious::Routes::Watch
         Invidious::Clips::Validation.range(clip_start_ms, clip_end_ms, video.length_seconds)
       rescue ex : ArgumentError
         return Routes::Clips.unavailable(env, native_clip) if native_clip
-        return error_template(400, ex)
+        return Errors.error_template(400, ex)
       end
       params.video_start = clip_start_ms / 1000.0
       params.video_end = clip_end_ms / 1000.0
@@ -119,47 +119,15 @@ module Invidious::Routes::Watch
     end
 
     if nojs
-      if preferences
-        source = video.comments? ? preferences.comments[0] : "reddit"
-
-        if source.empty?
-          source = preferences.comments[1]
-        end
-
-        requested_source = env.params.query["comments_source"]?
-        source = requested_source if {"youtube", "reddit"}.includes?(requested_source) && preferences.comments.any? { |item| {"youtube", "reddit"}.includes?(item) }
+      if params.comments.includes?("youtube") && video.comments?
         comment_cursor = env.params.query["comments_continuation"]?
-        comment_sort = env.params.query["comments_sort"]? || (source == "reddit" ? "confidence" : "top")
-        allowed_sorts = source == "reddit" ? {"confidence", "top", "new", "controversial", "old"} : {"top", "new"}
-        comment_sort = allowed_sorts.first unless allowed_sorts.includes?(comment_sort)
-
-        if source == "youtube"
-          begin
-            comment_html = JSON.parse(Comments.fetch_youtube(id, comment_cursor, "html", locale, preferences.thin_mode, region, sort_by: source == "youtube" ? comment_sort : "top"))["contentHtml"]
-          rescue
-            if preferences.comments[1] == "reddit"
-              comments, reddit_thread = Comments.fetch_reddit(id, sort_by: source == "reddit" ? comment_sort : "confidence")
-              comment_html = Frontend::Comments.template_reddit(comments, locale)
-
-              comment_html = Comments.fill_links(comment_html, "https", "www.reddit.com")
-              comment_html = Comments.replace_links(comment_html)
-            end
-          end
-        elsif source == "reddit"
-          begin
-            comments, reddit_thread = Comments.fetch_reddit(id, sort_by: source == "reddit" ? comment_sort : "confidence")
-            comment_html = Frontend::Comments.template_reddit(comments, locale)
-
-            comment_html = Comments.fill_links(comment_html, "https", "www.reddit.com")
-            comment_html = Comments.replace_links(comment_html)
-          rescue
-            if preferences.comments[1] == "youtube"
-              comment_html = JSON.parse(Comments.fetch_youtube(id, comment_cursor, "html", locale, preferences.thin_mode, region, sort_by: source == "youtube" ? comment_sort : "top"))["contentHtml"]
-            end
-          end
+        comment_sort = env.params.query["comments_sort"]? || "top"
+        comment_sort = "top" unless {"top", "new"}.includes?(comment_sort)
+        begin
+          comment_html = JSON.parse(Comments.fetch_youtube(id, comment_cursor, "html", locale, preferences.thin_mode, region, sort_by: comment_sort))["contentHtml"]
+        rescue
+          comment_html = ""
         end
-      else
-        comment_html = JSON.parse(Comments.fetch_youtube(id, nil, "html", locale, preferences.thin_mode, region))["contentHtml"]
       end
 
       comment_html ||= ""
@@ -262,23 +230,23 @@ module Invidious::Routes::Watch
     id = env.params.query["v"]? || ""
     ids = (env.params.query["ids"]? || "").split(',', remove_empty: true).uniq
     channels = (env.params.query["channels"]? || "").split(',', remove_empty: true).uniq
-    return error_json(400, "Invalid watch presentation request.") unless validate_video_id(id) && ids.size <= 200 && channels.size <= 200 &&
-                                                                         ids.all? { |value| validate_video_id(value) } && channels.all?(&.matches?(/\AUC[A-Za-z0-9_-]{22}\z/))
+    return Errors.error_json(400, "Invalid watch presentation request.") unless validate_video_id(id) && ids.size <= 200 && channels.size <= 200 &&
+                                                                                ids.all? { |value| validate_video_id(value) } && channels.all?(&.matches?(/\AUC[A-Za-z0-9_-]{22}\z/))
     user = env.get?("user").try(&.as(User))
     preferences = PreferencesRoute.runtime_preferences(env)
     blocked = user ? Database::BlockedChannels.ids(user.email) : [] of String
     fingerprint = Frontend::Misc.browse_fingerprint(preferences, blocked: blocked)
-    return error_json(409, "Enhancement settings changed. Check them again.") unless env.params.query["owner"]? == fingerprint
+    return Errors.error_json(409, "Enhancement settings changed. Check them again.") unless env.params.query["owner"]? == fingerprint
     env.set "preferences", preferences
     env.set "blocked_channels", blocked
     video = Database::Videos.select(id)
-    return error_json(503, "Cached watch information is unavailable. Try again.") unless video
+    return Errors.error_json(503, "Cached watch information is unavailable. Try again.") unless video
     result = Frontend::WatchEnhancements.projection(env, video, ids, channels, env.params.query["listen"]? == "1")
     result.merge({profile: Invidious::BrowserProfiles.render_scope(env), browseFingerprint: fingerprint}).to_json
   rescue DB::NoResultsError
-    error_json(403, "This account is no longer available. Reload to sign in again.")
+    Errors.error_json(403, "This account is no longer available. Reload to sign in again.")
   rescue
-    error_json(503, "Watch information could not be checked. Try again.")
+    Errors.error_json(503, "Watch information could not be checked. Try again.")
   end
 
   def self.redirect(env)
@@ -305,7 +273,7 @@ module Invidious::Routes::Watch
       if redirect
         return env.redirect referer
       else
-        return error_json(403, "No such user")
+        return Errors.error_json(403, "No such user")
       end
     end
 
@@ -320,12 +288,12 @@ module Invidious::Routes::Watch
     end
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
       if redirect
-        return error_template(400, ex)
+        return Errors.error_template(400, ex)
       else
-        return error_json(400, ex)
+        return Errors.error_json(400, ex)
       end
     end
 
@@ -335,19 +303,19 @@ module Invidious::Routes::Watch
     when "mark_unwatched"
       Invidious::Database::Users.mark_unwatched(user, id)
     when "set_progress"
-      return error_json(409, "Saving playback position is disabled in preferences.") unless user.preferences.save_player_pos
-      return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+      return Errors.error_json(409, "Saving playback position is disabled in preferences.") unless user.preferences.save_player_pos
+      return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
 
       position = env.params.body["position"]?.try &.to_i?
-      return error_json(400, "Invalid playback position.") unless position && position >= 0
+      return Errors.error_json(400, "Invalid playback position.") unless position && position >= 0
 
       Invidious::Database::PlaybackPositions.upsert(user.email, id, position)
     when "clear_progress"
-      return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+      return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
 
       Invidious::Database::PlaybackPositions.delete(user.email, id)
     else
-      return error_json(400, "Unsupported action #{action}")
+      return Errors.error_json(400, "Unsupported action #{action}")
     end
 
     if redirect
@@ -361,7 +329,7 @@ module Invidious::Routes::Watch
   def self.clip(env)
     clip_id = env.params.url["clip"]?
 
-    return error_template(400, "A clip ID is required") if !clip_id
+    return Errors.error_template(400, "A clip ID is required") if !clip_id
 
     if Invidious::Clips::Validation.native?(clip_id)
       env.set "native_clip_id", clip_id
@@ -369,7 +337,7 @@ module Invidious::Routes::Watch
     end
 
     response = YoutubeAPI.resolve_url("https://www.youtube.com/clip/#{clip_id}")
-    return error_template(400, "Invalid clip ID") if response["error"]?
+    return Errors.error_template(400, "Invalid clip ID") if response["error"]?
 
     if video_id = response.dig?("endpoint", "watchEndpoint", "videoId")
       if params = response.dig?("endpoint", "watchEndpoint", "params").try &.as_s
@@ -380,16 +348,16 @@ module Invidious::Routes::Watch
 
       return env.redirect "/watch?v=#{video_id}&#{env.params.query}"
     else
-      return error_template(404, "The requested clip doesn't exist")
+      return Errors.error_template(404, "The requested clip doesn't exist")
     end
   end
 
   def self.download(env)
     if CONFIG.disabled?("downloads")
-      return error_template(403, "Administrator has disabled this endpoint.")
+      return Errors.error_template(403, "Administrator has disabled this endpoint.")
     end
     if CONFIG.invidious_companion.present?
-      return error_template(403, "Downloads should be routed through Companion when present")
+      return Errors.error_template(403, "Downloads should be routed through Companion when present")
     end
 
     title = env.params.body["title"]? || ""
@@ -397,7 +365,7 @@ module Invidious::Routes::Watch
     selection = env.params.body["download_widget"]?
 
     if title.empty? || video_id.empty? || selection.nil?
-      return error_template(400, "Missing form data")
+      return Errors.error_template(400, "Missing form data")
     end
 
     download_widget = JSON.parse(selection)
@@ -428,7 +396,7 @@ module Invidious::Routes::Watch
 
       return Invidious::Routes::VideoPlayback.latest_version(env)
     else
-      return error_template(400, "Invalid label or itag")
+      return Errors.error_template(400, "Invalid label or itag")
     end
   end
 end

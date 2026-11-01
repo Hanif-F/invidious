@@ -498,6 +498,12 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 
+## Routes::Channels.shows
+
+`GET /channel/:ucid/shows`. Source: [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr).
+
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+
 ## Routes::Channels.playlists
 
 `GET /channel/:ucid/playlists`. Source: [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr).
@@ -563,7 +569,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `GET /watch`. Source: [src/invidious/routes/watch.cr](../../src/invidious/routes/watch.cr).
 
-- Query: `clip_preview`, `comments_continuation`, `comments_sort`, `comments_source`, `end`, `format`, `iv_load_policy`, `list`, `listen`, `nojs`, `quality`, `region`, `start`, `v`.
+- Query: `clip_preview`, `comments_continuation`, `comments_sort`, `end`, `format`, `iv_load_policy`, `list`, `listen`, `nojs`, `quality`, `region`, `start`, `v`.
 
 ## Routes::Watch.mark_watched
 
@@ -608,8 +614,9 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 ## Routes::Playlists.show
 
-`GET /playlist`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
+`GET /playlist`; `GET /show/:id`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
 
+- Path: `id`.
 - Query: `list`, `page`.
 
 ## Routes::Playlists.mix
@@ -965,6 +972,13 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 ## Routes::API::V1::Channels.courses
 
 `GET /api/v1/channels/:ucid/courses`. Source: [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr).
+
+- Path: `ucid`.
+- Query: `continuation`.
+
+## Routes::API::V1::Channels.shows
+
+`GET /api/v1/channels/:ucid/shows`. Source: [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr).
 
 - Path: `ucid`.
 - Query: `continuation`.

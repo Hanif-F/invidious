@@ -47,9 +47,9 @@ module Invidious::Routes::Feeds
     region ||= preferences.region
 
     begin
-      trending, plid = fetch_trending(trending_type, region, locale)
+      trending, plid = Invidious::Feeds::Trending.fetch(trending_type, region, locale)
     rescue ex
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
 
     trending = Frontend::BlockedChannels.filter(trending, Frontend::BlockedChannels.ids(env))
@@ -91,7 +91,7 @@ module Invidious::Routes::Feeds
     page ||= 1
 
     page = page.clamp(1, Int32::MAX)
-    videos, notifications = get_subscription_feed(user, max_results, page, feed_preferences)
+    videos, notifications = Invidious::User::Users.get_subscription_feed(user, max_results, page, feed_preferences)
 
     if CONFIG.enable_user_notifications
       # "updated" here is used for delivering new notifications, so if

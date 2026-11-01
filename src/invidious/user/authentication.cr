@@ -25,7 +25,7 @@ module Invidious::Authentication
       session = token["session"].as_s
       # Form/CSRF credentials must never become general instance access passes.
       raise InfoException.new("Invalid bearer token") if !session.starts_with?("v1:") || token["nonce"]?
-      scopes, _, _ = validate_request(token, session, env.request, HMAC_KEY, check_scope: false)
+      scopes, _, _ = Invidious::Helpers::Tokens.validate_request(token, session, env.request, HMAC_KEY, check_scope: false)
       env.set "session", session
       env.set "scopes", scopes
     elsif sid = env.request.cookies["SID"]?.try(&.value)
@@ -97,7 +97,7 @@ module Invidious::Authentication
   def valid_session_csrf?(env, token : String?) : Bool
     sid = env.get?("sid").try(&.as(String)) || env.request.cookies["SID"]?.try(&.value)
     return false if !sid || sid.starts_with?("v1:")
-    validate_request(token, sid, env.request, HMAC_KEY)
+    Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY)
     true
   rescue
     false
@@ -131,14 +131,14 @@ module Invidious::Authentication
     binding = Random::Secure.hex(32)
     env.response.cookies << HTTP::Cookie.new("AUTH_CSRF", binding, path: "/", http_only: true,
       secure: User::Cookies.secure?(cookie_domain(env)), samesite: HTTP::Cookie::SameSite::Lax, expires: Time.utc + 1.hour)
-    generate_response(binding, {"POST:#{path}"}, HMAC_KEY, 1.hour)
+    Invidious::Helpers::Tokens.generate_response(binding, {"POST:#{path}"}, HMAC_KEY, 1.hour)
   end
 
   def validate_form(env)
     no_store(env)
     binding = env.request.cookies["AUTH_CSRF"]?.try(&.value)
     raise InfoException.new("Invalid form. Please try again.") unless binding && binding.matches?(/\A[0-9a-f]{64}\z/)
-    validate_request(env.params.body["csrf_token"]?, binding, env.request, HMAC_KEY)
+    Invidious::Helpers::Tokens.validate_request(env.params.body["csrf_token"]?, binding, env.request, HMAC_KEY)
   end
 
   def ip_value(address : String) : Tuple(UInt128, Int32)?

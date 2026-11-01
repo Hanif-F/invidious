@@ -6,7 +6,7 @@ def check_playlist_order
   sid = Invidious::Database::Accounts.register("OrderOwner", password, Preferences.from_json("{}"))
   other_sid = Invidious::Database::Accounts.register("OrderOther", password, Preferences.from_json("{}"))
   owner = Invidious::Database::Users.select!(email: Invidious::Database::SessionIDs.select_email(sid).not_nil!)
-  list = create_playlist("Occurrence order", PlaylistPrivacy::Private, owner)
+  list = Invidious::Playlists::Playlists.create_playlist("Occurrence order", PlaylistPrivacy::Private, owner)
   original = [9_007_199_254_740_993_i64, 9_007_199_254_740_995_i64, 42_i64, 43_i64, 44_i64]
   original.each do |index|
     video = PlaylistVideo.new({title: "Duplicate", id: "abcdefghijk", author: "Owner", ucid: "UCowner", length_seconds: 10,
@@ -15,7 +15,7 @@ def check_playlist_order
     Invidious::Database::Playlists.update_video_added(list.id, index)
   end
   url = "/playlist_ajax?action=move_video_before&redirect=false&playlist_id=#{list.id}"
-  token = generate_response(sid, {"POST:playlist_ajax"}, HMAC_KEY)
+  token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:playlist_ajax"}, HMAC_KEY)
   fields = {"source" => original[0].to_s, "anchor" => "43", "placement" => "after", "csrf_token" => token, "include_positions" => "1"}
   response = security_request("POST", url, sid: sid, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded")
   check(response.response.status_code == 200, "Owner reorder failed")

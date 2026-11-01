@@ -16,18 +16,30 @@ module Invidious::BotProtection
 
   class InvalidChallenge < Exception; end
 
+  {% if Time.class.has_method?(:instant) %}
+    CLOCK_START = Time.instant
+  {% end %}
+
+  private def clock : Time::Span
+    {% if Time.class.has_method?(:instant) %}
+      Time.instant - CLOCK_START
+    {% else %}
+      Time.monotonic
+    {% end %}
+  end
+
   @@mutex = Mutex.new
   @@settings : Settings? = nil
-  @@refreshed_at = Time.monotonic - 2.seconds
+  @@refreshed_at : Time::Span = clock - 2.seconds
 
   def settings : Settings
     @@mutex.synchronize do
-      if @@settings.nil? || Time.monotonic - @@refreshed_at >= 1.second
+      if @@settings.nil? || clock - @@refreshed_at >= 1.second
         enabled, hours, revision = PG_DB.query_one(
           "SELECT enabled, duration_hours, revision FROM bot_protection_settings WHERE singleton = true",
           as: {Bool, Int32, Int64})
         @@settings = Settings.new(enabled, hours, revision)
-        @@refreshed_at = Time.monotonic
+        @@refreshed_at = clock
       end
       @@settings.not_nil!
     end
@@ -46,7 +58,7 @@ module Invidious::BotProtection
         WHERE singleton = true RETURNING revision
         SQL
       @@settings = Settings.new(enabled, hours, revision)
-      @@refreshed_at = Time.monotonic
+      @@refreshed_at = clock
       @@settings.not_nil!
     end
   end

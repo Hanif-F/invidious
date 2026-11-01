@@ -96,7 +96,7 @@ def check_spoiler_preferences(output)
   queue = JSON.parse({playlistId: "PLfixture", title: "Playlist", videos: [0, 1].map { |i|
     {videoId: "00000000000", title: "Queue original", author: "Studio North", authorId: id, lengthSeconds: 720, index: i}
   }}.to_json)
-  File.write("#{output}/queue-spoiler.json", {playlistHtml: template_playlist(queue, false, spoiler_env: queue_env), index: 1, nextVideo: "00000000000"}.to_json)
+  File.write("#{output}/queue-spoiler.json", {playlistHtml: Invidious::Playlists::Playlists.template_playlist(queue, false, spoiler_env: queue_env), index: 1, nextVideo: "00000000000"}.to_json)
 
   {false, true}.each do |dearrow|
     env = spoiler_env("/feed/popular", dearrow: dearrow, days: nil)
@@ -109,7 +109,7 @@ def check_spoiler_preferences(output)
   end
   File.write("#{output}/watch-spoiler-indefinite.html", watch_fixture(spoiler_env("/watch?v=#{video.id}", dearrow: true, days: nil), "PLfixture", supplied_video: video, account: true))
   File.write("#{output}/embed-spoiler-indefinite.html", watch_fixture(spoiler_env("/embed/#{video.id}", dearrow: true, days: nil), nil, true, supplied_video: video))
-  File.write("#{output}/queue-spoiler-indefinite.json", {playlistHtml: template_playlist(queue, false, spoiler_env: spoiler_env("/", days: nil)), index: 1, nextVideo: "00000000000"}.to_json)
+  File.write("#{output}/queue-spoiler-indefinite.json", {playlistHtml: Invidious::Playlists::Playlists.template_playlist(queue, false, spoiler_env: spoiler_env("/", days: nil)), index: 1, nextVideo: "00000000000"}.to_json)
   inactive = signed_in_env("/feed/popular")
   html = browse_fixture(inactive)
   raise "Inactive cached-page masking metadata missing" unless html.includes?("channel-spoiler-config") && html.includes?("data-spoiler-title") && html.includes?("/js/channel-spoilers.js")
@@ -184,7 +184,7 @@ def write_masking_editor_fixtures(output)
       env.set "user", user
       env.set "preferences", prefs
       env.set "sid", "fixture-session"
-      fields = {"channel" => id, "action" => "save", "hide_title" => "on", "reveal_after_days" => "days<draft>&", "csrf_token" => generate_response("fixture-session", {"POST:preferences/spoilers/channels"}, HMAC_KEY), "browser_profile" => Invidious::BrowserProfiles.render_scope(env)}
+      fields = {"channel" => id, "action" => "save", "hide_title" => "on", "reveal_after_days" => "days<draft>&", "csrf_token" => Invidious::Helpers::Tokens.generate_response("fixture-session", {"POST:preferences/spoilers/channels"}, HMAC_KEY), "browser_profile" => Invidious::BrowserProfiles.render_scope(env)}
       fields["browser_profile"] = "earlier-profile" if kind == "stale"
       if kind == "spaces"
         fields["reveal_after_days"] = " 7 "

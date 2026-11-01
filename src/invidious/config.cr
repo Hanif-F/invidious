@@ -23,6 +23,7 @@ struct ConfigPreferences
   property preload : Bool = true
   property autoplay : Bool = false
   property captions : Array(String) = ["", "", ""]
+  @[YAML::Field(converter: Preferences::CommentSources)]
   property comments : Array(String) = ["youtube", ""]
   property continue : Bool = false
   property continue_autoplay : Bool = true
@@ -39,6 +40,7 @@ struct ConfigPreferences
   property video_codec : String = "auto"
   @[YAML::Field(converter: Invidious::Videos::AudioPreferences)]
   property preferred_audio : String = "original"
+  @[YAML::Field(converter: Preferences::Quality)]
   property quality : String = "dash"
   property quality_dash : String = "auto"
   property default_home : String? = "Popular"

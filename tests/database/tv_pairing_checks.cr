@@ -76,7 +76,7 @@ def pairing_poll(device)
 end
 
 def pairing_submit(sid, code, decision = "approve", csrf = nil)
-  csrf ||= generate_response(sid, {"POST:tv"}, HMAC_KEY, 10.minutes)
+  csrf ||= Invidious::Helpers::Tokens.generate_response(sid, {"POST:tv"}, HMAC_KEY, 10.minutes)
   body = URI::Params.encode({"user_code" => code, "decision" => decision, "csrf_token" => csrf})
   security_request("POST", "/tv", sid, body: body, content_type: "application/x-www-form-urlencoded")
 end
@@ -127,9 +127,9 @@ def check_tv_pairing
   check(html.includes?("PairingAlice") && html.includes?(code) && html.includes?("Compare this code with your TV"), "Approval page lacks account and device intent")
   check(!html.includes?(device) && !html.includes?("accessToken"), "Approval HTML exposed private credentials")
   check(PG_DB.query_one("SELECT state FROM tv_pairings WHERE device_hash = $1", store.digest("device", device), as: String) == "pending", "QR GET approved access")
-  wrong_csrf = generate_response(other_sid, {"POST:tv"}, HMAC_KEY)
+  wrong_csrf = Invidious::Helpers::Tokens.generate_response(other_sid, {"POST:tv"}, HMAC_KEY)
   check(pairing_submit(sid, code, csrf: wrong_csrf).response.status_code == 400, "Wrong-account CSRF approved access")
-  wrong_endpoint = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+  wrong_endpoint = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences"}, HMAC_KEY)
   check(pairing_submit(sid, code, csrf: wrong_endpoint).response.status_code == 400, "Wrong-endpoint CSRF approved access")
   approved = pairing_submit(sid, code.downcase.delete('-'))
   check(approved.response.status_code == 200 && approved.get("test_result").as(String).includes?("TV access approved"), "Explicit approval failed")

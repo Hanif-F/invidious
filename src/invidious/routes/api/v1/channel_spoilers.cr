@@ -7,7 +7,7 @@ module Invidious::Routes::API::V1::ChannelSpoilers
     begin
       ids = Invidious::ChannelSpoilers.publication_ids(env.params.query["ids"]?)
     rescue ex : ArgumentError
-      return error_json(400, ex.message || "Invalid video IDs")
+      return Errors.error_json(400, ex.message || "Invalid video IDs")
     end
     dates = Invidious::Database::Videos.select_spoiler_dates(ids)
     {publications: ids.to_h { |id| {id, dates[id]?.try(&.to_unix)} }}.to_json

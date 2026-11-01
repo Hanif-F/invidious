@@ -149,7 +149,7 @@ for(const engine of engines) {
             assert.equal(await page.locator('body').getAttribute('class'),(variant==='light'?'light':'dark')+'-theme');assert.equal(await page.locator('html').getAttribute('dir'),variant==='rtl'?'rtl':'ltr');
             assert.equal(await page.locator('input[type=file]').count(),1);assert.equal(await page.locator('input[type=file]').getAttribute('name'),field);
             const inputs=await page.locator('form[enctype] input').evaluateAll(nodes=>nodes.map(n=>n.name));assert.deepEqual(inputs,['csrf_token',field]);
-            const links=await page.locator('main a[href^="/subscription_manager?action_takeout=1"]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')));assert.deepEqual(links,['/subscription_manager?action_takeout=1&format=json','/subscription_manager?action_takeout=1','/subscription_manager?action_takeout=1&format=newpipe']);
+            const links=await page.locator('main a[href^="/subscription_manager?action_takeout=1"]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')));assert.deepEqual(links,['/subscription_manager?action_takeout=1&format=json','/subscription_manager?action_takeout=1','/subscription_manager?action_takeout=1&format=opml','/subscription_manager?action_takeout=1&format=newpipe_json']);
             assert.match(await page.locator('main').innerText(),/not all-or-nothing|ux_data_partial/);
             await page.setViewportSize({width:1280,height:900});if(variant==='rtl')await page.addStyleTag({content:'body{font-size:20px}.muted,.button{font-size:18px}'});
             assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,source+' '+variant+' overflow');assert.deepEqual(errors,[]);

@@ -19,8 +19,8 @@ struct Preferences
   @[YAML::Field(converter: Preferences::StringToArray)]
   property captions : Array(String) = CONFIG.default_user_preferences.captions
 
-  @[JSON::Field(converter: Preferences::StringToArray)]
-  @[YAML::Field(converter: Preferences::StringToArray)]
+  @[JSON::Field(converter: Preferences::CommentSources)]
+  @[YAML::Field(converter: Preferences::CommentSources)]
   property comments : Array(String) = CONFIG.default_user_preferences.comments
   property continue : Bool = CONFIG.default_user_preferences.continue
   property continue_autoplay : Bool = CONFIG.default_user_preferences.continue_autoplay
@@ -67,7 +67,8 @@ struct Preferences
   @[YAML::Field(converter: Invidious::Videos::AudioPreferences)]
   property preferred_audio : String = CONFIG.default_user_preferences.preferred_audio
 
-  @[JSON::Field(converter: Preferences::ProcessString)]
+  @[JSON::Field(converter: Preferences::Quality)]
+  @[YAML::Field(converter: Preferences::Quality)]
   property quality : String = CONFIG.default_user_preferences.quality
   @[JSON::Field(converter: Preferences::ProcessString)]
   property quality_dash : String = CONFIG.default_user_preferences.quality_dash
@@ -390,6 +391,53 @@ struct Preferences
       else
         node.raise "Expected scalar, not #{node.class}"
       end
+    end
+  end
+
+  module CommentSources
+    def self.normalize(value : Array(String)) : Array(String)
+      value.map { |source| source == "reddit" ? "youtube" : source }
+    end
+
+    def self.from_json(value : JSON::PullParser) : Array(String)
+      normalize(StringToArray.from_json(value))
+    end
+
+    def self.to_json(value : Array(String), json : JSON::Builder)
+      StringToArray.to_json(normalize(value), json)
+    end
+
+    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array(String)
+      normalize(StringToArray.from_yaml(ctx, node))
+    end
+
+    def self.to_yaml(value : Array(String), yaml : YAML::Nodes::Builder)
+      StringToArray.to_yaml(normalize(value), yaml)
+    end
+  end
+
+  module Quality
+    def self.normalize(value : String) : String
+      value == "hd720" ? "medium" : value
+    end
+
+    def self.from_json(value : JSON::PullParser) : String
+      normalize(ProcessString.from_json(value))
+    end
+
+    def self.to_json(value : String, json : JSON::Builder)
+      ProcessString.to_json(normalize(value), json)
+    end
+
+    def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : String
+      unless node.is_a?(YAML::Nodes::Scalar)
+        node.raise "Expected scalar, not #{node.class}"
+      end
+      normalize(ProcessString.from_yaml(ctx, node))
+    end
+
+    def self.to_yaml(value : String, yaml : YAML::Nodes::Builder)
+      ProcessString.to_yaml(normalize(value), yaml)
     end
   end
 

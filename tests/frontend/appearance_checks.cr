@@ -133,7 +133,7 @@ def preferences_post_env(body : String, content_type = "application/x-www-form-u
   env.set "preferences", Preferences.from_json("{}")
   env.set "header_x-forwarded-host", "invidious.test"
   env.set "sid", "fixture-session"
-  env.request.headers["X-CSRF-Token"] = generate_response("fixture-session", {"POST:preferences"}, HMAC_KEY)
+  env.request.headers["X-CSRF-Token"] = Invidious::Helpers::Tokens.generate_response("fixture-session", {"POST:preferences"}, HMAC_KEY)
   env
 end
 

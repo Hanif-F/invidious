@@ -117,7 +117,7 @@ def check_required_login
     email = Invidious::Database::SessionIDs.select_email(sid).not_nil!
     user = Invidious::Database::Users.select!(email: email)
     token = Invidious::Database::Accounts.authenticate_mobile(user.username, password).not_nil![:accessToken]
-    restricted = generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
+    restricted = Invidious::Helpers::Tokens.generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
     CONFIG.login_required = true
 
     content_calls = RequiredLoginTestEndpoint.content_calls
@@ -207,7 +207,7 @@ def check_required_login
     signed_in = required_login_response("POST", redirect.headers["Location"], body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded", cookies: "AUTH_CSRF=#{form.cookies["AUTH_CSRF"].value}")
     check(signed_in.status_code == 302 && signed_in.headers["Location"]? == target, "Login did not return to the original page: #{signed_in.status_code}, #{signed_in.headers["Location"]?}")
     logout_sid = signed_in.cookies["SID"].value
-    logout_csrf = generate_response(logout_sid, {"POST:signout"}, HMAC_KEY)
+    logout_csrf = Invidious::Helpers::Tokens.generate_response(logout_sid, {"POST:signout"}, HMAC_KEY)
     required_login_response("POST", "/signout", logout_sid, body: URI::Params.encode({"csrf_token" => logout_csrf}), content_type: "application/x-www-form-urlencoded")
     check(required_login_response("GET", "/watch", logout_sid).status_code == 303, "Signed-out session retained content access")
     {"https://evil.test/path", "//evil.test/path", "/%2f%2fevil.test", "/%5cevil.test", "/watch%0d%0aLocation:evil", "/login", "/signup"}.each do |unsafe|
@@ -240,10 +240,10 @@ def check_required_login
 
     expired = JSON.parse(token).as_h
     expired["expire"] = JSON::Any.new(Time.utc.to_unix - 1)
-    expired["signature"] = JSON::Any.new(sign_token(HMAC_KEY, expired))
+    expired["signature"] = JSON::Any.new(Invidious::Helpers::Tokens.sign_token(HMAC_KEY, expired))
     forged = JSON.parse(token).as_h
     forged["signature"] = JSON::Any.new("forged")
-    form_token = generate_response(sid, {":*"}, HMAC_KEY)
+    form_token = Invidious::Helpers::Tokens.generate_response(sid, {":*"}, HMAC_KEY)
     {"malformed", expired.to_json, forged.to_json, form_token}.each do |invalid|
       check(required_login_response("GET", "/api/v1/videos/test", sid, invalid).status_code == 401, "Invalid bearer fell back to a valid cookie")
     end

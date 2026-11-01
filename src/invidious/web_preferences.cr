@@ -55,7 +55,10 @@ module Invidious::WebPreferences
         next unless (0...size).any? { |index| form.has_key?("#{field}[#{index}]") }
         old = previous[field]?.try(&.as_a?) || [] of JSON::Any
         values = (0...size).map do |index|
-          JSON::Any.new(form["#{field}[#{index}]"]? || old[index]?.try(&.as_s?) || "")
+          supplied = form["#{field}[#{index}]"]?
+          value = supplied || old[index]?.try(&.as_s?) || ""
+          value = "youtube" if supplied.nil? && field == "comments" && value == "reddit"
+          JSON::Any.new(value)
         end
         values.reject! { |value| value.as_s.empty? } if field == "feed_menu"
         value = JSON::Any.new(values)
@@ -108,7 +111,7 @@ module Invidious::WebPreferences
     when "region"
       raise InvalidField.new(field) unless value.raw.nil? || value.as_s.matches?(/\A[A-Z]{2}\z/)
     when "quality"
-      raise InvalidField.new(field) unless %w(dash hd720 medium small).includes?(value.as_s)
+      raise InvalidField.new(field) unless %w(dash medium small).includes?(value.as_s)
     else
       Invidious::NativePreferences.validate_patch({field => value})
     end

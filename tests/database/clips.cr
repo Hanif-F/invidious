@@ -28,6 +28,8 @@ require "../../src/invidious/videos/*"
 require "../../src/invidious/jsonify/**"
 
 require "../../src/invidious/*"
+require "../../src/invidious/playlists/*"
+require "../../src/invidious/feeds/*"
 require "../../src/invidious/comments/*"
 require "../../src/invidious/channels/*"
 require "../../src/invidious/user/*"
@@ -190,8 +192,8 @@ begin
   legacy_data = JSON.parse(result(legacy_api))
   check(legacy_data["clipTitle"].as_s == "Legacy title" && legacy_data["endTime"].as_f == 6.234 && !legacy_data["type"]?, "Legacy API shape changed")
   payload = {videoId: video.id, title: "  A <script> & moment  ", startTime: 1.234, endTime: 6.234}.to_json
-  token = generate_token(alice.email, ["GET:clips", "POST:clips", "DELETE:clips/*"], nil, HMAC_KEY, "alice-session")
-  reader = generate_token(alice.email, ["GET:clips"], nil, HMAC_KEY, "alice-session")
+  token = Invidious::Helpers::Tokens.generate_token(alice.email, ["GET:clips", "POST:clips", "DELETE:clips/*"], nil, HMAC_KEY, "alice-session")
+  reader = Invidious::Helpers::Tokens.generate_token(alice.email, ["GET:clips"], nil, HMAC_KEY, "alice-session")
   check(clip_request("POST", "/api/v1/auth/clips", bearer: reader, body: payload).response.status_code == 403, "Restricted token created clip")
   check(clip_request("POST", "/api/v1/auth/clips", "alice-session", body: payload).response.status_code == 403, "Missing CSRF accepted")
   check(clip_request("POST", "/api/v1/auth/clips", "alice-session", body: payload, csrf: "invalid").response.status_code == 403, "Invalid CSRF accepted")
@@ -294,7 +296,7 @@ begin
   removed = clip_request("POST", "/delete_clip", "alice-session",
     body: URI::Params.encode({"csrf_token" => delete_token, "id" => form_clip_id}), content_type: "application/x-www-form-urlencoded")
   check(removed.response.status_code == 302 && Invidious::Database::Clips.select(form_clip_id).nil?, "Ordinary deletion form failed")
-  check(clip_request("DELETE", "/api/v1/auth/clips/#{id}", "bob-session", csrf: generate_response("bob-session", {"DELETE:*"}, HMAC_KEY)).response.status_code == 404, "Foreign owner deleted clip")
+  check(clip_request("DELETE", "/api/v1/auth/clips/#{id}", "bob-session", csrf: Invidious::Helpers::Tokens.generate_response("bob-session", {"DELETE:*"}, HMAC_KEY)).response.status_code == 404, "Foreign owner deleted clip")
   check(clip_request("POST", "/delete_clip", "alice-session", body: URI::Params.encode({"id" => id}), content_type: "application/x-www-form-urlencoded").response.status_code == 403, "Form deletion missing CSRF accepted")
   check(result(clip_request("GET", "/delete_clip?id=#{id}", "alice-session")).includes?("Delete this clip permanently?"), "Deletion confirmation missing")
   PG_DB.exec("UPDATE users SET username = 'Renamed' WHERE email = $1", alice.email)

@@ -27,7 +27,7 @@ def check_browser_profiles
   Invidious::Authentication.set_session(login, alice_sid)
   check(login.response.cookies["PREFS"]?.nil? && login.response.cookies[Invidious::BrowserProfiles::MARKER].value == alice, "Login destroyed guest settings")
   check(Invidious::Database::Users.select!(email: alice_email).preferences.speed == 1.5, "Login reset database settings")
-  logout = context("POST", "/signout", {"csrf_token" => generate_response(alice_sid, {":signout"}, HMAC_KEY)}, "SID=#{alice_sid}; #{cookie_header}")
+  logout = context("POST", "/signout", {"csrf_token" => Invidious::Helpers::Tokens.generate_response(alice_sid, {":signout"}, HMAC_KEY)}, "SID=#{alice_sid}; #{cookie_header}")
   Invidious::Routes::BeforeAll.handle(logout)
   Invidious::Routes::Login.signout(logout)
   check(logout.response.cookies["SID"].expires == Time.unix(0) && logout.response.cookies[Invidious::BrowserProfiles::MARKER].value == "guest", "Logout did not return to guest profile")
@@ -54,7 +54,7 @@ def check_browser_profiles
   check(csrf.response.headers["X-Invidious-Browser-Profile"] == alice, "CSRF response omitted storage-denial profile guard")
   expired = security_request("GET", "/api/v1/auth/preferences", alice_sid)
   check(expired.response.status_code == 403 && expired.response.cookies[Invidious::BrowserProfiles::MARKER].value == "guest", "Revoked session did not invalidate browser profile")
-  bearer = generate_token(alice_email, ["GET:preferences"], nil, HMAC_KEY, replacement)
+  bearer = Invidious::Helpers::Tokens.generate_token(alice_email, ["GET:preferences"], nil, HMAC_KEY, replacement)
   native = security_request("GET", "/api/v1/auth/preferences", bob_sid, bearer)
   check(native.response.cookies[Invidious::BrowserProfiles::MARKER]?.nil? && native.response.cookies["SID"]?.nil? && native.response.headers["X-Invidious-Browser-Profile"]?.nil?, "Bearer request changed browser identity")
 
@@ -65,7 +65,7 @@ def check_browser_profiles
   check(guest_channel.response.status_code == 403 && Invidious::Database::Users.select!(email: bob_email).preferences.to_json == before_guest, "Guest channel action wrote account preferences")
 
   # Delete only this account's browser cookies; the next document purges its storage.
-  deletion = context("POST", "/delete_account", {"password" => password, "csrf_token" => generate_response(replacement, {":delete_account"}, HMAC_KEY)}, "SID=#{replacement}; #{cookie_header}; SEARCH_SHOW_MEMBER_VIDEOS_#{alice}=0")
+  deletion = context("POST", "/delete_account", {"password" => password, "csrf_token" => Invidious::Helpers::Tokens.generate_response(replacement, {":delete_account"}, HMAC_KEY)}, "SID=#{replacement}; #{cookie_header}; SEARCH_SHOW_MEMBER_VIDEOS_#{alice}=0")
   Invidious::Routes::BeforeAll.handle(deletion)
   Invidious::Routes::Account.post_delete(deletion)
   check(deletion.response.status_code == 302 && deletion.response.cookies[Invidious::BrowserProfiles::PURGE].value == alice, "Account deletion omitted browser cleanup")

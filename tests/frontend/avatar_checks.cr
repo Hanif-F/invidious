@@ -151,7 +151,7 @@ check_native_channel_avatars
 def real_avatar_items
   items = JSON.parse(File.read("spec/invidious/frontend/fixtures/avatar_lockups.json")).as_a
   response = JSON.parse({onResponseReceivedActions: [{appendContinuationItemsAction: {continuationItems: items}}]}.to_json).as_h
-  extract_playlist_videos("PLNoVVZkH7--4P12wo6pVV10ycmBCMct6l", response).select(PlaylistVideo)
+  Invidious::Playlists::Playlists.extract_playlist_videos("PLNoVVZkH7--4P12wo6pVV10ycmBCMct6l", response).select(PlaylistVideo)
 end
 
 def check_real_avatar_extraction
@@ -184,7 +184,7 @@ def check_real_avatar_extraction
     item = JSON.parse(File.read("spec/invidious/frontend/fixtures/avatar_lockups.json")).as_a.first
     item["lockupViewModel"]["metadata"]["lockupMetadataViewModel"].as_h["image"] = image
     response = JSON.parse({onResponseReceivedActions: [{appendContinuationItemsAction: {continuationItems: [item]}}]}.to_json).as_h
-    video = extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo)
+    video = Invidious::Playlists::Playlists.extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo)
     raise "Malformed avatar lost playlist identity" unless video.ucid == ids.first && video.index == 0
     raise "Malformed playlist avatar accepted" unless video.author_thumbnail.nil?
   end
@@ -192,7 +192,7 @@ def check_real_avatar_extraction
   endpoint = item["lockupViewModel"]["metadata"]["lockupMetadataViewModel"].dig("image", "decoratedAvatarViewModel", "rendererContext", "commandContext", "onTap", "innertubeCommand", "browseEndpoint")
   endpoint.as_h["browseId"] = JSON::Any.new("UCother")
   response = JSON.parse({onResponseReceivedActions: [{appendContinuationItemsAction: {continuationItems: [item]}}]}.to_json).as_h
-  raise "Conflicting playlist avatar accepted" unless extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo).author_thumbnail.nil?
+  raise "Conflicting playlist avatar accepted" unless Invidious::Playlists::Playlists.extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo).author_thumbnail.nil?
   raise "Invalid avatar extraction fetched metadata" unless YoutubeAPI.avatar_listing_calls == 0
   puts "Real response avatar extraction, native serialization, cache reuse and zero-metadata-request checks passed"
 end

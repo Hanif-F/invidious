@@ -17,7 +17,7 @@ def write_blocked_channels_fixtures(output)
           Invidious::Database::BlockedChannels.block(user.email, "UC" + ('a'.ord + index).chr.to_s * 22, name)
         end
       end
-      fields = {"ucid" => "UC" + "a" * 22, "action" => "unblock", "name" => "<Requested channel>", "csrf_token" => generate_response("fixture-session", {"POST:blocked_channels"}, HMAC_KEY), "browser_profile" => Invidious::BrowserProfiles.account_scope(user.email)}
+      fields = {"ucid" => "UC" + "a" * 22, "action" => "unblock", "name" => "<Requested channel>", "csrf_token" => Invidious::Helpers::Tokens.generate_response("fixture-session", {"POST:blocked_channels"}, HMAC_KEY), "browser_profile" => Invidious::BrowserProfiles.account_scope(user.email)}
       fields["browser_profile"] = "earlier-profile" if kind == "stale"
       fields["csrf_token"] = "expired" if kind == "expired"
       fields["action"] = "invalid<draft>&" if kind == "invalid"

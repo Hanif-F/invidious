@@ -59,7 +59,7 @@ def write_watch_utility_fixtures(output)
     {"comments", "comments-disabled", "comments-thin", "comments-nojs"}.each do |kind|
       env = fixture_env("/watch?v=2isYuQZMbdU", mode)
       prefs = env.get("preferences").as(Preferences)
-      prefs.comments = ["youtube", "reddit"]; prefs.thin_mode = kind == "comments-thin"; env.set "preferences", prefs
+      prefs.comments = ["youtube", ""]; prefs.thin_mode = kind == "comments-thin"; env.set "preferences", prefs
       video = fixture_video
       video.info["commentsEnabled"] = JSON::Any.new(false) if kind == "comments-disabled"
       source = watch_fixture(env, nil, supplied_video: video, nojs_comments: kind == "comments-nojs", initial_comment_html: Invidious::Frontend::Comments.template_youtube(JSON::Any.new(data), "en-US", prefs.thin_mode))
@@ -68,9 +68,6 @@ def write_watch_utility_fixtures(output)
   end
   File.write("#{output}/d6-comments-page.json", {"contentHtml" => Invidious::Frontend::Comments.template_youtube(JSON::Any.new(data), "en-US", false), "commentCount" => 3}.to_json)
   File.write("#{output}/d6-comments-thin.json", {"contentHtml" => Invidious::Frontend::Comments.template_youtube(JSON::Any.new(data), "en-US", true), "commentCount" => 3}.to_json)
-  reddit = JSON.parse(%([{"kind":"t1","data":{"author":"A reader <literal>","body_html":"&lt;div&gt;&lt;p&gt;A thoughtful Reddit response.&lt;/p&gt;&lt;/div&gt;","score":12,"depth":0,"permalink":"/r/videos/comments/fixture/thread","created_utc":1700000000,"replies":{"kind":"Listing","data":{"modhash":"","children":[{"kind":"t1","data":{"author":"Another reader","body_html":"&lt;div&gt;&lt;p&gt;A nested response.&lt;/p&gt;&lt;/div&gt;","score":2,"depth":1,"permalink":"/r/videos/comments/fixture/reply","created_utc":1700000001,"replies":""}},{"kind":"more","data":{"children":["opaque-child"],"count":4,"depth":1}}]}}}}]))
-  children = Array(RedditThing).from_json(reddit.to_json)
-  File.write("#{output}/d6-reddit-page.json", {"contentHtml" => Invidious::Frontend::Comments.template_reddit(children, "en-US"), "title" => "An original video title must not be repeated in auxiliary labels", "permalink" => "/r/videos/comments/fixture/thread"}.to_json)
 end
 
 def chat_settings_fixture(account = false, mode = "light", locale = "en-US")

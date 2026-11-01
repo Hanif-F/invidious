@@ -28,6 +28,8 @@ require "../../src/invidious/videos/*"
 require "../../src/invidious/jsonify/**"
 
 require "../../src/invidious/*"
+require "../../src/invidious/playlists/*"
+require "../../src/invidious/feeds/*"
 require "../../src/invidious/comments/*"
 require "../../src/invidious/channels/*"
 require "../../src/invidious/user/*"
@@ -184,7 +186,7 @@ begin
   PG_DB.exec("INSERT INTO playlists (id, author, title) VALUES ('IVtest', 'Legacy Name!', 'Saved playlist')")
   PG_DB.exec("INSERT INTO playlists (id, author, title, video_count) VALUES ('PLlegacy', 'Legacy Name!', 'Legacy subscription', 8)")
   PG_DB.exec("INSERT INTO playlists (id, author, title, video_count) VALUES ('RDabcdefghijk', 'Legacy Name!', 'Legacy mix', -1)")
-  PG_DB.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256("Legacy Name!")} AS #{MATERIALIZED_VIEW_SQL.call("Legacy Name!")}")
+  PG_DB.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256("Legacy Name!")} AS #{Invidious::User::Users::MATERIALIZED_VIEW_SQL.call("Legacy Name!")}")
   linked = %w[watch_history playback_positions blocked_channels dearrow_identities playlists]
   snapshots = linked.to_h { |table| {table, PG_DB.query_one("SELECT json_agg(t)::text FROM #{table} t", as: String)} }
   migration = Invidious::Database::Migrator.new(PG_DB)
@@ -243,8 +245,8 @@ begin
   check(race_results.compact.count { |value| Invidious::Database::SessionIDs.select_email(value) != nil } == 1, "Concurrent old-password login survived change")
   new_password = "the next strong account password"
   sid = race_results.compact.find! { |value| Invidious::Database::SessionIDs.select_email(value) != nil }
-  must_fail("Revoked parent minted a new API token") { generate_token(user.email, [":*"], nil, HMAC_KEY, "old-browser") }
-  api = JSON.parse(generate_token(user.email, [":*"], nil, HMAC_KEY, sid))["session"].as_s
+  must_fail("Revoked parent minted a new API token") { Invidious::Helpers::Tokens.generate_token(user.email, [":*"], nil, HMAC_KEY, "old-browser") }
+  api = JSON.parse(Invidious::Helpers::Tokens.generate_token(user.email, [":*"], nil, HMAC_KEY, sid))["session"].as_s
   check(Invidious::Database::SessionIDs.select_email(api) == user.email, "API token creation failed")
   # Expiry is server-enforced for both web and API cookie authentication.
   PG_DB.exec("UPDATE session_ids SET expires_at = now() - interval '1 second' WHERE id = $1", sid)
@@ -264,11 +266,11 @@ begin
   Invidious::Authentication.validate_form(post)
   must_fail("Missing binding accepted") { Invidious::Authentication.validate_form(context("POST", "/login", {"csrf_token" => token})) }
   must_fail("Wrong scope accepted") { Invidious::Authentication.validate_form(context("POST", "/signup", {"csrf_token" => token}, "AUTH_CSRF=#{cookie}")) }
-  expired = generate_response(cookie, {"POST:login"}, HMAC_KEY, -1.second)
-  must_fail("Expired form accepted") { validate_request(expired, cookie, post.request, HMAC_KEY) }
-  nonce = generate_response(cookie, {"POST:login"}, HMAC_KEY, use_nonce: true)
-  validate_request(nonce, cookie, post.request, HMAC_KEY)
-  must_fail("Reused nonce accepted") { validate_request(nonce, cookie, post.request, HMAC_KEY) }
+  expired = Invidious::Helpers::Tokens.generate_response(cookie, {"POST:login"}, HMAC_KEY, -1.second)
+  must_fail("Expired form accepted") { Invidious::Helpers::Tokens.validate_request(expired, cookie, post.request, HMAC_KEY) }
+  nonce = Invidious::Helpers::Tokens.generate_response(cookie, {"POST:login"}, HMAC_KEY, use_nonce: true)
+  Invidious::Helpers::Tokens.validate_request(nonce, cookie, post.request, HMAC_KEY)
+  must_fail("Reused nonce accepted") { Invidious::Helpers::Tokens.validate_request(nonce, cookie, post.request, HMAC_KEY) }
   CONFIG.auth_trusted_proxies = ["10.0.0.0/8", "2001:db8::/32"]
   check(Invidious::Authentication.trusted?("10.2.3.4"), "IPv4 proxy CIDR mismatch")
   check(Invidious::Authentication.trusted?("2001:db8::1"), "IPv6 proxy CIDR mismatch")
@@ -322,7 +324,7 @@ begin
   account.set "user", account_user
   account.set "sid", account_sid
   check(Invidious::Routes::Account.get_account(account).not_nil!.includes?("Change username"), "Account page did not render")
-  change_token = generate_response(account_sid, {"POST:account/username"}, HMAC_KEY)
+  change_token = Invidious::Helpers::Tokens.generate_response(account_sid, {"POST:account/username"}, HMAC_KEY)
   change = context("POST", "/account/username", {"csrf_token" => change_token, "username" => "RouteRenamed", "password" => new_password})
   change.set "user", account_user
   change.set "sid", account_sid
@@ -336,13 +338,13 @@ begin
   csrf = Invidious::Authentication.form_token(captcha_get, "signup")
   binding = captcha_get.response.cookies["AUTH_CSRF"].value
   answer = OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, "1:05:10")
-  captcha_token = generate_response(answer, {"POST:signup"}, HMAC_KEY, use_nonce: true)
+  captcha_token = Invidious::Helpers::Tokens.generate_response(answer, {"POST:signup"}, HMAC_KEY, use_nonce: true)
   captcha_post = context("POST", "/signup", {"csrf_token" => csrf, "username" => "CaptchaUser", "password" => new_password, "password_confirmation" => new_password, "answer" => "1:05:10", "token[0]" => captcha_token}, "AUTH_CSRF=#{binding}")
   Invidious::Routes::Login.signup(captcha_post)
   check(captcha_post.response.status_code == 302, "Valid signup CAPTCHA rejected")
-  must_fail("Reused CAPTCHA accepted") { validate_request(captcha_token, answer, captcha_post.request, HMAC_KEY) }
-  incorrect_token = generate_response(answer, {"POST:signup"}, HMAC_KEY, use_nonce: true)
-  must_fail("Wrong CAPTCHA answer accepted") { validate_request(incorrect_token, "wrong answer", captcha_post.request, HMAC_KEY) }
+  must_fail("Reused CAPTCHA accepted") { Invidious::Helpers::Tokens.validate_request(captcha_token, answer, captcha_post.request, HMAC_KEY) }
+  incorrect_token = Invidious::Helpers::Tokens.generate_response(answer, {"POST:signup"}, HMAC_KEY, use_nonce: true)
+  must_fail("Wrong CAPTCHA answer accepted") { Invidious::Helpers::Tokens.validate_request(incorrect_token, "wrong answer", captcha_post.request, HMAC_KEY) }
   CONFIG.captcha_enabled = false
   CONFIG.registration_enabled = false
   disabled = context("GET", "/signup")

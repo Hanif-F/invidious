@@ -66,7 +66,7 @@ def comment_avatar_response_cases
       end
       {false, true}.each do |single|
         check_comment_avatar_response(responses, "community-#{single}-#{suffix}", expected_comment_avatars("community")) do
-          extract_channel_community(comment_avatar_fixture("community_posts").as_a,
+          Invidious::Channels::Community.extract_channel_community(comment_avatar_fixture("community_posts").as_a,
             ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: "en-US", format: format, thin_mode: thin, is_single_post: single)
         end
       end
@@ -119,17 +119,17 @@ def check_fetched_comment_avatars
   listing = JSON.parse({contents: {twoColumnBrowseResultsRenderer: {tabs: [{tabRenderer: {selected: true, content: {sectionListRenderer: {contents: [{itemSectionRenderer: {contents: items}}]}}}}]}}}.to_json).as_h
   YoutubeAPI.avatar_listing_fixture = listing
   check_comment_avatar_response(responses, "fetch-community", expected_comment_avatars("community")) do
-    fetch_channel_community("UCXuqSBlHAE6Xw-yeJA0Tunw", nil, "en-US", "json", true)
+    Invidious::Channels::Community.fetch_channel_community("UCXuqSBlHAE6Xw-yeJA0Tunw", nil, "en-US", "json", true)
   end
   calls += 1
   check_comment_avatar_response(responses, "fetch-single-post", expected_comment_avatars("community")) do
-    fetch_channel_community_post("UCXuqSBlHAE6Xw-yeJA0Tunw", "post-fixture", "en-US", "html", true)
+    Invidious::Channels::Community.fetch_channel_community_post("UCXuqSBlHAE6Xw-yeJA0Tunw", "post-fixture", "en-US", "html", true)
   end
   calls += 1
 
   YoutubeAPI.avatar_listing_fixture = JSON.parse({continuationContents: {itemSectionContinuation: {contents: items}}}.to_json).as_h
   check_comment_avatar_response(responses, "fetch-community-continuation", expected_comment_avatars("community")) do
-    fetch_channel_community("UCXuqSBlHAE6Xw-yeJA0Tunw", "fixture-next-page", "en-US", "json", true)
+    Invidious::Channels::Community.fetch_channel_community("UCXuqSBlHAE6Xw-yeJA0Tunw", "fixture-next-page", "en-US", "json", true)
   end
   calls += 1
 
@@ -158,7 +158,7 @@ def check_comment_avatar_edges
       Invidious::Comments.parse_youtube("2isYuQZMbdU", raw, format, "en-US", false)
     end
     check_comment_avatar_response(responses, "empty-posts-#{format}", empty) do
-      extract_channel_community([JSON.parse("{}")], ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: "en-US", format: format, thin_mode: true)
+      Invidious::Channels::Community.extract_channel_community([JSON.parse("{}")], ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: "en-US", format: format, thin_mode: true)
     end
   end
 
@@ -180,7 +180,7 @@ def check_comment_avatar_edges
     items.each do |item|
       item["backstagePostThreadRenderer"]["post"]["backstagePostRenderer"]["authorEndpoint"]["browseEndpoint"].as_h["browseId"] = JSON::Any.new("")
     end
-    parsed = extract_channel_community(items, ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: "en-US", format: "json", thin_mode: false)
+    parsed = Invidious::Channels::Community.extract_channel_community(items, ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: "en-US", format: "json", thin_mode: false)
     raise "Unidentified posts lost records or inferred parent identity" unless JSON.parse(parsed)["comments"].as_a.all? { |post| post["authorId"].as_s.empty? }
     parsed
   end
@@ -219,7 +219,7 @@ def check_comment_avatar_edges
   raise "Cache failure read cache" unless cache.comment_avatar_reads == reads
   # Also ensure community HTML survives the failed write.
   writes = cache.comment_avatar_writes
-  response = extract_channel_community(comment_avatar_fixture("community_posts").as_a, ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: "en-US", format: "html", thin_mode: false)
+  response = Invidious::Channels::Community.extract_channel_community(comment_avatar_fixture("community_posts").as_a, ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: "en-US", format: "html", thin_mode: false)
   raise "Cache failure changed community HTML" unless comment_avatar_output_digest(response) == comment_avatar_fixture("baseline_output_digests")["community-false-html-false"].as_s
   raise "Community cache failure retried write" unless cache.comment_avatar_writes == writes + 1
 ensure
@@ -231,7 +231,7 @@ def comment_avatar_cross_page_fixture(thin = false)
   env = fixture_env("/feed/subscriptions", thin: thin)
   locale = "en-US"
   modern = JSON.parse(Invidious::Comments.parse_youtube("2isYuQZMbdU", comment_avatar_fixture("modern_comments").as_h, "json", locale, true))["comments"].as_a
-  community = JSON.parse(extract_channel_community(comment_avatar_fixture("community_posts").as_a, ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: locale, format: "json", thin_mode: true))["comments"].as_a.first(1)
+  community = JSON.parse(Invidious::Channels::Community.extract_channel_community(comment_avatar_fixture("community_posts").as_a, ucid: "UCXuqSBlHAE6Xw-yeJA0Tunw", locale: locale, format: "json", thin_mode: true))["comments"].as_a.first(1)
   items = (modern + community).map_with_index do |author, index|
     # These subscription cards contain no supplied avatar, so they require cache reuse.
     ChannelVideo.new({title: "An avatar learned from an existing comment or post", id: "comment#{index}", author: author["author"].as_s, ucid: author["authorId"].as_s,

@@ -8,6 +8,7 @@ module Invidious::Frontend::ChannelPage
     Podcasts
     Releases
     Courses
+    Shows
     Playlists
     Clips
     Posts
@@ -38,7 +39,7 @@ module Invidious::Frontend::ChannelPage
       {TabsAvailable::Videos, TabsAvailable::Shorts, TabsAvailable::Streams, TabsAvailable::Playlists, TabsAvailable::Clips, TabsAvailable::Posts, TabsAvailable::Search}.each do |tab|
         tab_link(str, locale, channel, tab, selected_tab) if available?(channel, tab, selected_tab)
       end
-      overflow = {TabsAvailable::Podcasts, TabsAvailable::Releases, TabsAvailable::Courses, TabsAvailable::Channels}
+      overflow = {TabsAvailable::Podcasts, TabsAvailable::Releases, TabsAvailable::Courses, TabsAvailable::Shows, TabsAvailable::Channels}
       selected_more = overflow.includes?(selected_tab)
       str << %(<details class="ui-menu channel-more" data-ui-menu><summary class="button")
       str << %( aria-current="page") if selected_more

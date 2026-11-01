@@ -10,7 +10,7 @@ module Invidious::Routes::BlockedChannels
   private def self.state(env, user : User, sid : String)
     {channels: Database::BlockedChannels.list(user.email).map { |id, name| {authorId: id, author: name} },
      profile:  Invidious::BrowserProfiles.render_scope(env),
-     csrf:     generate_response(sid, {"POST:blocked_channels"}, HMAC_KEY)}.to_json
+     csrf:     Invidious::Helpers::Tokens.generate_response(sid, {"POST:blocked_channels"}, HMAC_KEY)}.to_json
   end
 
   private def self.failure(env, code : Int32, message : String, uncertain = false, stale = false)
@@ -19,7 +19,7 @@ module Invidious::Routes::BlockedChannels
       env.response.content_type = "application/json"
       return {error: message}.to_json
     end
-    return error_template(code, message) unless env.get?("user") && env.get?("sid")
+    return Errors.error_template(code, message) unless env.get?("user") && env.get?("sid")
     env.set "blocked_error", message
     env.set "blocked_uncertain", uncertain
     env.set "blocked_stale", stale
@@ -51,7 +51,7 @@ module Invidious::Routes::BlockedChannels
       env.set "blocked_unavailable", true
       env.set "blocked_error", I18n.translate(locale, "overhaul_blocks_load_error") unless env.get?("blocked_error")
     end
-    csrf_token = generate_response(sid, {"POST:blocked_channels"}, HMAC_KEY)
+    csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:blocked_channels"}, HMAC_KEY)
     templated "user/blocked_channels"
   end
 
@@ -65,7 +65,7 @@ module Invidious::Routes::BlockedChannels
       return failure(env, 409, I18n.translate(locale, "overhaul_channel_profile_changed"), stale: true) unless profile == Invidious::BrowserProfiles.render_scope(env)
     end
     begin
-      validate_request(env.params.body["csrf_token"]?, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(env.params.body["csrf_token"]?, sid, env.request, HMAC_KEY, locale)
     rescue
       # Keep the ordinary contextual endpoint's existing CSRF status/JSON path.
       return failure(env, 400, I18n.translate(locale, "overhaul_channel_session"))

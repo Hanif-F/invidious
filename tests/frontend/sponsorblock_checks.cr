@@ -71,7 +71,7 @@ def check_sponsorblock_channels
   File.write("tests/frontend/.generated/sponsorblock-channels.html", html)
   # Render a guest editor with known channel metadata; no upstream request.
   File.write("tests/frontend/.generated/sponsorblock-channels-guest-editor.html", guest_sponsorblock_editor(id))
-  token = generate_response("fixture-session", {"POST:preferences/sponsorblock/channels"}, HMAC_KEY)
+  token = Invidious::Helpers::Tokens.generate_response("fixture-session", {"POST:preferences/sponsorblock/channels"}, HMAC_KEY)
   # Effective settings are resolved by the shared watch/embed player template.
   video_id = fixture_video.ucid
   {false, true}.each do |embed|
@@ -145,7 +145,7 @@ def write_sponsorblock_editor_fixtures(output)
       env.set "user", user
       env.set "preferences", prefs
       env.set "sid", "fixture-session"
-      token = generate_response("fixture-session", {"POST:preferences/sponsorblock/channels"}, HMAC_KEY)
+      token = Invidious::Helpers::Tokens.generate_response("fixture-session", {"POST:preferences/sponsorblock/channels"}, HMAC_KEY)
       fields = {"channel" => id, "enabled" => "true", "mode_sponsor" => "marker", "mode_intro" => "manual<draft>&", "csrf_token" => token, "browser_profile" => Invidious::BrowserProfiles.render_scope(env), "action" => "save"}
       fields["browser_profile"] = "earlier-profile" if kind == "stale"
       if kind == "missing"

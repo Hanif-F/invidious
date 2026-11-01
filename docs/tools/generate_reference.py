@@ -191,7 +191,7 @@ def make_source_map():
         "src/invidious/yt_backend": "YouTube Innertube requests, extraction, connection pooling, URL validation and outbound proxies.",
         "src/invidious/videos": "Video metadata, captions/transcripts, chapters, music, downloads and archived chat parsing.",
         "src/invidious/channels": "Channel metadata and tabs, community posts and upstream pagination.",
-        "src/invidious/comments": "YouTube and Reddit comment parsing, content and safe link handling.",
+        "src/invidious/comments": "YouTube comment parsing, content and safe link handling.",
         "src/invidious/search": "Query classification, filters, protobuf continuation construction and processors.",
         "src/invidious/user": "User models, credentials, cookies, preference converters, CAPTCHA and data exchange.",
         "src/invidious/jobs": "Long-running background refresh and cleanup fibers.",

@@ -14,7 +14,7 @@ module Invidious::Routes::API::V1::AiChannels
     begin
       ids, kinds = Invidious::AiSList::Api.parameters(env.params.query["ids"]?, env.params.query["lists"]?)
     rescue ex : ArgumentError
-      return error_json(400, ex.message || "Invalid AI query")
+      return Errors.error_json(400, ex.message || "Invalid AI query")
     end
     runtime = Invidious::AiSList.runtime
     Invidious::AiSList::Api.classify(ids, kinds, runtime.lists, runtime.resolver).to_json

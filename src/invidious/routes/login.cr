@@ -12,8 +12,8 @@ module Invidious::Routes::Login
     referer = Authentication.login_referer(env)
     Authentication.no_store(env)
     return env.redirect referer if env.get?("user")
-    return error_template(403, "Login has been disabled by administrator.") unless CONFIG.login_enabled
-    return error_template(403, "Registration has been disabled by administrator.") if signup && !CONFIG.registration_enabled
+    return Errors.error_template(403, "Login has been disabled by administrator.") unless CONFIG.login_enabled
+    return Errors.error_template(403, "Registration has been disabled by administrator.") if signup && !CONFIG.registration_enabled
     csrf_token = Authentication.form_token(env, signup ? "signup" : "login")
     captcha = signup && CONFIG.captcha_enabled ? User::Captcha.generate_image(HMAC_KEY) : nil
     {% if flag?(:api_only) %}
@@ -33,8 +33,8 @@ module Invidious::Routes::Login
   def self.submit(env, signup : Bool)
     locale = env.get("preferences").as(Preferences).locale
     Authentication.no_store(env)
-    return error_template(403, "Login has been disabled by administrator.") unless CONFIG.login_enabled
-    return error_template(403, "Registration has been disabled by administrator.") if signup && !CONFIG.registration_enabled
+    return Errors.error_template(403, "Login has been disabled by administrator.") unless CONFIG.login_enabled
+    return Errors.error_template(403, "Registration has been disabled by administrator.") if signup && !CONFIG.registration_enabled
     username = env.params.body["username"]? || env.params.body["email"]? || ""
     password = env.params.body["password"]? || ""
     begin
@@ -54,7 +54,7 @@ module Invidious::Routes::Login
       if !error && CONFIG.captcha_enabled
         begin
           answer = OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, (env.params.body["answer"]? || "").lstrip('0'))
-          validate_request(env.params.body["token[0]"]?, answer, env.request, HMAC_KEY, locale)
+          Invidious::Helpers::Tokens.validate_request(env.params.body["token[0]"]?, answer, env.request, HMAC_KEY, locale)
         rescue
           error = "Erroneous CAPTCHA"
         end
@@ -95,9 +95,9 @@ module Invidious::Routes::Login
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
-      return error_template(400, ex)
+      return Errors.error_template(400, ex)
     end
 
     Invidious::Database::SessionIDs.delete(sid: sid)

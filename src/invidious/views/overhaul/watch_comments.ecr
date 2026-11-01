@@ -3,10 +3,8 @@
     <% if (params.comments <=> ["", ""]) == 0 %>
         <p id="comments-disabled-message" class="muted"><%= HTML.escape(I18n.translate(locale, "comments_invidious_disabled_text")) %></p>
     <% else %>
-        <% comment_source = params.comments.find { |item| {"youtube", "reddit"}.includes?(item) } || "youtube" %>
-        <% if requested_comment_source = env.params.query["comments_source"]? %><% comment_source = requested_comment_source if {"youtube", "reddit"}.includes?(requested_comment_source) %><% elsif nojs && !video.comments? %><% comment_source = "reddit" %><% end %>
         <div class="comment-toolbar js-only">
-            <label for="comment-source"><%= I18n.translate(locale, "overhaul_comment_source") %><select id="comment-source"><% {"youtube", "reddit"}.each do |source| %><option value="<%= source %>" <%= "selected" if source == comment_source %>><%= I18n.translate(locale, source) %></option><% end %></select></label>
+            <label for="comment-source"><%= I18n.translate(locale, "overhaul_comment_source") %><select id="comment-source"><option value="youtube"><%= I18n.translate(locale, "youtube") %></option></select></label>
             <label for="comment-sort"><%= I18n.translate(locale, "overhaul_comment_sort") %><select id="comment-sort"></select></label>
         </div>
         <p id="comment-source-link" class="comment-source-link"></p>
@@ -16,9 +14,7 @@
             "baseUrl" => "/api/v1/comments/#{video.id}", "locale" => locale, "thinMode" => preferences.thin_mode, "youtubeEnabled" => video.comments?, "initialSort" => env.params.query["comments_sort"]?,
             "disabledText" => I18n.translate(locale, "comments_youtube_disabled_text"), "empty" => I18n.translate(locale, "overhaul_comment_empty"), "unavailable" => I18n.translate(locale, "overhaul_comment_unavailable"),
             "hideReplies" => I18n.translate(locale, "Hide replies"), "showReplies" => I18n.translate(locale, "Show replies"), "countText" => I18n.translate(locale, "overhaul_comments_count", "{count}"),
-            "redditLink" => I18n.translate(locale, "View more comments on Reddit"),
-            "youtubeSort" => [["top", I18n.translate(locale, "overhaul_comment_sort_top")], ["new", I18n.translate(locale, "overhaul_comment_sort_new")]],
-            "redditSort" => [["confidence", I18n.translate(locale, "overhaul_comment_sort_best")], ["top", I18n.translate(locale, "overhaul_comment_sort_top")], ["new", I18n.translate(locale, "overhaul_comment_sort_new")], ["controversial", I18n.translate(locale, "overhaul_comment_sort_controversial")], ["old", I18n.translate(locale, "overhaul_comment_sort_old")]]
+            "youtubeSort" => [["top", I18n.translate(locale, "overhaul_comment_sort_top")], ["new", I18n.translate(locale, "overhaul_comment_sort_new")]]
         }.to_json.gsub("<", "\\u003c") %></script>
     <% end %>
 </section>

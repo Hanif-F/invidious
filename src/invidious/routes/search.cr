@@ -77,9 +77,9 @@ module Invidious::Routes::Search
           items = query.process
         end
       rescue ex : ChannelSearchException
-        return error_template(404, "Unable to find channel with id of '#{ex.channel}'. Are you sure that's an actual channel id? It should look like 'UC4QobU6STFB0P71PMvOGN5A'.")
+        return Errors.error_template(404, "Unable to find channel with id of '#{ex.channel}'. Are you sure that's an actual channel id? It should look like 'UC4QobU6STFB0P71PMvOGN5A'.")
       rescue ex
-        return error_template(500, ex)
+        return Errors.error_template(500, ex)
       end
 
       upstream_count = items.size
@@ -119,7 +119,7 @@ module Invidious::Routes::Search
 
     hashtag = env.params.url["hashtag"]?
     if hashtag.nil? || hashtag.empty?
-      return error_template(400, "Invalid request")
+      return Errors.error_template(400, "Invalid request")
     end
 
     page = env.params.query["page"]?
@@ -131,9 +131,9 @@ module Invidious::Routes::Search
     end
 
     begin
-      items = Invidious::Hashtag.fetch(hashtag, page)
+      items = Invidious::Search::Hashtag.fetch_hashtag(hashtag, page)
     rescue ex
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
 
     upstream_count = items.size

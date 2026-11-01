@@ -312,7 +312,7 @@ def render_ai_thumbnail_fixtures(output, items, frontend, video, storage, lists,
     ]}.to_json)
     original_source = source.to_json
     replacements = frontend.prepare_queue(queue_env, source["videos"].as_a)
-    queue_data.as_h["playlistHtml"] = JSON::Any.new(template_playlist(source, false, thin, ai_thumbnails: replacements, locale: "en-US"))
+    queue_data.as_h["playlistHtml"] = JSON::Any.new(Invidious::Playlists::Playlists.template_playlist(source, false, thin, ai_thumbnails: replacements, locale: "en-US"))
     raise "Queue classification mutated public source" unless source.to_json == original_source
     File.write("#{output}/queue-ai-thumbnails-#{suffix}.json", queue_data.to_json)
     paused_queue = fixture_env("/api/v1/playlists/PLfixture?format=html", "dark", thin)
@@ -320,7 +320,7 @@ def render_ai_thumbnail_fixtures(output, items, frontend, video, storage, lists,
     paused_queue_data = JSON.parse(queue_data.to_json)
     paused_replacements = frontend.prepare_queue(paused_queue, source["videos"].as_a)
     raise "Paused queue still replaced thumbnails" unless paused_replacements.empty?
-    paused_queue_data.as_h["playlistHtml"] = JSON::Any.new(template_playlist(source, false, thin, ai_thumbnails: paused_replacements, locale: "en-US"))
+    paused_queue_data.as_h["playlistHtml"] = JSON::Any.new(Invidious::Playlists::Playlists.template_playlist(source, false, thin, ai_thumbnails: paused_replacements, locale: "en-US"))
     File.write("#{output}/queue-ai-paused-#{suffix}.json", paused_queue_data.to_json)
 
     source.as_h["mixId"] = JSON::Any.new("RDfixture")

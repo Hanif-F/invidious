@@ -1,6 +1,6 @@
 require "../../spec_helper"
 require "../../parsers_helper"
-require "../../../src/invidious/mixes"
+require "../../../src/invidious/playlists/mixes"
 require "../../../src/invidious/frontend/channel_spoilers"
 require "../../../src/invidious/frontend/channel_avatars"
 require "../../../src/invidious/frontend/desktop"
@@ -14,20 +14,20 @@ end
 
 Spectator.describe "Watch queue rendering" do
   it "retains occurrence indices without duplicate DOM IDs" do
-    html = template_playlist(queue_test_data, false)
+    html = Invidious::Playlists::Playlists.template_playlist(queue_test_data, false)
     expect(html).to contain(%(data-index="0"), %(data-index="1"))
     expect(html).to contain("&amp;index=0", "&amp;index=1")
     expect(html).to_not contain(%( id="repeat12345"))
   end
 
   it "escapes upstream titles, authors, and metadata" do
-    html = template_playlist(queue_test_data, false)
+    html = Invidious::Playlists::Playlists.template_playlist(queue_test_data, false)
     expect(html).to contain("A &lt;playlist&gt;", "&lt;script&gt;", "A &amp; B")
     expect(html).to_not contain("<script>")
   end
 
   it "does not request thumbnails in thin mode" do
-    html = template_playlist(queue_test_data, true, true)
+    html = Invidious::Playlists::Playlists.template_playlist(queue_test_data, true, true)
     expect(html).to_not contain("<img")
     expect(html).to contain("&amp;listen=1")
   end
@@ -45,8 +45,8 @@ Spectator.describe "Editable watch queues" do
       {videoId: "repeat12345", index: 0, indexId: "20000000000001", title: "First", author: "Author", lengthSeconds: 90},
       {videoId: "repeat12345", index: 1, indexId: "20000000000002", title: "Second", author: "Author", lengthSeconds: 90},
     ]}.to_json)
-    expect(template_playlist(data, false)).to_not contain("data-remove-index")
-    expect(template_playlist(data, false, false, true)).to contain(%(data-remove-index="9007199254740993"), %(data-remove-index="9007199254740994"))
-    expect(template_queue(data, false, true, false, true)).to_not contain("data-remove-index")
+    expect(Invidious::Playlists::Playlists.template_playlist(data, false)).to_not contain("data-remove-index")
+    expect(Invidious::Playlists::Playlists.template_playlist(data, false, false, true)).to contain(%(data-remove-index="9007199254740993"), %(data-remove-index="9007199254740994"))
+    expect(Invidious::Playlists::Playlists.template_queue(data, false, true, false, true)).to_not contain("data-remove-index")
   end
 end

@@ -19,7 +19,7 @@ def check_playlist_volume
     }}}]}}}.to_json).as_h
     action = JSON.parse({onResponseReceivedActions: [{appendContinuationItemsAction: {continuationItems: [item]}}]}.to_json).as_h
     [initial, continuation, action].each do |response|
-      video = extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo)
+      video = Invidious::Playlists::Playlists.extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo)
       raise "Incorrect publication presence for #{date}" unless video.published_known == known
       raise "Date parser changed" if known && (video.published - decode_date(date.sub(/\AStreamed /, ""))).abs > 2.seconds
       video.published = Time.utc - 3.days unless known # An old placeholder must also stay hidden.
@@ -32,5 +32,5 @@ def check_playlist_volume
       raise "DB columns changed" if PlaylistVideo.type_array.includes?("published_known")
     end
   end
-  raise "Missing metadata produced date" unless playlist_publication_date(nil).nil?
+  raise "Missing metadata produced date" unless Invidious::Playlists::Playlists.playlist_publication_date(nil).nil?
 end

@@ -7,7 +7,7 @@ module Invidious::Routes::Feeds
     if env.params.url["ucid"].matches?(/^[\w-]+$/)
       ucid = env.params.url["ucid"]
     else
-      return error_atom(400, InfoException.new("Invalid channel ucid provided."))
+      return Errors.error_atom(400, InfoException.new("Invalid channel ucid provided."))
     end
 
     params = HTTP::Params.parse(env.params.query["params"]? || "")
@@ -19,7 +19,7 @@ module Invidious::Routes::Feeds
     }
 
     response = YT_POOL.client &.get("/feeds/videos.xml?channel_id=#{ucid}")
-    return error_atom(404, NotFoundException.new("Channel does not exist.")) if response.status_code == 404
+    return Errors.error_atom(404, NotFoundException.new("Channel does not exist.")) if response.status_code == 404
     rss = XML.parse(response.body)
 
     videos = rss.xpath_nodes("//default:feed/default:entry", namespaces).map do |entry|
@@ -110,7 +110,7 @@ module Invidious::Routes::Feeds
 
     params = HTTP::Params.parse(env.params.query["params"]? || "")
 
-    videos, notifications = get_subscription_feed(user, max_results, page)
+    videos, notifications = Invidious::User::Users.get_subscription_feed(user, max_results, page)
 
     XML.build(indent: "  ", encoding: "UTF-8") do |xml|
       xml.element("feed", "xmlns:yt": "http://www.youtube.com/xml/schemas/2015",
@@ -147,13 +147,13 @@ module Invidious::Routes::Feeds
         seed = Invidious::NativePlaylists.seed(plid, env.params.query["continuation"]?)
         return Invidious::RSS.mix(fetch_mix(plid, seed, locale: locale), seed)
       rescue ex
-        return error_atom(404, ex)
+        return Errors.error_atom(404, ex)
       end
     end
     if plid.starts_with?("IV")
       playlist = Invidious::Database::Playlists.select(id: plid)
       user = env.get?("user").try &.as(User)
-      return error_atom(404, "Playlist does not exist.") unless playlist && (!playlist.privacy.private? || playlist.author == user.try(&.email))
+      return Errors.error_atom(404, "Playlist does not exist.") unless playlist && (!playlist.privacy.private? || playlist.author == user.try(&.email))
       env.response.headers["Cache-Control"] = "private, no-store" if playlist.privacy.private?
       if playlist.privacy.private?
         owner = Invidious::Database::Users.select(email: playlist.author)
@@ -163,7 +163,7 @@ module Invidious::Routes::Feeds
     end
 
     response = YT_POOL.client &.get("/feeds/videos.xml?playlist_id=#{plid}")
-    return error_atom(404, NotFoundException.new("Playlist does not exist.")) if response.status_code == 404
+    return Errors.error_atom(404, NotFoundException.new("Playlist does not exist.")) if response.status_code == 404
 
     document = XML.parse(response.body)
     document.xpath_nodes(%q(//*[@href]|//*[@url])).each do |node|

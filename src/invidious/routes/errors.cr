@@ -46,6 +46,6 @@ module Invidious::Routes::ErrorRoutes
       end
     end
 
-    error_template(404, "Page not found.")
+    Errors.error_template(404, "Page not found.")
   end
 end

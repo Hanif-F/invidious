@@ -21,7 +21,7 @@ when SearchChannel %>
   <div class="media-details"><h3 class="media-title"><a href="/channel/<%= HTML.escape(item.ucid) %>" dir="auto"><%= HTML.escape(item.author) %></a><% if item.author_verified %><span class="verified" title="<%= I18n.translate(locale, "ui_verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></h3>
     <% if handle = item.channel_handle %><p class="muted" dir="auto"><%= HTML.escape(handle) %></p><% end %>
     <div class="media-meta"><span><%= I18n.translate_count(locale, "generic_subscribers_count", item.subscriber_count, I18n::NumberFormatting::Separator) %></span><% if !item.auto_generated && item.channel_handle.nil? %><span><%= I18n.translate_count(locale, "generic_videos_count", item.video_count, I18n::NumberFormatting::Separator) %></span><% end %></div>
-    <p class="result-description" dir="auto"><%= HTML.escape(Helpers.html_to_content(item.description_html)) %></p>
+    <p class="result-description" dir="auto"><%= HTML.escape(::Invidious::Helpers.html_to_content(item.description_html)) %></p>
   </div>
 <% when SearchHashtag %>
   <a class="thumbnail hashtag-result-thumbnail" href="<%= HTML.escape(item.url) %>" tabindex="-1"><img src="/hashtag.svg" width="120" height="120" alt="" loading="lazy"></a><div class="media-details"><h3 class="media-title"><a href="<%= HTML.escape(item.url) %>" dir="auto"><%= HTML.escape(item.title) %></a></h3><div class="media-meta"><span><%= I18n.translate_count(locale, "generic_videos_count", item.video_count, I18n::NumberFormatting::Separator) %></span><span><%= I18n.translate_count(locale, "generic_channels_count", item.channel_count, I18n::NumberFormatting::Separator) %></span></div></div>
@@ -41,7 +41,7 @@ when SearchChannel %>
 <% when Category %>
   <h2><% if item.responds_to?(:title) %><%= HTML.escape(item.title) %><% else %><%= I18n.translate(locale, "channel_tab_videos_label") %><% end %></h2>
 <% when ProblematicTimelineItem %>
-  <div class="status-panel"><h3><%= I18n.translate(locale, "timeline_parse_error_placeholder_heading") %></h3><p><%= I18n.translate(locale, "timeline_parse_error_placeholder_message") %></p><details><summary><%= I18n.translate(locale, "timeline_parse_error_show_technical_details") %></summary><pre><%= HTML.escape(get_issue_template(env, item.parse_exception)[1]) %></pre></details></div>
+  <div class="status-panel"><h3><%= I18n.translate(locale, "timeline_parse_error_placeholder_heading") %></h3><p><%= I18n.translate(locale, "timeline_parse_error_placeholder_message") %></p><details><summary><%= I18n.translate(locale, "timeline_parse_error_show_technical_details") %></summary><pre><%= HTML.escape(Errors.get_issue_template(env, item.parse_exception)[1]) %></pre></details></div>
 <% else %>
   <%
     endpoint_params = "?v=#{URI.encode_www_form(item.id)}"

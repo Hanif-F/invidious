@@ -76,10 +76,21 @@ describe Invidious::WebPreferences do
     end
   end
 
+  it "rejects retired comment sources and progressive quality options in new writes" do
+    expect_raises(Invidious::WebPreferences::InvalidField) { web_preferences_parse("captions-comments", "comments%5B0%5D=reddit") }
+    expect_raises(Invidious::WebPreferences::InvalidField) { web_preferences_parse("playback", "quality=hd720") }
+    expect_raises(Exception) { Invidious::NativePreferences.validate_patch(JSON.parse(%({"comments":["reddit",""]})).as_h) }
+  end
+
+  it "normalizes omitted legacy comment priorities without accepting retired new inputs" do
+    patch = web_preferences_parse("captions-comments", "comments%5B0%5D=", %({"comments":["youtube","reddit"]}))
+    patch["comments"].as_a.map(&.as_s).should eq(["", "youtube"])
+  end
+
   it "preserves omitted array positions while allowing explicitly cleared priorities" do
-    patch = web_preferences_parse("captions-comments", "captions%5B1%5D=Indonesian&comments%5B0%5D=reddit", %({"captions":["English","French","German"],"comments":["youtube",""]}))
+    patch = web_preferences_parse("captions-comments", "captions%5B1%5D=Indonesian&comments%5B0%5D=", %({"captions":["English","French","German"],"comments":["youtube",""]}))
     patch["captions"].as_a.map(&.as_s).should eq(%w(English Indonesian German))
-    patch["comments"].as_a.map(&.as_s).should eq(["reddit", ""])
+    patch["comments"].as_a.map(&.as_s).should eq(["", ""])
     cleared = web_preferences_parse("browsing", "feed_menu%5B0%5D=&feed_menu%5B1%5D=&feed_menu%5B2%5D=&feed_menu%5B3%5D=", %({"feed_menu":["Popular","Trending"]}))
     cleared["feed_menu"].as_a.should be_empty
     web_preferences_parse("browsing", "default_home=Popular").has_key?("feed_menu").should be_false

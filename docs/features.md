@@ -34,7 +34,7 @@ The following inventory covers the user-visible capabilities implemented in this
 | Storyboards | Preview images and VTT storyboard references | [API](api.md) |
 | Legacy annotations | Optional archived annotations, including subscribed-channel preference and caching | [Playback](playback.md) |
 | VR | Projection-aware VR support for supported streams/browsers | [Playback](playback.md) |
-| Comments | YouTube/Reddit source preferences, continuation/replies and sorting | [Playback](playback.md) |
+| Comments | YouTube comment preferences, continuation/replies and sorting | [Playback](playback.md) |
 | Replay chat | Archived livestream chat in a synchronized browser panel, with filters and timing offsets; native overlay fields remain compatible | [Playback](playback.md) |
 | Queue and next video | Playlist/mix queues, occurrence-aware current item, owner removal, loop/autoplay/continue controls | [Playback](playback.md) |
 | Watch indicators | Watched state and saved progress displayed on supported cards | [Accounts and library](accounts-and-library.md) |

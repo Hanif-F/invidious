@@ -11,8 +11,8 @@ module Invidious::Routes::Account
     user = env.get("user").as(User)
     username = username.try(&.byte_slice(0, 254)) || user.username
     sid = env.get("sid").as(String)
-    username_token = generate_response(sid, {"POST:account/username"}, HMAC_KEY, 1.hour)
-    password_token = generate_response(sid, {"POST:change_password"}, HMAC_KEY, 1.hour)
+    username_token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:account/username"}, HMAC_KEY, 1.hour)
+    password_token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:change_password"}, HMAC_KEY, 1.hour)
     templated "user/account"
   end
 
@@ -36,7 +36,7 @@ module Invidious::Routes::Account
     sid = env.get("sid").as(String)
     username = rename ? (env.params.body["username"]? || "").byte_slice(0, 254) : nil
     begin
-      validate_request(env.params.body["csrf_token"]?, sid, env.request, HMAC_KEY)
+      Invidious::Helpers::Tokens.validate_request(env.params.body["csrf_token"]?, sid, env.request, HMAC_KEY)
     rescue
       env.response.status_code = 400
       return get_account(env, "Invalid form. Please try again.", username)
@@ -87,7 +87,7 @@ module Invidious::Routes::Account
 
     user = user.as(User)
     sid = sid.as(String)
-    csrf_token = generate_response(sid, {":delete_account"}, HMAC_KEY)
+    csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":delete_account"}, HMAC_KEY)
 
     templated "user/delete_account"
   end
@@ -111,7 +111,7 @@ module Invidious::Routes::Account
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
       env.response.status_code = 400
       return get_delete(env, "Invalid form. Please try again.")
@@ -150,7 +150,7 @@ module Invidious::Routes::Account
 
     user = user.as(User)
     sid = sid.as(String)
-    csrf_token = generate_response(sid, {":clear_watch_history"}, HMAC_KEY)
+    csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":clear_watch_history"}, HMAC_KEY)
 
     templated "user/clear_watch_history"
   end
@@ -172,9 +172,9 @@ module Invidious::Routes::Account
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
-      return error_template(400, ex)
+      return Errors.error_template(400, ex)
     end
 
     Invidious::Database::Users.clear_watch_history(user, clear_positions: true)
@@ -215,7 +215,7 @@ module Invidious::Routes::Account
 
     user = user.as(User)
     sid = sid.as(String)
-    csrf_token = generate_response(sid, {":authorize_token"}, HMAC_KEY)
+    csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":authorize_token"}, HMAC_KEY)
 
     scopes = env.params.query["scopes"]?.try &.split(",")
     scopes ||= [] of String
@@ -223,7 +223,7 @@ module Invidious::Routes::Account
     begin
       callback_url = authorization_callback(env.params.query["callback_url"]?)
     rescue ex : InfoException
-      return error_template(400, ex)
+      return Errors.error_template(400, ex)
     end
 
     expire = env.params.query["expire"]?.try &.to_i64?
@@ -250,20 +250,20 @@ module Invidious::Routes::Account
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
-      return error_template(400, ex)
+      return Errors.error_template(400, ex)
     end
 
     scopes = env.params.body.select { |k, _| k.match(/^scopes\[\d+\]$/) }.map { |_, v| v }
     begin
       callback_url = authorization_callback(env.params.body["callbackUrl"]?)
     rescue ex : InfoException
-      return error_template(400, ex)
+      return Errors.error_template(400, ex)
     end
     expire = env.params.body["expire"]?.try &.to_i64?
 
-    access_token = generate_token(user.email, scopes, expire, HMAC_KEY, sid)
+    access_token = Invidious::Helpers::Tokens.generate_token(user.email, scopes, expire, HMAC_KEY, sid)
 
     if callback_url
       access_token = URI.encode_www_form(access_token)
@@ -333,7 +333,7 @@ module Invidious::Routes::Account
       if redirect
         return env.redirect referer
       else
-        return error_json(403, "No such user")
+        return Errors.error_json(403, "No such user")
       end
     end
 
@@ -342,12 +342,12 @@ module Invidious::Routes::Account
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
       if redirect
-        return error_template(400, ex)
+        return Errors.error_template(400, ex)
       else
-        return error_json(400, ex)
+        return Errors.error_json(400, ex)
       end
     end
 
@@ -355,12 +355,12 @@ module Invidious::Routes::Account
     when "revoke_token"
       session = env.params.body["session"]? || env.params.query["session"]?
       unless session && !session.empty?
-        return redirect ? error_template(400, "Invalid form. Please try again.") : error_json(400, "Missing session")
+        return redirect ? Errors.error_template(400, "Invalid form. Please try again.") : Errors.error_json(400, "Missing session")
       end
       Invidious::Database::SessionIDs.delete(sid: session, email: user.email)
       Authentication.clear_session(env) if session == sid
     else
-      return error_json(400, "Unsupported action #{action}")
+      return Errors.error_json(400, "Unsupported action #{action}")
     end
 
     if redirect

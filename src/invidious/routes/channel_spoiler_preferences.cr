@@ -16,7 +16,7 @@ module Invidious::Routes::ChannelSpoilerPreferences
 
   private def self.state(env, raw : String? = nil)
     user = env.get?("user").try(&.as(User))
-    token = user ? generate_response(env.get("sid").as(String), {"POST:preferences/spoilers/channels"}, HMAC_KEY) : ""
+    token = user ? Invidious::Helpers::Tokens.generate_response(env.get("sid").as(String), {"POST:preferences/spoilers/channels"}, HMAC_KEY) : ""
     {rules: saved(env, raw), profile: Invidious::BrowserProfiles.render_scope(env), csrf: token}.to_json
   end
 
@@ -49,7 +49,7 @@ module Invidious::Routes::ChannelSpoilerPreferences
     end
     channel_id = nil.as(String?)
     entry = Invidious::ChannelSpoilers::Rule.new
-    csrf_token = user ? generate_response(env.get("sid").as(String), {"POST:preferences/spoilers/channels"}, HMAC_KEY) : ""
+    csrf_token = user ? Invidious::Helpers::Tokens.generate_response(env.get("sid").as(String), {"POST:preferences/spoilers/channels"}, HMAC_KEY) : ""
     values = env.request.method == "POST" ? env.params.body : env.params.query
     if input = values["channel"]?
       channel_id = Invidious::SponsorBlock.channel_id(input)
@@ -59,7 +59,7 @@ module Invidious::Routes::ChannelSpoilerPreferences
         else
           entry = Invidious::ChannelSpoilers::Rule.new(channel_id, false, false)
           begin
-            entry.name = get_channel(channel_id).author
+            entry.name = Invidious::Channels::Channels.get_channel(channel_id).author
           rescue
             env.response.status_code = 502 if env.response.status_code < 400
             env.set "mask_error", I18n.translate(locale, "sb_channel_lookup_failed") unless env.get?("mask_error")
@@ -82,7 +82,7 @@ module Invidious::Routes::ChannelSpoilerPreferences
       return failure(env, 409, I18n.translate(locale, "overhaul_channel_profile_changed"), stale: true) unless profile == Invidious::BrowserProfiles.render_scope(env)
     end
     begin
-      validate_request(env.params.body["csrf_token"]?, env.get("sid").as(String), env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(env.params.body["csrf_token"]?, env.get("sid").as(String), env.request, HMAC_KEY, locale)
     rescue
       return failure(env, 403, I18n.translate(locale, "overhaul_channel_session"))
     end
@@ -106,7 +106,7 @@ module Invidious::Routes::ChannelSpoilerPreferences
       name = user.preferences.channel_spoiler_settings[id]?.try(&.name)
       if !name && (title || thumbnail)
         begin
-          name = get_channel(id).author
+          name = Invidious::Channels::Channels.get_channel(id).author
         rescue
           return failure(env, 502, I18n.translate(locale, "sb_channel_lookup_failed"))
         end

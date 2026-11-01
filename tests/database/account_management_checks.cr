@@ -55,7 +55,7 @@ def check_mobile_account_management
   delegated = account_result(authorized)["accessToken"].as_s
   check(security_request("GET", "/api/v1/auth/preferences", bearer: delegated).response.status_code == 200, "Authorized permission missing")
   check(security_request("GET", "/api/v1/auth/account/sessions", bearer: delegated).response.status_code == 403, "Delegated token gained account management")
-  check(!scopes_include_scope(JSON.parse(token)["scopes"].as_a.map(&.as_s), "POST:tokens/register"), "Native session gained unrestricted delegated issuance")
+  check(!Invidious::Helpers::Tokens.scopes_include_scope(JSON.parse(token)["scopes"].as_a.map(&.as_s), "POST:tokens/register"), "Native session gained unrestricted delegated issuance")
   invalid = security_request("POST", token_path, bearer: token, body: {password: password, scopes: ["GET:preferences"], expiresAt: "bad"}.to_json)
   check(invalid.response.status_code == 400, "Malformed expiry became a never-expiring token")
 
@@ -84,14 +84,14 @@ def check_mobile_account_management
   # CAPTCHA challenges bind to the native route, expire, and consume their nonce.
   CONFIG.captcha_enabled = true
   answer = OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, "1:05:10")
-  captcha = generate_response(answer, {"POST:api/v1/mobile/register"}, HMAC_KEY, use_nonce: true)
+  captcha = Invidious::Helpers::Tokens.generate_response(answer, {"POST:api/v1/mobile/register"}, HMAC_KEY, use_nonce: true)
   captcha_body = {username: "NativeCaptcha", password: password, passwordConfirmation: password, captchaAnswer: "1:05:10", captchaToken: captcha}.to_json
   check(security_request("POST", path, body: captcha_body).response.status_code == 200, "Native CAPTCHA rejected")
   check(security_request("POST", path, body: captcha_body).response.status_code == 400, "Native CAPTCHA replay accepted")
-  web_captcha = generate_response(answer, {"POST:signup"}, HMAC_KEY, use_nonce: true)
+  web_captcha = Invidious::Helpers::Tokens.generate_response(answer, {"POST:signup"}, HMAC_KEY, use_nonce: true)
   wrong_route = {username: "NativeWrongRoute", password: password, passwordConfirmation: password, captchaAnswer: "1:05:10", captchaToken: web_captcha}.to_json
   check(security_request("POST", path, body: wrong_route).response.status_code == 400, "Web CAPTCHA bypassed native route binding")
-  expired_captcha = generate_response(answer, {"POST:api/v1/mobile/register"}, HMAC_KEY, -1.second, use_nonce: true)
+  expired_captcha = Invidious::Helpers::Tokens.generate_response(answer, {"POST:api/v1/mobile/register"}, HMAC_KEY, -1.second, use_nonce: true)
   expired_body = {username: "NativeExpiredCaptcha", password: password, passwordConfirmation: password, captchaAnswer: "1:05:10", captchaToken: expired_captcha}.to_json
   check(security_request("POST", path, body: expired_body).response.status_code == 400, "Expired native CAPTCHA accepted")
   CONFIG.captcha_enabled = false

@@ -12,7 +12,7 @@ require "../src/invidious/helpers/logger"
 require "../src/invidious/helpers/membership"
 require "../src/invidious/helpers/utils"
 
-require "../src/invidious/videos"
+require "../src/invidious/videos/videos"
 require "../src/invidious/videos/*"
 require "../src/invidious/comments/content"
 

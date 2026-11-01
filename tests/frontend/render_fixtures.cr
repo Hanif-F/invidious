@@ -28,6 +28,8 @@ require "../../src/invidious/videos/*"
 require "../../src/invidious/jsonify/**"
 
 require "../../src/invidious/*"
+require "../../src/invidious/playlists/*"
+require "../../src/invidious/feeds/*"
 require "../../src/invidious/comments/*"
 require "../../src/invidious/channels/*"
 require "../../src/invidious/user/*"
@@ -218,7 +220,7 @@ def queue_fixture(thin = false)
     {videoId: "2isYuQZMbdU", index: 2, title: "A journey through light, color, and motion", author: "Studio North", lengthSeconds: 930},
     {videoId: "nextvideo01", index: 3, title: "The next chapter", author: "Studio North", lengthSeconds: 420},
   ]}.to_json)
-  {playlistHtml: template_playlist(playlist, false, thin), nextVideo: "nextvideo01", index: 3}.to_json
+  {playlistHtml: Invidious::Playlists::Playlists.template_playlist(playlist, false, thin), nextVideo: "nextvideo01", index: 3}.to_json
 end
 
 def signed_in_env(path)
@@ -348,7 +350,7 @@ end
 
 def diary_error_fixture(mode = "light")
   env = fixture_env("/unavailable", mode)
-  error_template_helper(env, 503, "This page is unavailable. Please try again later.")
+  Errors.error_template_helper(env, 503, "This page is unavailable. Please try again later.")
 end
 
 def diary_playlist_fixture(mode = "light", editable = false)
@@ -445,7 +447,7 @@ def editable_queue_fixture(removed = [] of Int32, cursor = 2, current_removed = 
   end
   playlist = JSON.parse({playlistId: "IVfixture", title: "Editable playlist", videoCount: videos.size, videos: videos}.to_json)
   next_index = cursor + (current_removed ? 0 : 1)
-  {playlistHtml: template_playlist(playlist, false, false, true), currentIndex: cursor, nextVideo: videos[next_index]?.try(&.[:videoId]), index: videos[next_index]?.try(&.[:index])}.to_json
+  {playlistHtml: Invidious::Playlists::Playlists.template_playlist(playlist, false, false, true), currentIndex: cursor, nextVideo: videos[next_index]?.try(&.[:videoId]), index: videos[next_index]?.try(&.[:index])}.to_json
 end
 
 File.write("#{output}/queue-editable.json", editable_queue_fixture)
@@ -988,3 +990,18 @@ write_status_surface_fixtures(output)
 
 require "./embed_surface_checks"
 write_embed_surface_fixtures(output)
+
+# Upstream merge contracts use real parsers and the fork's channel navigation.
+legacy = Preferences.from_json(%({"comments":["reddit",""],"quality":"hd720","preferred_audio":"id"}))
+raise "Legacy account preferences did not normalize" unless legacy.comments == ["youtube", ""] && legacy.quality == "medium" && legacy.preferred_audio == "id"
+legacy_query = Invidious::Videos.process_video_params(URI::Params.parse("quality=hd720&comments=reddit,"), legacy)
+raise "Legacy watch query did not normalize" unless legacy_query.quality == "medium" && legacy_query.comments == ["youtube", ""]
+show_item = JSON.parse(%({"gridShowRenderer":{"title":{"simpleText":"Fixture show"},"navigationEndpoint":{"commandMetadata":{"webCommandMetadata":{"url":"/show/VLPLshowfixture?sbp=opaque"}}},"thumbnailRenderer":{"showCustomThumbnailRenderer":{"thumbnail":{"thumbnails":[{"url":"https://example.test/show.jpg"}]}}},"thumbnailOverlays":[{"thumbnailOverlayBottomPanelRenderer":{"text":{"runs":[{"text":"12"}]}}}]}}))
+show = parse_item(show_item, "Show channel", "UCshowfixture").as(SearchPlaylist)
+raise "Shows parser lost its playlist or author" unless show.id == "PLshowfixture" && show.title == "Fixture show" && show.video_count == 12 && show.author == "Show channel" && show.ucid == "UCshowfixture"
+shows_html = diary_channel_fixture(secondary: "Shows")
+shows_doc = XML.parse_html(shows_html)
+raise "Shows tab did not use the existing overflow menu" unless shows_doc.xpath_node("//details[contains(@class,'channel-more')]//strong[@aria-current='page']").try(&.content) == "Shows"
+raise "Shows channel lost native Clips" unless shows_doc.xpath_node("//a[@href='/channel/UCfixture/clips']")
+File.write("#{output}/upstream-shows-light.html", shows_html)
+puts "Upstream Shows parser/navigation and legacy preference checks passed"

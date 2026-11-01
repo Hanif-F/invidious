@@ -17,7 +17,7 @@ module Invidious::NativePlaylists
       "type" => playlist.is_a?(InvidiousPlaylist) ? "invidiousPlaylist" : "playlist",
       "playlistId" => playlist.id, "title" => playlist.title,
       "videoCount" => playlist.video_count, "privacy" => playlist.privacy.to_s.downcase,
-      "description" => Helpers.html_to_content(playlist.description_html),
+      "description" => ::Invidious::Helpers.html_to_content(playlist.description_html),
       "playlistThumbnail" => playlist.thumbnail,
       "author" => playlist.is_a?(InvidiousPlaylist) ? playlist.display_author : playlist.author,
       "authorId" => playlist.ucid, "isOwned" => owned,
@@ -45,7 +45,7 @@ module Invidious::NativePlaylists
       video = seed(id, explicit_seed)
       return metadata(fetch_mix(id, video), video)
     end
-    playlist = get_playlist(id)
+    playlist = Invidious::Playlists::Playlists.get_playlist(id)
     if playlist.is_a?(InvidiousPlaylist)
       raise NotFoundException.new("Playlist does not exist.") if playlist.privacy.private? && playlist.author != email
       raise InfoException.new("This playlist is already in My playlists.") if playlist.author == email

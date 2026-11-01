@@ -14,7 +14,7 @@ module Invidious::Routes::Subscriptions
       if redirect
         return env.redirect referer
       else
-        return error_json(403, "No such user")
+        return Errors.error_json(403, "No such user")
       end
     end
 
@@ -23,12 +23,12 @@ module Invidious::Routes::Subscriptions
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
       if redirect
-        return error_template(400, ex)
+        return Errors.error_template(400, ex)
       else
-        return error_json(400, ex)
+        return Errors.error_json(400, ex)
       end
     end
 
@@ -38,13 +38,13 @@ module Invidious::Routes::Subscriptions
     case action = env.params.query["action"]?
     when "create_subscription_to_channel"
       if !user.subscriptions.includes? channel_id
-        get_channel(channel_id)
+        Invidious::Channels::Channels.get_channel(channel_id)
         Invidious::Database::Users.subscribe_channel(user, channel_id)
       end
     when "remove_subscriptions"
       Invidious::Database::Users.unsubscribe_channel(user, channel_id)
     else
-      return error_json(400, "Unsupported action #{action}")
+      return Errors.error_json(400, "Unsupported action #{action}")
     end
 
     if redirect
@@ -77,14 +77,23 @@ module Invidious::Routes::Subscriptions
     format ||= "rss"
 
     if action_takeout
+      env.response.headers["Cache-Control"] = "private, no-store"
+      export_time = Time.local.to_s("%Y%m%d%H%M")
       if format == "json"
         env.response.content_type = "application/json"
-        env.response.headers["content-disposition"] = "attachment"
-
+        env.response.headers["Content-Disposition"] = "attachment; filename=\"invidious_subscriptions_#{export_time}.json\""
         return Invidious::User::Export.to_invidious(user)
+      elsif format == "newpipe_json"
+        env.response.content_type = "application/json"
+        env.response.headers["Content-Disposition"] = "attachment; filename=\"newpipe_subscriptions_#{export_time}\""
+        channels = Invidious::RSS.subscription_channels(user.subscriptions)
+        return Invidious::User::Export.to_newpipe(channels)
       else
         env.response.content_type = "application/xml"
-        env.response.headers["content-disposition"] = "attachment"
+        env.response.headers["Content-Disposition"] = "attachment; filename=\"invidious_subscriptions_#{export_time}.opml\""
+        if format == "opml"
+          return Invidious::User::Export.to_freetube_opml(Invidious::RSS.subscription_channels(user.subscriptions))
+        end
         return Invidious::RSS.subscriptions(user.subscriptions, format)
       end
     end

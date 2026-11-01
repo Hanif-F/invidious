@@ -1,4 +1,6 @@
 module Invidious::Routes::BeforeAll
+  extend self
+
   struct CompanionCSP
     property companion_urls : String = ""
 
@@ -90,7 +92,7 @@ module Invidious::Routes::BeforeAll
     else
       if user = Authentication.resolve_user(env)
         sid = env.get("sid").as(String)
-        csrf_token = generate_response(sid, {
+        csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {
           ":authorize_token",
           ":playlist_ajax",
           ":blocked_channels",
@@ -126,7 +128,7 @@ module Invidious::Routes::BeforeAll
     end
     env.set "browser_profile", BrowserProfiles.render_scope(env)
 
-    dark_mode = convert_theme(env.params.query["dark_mode"]?) || preferences.dark_mode.to_s
+    dark_mode = Invidious::User::Converters.convert_theme(env.params.query["dark_mode"]?) || preferences.dark_mode.to_s
     thin_mode = env.params.query["thin_mode"]?
     thin_mode = (thin_mode == "true") || preferences.thin_mode
     locale = env.params.query["hl"]? || preferences.locale

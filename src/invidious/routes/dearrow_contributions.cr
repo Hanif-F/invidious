@@ -21,7 +21,7 @@ module Invidious::Routes::DeArrowContributions
     raise DeArrow::ContributionError.new(413, "Request too large") if raw.bytesize > 8192
     params = URI::Params.parse(raw)
     begin
-      validate_request(params["csrf_token"]?, sid, env.request, HMAC_KEY)
+      Invidious::Helpers::Tokens.validate_request(params["csrf_token"]?, sid, env.request, HMAC_KEY)
     rescue
       raise DeArrow::ContributionError.new(403, "Your session expired. Reload the page and try again.")
     end
@@ -52,7 +52,7 @@ module Invidious::Routes::DeArrowContributions
 
   private def self.identity_state(env, user : User, sid : String, stored = Database::DeArrowIdentities.snapshot(user.email, HMAC_KEY))
     {ready: DeArrow::IdentityCipher.ready?(CONFIG.dearrow_identity_key), configured: stored[:configured], revision: stored[:revision],
-     profile: Invidious::BrowserProfiles.render_scope(env), csrf: generate_response(sid, {"POST:dearrow_identity"}, HMAC_KEY)}
+     profile: Invidious::BrowserProfiles.render_scope(env), csrf: Invidious::Helpers::Tokens.generate_response(sid, {"POST:dearrow_identity"}, HMAC_KEY)}
   end
 
   def self.identity_page(env)
@@ -74,7 +74,7 @@ module Invidious::Routes::DeArrowContributions
       env.response.status_code = 503 if env.response.status_code < 400
       env.set "identity_unavailable", true
       env.set "identity_error", I18n.translate(locale, "overhaul_identity_load") unless env.get?("identity_error")
-      {ready: false, configured: false, revision: "", profile: Invidious::BrowserProfiles.render_scope(env), csrf: generate_response(sid, {"POST:dearrow_identity"}, HMAC_KEY)}
+      {ready: false, configured: false, revision: "", profile: Invidious::BrowserProfiles.render_scope(env), csrf: Invidious::Helpers::Tokens.generate_response(sid, {"POST:dearrow_identity"}, HMAC_KEY)}
     end
     if env.params.query["format"]? == "json"
       env.response.content_type = "application/json"
@@ -91,7 +91,7 @@ module Invidious::Routes::DeArrowContributions
       env.response.content_type = "application/json"
       return {error: message}.to_json
     end
-    return error_template(code, message) unless env.get?("user") && env.get?("sid")
+    return Errors.error_template(code, message) unless env.get?("user") && env.get?("sid")
     # Never echo private_id or serialize a credential-bearing failed form.
     env.set "identity_error", message
     env.set "identity_failed", true

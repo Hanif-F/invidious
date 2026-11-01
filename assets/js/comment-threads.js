@@ -10,7 +10,7 @@
     var owners = new WeakMap(), active = new Set(), activePage = true, epoch = 0, topNeeded = config.initial === true;
     var source = config.watch ? document.getElementById('comment-source') : null, sort = config.watch ? document.getElementById('comment-sort') : null;
     var sourceLink = config.watch ? document.getElementById('comment-source-link') : null;
-    var sorts = {youtube:'top',reddit:'confidence'}; if (config.initialSort) sorts[currentSource()] = config.initialSort;
+    var sorts = {youtube:'top'}; if (config.initialSort) sorts[currentSource()] = config.initialSort;
     function alive(owner) { return activePage && !lifetime.signal.aborted && InvidiousStorage.isCurrent() && root.isConnected && owner.isConnected; }
     function statusFor(owner) {
         var status = owner.querySelector(':scope > [data-thread-status]');
@@ -34,19 +34,13 @@
         epoch++;
         Array.from(active).forEach(function (entry) { entry.controller.abort(); release(entry,true); });
     }
-    function currentSource() { return source && source.value === 'reddit' ? 'reddit' : 'youtube'; }
+    function currentSource() { return 'youtube'; }
     function metadata(data) {
         var heading = document.getElementById(config.heading);
         if (heading) heading.textContent = Number.isFinite(data.commentCount) && data.commentCount >= 0 ? config.countText.replace('{count}',data.commentCount.toLocaleString()) : config.headingText;
         if (!sourceLink) return;
         sourceLink.replaceChildren();
-        if (currentSource() === 'reddit' && typeof data.permalink === 'string') {
-            var url; try { url = new URL(data.permalink,'https://www.reddit.com'); } catch (_) { return; }
-            if (url.protocol === 'https:' && ['reddit.com','www.reddit.com'].includes(url.hostname)) {
-                var link = document.createElement('a'); link.href = url.href; link.rel = 'noopener noreferrer'; link.textContent = config.redditLink;
-                sourceLink.append(link);
-            }
-        }
+
     }
     async function read(owner, button, loadMore, loadReplies, initial) {
         if (!alive(owner) || owners.has(owner)) return;
@@ -110,7 +104,7 @@
         read(root,null,false,false,true);
     }
     function setSort() {
-        var choices = currentSource() === 'reddit' ? config.redditSort : config.youtubeSort;
+        var choices = config.youtubeSort;
         sort.replaceChildren(); choices.forEach(function (choice) { var option = document.createElement('option'); option.value = choice[0]; option.textContent = choice[1]; sort.append(option); });
         if (choices.some(function (choice) { return choice[0] === sorts[currentSource()]; })) sort.value = sorts[currentSource()];
     }

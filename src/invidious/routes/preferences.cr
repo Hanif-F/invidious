@@ -3,14 +3,14 @@
 module Invidious::Routes::PreferencesRoute
   def self.detect_timezone(env)
     user = env.get?("user").try &.as(User)
-    return error_json(403, "No such user") unless user
+    return Errors.error_json(403, "No such user") unless user
     begin
-      validate_request(env.params.body["csrf_token"]?, env.get("sid").as(String), env.request, HMAC_KEY, user.preferences.locale)
+      Invidious::Helpers::Tokens.validate_request(env.params.body["csrf_token"]?, env.get("sid").as(String), env.request, HMAC_KEY, user.preferences.locale)
     rescue
-      return error_json(403, "Invalid CSRF token")
+      return Errors.error_json(403, "Invalid CSRF token")
     end
     zone = Invidious::History.timezone(env.params.body["timezone"]?)
-    return error_json(400, "Invalid timezone") unless zone
+    return Errors.error_json(400, "Invalid timezone") unless zone
     Invidious::Database::Users.merge_preferences_cas(user.email) do |stored|
       stored.merge({"timezone" => JSON::Any.new(zone)})
     end
@@ -54,13 +54,13 @@ module Invidious::Routes::PreferencesRoute
     if env.params.query["format"]? == "runtime"
       Authentication.no_store(env)
       env.response.headers["Allow"] = "GET"
-      return error_json(405, "Use GET to check enhancement settings.")
+      return Errors.error_json(405, "Use GET to check enhancement settings.")
     end
     if env.get?("user") && !Authentication.valid_session_csrf?(env)
       if section = env.params.body["section"]?
         return section_failure(env, 403, "Your session could not be verified. Reload this page before saving.", section)
       end
-      return error_template(403, "Invalid CSRF token")
+      return Errors.error_template(403, "Invalid CSRF token")
     end
     if section = env.params.body["section"]?
       return update_chat(env) if section == "chat"
@@ -70,7 +70,7 @@ module Invidious::Routes::PreferencesRoute
     referer = get_referer(env)
     if zone = env.params.body["timezone"]?
       unless zone.empty? || Invidious::History.timezone(zone)
-        return error_template(400, "Invalid timezone")
+        return Errors.error_template(400, "Invalid timezone")
       end
     end
 
@@ -306,7 +306,7 @@ module Invidious::Routes::PreferencesRoute
           else
             saved = Invidious::WebPreferences.merge_legacy(guest_fields(env), preferences, env.params.body).to_json
             cookie = Invidious::User::Cookies.prefs_json(Authentication.cookie_domain(env), saved)
-            return error_template(400, "These browser settings exceed the cookie limit.") if cookie.to_set_cookie_header.bytesize > 4096
+            return Errors.error_template(400, "These browser settings exceed the cookie limit.") if cookie.to_set_cookie_header.bytesize > 4096
             env.response.cookies["PREFS"] = cookie
             saved
           end
@@ -376,9 +376,9 @@ module Invidious::Routes::PreferencesRoute
   private def self.update_chat(env)
     Authentication.no_store(env)
     user = env.get?("user").try(&.as(User))
-    return error_template(403, "Sign in to save chat settings without JavaScript") unless user
+    return Errors.error_template(403, "Sign in to save chat settings without JavaScript") unless user
     unless env.params.body["browser_profile"]? == Invidious::BrowserProfiles.render_scope(env)
-      return error_template(409, "Your signed-in profile changed. Reload before saving these settings.")
+      return Errors.error_template(409, "Your signed-in profile changed. Reload before saving these settings.")
     end
     draft = Preferences.from_json(user.preferences.to_json)
     draft.chat_show_timestamps = env.params.body["chat_show_timestamps"]? == "on"
@@ -421,7 +421,7 @@ module Invidious::Routes::PreferencesRoute
       env.set "settings_values", Invidious::WebPreferences.values(section, JSON.parse(preferences.to_json).as_h).to_json
       return templated "overhaul/settings", "overhaul/shell"
     end
-    error_template(status, message)
+    Errors.error_template(status, message)
   end
 
   private def self.update_section(env, section : String)
@@ -476,7 +476,7 @@ module Invidious::Routes::PreferencesRoute
 
   def self.toggle_theme(env)
     if env.get?("user") && !Authentication.valid_session_csrf?(env)
-      return error_template(403, "Invalid CSRF token")
+      return Errors.error_template(403, "Invalid CSRF token")
     end
     locale = env.get("preferences").as(Preferences).locale
     referer = get_referer(env, unroll: false)
@@ -497,7 +497,7 @@ module Invidious::Routes::PreferencesRoute
       Invidious::Database::Users.merge_preferences_cas(user.email) { |stored| change.call(stored) }
     else
       cookie = Invidious::User::Cookies.prefs_json(Authentication.cookie_domain(env), change.call(guest_fields(env)).to_json)
-      return error_json(400, "These browser settings exceed the cookie limit.") if cookie.to_set_cookie_header.bytesize > 4096
+      return Errors.error_json(400, "These browser settings exceed the cookie limit.") if cookie.to_set_cookie_header.bytesize > 4096
       env.response.cookies["PREFS"] = cookie
     end
 
@@ -544,9 +544,9 @@ module Invidious::Routes::PreferencesRoute
       HTTP::FormData.parse(env.request) do |part|
         unless csrf_valid
           # The form emits CSRF first so no file is processed before authorization.
-          return error_template(403, "Invalid CSRF token") unless part.name == "csrf_token"
+          return Errors.error_template(403, "Invalid CSRF token") unless part.name == "csrf_token"
           csrf_valid = Authentication.valid_session_csrf?(env, part.body.gets_to_end)
-          return error_template(403, "Invalid CSRF token") unless csrf_valid
+          return Errors.error_template(403, "Invalid CSRF token") unless csrf_valid
           next
         end
         next if part.name == "csrf_token"

@@ -20,7 +20,7 @@ def check_account_surfaces
   end
   check(read.call("/account").response.headers["Referrer-Policy"] == "no-referrer", "Account page permits referrer leakage")
   check(security_request("GET", "/account").response.status_code == 302, "Guest account controls exposed")
-  rename_csrf = generate_response(alice_sid, {"POST:account/username"}, HMAC_KEY)
+  rename_csrf = Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:account/username"}, HMAC_KEY)
   draft = %(<bad>" retained & username)
   failure = security_request("POST", "/account/username", alice_sid, body: URI::Params.encode({"csrf_token" => rename_csrf, "username" => draft, "password" => password}), content_type: form_type)
   html = result_html.call(failure)
@@ -31,7 +31,7 @@ def check_account_surfaces
   check(invalid.response.status_code == 400 && XML.parse_html(result_html.call(invalid)).xpath_node("//input[@id='username']").not_nil!["value"] == "DraftAfterCsrf", "CSRF failure lost rename draft")
   duplicate = security_request("POST", "/account/username", alice_sid, body: URI::Params.encode({"csrf_token" => rename_csrf, "username" => "SurfaceBob", "password" => password}), content_type: form_type)
   check(duplicate.response.status_code == 400 && result_html.call(duplicate).includes?("Username is already taken."), "Duplicate username failure not actionable")
-  delete_csrf = generate_response(alice_sid, {"POST:delete_account"}, HMAC_KEY)
+  delete_csrf = Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:delete_account"}, HMAC_KEY)
   bad_delete = security_request("POST", "/delete_account?referer=%2Faccount", alice_sid, body: URI::Params.encode({"csrf_token" => delete_csrf, "password" => "secret-wrong-password"}), content_type: form_type)
   html = result_html.call(bad_delete)
   check(bad_delete.response.status_code == 401 && html.includes?("Incorrect password") && !html.includes?("secret-wrong-password"), "Deletion failure not private/actionable")
@@ -39,7 +39,7 @@ def check_account_surfaces
   cancel = XML.parse_html(html).xpath_node("//a[text()='Cancel']").not_nil!
   check(cancel["href"] == "/account", "Delete cancellation was URL-form-encoded")
   check(!!Invidious::Database::Users.select(email: alice.email), "Bad deletion removed account")
-  auth_csrf = generate_response(alice_sid, {"POST:authorize_token"}, HMAC_KEY)
+  auth_csrf = Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:authorize_token"}, HMAC_KEY)
   scopes = ["GET:subscriptions", %(GET:history" autofocus onfocus="alert(1))]
   callback = %(tividious://authorize/path?label="quoted"&value=<escaped>)
   consent = read.call("/authorize_token?#{URI::Params.encode({"callback_url" => callback, "scopes" => scopes.join(","), "expire" => "2000000000"})}")
@@ -70,9 +70,9 @@ def check_account_surfaces
   check(parsed["scopes"][0].as_s == scopes[1], "Explicit token view corrupted token")
   check(!result_html.call(plain).includes?("autofocus onfocus=\"alert"), "Issued token became HTML")
   # Browser-cookie API entry keeps the consent page and custom callback/scopes.
-  api_consent = security_request("POST", "/api/v1/auth/tokens/register", alice_sid, body: URI::Params.encode({"csrf_token" => generate_response(alice_sid, {"POST:tokens/register"}, HMAC_KEY), "scopes[0]" => scopes[0], "callbackUrl" => callback}), content_type: form_type)
+  api_consent = security_request("POST", "/api/v1/auth/tokens/register", alice_sid, body: URI::Params.encode({"csrf_token" => Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:tokens/register"}, HMAC_KEY), "scopes[0]" => scopes[0], "callbackUrl" => callback}), content_type: form_type)
   check(api_consent.response.status_code == 200 && result_html.call(api_consent).includes?("data-overhaul"), "Cookie API consent lost shared account shell")
-  wide = security_request("POST", "/api/v1/auth/tokens/register", alice_sid, body: {"scopes" => scopes, "expire" => Int64::MAX}.to_json, csrf: generate_response(alice_sid, {"POST:tokens/register"}, HMAC_KEY))
+  wide = security_request("POST", "/api/v1/auth/tokens/register", alice_sid, body: {"scopes" => scopes, "expire" => Int64::MAX}.to_json, csrf: Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:tokens/register"}, HMAC_KEY))
   check(wide.response.status_code == 200 && XML.parse_html(result_html.call(wide)).xpath_node("//input[@name='expire']").not_nil!["value"] == Int64::MAX.to_s, "Cookie API consent cannot display native Int64 expiry")
   wide_issued = security_request("POST", "/authorize_token", alice_sid, body: URI::Params.encode({"csrf_token" => auth_csrf, "expire" => Int64::MAX.to_s}), content_type: form_type)
   wide_token = JSON.parse(XML.parse_html(result_html.call(wide_issued)).xpath_node("//pre[@class='issued-token']/code").not_nil!.content)
@@ -81,7 +81,7 @@ def check_account_surfaces
   tree = XML.parse_html(result_html.call(manager))
   check(!tree.xpath_node("//main").not_nil!.content.includes?(alice_sid) && !tree.xpath_node("//main").not_nil!.content.includes?(token_sid), "Session list displays raw credentials")
   check(tree.xpath_nodes("//input[@name='session']").size >= 3, "Ordinary revocation forms lost sessions")
-  revoke_csrf = generate_response(alice_sid, {"POST:token_ajax"}, HMAC_KEY)
+  revoke_csrf = Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:token_ajax"}, HMAC_KEY)
   cross = security_request("POST", "/token_ajax?action=revoke_token&redirect=false", alice_sid, body: URI::Params.encode({"csrf_token" => revoke_csrf, "session" => bob_sid}), content_type: form_type)
   check(cross.response.status_code == 200 && Invidious::Database::SessionIDs.select_email(bob_sid) == bob.email, "Revocation crossed account boundary")
   denied = security_request("POST", "/token_ajax?action=revoke_token&redirect=false", alice_sid, body: URI::Params.encode({"session" => token_sid}), content_type: form_type)
@@ -94,7 +94,7 @@ def check_account_surfaces
   renamed = security_request("POST", "/account/username", alice_sid, body: URI::Params.encode({"csrf_token" => rename_csrf, "username" => "SurfaceRenamed", "password" => password}), content_type: form_type)
   check(renamed.response.status_code == 302 && Invidious::Database::SessionIDs.select_email(alice_sid).nil?, "Successful rename did not rotate session")
   new_sid = renamed.response.cookies["SID"].value
-  deletion = security_request("POST", "/delete_account?referer=%2Faccount", new_sid, body: URI::Params.encode({"csrf_token" => generate_response(new_sid, {"POST:delete_account"}, HMAC_KEY), "password" => password}), content_type: form_type)
+  deletion = security_request("POST", "/delete_account?referer=%2Faccount", new_sid, body: URI::Params.encode({"csrf_token" => Invidious::Helpers::Tokens.generate_response(new_sid, {"POST:delete_account"}, HMAC_KEY), "password" => password}), content_type: form_type)
   check(deletion.response.status_code == 302 && Invidious::Database::Users.select(email: alice.email).nil?, "Confirmed browser deletion failed")
   check(Invidious::Database::SessionIDs.select_email(new_sid).nil? && Invidious::Database::SessionIDs.select_email(bob_sid) == bob.email, "Deletion left access or changed another account")
   puts "D7 account surfaces passed: private forms, failed drafts, CSRF, native callbacks/scopes, token confidentiality, owner revocation, rotation and deletion"

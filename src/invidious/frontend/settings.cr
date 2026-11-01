@@ -164,7 +164,14 @@ module Invidious::Frontend::Settings
   end
 
   def saved(env) : Hash(String, JSON::Any)
-    JSON.parse(env.get("settings_values").as(String)).as_h
+    values = JSON.parse(env.get("settings_values").as(String)).as_h
+    if comments = values["comments"]?.try(&.as_a?)
+      values["comments"] = JSON.parse(Preferences::CommentSources.normalize(comments.map(&.as_s)).to_json)
+    end
+    if quality = values["quality"]?.try(&.as_s?)
+      values["quality"] = JSON::Any.new(Preferences::Quality.normalize(quality))
+    end
+    values
   end
 
   def value(env, field : String, index : Int32? = nil) : String
@@ -197,10 +204,10 @@ module Invidious::Frontend::Settings
     locale = env.get("preferences").as(Preferences).locale
     values = case field
              when "dark_mode"                 then ["", "light", "dark"]
-             when "quality"                   then %w(dash hd720 medium small)
+             when "quality"                   then %w(dash medium small)
              when "quality_dash"              then Invidious::NativePreferences::QUALITIES
              when "video_codec"               then %w(auto av1 h264)
-             when "comments"                  then ["", "youtube", "reddit"]
+             when "comments"                  then ["", "youtube"]
              when "captions"                  then [""] + Invidious::Videos::Captions::LANGUAGES.to_a
              when "default_home", "feed_menu" then Invidious::NativePreferences::HOMES
              when "sort"                      then Invidious::NativePreferences::SORTS

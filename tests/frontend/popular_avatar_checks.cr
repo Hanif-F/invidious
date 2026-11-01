@@ -82,7 +82,7 @@ def run_popular_avatar_refresh(key, response = popular_avatar_fixture("candidate
   writes = cache.comment_avatar_writes
   reads = cache.comment_avatar_reads
   metadata_calls = Invidious::Videos::Parser.avatar_metadata_calls
-  fetched = fetch_channel(channel.id, pull_all_videos: false)
+  fetched = Invidious::Channels::Channels.fetch_channel(channel.id, pull_all_videos: false)
   raise "Refresh added metadata requests" unless YoutubeAPI.avatar_listing_calls == calls + 1
   raise "Refresh added RSS requests" unless HTTP::Client.popular_avatar_rss_calls == rss_calls + 1
   raise "Refresh did not use one cache batch" unless cache.comment_avatar_writes == writes + 1

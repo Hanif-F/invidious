@@ -24,7 +24,7 @@ module Invidious::Routes::Clips
     locale = env.get("preferences").as(Preferences).locale
     values = env.request.method == "POST" ? env.params.body : env.params.query
     video_id = values["videoId"]? || ""
-    return error_template(400, "Invalid video ID.") unless validate_video_id(video_id)
+    return Errors.error_template(400, "Invalid video ID.") unless validate_video_id(video_id)
     video = nil.as(Video?)
     source_failure = nil.as(String?)
     source_status = 400
@@ -39,7 +39,7 @@ module Invidious::Routes::Clips
       source_status = 500
     end
     if source_failure
-      return error_template(source_status, source_failure) unless env.request.method == "POST"
+      return Errors.error_template(source_status, source_failure) unless env.request.method == "POST"
       # A source lookup can fail while returning a rejected POST. Keep its raw
       # draft without requiring metadata or attempting another creation.
       error ||= source_failure
@@ -57,7 +57,7 @@ module Invidious::Routes::Clips
       clip_start_value = values["startTime"]? || ""
       clip_end_value = values["endTime"]? || ""
     end
-    clip_csrf = generate_response(env.get("sid").as(String), {"POST:create_clip"}, HMAC_KEY)
+    clip_csrf = Invidious::Helpers::Tokens.generate_response(env.get("sid").as(String), {"POST:create_clip"}, HMAC_KEY)
     templated "create_clip"
   end
 
@@ -92,16 +92,16 @@ module Invidious::Routes::Clips
     return login(env) unless user = env.get?("user").try(&.as(User))
     locale = env.get("preferences").as(Preferences).locale
     clip = Database::Clips.select(env.params.query["id"]? || "")
-    return error_template(404, "Clip not found.") unless clip && clip.owner == user.email
-    csrf_token = generate_response(env.get("sid").as(String), {"POST:delete_clip"}, HMAC_KEY)
+    return Errors.error_template(404, "Clip not found.") unless clip && clip.owner == user.email
+    csrf_token = Invidious::Helpers::Tokens.generate_response(env.get("sid").as(String), {"POST:delete_clip"}, HMAC_KEY)
     templated "delete_clip"
   end
 
   def delete(env)
     Authentication.no_store(env)
     return login(env) unless user = env.get?("user").try(&.as(User))
-    return error_template(403, "Invalid CSRF token") unless Authentication.valid_session_csrf?(env)
-    return error_template(404, "Clip not found.") unless Database::Clips.delete(env.params.body["id"]? || "", user.email)
+    return Errors.error_template(403, "Invalid CSRF token") unless Authentication.valid_session_csrf?(env)
+    return Errors.error_template(404, "Clip not found.") unless Database::Clips.delete(env.params.body["id"]? || "", user.email)
     env.redirect "/feed/clips"
   end
 

@@ -68,7 +68,7 @@ The [repository handbook](docs/README.md) describes this fork. The desktop inter
 - Subscriptions independent from Google
 - Notifications for all subscribed channels
 - Audio-only mode (with background play on mobile)
-- Support for Reddit comments
+- Support for YouTube comments
 - [Available in many languages](locales/), thanks to [our translators](#contribute)
 
 **Data import/export**

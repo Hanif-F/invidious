@@ -4,7 +4,7 @@
 
 Generated from [src/invidious/routing.cr](../../src/invidious/routing.cr) by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-All **255 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
+All **258 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
 
 GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media proxies and configured companion routes remain. `/companion/*` requires a nonempty companion configuration. Notification registrations require `enable_user_notifications`. Public routes can still enforce resource privacy; `/api/v1/auth/*` always passes authentication. See [API conventions](../api.md), [security](../security.md), and [playback](../playback.md) for contracts.
 
@@ -125,6 +125,7 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | GET | `/channel/:ucid/podcasts` | `Routes::Channels.podcasts` | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) |
 | GET | `/channel/:ucid/releases` | `Routes::Channels.releases` | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) |
 | GET | `/channel/:ucid/courses` | `Routes::Channels.courses` | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) |
+| GET | `/channel/:ucid/shows` | `Routes::Channels.shows` | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) |
 | GET | `/channel/:ucid/playlists` | `Routes::Channels.playlists` | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) |
 | GET | `/channel/:ucid/clips` | `Routes::Channels.clips` | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) |
 | GET | `/channel/:ucid/community` | `Routes::Channels.community` | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) |
@@ -169,6 +170,7 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | Method | Path | Handler | Implementation |
 | --- | --- | --- | --- |
 | GET | `/playlist` | `Routes::Playlists.show` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
+| GET | `/show/:id` | `Routes::Playlists.show` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
 | GET | `/mix` | `Routes::Playlists.mix` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
 | GET | `/watch_videos` | `Routes::Playlists.watch_videos` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
 
@@ -263,6 +265,7 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | GET | `/api/v1/channels/:ucid/podcasts` | `Routes::API::V1::Channels.podcasts` | [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr) |
 | GET | `/api/v1/channels/:ucid/releases` | `Routes::API::V1::Channels.releases` | [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr) |
 | GET | `/api/v1/channels/:ucid/courses` | `Routes::API::V1::Channels.courses` | [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr) |
+| GET | `/api/v1/channels/:ucid/shows` | `Routes::API::V1::Channels.shows` | [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr) |
 | GET | `/api/v1/channels/:ucid/playlists` | `Routes::API::V1::Channels.playlists` | [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr) |
 | GET | `/api/v1/channels/:ucid/community` | `Routes::API::V1::Channels.community` | [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr) |
 | GET | `/api/v1/channels/:ucid/posts` | `Routes::API::V1::Channels.community` | [src/invidious/routes/api/v1/channels.cr](../../src/invidious/routes/api/v1/channels.cr) |

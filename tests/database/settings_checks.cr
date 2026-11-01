@@ -81,7 +81,7 @@ def check_settings_merges
   check(PG_DB.query_one("SELECT count(*) FROM playback_positions WHERE email=$1", owner, as: Int64) == 0, "Disabling sync failed to clear positions in the transaction")
   check(JSON.parse(Invidious::Database::Users.preference_json(owner))["watch_history"] == true, "Sync opt-out disabled history")
   # Exercise the actual HTML/JSON category handlers through production auth.
-  token = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+  token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences"}, HMAC_KEY)
   fields = {"section" => "appearance", "browser_profile" => Invidious::BrowserProfiles.account_scope(owner), "csrf_token" => token, "dark_mode" => "light", "show_nick" => "on"}
   config_before = CONFIG.to_yaml
   fields["login_required"] = "on"
@@ -136,7 +136,7 @@ def check_settings_merges
   check(account_with_guest.response.status_code == 200 && JSON.parse(Invidious::Database::Users.preference_json(owner))["speed"] == 1.5, "Account save imported guest state")
   check(Invidious::Database::Users.preference_json(other) == other_before, "HTTP category save changed another account")
 
-  native = generate_token(owner, ["GET:preferences", "PATCH:preferences"], nil, HMAC_KEY, sid)
+  native = Invidious::Helpers::Tokens.generate_token(owner, ["GET:preferences", "PATCH:preferences"], nil, HMAC_KEY, sid)
   patched = security_request("PATCH", "/api/v1/auth/preferences", bearer: native, body: %({"thin_mode":false,"video_codec":"av1"}))
   check(patched.response.status_code == 200, "Native preference patch failed after web category save")
   fields["section"] = "appearance"
@@ -149,13 +149,13 @@ def check_settings_merges
   legacy_saved = JSON.parse(Invidious::Database::Users.preference_json(owner))
   %w(thin_mode ui_density player_style video_codec preferred_audio seek_seconds speed chat_overlay_mode chat_width_px future_native).each { |key| check(legacy_saved[key] == roundtrip[key], "Legacy form reset omitted native/unknown data: #{key}") }
   %w(sponsorblock_modes sponsorblock_colors channel_spoiler_settings sponsorblock_channel_overrides ai_filter_enabled ai_blocklist_feeds_action).each { |key| check(legacy_saved[key] == roundtrip[key], "Legacy form reset dedicated/omitted enhancement data: #{key}") }
-  theme_token = generate_response(sid, {"POST:toggle_theme"}, HMAC_KEY)
+  theme_token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:toggle_theme"}, HMAC_KEY)
   themed = security_request("POST", "/toggle_theme?mode=light&redirect=false", sid: sid, body: URI::Params.encode({"csrf_token" => theme_token}), content_type: "application/x-www-form-urlencoded")
   check(themed.response.status_code == 200 && themed.get("test_result").as(String) == "{}", "Header theme response contract changed")
   themed_saved = JSON.parse(Invidious::Database::Users.preference_json(owner))
   check(themed_saved["dark_mode"] == "light", "Header theme did not save the requested mode")
   legacy_saved.as_h.each { |key, value| check(themed_saved[key] == value, "Header theme reset unrelated data: #{key}") unless key == "dark_mode" }
-  zone_token = generate_response(sid, {"POST:preferences/timezone"}, HMAC_KEY)
+  zone_token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences/timezone"}, HMAC_KEY)
   zone = security_request("POST", "/preferences/timezone", sid: sid, body: URI::Params.encode({"csrf_token" => zone_token, "timezone" => "Asia/Jakarta"}), content_type: "application/x-www-form-urlencoded")
   check(zone.response.status_code == 204, "Timezone detection response contract changed")
   zoned = JSON.parse(Invidious::Database::Users.preference_json(owner))
@@ -238,7 +238,7 @@ def check_admin_settings(sid : String, other_sid : String)
     email = Invidious::Database::SessionIDs.select_email(sid).not_nil!
     CONFIG.admins = [Invidious::Database::Users.select!(email: email).username]
     Invidious::BotProtection.save(false, 12)
-    personal_csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+    personal_csrf = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences"}, HMAC_KEY)
     config_before = CONFIG.to_yaml
     personal = required_login_response("POST", "/preferences?redirect=false", sid, body: URI::Params.encode({"csrf_token" => personal_csrf, "dark_mode" => "dark", "login_required" => "off", "admin_default_home" => "Playlists"}), content_type: "application/x-www-form-urlencoded")
     check(personal.status_code == 200 && CONFIG.to_yaml == config_before && File.read(config_path) == original_yaml, "Legacy personal save changed or serialized instance configuration")
@@ -257,7 +257,7 @@ def check_admin_settings(sid : String, other_sid : String)
     check(!form.body.includes?("test-only-preserved-yaml-key") && !form.body.includes?("test-only-preserved-database"), "Admin form leaked undeclared configuration")
     check(required_login_response("GET", "/admin/settings", other_sid).status_code == 403, "Non-admin read instance Settings")
     check(required_login_response("GET", "/admin/settings").status_code == 303, "Guest read instance Settings")
-    token = generate_response(sid, {"POST:admin/settings"}, HMAC_KEY)
+    token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:admin/settings"}, HMAC_KEY)
     fields = {"csrf_token" => token, "revision" => revision.call, "login_required" => "on", "admin_default_home" => "Trending", "modified_source_code_url" => "https://code.example.test/source", "database_url" => "must-not-be-written"}
     submit = ->(body : Hash(String, String), session : String) { required_login_response("POST", "/admin/settings", session, body: URI::Params.encode(body), content_type: "application/x-www-form-urlencoded") }
     invalid_csrf = fields.merge({"csrf_token" => "forged"})
@@ -375,9 +375,9 @@ def check_chat_settings
     check(security_request("PATCH", "/api/v1/auth/chat_preferences", sid: sid, csrf: csrf, body: invalid).response.status_code == 400, "Invalid native chat field/range accepted")
     check(Invidious::Database::Users.preference_json(email) == before, "Rejected chat value partially wrote preferences")
   end
-  restricted = generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
+  restricted = Invidious::Helpers::Tokens.generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
   check(security_request("PATCH", "/api/v1/auth/chat_preferences", bearer: restricted, body: body).response.status_code == 403, "Preference-read token gained chat-write scope")
-  bearer = generate_token(email, ["PATCH:chat_preferences"], nil, HMAC_KEY, sid)
+  bearer = Invidious::Helpers::Tokens.generate_token(email, ["PATCH:chat_preferences"], nil, HMAC_KEY, sid)
   check(security_request("PATCH", "/api/v1/auth/chat_preferences", bearer: bearer, body: {chat_font_scale: 75, chat_width_px: 640}.to_json).response.status_code == 200, "Exact native chat scope/range boundary failed")
   native_fields = JSON.parse(Invidious::Database::Users.preference_json(email))
   native.each { |key, value| check(native_fields[key] == value, "Bearer chat save reset compatibility data: #{key}") }
@@ -394,7 +394,7 @@ def check_chat_settings
     check(security_request("PUT", timing_path, sid: sid, csrf: csrf, body: bad).response.status_code == 400 && timing.call == 125, "Invalid video timing changed the saved value")
   end
   check(security_request("GET", timing_path, bearer: restricted).response.status_code == 403, "Preference-read token gained timing access")
-  timing_bearer = generate_token(email, ["PUT:chat_timing/*", "GET:chat_timing/*"], nil, HMAC_KEY, sid)
+  timing_bearer = Invidious::Helpers::Tokens.generate_token(email, ["PUT:chat_timing/*", "GET:chat_timing/*"], nil, HMAC_KEY, sid)
   check(security_request("PUT", timing_path, bearer: timing_bearer, body: {offsetMs: -125}.to_json).response.status_code == 200, "Native timing write scope failed")
   check(JSON.parse(security_request("GET", timing_path, bearer: timing_bearer).get("test_result").as(String))["offsetMs"] == -125, "Native timing read scope failed")
   other_sid = Invidious::Database::Accounts.register("ChatTimingOther", "another isolated timing test password", Preferences.from_json("{}"))
@@ -406,7 +406,7 @@ def check_chat_settings
   html = page.get("test_result").as(String)
   check(page.response.status_code == 200 && html.includes?("data-chat-preferences") && !html.includes?("id=\"chat-overlay"), "Dedicated chat page is unavailable or exposes retired overlay UI")
   check(page.response.headers["Cache-Control"] == "private, no-store", "Private chat editor was cacheable")
-  token = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+  token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences"}, HMAC_KEY)
   fields = {"section" => "chat", "csrf_token" => token, "browser_profile" => Invidious::BrowserProfiles.account_scope(email), "chat_show_timestamps" => "on", "chat_user_blacklist" => "UCblocked", "chat_word_blacklist" => "literal /pattern/", "chat_overlay_mode" => "off", "chat_font_scale" => "100"}
   posted = security_request("POST", "/preferences", sid: sid, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded")
   check(posted.response.status_code == 302 && posted.response.headers["Location"] == "/preferences?section=chat&saved=1", "No-JavaScript chat form failed")
@@ -663,12 +663,12 @@ def check_blocked_channel_routes
   # Native and web clients keep the same table, response fields and token scopes.
   native = security_request("GET", "/api/v1/auth/blocked_channels", sid: sid)
   check(JSON.parse(native.get("test_result").as(String)).as_a.size == 2, "Native block list lost web entries")
-  wrong_scope = generate_token(owner, ["GET:preferences"], nil, HMAC_KEY, sid)
+  wrong_scope = Invidious::Helpers::Tokens.generate_token(owner, ["GET:preferences"], nil, HMAC_KEY, sid)
   check(security_request("GET", "/api/v1/auth/blocked_channels", bearer: wrong_scope).response.status_code == 403, "Preference scope gained native block access")
   saved = security_request("POST", "#{path}?format=json", sid: sid, body: URI::Params.encode(payload), content_type: "application/x-www-form-urlencoded")
   check(saved.response.status_code == 200 && JSON.parse(saved.get("test_result").as(String))["channels"].as_a.map(&.["authorId"].as_s) == [second], "Canonical unblock did not return the remaining rows")
   check(Invidious::Database::BlockedChannels.ids(other) == [id] && Invidious::Database::Users.preference_json(owner) == preferences, "Unblock changed another account or preference document")
-  legacy = {"ucid" => id, "action" => "block", "name" => " Legacy <name> ", "csrf_token" => generate_response(sid, {":blocked_channels"}, HMAC_KEY)}
+  legacy = {"ucid" => id, "action" => "block", "name" => " Legacy <name> ", "csrf_token" => Invidious::Helpers::Tokens.generate_response(sid, {":blocked_channels"}, HMAC_KEY)}
   2.times do
     response = security_request("POST", "#{path}?redirect=false", sid: sid, body: URI::Params.encode(legacy), content_type: "application/x-www-form-urlencoded")
     check(response.response.status_code == 200 && JSON.parse(response.get("test_result").as(String)) == JSON.parse(%({"blocked":true})), "Legacy contextual block JSON changed")

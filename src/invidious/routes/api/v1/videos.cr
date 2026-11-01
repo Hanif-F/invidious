@@ -21,10 +21,10 @@ module Invidious::Routes::API::V1::Videos
         Invidious::JSONify::APIv1.video(video, json, locale: locale, proxy: proxy)
       end
     rescue ex : NotFoundException
-      return error_json(404, ex)
+      return Errors.error_json(404, ex)
     rescue ex
       LOGGER.error("Video API #{id}: #{ex.inspect_with_backtrace}")
-      return error_json(500, ex)
+      return Errors.error_json(500, ex)
     end
   end
 
@@ -36,7 +36,7 @@ module Invidious::Routes::API::V1::Videos
 
     # Sanity checks
     unless validate_video_id(id)
-      return error_json(400, InvalidVideoID.new(id))
+      return Errors.error_json(400, InvalidVideoID.new(id))
     end
 
     # See https://github.com/ytdl-org/youtube-dl/blob/6ab30ff50bf6bd0585927cb73c7421bef184f87a/youtube_dl/extractor/youtube.py#L1354
@@ -179,10 +179,10 @@ module Invidious::Routes::API::V1::Videos
       Invidious::Videos::CaptionDelivery.validate(webvtt)
     rescue ex : Invidious::Videos::CaptionDelivery::UpstreamError
       env.response.content_type = "application/json"
-      return error_json(ex.status, ex.message || "Captions are unavailable.")
+      return Errors.error_json(ex.status, ex.message || "Captions are unavailable.")
     rescue ex
       env.response.content_type = "application/json"
-      return error_json(502, "Could not retrieve captions from upstream.")
+      return Errors.error_json(502, "Could not retrieve captions from upstream.")
     end
 
     if title = env.params.query["title"]?
@@ -324,7 +324,7 @@ module Invidious::Routes::API::V1::Videos
 
         annotations = response.body
 
-        Helpers.cache_annotation(video_id, annotations)
+        Invidious::Helpers.cache_annotation(video_id, annotations)
       end
     else # "youtube"
       response = YT_POOL.client &.get("/annotations_invideo?video_id=#{video_id}")
@@ -371,49 +371,29 @@ module Invidious::Routes::API::V1::Videos
     continuation = env.params.query["continuation"]?
     sort_by = env.params.query["sort_by"]?.try &.downcase
 
+    # 2026-10-18 TODO: Make a mechanism to remove unused
+    # preferences from PREFS cookie of the clients
+    # when some preferences are changed, like this one
+    # which is a Reedit comments deprecation that appears
+    # on preferences.
+    #
+    # Fallback for API users that still use Reddit as a source
+    if source == "reddit"
+      return Errors.error_json(410, RedditIsDeprecated.new)
+    end
+
     if source == "youtube"
       sort_by ||= "top"
 
       begin
         comments = Comments.fetch_youtube(id, continuation, format, locale, thin_mode, region, sort_by: sort_by)
       rescue ex : NotFoundException
-        return error_json(404, ex)
+        return Errors.error_json(404, ex)
       rescue ex
-        return error_json(500, ex)
+        return Errors.error_json(500, ex)
       end
 
       return comments
-    elsif source == "reddit"
-      sort_by ||= "confidence"
-
-      begin
-        comments, reddit_thread = Comments.fetch_reddit(id, sort_by: sort_by)
-      rescue
-        comments = nil
-        reddit_thread = nil
-      end
-
-      if !reddit_thread || !comments
-        return error_json(404, "No reddit threads found")
-      end
-
-      if format == "json"
-        reddit_thread = JSON.parse(reddit_thread.to_json).as_h
-        reddit_thread["comments"] = JSON.parse(comments.to_json)
-
-        return reddit_thread.to_json
-      else
-        content_html = Frontend::Comments.template_reddit(comments, locale)
-        content_html = Comments.fill_links(content_html, "https", "www.reddit.com")
-        content_html = Comments.replace_links(content_html)
-        response = {
-          "title"       => reddit_thread.title,
-          "permalink"   => reddit_thread.permalink,
-          "contentHtml" => content_html,
-        }
-
-        return response.to_json
-      end
     end
   end
 
@@ -428,10 +408,10 @@ module Invidious::Routes::API::V1::Videos
     proxy = {"1", "true"}.any? &.== env.params.query["local"]?
 
     response = YoutubeAPI.resolve_url("https://www.youtube.com/clip/#{clip_id}")
-    return error_json(400, "Invalid clip ID") if response["error"]?
+    return Errors.error_json(400, "Invalid clip ID") if response["error"]?
 
     video_id = response.dig?("endpoint", "watchEndpoint", "videoId").try &.as_s
-    return error_json(400, "Invalid clip ID") if video_id.nil?
+    return Errors.error_json(400, "Invalid clip ID") if video_id.nil?
 
     start_time = nil
     end_time = nil
@@ -444,9 +424,9 @@ module Invidious::Routes::API::V1::Videos
     begin
       video = get_video(video_id, region: region)
     rescue ex : NotFoundException
-      return error_json(404, ex)
+      return Errors.error_json(404, ex)
     rescue ex
-      return error_json(500, ex)
+      return Errors.error_json(500, ex)
     end
 
     return JSON.build do |json|
@@ -478,9 +458,9 @@ module Invidious::Routes::API::V1::Videos
       begin
         video = get_video(id)
       rescue ex : NotFoundException
-        return error_json(404, ex)
+        return Errors.error_json(404, ex)
       rescue ex
-        return error_json(500, ex)
+        return Errors.error_json(500, ex)
       end
 
       response = JSON.build do |json|
@@ -518,14 +498,14 @@ module Invidious::Routes::API::V1::Videos
       begin
         video = get_video(id)
       rescue ex : NotFoundException
-        return error_json(404, ex)
+        return Errors.error_json(404, ex)
       rescue ex
-        return error_json(500, ex)
+        return Errors.error_json(500, ex)
       end
 
       target_transcript = video.captions.select(&.name.== label)
       if target_transcript.empty?
-        return error_json(404, NotFoundException.new("Requested transcript does not exist"))
+        return Errors.error_json(404, NotFoundException.new("Requested transcript does not exist"))
       else
         target_transcript = target_transcript[0]
         lang, auto_generated = target_transcript.language_code, target_transcript.auto_generated
@@ -539,9 +519,9 @@ module Invidious::Routes::API::V1::Videos
         YoutubeAPI.get_transcript(params), lang, auto_generated
       )
     rescue ex : NotFoundException
-      return error_json(404, ex)
+      return Errors.error_json(404, ex)
     rescue ex
-      return error_json(500, ex)
+      return Errors.error_json(500, ex)
     end
 
     return transcript.to_json

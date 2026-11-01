@@ -199,3 +199,5 @@ The JavaScript license table retains its LibreJS ID and three linked columns,
 including dynamically enumerated first-party scripts and existing player/vendor
 licenses. Lucide attribution remains accessible. The table can scroll inside its
 reading panel without widening the document.
+
+Channel Shows use the existing More menu, alongside Podcasts, Releases, Courses and related channels. Native channel metadata advertises Shows while retaining the fork's Clips tab. Watch comments retain YouTube sort, replies, continuation and no-JavaScript pagination; Reddit source controls and fallback readers have been removed.

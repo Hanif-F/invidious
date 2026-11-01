@@ -6,7 +6,7 @@ def check_library_workflows
   other_sid = Invidious::Database::Accounts.register("LibraryOther", "a disposable library check password", Preferences.from_json("{}"))
   owner = Invidious::Database::Users.select!(email: Invidious::Database::SessionIDs.select_email(sid).not_nil!)
   other = Invidious::Database::Users.select!(email: Invidious::Database::SessionIDs.select_email(other_sid).not_nil!)
-  list = create_playlist("Transactional entries", PlaylistPrivacy::Private, owner)
+  list = Invidious::Playlists::Playlists.create_playlist("Transactional entries", PlaylistPrivacy::Private, owner)
   first = PlaylistVideo.new({title: "Duplicate", id: "abcdefghijk", author: "Channel", ucid: "UCfixture", length_seconds: 10, published: Time.utc, plid: list.id, index: 9_007_199_254_740_993_i64, live_now: false, members_only: false})
   second = first.dup; second.index += 2
   appended = [] of Int64
@@ -87,7 +87,7 @@ def check_library_workflows
   PG_DB.exec("DROP TRIGGER reject_library_delete ON playlists")
   PG_DB.exec("DROP FUNCTION reject_library_delete()")
 
-  create_token = generate_response(sid, {":create_playlist"}, HMAC_KEY)
+  create_token = Invidious::Helpers::Tokens.generate_response(sid, {":create_playlist"}, HMAC_KEY)
   fields = {"title" => "Keep my <typed> & quoted draft", "privacy" => "invalid", "csrf_token" => create_token}
   html = security_request("POST", "/create_playlist", sid: sid, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded")
   check(html.response.status_code == 400 && html.get("test_result").as(String).includes?(HTML.escape(fields["title"])) && html.get("test_result").as(String).includes?("data-playlist-form=\"create\""), "Failed HTML creation lost its draft")
@@ -108,7 +108,7 @@ def check_library_workflows
   end
   fields["title"] = "日本語" * 30
   check(security_request("POST", "/create_playlist?redirect=false", sid: sid, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded").response.status_code == 400, "Overlong UTF-8 title bypassed validation")
-  edit_token = generate_response(sid, {":edit_playlist"}, HMAC_KEY)
+  edit_token = Invidious::Helpers::Tokens.generate_response(sid, {":edit_playlist"}, HMAC_KEY)
   edit_fields = {"title" => "Changed <title>", "privacy" => "Unlisted", "description" => "Keep </textarea> & <script> literally", "csrf_token" => edit_token}
   result = security_request("POST", "/edit_playlist?list=#{list.id}&redirect=false", sid: sid, body: URI::Params.encode(edit_fields), content_type: "application/x-www-form-urlencoded")
   check(result.response.status_code == 200 && JSON.parse(result.get("test_result").as(String))["title"].as_s == edit_fields["title"], "Edit JSON failed to acknowledge canonical metadata")
@@ -120,14 +120,14 @@ def check_library_workflows
   check(security_request("POST", "/edit_playlist?list=#{list.id}", sid: other_sid, body: URI::Params.encode(edit_fields), content_type: "application/x-www-form-urlencoded").response.status_code >= 400, "Another account edited the playlist")
 
   before_remove = PG_DB.query_one("SELECT index FROM playlists WHERE id=$1", list.id, as: Array(Int64))
-  ajax_token = generate_response(sid, {"POST:playlist_ajax"}, HMAC_KEY)
+  ajax_token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:playlist_ajax"}, HMAC_KEY)
   removed = security_request("POST", "/playlist_ajax?action=remove_video&redirect=false&playlist_id=#{list.id}&set_video_id=#{before_remove.first}", sid: sid, body: URI::Params.encode({"csrf_token" => ajax_token, "include_positions" => "1"}), content_type: "application/x-www-form-urlencoded")
   check(removed.response.status_code == 200, "Occurrence removal with a canonical snapshot failed")
   canonical = JSON.parse(removed.get("test_result").as(String))
   check(canonical["total"].as_i == 1 && canonical["positions"][before_remove.last.to_s].as_i == 1 && !canonical["positions"].as_h.has_key?(before_remove.first.to_s), "Removal snapshot lost canonical count/order")
 
   Database::SavedPlaylists.save(other.email, NativePlaylists.metadata(Invidious::Database::Playlists.select(id: list.id).not_nil!, other.email))
-  delete_token = generate_response(other_sid, {":delete_playlist"}, HMAC_KEY)
+  delete_token = Invidious::Helpers::Tokens.generate_response(other_sid, {":delete_playlist"}, HMAC_KEY)
   unsave = {"operation" => "unsave", "csrf_token" => delete_token}
   result = security_request("POST", "/delete_playlist?list=#{list.id}", sid: other_sid, body: URI::Params.encode(unsave), content_type: "application/x-www-form-urlencoded")
   check(result.response.status_code == 302 && !Database::SavedPlaylists.exists?(other.email, list.id), "Unsave did not remove the requesting account's reference")
@@ -144,7 +144,7 @@ def check_library_workflows
   check(PG_DB.query_one("SELECT count(*) FROM watch_history WHERE email=$1", owner.email, as: Int64) == 1 && Invidious::Database::Users.select!(email: owner.email).watched == ["abcdefghijk"], "Failed full-history clearing lost history")
   PG_DB.exec("DROP TRIGGER reject_library_clear ON playback_positions")
   PG_DB.exec("DROP FUNCTION reject_library_clear()")
-  clear_token = generate_response(sid, {":clear_watch_history"}, HMAC_KEY)
+  clear_token = Invidious::Helpers::Tokens.generate_response(sid, {":clear_watch_history"}, HMAC_KEY)
   result = security_request("POST", "/clear_watch_history", sid: sid, body: URI::Params.encode({"csrf_token" => clear_token}), content_type: "application/x-www-form-urlencoded")
   check(result.response.status_code == 302, "Confirmed history clearing failed")
   check(PG_DB.query_one("SELECT count(*) FROM playback_positions WHERE email=$1", owner.email, as: Int64) == 0 && PG_DB.query_one("SELECT count(*) FROM watch_history WHERE email=$1", owner.email, as: Int64) == 0, "Clearing history left synced positions")
@@ -157,14 +157,14 @@ end
 def check_library_limit_race
   sid = Invidious::Database::Accounts.register("LibraryLimit", "a disposable playlist quota password", Preferences.from_json("{}"))
   owner = Invidious::Database::Users.select!(email: Invidious::Database::SessionIDs.select_email(sid).not_nil!)
-  utf8 = create_playlist("日" * 51, PlaylistPrivacy::Private, owner)
+  utf8 = Invidious::Playlists::Playlists.create_playlist("日" * 51, PlaylistPrivacy::Private, owner)
   check(utf8.title == "日" * 50, "The existing title bound produced invalid UTF-8")
   PG_DB.exec("INSERT INTO playlists SELECT 'Limit', 'IVlimit' || n, $1, '', 0, now(), now(), 'Private'::privacy, '{}'::bigint[] FROM generate_series(1,98) n", owner.email)
   outcomes = Channel(Symbol).new(2)
   2.times do
     spawn do
       begin
-        create_playlist("The last slot", PlaylistPrivacy::Private, owner)
+        Invidious::Playlists::Playlists.create_playlist("The last slot", PlaylistPrivacy::Private, owner)
         outcomes.send(:ok)
       rescue InfoException
         outcomes.send(:full)

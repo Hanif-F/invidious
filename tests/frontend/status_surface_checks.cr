@@ -42,7 +42,7 @@ def write_status_surface_fixtures(output)
       env = status_surface_env(path, mode, locale, method)
       env.set "search", "private-search-sentinel"
       env.request.headers["Authorization"] = "Bearer private-header-sentinel"
-      html = error_template_helper(env, status, Exception.new("private-exception-sentinel /callback?secret=private-query-sentinel")).as(String)
+      html = Errors.error_template_helper(env, status, Exception.new("private-exception-sentinel /callback?secret=private-query-sentinel")).as(String)
       %w(private-query-sentinel private-path-sentinel private-search-sentinel private-header-sentinel private-exception-sentinel).each do |secret|
         raise "Public error exposed #{secret}" if html.includes?(secret)
       end
@@ -52,9 +52,9 @@ def write_status_surface_fixtures(output)
       File.write("#{output}/d7-status-#{name}-#{variant}.html", html)
     end
     known = status_surface_env("/watch?v=abcdefghijk", mode, locale)
-    File.write("#{output}/d7-status-known-#{variant}.html", error_template_helper(known, 404, InfoException.new(%(Unavailable <img src=x onerror="window.injected=true"> & "quoted"))).as(String))
+    File.write("#{output}/d7-status-known-#{variant}.html", Errors.error_template_helper(known, 404, InfoException.new(%(Unavailable <img src=x onerror="window.injected=true"> & "quoted"))).as(String))
     unavailable = status_surface_env("/embed/abcdefghijk", mode, locale)
-    html = error_template_helper(unavailable, 404, VideoNotAvailableException.new("This video is unavailable.")).as(String)
+    html = Errors.error_template_helper(unavailable, 404, VideoNotAvailableException.new("This video is unavailable.")).as(String)
     raise "Known unavailable video became an unexpected crash" if html.includes?("error-details") || !html.includes?("This video is unavailable.")
     File.write("#{output}/d7-status-unavailable-#{variant}.html", html)
     missing = status_surface_env("/unknown/missing/page", mode, locale)
@@ -63,7 +63,7 @@ def write_status_surface_fixtures(output)
     File.write("#{output}/d7-status-not-found-#{variant}.html", html)
   end
   early = HTTP::Server::Context.new(HTTP::Request.new("GET", "/unknown/early?password=private-early-sentinel"), HTTP::Server::Response.new(IO::Memory.new))
-  html = error_template_helper(early, 500, Exception.new("private-early-sentinel")).as(String)
+  html = Errors.error_template_helper(early, 500, Exception.new("private-early-sentinel")).as(String)
   raise "Early exception could not render a private-safe recovery" if html.includes?("private-early-sentinel") || !html.includes?("error-heading")
   unsafe = status_surface_env("/privacy", %q(dark" onload="window.injected=true), %q(en-US" onload="window.injected=true))
   preferences = unsafe.get("preferences").as(Preferences)

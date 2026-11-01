@@ -59,7 +59,7 @@ module Invidious::NativePreferences
           raise "Invalid captions" unless languages.size <= 3 && languages.all? { |entry| entry.as_s.matches?(/\A[\p{L}\p{N} _().-]{0,100}\z/) }
         when "comments"
           sources = value.as_a
-          raise "Invalid comments" unless sources.size <= 2 && sources.all? { |entry| {"", "youtube", "reddit"}.includes?(entry.as_s) }
+          raise "Invalid comments" unless sources.size <= 2 && sources.all? { |entry| {"", "youtube"}.includes?(entry.as_s) }
         when "max_results"
           raise "Invalid page size" unless (1..1500).includes?(value.as_i64)
         when "sort"

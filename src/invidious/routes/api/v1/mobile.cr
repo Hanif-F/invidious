@@ -19,7 +19,7 @@ module Invidious::Routes::API::V1::Mobile
     if enabled && CONFIG.captcha_enabled
       if wait = Database::Accounts.throttle("mobile-captcha:#{Authentication.client_ip(env)}", 60, 3600)
         env.response.headers["Retry-After"] = wait.to_s
-        return error_json(429, "Too many attempts. Try again later.")
+        return Errors.error_json(429, "Too many attempts. Try again later.")
       end
     end
     captcha = enabled && CONFIG.captcha_enabled ? User::Captcha.generate_image(HMAC_KEY, "POST:api/v1/mobile/register") : nil
@@ -30,32 +30,32 @@ module Invidious::Routes::API::V1::Mobile
   def self.register(env)
     env.response.content_type = "application/json"
     Authentication.no_store(env)
-    return error_json(403, "Sign-in is disabled on this instance.") unless CONFIG.login_enabled
-    return error_json(403, "Registration is disabled on this instance.") unless CONFIG.registration_enabled
+    return Errors.error_json(403, "Sign-in is disabled on this instance.") unless CONFIG.login_enabled
+    return Errors.error_json(403, "Registration is disabled on this instance.") unless CONFIG.registration_enabled
     begin
       data = read_json(env)
       username = data["username"].as_s
       password = data["password"].as_s
       confirmation = data["passwordConfirmation"].as_s
     rescue
-      return error_json(400, "Invalid registration request.")
+      return Errors.error_json(400, "Invalid registration request.")
     end
-    return error_json(429, "Too many attempts. Try again later.") if Authentication.throttle(env, username.byte_slice(0, 254), true)
+    return Errors.error_json(429, "Too many attempts. Try again later.") if Authentication.throttle(env, username.byte_slice(0, 254), true)
     error = Credentials.username_error(username) || Credentials.password_error(password)
     error ||= "New passwords must match" unless password == confirmation
-    return error_json(400, error) if error
+    return Errors.error_json(400, error) if error
     if CONFIG.captcha_enabled
       begin
         answer = OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, data["captchaAnswer"].as_s.lstrip('0'))
-        validate_request(data["captchaToken"].as_s, answer, env.request, HMAC_KEY)
+        Invidious::Helpers::Tokens.validate_request(data["captchaToken"].as_s, answer, env.request, HMAC_KEY)
       rescue
-        return error_json(400, "Incorrect or expired CAPTCHA. Refresh the challenge.")
+        return Errors.error_json(400, "Incorrect or expired CAPTCHA. Refresh the challenge.")
       end
     end
     Database::Accounts.register_mobile(username, password).to_json
   rescue ex : PQ::PQError
     raise ex unless ex.field_message(:code) == "23505"
-    error_json(409, "Username is already taken.")
+    Errors.error_json(409, "Username is already taken.")
   end
 
   def self.read_json(env) : Hash(String, JSON::Any)
@@ -73,20 +73,20 @@ module Invidious::Routes::API::V1::Mobile
   def self.login(env)
     env.response.content_type = "application/json"
     Invidious::Authentication.no_store(env)
-    return error_json(403, "Sign-in is disabled on this instance.") unless CONFIG.login_enabled
+    return Errors.error_json(403, "Sign-in is disabled on this instance.") unless CONFIG.login_enabled
     begin
       data = read_json(env)
       username = data["username"].as_s
       password = data["password"].as_s
       raise "Invalid credentials" unless 0 < username.bytesize <= 254 && 0 < password.bytesize <= 4096
     rescue
-      return error_json(400, "Invalid sign-in request.")
+      return Errors.error_json(400, "Invalid sign-in request.")
     end
-    return error_json(429, "Too many attempts. Try again later.") if Invidious::Authentication.throttle(env, username)
+    return Errors.error_json(429, "Too many attempts. Try again later.") if Invidious::Authentication.throttle(env, username)
     if result = Invidious::Database::Accounts.authenticate_mobile(username, password)
       result.to_json
     else
-      error_json(401, "Incorrect username or password.")
+      Errors.error_json(401, "Incorrect username or password.")
     end
   end
 end

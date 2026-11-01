@@ -114,7 +114,7 @@ def check_watch_enhancement_routes(sid, owner, original_raw)
   preferences.show_original_title = false
   PG_DB.exec("UPDATE users SET preferences=$1 WHERE email=$2", preferences.to_json, owner)
   user = Invidious::Database::Users.select!(email: owner)
-  playlist = create_playlist("Retained member occurrences", PlaylistPrivacy::Private, user)
+  playlist = Invidious::Playlists::Playlists.create_playlist("Retained member occurrences", PlaylistPrivacy::Private, user)
   occurrences = [9_007_199_254_741_001_i64, 9_007_199_254_741_003_i64]
   occurrences.each do |occurrence|
     item = PlaylistVideo.new({title: "A member occurrence", id: "abcdefghijk", author: "A", ucid: channel_a,

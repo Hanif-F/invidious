@@ -119,7 +119,7 @@ def check_member_extraction
   raise "Lockup discarded membership or duration" unless modern.members_only && modern.length_seconds == 754
   upstream = {"onResponseReceivedActions" => JSON.parse({appendContinuationItemsAction: {continuationItems: [lockup]}}.to_json)}
   upstream["onResponseReceivedActions"] = JSON::Any.new([upstream["onResponseReceivedActions"]])
-  entry = extract_playlist_videos("PLfixture", upstream).first.as(PlaylistVideo)
+  entry = Invidious::Playlists::Playlists.extract_playlist_videos("PLfixture", upstream).first.as(PlaylistVideo)
   raise "Playlist discarded membership or index" unless entry.members_only && entry.index == 4 && entry.length_seconds == 754
 
   related = JSON.parse(%({"videoId":"members0001","title":{"simpleText":"Member video"},"badges":[{"metadataBadgeRenderer":{"label":"Members only"}}]}))

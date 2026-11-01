@@ -6,10 +6,9 @@ require "yaml"
 require "../src/invidious/helpers/*"
 require "../src/invidious/channels/*"
 require "../src/invidious/videos/caption"
-require "../src/invidious/videos"
-require "../src/invidious/playlists"
+require "../src/invidious/videos/videos"
+require "../src/invidious/playlists/playlists"
 require "../src/invidious/search/ctoken"
-require "../src/invidious/trending"
 require "spectator"
 
 Spectator.configure do |config|

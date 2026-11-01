@@ -15,7 +15,7 @@ def write_identity_editor_fixtures(output)
       PG_DB.exec("DELETE FROM dearrow_identities WHERE email = ?", user.email)
       Invidious::Database::DeArrowIdentities.import(user.email, secret, CONFIG.dearrow_identity_key) unless kind == "new"
       CONFIG.dearrow_identity_key = "" if kind == "setup"
-      fields = {"identity_editor" => "1", "private_id" => "<literal>&private", "confirm_replace" => "on", "browser_profile" => Invidious::BrowserProfiles.account_scope(user.email), "csrf_token" => generate_response("fixture-session", {"POST:dearrow_identity"}, HMAC_KEY), "revision" => Invidious::Database::DeArrowIdentities.snapshot(user.email, HMAC_KEY)[:revision]}
+      fields = {"identity_editor" => "1", "private_id" => "<literal>&private", "confirm_replace" => "on", "browser_profile" => Invidious::BrowserProfiles.account_scope(user.email), "csrf_token" => Invidious::Helpers::Tokens.generate_response("fixture-session", {"POST:dearrow_identity"}, HMAC_KEY), "revision" => Invidious::Database::DeArrowIdentities.snapshot(user.email, HMAC_KEY)[:revision]}
       fields["csrf_token"] = "expired" if kind == "expired"
       fields["browser_profile"] = "earlier-profile" if kind == "stale"
       html = if {"invalid", "expired", "stale"}.includes?(kind)

@@ -8,7 +8,7 @@ def check_contribution_editor_routes
   Invidious::Database::DeArrowIdentities.import(other, "q" * 64, CONFIG.dearrow_identity_key)
   other_before = PG_DB.query_one("SELECT ciphertext FROM dearrow_identities WHERE email=$1", other, as: String)
   prefs = Invidious::Database::Users.preference_json(owner)
-  token = generate_response(sid, {"POST:dearrow_submit"}, HMAC_KEY)
+  token = Invidious::Helpers::Tokens.generate_response(sid, {"POST:dearrow_submit"}, HMAC_KEY)
   fields = {"video_id" => "abcdefghijk", "action" => "upvote", "uuid" => "proposal", "csrf_token" => token, "browser_profile" => Invidious::BrowserProfiles.account_scope(owner)}
   count = DEARROW_TEST_WRITES.size
   read = security_request("GET", "/api/v1/dearrow/abcdefghijk/submissions", sid: sid)

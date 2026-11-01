@@ -46,7 +46,7 @@ def check_dearrow_preferences
 end
 
 def dearrow_post(path, fields, signed = true, valid_csrf = true)
-  token = generate_response("dearrow-session", {"POST:dearrow_submit", "POST:dearrow_identity"}, HMAC_KEY)
+  token = Invidious::Helpers::Tokens.generate_response("dearrow-session", {"POST:dearrow_submit", "POST:dearrow_identity"}, HMAC_KEY)
   fields["csrf_token"] = valid_csrf ? token : "invalid"
   body = URI::Params.encode(fields)
   env = HTTP::Server::Context.new(HTTP::Request.new("POST", path, HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}, body), HTTP::Server::Response.new(IO::Memory.new))

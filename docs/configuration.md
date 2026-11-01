@@ -138,3 +138,5 @@ The `default_user_preferences.show_original_title` boolean defaults true and als
 applies to older preferences that omit it. Set it to false to retain existing
 upstream video titles by default. Migration 24 creates the optional original-title
 cache; [preferences](preferences.md) describes lookup limits and DeArrow behavior.
+
+Legacy preference documents remain readable after the upstream merge: `comments` entries containing `reddit` normalize to `youtube`, and `quality: hd720` normalizes to `medium`, including YAML instance defaults. New web/native preference writes offer only supported values. This normalization requires no database migration.

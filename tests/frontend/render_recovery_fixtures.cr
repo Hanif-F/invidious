@@ -28,6 +28,8 @@ require "../../src/invidious/videos/*"
 require "../../src/invidious/jsonify/**"
 
 require "../../src/invidious/*"
+require "../../src/invidious/playlists/*"
+require "../../src/invidious/feeds/*"
 require "../../src/invidious/comments/*"
 require "../../src/invidious/channels/*"
 require "../../src/invidious/user/*"
@@ -97,7 +99,7 @@ Dir.mkdir_p(output)
   raise "API-only verification offers an unavailable Privacy route" if html.includes?("href=\"/privacy")
   File.write("#{output}/d7-api-verify-#{mode}.html", html)
   error_env = recovery_env("/api/private-sentinel?token=private-sentinel", mode)
-  html = error_template_helper(error_env, 500, Exception.new("private-sentinel")).as(String)
+  html = Errors.error_template_helper(error_env, 500, Exception.new("private-sentinel")).as(String)
   raise "API-only error exposed a credential or unavailable browsing action" if html.includes?("private-sentinel") || html.includes?("href=\"/search") || html.includes?("app-sidebar")
   raise "API-only error lost its useful recovery destination" unless html.includes?("href=\"/admin/settings")
   File.write("#{output}/d7-api-error-#{mode}.html", html)

@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **459 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **456 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -213,21 +213,19 @@ Domain models and cross-cutting integrations, configuration and routing.
 | [src/invidious/dearrow_contributions.cr](../../src/invidious/dearrow_contributions.cr) | dearrow contributions |
 | [src/invidious/dearrow_identity.cr](../../src/invidious/dearrow_identity.cr) | dearrow identity |
 | [src/invidious/exceptions.cr](../../src/invidious/exceptions.cr) | exceptions |
-| [src/invidious/hashtag.cr](../../src/invidious/hashtag.cr) | hashtag |
+| [src/invidious/ext/kemal_static_file_handler.cr](../../src/invidious/ext/kemal_static_file_handler.cr) | kemal static file handler |
+| [src/invidious/feeds/trending.cr](../../src/invidious/feeds/trending.cr) | trending |
 | [src/invidious/history.cr](../../src/invidious/history.cr) | history |
 | [src/invidious/jobs.cr](../../src/invidious/jobs.cr) | jobs |
-| [src/invidious/mixes.cr](../../src/invidious/mixes.cr) | mixes |
 | [src/invidious/native_playlists.cr](../../src/invidious/native_playlists.cr) | native playlists |
 | [src/invidious/native_preferences.cr](../../src/invidious/native_preferences.cr) | native preferences |
 | [src/invidious/original_titles.cr](../../src/invidious/original_titles.cr) | original titles |
-| [src/invidious/playlists.cr](../../src/invidious/playlists.cr) | playlists |
+| [src/invidious/playlists/mixes.cr](../../src/invidious/playlists/mixes.cr) | mixes |
+| [src/invidious/playlists/playlists.cr](../../src/invidious/playlists/playlists.cr) | playlists |
 | [src/invidious/routing.cr](../../src/invidious/routing.cr) | routing |
 | [src/invidious/rss.cr](../../src/invidious/rss.cr) | rss |
 | [src/invidious/sponsorblock.cr](../../src/invidious/sponsorblock.cr) | sponsorblock |
 | [src/invidious/sponsorblock_preferences.cr](../../src/invidious/sponsorblock_preferences.cr) | sponsorblock preferences |
-| [src/invidious/trending.cr](../../src/invidious/trending.cr) | trending |
-| [src/invidious/users.cr](../../src/invidious/users.cr) | users |
-| [src/invidious/videos.cr](../../src/invidious/videos.cr) | videos |
 | [src/invidious/web_preferences.cr](../../src/invidious/web_preferences.cr) | web preferences |
 ## src/invidious/channels
 
@@ -239,7 +237,7 @@ Channel metadata and tabs, community posts and upstream pagination.
 | [src/invidious/channels/channels.cr](../../src/invidious/channels/channels.cr) | channels |
 | [src/invidious/channels/community.cr](../../src/invidious/channels/community.cr) | community |
 | [src/invidious/channels/playlists.cr](../../src/invidious/channels/playlists.cr) | playlists |
-| [src/invidious/channels/videos.cr](../../src/invidious/channels/videos.cr) | videos |
+| [src/invidious/channels/tabs.cr](../../src/invidious/channels/tabs.cr) | tabs |
 ## src/invidious/clips
 
 Native clip range, timestamp and ID validation.
@@ -249,14 +247,11 @@ Native clip range, timestamp and ID validation.
 | [src/invidious/clips/validation.cr](../../src/invidious/clips/validation.cr) | validation |
 ## src/invidious/comments
 
-YouTube and Reddit comment parsing, content and safe link handling.
+YouTube comment parsing, content and safe link handling.
 
 | File | Subject |
 | --- | --- |
 | [src/invidious/comments/content.cr](../../src/invidious/comments/content.cr) | content |
-| [src/invidious/comments/links_util.cr](../../src/invidious/comments/links_util.cr) | links util |
-| [src/invidious/comments/reddit.cr](../../src/invidious/comments/reddit.cr) | reddit |
-| [src/invidious/comments/reddit_types.cr](../../src/invidious/comments/reddit_types.cr) | reddit types |
 | [src/invidious/comments/youtube.cr](../../src/invidious/comments/youtube.cr) | youtube |
 ## src/invidious/database
 
@@ -331,7 +326,6 @@ Presentation helpers for cards, filters, history, channels and page data.
 | [src/invidious/frontend/channel_avatars.cr](../../src/invidious/frontend/channel_avatars.cr) | channel avatars |
 | [src/invidious/frontend/channel_page.cr](../../src/invidious/frontend/channel_page.cr) | channel page |
 | [src/invidious/frontend/channel_spoilers.cr](../../src/invidious/frontend/channel_spoilers.cr) | channel spoilers |
-| [src/invidious/frontend/comments_reddit.cr](../../src/invidious/frontend/comments_reddit.cr) | comments reddit |
 | [src/invidious/frontend/comments_youtube.cr](../../src/invidious/frontend/comments_youtube.cr) | comments youtube |
 | [src/invidious/frontend/data_control.cr](../../src/invidious/frontend/data_control.cr) | data control |
 | [src/invidious/frontend/desktop.cr](../../src/invidious/frontend/desktop.cr) | desktop |
@@ -476,6 +470,7 @@ Query classification, filters, protobuf continuation construction and processors
 | --- | --- |
 | [src/invidious/search/ctoken.cr](../../src/invidious/search/ctoken.cr) | ctoken |
 | [src/invidious/search/filters.cr](../../src/invidious/search/filters.cr) | filters |
+| [src/invidious/search/hashtag.cr](../../src/invidious/search/hashtag.cr) | hashtag |
 | [src/invidious/search/processors.cr](../../src/invidious/search/processors.cr) | processors |
 | [src/invidious/search/query.cr](../../src/invidious/search/query.cr) | query |
 ## src/invidious/user
@@ -496,6 +491,7 @@ User models, credentials, cookies, preference converters, CAPTCHA and data excha
 | [src/invidious/user/preferences.cr](../../src/invidious/user/preferences.cr) | preferences |
 | [src/invidious/user/sponsorblock_preferences.cr](../../src/invidious/user/sponsorblock_preferences.cr) | sponsorblock preferences |
 | [src/invidious/user/user.cr](../../src/invidious/user/user.cr) | user |
+| [src/invidious/user/users.cr](../../src/invidious/user/users.cr) | users |
 ## src/invidious/videos
 
 Video metadata, captions/transcripts, chapters, music, downloads and archived chat parsing.
@@ -520,6 +516,7 @@ Video metadata, captions/transcripts, chapters, music, downloads and archived ch
 | [src/invidious/videos/storyboard.cr](../../src/invidious/videos/storyboard.cr) | storyboard |
 | [src/invidious/videos/transcript.cr](../../src/invidious/videos/transcript.cr) | transcript |
 | [src/invidious/videos/video_preferences.cr](../../src/invidious/videos/video_preferences.cr) | video preferences |
+| [src/invidious/videos/videos.cr](../../src/invidious/videos/videos.cr) | videos |
 | [src/invidious/videos/view_counts.cr](../../src/invidious/videos/view_counts.cr) | view counts |
 ## src/invidious/views
 

@@ -25,13 +25,13 @@ module Invidious::Database::Accounts
 
   def register(username : String, password : String, preferences : Preferences) : String
     sid = Base64.urlsafe_encode(Random::Secure.random_bytes(32))
-    user, _ = create_user(sid, "account:#{Random::Secure.hex(32)}", password)
+    user, _ = Invidious::User::Users.create_user(sid, "account:#{Random::Secure.hex(32)}", password)
     user.username = username
     user.preferences = preferences if preferences
     PG_DB.transaction do |tx|
       conn = tx.connection
       Users.insert(user, conn: conn)
-      conn.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256(user.email)} AS #{MATERIALIZED_VIEW_SQL.call(user.email)}")
+      conn.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256(user.email)} AS #{Invidious::User::Users::MATERIALIZED_VIEW_SQL.call(user.email)}")
       SessionIDs.insert(sid, user.email, conn: conn)
     end
     sid
@@ -126,18 +126,18 @@ module Invidious::Database::Accounts
     conn.exec("INSERT INTO session_ids (id, email, issued, expires_at) VALUES ($1, $2, now(), $3)", session, email, expires)
     token = {"session" => JSON::Any.new(session), "scopes" => JSON::Any.new(scopes.map { |scope| JSON::Any.new(scope) })}
     token["expire"] = JSON::Any.new(expires.to_unix) if expires
-    token["signature"] = JSON::Any.new(sign_token(HMAC_KEY, token))
+    token["signature"] = JSON::Any.new(Invidious::Helpers::Tokens.sign_token(HMAC_KEY, token))
     token.to_json
   end
 
   def register_mobile(username : String, password : String, preferences : Preferences? = nil)
-    user, _ = create_user("", "account:#{Random::Secure.hex(32)}", password)
+    user, _ = Invidious::User::Users.create_user("", "account:#{Random::Secure.hex(32)}", password)
     user.username = username
     user.preferences = preferences if preferences
     PG_DB.transaction do |tx|
       conn = tx.connection
       Users.insert(user, conn: conn)
-      conn.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256(user.email)} AS #{MATERIALIZED_VIEW_SQL.call(user.email)}")
+      conn.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256(user.email)} AS #{Invidious::User::Users::MATERIALIZED_VIEW_SQL.call(user.email)}")
       issue_mobile(user, conn)
     end.not_nil!
   end

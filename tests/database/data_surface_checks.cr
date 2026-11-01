@@ -18,7 +18,7 @@ def check_data_surfaces
   check(XML.parse_html(unknown.get("test_result").as(String)).xpath_node("//input[@type='file']").not_nil!["name"] == "import_invidious", "Unknown data source did not fall back safely")
   check(security_request("GET", "/data_control").response.status_code == 302, "Guest can view private import controls")
   boundary = "data-surface-disposable-boundary"
-  csrf = generate_response(sid, {"POST:data_control"}, HMAC_KEY)
+  csrf = Invidious::Helpers::Tokens.generate_response(sid, {"POST:data_control"}, HMAC_KEY)
   token_part = "--#{boundary}\r\nContent-Disposition: form-data; name=\"csrf_token\"\r\n\r\n#{csrf}\r\n"
   upload = ->(name : String, filename : String, type : String, data : String) {
     "--#{boundary}\r\nContent-Disposition: form-data; name=\"#{name}\"; filename=\"#{filename}\"\r\nContent-Type: #{type}\r\n\r\n#{data}\r\n"
@@ -44,15 +44,17 @@ def check_data_surfaces
   check(partial_html.includes?("Earlier parts") && XML.parse_html(partial_html).xpath_node("//input[@type='file']").not_nil!["name"] == "import_youtube_wh", "Partial failure lost source or truthful guidance")
   check(Invidious::Database::Users.select!(email: email).preferences.dark_mode == "dark", "Partial import test did not preserve earlier committed section")
   # No subscriptions or playlist videos are supplied, so these checks need no provider.
-  {"json", "rss", "newpipe"}.each do |format|
+  {"json", "rss", "newpipe", "opml", "newpipe_json"}.each do |format|
     result = security_request("GET", "/subscription_manager?action_takeout=1&format=#{format}", sid)
-    check(result.response.status_code == 200 && result.response.headers["content-disposition"] == "attachment", "Grouped export link stopped downloading")
+    check(result.response.status_code == 200 && result.response.headers["content-disposition"].starts_with?("attachment; filename="), "Grouped export link stopped downloading")
     check(result.response.headers["Cache-Control"] == "private, no-store", "Private export can be cached")
     output = result.get("test_result").as(String)
     if format == "json"
       data = JSON.parse(output)
       check(data["preferences"]["dark_mode"] == "dark", "Portable JSON lost imported preference")
       %w(password sessions token accessToken dearrow_identity clips blocked_channels saved_playlists).each { |field| check(!data.as_h.has_key?(field), "Portable JSON gained private/unsupported field") }
+    elsif format == "newpipe_json"
+      check(JSON.parse(output)["subscriptions"].as_a.empty?, "Empty NewPipe export changed shape")
     else
       check(XML.parse(output).xpath_node("/opml/body"), "Subscription export lost OPML format")
     end

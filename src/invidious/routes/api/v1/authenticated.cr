@@ -8,15 +8,15 @@ module Invidious::Routes::API::V1::Authenticated
   #   topics = env.params.body["topics"]?.try &.split(",").uniq.first(1000)
   #   topics ||= [] of String
 
-  #   Helpers.create_notification_stream(env, topics, connection_channel)
+  #   Invidious::Helpers.create_notification_stream(env, topics, connection_channel)
   # end
 
   # Cookie clients obtain a session-bound token before mutating API requests.
   def self.get_csrf(env)
     env.response.content_type = "application/json"
-    return error_json(403, "A browser session is required.") if env.request.headers.has_key?("Authorization")
+    return Errors.error_json(403, "A browser session is required.") if env.request.headers.has_key?("Authorization")
     session = env.get("session").as(String)
-    {csrfToken: generate_response(session, {"POST;PUT;PATCH;DELETE:*"}, HMAC_KEY, 1.hour)}.to_json
+    {csrfToken: Invidious::Helpers::Tokens.generate_response(session, {"POST;PUT;PATCH;DELETE:*"}, HMAC_KEY, 1.hour)}.to_json
   end
 
   def self.get_preferences(env)
@@ -48,7 +48,7 @@ module Invidious::Routes::API::V1::Authenticated
       data = Mobile.read_json(env)
       Invidious::NativePreferences.validate_patch(data)
     rescue
-      return error_json(400, "Invalid preference patch. Use supported Mobivious settings with valid types and values.")
+      return Errors.error_json(400, "Invalid preference patch. Use supported Mobivious settings with valid types and values.")
     end
     names = {} of String => String
     # Channel extraction can involve upstream IO; do it before locking preferences.
@@ -57,16 +57,16 @@ module Invidious::Routes::API::V1::Authenticated
         next if entry.raw.nil?
         fields = entry.as_h
         next if fields["enabled"]?.try(&.raw).nil? && (fields["modes"]?.try(&.as_h).try(&.empty?) != false)
-        names[id] = user.preferences.sponsorblock_channel_overrides[id]?.try(&.name) || get_channel(id).author
+        names[id] = user.preferences.sponsorblock_channel_overrides[id]?.try(&.name) || Invidious::Channels::Channels.get_channel(id).author
       end
       data["channel_spoiler_settings"]?.try(&.as_h).try &.each do |id, entry|
         next if entry.raw.nil?
         fields = entry.as_h
         next unless fields["hide_title"].as_bool || fields["hide_thumbnail"].as_bool
-        names[id] = user.preferences.channel_spoiler_settings[id]?.try(&.name) || names[id]? || get_channel(id).author
+        names[id] = user.preferences.channel_spoiler_settings[id]?.try(&.name) || names[id]? || Invidious::Channels::Channels.get_channel(id).author
       end
     rescue
-      return error_json(502, "Could not load this channel. Please try again.")
+      return Errors.error_json(502, "Could not load this channel. Please try again.")
     end
     raw = ""
     PG_DB.transaction do |tx|
@@ -90,7 +90,7 @@ module Invidious::Routes::API::V1::Authenticated
     end
     raw
   rescue ex : ArgumentError
-    error_json(400, ex.message || "Invalid channel rules")
+    Errors.error_json(400, ex.message || "Invalid channel rules")
   end
 
   def self.set_chat_preferences(env)
@@ -100,34 +100,34 @@ module Invidious::Routes::API::V1::Authenticated
       data = JSON.parse(env.request.body.try(&.gets_to_end) || "{}").as_h
       Invidious::ChatPreferences.validate_patch(data)
     rescue
-      return error_json(400, "Invalid chat settings")
+      return Errors.error_json(400, "Invalid chat settings")
     end
     begin
       user.preferences = Invidious::ChatPreferences.save_account(user.email, data)
       user.preferences.to_json
     rescue ArgumentError
-      error_json(400, "Invalid chat settings")
+      Errors.error_json(400, "Invalid chat settings")
     rescue Invidious::Database::Users::PreferenceConflict
-      error_json(409, "Chat settings changed; try again")
+      Errors.error_json(409, "Chat settings changed; try again")
     end
   end
 
   def self.get_chat_timing(env)
     env.response.content_type = "application/json"
     id = env.params.url["id"]
-    return error_json(400, "Invalid video id") unless validate_video_id(id)
+    return Errors.error_json(400, "Invalid video id") unless validate_video_id(id)
     {offsetMs: Invidious::Database::ChatTimingOffsets.select(env.get("user").as(User).email, id)}.to_json
   end
 
   def self.set_chat_timing(env)
     env.response.content_type = "application/json"
     id = env.params.url["id"]
-    return error_json(400, "Invalid video id") unless validate_video_id(id)
+    return Errors.error_json(400, "Invalid video id") unless validate_video_id(id)
     begin
       offset = JSON.parse(env.request.body.try(&.gets_to_end) || "{}")["offsetMs"].as_i
       raise "Invalid timing" unless (-3_600_000..3_600_000).includes?(offset)
     rescue
-      return error_json(400, "Invalid timing")
+      return Errors.error_json(400, "Invalid timing")
     end
     Invidious::Database::ChatTimingOffsets.upsert(env.get("user").as(User).email, id, offset)
     {offsetMs: offset}.to_json
@@ -152,9 +152,9 @@ module Invidious::Routes::API::V1::Authenticated
       Invidious::User::Import.from_invidious(user, body)
       env.response.status_code = 204
     rescue ex : InfoException
-      return error_json(400, ex)
+      return Errors.error_json(400, ex)
     rescue ex
-      return error_json(500, ex)
+      return Errors.error_json(500, ex)
     end
   end
 
@@ -210,13 +210,13 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
 
     if !user.preferences.watch_history
-      return error_json(409, "Watch history is disabled in preferences.")
+      return Errors.error_json(409, "Watch history is disabled in preferences.")
     end
 
     # Sanity checks
     id = env.params.url["id"]
     unless validate_video_id(id)
-      return error_json(400, InvalidVideoID.new(id))
+      return Errors.error_json(400, InvalidVideoID.new(id))
     end
 
     Invidious::Database::Users.mark_watched(user, id)
@@ -227,12 +227,12 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
 
     if !user.preferences.watch_history
-      return error_json(409, "Watch history is disabled in preferences.")
+      return Errors.error_json(409, "Watch history is disabled in preferences.")
     end
 
     video_id = env.params.url["id"]
     unless video_id && validate_video_id(video_id)
-      return error_json(400, InvalidVideoID.new(video_id))
+      return Errors.error_json(400, InvalidVideoID.new(video_id))
     end
 
     Invidious::Database::Users.mark_unwatched(user, video_id)
@@ -259,7 +259,7 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
     id = env.params.url["id"]
 
-    return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+    return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
 
     if position = Invidious::Database::PlaybackPositions.select(user.email, id)
       return {
@@ -269,19 +269,19 @@ module Invidious::Routes::API::V1::Authenticated
       }.to_json
     end
 
-    error_json(404, "Playback position does not exist.")
+    Errors.error_json(404, "Playback position does not exist.")
   end
 
   def self.set_playback_position(env)
     user = env.get("user").as(User)
     id = env.params.url["id"]
 
-    return error_json(409, "Saving playback position is disabled in preferences.") unless user.preferences.save_player_pos
-    return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+    return Errors.error_json(409, "Saving playback position is disabled in preferences.") unless user.preferences.save_player_pos
+    return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
 
     position = env.params.json["position"]?
     unless position.is_a?(Int64) && position >= 0 && position <= Int32::MAX
-      return error_json(400, "Invalid playback position.")
+      return Errors.error_json(400, "Invalid playback position.")
     end
 
     Invidious::Database::PlaybackPositions.upsert(user.email, id, position.to_i32)
@@ -292,7 +292,7 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
     id = env.params.url["id"]
 
-    return error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+    return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
 
     Invidious::Database::PlaybackPositions.delete(user.email, id)
     env.response.status_code = 204
@@ -317,7 +317,7 @@ module Invidious::Routes::API::V1::Authenticated
     page = env.params.query["page"]?.try &.to_i?
     page ||= 1
 
-    videos, notifications = get_subscription_feed(user, max_results, page)
+    videos, notifications = Invidious::User::Users.get_subscription_feed(user, max_results, page)
 
     Invidious::JSONify::APIv1::VideoMetadata.build(env.get("preferences").as(Preferences).locale) do |json|
       json.object do
@@ -344,8 +344,8 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
     include_stats = env.params.query["include_stats"]? == "true"
-    if include_stats && !scopes_include_scope(env.get("scopes").as(Array(String)), "GET:history")
-      return error_json(403, "Channel sorting requires history read permission.")
+    if include_stats && !Invidious::Helpers::Tokens.scopes_include_scope(env.get("scopes").as(Array(String)), "GET:history")
+      return Errors.error_json(403, "Channel sorting requires history read permission.")
     end
 
     subscriptions = Invidious::Database::Channels.select(user.subscriptions)
@@ -395,7 +395,7 @@ module Invidious::Routes::API::V1::Authenticated
     ucid = env.params.url["ucid"]
 
     if !user.subscriptions.includes? ucid
-      get_channel(ucid)
+      Invidious::Channels::Channels.get_channel(ucid)
       Invidious::Database::Users.subscribe_channel(user, ucid)
     end
 
@@ -431,22 +431,22 @@ module Invidious::Routes::API::V1::Authenticated
 
     title = env.params.json["title"]?.try &.as(String).delete("<>").byte_slice(0, 150).scrub("")
     if !title
-      return error_json(400, "Invalid title.")
+      return Errors.error_json(400, "Invalid title.")
     end
 
     privacy = env.params.json["privacy"]?.try { |p| PlaylistPrivacy.parse(p.as(String).downcase) }
     if !privacy
-      return error_json(400, "Invalid privacy setting.")
+      return Errors.error_json(400, "Invalid privacy setting.")
     end
 
     if Invidious::Database::Playlists.count_owned_by(user.email) >= 100
-      return error_json(400, "User cannot have more than 100 playlists.")
+      return Errors.error_json(400, "User cannot have more than 100 playlists.")
     end
 
     begin
-      playlist = create_playlist(title, privacy, user)
+      playlist = Invidious::Playlists::Playlists.create_playlist(title, privacy, user)
     rescue ex : InfoException
-      return error_json(400, ex)
+      return Errors.error_json(400, ex)
     end
     env.response.headers["Location"] = "#{HOST_URL}/api/v1/auth/playlists/#{playlist.id}"
     env.response.status_code = 201
@@ -462,16 +462,16 @@ module Invidious::Routes::API::V1::Authenticated
 
     plid = env.params.url["plid"]?
     if !plid || plid.empty?
-      return error_json(400, "A playlist ID is required")
+      return Errors.error_json(400, "A playlist ID is required")
     end
 
     playlist = Invidious::Database::Playlists.select(id: plid)
     if !playlist || playlist.author != user.email && playlist.privacy.private?
-      return error_json(404, "Playlist does not exist.")
+      return Errors.error_json(404, "Playlist does not exist.")
     end
 
     if !plid.starts_with?("IV") || playlist.author != user.email
-      return error_json(403, "Only owned playlists can be edited.")
+      return Errors.error_json(403, "Only owned playlists can be edited.")
     end
 
     title = env.params.json["title"].try &.as(String).delete("<>").byte_slice(0, 150).scrub("") || playlist.title
@@ -505,11 +505,11 @@ module Invidious::Routes::API::V1::Authenticated
 
     playlist = Invidious::Database::Playlists.select(id: plid)
     if !playlist || playlist.author != user.email && playlist.privacy.private?
-      return error_json(404, "Playlist does not exist.")
+      return Errors.error_json(404, "Playlist does not exist.")
     end
 
     if !plid.starts_with?("IV") || playlist.author != user.email
-      return error_json(403, "Only owned playlists can be edited.")
+      return Errors.error_json(403, "Only owned playlists can be edited.")
     end
 
     Invidious::Database::Playlists.delete(plid)
@@ -525,29 +525,29 @@ module Invidious::Routes::API::V1::Authenticated
 
     playlist = Invidious::Database::Playlists.select(id: plid)
     if !playlist || playlist.author != user.email && playlist.privacy.private?
-      return error_json(404, "Playlist does not exist.")
+      return Errors.error_json(404, "Playlist does not exist.")
     end
 
     if !plid.starts_with?("IV") || playlist.author != user.email
-      return error_json(403, "Only owned playlists can be edited.")
+      return Errors.error_json(403, "Only owned playlists can be edited.")
     end
 
     if playlist.index.size >= CONFIG.playlist_length_limit
-      return error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos")
+      return Errors.error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos")
     end
 
     video_id = env.params.json["videoId"].try &.as(String)
     # Sanity checks
     unless video_id && validate_video_id(video_id)
-      return error_json(400, InvalidVideoID.new(video_id))
+      return Errors.error_json(400, InvalidVideoID.new(video_id))
     end
 
     begin
       video = get_video(video_id)
     rescue ex : NotFoundException
-      return error_json(404, ex)
+      return Errors.error_json(404, ex)
     rescue ex
-      return error_json(500, ex)
+      return Errors.error_json(500, ex)
     end
 
     playlist_video = PlaylistVideo.new({
@@ -564,9 +564,9 @@ module Invidious::Routes::API::V1::Authenticated
     })
 
     outcome, position = Invidious::Database::Playlists.append_video(plid, user.email, playlist_video)
-    return error_json(404, "Playlist does not exist.") if outcome == :missing
-    return error_json(403, "Only owned playlists can be edited.") if outcome == :forbidden
-    return error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos") if outcome == :full
+    return Errors.error_json(404, "Playlist does not exist.") if outcome == :missing
+    return Errors.error_json(403, "Only owned playlists can be edited.") if outcome == :forbidden
+    return Errors.error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos") if outcome == :full
 
     if count = Invidious::Videos::ViewCounts.from_item(video)
       playlist_video.views = count.value
@@ -591,21 +591,21 @@ module Invidious::Routes::API::V1::Authenticated
 
     playlist = Invidious::Database::Playlists.select(id: plid)
     if !playlist || playlist.author != user.email && playlist.privacy.private?
-      return error_json(404, "Playlist does not exist.")
+      return Errors.error_json(404, "Playlist does not exist.")
     end
 
     if !plid.starts_with?("IV") || playlist.author != user.email
-      return error_json(403, "Only owned playlists can be edited.")
+      return Errors.error_json(403, "Only owned playlists can be edited.")
     end
 
     if !playlist.index.includes? index
-      return error_json(404, "Playlist does not contain index")
+      return Errors.error_json(404, "Playlist does not contain index")
     end
 
     case Invidious::Database::Playlists.remove_video(plid, user.email, index)
-    when :missing   then return error_json(404, "Playlist does not exist.")
-    when :forbidden then return error_json(403, "Only owned playlists can be edited.")
-    when :conflict  then return error_json(404, "Playlist does not contain index")
+    when :missing   then return Errors.error_json(404, "Playlist does not exist.")
+    when :forbidden then return Errors.error_json(403, "Only owned playlists can be edited.")
+    when :conflict  then return Errors.error_json(404, "Playlist does not contain index")
     end
 
     env.response.status_code = 204
@@ -650,7 +650,7 @@ module Invidious::Routes::API::V1::Authenticated
       callback_url = env.params.json["callbackUrl"]?.try &.as(String)
       expire = env.params.json["expire"]?.try &.as(Int64)
     else
-      return error_json(400, "Invalid or missing header 'Content-Type'")
+      return Errors.error_json(400, "Invalid or missing header 'Content-Type'")
     end
 
     if callback_url && callback_url.empty?
@@ -666,7 +666,7 @@ module Invidious::Routes::API::V1::Authenticated
 
       # Used by template bellow.
       # ameba:disable Lint/UselessAssign
-      csrf_token = generate_response(sid, {":authorize_token"}, HMAC_KEY, use_nonce: true)
+      csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":authorize_token"}, HMAC_KEY, use_nonce: true)
       env.set "account_surface", true
       Invidious::Authentication.no_store(env)
       env.response.headers["Referrer-Policy"] = "no-referrer"
@@ -678,12 +678,12 @@ module Invidious::Routes::API::V1::Authenticated
 
       authorized_scopes = [] of String
       scopes.each do |scope|
-        if scopes_include_scope(superset_scopes, scope)
+        if Invidious::Helpers::Tokens.scopes_include_scope(superset_scopes, scope)
           authorized_scopes << scope
         end
       end
 
-      access_token = generate_token(user.email, authorized_scopes, expire, HMAC_KEY, env.get("session").as(String))
+      access_token = Invidious::Helpers::Tokens.generate_token(user.email, authorized_scopes, expire, HMAC_KEY, env.get("session").as(String))
 
       if callback_url
         access_token = URI.encode_www_form(access_token)
@@ -715,10 +715,10 @@ module Invidious::Routes::API::V1::Authenticated
     # Allow tokens to revoke other tokens with correct scope
     if session == env.get("session").as(String)
       Invidious::Database::SessionIDs.delete(sid: session, email: env.get("user").as(User).email)
-    elsif scopes_include_scope(scopes, "GET:tokens")
+    elsif Invidious::Helpers::Tokens.scopes_include_scope(scopes, "GET:tokens")
       Invidious::Database::SessionIDs.delete(sid: session, email: env.get("user").as(User).email)
     else
-      return error_json(400, "Cannot revoke session #{session}")
+      return Errors.error_json(400, "Cannot revoke session #{session}")
     end
 
     env.response.status_code = 204
@@ -731,6 +731,6 @@ module Invidious::Routes::API::V1::Authenticated
     topics = raw_topics.try &.split(",").uniq!.first(1000)
     topics ||= [] of String
 
-    Helpers.create_notification_stream(env, topics, CONNECTION_CHANNEL)
+    Invidious::Helpers.create_notification_stream(env, topics, CONNECTION_CHANNEL)
   end
 end

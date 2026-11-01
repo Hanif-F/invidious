@@ -104,7 +104,7 @@ describe Invidious::NativePreferences do
       "autoplay":false,"continue":true,"continue_autoplay":false,"video_loop":true,"listen":true,"local":true,"speed":1.5,"quality_dash":"720p",
       "dark_mode":"dark","ui_density":"compact","thin_mode":true,"default_home":"Trending",
       "feed_menu":["Trending","Popular","Subscriptions","Playlists"],"region":"ID",
-      "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube","reddit"],
+      "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube",""],
       "related_videos":false,"extend_desc":true,"show_member_videos":true,"max_results":60,"sort":"channel name",
       "latest_only":true,"unseen_only":true,"notifications_only":true,"default_playlist":null,
       "sponsorblock_modes":{"intro":"auto"}

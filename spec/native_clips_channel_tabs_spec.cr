@@ -10,4 +10,7 @@ describe "Native channel clips metadata" do
     Invidious::Routes::API::V1::Channels.advertised_tabs(%w(streams future clips clips)).should eq(%w(streams clips future))
     Invidious::Routes::API::V1::Channels.advertised_tabs([] of String).should eq(["clips"])
   end
+  it "advertises shows alongside clips and preserves future tabs" do
+    Invidious::Routes::API::V1::Channels.advertised_tabs(%w(posts shows videos playlists)).should eq(%w(videos shows playlists clips posts))
+  end
 end

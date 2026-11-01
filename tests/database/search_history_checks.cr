@@ -57,7 +57,7 @@ def check_mobile_search_history(token, email)
     check(by_channel.size == 20, "Subscription search cannot match channel names")
     check(JSON.parse(security_request("GET", path, bearer: other_token).get("test_result").as(String)).as_a.empty?, "Subscription search leaked across accounts")
     check(security_request("GET", path).response.status_code == 403, "Anonymous subscription search was accepted")
-    old_token = generate_token(email, ["GET:subscriptions"], nil, HMAC_KEY, JSON.parse(token)["session"].as_s)
+    old_token = Invidious::Helpers::Tokens.generate_token(email, ["GET:subscriptions"], nil, HMAC_KEY, JSON.parse(token)["session"].as_s)
     check(security_request("GET", path, bearer: old_token).response.status_code == 403, "Old subscription scope authorized search")
     check(JSON.parse(security_request("GET", path + "&page=2147483647", bearer: token).get("test_result").as(String)).as_a.empty?, "Subscription pagination overflowed")
     puts "Scoped subscription search and organized history: whole-library matching, pagination, metadata, scopes and isolation passed"

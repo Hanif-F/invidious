@@ -51,7 +51,7 @@ curl -X PATCH -H "Authorization: Bearer $IV_ACCESS_TOKEN" \
 | `/transcripts/:id` | None, or `label`/`lang`, presence of `autogen` | Transcript choices or selected transcript JSON |
 | `/storyboards/:id` | None, or `width`/`height`, optional region | Storyboard descriptors, or VTT for a matching size |
 | `/annotations/:id` | `source` | Archive/YouTube annotation XML, with ETag handling |
-| `/comments/:id` | `source=youtube/reddit`, `sort_by`, `continuation`, `format`, `thin_mode`, `region` | Source-specific comment/thread JSON or HTML-wrapper JSON |
+| `/comments/:id` | `source=youtube` (`reddit` returns 410), `sort_by`, `continuation`, `format`, `thin_mode`, `region` | Source-specific comment/thread JSON or HTML-wrapper JSON |
 | `/clips/:id` | Legacy YouTube clip `region`/`local` | YouTube clip bounds plus video, or native clip object |
 | `/live_chat/:id` | `offset_ms`, `continuation` | `{messages, removedIds, continuation}` for completed replay |
 | `/videos/:id/downloads` | Optional `region` | `{video, allowed, reason, choices}` |
@@ -60,7 +60,7 @@ curl -X PATCH -H "Authorization: Bearer $IV_ACCESS_TOKEN" \
 | `/dearrow/:id` | None | `{title: string or null}` trusted title |
 | `/dearrow/:id/submissions` | None | Browser-sign-in required despite the non-auth URL; proposal titles/votes/lock/UUID, anonymous 403 |
 
-The comments `action` query is read but currently unused. YouTube defaults to top comments, Reddit to confidence; continuation/replies are source-specific. Transcript `autogen` is presence-based, so `autogen=false` still selects generated handling. Caption list entries use `languageCode`, while detailed-video caption entries use `language_code`; clients should respect the actual payload rather than assuming a global naming convention.
+The comments `action` query is read but currently unused. YouTube defaults to top comments and supports continuations/replies. Reddit sources return HTTP 410. Transcript `autogen` is presence-based, so `autogen=false` still selects generated handling. Caption list entries use `languageCode`, while detailed-video caption entries use `language_code`; clients should respect the actual payload rather than assuming a global naming convention.
 
 Detailed video serialization is in [video_json.cr](../src/invidious/jsonify/api_v1/video_json.cr):
 
@@ -93,7 +93,7 @@ Replay messages have `id`, `offsetMs`, author/channel/handle, text, kind and amo
 | `/channels/:ucid/latest` | Video wrapper using newest initial page; ignores supplied sort/continuation |
 | `/channels/:ucid/videos`, `/shorts`, `/streams` | `{videos, continuation?}`; sort_by and continuation |
 | `/channels/:ucid/playlists` | `{playlists, continuation?}`; sort/sort_by and continuation |
-| `/channels/:ucid/podcasts`, `/releases`, `/courses` | Playlist-like wrappers; continuation |
+| `/channels/:ucid/podcasts`, `/releases`, `/courses`, `/shows` | Playlist-like wrappers; continuation |
 | `/channels/:ucid/community`, `/posts` | Community result; continuation/format/thin_mode |
 | `/channels/:ucid/channels` | `{relatedChannels, continuation?}` |
 | `/channels/:ucid/search` | Channel search-item array; q/page/region |

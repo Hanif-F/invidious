@@ -99,6 +99,9 @@ module Invidious::Videos
     vr_mode ||= CONFIG.default_user_preferences.vr_mode.to_unsafe
     save_player_pos ||= CONFIG.default_user_preferences.save_player_pos.to_unsafe
 
+    comments = Preferences::CommentSources.normalize(comments)
+    quality = Preferences::Quality.normalize(quality)
+
     annotations = annotations == 1
     preload = preload == 1
     autoplay = autoplay == 1

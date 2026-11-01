@@ -31,8 +31,26 @@ isolates verification passes from account credentials. If omitted, the instance
 Companion only on its private Docker network; do not expose its port, a second
 hostname, reverse-proxy route, or direct origin. The readiness check verifies
 configuration and requires the explicit private-routing attestation; operators
-must verify firewall/listener/proxy configuration themselves. Cloudflare remains
-DNS-only. There is no edge preclearance cookie or broad request rate limiter.
+must verify firewall/listener/proxy configuration themselves. This application
+gate works with DNS-only Cloudflare and with a proxied zone.
+It does not itself issue an edge clearance cookie or provide a broad request rate
+limiter. When a zone also uses Managed Challenge, the edge can block requests
+before this server sees them, including native bootstrap and verification APIs.
+
+Mobivious can display the same-origin native verification page, obtain browser
+`cf_clearance`, and confirm it through a native discovery request. The cookie,
+backend signed pass and account bearer are independent credentials. The client
+uses the browser's user agent and limits clearance to the exact instance origin.
+Embedded-browser and native-request acceptance must be checked against the actual
+zone; a completed widget alone does not establish native access.
+
+Optional [Turnstile pre-clearance](https://developers.cloudflare.com/turnstile/get-started/pre-clearance/)
+requires the widget hostname to match the Cloudflare zone and a `managed` clearance
+level or higher for Managed Challenge. Keep Siteverify validation and ensure the
+verification page/assets are reachable under the chosen edge rules. Ordinary
+Turnstile response tokens and this server's signed passes do not replace
+`cf_clearance`. Neither enabling pre-clearance nor changing live edge policy is
+part of installing the client update.
 
 Sign in as an existing administrator and open the account menu → Instance settings
 → Bot protection, or `/admin/bot-protection` directly. Changes require a browser session

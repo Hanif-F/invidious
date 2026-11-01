@@ -38,7 +38,7 @@ module Invidious::Routes::API::V1::DeArrow
       raise "Invalid fields" unless data.keys == ["privateId"]
       id = data["privateId"].as_s
     rescue
-      return error_json(400, "Expected a privateId string.")
+      return Errors.error_json(400, "Expected a privateId string.")
     end
     Invidious::DeArrow::AccountContributions.import_identity(env.get("user").as(User).email, id)
     {ok: true}.to_json
@@ -46,7 +46,7 @@ module Invidious::Routes::API::V1::DeArrow
     env.response.status_code = ex.status
     {error: ex.message}.to_json
   rescue
-    error_json(500, "Could not save the DeArrow identity.")
+    Errors.error_json(500, "Could not save the DeArrow identity.")
   end
 
   def self.submit(env, client = Invidious::DeArrow::CONTRIBUTIONS)
@@ -61,7 +61,7 @@ module Invidious::Routes::API::V1::DeArrow
       confirmed = data["confirmed"]?.try(&.as_bool) || false
       original = data["original"]?.try(&.as_bool) || false
     rescue
-      return error_json(400, "Invalid DeArrow action. Use JSON booleans for confirmed and original.")
+      return Errors.error_json(400, "Invalid DeArrow action. Use JSON booleans for confirmed and original.")
     end
     Invidious::DeArrow::AccountContributions.submit(env.get("user").as(User).email,
       env.params.url["id"], action, title, confirmed, uuid, original, client)
@@ -70,6 +70,6 @@ module Invidious::Routes::API::V1::DeArrow
     env.response.status_code = ex.status
     {error: ex.message}.to_json
   rescue
-    error_json(502, "Could not complete the DeArrow action. Refresh before trying again.")
+    Errors.error_json(502, "Could not complete the DeArrow action. Refresh before trying again.")
   end
 end

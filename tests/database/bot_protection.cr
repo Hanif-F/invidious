@@ -28,6 +28,8 @@ require "../../src/invidious/videos/*"
 require "../../src/invidious/jsonify/**"
 
 require "../../src/invidious/*"
+require "../../src/invidious/playlists/*"
+require "../../src/invidious/feeds/*"
 require "../../src/invidious/comments/*"
 require "../../src/invidious/channels/*"
 require "../../src/invidious/user/*"

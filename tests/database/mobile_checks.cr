@@ -33,9 +33,9 @@ def check_mobile_security
   check(security_request("GET", "/api/v1/auth/tokens", bearer: token).response.status_code == 403, "Native token gained token-manager access")
   expired_signature = JSON.parse(token).as_h
   expired_signature["expire"] = JSON::Any.new(Time.utc.to_unix - 1)
-  expired_signature["signature"] = JSON::Any.new(sign_token(HMAC_KEY, expired_signature))
+  expired_signature["signature"] = JSON::Any.new(Invidious::Helpers::Tokens.sign_token(HMAC_KEY, expired_signature))
   check(security_request("GET", "/api/v1/auth/preferences", bearer: expired_signature.to_json).response.status_code == 403, "Expired signature survived a valid database session")
-  check(!scopes_include_scope(JSON.parse(token)["scopes"].as_a.map(&.as_s), "POST:tokens/register"), "Native token can mint tokens")
+  check(!Invidious::Helpers::Tokens.scopes_include_scope(JSON.parse(token)["scopes"].as_a.map(&.as_s), "POST:tokens/register"), "Native token can mint tokens")
   unknown = security_request("POST", "/api/v1/mobile/login", body: {username: "MissingMobile", password: "wrong"}.to_json)
   wrong = security_request("POST", "/api/v1/mobile/login", body: {username: "MobileAlice", password: "wrong"}.to_json)
   check(unknown.response.status_code == 401 && unknown.get("test_result") == wrong.get("test_result"), "Native login reveals account existence")
@@ -112,7 +112,7 @@ def check_mobile_preferences(token, email, sid)
   body = %({"autoplay":false,"continue":true,"continue_autoplay":false,"video_loop":true,"listen":true,"local":true,"speed":1.5,"quality_dash":"720p",
     "dark_mode":"dark","ui_density":"compact","thin_mode":true,"default_home":"Trending",
     "feed_menu":["Trending","Popular","Subscriptions","Playlists"],"region":"ID",
-    "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube","reddit"],
+    "captions":["Indonesian","English (auto-generated)",""],"comments":["youtube",""],
     "related_videos":false,"extend_desc":true,"show_member_videos":true,"max_results":60,"sort":"channel name",
     "latest_only":true,"unseen_only":true,"notifications_only":true,"default_playlist":null})
   patch = security_request("PATCH", path, bearer: token, body: body)
@@ -130,7 +130,7 @@ def check_mobile_preferences(token, email, sid)
     saved = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
     previous.each { |key, value| check(saved[key] == value, "Codec patch overwrote #{key}") unless key == "video_codec" }
     check(Invidious::Database::Users.select!(email: email).preferences.video_codec == codec, "Android codec was not visible to the web account")
-    csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+    csrf = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences"}, HMAC_KEY)
     result = security_request("POST", "/preferences", sid: sid,
       body: URI::Params.encode({"video_codec" => codec, "csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
     check(result.response.status_code == 302, "Web codec form failed")
@@ -145,7 +145,7 @@ def check_mobile_preferences(token, email, sid)
     saved = JSON.parse(Invidious::Database::Users.preference_json(email)).as_h
     previous.each { |key, value| check(saved[key] == value, "Audio patch overwrote #{key}") unless key == "preferred_audio" }
     check(Invidious::Database::Users.select!(email: email).preferences.preferred_audio == preference, "Android audio was not visible to the web account")
-    csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+    csrf = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences"}, HMAC_KEY)
     result = security_request("POST", "/preferences", sid: sid,
       body: URI::Params.encode({"preferred_audio" => preference, "csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
     check(result.response.status_code == 302, "Web preferred audio form failed")
@@ -178,14 +178,14 @@ def check_mobile_seek_interval(token, email, sid)
     result = security_request("PATCH", path, bearer: token, body: %({"speed":1.5}))
     check(result.response.status_code == 200, "Unrelated sparse seek save failed")
     check(JSON.parse(result.get("test_result").as(String))["seek_seconds"].as_i == seconds, "Sparse patch erased seek interval")
-    csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+    csrf = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences"}, HMAC_KEY)
     result = security_request("POST", "/preferences", sid: sid,
       body: URI::Params.encode({"csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
     check(result.response.status_code == 302, "Older web form failed")
     read = security_request("GET", path, bearer: token)
     check(JSON.parse(read.get("test_result").as(String))["seek_seconds"].as_i == seconds, "Older web form erased seek interval")
     web_seconds = seconds == 5 ? 30 : 5
-    csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
+    csrf = Invidious::Helpers::Tokens.generate_response(sid, {"POST:preferences"}, HMAC_KEY)
     result = security_request("POST", "/preferences", sid: sid,
       body: URI::Params.encode({"seek_seconds" => web_seconds.to_s, "csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
     check(result.response.status_code == 302, "Web seek interval form failed")
@@ -228,7 +228,7 @@ def check_mobile_sponsorblock(token, email, sid)
   check(security_request("PATCH", path, body: patch).response.status_code == 403, "Guest SponsorBlock account write accepted")
   check(security_request("PATCH", path, sid, body: patch).response.status_code == 403, "Cookie SponsorBlock write bypassed CSRF")
   # A pre-existing token with the original preference scopes remains sufficient.
-  old_token = generate_token(email, ["GET:preferences", "PATCH:preferences"], nil, HMAC_KEY, sid)
+  old_token = Invidious::Helpers::Tokens.generate_token(email, ["GET:preferences", "PATCH:preferences"], nil, HMAC_KEY, sid)
   check(security_request("PATCH", path, bearer: old_token, body: %({"sponsorblock_modes":{"intro":"auto"}})).response.status_code == 200, "SponsorBlock required new token permissions")
   csrf = JSON.parse(security_request("GET", "/api/v1/auth/csrf", sid).get("test_result").as(String))["csrfToken"].as_s
   check(security_request("PATCH", path, sid, body: %({"sponsorblock_colors":{"intro":"#abcdef"}}), csrf: csrf).response.status_code == 200, "Valid cookie SponsorBlock write failed")
@@ -261,7 +261,7 @@ def check_mobile_dearrow(token, email, sid)
   check(state.response.status_code == 200 && state.response.headers["Cache-Control"] == "private, no-store", "DeArrow status rejected or cached")
   check(JSON.parse(state.get("test_result").as(String)) == JSON.parse(%({"ready":true,"configured":false})), "Status created or disclosed an identity")
   check(security_request("POST", path, body: %({"action":"submit","title":"Draft","confirmed":true})).response.status_code == 403, "Anonymous contribution accepted")
-  old_token = generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
+  old_token = Invidious::Helpers::Tokens.generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
   check(security_request("GET", identity_path, bearer: old_token).response.status_code == 403, "Older token gained DeArrow access")
   check(security_request("PUT", identity_path, sid, body: %({"privateId":""})).response.status_code == 403, "Cookie identity write bypassed CSRF")
   {"{}", %({"privateId":"short"}), %({"privateId":false}), "x" * 16_385}.each do |body|
@@ -310,7 +310,7 @@ def check_mobile_blocking(token, email, sid)
   first = "UC" + "a" * 22
   second = "UC" + "b" * 22
   before = Invidious::Database::Users.preference_json(email)
-  reader = generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
+  reader = Invidious::Helpers::Tokens.generate_token(email, ["GET:preferences"], nil, HMAC_KEY, sid)
   check(security_request("GET", path, bearer: reader).response.status_code == 403, "Old scope gained blocking access")
   check(security_request("GET", path).response.status_code == 403, "Guest block list readable")
   check(security_request("POST", "#{path}/#{first}", bearer: reader, body: "{}").response.status_code == 403, "Old token can block channels")
@@ -330,7 +330,7 @@ def check_mobile_blocking(token, email, sid)
   csrf = JSON.parse(security_request("GET", "/api/v1/auth/csrf", sid).get("test_result").as(String))["csrfToken"].as_s
   check(security_request("DELETE", "#{path}/#{first}", sid: sid, csrf: csrf).response.status_code == 204, "Valid cookie unblock failed")
   # The website and native API share one table and ordinary website mutations.
-  web = context("POST", "/blocked_channels?redirect=false", {"ucid" => first, "action" => "block", "name" => "Web channel", "csrf_token" => generate_response(sid, {":blocked_channels"}, HMAC_KEY)}, "SID=#{sid}")
+  web = context("POST", "/blocked_channels?redirect=false", {"ucid" => first, "action" => "block", "name" => "Web channel", "csrf_token" => Invidious::Helpers::Tokens.generate_response(sid, {":blocked_channels"}, HMAC_KEY)}, "SID=#{sid}")
   web.set "user", Database::Users.select!(email: email)
   web.set "sid", sid
   Invidious::Routes::BlockedChannels.update(web)

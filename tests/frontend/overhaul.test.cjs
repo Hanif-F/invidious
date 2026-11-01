@@ -572,6 +572,15 @@ for(const engine of engines) {
             assert.deepEqual(state.errors,[]);await state.context.close();
         }
     });
+    test(`${engine}: upstream Shows uses channel More while retaining native Clips`,async()=>{
+        const {page,context,errors}=await setup(engine,'browse','light',{fixture:'upstream-shows-light',url:'/channel/UCfixture/shows'});
+        const more=page.locator('.channel-more');
+        assert.match(await more.locator('summary').innerText(),/More.*Shows/);
+        await more.locator('summary').click();
+        assert.equal(await more.locator('strong[aria-current=page]').innerText(),'Shows');
+        assert.equal(await page.locator('a[href="/channel/UCfixture/clips"]').count(),1);
+        assert.deepEqual(errors,[]);await context.close();
+    });
     test(`${engine}: D3 channel primary tabs, selected More and no-JS search home`,async()=>{
         const {page,context,errors}=await setup(engine,'browse','light',{fixture:'d3-channel-more',url:'/channel/UCfixture/podcasts'});
         const more=page.locator('.channel-more');
@@ -1840,7 +1849,7 @@ for(const engine of engines) {
             if(!entry.url.pathname.startsWith('/api/v1/comments/'))return null;
             const source=entry.url.searchParams.get('source'),sort=entry.url.searchParams.get('sort_by'),cursor=entry.url.searchParams.get('continuation');calls.push({source,sort,cursor});
             if(cursor==='thread-a+/= &?日本語'&&!failed){failed=true;return{status:503,contentType:'application/json',body:'{}'};}
-            return{contentType:'application/json',body:fs.readFileSync(path.join(generated,cursor?'d3-thread-end.json':source==='reddit'?'d6-reddit-page.json':'d6-comments-page.json'))};
+            return{contentType:'application/json',body:fs.readFileSync(path.join(generated,cursor?'d3-thread-end.json':'d6-comments-page.json'))};
         }});
         await page.locator('#comments-results>[data-comment-id]').first().waitFor();await page.evaluate(()=>window.commentMedia=player.tech().el());assert.equal(await page.locator('.comment-pinned').textContent(),'Pinned');
         await page.locator('#comment-sort').selectOption('new');await page.waitForFunction(()=>document.querySelectorAll('#comments-results>[data-comment-id]').length===3);
@@ -1850,14 +1859,11 @@ for(const engine of engines) {
         await page.evaluate(()=>{InvidiousUI.changed(document.getElementById('comments-results'));InvidiousUI.changed(document.getElementById('comments-results'));});
         await page.locator('#comments-results>[data-comment-more] [data-load-more]').click();await page.waitForFunction(()=>document.querySelectorAll('#comments-results>.comment').length===4);
         assert.deepEqual(calls.filter(c=>c.cursor).map(c=>[c.cursor,c.sort]),[['thread-a+/= &?日本語','new'],['thread-a+/= &?日本語','new'],['thread-b+/= &?日本語','new'],['more+/= &?日本語','new']]);
-        await page.locator('#comment-source').selectOption('reddit');await page.locator('.comment-reddit').first().waitFor();assert.equal(await page.locator('#comment-sort').inputValue(),'confidence');
-        const reddit=page.locator('#comments-results>.comment-reddit');assert.equal(await reddit.locator('.comment-author>a').first().textContent(),'A reader <literal>');assert.equal(await reddit.locator('literal').count(),0);
-        assert.equal(await page.locator('#comments-heading').textContent(),'Comments');assert.ok(!(await page.locator('#comments').textContent()).includes('An original video title'));
-        assert.equal(await page.locator('#comment-source-link>a').getAttribute('href'),'https://www.reddit.com/r/videos/comments/fixture/thread');
-        const replies=reddit.locator('details.comment-replies');assert.equal(await replies.getAttribute('open'),null);assert.equal(await replies.locator('.comment').isVisible(),false);
-        await replies.locator('summary').click();assert.equal(await replies.locator('.comment').isVisible(),true);assert.ok(await replies.getByRole('link',{name:'View more comments on Reddit',exact:true}).isVisible());
-        await page.locator('#comments').screenshot({path:path.join(artifacts,`${engine}-d6-comments-reddit-light.png`)});
-        await page.locator('#comment-sort').selectOption('top');await page.locator('.comment-reddit').first().waitFor();await page.locator('#comment-source').selectOption('youtube');await page.locator('[data-comment-id=post-a]').waitFor();assert.equal(await page.locator('#comment-sort').inputValue(),'new','source switches retain each selected sort');
+        assert.deepEqual(await page.locator('#comment-source option').evaluateAll(nodes=>nodes.map(node=>node.value)),['youtube']);
+        assert.equal(await page.locator('#comment-source-link>a').count(),0);
+        await page.locator('#comment-sort').selectOption('top');await page.locator('[data-comment-id=post-a]').waitFor();
+        assert.equal(calls.at(-1).source,'youtube');assert.equal(calls.at(-1).sort,'top');
+        await page.locator('#comments').screenshot({path:path.join(artifacts,`${engine}-d6-comments-youtube-light.png`)});
         assert.equal(await page.evaluate(()=>player.tech().el()===commentMedia),true);assert.ok(!requests.some(r=>/^\/api\/v1\/(channels|videos)\//.test(r.url.pathname)));assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D6 watch comments distinguish unavailable and empty results, known disabled sources, thin mode and no-JS`,async()=>{
@@ -1870,23 +1876,23 @@ for(const engine of engines) {
         await page.locator('#comments-results .ui-retry').click();await page.waitForFunction(()=>document.querySelector('#comments-results>[data-thread-status]').textContent.includes('unavailable'));assert.notEqual(await page.locator('#comments-results>[data-thread-status]').textContent(),error);
         await page.locator('#comments-results .ui-retry').click();await page.waitForFunction(()=>document.querySelector('#comments-results>[data-thread-status]').textContent==='No comments are available.');assert.equal(reads,3);
         assert.equal(await page.locator('#comment-source').isEnabled(),true);assert.equal(await page.locator('#comment-sort').isEnabled(),true);await page.locator('#comments').screenshot({path:path.join(artifacts,`${engine}-d6-comments-empty-dark.png`)});assert.deepEqual(errors,[]);await context.close();
-        const disabled=await setup(engine,'watch','light',{fixture:'d6-comments-disabled-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/comments/')?{contentType:'application/json',body:fs.readFileSync(path.join(generated,'d6-reddit-page.json'))}:null});
+        const disabled=await setup(engine,'watch','light',{fixture:'d6-comments-disabled-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/comments/')?{contentType:'application/json',body:fs.readFileSync(path.join(generated,'d6-comments-page.json'))}:null});
         await disabled.page.locator('#comments-results>[data-thread-status]').waitFor();assert.equal(disabled.requests.filter(r=>r.url.pathname.startsWith('/api/v1/comments/')).length,0);
-        await disabled.page.locator('#comment-source').selectOption('reddit');await disabled.page.locator('.comment-reddit').first().waitFor();assert.equal(disabled.requests.filter(r=>r.url.pathname.startsWith('/api/v1/comments/')).length,1);assert.deepEqual(disabled.errors,[]);await disabled.context.close();
+        assert.equal(await disabled.page.locator('#comment-source option[value=reddit]').count(),0);await disabled.page.locator('#comment-sort').selectOption('new');assert.equal(disabled.requests.filter(r=>r.url.pathname.startsWith('/api/v1/comments/')).length,0);assert.deepEqual(disabled.errors,[]);await disabled.context.close();
         const off=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU'});assert.equal(await off.page.locator('#comment-source').count(),0);assert.equal(off.requests.filter(r=>r.url.pathname.startsWith('/api/v1/comments/')).length,0);assert.deepEqual(off.errors,[]);await off.context.close();
         const thin=await setup(engine,'watch','light',{fixture:'d6-comments-thin-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/comments/')?{contentType:'application/json',body:fs.readFileSync(path.join(generated,'d6-comments-thin.json'))}:null});await thin.page.locator('[data-comment-id=post-a]').waitFor();assert.equal(await thin.page.locator('#comments .comment-avatar').count(),0);assert.equal(thin.requests.find(r=>r.url.pathname.startsWith('/api/v1/comments/')).url.searchParams.get('thin_mode'),'true');assert.deepEqual(thin.errors,[]);await thin.context.close();
         const nojs=await setup(engine,'watch','light',{fixture:'d6-comments-nojs-light',url:'/watch?v=2isYuQZMbdU&nojs=1',javascript:false});assert.equal(await nojs.page.locator('#comments-results>.comment').count(),3);const next=new URL(await nojs.page.locator('#comments-results>[data-comment-more] a').getAttribute('href'),'https://invidious.test');assert.equal(next.searchParams.get('comments_continuation'),'more+/= &?日本語');assert.equal(next.searchParams.get('nojs'),'1');assert.equal(next.searchParams.get('comments_source'),'youtube');assert.equal(nojs.requests.filter(r=>r.url.pathname.startsWith('/api/v1/comments/')).length,0);await nojs.context.close();
     });
-    test(`${engine}: D6 comment source/sort and cached-page generations reject late reads after cancellation`,async()=>{
+    test(`${engine}: D6 comment sort and cached-page generations reject late reads after cancellation`,async()=>{
         const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d6-comments-light',url:'/watch?v=2isYuQZMbdU',init:()=>{
             const original=window.fetch.bind(window);window.commentReads=[];window.fetch=(url,options)=>new URL(url,location.href).pathname.startsWith('/api/v1/comments/')?new Promise(resolve=>commentReads.push(data=>resolve(new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}})))):original(url,options);
         }});
-        await page.waitForFunction(()=>commentReads.length===1);await page.locator('#comment-source').selectOption('reddit');await page.waitForFunction(()=>commentReads.length===2);
+        await page.waitForFunction(()=>commentReads.length===1);await page.locator('#comment-sort').selectOption('new');await page.waitForFunction(()=>commentReads.length===2);
         await page.evaluate(()=>commentReads[0]({contentHtml:'<p>Stale YouTube response</p>'}));assert.equal(await page.locator('#comments-results').getByText('Stale YouTube response').count(),0);
-        const reddit=JSON.parse(fs.readFileSync(path.join(generated,'d6-reddit-page.json')));await page.evaluate(data=>commentReads[1](data),reddit);await page.locator('.comment-reddit').first().waitFor();
-        await page.locator('#comment-sort').selectOption('new');await page.waitForFunction(()=>commentReads.length===3);await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>commentReads.length===4);
+        const comments=JSON.parse(fs.readFileSync(path.join(generated,'d6-comments-page.json')));await page.evaluate(data=>commentReads[1](data),comments);await page.locator('[data-comment-id=post-a]').waitFor();
+        await page.locator('#comment-sort').selectOption('top');await page.waitForFunction(()=>commentReads.length===3);await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>commentReads.length===4);
         await page.evaluate(()=>commentReads[2]({contentHtml:'<p>Stale cached-page response</p>'}));assert.equal(await page.locator('#comments-results').getByText('Stale cached-page response').count(),0);
-        await page.evaluate(data=>commentReads[3](data),reddit);await page.locator('.comment-reddit').first().waitFor();await page.locator('#comment-source').selectOption('youtube');await page.waitForFunction(()=>commentReads.length===5);
+        await page.evaluate(data=>commentReads[3](data),comments);await page.locator('[data-comment-id=post-a]').waitFor();await page.locator('#comment-sort').selectOption('new');await page.waitForFunction(()=>commentReads.length===5);
         await page.evaluate(()=>window.dispatchEvent(new Event('browserprofilechange')));await page.evaluate(()=>commentReads[4]({contentHtml:'<p>Stale profile response</p>'}));assert.equal(await page.locator('#comments-results').getByText('Stale profile response').count(),0);
         await page.locator('#comment-sort').selectOption('new');assert.equal(await page.evaluate(()=>commentReads.length),5);assert.deepEqual(errors,[]);await context.close();
     });
@@ -3608,7 +3614,7 @@ for (const engine of engines) {
     test(`${engine}: D8 category canonical arrays, maps, nulls and future selections become the saved Discard baseline`, async () => {
         for (const section of ['captions-comments', 'browsing', 'sponsorblock', 'language']) {
             const initial = settingsConfig(section), values = structuredClone(initial.values), writes = [], reads = [];
-            if (section === 'captions-comments') Object.assign(values, {captions:['id','',''], comments:['reddit','youtube'], related_videos:false});
+            if (section === 'captions-comments') Object.assign(values, {captions:['id','',''], comments:['','youtube'], related_videos:false});
             if (section === 'browsing') Object.assign(values, {feed_menu:['Trending','History','Native future',''], show_original_title:false});
             if (section === 'sponsorblock') { values.sponsorblock_modes.intro = 'marker'; values.sponsorblock_colors.intro = '#123456'; }
             if (section === 'language') values.timezone = null;
@@ -3760,8 +3766,9 @@ for (const engine of engines) test(`${engine}: D8 Settings search finds descript
     const metadata=JSON.parse(await page.locator('#settings-navigation-config').textContent()).search;
     assert.ok(metadata.length>30);
     assert.ok(!JSON.stringify(metadata).includes('Fixture playlist'),'search metadata must not enumerate owned playlist titles');
+    assert.ok(!JSON.stringify(metadata).includes('Reddit'),'retired comment sources must not appear in Settings search');
     const reads=()=>requests.filter(entry=>entry.url.pathname==='/preferences').length,before=reads();
-    for (const [query,field] of [['if your choice is unavailable','preferred_audio'],['Stable Volume','preferred_audio'],['System','dark_mode'],['Reddit','comments']]) {
+    for (const [query,field] of [['if your choice is unavailable','preferred_audio'],['Stable Volume','preferred_audio'],['System','dark_mode'],['YouTube','comments']]) {
         await page.locator('#settings-search').fill(query);
         assert.ok(await page.locator('#settings-search-results [data-settings-field="'+field+'"]').count()>0,query+' finds its owning field');
         assert.equal(reads(),before,'typing searches local metadata only');

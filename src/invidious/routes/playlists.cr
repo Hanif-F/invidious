@@ -12,7 +12,7 @@ module Invidious::Routes::Playlists
 
     user = user.as(User)
     sid = sid.as(String)
-    csrf_token = generate_response(sid, {":create_playlist"}, HMAC_KEY)
+    csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":create_playlist"}, HMAC_KEY)
 
     templated "create_playlist"
   end
@@ -26,7 +26,7 @@ module Invidious::Routes::Playlists
 
     json_response = env.params.query["redirect"]? == "false"
     if user.nil?
-      return error_json(403, "No such user") if json_response
+      return Errors.error_json(403, "No such user") if json_response
       return env.redirect "/"
     end
 
@@ -35,7 +35,7 @@ module Invidious::Routes::Playlists
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue
       return form_failure(env, "Invalid CSRF token")
     end
@@ -50,7 +50,7 @@ module Invidious::Routes::Playlists
     end
 
     begin
-      playlist = create_playlist(title, privacy, user)
+      playlist = Invidious::Playlists::Playlists.create_playlist(title, privacy, user)
     rescue ex : InfoException
       return form_failure(env, I18n.translate(locale, "overhaul_playlist_limit"))
     rescue
@@ -79,16 +79,16 @@ module Invidious::Routes::Playlists
     env.set "playlist_form_uncertain", uncertain
     if playlist
       plid = playlist.id
-      csrf_token = generate_response(sid, {":edit_playlist"}, HMAC_KEY)
+      csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":edit_playlist"}, HMAC_KEY)
       templated "edit_playlist"
     else
-      csrf_token = generate_response(sid, {":create_playlist"}, HMAC_KEY)
+      csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":create_playlist"}, HMAC_KEY)
       templated "create_playlist"
     end
   end
 
   def self.subscribe(env)
-    return error_template(403, "Invalid CSRF token") unless Authentication.valid_session_csrf?(env)
+    return Errors.error_template(403, "Invalid CSRF token") unless Authentication.valid_session_csrf?(env)
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -102,11 +102,11 @@ module Invidious::Routes::Playlists
     begin
       fields = Invidious::NativePlaylists.resolve(playlist_id, user.email, env.params.query["continuation"]?)
     rescue ex : NotFoundException
-      return error_template(404, ex)
+      return Errors.error_template(404, ex)
     rescue ex : InfoException
-      return error_template(400, ex)
+      return Errors.error_template(400, ex)
     rescue ex
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
     Database::SavedPlaylists.save(user.email, fields)
 
@@ -131,7 +131,7 @@ module Invidious::Routes::Playlists
 
     plid = env.params.query["list"]?
     if !plid || plid.empty?
-      return error_template(400, "A playlist ID is required")
+      return Errors.error_template(400, "A playlist ID is required")
     end
 
     playlist = Invidious::Database::Playlists.select(id: plid)
@@ -146,7 +146,7 @@ module Invidious::Routes::Playlists
       return env.redirect referer
     end
 
-    csrf_token = generate_response(sid, {":delete_playlist"}, HMAC_KEY)
+    csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":delete_playlist"}, HMAC_KEY)
 
     templated "delete_playlist"
   end
@@ -168,14 +168,14 @@ module Invidious::Routes::Playlists
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
-      return error_template(400, ex)
+      return Errors.error_template(400, ex)
     end
 
     operation = env.params.body["operation"]?
     unless operation.nil? || {"unsave", "delete"}.includes?(operation)
-      return error_template(400, "Invalid playlist operation")
+      return Errors.error_template(400, "Invalid playlist operation")
     end
     unsave = operation == "unsave" || (operation.nil? && (Database::SavedPlaylists.exists?(user.email, plid) || !plid.starts_with?("IV")))
     if unsave
@@ -185,7 +185,7 @@ module Invidious::Routes::Playlists
 
     playlist = Invidious::Database::Playlists.select(id: plid)
     if !playlist || !plid.starts_with?("IV") || playlist.author != user.email
-      return error_template(403, "Only owned playlists can be deleted")
+      return Errors.error_template(403, "Only owned playlists can be deleted")
     end
 
     Invidious::Database::Playlists.delete(plid)
@@ -214,7 +214,7 @@ module Invidious::Routes::Playlists
     if !playlist || playlist.author != user.email
       return env.redirect referer
     end
-    csrf_token = generate_response(sid, {":edit_playlist"}, HMAC_KEY)
+    csrf_token = Invidious::Helpers::Tokens.generate_response(sid, {":edit_playlist"}, HMAC_KEY)
 
     templated "edit_playlist"
   end
@@ -237,10 +237,10 @@ module Invidious::Routes::Playlists
 
     playlist = Invidious::Database::Playlists.select(id: plid)
     if !plid.starts_with?("IV") || !playlist || playlist.author != user.email
-      return error_template(403, "Only owned playlists can be edited")
+      return Errors.error_template(403, "Only owned playlists can be edited")
     end
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue
       return form_failure(env, "Invalid CSRF token", playlist: playlist)
     end
@@ -276,7 +276,7 @@ module Invidious::Routes::Playlists
     plid = params["list"]?
     return env.redirect referer unless plid && plid.starts_with?("IV")
     playlist = Invidious::Database::Playlists.select(id: plid)
-    return error_template(403, "Only owned playlists can be edited") unless playlist && playlist.author == user.email
+    return Errors.error_template(403, "Only owned playlists can be edited") unless playlist && playlist.author == user.email
     env.response.headers["Cache-Control"] = "private, no-store"
     show_members = Frontend::SearchPreferences.apply(env, params, preferences.show_member_videos, !!(Kemal.config.ssl || CONFIG.https_only))
     env.set "show_member_videos", show_members
@@ -317,7 +317,7 @@ module Invidious::Routes::Playlists
       if redirect
         return env.redirect referer
       else
-        return error_json(403, "No such user")
+        return Errors.error_json(403, "No such user")
       end
     end
 
@@ -326,26 +326,26 @@ module Invidious::Routes::Playlists
     token = env.params.body["csrf_token"]?
 
     begin
-      validate_request(token, sid, env.request, HMAC_KEY, locale)
+      Invidious::Helpers::Tokens.validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
       if redirect
-        return error_template(400, ex)
+        return Errors.error_template(400, ex)
       else
-        return error_json(400, ex)
+        return Errors.error_json(400, ex)
       end
     end
 
     begin
       playlist_id = env.params.query["playlist_id"]
-      playlist = get_playlist(playlist_id).as(InvidiousPlaylist)
+      playlist = Invidious::Playlists::Playlists.get_playlist(playlist_id).as(InvidiousPlaylist)
       raise "Invalid user" if playlist.author != user.email
     rescue ex : NotFoundException
-      return error_json(404, ex)
+      return Errors.error_json(404, ex)
     rescue ex
       if redirect
-        return error_template(400, ex)
+        return Errors.error_template(400, ex)
       else
-        return error_json(400, ex)
+        return Errors.error_json(400, ex)
       end
     end
 
@@ -354,9 +354,9 @@ module Invidious::Routes::Playlists
     when "add_video"
       if playlist.index.size >= CONFIG.playlist_length_limit
         if redirect
-          return error_template(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos")
+          return Errors.error_template(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos")
         else
-          return error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos")
+          return Errors.error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos")
         end
       end
 
@@ -365,12 +365,12 @@ module Invidious::Routes::Playlists
       begin
         video = get_video(video_id)
       rescue ex : NotFoundException
-        return error_json(404, ex)
+        return Errors.error_json(404, ex)
       rescue ex
         if redirect
-          return error_template(500, ex)
+          return Errors.error_template(500, ex)
         else
-          return error_json(500, ex)
+          return Errors.error_json(500, ex)
         end
       end
 
@@ -388,36 +388,36 @@ module Invidious::Routes::Playlists
       })
 
       outcome, _ = Invidious::Database::Playlists.append_video(playlist_id, user.email, playlist_video, snapshot)
-      return error_json(404, "Playlist not found") if outcome == :missing
-      return error_json(403, "Invalid user") if outcome == :forbidden
-      return error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos") if outcome == :full
+      return Errors.error_json(404, "Playlist not found") if outcome == :missing
+      return Errors.error_json(403, "Invalid user") if outcome == :forbidden
+      return Errors.error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos") if outcome == :full
     when "remove_video"
       index = env.params.query["set_video_id"].to_i64?
       if index.nil? || !playlist.index.includes? index
-        return error_json(404, "Playlist does not contain index")
+        return Errors.error_json(404, "Playlist does not contain index")
       end
 
       case Invidious::Database::Playlists.remove_video(playlist_id, user.email, index, snapshot)
-      when :missing   then return error_json(404, "Playlist not found")
-      when :forbidden then return error_json(403, "Invalid user")
-      when :conflict  then return error_json(409, "Playlist entries changed; refresh the playlist")
+      when :missing   then return Errors.error_json(404, "Playlist not found")
+      when :forbidden then return Errors.error_json(403, "Invalid user")
+      when :conflict  then return Errors.error_json(409, "Playlist entries changed; refresh the playlist")
       end
     when "move_video_before"
       source = env.params.body["source"]?.try(&.to_i64?)
       anchor = env.params.body["anchor"]?.try(&.to_i64?)
       placement = env.params.body["placement"]? || "before"
       unless source && anchor && {"before", "after"}.includes?(placement)
-        return error_json(400, "Invalid playlist entry or placement")
+        return Errors.error_json(400, "Invalid playlist entry or placement")
       end
       case Invidious::Database::Playlists.move_video(playlist_id, user.email, source, anchor, placement == "after", snapshot)
-      when :missing   then return error_json(404, "Playlist not found")
-      when :forbidden then return error_json(403, "Invalid user")
-      when :conflict  then return error_json(409, "Playlist entries changed; refresh the playlist")
+      when :missing   then return Errors.error_json(404, "Playlist not found")
+      when :forbidden then return Errors.error_json(403, "Invalid user")
+      when :conflict  then return Errors.error_json(409, "Playlist entries changed; refresh the playlist")
       end
     when nil
-      return error_json(400, "Missing action")
+      return Errors.error_json(400, "Missing action")
     else
-      return error_json(400, "Unsupported action #{action}")
+      return Errors.error_json(400, "Unsupported action #{action}")
     end
 
     if snapshot && !redirect
@@ -441,6 +441,7 @@ module Invidious::Routes::Playlists
     referer = get_referer(env)
 
     plid = env.params.query["list"]?.try &.gsub(/[^a-zA-Z0-9_-]/, "")
+    plid ||= env.params.url["id"]?.try &.[2..]
     if !plid
       return env.redirect "/"
     end
@@ -453,15 +454,15 @@ module Invidious::Routes::Playlists
     end
 
     begin
-      playlist = get_playlist(plid)
+      playlist = Invidious::Playlists::Playlists.get_playlist(plid)
     rescue ex : NotFoundException
-      return error_template(404, ex)
+      return Errors.error_template(404, ex)
     rescue ex
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
 
     if playlist.privacy == PlaylistPrivacy::Private && playlist.author != user.try &.email
-      return error_template(403, "This playlist is private.")
+      return Errors.error_template(403, "This playlist is private.")
     end
 
     if playlist.is_a? InvidiousPlaylist
@@ -480,12 +481,12 @@ module Invidious::Routes::Playlists
 
     begin
       if playlist.is_a? InvidiousPlaylist
-        items = get_playlist_videos(playlist, offset: (page - 1) * 100)
+        items = Invidious::Playlists::Playlists.get_playlist_videos(playlist, offset: (page - 1) * 100)
       else
-        items = get_playlist_videos(playlist, offset: (page - 1) * 200)
+        items = Invidious::Playlists::Playlists.get_playlist_videos(playlist, offset: (page - 1) * 200)
       end
     rescue ex
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
 
     if playlist.is_a?(InvidiousPlaylist) && playlist.author == user.try &.email
@@ -515,16 +516,16 @@ module Invidious::Routes::Playlists
     continuation = env.params.query["continuation"]?
     continuation ||= rdid.lchop("RD")
     begin
-      return error_template(400, "Invalid mix ID") unless NativePlaylists.valid_id?(rdid)
+      return Errors.error_template(400, "Invalid mix ID") unless NativePlaylists.valid_id?(rdid)
       continuation = NativePlaylists.seed(rdid, continuation)
     rescue ex : InfoException
-      return error_template(400, ex)
+      return Errors.error_template(400, ex)
     end
 
     begin
       mix = fetch_mix(rdid, continuation, locale: locale)
     rescue ex
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
 
     if mix_user = env.get?("user").try(&.as(User))

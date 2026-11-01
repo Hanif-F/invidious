@@ -46,7 +46,7 @@ Positions are imported only when the resulting preferences enable `save_player_p
 
 ## Subscription exports
 
-Authenticated `GET /api/v1/auth/subscriptions/export?format=rss` downloads `subscriptions.opml` with instance-oriented feeds. `format=newpipe` produces compatible source URLs. Browser subscription controls also expose supported JSON/OPML variants. The original README mentions FreeTube export compatibility through supported subscription formats; there is no separate full FreeTube account backup endpoint.
+Authenticated `GET /api/v1/auth/subscriptions/export?format=rss` downloads `subscriptions.opml` with instance-oriented feeds. `format=newpipe` produces compatible source URLs. The browser export route `/subscription_manager?action_takeout=1` retains these formats: omitted/`rss` uses instance feeds, `newpipe` uses YouTube feeds, and `json` exports the full portable Invidious account data. It additionally accepts `opml` for FreeTube-compatible YouTube feeds and `newpipe_json` for NewPipe subscription JSON. All browser formats include attachment filenames and private cache headers. Every subscription is included even when its channel metadata is uncached; its ID supplies the fallback name. Full JSON exports preserve detailed history, playback positions, chat timing offsets and fork preferences. There is no separate full FreeTube account backup endpoint.
 
 Private subscription RSS can be retrieved with `GET /api/v1/auth/feed/rss`, returning a token-bearing relative feed path. This credential is deliberately distinct from an ordinary subscription OPML file. Protect private feed URLs, exports and backups from shared caching and logs.
 

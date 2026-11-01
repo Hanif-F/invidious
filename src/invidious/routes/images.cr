@@ -106,7 +106,7 @@ module Invidious::Routes::Images
           break
         end
 
-        Helpers.proxy_file(response, env)
+        Invidious::Helpers.proxy_file(response, env)
       end
     rescue
     end
@@ -154,10 +154,6 @@ module Invidious::Routes::Images
 
     env.response.headers["Access-Control-Allow-Origin"] = "*"
 
-    if response.status_code >= 300
-      return env.response.headers.delete("Transfer-Encoding")
-    end
-
-    return Helpers.proxy_file(response, env)
+    return Invidious::Helpers.proxy_file(response, env)
   end
 end

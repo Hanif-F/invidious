@@ -53,16 +53,16 @@ module Invidious::Routes::API::V1::Misc
     end
 
     begin
-      playlist = get_playlist(plid)
+      playlist = Invidious::Playlists::Playlists.get_playlist(plid)
     rescue ex : InfoException
-      return error_json(404, ex)
+      return Errors.error_json(404, ex)
     rescue
-      return error_json(404, "Playlist does not exist.")
+      return Errors.error_json(404, "Playlist does not exist.")
     end
 
     user = env.get?("user").try &.as(User)
     if !playlist || playlist.privacy.private? && playlist.author != user.try &.email
-      return error_json(404, "Playlist does not exist.")
+      return Errors.error_json(404, "Playlist does not exist.")
     end
 
     requested_occurrence = nil.as(Int64?)
@@ -72,7 +72,7 @@ module Invidious::Routes::API::V1::Misc
       if raw = env.params.query["occurrence"]?
         explicit_occurrence = true
         requested_occurrence = raw.matches?(/\A[0-9]{1,19}\z/) ? raw.to_i64? : nil
-        return error_json(400, "Invalid occurrence.") unless requested_occurrence
+        return Errors.error_json(400, "Invalid occurrence.") unless requested_occurrence
         if position = playlist.index.index(requested_occurrence)
           offset = position
           current_removed = false
@@ -131,7 +131,7 @@ module Invidious::Routes::API::V1::Misc
 
       json_response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(json_response["videos"].as_a, show_members))
       ai_thumbnails = Frontend::AiChannels.prepare_queue(env, json_response["videos"].as_a)
-      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode && !desktop_fragment, editable, user.try(&.watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: env.get("preferences").as(Preferences).locale, spoiler_env: env)
+      playlist_html = Invidious::Playlists::Playlists.template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode && !desktop_fragment, editable, user.try(&.watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: env.get("preferences").as(Preferences).locale, spoiler_env: env)
 
       data = {
         "playlistHtml" => playlist_html,
@@ -163,7 +163,7 @@ module Invidious::Routes::API::V1::Misc
     begin
       continuation = Invidious::NativePlaylists.seed(rdid, continuation)
     rescue ex
-      return error_json(400, ex)
+      return Errors.error_json(400, ex)
     end
 
     format = env.params.query["format"]?
@@ -178,7 +178,7 @@ module Invidious::Routes::API::V1::Misc
       index = mix.videos.index { |video| video.id == continuation } || 0
       mix.videos = mix.videos[index..-1]
     rescue ex
-      return error_json(500, ex)
+      return Errors.error_json(500, ex)
     end
 
     response = JSON.build do |json|
@@ -247,14 +247,14 @@ module Invidious::Routes::API::V1::Misc
     env.response.content_type = "application/json"
     url = env.params.query["url"]?
 
-    return error_json(400, "Missing URL to resolve") if !url
+    return Errors.error_json(400, "Missing URL to resolve") if !url
 
     begin
       resolved_url = YoutubeAPI.resolve_url(url.as(String))
       endpoint = resolved_url["endpoint"]
       page_type = endpoint.dig?("commandMetadata", "webCommandMetadata", "webPageType").try &.as_s || ""
       if page_type == "WEB_PAGE_TYPE_UNKNOWN"
-        return error_json(400, "Unknown url")
+        return Errors.error_json(400, "Unknown url")
       end
 
       sub_endpoint = endpoint["watchEndpoint"]? || endpoint["browseEndpoint"]? || endpoint
@@ -273,7 +273,7 @@ module Invidious::Routes::API::V1::Misc
         post_id = nil
       end
     rescue ex
-      return error_json(500, ex)
+      return Errors.error_json(500, ex)
     end
     JSON.build do |json|
       json.object do

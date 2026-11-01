@@ -92,7 +92,7 @@ class AuthHandler < Kemal::Handler
       if env.get?("authentication_bearer")
         scopes = env.get("scopes").as(Array(String))
         scope = "#{env.request.method}:#{env.request.path.lchop("/api/v1/auth/").lstrip("/")}"
-        raise "Invalid scope" unless scopes_include_scope(scopes, scope)
+        raise "Invalid scope" unless Invidious::Helpers::Tokens.scopes_include_scope(scopes, scope)
       else
         if !{"GET", "HEAD", "OPTIONS"}.includes?(env.request.method) && !Invidious::Authentication.valid_session_csrf?(env)
           raise "Invalid CSRF token"

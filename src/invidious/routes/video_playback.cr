@@ -24,7 +24,7 @@ module Invidious::Routes::VideoPlayback
 
     # Sanity check, to avoid being used as an open proxy
     if !Invidious::HttpServer::Utils.video_host?(host)
-      return error_template(400, "Invalid \"host\" parameter.")
+      return Errors.error_template(400, "Invalid \"host\" parameter.")
     end
 
     host = "https://#{host}"
@@ -56,7 +56,7 @@ module Invidious::Routes::VideoPlayback
           location = URI.parse(host).resolve(response.headers["Location"])
           unless Invidious::HttpServer::Utils.video_uri?(location)
             client.close
-            return error_template(502, "Invalid media redirect.")
+            return Errors.error_template(502, "Invalid media redirect.")
           end
           env.response.headers["Access-Control-Allow-Origin"] = "*"
 
@@ -80,7 +80,7 @@ module Invidious::Routes::VideoPlayback
         fallback_host = "r#{fvip}---#{mn}.googlevideo.com"
         unless Invidious::HttpServer::Utils.video_host?(fallback_host)
           client.close
-          return error_template(400, "Invalid media host.")
+          return Errors.error_template(400, "Invalid media host.")
         end
         host = "https://#{fallback_host}"
         client.close
@@ -92,13 +92,13 @@ module Invidious::Routes::VideoPlayback
 
     if response.status_code >= 300 && response.status_code < 400
       client.close
-      return error_template(502, "Too many media redirects.")
+      return Errors.error_template(502, "Too many media redirects.")
     end
 
     # Remove the Range header added previously.
     headers.delete("Range") if range_header.nil?
 
-    playback_statistics = Helpers.get_playback_statistic
+    playback_statistics = Invidious::Helpers.get_playback_statistic
     playback_statistics["totalRequests"] += 1
 
     if response.status_code >= 400
@@ -110,7 +110,7 @@ module Invidious::Routes::VideoPlayback
 
     if url.includes? "&file=seg.ts"
       if CONFIG.disabled?("livestreams")
-        return error_template(403, "Administrator has disabled this endpoint.")
+        return Errors.error_template(403, "Administrator has disabled this endpoint.")
       end
 
       begin
@@ -140,7 +140,7 @@ module Invidious::Routes::VideoPlayback
     else
       if query_params["title"]? && CONFIG.disabled?("downloads") ||
          CONFIG.disabled?("dash")
-        return error_template(403, "Administrator has disabled this endpoint.")
+        return Errors.error_template(403, "Administrator has disabled this endpoint.")
       end
 
       content_length = nil
@@ -220,7 +220,7 @@ module Invidious::Routes::VideoPlayback
               end
             end
 
-            Helpers.proxy_file(resp, env)
+            Invidious::Helpers.proxy_file(resp, env)
           end
         rescue ex
           if ex.message != "Error reading socket: Connection reset by peer"
@@ -289,7 +289,7 @@ module Invidious::Routes::VideoPlayback
     is_drc = env.params.query["is_drc"]?
     audio_selection = !audio_track.nil? || !is_drc.nil?
     if audio_selection && (!(audio_track || "").matches?(/\A[A-Za-z0-9_.-]{0,100}\z/) || (is_drc && !{"true", "false"}.includes?(is_drc)))
-      return error_template(400, "Invalid audio selector")
+      return Errors.error_template(400, "Invalid audio selector")
     end
     # Companion's itag-only redirect cannot distinguish dubbed/DRC copies.
     # Resolve explicit selectors here using the server's refreshed metadata.
@@ -303,11 +303,11 @@ module Invidious::Routes::VideoPlayback
 
     # Sanity checks
     unless id && validate_video_id(id)
-      return error_template(400, InvalidVideoID.new(id))
+      return Errors.error_template(400, InvalidVideoID.new(id))
     end
 
     if !itag.nil? && (itag <= 0 || itag >= 1000)
-      return error_template(400, "Invalid itag")
+      return Errors.error_template(400, "Invalid itag")
     end
 
     region = env.params.query["region"]?
@@ -316,15 +316,15 @@ module Invidious::Routes::VideoPlayback
     title = env.params.query["title"]?
 
     if title && CONFIG.disabled?("downloads")
-      return error_template(403, "Administrator has disabled this endpoint.")
+      return Errors.error_template(403, "Administrator has disabled this endpoint.")
     end
 
     begin
       video = get_video(id, region: region)
     rescue ex : NotFoundException
-      return error_template(404, ex)
+      return Errors.error_template(404, ex)
     rescue ex
-      return error_template(500, ex)
+      return Errors.error_template(500, ex)
     end
 
     if audio_selection

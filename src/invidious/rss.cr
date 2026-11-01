@@ -1,12 +1,16 @@
 module Invidious::RSS
   extend self
 
-  def subscriptions(ids : Array(String), format : String = "rss") : String
+  def subscription_channels(ids : Array(String)) : Array(InvidiousChannel)
     cached = Database::Channels.select(ids).to_h { |channel| {channel.id, channel} }
     channels = ids.uniq.map do |id|
       cached[id]? || InvidiousChannel.new({id: id, author: id, updated: Time.utc, deleted: false, subscribed: Time.utc})
     end
-    opml(channels, format)
+    channels.sort_by(&.author.downcase)
+  end
+
+  def subscriptions(ids : Array(String), format : String = "rss") : String
+    opml(subscription_channels(ids), format)
   end
 
   def playlist(playlist : InvidiousPlaylist) : String
@@ -20,7 +24,7 @@ module Invidious::RSS
         xml.element("link", rel: "self", href: "#{HOST_URL}/feed/playlist/#{playlist.id}")
         xml.element("link", rel: "alternate", href: "#{HOST_URL}/playlist?list=#{playlist.id}")
         xml.element("author") { xml.element("name") { xml.text playlist.display_author } }
-        get_playlist_videos(playlist, offset: 0).each { |video| video.to_xml(xml) if video.is_a?(PlaylistVideo) }
+        Invidious::Playlists::Playlists.get_playlist_videos(playlist, offset: 0).each { |video| video.to_xml(xml) if video.is_a?(PlaylistVideo) }
       end
     end
   end

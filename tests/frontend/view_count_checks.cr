@@ -47,7 +47,7 @@ def view_count_queue_fixture
     {"2isYuQZMbdU" => Invidious::Videos::ViewCounts::Count.new(1234_i64, "exact"), "previous001" => Invidious::Videos::ViewCounts::Count.new(0_i64, "exact")}
   end
   raise "Queue misses were not batched/deduplicated" unless reads == [%w(2isYuQZMbdU previous001 nextvideo01)]
-  html = template_playlist(playlist, false)
+  html = Invidious::Playlists::Playlists.template_playlist(playlist, false)
   raise "Repeated queue counts missing" unless html.scan("1.2K views").size == 2
   raise "Real queue zero missing" unless html.includes?("0 views")
   {playlistHtml: html, nextVideo: "nextvideo01", index: 3}.to_json
@@ -58,7 +58,7 @@ def check_view_counts(output)
   upstream_calls = YoutubeAPI.avatar_listing_calls
   items = JSON.parse(File.read("spec/invidious/frontend/fixtures/avatar_lockups.json")).as_a
   view_count_playlist_responses(items).each do |response|
-    videos = extract_playlist_videos("PLfixture", response).select(PlaylistVideo)
+    videos = Invidious::Playlists::Playlists.extract_playlist_videos("PLfixture", response).select(PlaylistVideo)
     raise "Playlist response counts discarded" unless videos.map(&.views) == [106_000_000_i64, 386_000_000_i64]
     raise "Playlist precision discarded" unless videos.all? { |video| video.view_count_precision == "approximate" && video.view_count_type == "views" }
     api = JSON.parse(Invidious::JSONify::APIv1::VideoMetadata.enrich_json(videos.to_json))
@@ -66,7 +66,7 @@ def check_view_counts(output)
   end
   legacy = JSON.parse(%({"playlistVideoRenderer":{"videoId":"legacy00001","title":{"simpleText":"Legacy video"},"index":{"simpleText":"1"},"lengthText":{"simpleText":"2:00"},"videoInfo":{"simpleText":"No views"}}}))
   view_count_playlist_responses([legacy]).each do |response|
-    video = extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo)
+    video = Invidious::Playlists::Playlists.extract_playlist_videos("PLfixture", response).first.as(PlaylistVideo)
     raise "Legacy zero lost" unless video.views == 0 && video.index == 0 && video.view_count_type == "views"
   end
   raise "View counts changed playlist DB fields" if PlaylistVideo.type_array.includes?("views") || PlaylistVideo.type_array.includes?("view_count_type")
