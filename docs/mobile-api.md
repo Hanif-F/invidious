@@ -542,7 +542,7 @@ multiple accounts, and saving it never copies its videos or transfers ownership.
 | `PUT /api/v1/auth/saved_playlists/:id` | JSON `{}` or optional `seedVideoId`; idempotent subscribe with resolved metadata. An opaque RD mix requires its 11-character seed. |
 | `DELETE /api/v1/auth/saved_playlists/:id` | Idempotent 204; removes only caller’s subscription. |
 | `GET /api/v1/auth/feed/rss` | JSON `{"feedPath":"/feed/private?token=..."}` using the existing RSS token, relative to the selected instance. |
-| `GET /api/v1/auth/subscriptions/export?format=rss` | Complete OPML with Invidious channel URLs; `format=newpipe` uses YouTube URLs. Includes uncached channel IDs. |
+| `GET /api/v1/auth/subscriptions/export?format=rss` | Complete subscription export: `rss` uses Invidious feed URLs, `newpipe` YouTube feed URLs, `opml` the shared FreeTube OPML serializer (application/xml), and `newpipe_json` the shared NewPipe JSON serializer (application/json). Includes uncached channel IDs. |
 | `GET /api/v1/auth/playlists/:id/feed` | Atom snapshot of an owned IV playlist, including private playlists; another account gets 404. Existing 100-item playlist feed window is retained. |
 
 Library/detail responses add `isOwned`, `isSaved`, actual `privacy`, `isMix` and
@@ -564,6 +564,13 @@ upstream subscribe failures 502 with a retry explanation.
 Public RSS remains at `/feed/channel/:id`, `/feed/playlist/:id`, and
 `/feed/private?token=...`; RD playlist feeds accept `continuation=<seed>` and export
 a current mix snapshot. These routes are available in normal and API-only builds.
+The added `opml` and `newpipe_json` formats reuse `GET:subscriptions/export`;
+existing authorized tokens need no renewed sign-in or migration. Attachments use
+`subscriptions.opml` for the original formats, `freetube_subscriptions.opml` for
+FreeTube, and extensionless `newpipe_subscriptions` for NewPipe JSON. Unsupported
+formats return 400; every response remains private/no-store. Deploy this endpoint
+extension before using the new formats in Android.
+
 Web/native OPML and IV Atom share serializers; namespaces and entry times are
 valid for empty and populated snapshots. Subscription-feed windows retain the
 existing account filters, page size and query parameters.

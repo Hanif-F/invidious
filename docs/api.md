@@ -153,7 +153,7 @@ for browser cookies, account sync and compatibility.
 | `GET /feed/rss` | `{feedPath}` with private feed credential |
 | `GET /subscriptions` | Creator array; include_stats=true requires history scope and adds subscriptionStats |
 | `GET /subscriptions/search` | Subscribed cached-video search array; q/page |
-| `GET /subscriptions/export` | OPML attachment; format=rss/newpipe |
+| `GET /subscriptions/export` | Subscription attachment; `format=rss/newpipe/opml` returns OPML, `newpipe_json` returns NewPipe JSON |
 | `POST /subscriptions/:ucid`, `DELETE /subscriptions/:ucid` | Subscribe/unsubscribe; 204 |
 | `GET /blocked_channels` | Blocked channel records |
 | `POST /blocked_channels/:ucid`, `DELETE /blocked_channels/:ucid` | Add optional name/remove canonical block; idempotent supported updates |

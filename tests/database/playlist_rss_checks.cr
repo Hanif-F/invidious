@@ -88,13 +88,35 @@ def check_mobile_playlist_rss(token, email, sid)
   ids = Array.new(165) { |i| "UCfixture#{i}" }
   ids.first(164).each { |id| PG_DB.exec("INSERT INTO channels VALUES ($1,$1,now(),false,now())", id) }
   PG_DB.exec("UPDATE users SET subscriptions=$2 WHERE email=$1", email, ids)
-  {"rss", "newpipe"}.each do |format|
+  {"rss", "newpipe", "opml", "newpipe_json"}.each do |format|
     exported = security_request("GET", "/api/v1/auth/subscriptions/export?format=#{format}", bearer: token)
-    outlines = XML.parse(exported.get("test_result").as(String)).xpath_nodes("//outline[@xmlUrl]")
-    check(outlines.size == ids.size, "OPML truncated subscriptions")
-    check(outlines.all? { |outline| outline["xmlUrl"].starts_with?(format == "rss" ? HOST_URL : "https://www.youtube.com/") }, "OPML used wrong feed format")
+    check(exported.response.status_code == 200 && exported.response.headers["Cache-Control"] == "private, no-store", "Subscription export failed or was cacheable")
+    body = exported.get("test_result").as(String)
+    check(!body.includes?(token), "Subscription export leaked native credentials")
+    if format == "newpipe_json"
+      data = JSON.parse(body)
+      subscriptions = data["subscriptions"].as_a
+      check(exported.response.content_type == "application/json", "NewPipe export used wrong MIME type")
+      check(exported.response.headers["Content-Disposition"] == "attachment; filename=\"newpipe_subscriptions\"", "NewPipe export lost its extensionless filename")
+      check(subscriptions.size == ids.size && subscriptions.map { |entry| entry["url"].as_s }.sort == ids.map { |id| "https://www.youtube.com/channel/#{id}" }.sort, "NewPipe export truncated subscriptions")
+      check(data["app_version"].as_s != "" && data["app_version_int"].as_i > 0 && subscriptions.all? { |entry| entry["service_id"] == 0 && !entry["name"].as_s.empty? }, "NewPipe export lost importer metadata")
+    else
+      outlines = XML.parse(body).xpath_nodes("//outline[@xmlUrl]")
+      check(exported.response.content_type == "application/xml", "OPML used wrong MIME type")
+      check(outlines.size == ids.size, "OPML truncated subscriptions")
+      check(outlines.all? { |outline| outline["xmlUrl"].starts_with?(format == "rss" ? HOST_URL : "https://www.youtube.com/") }, "OPML used wrong feed format")
+      check(exported.response.headers["Content-Disposition"].ends_with?(".opml\""), "OPML lost its filename extension")
+    end
+    check(security_request("GET", "/api/v1/auth/subscriptions/export?format=#{format}", bearer: reader).response.status_code == 403, "Playlist token gained subscription-export permission")
   end
   check(security_request("GET", "/api/v1/auth/subscriptions/export?format=bad", bearer: token).response.status_code == 400, "Invalid OPML format accepted")
+  PG_DB.exec("UPDATE users SET subscriptions='{}' WHERE email=$1", email)
+  {"rss", "newpipe", "opml", "newpipe_json"}.each do |format|
+    exported = security_request("GET", "/api/v1/auth/subscriptions/export?format=#{format}", bearer: token)
+    body = exported.get("test_result").as(String)
+    check(exported.response.status_code == 200, "Empty subscription export failed")
+    check(format == "newpipe_json" ? JSON.parse(body)["subscriptions"].as_a.empty? : XML.parse(body).xpath_nodes("//outline[@xmlUrl]").empty?, "Empty export contained subscriptions")
+  end
   check(XML.parse(Invidious::RSS.subscriptions([] of String)).xpath_nodes("//outline[@xmlUrl]").empty?, "Empty OPML failed")
   mix = Mix.new({id: "RDopaque", title: "Mix & fixture", videos: [MixVideo.new({title: "Snapshot", id: "abcdefghijk", author: "Owner", ucid: "UCowner", length_seconds: 10, index: 0, rdid: "RDopaque", members_only: false})]})
   mix_xml = Invidious::RSS.mix(mix, "abcdefghijk")

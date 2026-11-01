@@ -38,10 +38,21 @@ module Invidious::Routes::API::V1::Authenticated
   def self.export_subscriptions(env)
     user = env.get("user").as(User)
     format = env.params.query["format"]? || "rss"
-    return Errors.error_json(400, "Unsupported OPML format.") unless {"rss", "newpipe"}.includes?(format)
-    env.response.content_type = "application/xml"
-    env.response.headers["Content-Disposition"] = "attachment; filename=\"subscriptions.opml\""
-    Invidious::RSS.subscriptions(user.subscriptions, format)
+    return Errors.error_json(400, "Unsupported subscription export format.") unless {"rss", "newpipe", "opml", "newpipe_json"}.includes?(format)
+    Invidious::Authentication.no_store(env)
+    env.response.content_type = format == "newpipe_json" ? "application/json" : "application/xml"
+    filename = case format
+               when "newpipe_json" then "newpipe_subscriptions"
+               when "opml"         then "freetube_subscriptions.opml"
+               else                     "subscriptions.opml"
+               end
+    env.response.headers["Content-Disposition"] = "attachment; filename=\"#{filename}\""
+    channels = Invidious::RSS.subscription_channels(user.subscriptions)
+    case format
+    when "newpipe_json" then Invidious::User::Export.to_newpipe(channels)
+    when "opml"         then Invidious::User::Export.to_freetube_opml(channels)
+    else                     Invidious::RSS.opml(channels, format)
+    end
   end
 
   def self.playlist_feed(env)

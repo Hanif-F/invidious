@@ -97,7 +97,9 @@ Remove the disposable database after testing.
 backfill/preservation, concurrent and independent subscriptions, caller-only legacy
 cleanup, live source metadata, cached fallback, ownership/privacy flags, CSRF and
 native scopes, private Atom authorization, empty/populated Atom namespaces, seeded
-mix snapshots, complete OPML (165 subscriptions with an uncached ID), account
+mix snapshots, all four subscription export formats (165 subscriptions with an
+uncached ID plus empty lists, NewPipe metadata, MIME/filenames, no-store and scope
+enforcement), account
 cascades and rendered English category headings with their existing counts.
 
 Avatar cache checks use an **empty** disposable database named `invidious_avatars_test`:
