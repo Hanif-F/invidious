@@ -1,8 +1,34 @@
 'use strict';
 // Shared, profile-guarded requests. Mutations are never automatically retried.
 window.InvidiousUI = (function () {
+    if (window.InvidiousUI) return window.InvidiousUI;
     var config = JSON.parse(document.getElementById('ui-config').textContent);
     var locks = new Set();
+    // Signals carry no settings/drafts. Receivers must read canonical owner state.
+    var channel, active = true, disposed = false, revision = 0, serial = 0, changes = new Map();
+    var sender = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    var kinds = ['preferences', 'blocks', 'dearrow'];
+    function closeChannel() { if (channel) { channel.onmessage = null; channel.close(); channel = null; } }
+    function invalidateLocal(kind, remote) {
+        InvidiousStorage.session.remove('browse_state');
+        changes.set(kind, ++revision);
+        document.dispatchEvent(new CustomEvent('iv:preferences-change', {detail: {kind: kind, remote: remote, revision: revision}}));
+    }
+    function connectChannel() {
+        if (channel || !active || disposed || typeof BroadcastChannel !== 'function' || location.origin === 'null' || !InvidiousStorage.isCurrent()) return;
+        try {
+            channel = new BroadcastChannel('invidious:changes:v1:' + InvidiousStorage.scope);
+            channel.onmessage = function (event) {
+                var data = event.data;
+                if (!active || disposed || !InvidiousStorage.isCurrent() || event.origin && event.origin !== location.origin || !data || data.version !== 1 || data.profile !== InvidiousStorage.scope || !kinds.includes(data.kind) || typeof data.sender !== 'string' || !/^[a-z0-9-]{8,80}$/.test(data.sender) || data.sender === sender || !Number.isSafeInteger(data.serial) || data.serial < 1) return;
+                invalidateLocal(data.kind, true);
+            };
+        } catch (_) { closeChannel(); /* Cached-page reads remain the fallback. */ }
+    }
+    window.addEventListener('pagehide', function (event) { active = false; closeChannel(); if (!event.persisted) disposed = true; });
+    window.addEventListener('pageshow', function () { if (!disposed) { active = true; connectChannel(); } });
+    window.addEventListener('browserprofilechange', function () { disposed = true; active = false; closeChannel(); });
+    connectChannel();
     function label(key, values) {
         var text = config.words[key] || key;
         Object.keys(values || {}).forEach(function (name) { text = text.replaceAll('{' + name + '}', String(values[name])); });
@@ -13,6 +39,12 @@ window.InvidiousUI = (function () {
         var target = new URL(url, location.href);
         if (target.origin !== location.origin || !InvidiousStorage.isCurrent()) throw new Error(label('error'));
         var controller = new AbortController();
+        var owner = options.signal;
+        function abortOwner() { controller.abort(); }
+        if (owner) {
+            if (owner.aborted) controller.abort();
+            else owner.addEventListener('abort', abortOwner, {once:true});
+        }
         var timer = setTimeout(function () { controller.abort(); }, options.timeout || 15000);
         options.signal = controller.signal;
         options.headers = Object.assign({Accept: 'application/json'}, options.headers);
@@ -23,6 +55,13 @@ window.InvidiousUI = (function () {
             if (!response.ok || response.redirected) {
                 var failure = new Error(label('error'));
                 failure.status = response.status;
+                if (!response.redirected && (response.headers.get('Content-Type') || '').includes('application/json')) {
+                    try {
+                        var detail = await response.json();
+                        if (typeof detail.error === 'string' && detail.error.length <= 500) failure.userMessage = detail.error;
+                        if (typeof detail.field === 'string' && /^[a-z_]{1,100}$/.test(detail.field)) failure.field = detail.field;
+                    } catch (_) { /* A failed response need not contain JSON. */ }
+                }
                 throw failure;
             }
             if (options.html) {
@@ -34,7 +73,10 @@ window.InvidiousUI = (function () {
             var data = response.status === 204 ? {} : await response.json();
             if (!InvidiousStorage.isCurrent()) throw new Error(label('error'));
             return data;
-        } finally { clearTimeout(timer); }
+        } finally {
+            clearTimeout(timer);
+            if (owner) owner.removeEventListener('abort', abortOwner);
+        }
     }
     function post(url, data) {
         return request(url, {method: 'POST', body: new URLSearchParams(Object.assign({csrf_token: config.csrf}, data))});
@@ -44,7 +86,7 @@ window.InvidiousUI = (function () {
         target.setAttribute('role', 'status');
         if (retry) {
             var button = document.createElement('button');
-            button.type = 'button'; button.className = 'pure-button ui-retry'; button.textContent = label('retry');
+            button.type = 'button'; button.className = 'button ui-retry'; button.textContent = label('retry');
             button.onclick = retry;
             target.append(' ', button);
         }
@@ -54,6 +96,7 @@ window.InvidiousUI = (function () {
         if (!target) return;
         target.hidden = false;
         status(target.querySelector('[role=status]'), text, retry);
+        return target;
     }
     function dismissNotice() {
         var target = document.getElementById('ui-notice');
@@ -89,10 +132,17 @@ window.InvidiousUI = (function () {
         }
     }
     function changed(root) { document.dispatchEvent(new CustomEvent('iv:content-added', {detail: root})); }
-    function invalidate() {
-        InvidiousStorage.session.remove('browse_state');
-        document.dispatchEvent(new Event('iv:preferences-change'));
+    function invalidate(kind) {
+        if (!active || disposed || !InvidiousStorage.isCurrent()) return;
+        kind = kinds.includes(kind) ? kind : 'preferences';
+        invalidateLocal(kind, false);
+        connectChannel();
+        if (channel) {
+            try { channel.postMessage({version: 1, profile: InvidiousStorage.scope, kind: kind, sender: sender, serial: ++serial}); }
+            catch (_) { closeChannel(); }
+        }
     }
+    function invalidationsSince(after) { return Array.from(changes).filter(function (entry) { return entry[1] > after; }).map(function (entry) { return entry[0]; }); }
     function removeRows(rows, amount) {
         var count = document.getElementById('count');
         if (count && /^\d+$/.test(count.textContent.trim())) count.textContent = Math.max(0, Number(count.textContent) - (amount === undefined ? rows.length : amount));
@@ -119,6 +169,19 @@ window.InvidiousUI = (function () {
         if (value && config.unseenOnly && location.pathname === '/feed/subscriptions') removeRows(rows);
         document.dispatchEvent(new CustomEvent('iv:watched-change', {detail: {id: id, watched: value}}));
     }
+    // Apply a server snapshot only after every surviving occurrence is accounted
+    // for. IDs stay strings; filtered/unloaded entries retain their real ordinal.
+    function playlistOrder(list, saved, removed) {
+        var entries = Array.from(list.querySelectorAll('[data-occurrence]')).filter(function (row) { return row !== removed; });
+        var positions = saved && saved.positions;
+        if (!positions || typeof positions !== 'object' || Array.isArray(positions) || !Number.isSafeInteger(saved.total) || saved.total < entries.length || Object.keys(positions).some(function (id) { return !/^[0-9]{1,19}$/.test(id) || !Number.isSafeInteger(positions[id]) || positions[id] < 1 || positions[id] > saved.total; }) || entries.some(function (row) { return !Object.prototype.hasOwnProperty.call(positions,row.dataset.occurrence); }) || new Set(Object.values(positions)).size !== Object.keys(positions).length || removed && Object.prototype.hasOwnProperty.call(positions,removed.dataset.occurrence)) throw new Error(label('error'));
+        entries.sort(function (a,b) { return positions[a.dataset.occurrence]-positions[b.dataset.occurrence]; });
+        if (removed) removeRows([removed]);
+        entries.forEach(function (row) { list.append(row); row.querySelector('.playlist-position').textContent = positions[row.dataset.occurrence]; });
+        list.dataset.orderTotal = String(saved.total);
+        var count = document.querySelector('[data-playlist-count]'); if (count && typeof saved.countText === 'string') count.textContent = saved.countText;
+        return positions;
+    }
     return {config: config, label: label, request: request, post: post, status: status, notice: notice, dismissNotice: dismissNotice,
-        action: action, changed: changed, invalidate: invalidate, removeRows: removeRows, watched: watched};
+        action: action, changed: changed, invalidate: invalidate, invalidationsSince: invalidationsSince, removeRows: removeRows, watched: watched, playlistOrder: playlistOrder};
 })();

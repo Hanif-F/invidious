@@ -1,0 +1,6 @@
+<% content_for "header" do %><title><%= I18n.translate(locale, "overhaul_playlist_example") %> - Invidious</title><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_playlist_example") %></h1><p><%= I18n.translate(locale, "overhaul_playlist_help") %></p></header>
+<div class="toolbar"><a class="button button-primary" href="/watch?v=<%= items.first.id %>&list=IVfixture"><%= Invidious::Frontend::Icons.render("play") %><%= I18n.translate(locale, "overhaul_play_all") %></a><a class="button" href="/add_playlist_items?list=IVfixture"><%= Invidious::Frontend::Icons.render("plus") %><%= I18n.translate(locale, "playlist_button_add_items") %></a><a class="button" href="/edit_playlist?list=IVfixture"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "generic_button_edit") %></a></div>
+<p class="muted" style="margin-top:16px"><%= I18n.translate(locale, "overhaul_reorder_help") %></p><p role="status" data-order-status class="sr-only"></p>
+<% Invidious::Frontend::ChannelSpoilers.prepare(env, items) %>
+<div class="media-rows" data-playlist-id="IVfixture"><% items.each_with_index do |item, item_position| %><%= rendered "overhaul/item" %><% end %></div>

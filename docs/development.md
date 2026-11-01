@@ -9,7 +9,7 @@ Use [getting started](getting-started.md) for runtime setup. This guide maps sou
 | Path | Contents |
 | --- | --- |
 | `src/invidious.cr`, `src/invidious/`, `src/ext/` | Startup, domain/routes/database/parsers/views/jobs and compatibility overrides |
-| `assets/` | Runtime browser code, styles, icons/fonts/images, themes and pinned player dependencies |
+| `assets/` | Runtime browser code, shared/feature styles, local SVG icons/images and pinned player dependencies |
 | `locales/` | Translation JSON; active locale allowlist is in the source |
 | `config/config.example.yml`, `config/sql/`, `config/security/` | Operator options, fresh DDL and compiled password-list/license |
 | `spec/` | Crystal standard/Spectator unit/parser/helper tests and reduced local fixtures |
@@ -66,25 +66,20 @@ preview metadata, valid live/recording previews and VTT, playable metadata witho
 previews, retained 404s and logged JSON serialization errors without a database,
 accounts or YouTube.
 
-Seek interval verification on 15 October 2026 passed full linked GUI and API-only
-builds, 28 focused preference/chapter/spoiler/audio specs, production frontend
-fixture checks, six Chromium/Firefox settings/seeking journeys, the storage/player
-Node suites, and the complete guarded PostgreSQL account harness. The full
-`crystal spec -Dskip_videojs_download` command stops at the existing undefined
-`Invidious::Frontend::ChannelSpoilers` reference in `playlists.cr:585`, because
-`spec/spec_helper.cr` omits that frontend helper. A temporary unchanged HEAD
-snapshot reproduced the same failure. It is outside this preference addition.
+The [D8 acceptance](uiUXOverhaulPlan/d8-acceptance.md) retains fresh normal/API-only linked application builds and the complete specs: 300 Spectator plus 137 standard examples pass. The older seek-interval report's missing frontend-helper compile failure has been resolved; it is not a current prerequisite or known failure.
 
 ## Frontend fixtures and browser tests
 
-This fork neither requires nor discourages JavaScript. Features have no blanket obligation to provide JavaScript-disabled fallbacks. The current frontend architecture is described in [frontend](frontend.md).
+The current frontend architecture is described in [frontend](frontend.md). Playback and dynamic editors require JavaScript. Ordinary navigation, category/account/import forms, reading/recovery pages and documented standalone fallbacks retain their specified no-JavaScript paths; test the applicable contract.
 
 With Crystal/Shards, Node.js, FFmpeg and browser dependencies installed:
 
 ```sh
 crystal run tests/frontend/render_fixtures.cr -Dskip_videojs_download
+crystal run tests/frontend/render_recovery_fixtures.cr -Dapi_only -Dskip_videojs_download
 ffmpeg -f lavfi -i color=c=0x303a53:s=320x180:r=12 -t 4 -an -c:v libvpx -y tests/frontend/.generated/fixture.webm
 ffmpeg -f lavfi -i color=c=0x303a53:s=320x180:r=12 -t 8 -an -c:v libvpx -y tests/frontend/.generated/clip-fixture.webm
+node tests/frontend/generate_watch_media.cjs
 npm ci --prefix tests/frontend --ignore-scripts
 cd tests/frontend
 npx playwright install --with-deps chromium firefox
@@ -120,13 +115,13 @@ The account/clip/avatar harnesses additionally require an empty database. Read [
 
 ## Choosing checks for a change
 
-Parser/model changes need focused specs and full compile checking. Route/auth/database changes need matching PostgreSQL/production-route harnesses. Templates/player/styles/storage need fixture rendering and relevant Node/browser coverage, including mobile, RTL and keyboard interactions. Schema changes need both fresh SQL and a numbered migration, plus migration tracking/backfill tests. API-only builds catch accidental GUI assumptions. Documentation updates need reference regeneration and local link/coverage checks.
+Parser/model changes need focused specs and full compile checking. Route/auth/database changes need matching PostgreSQL/production-route harnesses. Templates/player/styles/storage need fixture rendering and relevant Node/browser coverage, including the 1280–1920px desktop matrix, RTL and keyboard interactions. Preserve existing shared touch/embed contracts; mobile website redesign is deferred. Schema changes need both fresh SQL and a numbered migration, plus migration tracking/backfill tests. API-only builds catch accidental GUI assumptions. Documentation updates need reference regeneration and local link/coverage checks.
 
 Keep tests meaningful: fixture/browser passes do not certify real upstream parsing forever, physical codec decoding or deployed proxy security. Historical known failures in `SECURITY_READINESS.md` are prior observations, not current test execution results.
 
 ## CI, releases and maintenance tools
 
-`.github/workflows/ci.yml` builds/tests a compiler matrix and Docker architectures, with a separate lint job. `frontend.yml` renders/browser-checks UI and runs selected blocking/account database suites; it does not automatically run every available harness or every Node test listed by local npm test. Container stable/nightly workflows and release prep are separate.
+`.github/workflows/ci.yml` builds/tests a compiler matrix and Docker architectures, with a separate lint job. `frontend.yml` renders/browser-checks UI and runs selected blocking/account database suites; it runs the complete declared npm suite, but not every available database harness. `documentation.yml` checks deterministic references, local links/anchors, handbook reachability and whitespace without app startup, dependencies or network requests. Container stable/nightly workflows and release prep are separate.
 
 `scripts/fetch-player-dependencies.cr` resolves pinned player packages. `scripts/generate_js_licenses.cr` generates license markup used by the licenses page. `scripts/deploy-database.sh` bootstraps a role/database on systemd hosts. `scripts/install-dependencies.sh` installs platform prerequisites.
 

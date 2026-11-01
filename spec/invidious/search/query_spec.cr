@@ -298,3 +298,69 @@ Spectator.describe Invidious::Search::Query do
     expect(query.to_http_params.has_key?("show_member_videos")).to be_false
   end
 end
+
+Spectator.describe Invidious::Search::Query do
+  it "retains a literal URL escape through filter and continuation parameters" do
+    input = "\\https://youtu.be/aaaaaaaaaaa"
+    query = described_class.new(HTTP::Params{"q" => input, "duration" => "short"}, :regular)
+    expect(query.url?).to be_false
+    expect(query.input).to eq(input)
+    restored = described_class.new(query.to_http_params, :regular)
+    expect(restored.url?).to be_false
+    expect(restored.text).to eq(query.text)
+    expect(restored.filters.duration).to eq(query.filters.duration)
+  end
+
+  it "retains subscription search scope across pagination" do
+    query = described_class.new(HTTP::Params{"q" => "subscriptions:true light"}, :regular)
+    restored = described_class.new(query.to_http_params, :regular)
+    expect(restored.type).to eq(Invidious::Search::Query::Type::Subscriptions)
+    expect(restored.text).to eq("light")
+  end
+
+  it "retains explicit channel search scope across pagination" do
+    query = described_class.new(HTTP::Params{"q" => "channel:UCfixture light"}, :regular)
+    restored = described_class.new(query.to_http_params, :regular)
+    expect(restored.type).to eq(Invidious::Search::Query::Type::Channel)
+    expect(restored.channel).to eq("UCfixture")
+    expect(restored.text).to eq("light")
+  end
+end
+
+Spectator.describe Invidious::Search::Query do
+  it "retains the effective upstream region with continuation and filter parameters" do
+    query = described_class.new(HTTP::Params{"q" => "light", "duration" => "short"}, :regular, "ID")
+    expect(query.to_http_params["region"]).to eq("ID")
+    expect(query.to_http_params["q"]).to eq("light")
+    expect(query.to_http_params["duration"]).to eq("short")
+  end
+end
+
+Spectator.describe Invidious::Search::Query do
+  it "keeps explicit subscription scope and literal input through form pagination" do
+    query = described_class.new(HTTP::Params{"q" => "\\https://youtu.be/abcdefghijk", "subscriptions" => "true", "page" => "2"}, :regular)
+    expect(query.type).to eq(Invidious::Search::Query::Type::Subscriptions)
+    expect(query.to_http_params["q"]).to eq("\\https://youtu.be/abcdefghijk")
+    restored = described_class.new(query.to_http_params, :regular)
+    expect(restored.type).to eq(Invidious::Search::Query::Type::Subscriptions)
+    expect(restored.input).to eq(query.input)
+  end
+
+  it "keeps an explicit subscription scope when legacy channel text is supplied" do
+    query = described_class.new(HTTP::Params{"q" => "channel:UCfixture light", "subscriptions" => "true"}, :regular)
+    expect(query.type).to eq(Invidious::Search::Query::Type::Subscriptions)
+    expect(query.channel).to be_empty
+    expect(query.text).to eq("light")
+  end
+
+  it "retains explicit playlist-item filters, region and literal query across pages" do
+    query = described_class.new(HTTP::Params{"q" => "\\https://example.test/a", "date" => "week", "duration" => "short", "page" => "2"}, :playlist, "ID")
+    restored = described_class.new(query.to_http_params, :playlist, query.region)
+    expect(restored.type).to eq(Invidious::Search::Query::Type::Playlist)
+    expect(restored.filters.type).to eq(Invidious::Search::Filters::Type::Video)
+    expect(restored.filters.date).to eq(Invidious::Search::Filters::Date::Week)
+    expect(restored.filters.duration).to eq(Invidious::Search::Filters::Duration::Short)
+    expect(restored.input).to eq(query.input)
+    expect(restored.region).to eq("ID")
+  end
+end

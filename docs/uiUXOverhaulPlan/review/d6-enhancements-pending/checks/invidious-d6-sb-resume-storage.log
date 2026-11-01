@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: guest → Alice → guest → Bob → Alice restores only the active profile
+ok 1 - guest → Alice → guest → Bob → Alice restores only the active profile
+  ---
+  duration_ms: 9.137578
+  type: 'test'
+  ...
+# Subtest: legacy raw, encoded, and cookie saves migrate only to guests on an account visit
+ok 2 - legacy raw, encoded, and cookie saves migrate only to guests on an account visit
+  ---
+  duration_ms: 2.182936
+  type: 'test'
+  ...
+# Subtest: migration preserves new-format guest values and removes invalid legacy data
+ok 3 - migration preserves new-format guest values and removes invalid legacy data
+  ---
+  duration_ms: 0.811414
+  type: 'test'
+  ...
+# Subtest: stale tabs reject writes, callbacks and guest preference updates after switching
+ok 4 - stale tabs reject writes, callbacks and guest preference updates after switching
+  ---
+  duration_ms: 2.014627
+  type: 'test'
+  ...
+# Subtest: storage events and session continuations are filtered by profile and backend
+ok 5 - storage events and session continuations are filtered by profile and backend
+  ---
+  duration_ms: 2.279097
+  type: 'test'
+  ...
+# Subtest: denied storage uses bounded profile cookies, larger data stays in memory and reports failure
+ok 6 - denied storage uses bounded profile cookies, larger data stays in memory and reports failure
+  ---
+  duration_ms: 1.694632
+  type: 'test'
+  ...
+# Subtest: cookie and storage denial does not break playback settings in page memory
+ok 7 - cookie and storage denial does not break playback settings in page memory
+  ---
+  duration_ms: 0.817194
+  type: 'test'
+  ...
+# Subtest: quota failures retain current values instead of resurrecting an old save
+ok 8 - quota failures retain current values instead of resurrecting an old save
+  ---
+  duration_ms: 1.495947
+  type: 'test'
+  ...
+# Subtest: failed persistence leaves the last successful save intact for the next visit
+ok 9 - failed persistence leaves the last successful save intact for the next visit
+  ---
+  duration_ms: 2.058811
+  type: 'test'
+  ...
+# Subtest: invalid stored values are removed and complex settings are allowlisted
+ok 10 - invalid stored values are removed and complex settings are allowlisted
+  ---
+  duration_ms: 1.397672
+  type: 'test'
+  ...
+# Subtest: guest SponsorBlock overrides inherit categories, support enablement and never affect accounts or live video
+ok 11 - guest SponsorBlock overrides inherit categories, support enablement and never affect accounts or live video
+  ---
+  duration_ms: 1.691086
+  type: 'test'
+  ...
+# Subtest: account deletion purges only its own profile and leaves guest and other accounts intact
+ok 12 - account deletion purges only its own profile and leaves guest and other accounts intact
+  ---
+  duration_ms: 3.73075
+  type: 'test'
+  ...
+# Subtest: guest playback speed preserves other guest preferences and account calls never write PREFS
+ok 13 - guest playback speed preserves other guest preferences and account calls never write PREFS
+  ---
+  duration_ms: 1.456993
+  type: 'test'
+  ...
+# Subtest: guest speed preserves form-encoded spaces and literal plus signs
+ok 14 - guest speed preserves form-encoded spaces and literal plus signs
+  ---
+  duration_ms: 0.729349
+  type: 'test'
+  ...
+# Subtest: late response cookies cannot override a newer active profile, and response headers guard denied storage
+ok 15 - late response cookies cannot override a newer active profile, and response headers guard denied storage
+  ---
+  duration_ms: 2.022673
+  type: 'test'
+  ...
+# Subtest: large legacy saves remain usable in guest page memory when migration exceeds quota
+ok 16 - large legacy saves remain usable in guest page memory when migration exceeds quota
+  ---
+  duration_ms: 3.07951
+  type: 'test'
+  ...
+# Subtest: delayed helper responses and retries are discarded after switching profiles
+ok 17 - delayed helper responses and retries are discarded after switching profiles
+  ---
+  duration_ms: 2.981234
+  type: 'test'
+  ...
+# Subtest: one notification tab owns each profile lease; expired owners close and account switches discard messages
+ok 18 - one notification tab owns each profile lease; expired owners close and account switches discard messages
+  ---
+  duration_ms: 4.217881
+  type: 'test'
+  ...
+# Subtest: notifications retain server counts without a header ticker and skip empty or malformed subscription reads
+ok 19 - notifications retain server counts without a header ticker and skip empty or malformed subscription reads
+  ---
+  duration_ms: 3.117963
+  type: 'test'
+  ...
+# Subtest: channel spoiler rules reject malformed timers and remain isolated from account profiles
+ok 20 - channel spoiler rules reject malformed timers and remain isolated from account profiles
+  ---
+  duration_ms: 1.977797
+  type: 'test'
+  ...
+# Subtest: browse restoration keeps bounded GET descriptors in the owning tab/profile only
+ok 21 - browse restoration keeps bounded GET descriptors in the owning tab/profile only
+  ---
+  duration_ms: 2.210046
+  type: 'test'
+  ...
+# Subtest: watch layout and docking use isolated validated profiles without inheriting guest state
+ok 22 - watch layout and docking use isolated validated profiles without inheriting guest state
+  ---
+  duration_ms: 3.022011
+  type: 'test'
+  ...
+# Subtest: watch browser state distinguishes durable cookie fallback from page-only storage
+ok 23 - watch browser state distinguishes durable cookie fallback from page-only storage
+  ---
+  duration_ms: 3.255452
+  type: 'test'
+  ...
+# Subtest: notification cached-page departure releases its lease and timers, then return starts one new stream
+ok 24 - notification cached-page departure releases its lease and timers, then return starts one new stream
+  ---
+  duration_ms: 2.862299
+  type: 'test'
+  ...
+# Subtest: notification messages retain masking and tolerate missing optional avatar metadata
+ok 25 - notification messages retain masking and tolerate missing optional avatar metadata
+  ---
+  duration_ms: 1.549288
+  type: 'test'
+  ...
+# Subtest: unresolved notification channel identity keeps the in-page count without exposing a title in OS notifications
+ok 26 - unresolved notification channel identity keeps the in-page count without exposing a title in OS notifications
+  ---
+  duration_ms: 1.057098
+  type: 'test'
+  ...
+# Subtest: persisted reads distinguish failed page-memory drafts from durable channel overrides
+ok 27 - persisted reads distinguish failed page-memory drafts from durable channel overrides
+  ---
+  duration_ms: 0.891705
+  type: 'test'
+  ...
+# Subtest: persisted channel reads follow durable changes and remain profile guarded
+ok 28 - persisted channel reads follow durable changes and remain profile guarded
+  ---
+  duration_ms: 0.849525
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 243.492025

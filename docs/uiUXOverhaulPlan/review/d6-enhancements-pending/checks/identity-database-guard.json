@@ -1,0 +1,20 @@
+{
+  "container": "invidious-ui-overhaul-01a176a0",
+  "containerId": "9dc6d6309b88597acc783370fbe70b795dd92e5a89230a94c793b8404d0762cb",
+  "taskLabel": "01a176a0-bf7a-71b0-af8d-2955647ae8f0",
+  "bindingAtRun": "127.0.0.1:32768",
+  "database": "invidious_accounts_test",
+  "beforeReset": {
+    "publicTables": 24,
+    "otherConnections": 0
+  },
+  "afterReset": {
+    "publicTables": 0,
+    "otherConnections": 0
+  },
+  "afterHarness": {
+    "publicTables": 24,
+    "otherConnections": 0
+  },
+  "guard": "Exact container id, task label, running state, loopback binding, database name/schema and idle connections verified before resetting only this disposable database."
+}

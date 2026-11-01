@@ -68,27 +68,28 @@ GGPHT_POOL           = YoutubeConnectionPool.new(URI.parse("https://yt3.ggpht.co
 COMPANION_POOL       = CompanionConnectionPool.new(capacity: 1)
 
 FIXTURE_ORIGINAL_TITLES = Invidious::OriginalTitles::Client.new(->(_id : String) { Invidious::OriginalTitles::Result.new(nil, 10.minutes) })
+require "./runtime_owner_fixtures"
 
-def fixture_env(path, mode = "dark", thin = false, density = "balanced", locale = "en-US")
+def fixture_env(path, mode = "dark", thin = false, density = "balanced", locale = "en-US", method = "GET")
   preferences = Preferences.from_json({"dark_mode" => mode, "thin_mode" => thin, "ui_density" => density, "locale" => locale, "comments" => ["", ""], "preload" => false}.to_json)
-  env = HTTP::Server::Context.new(HTTP::Request.new("GET", path), HTTP::Server::Response.new(IO::Memory.new))
+  env = HTTP::Server::Context.new(HTTP::Request.new(method, path), HTTP::Server::Response.new(IO::Memory.new))
   env.set "preferences", preferences
   env.set "original_title_selection", Invidious::OriginalTitles::Selection.new(preferences.show_original_title, FIXTURE_ORIGINAL_TITLES)
   env.set "current_page", path
   env
 end
 
-def fixture_video
+def fixture_video(video_id = "2isYuQZMbdU")
   raw = JSON.parse(File.read("mocks/video/regular_mrbeast.player.json")).as_h
   raw.merge!(JSON.parse(File.read("mocks/video/regular_mrbeast.next.json")).as_h)
-  info = Invidious::Videos::Parser.parse_video_info("2isYuQZMbdU", raw)
+  info = Invidious::Videos::Parser.parse_video_info(video_id, raw)
   info["title"] = JSON::Any.new("A journey through light, color, and motion")
   info["author"] = JSON::Any.new("Studio North")
   info["descriptionHtml"] = JSON::Any.new("A closer look at the small details that make a world.\n0:00 Introduction\n1:20 Finding the light\n3:45 Color in motion")
   info["description"] = info["descriptionHtml"]
   info["shortDescription"] = info["descriptionHtml"]
   info["captions"] = JSON.parse(%({"playerCaptionsTracklistRenderer":{"captionTracks":[{"name":{"simpleText":"English"},"languageCode":"en","baseUrl":"https://example.com/en"},{"name":{"simpleText":"Indonesian (auto-generated)"},"languageCode":"id","kind":"asr","baseUrl":"https://example.com/id"}]}}))
-  Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
+  Video.new({id: video_id, info: info, updated: Time.utc})
 end
 
 # The public watch serializer must expose the same license and rich information as the web page.
@@ -103,7 +104,7 @@ metadata = JSON.parse(metadata_video.to_json("en-US", nil))
 raise "Custom video license lost" unless metadata["license"].as_s == "Creative Commons Attribution license"
 raise "Music credit lost" unless metadata["musicTracks"][0]["song"].as_s == "Fixture song" && metadata["musicTracks"][0]["license"].as_s == "Fixture music license"
 
-def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false, native_clip : InvidiousClip? = nil, clip_duration : Int32? = nil, supplied_video : Video? = nil)
+def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = false, chapter_description : String? = nil, chat = false, chat_only = false, native_clip : InvidiousClip? = nil, clip_duration : Int32? = nil, supplied_video : Video? = nil, quality : String = "medium", aspect : String = "16:9", fallback_formats : Array(Hash(String, JSON::Any))? = nil, nojs_comments : Bool = false, initial_comment_html : String = "", sync_positions : Bool = false, video_series : Array(String)? = nil, preview_range : Tuple(Float64, Float64)? = nil, player_controls : Bool? = nil)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   video = supplied_video || fixture_video
@@ -113,11 +114,21 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
   related_videos = video.related_videos
   id = video.id
   continuation = 2
-  preview_clip = false
+  preview_clip = !preview_range.nil?
   params = Invidious::Videos.process_video_params(URI::Params.new, preferences)
   params.related_videos = false if chat_only
-  params.comments = ["", ""]
-  params.quality = "medium"
+  params.comments = preferences.comments
+  params.quality = quality
+  params.controls = player_controls unless player_controls.nil?
+  if range = preview_range
+    params.video_start, params.video_end = range
+    params.save_player_pos = false
+    params.continue = false
+    params.continue_autoplay = false
+    params.raw = false
+    plid = nil
+    video_series = nil
+  end
   if native_clip
     plid = nil
     params.video_start = native_clip.start_time
@@ -129,33 +140,32 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
     env.set "native_clip_id", native_clip.id
   end
   params.vr_mode = false
-  playback_sync = false
+  playback_sync = sync_positions && native_clip.nil?
   playback_position = nil
   chat_timing_ms = 0
   user = account ? env.get?("user").try(&.as(User)) : nil
   subscriptions = [] of String
-  nojs = false
-  comment_html = ""
+  nojs = nojs_comments
+  comment_html = initial_comment_html
   thumbnail = "/vi/#{id}/maxres.jpg"
-  aspect_ratio = "16:9"
+  aspect_ratio = aspect
   invidious_companion = nil.as(Config::CompanionConfig?)
   video_streams = video.video_streams
   audio_streams = video.audio_streams
-  fmt_stream = [JSON.parse(%({"mimeType":"video/webm","itag":43,"quality":"medium","url":"/fixture.webm"})).as_h]
+  fmt_stream = fallback_formats || [JSON.parse(%({"mimeType":"video/webm","itag":43,"quality":"medium","url":"/fixture.webm"})).as_h]
   adaptive_fmts = video.adaptive_fmts
   captions = video.captions
   preferred_captions = [] of Invidious::Videos::Captions::Metadata
   video_assets = Invidious::Frontend::WatchPage::VideoAssets.new(fmt_stream, video_streams, audio_streams, captions)
   navbar_search = true
   if embed
-    video_series = nil.as(String?)
     render "src/invidious/views/embed.ecr"
   else
     render "src/invidious/views/watch.ecr", "src/invidious/views/template.ecr"
   end
 end
 
-def browse_fixture(env, valid_ids = false)
+def browse_fixture(env, valid_ids = false, production_popular = false)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   items = (0...12).map do |i|
@@ -164,24 +174,39 @@ def browse_fixture(env, valid_ids = false)
   navbar_search = true
   current_page = env.params.query["page"]?.try(&.to_i?) || 1
   page_nav_html = Invidious::Frontend::Pagination.nav_numeric(locale, base_url: env.request.resource, current_page: current_page, show_next: current_page < 3)
-  render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
+  if production_popular
+    popular_videos = items
+    render "src/invidious/views/feeds/popular.ecr", "src/invidious/views/template.ecr"
+  else
+    render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
+  end
 end
 
-def preferences_fixture(env)
+def preferences_fixture(env, section = nil)
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
-  referer = "/"
-  navbar_search = true
-  render "src/invidious/views/user/preferences.ecr", "src/invidious/views/template.ecr"
+  env.set "settings_legacy_entry", true unless section || env.params.query["section"]?
+  env.set "settings_section", section || env.params.query["section"]? || "appearance"
+  render "src/invidious/views/overhaul/settings.ecr", "src/invidious/views/template.ecr"
 end
 
-def playlist_library_fixture
+def playlist_library_fixture(mode = "light", add_video = false, empty = false)
   env = signed_in_env("/feed/playlists")
-  locale = env.get("preferences").as(Preferences).locale
-  items_created = (0...4).map do |i|
-    SearchPlaylist.new({title: "Light and motion #{i + 1}", id: "PLfixture#{i}", author: "Studio North", ucid: "UCfixture", video_count: 12, videos: [] of SearchPlaylistVideo, thumbnail: "/vi/2isYuQZMbdU/mqdefault.jpg", author_verified: false})
+  preferences = env.get("preferences").as(Preferences)
+  preferences.dark_mode = mode
+  env.set "preferences", preferences
+  locale = preferences.locale
+  items_created = (0...(empty ? 0 : 4)).map do |i|
+    InvidiousPlaylist.new({title: ["Light and motion", "私のコレクション — ألوان وحركة", "A longer title with <markup> & useful notes", "An empty playlist"][i], id: "IVfixture#{i}", author: "viewer@example.test", video_count: i == 3 ? 0 : 12,
+                           description: "", created: Time.utc, updated: Time.utc, privacy: PlaylistPrivacy.values[i % 3], index: [] of Int64})
   end
-  items_saved = items_created.first(2)
+  playlist_covers = items_created.to_h { |item| {item.id, item.video_count == 0 ? "" : "2isYuQZMbdU"} }
+  items_saved = empty ? [] of JSON::Any : [
+    JSON.parse({playlistId: "PLremote", title: "Field notes <saved>", author: "Studio North", videoCount: 23, privacy: "unlisted", playlistThumbnail: "/vi/2isYuQZMbdU/mqdefault.jpg", isMix: false}.to_json),
+    JSON.parse({playlistId: "RDMixRadio", title: "A saved mix", author: "", videoCount: -1, privacy: "public", playlistThumbnail: "/vi/previous001/mqdefault.jpg", isMix: true, seedVideoId: "previous001"}.to_json),
+    JSON.parse({playlistId: "IVshared", title: "Another person's playlist", author: "Another person", videoCount: 0, privacy: "public", playlistThumbnail: ""}.to_json),
+  ]
+  add_video_id = add_video ? "2isYuQZMbdU" : nil
   navbar_search = true
   render "src/invidious/views/feeds/playlists.ecr", "src/invidious/views/template.ecr"
 end
@@ -201,8 +226,16 @@ def signed_in_env(path)
   user = Invidious::User.new({updated: Time.utc, notifications: [] of String, subscriptions: [] of String, email: "viewer@example.test", username: "viewer@example.test", credential_version: 1, preferences: env.get("preferences").as(Preferences), password: nil, token: "fixture", watched: [] of String, feed_needs_update: false})
   env.set "user", user
   env.set "csrf_token", "fixture-token"
+  env.set "sid", "fixture-session"
   env.set "blocked_channels", [] of String
   env
+end
+
+def prepare_fixture_user_names
+  unless PG_DB.query_all("SELECT name FROM pragma_table_info('users')", as: String).includes?("username")
+    PG_DB.exec("ALTER TABLE users ADD COLUMN username TEXT")
+    PG_DB.exec("UPDATE users SET username=email")
+  end
 end
 
 def navigation_fixture
@@ -210,7 +243,7 @@ def navigation_fixture
   preferences = env.get("preferences").as(Preferences)
   preferences.feed_menu = ["Popular", "Trending"]
   locale = preferences.locale
-  render "src/invidious/views/components/navigation.ecr"
+  render "src/invidious/views/overhaul/navigation.ecr"
 end
 
 def history_fixture(empty = false, thin = false, history_query = "", sync = false, dearrow = false, ai = false, known_views = false)
@@ -253,12 +286,14 @@ def history_fixture(empty = false, thin = false, history_query = "", sync = fals
   render "src/invidious/views/feeds/history.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_channel_fixture(mode = "light", playlists = false, search = false, privacy = false, empty = false, ai = false)
-  env = fixture_env("/channel/UCfixture", mode)
+def diary_channel_fixture(mode = "light", playlists = false, search = false, privacy = false, empty = false, ai = false, secondary = "", literal = false, signed = false)
+  fixture_channel_id = signed ? "UC" + "a" * 22 : "UCfixture"
+  env = signed ? signed_in_env("/channel/#{fixture_channel_id}") : fixture_env(search ? "/channel/UCfixture/search" : "/channel/UCfixture", mode)
+  prefs = env.get("preferences").as(Preferences); prefs.dark_mode = mode; env.set "preferences", prefs
   locale = "en-US"
-  user = nil
-  subscriptions = [] of String
-  channel = AboutChannel.new(ucid: "UCfixture", author: "Studio North", auto_generated: false,
+  user = env.get?("user").try &.as(User)
+  subscriptions = user.try(&.subscriptions) || [] of String
+  channel = AboutChannel.new(ucid: fixture_channel_id, author: "Studio North", auto_generated: false,
     author_url: "/channel/UCfixture", author_thumbnail: "https://example.test/avatar", banner: "https://example.test/banner",
     description: "Collecting the small details of everyday life.", description_html: "Collecting the small details of everyday life.",
     total_views: 123456_i64, sub_count: 1200, joined: Time.utc, is_family_friendly: true, pronouns: nil,
@@ -277,14 +312,19 @@ def diary_channel_fixture(mode = "light", playlists = false, search = false, pri
       SearchPlaylist.new({title: "Light and motion #{i + 1}", id: "PLfixture#{i}", author: "Studio North", ucid: "UCfixture", video_count: 12, videos: [] of SearchPlaylistVideo, thumbnail: "/vi/2isYuQZMbdU/mqdefault.jpg", author_verified: false})
     end
   end
+  unless secondary.empty?
+    selected_tab = Invidious::Frontend::ChannelPage::TabsAvailable.parse(secondary)
+    channel.tabs << secondary.downcase
+    sort_options = [] of String
+  end
   navbar_search = true
   if search
     preferences = env.get("preferences").as(Preferences)
     preferences.search_privacy = privacy
     env.set "preferences", preferences
-    query = Invidious::Search::Query.new(HTTP::Params{"q" => %(<cats> & "dogs" + café), "page" => "2"}, :channel)
+    query = Invidious::Search::Query.new(HTTP::Params{"q" => (literal ? "\\https://youtu.be/aaaaaaaaaaa" : %(<cats> & "dogs" + café)), "page" => "2"}, :channel)
     query.channel = channel.ucid
-    env.set "channel_search_query", query.text
+    env.set "channel_search_query", query.input
     selected_tab = Invidious::Frontend::ChannelPage::TabsAvailable::Search
     sort_options = [] of String
     items = [] of SearchVideo if empty
@@ -308,11 +348,7 @@ end
 
 def diary_error_fixture(mode = "light")
   env = fixture_env("/unavailable", mode)
-  locale = "en-US"
-  error_message = "<h1>This page is unavailable</h1><p>Please try again later.</p>"
-  next_steps = "<a href=\"/\">Return home</a>"
-  navbar_search = true
-  render "src/invidious/views/error.ecr", "src/invidious/views/template.ecr"
+  error_template_helper(env, 503, "This page is unavailable. Please try again later.")
 end
 
 def diary_playlist_fixture(mode = "light", editable = false)
@@ -337,6 +373,10 @@ require "./ai_slist_checks"
 
 output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
 Dir.mkdir_p(output)
+{"guest" => fixture_env("/watch?v=2isYuQZMbdU"), "account" => signed_in_env("/watch?v=2isYuQZMbdU")}.each do |kind, env|
+  snapshot = Invidious::Frontend::EnhancementState.snapshot(env.get("preferences").as(Preferences), Invidious::BrowserProfiles.render_scope(env), !!env.get?("user"), ([] of String), HMAC_KEY, Time.unix(1_700_000_000))
+  File.write("#{output}/enhancement-runtime-#{kind}.json", snapshot.to_json)
+end
 {"dark", "light", ""}.each do |mode|
   suffix = mode.empty? ? "auto" : mode
   File.write("#{output}/watch-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode)))
@@ -418,6 +458,7 @@ check_dearrow_preferences
 require "./sponsorblock_checks"
 check_sponsorblock_preferences
 check_sponsorblock_channels
+write_sponsorblock_editor_fixtures(output)
 {true, false}.each do |show_original|
   env = fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2")
   prefs = env.get("preferences").as(Preferences)
@@ -472,10 +513,19 @@ locale = "en-US"
 user = env.get("user").as(User)
 error = nil
 username_token = password_token = "fixture-csrf"
+username = user.username
 navbar_search = true
 File.write("#{output}/account-settings.html", render "src/invidious/views/user/account.ecr", "src/invidious/views/template.ecr")
 
-# Preferences states use the same template and form names as the live page.
+def admin_settings_fixture(env)
+  preferences = env.get("preferences").as(Preferences)
+  locale = preferences.locale
+  env.set "admin_revision", "fixture-revision"
+  render "src/invidious/views/admin/settings.ecr", "src/invidious/views/overhaul/shell.ecr"
+end
+
+# Historical fixture names render the actual default category. Legacy POST and
+# receipt compatibility is exercised through the guarded production route harness.
 PG_DB.exec("INSERT INTO playlists (title, id, author) VALUES (?, ?, ?)", "Fixture playlist", "IVpreferences", "viewer@example.test")
 File.write("#{output}/preferences-signed-in.html", preferences_fixture(signed_in_env("/preferences")))
 env = signed_in_env("/preferences")
@@ -486,9 +536,11 @@ File.write("#{output}/preferences-signed-in-no-nick.html", preferences_fixture(e
 CONFIG.admins << "viewer@example.test"
 begin
   File.write("#{output}/preferences-admin.html", preferences_fixture(signed_in_env("/preferences")))
+  File.write("#{output}/admin-settings.html", admin_settings_fixture(signed_in_env("/admin/settings")))
   CONFIG.login_required = true
   CONFIG.registration_enabled = false
   File.write("#{output}/preferences-admin-private.html", preferences_fixture(signed_in_env("/preferences")))
+  File.write("#{output}/admin-settings-private.html", admin_settings_fixture(signed_in_env("/admin/settings")))
 ensure
   CONFIG.login_required = false
   CONFIG.registration_enabled = true
@@ -541,6 +593,8 @@ def create_clip_fixture(locale = "en-US")
   clip_start_value = "00:00"
   clip_end_value = "00:30"
   error = nil
+  clip_unconfirmed = false
+  clip_source_available = true
   clip_csrf = "fixture-token"
   navbar_search = true
   render "src/invidious/views/create_clip.ecr", "src/invidious/views/template.ecr"
@@ -571,6 +625,7 @@ require "./view_count_checks"
 check_view_counts(output)
 require "./spoiler_checks"
 check_spoiler_preferences(output)
+write_masking_editor_fixtures(output)
 check_ai_filtering(output)
 
 check_audio_playback(output)
@@ -580,6 +635,7 @@ check_original_titles(output)
 
 # Standalone verification pages never require content data or database access.
 def verification_fixture(native = false)
+  env = fixture_env("/verify", "dark")
   policy = Invidious::BotProtection::Settings.new(true, 12, 1_i64)
   destination = "/watch?v=abcdefghijk&t=42"
   ready = true
@@ -608,7 +664,7 @@ def qol_search_fixture(env, page : Int32, empty = false)
   member_results = false
   redirect_url = "/redirect"
   env.set "search", "light"
-  page_nav_html = Invidious::Frontend::Pagination.nav_numeric(locale, base_url: "/search?#{params}", current_page: page, show_next: page < 3, post: preferences.search_privacy)
+  page_nav_html = Invidious::Frontend::Pagination.nav_numeric(locale, base_url: "/search?#{params}", current_page: page, show_next: page < 3, post: Invidious::Frontend::Desktop.private_search?(env))
   navbar_search = true
   render "src/invidious/views/search.ecr", "src/invidious/views/template.ecr"
 end
@@ -642,3 +698,293 @@ def qol_playlist_fixture
 end
 
 File.write("#{output}/qol-playlist.html", qol_playlist_fixture)
+
+# Representative desktop fixtures use the production page templates and shell.
+prepare_fixture_user_names
+
+def overhaul_settings_fixture(env)
+  env.set "settings_section", env.params.query["section"]? || "appearance"
+  preferences = env.get("preferences").as(Preferences)
+  locale = preferences.locale
+  render "src/invidious/views/overhaul/settings.ecr", "src/invidious/views/overhaul/shell.ecr"
+end
+
+def overhaul_playlist_fixture(env)
+  env.set "remove_playlist_items", "IVfixture"
+  locale = env.get("preferences").as(Preferences).locale
+  user = env.get("user").as(User)
+  plid = "IVfixture"
+  page = 1
+  page_nav_html = ""
+  playlist = InvidiousPlaylist.new({title: "Light and motion", id: plid, author: user.email, video_count: 6,
+                                    description: "", created: Time.utc - 3.days, updated: Time.utc,
+                                    privacy: PlaylistPrivacy::Private, index: [] of Int64})
+  items = (0...6).map do |i|
+    PlaylistVideo.new({title: "A chapter in light and motion #{i + 1}", id: i.to_s.rjust(11, '0'), author: "Studio North", ucid: "UCfixture", length_seconds: 720, published: Time.utc - 3.days, plid: "IVfixture", index: 9007199254740990_i64 + i, live_now: false, members_only: false})
+  end
+  render "src/invidious/views/playlist.ecr", "src/invidious/views/template.ecr"
+end
+
+{"light", "dark", ""}.each do |mode|
+  suffix = mode.empty? ? "system" : mode
+  {"browse" => "/feed/popular", "watch" => "/watch?v=2isYuQZMbdU&list=PLfixture&index=2", "playlist" => "/playlist?list=IVfixture", "settings" => "/preferences?section=appearance"}.each do |screen, path|
+    env = screen == "playlist" ? signed_in_env(path) : fixture_env(path, mode)
+    candidate_preferences = env.get("preferences").as(Preferences)
+    candidate_preferences.dark_mode = mode
+    env.set "preferences", candidate_preferences
+    source = case screen
+             when "browse"   then browse_fixture(env, true, production_popular: true)
+             when "watch"    then watch_fixture(env)
+             when "playlist" then overhaul_playlist_fixture(env)
+             else                 overhaul_settings_fixture(env)
+             end
+    File.write("#{output}/overhaul-#{screen}-#{suffix}.html", source)
+  end
+end
+
+# Desktop stress/RTL uses the same production pages.
+{"browse", "watch", "playlist", "settings"}.each do |screen|
+  path = {"browse" => "/feed/popular", "watch" => "/watch?v=2isYuQZMbdU&list=PLfixture", "playlist" => "/playlist?list=IVfixture", "settings" => "/preferences?section=appearance"}[screen]
+  env = screen == "playlist" ? signed_in_env(path) : fixture_env(path, "light", locale: "ar")
+  candidate_preferences = env.get("preferences").as(Preferences)
+  candidate_preferences.locale = "ar"
+  candidate_preferences.dark_mode = "light"
+  env.set "preferences", candidate_preferences
+  source = case screen
+           when "browse"   then browse_fixture(env, true, production_popular: true)
+           when "watch"    then watch_fixture(env)
+           when "playlist" then overhaul_playlist_fixture(env)
+           else                 overhaul_settings_fixture(env)
+           end
+  File.write("#{output}/overhaul-#{screen}-rtl.html", source)
+end
+{"light", "dark"}.each do |mode|
+  env = fixture_env("/watch?v=2isYuQZMbdU", mode)
+  File.write("#{output}/overhaul-watch-single-#{mode}.html", watch_fixture(env, nil))
+end
+
+# D2 real category forms for explicit fragment navigation and canonical read-back.
+Invidious::WebPreferences::SECTIONS.each_key do |section|
+  env = signed_in_env("/preferences?section=#{section}")
+  candidate_preferences = env.get("preferences").as(Preferences)
+  candidate_preferences.dark_mode = "light"
+  env.set "preferences", candidate_preferences
+  File.write("#{output}/settings-#{section}.html", overhaul_settings_fixture(env))
+end
+
+# Literal failed map controls and future saved native values must remain visible.
+{"invalid", "future"}.each do |kind|
+  env = signed_in_env("/preferences?section=sponsorblock")
+  preferences = env.get("preferences").as(Preferences)
+  values = Invidious::WebPreferences.values("sponsorblock", JSON.parse(preferences.to_json).as_h)
+  if kind == "invalid"
+    env.set "settings_draft", URI::Params.encode({"sponsorblock_mode_intro" => "manual<draft>&", "sponsorblock_color_intro" => "color<draft>&"})
+    env.set "settings_error", "Invalid SponsorBlock draft retained"
+  else
+    values["sponsorblock_modes"].as_h["intro"] = JSON::Any.new("future<mode>&")
+    values["sponsorblock_colors"].as_h["intro"] = JSON::Any.new("future<color>&")
+  end
+  env.set "settings_values", values.to_json
+  File.write("#{output}/d6-sb-defaults-#{kind}.html", overhaul_settings_fixture(env))
+end
+
+# D3 production templates, including a POST whose saved privacy preference is
+# off: method privacy cannot depend on the preference alone.
+def d3_search_fixture(mode = "light", privacy = false, literal = false, scope = "")
+  env = fixture_env("/search", mode, method: privacy ? "POST" : "GET")
+  preferences = env.get("preferences").as(Preferences)
+  preferences.search_privacy = false
+  env.set "preferences", preferences
+  locale = preferences.locale
+  text = literal ? "\\https://youtu.be/aaaaaaaaaaa" : "light"
+  text = "subscriptions:true #{text}" if scope == "subscriptions"
+  text = "channel:UCfixture #{text}" if scope == "channel"
+  params = HTTP::Params{"q" => text}
+  if scope.empty?
+    params["duration"] = "short"
+    params["features"] = "hd,subtitles"
+  end
+  query = Invidious::Search::Query.new(params, :regular, "ID")
+  items = [] of SearchItem
+  items << SearchVideo.new({title: "An observed moment <&> العربية 日本語", id: "aaaaaaaaaaa", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: 0_i64, description_html: "A perspective.", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: "https://yt3.ggpht.com/supplied=s88", badges: VideoBadges::None})
+  items << SearchChannel.new({author: "Studio North", ucid: "UCfixture", author_thumbnail: "https://yt3.ggpht.com/supplied=s88", subscriber_count: 0, video_count: 0, channel_handle: "@studio", description_html: "A channel about &lt;light&gt; and everyday observations.", auto_generated: false, author_verified: true})
+  items << SearchPlaylist.new({title: "Empty collection", id: "PLempty", author: "Studio North", ucid: "UCfixture", video_count: 0, videos: [] of SearchPlaylistVideo, thumbnail: nil, author_verified: false})
+  items << SearchHashtag.new({title: "#light", url: "/hashtag/light", video_count: 42_i64, channel_count: 3_i64})
+  items << ProblematicTimelineItem.new(Exception.new("Unrecognized <upstream> item"))
+  blocked_results = member_results = false
+  redirect_url = "/redirect"
+  env.set "search", text
+  page_nav_html = Invidious::Frontend::Pagination.nav_numeric(locale, base_url: "/search?#{query.to_http_params}", current_page: 1, post: Invidious::Frontend::Desktop.private_search?(env))
+  navbar_search = true
+  render "src/invidious/views/search.ecr", "src/invidious/views/template.ecr"
+end
+
+{false, true}.each do |privacy|
+  File.write("#{output}/d3-search-#{privacy}.html", d3_search_fixture(privacy: privacy))
+  File.write("#{output}/d3-search-literal-#{privacy}.html", d3_search_fixture(privacy: privacy, literal: true))
+end
+File.write("#{output}/d3-search-subscriptions.html", d3_search_fixture(scope: "subscriptions"))
+File.write("#{output}/d3-search-channel.html", d3_search_fixture(scope: "channel"))
+{"light", "dark"}.each do |mode|
+  env = fixture_env("/search", mode)
+  locale = "en-US"
+  preferences = env.get("preferences").as(Preferences)
+  navbar_search = false
+  File.write("#{output}/d3-search-home-#{mode}.html", render("src/invidious/views/search_homepage.ecr", "src/invidious/views/template.ecr"))
+end
+
+def d3_thread_data
+  JSON.parse({
+    "authorId"     => "UCfixture",
+    "continuation" => "more+/= &?日本語",
+    "comments"     => [
+      {"commentId" => "post-a", "author" => "Studio <North>", "authorUrl" => "/channel/UCfixture", "authorThumbnail" => "https://yt3.ggpht.com/supplied=s88", "authorIsChannelOwner" => true, "verified" => true, "contentHtml" => "A moment of light.<br>With a second line.", "published" => (Time.utc - 1.day).to_unix, "isEdited" => true, "likeCount" => 0, "replyCount" => 3, "replies" => {"replyCount" => 3, "continuation" => "thread-a+/= &?日本語"}, "attachment" => {"type" => "multiImage", "images" => [[{"url" => "https://yt3.ggpht.com/photo-a"}, {"url" => "https://yt3.ggpht.com/photo-a"}], [{"url" => "https://yt3.ggpht.com/photo-b"}, {"url" => "https://yt3.ggpht.com/photo-b"}]]}},
+      {"commentId" => "post-b", "author" => "Another observer", "authorUrl" => "/channel/UCother", "authorThumbnails" => [] of String, "authorIsChannelOwner" => false, "contentHtml" => "A second post with its own replies.", "published" => (Time.utc - 2.days).to_unix, "isEdited" => false, "likeCount" => 12, "replyCount" => 2, "replies" => {"replyCount" => 2, "continuation" => "thread-b+/= &?日本語"}, "attachment" => {"type" => "video", "videoId" => "aaaaaaaaaaa"}},
+      {"commentId" => "post-c", "author" => "A reader", "authorUrl" => "/channel/UCother", "authorThumbnails" => [] of String, "authorIsChannelOwner" => false, "contentHtml" => "No reply cursor from another post belongs here.", "published" => (Time.utc - 2.days).to_unix, "isEdited" => false, "likeCount" => 0, "replyCount" => 0},
+    ],
+  }.to_json)
+end
+
+def d3_community_fixture(mode = "light")
+  env = fixture_env("/channel/UCfixture/community", mode)
+  preferences = env.get("preferences").as(Preferences)
+  locale = preferences.locale
+  user = nil
+  subscriptions = [] of String
+  sort_options = [] of String
+  sort_by = ""
+  channel = AboutChannel.new(ucid: "UCfixture", author: "Studio North", auto_generated: false,
+    author_url: "/channel/UCfixture", author_thumbnail: "https://example.test/avatar", banner: nil,
+    description: "A community of observers.", description_html: "A community of observers.", total_views: 123456_i64, sub_count: 1200,
+    joined: Time.utc, is_family_friendly: true, pronouns: nil, allowed_regions: [] of String,
+    tabs: ["videos", "shorts", "streams", "playlists", "community", "podcasts", "releases", "courses", "channels"], tags: [] of String, verified: true, is_age_gated: false)
+  items = d3_thread_data
+  error_message = nil
+  navbar_search = true
+  render "src/invidious/views/community.ecr", "src/invidious/views/template.ecr"
+end
+
+{"light", "dark"}.each do |mode|
+  File.write("#{output}/d3-community-#{mode}.html", d3_community_fixture(mode))
+end
+File.write("#{output}/d3-thread-response.json", {"contentHtml" => Invidious::Frontend::Comments.template_youtube(d3_thread_data, "en-US", false), "commentCount" => 3}.to_json)
+File.write("#{output}/d3-thread-end.json", {"contentHtml" => "<article class=\"comment comment-no-avatar\"><div class=\"comment-main\"><div class=\"comment-author\"><a href=\"/channel/UCother\">A reply</a></div><p>Reply body.</p></div></article>"}.to_json)
+
+File.write("#{output}/d3-channel-more.html", diary_channel_fixture(playlists: true, secondary: "Podcasts"))
+
+# Standalone post and no-JavaScript comments use the same production fragments.
+def d3_post_fixture(mode = "light", nojs = false)
+  env = fixture_env("/post/post-a", mode)
+  preferences = env.get("preferences").as(Preferences)
+  locale = preferences.locale
+  id = "post-a"
+  ucid = "UCfixture"
+  post_response = JSON.parse({"authorId" => ucid, "singlePost" => true, "comments" => [d3_thread_data["comments"][0].as_h.reject { |key, _| key == "replies" }]}.to_json)
+  response = JSON.parse({"postId" => id, "comments" => d3_thread_data["comments"], "continuation" => "post-more+/= &?日本語"}.to_json)
+  comment_html = Invidious::Frontend::Comments.template_youtube(response, locale, false)
+  navbar_search = true
+  render "src/invidious/views/post.ecr", "src/invidious/views/template.ecr"
+end
+
+{"light", "dark"}.each do |mode|
+  File.write("#{output}/d3-post-#{mode}.html", d3_post_fixture(mode))
+  File.write("#{output}/d3-post-nojs-#{mode}.html", d3_post_fixture(mode, true))
+  File.write("#{output}/d3-search-#{mode}.html", d3_search_fixture(mode))
+end
+
+def d3_discovery_fixture(screen, mode = "light", empty = false)
+  env = fixture_env("/feed/#{screen}", mode)
+  preferences = env.get("preferences").as(Preferences)
+  locale = preferences.locale
+  navbar_search = true
+  if screen == "trending"
+    trending_type = "Gaming"
+    region = "ID"
+    trending = empty ? [] of SearchVideo : (0...12).map { |i| SearchVideo.new({title: "An observed moment #{i + 1}", id: "aaaaaaaaaaa", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, views: i.to_i64, description_html: "", length_seconds: 720, premiere_timestamp: nil, author_verified: true, author_thumbnail: nil, badges: VideoBadges::None}) }
+    plid = empty ? nil : "PLtrending"
+    render "src/invidious/views/feeds/trending.ecr", "src/invidious/views/template.ecr"
+  else
+    previous = popular_videos
+    begin
+      samples = empty ? [] of ChannelVideo : (0...12).map { |i| ChannelVideo.new({title: "An observed moment #{i + 1}", id: "aaaaaaaaaaa", author: "Studio North", ucid: "UCfixture", published: Time.utc - 3.days, updated: Time.utc, views: i.to_i64, length_seconds: 720, live_now: false, premiere_timestamp: nil, members_only: false}) }
+      Invidious::Jobs::PullPopularVideosJob::POPULAR_VIDEOS.set(samples)
+      render "src/invidious/views/feeds/popular.ecr", "src/invidious/views/template.ecr"
+    ensure
+      Invidious::Jobs::PullPopularVideosJob::POPULAR_VIDEOS.set(previous)
+    end
+  end
+end
+
+{"light", "dark"}.each do |mode|
+  {"popular", "trending"}.each do |screen|
+    File.write("#{output}/d3-#{screen}-#{mode}.html", d3_discovery_fixture(screen, mode))
+    File.write("#{output}/d3-#{screen}-empty-#{mode}.html", d3_discovery_fixture(screen, mode, true))
+  end
+end
+File.write("#{output}/d3-channel-search-literal.html", diary_channel_fixture(search: true, privacy: true, literal: true))
+
+# Continuation controls preserve filters without mutating their caller's params.
+token = "opaque+/= &?日本語"
+nav_params = URI::Params{"sort_by" => "oldest", "continuation" => "old"}
+nav_before = nav_params.to_s
+nav = Invidious::Frontend::Pagination.nav_ctoken("en-US", base_url: "/channel/UCfixture", ctoken: token, first_page: false, params: nav_params)
+raise "Pagination mutated its caller" unless nav_params.to_s == nav_before
+raise "Continuation token was not safely preserved" unless nav.includes?("continuation=#{URI.encode_www_form(token)}")
+raise "First-page filter lost" unless nav.includes?("href=\"/channel/UCfixture?sort_by=oldest\"")
+
+require "./library_checks"
+write_library_fixtures(output)
+
+require "./watch_checks"
+write_watch_fixtures(output)
+require "./watch_enhancement_checks"
+write_watch_enhancement_fixtures(output)
+write_clip_editor_fixtures(output)
+write_clip_secondary_fixtures(output)
+write_watch_utility_fixtures(output)
+write_chat_settings_fixtures(output)
+
+require "./blocked_channels_checks"
+write_blocked_channels_fixtures(output)
+File.write("#{output}/d6-block-context-popular.html", block_context_fixture("/feed/popular"))
+File.write("#{output}/d6-block-context-filtered.html", block_context_fixture("/feed/popular", true))
+File.write("#{output}/d6-block-context-library.html", block_context_fixture("/feed/history"))
+
+require "./dearrow_identity_editor_checks"
+write_identity_editor_fixtures(output)
+
+require "./dearrow_contribution_editor_checks"
+write_contribution_editor_fixtures(output)
+
+require "./settings_entry_checks"
+write_settings_entry_fixtures(output)
+# Capture the same production preferences after a contextual recommendation block.
+# Browser regressions can return this canonical DTO instead of inventing a hash.
+blocked_watch_env = signed_in_env("/watch?v=2isYuQZMbdU")
+blocked_watch_env.set "blocked_channels", ["UCX6OQ3DkcsbYNE6H8uQQuVA"]
+File.write("#{output}/watch-actions-blocked.html", watch_fixture(blocked_watch_env, nil))
+# Real canonical before/after snapshots for successful personal-context blocks.
+# Valid channel IDs keep the snapshot's native validation in the test path.
+{false, true}.each do |blocked|
+  suffix = blocked ? "-blocked" : ""
+  channel_id = "UC" + "a" * 22
+  File.write("#{output}/d8-context-subscriptions#{suffix}.html", library_subscriptions_fixture(blocked: blocked))
+  File.write("#{output}/d8-context-playlist#{suffix}.html", library_playlist_fixture(channel_id: channel_id, blocked: blocked))
+  File.write("#{output}/d8-context-search#{suffix}.html", member_search_fixture(true, channel_id: channel_id, blocked: blocked))
+end
+File.write("#{output}/runtime-owner-states.json", Invidious::Frontend::Desktop.fixture_owner_states.to_json)
+
+require "./account_surface_checks"
+write_account_surface_fixtures(output)
+
+require "./data_surface_checks"
+write_data_surface_fixtures(output)
+
+require "./verification_surface_checks"
+write_verification_surface_fixtures(output)
+
+require "./status_surface_checks"
+write_status_surface_fixtures(output)
+
+require "./embed_surface_checks"
+write_embed_surface_fixtures(output)

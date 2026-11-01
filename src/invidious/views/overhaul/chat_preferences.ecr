@@ -1,0 +1,24 @@
+<form action="/preferences" method="post" id="chat-preferences-form" class="chat-preferences-form" data-chat-preferences>
+    <input type="hidden" name="section" value="chat">
+    <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
+    <input type="hidden" name="browser_profile" value="<%= Invidious::BrowserProfiles.render_scope(env) %>">
+    <p class="muted"><%= I18n.translate(locale, env.get?("user") ? "overhaul_chat_storage_account" : "overhaul_chat_storage_guest") %></p>
+    <fieldset><legend><%= I18n.translate(locale, "overhaul_chat_display") %></legend>
+        <label class="checkbox-field"><input name="chat_show_timestamps" id="chat-show-timestamps" type="checkbox" <%= "checked" if preferences.chat_show_timestamps %>><%= I18n.translate(locale, "ui_chat_show_timestamps") %></label>
+        <div data-chat-browser-fields><label class="checkbox-field"><input name="chat_hide_user_ids" id="chat-hide-user-ids" type="checkbox" disabled><%= I18n.translate(locale, "ui_chat_hide_user_ids") %></label>
+        <label id="chat-font-label" for="chat-font-value"><%= I18n.translate(locale, "ui_chat_font_size") %> (%)</label><div class="chat-range-row"><input id="chat-font-scale" aria-labelledby="chat-font-label" type="range" min="75" max="150" step="5" value="100" disabled><input name="chat_font_scale" id="chat-font-value" aria-describedby="chat-font-error" type="number" required min="75" max="150" step="1" value="100" disabled></div><p id="chat-font-error" class="chat-field-error" hidden></p>
+        <label id="chat-width-label" for="chat-width-value"><%= I18n.translate(locale, "ui_chat_size") %> (px)</label><div class="chat-range-row"><input id="chat-width" aria-labelledby="chat-width-label" type="range" min="280" max="640" step="20" value="440" disabled><input name="chat_width_px" id="chat-width-value" aria-describedby="chat-width-error" type="number" required min="280" max="640" step="1" value="440" disabled></div><p id="chat-width-error" class="chat-field-error" hidden></p><p class="muted"><%= I18n.translate(locale, "overhaul_chat_width_help") %></p></div>
+    </fieldset>
+    <fieldset><legend><%= I18n.translate(locale, "overhaul_chat_filters") %></legend>
+        <label for="chat-user-blacklist"><%= I18n.translate(locale, "ui_chat_user_blacklist") %></label><textarea name="chat_user_blacklist" id="chat-user-blacklist" dir="ltr" aria-describedby="chat-filter-help chat-user-error" rows="2" maxlength="1024" spellcheck="false" autocomplete="off"><%= HTML.escape(preferences.chat_user_blacklist) %></textarea><p id="chat-user-error" class="chat-field-error" hidden></p>
+        <label for="chat-word-blacklist"><%= I18n.translate(locale, "ui_chat_word_blacklist") %></label><textarea name="chat_word_blacklist" id="chat-word-blacklist" dir="ltr" aria-describedby="chat-filter-help chat-word-error" rows="2" maxlength="1024" spellcheck="false" autocomplete="off"><%= HTML.escape(preferences.chat_word_blacklist) %></textarea><p id="chat-word-error" class="chat-field-error" hidden></p>
+        <p class="muted" id="chat-filter-help"><%= I18n.translate(locale, "overhaul_chat_filter_help") %></p>
+    </fieldset>
+    <div class="settings-actions"><button type="submit" class="button button-primary" data-chat-save><%= I18n.translate(locale, "Save preferences") %></button><button type="reset" class="button" data-chat-discard hidden><%= I18n.translate(locale, "ux_discard") %></button><button type="button" class="button" data-chat-readback hidden><%= I18n.translate(locale, "overhaul_check_saved") %></button><span role="status" data-chat-save-status></span></div>
+    <noscript><p class="muted"><%= I18n.translate(locale, "overhaul_chat_nojs") %></p><% unless env.get?("user") %><style>#chat-preferences-form fieldset,#chat-preferences-form [data-chat-save]{display:none}</style><% end %></noscript>
+</form>
+<script id="chat-preferences-config" type="application/json"><%= {
+    account: !!env.get?("user"), values: {chat_show_timestamps: preferences.chat_show_timestamps, chat_user_blacklist: preferences.chat_user_blacklist, chat_word_blacklist: preferences.chat_word_blacklist},
+    words: {saved: I18n.translate(locale, "settings_saved"), unsaved: I18n.translate(locale, "settings_unsaved"), saving: I18n.translate(locale, "settings_saving"), error: I18n.translate(locale, "settings_save_error"), unconfirmed: I18n.translate(locale, "settings_save_unconfirmed"), page_only: I18n.translate(locale, "settings_page_only"), partial: I18n.translate(locale, "overhaul_chat_partial_save"), invalid_pattern: I18n.translate(locale, "ui_chat_invalid_pattern"), too_long: I18n.translate(locale, "overhaul_chat_filter_long")}
+}.to_json.gsub("<", "\\u003c") %></script>
+

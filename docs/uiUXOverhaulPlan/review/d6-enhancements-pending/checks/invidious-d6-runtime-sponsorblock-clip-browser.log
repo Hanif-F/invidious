@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 1 - chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 1283.119187
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 2 - firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 1613.330797
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3728.759145

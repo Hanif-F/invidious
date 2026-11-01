@@ -1,0 +1,48 @@
+<% section = env.get?("settings_section").try(&.as(String)) || "appearance" %>
+<% settings_ui = Invidious::Frontend::Settings %>
+<% values = env.get?("settings_values").try(&.as(String)) || Invidious::WebPreferences.values(section, JSON.parse(preferences.to_json).as_h).to_json %>
+<% env.set "settings_values", values %>
+<% content_for "header" do %><title><%= I18n.translate(locale, "overhaul_settings") %> - Invidious</title><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_settings") %></h1></header>
+<% if env.get?("settings_legacy_entry") == true %><%= rendered "overhaul/settings_legacy_entry" %><% end %>
+<script id="settings-config" type="application/json"><%= {section: section, profile: Invidious::BrowserProfiles.render_scope(env), values: JSON.parse(values), words: %w(load_error save_error save_unconfirmed language_saved reload saved unsaved discard retry page_only saving).to_h { |key| {key, I18n.translate(locale, "settings_#{key}")} }}.to_json.gsub("<", "\\u003c") %></script>
+<div class="settings-layout"><%= rendered "overhaul/settings_navigation" %>
+<section class="settings-category" data-settings-panel><h2><%= I18n.translate(locale, Invidious::Frontend::Settings::CATEGORIES[section][0]) %></h2><p><%= I18n.translate(locale, "settings_scope_#{section}") %></p>
+<% if section == "appearance" && env.params.query["retired"]? == "layout" %><p role="status"><%= I18n.translate(locale, "overhaul_settings_layout_retired") %></p><% elsif section == "playback" && env.params.query["retired"]? == "player" %><p role="status"><%= I18n.translate(locale, "overhaul_settings_player_retired") %></p><% end %>
+<% if message = env.get?("settings_error").try(&.as(String)) %><p class="settings-error" role="alert"><%= HTML.escape(message) %> <a href="/preferences?section=<%= section %>"><%= I18n.translate(locale, "settings_reload") %></a></p><% elsif env.params.query["saved"]? == "1" %><p role="status"><%= I18n.translate(locale, "ux_saved") %></p><% end %>
+<form action="/preferences" method="post" data-category-form>
+<input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
+<input type="hidden" name="browser_profile" value="<%= HTML.escape(env.get?("settings_draft").try(&.as(String)).try { |draft| URI::Params.parse(draft)["browser_profile"]? } || Invidious::BrowserProfiles.render_scope(env)) %>"><input type="hidden" name="section" value="<%= section %>">
+<% Invidious::WebPreferences::SECTIONS[section].each do |field| %>
+<% next if section == "ai-filter" && field != "ai_filter_enabled" %>
+<% next if section == "sponsorblock" && field != "sponsorblock_enabled" %>
+<% if Invidious::WebPreferences::MERGED_MAPS.includes?(field) %>
+<fieldset class="settings-map"><legend><%= settings_ui.label(locale, field) %></legend>
+<% Invidious::SponsorBlock::CATEGORIES.each_key do |category| %>
+<% control_name = (field == "sponsorblock_modes" ? "sponsorblock_mode_" : "sponsorblock_color_") + category %><% control_value = settings_ui.map_value(env, field, category) %>
+<div class="field-row"><label for="<%= control_name %>"><%= I18n.translate(locale, "sb_category_#{category}") %></label>
+<% if field == "sponsorblock_modes" %><select name="<%= control_name %>" id="<%= control_name %>"><% %w(auto manual marker disabled).each do |mode| %><option value="<%= mode %>" <%= "selected" if mode == control_value %>><%= I18n.translate(locale, "sb_mode_#{mode}") %></option><% end %></select>
+<% else %><input type="color" name="<%= control_name %>" id="<%= control_name %>" value="<%= HTML.escape(control_value) %>"><% end %></div>
+<% end %></fieldset>
+<% else %>
+<% count = Invidious::WebPreferences::ARRAYS[field]? || 1 %>
+<% count.times do |index| %>
+<% array_field = Invidious::WebPreferences::ARRAYS.has_key?(field) %><% control_name = array_field ? "#{field}[#{index}]" : field %><% control_id = "setting-#{field}#{array_field ? "-#{index}" : ""}" %><% control_value = settings_ui.value(env, field, array_field ? index : nil) %><% control_hint = settings_ui.hint(locale, field) %>
+<div class="field-row" id="<%= control_id %>-row"><label for="<%= control_id %>"><%= settings_ui.label(locale, field) %><%= " · #{index + 1}" if array_field %></label>
+<% if Invidious::WebPreferences::BOOLEANS.includes?(field) %>
+<input id="<%= control_id %>" <%= %(aria-describedby="#{control_id}-help") if control_hint %> name="<%= control_name %>" type="checkbox" <%= "checked" if settings_ui.checked?(env, field) %>>
+<% elsif !(choices = settings_ui.options(env, field)).empty? %>
+<select id="<%= control_id %>" <%= %(aria-describedby="#{control_id}-help") if control_hint %> name="<%= control_name %>">
+<% unless choices.any? { |entry| entry[0] == control_value } %><option value="<%= HTML.escape(control_value) %>" selected><%= HTML.escape(control_value) %></option><% end %>
+<% choices.each do |value, label| %><option value="<%= HTML.escape(value) %>" <%= "selected" if value == control_value %>><%= HTML.escape(label) %></option><% end %></select>
+<% else %><input id="<%= control_id %>" <%= %(aria-describedby="#{control_id}-help") if control_hint %> name="<%= control_name %>" value="<%= HTML.escape(control_value) %>" <%= %(type="number" min="1" max="1500") if field == "max_results" %> <%= %(type="number" min="0.25" max="2" step="any") if field == "speed" %> <%= %(list="settings-timezones" placeholder="UTC") if field == "timezone" %>><% end %>
+<% if control_hint %><small id="<%= control_id %>-help" class="field-hint"><%= HTML.escape(control_hint) %></small><% end %>
+</div><% end %><% end %><% end %>
+<% if section == "sponsorblock" %><%= rendered "overhaul/sponsorblock_defaults" %><% end %>
+<% if section == "ai-filter" %><%= rendered "overhaul/ai_filter_matrix" %><% end %>
+<% if section == "language" %><datalist id="settings-timezones"><% Invidious::History.timezones.each do |zone| %><option value="<%= HTML.escape(zone) %>"></option><% end %></datalist><% end %>
+<div class="settings-actions"><button type="submit" class="button button-primary"><%= I18n.translate(locale, "Save preferences") %></button><button type="reset" class="button" hidden><%= I18n.translate(locale, "ux_discard") %></button><noscript><a class="button" href="/preferences?section=<%= section %>"><%= I18n.translate(locale, "ux_discard") %></a></noscript><span role="status" data-category-status></span></div>
+</form>
+<% if section == "dearrow" %><div class="toolbar"><a class="button" href="/preferences/dearrow/identity"><%= Invidious::Frontend::Icons.render("lock") %><%= I18n.translate(locale, "overhaul_identity_heading") %></a></div><p><%= I18n.translate(locale, "preferences_dearrow_attribution") %> <a href="https://dearrow.ajay.app/" rel="noopener noreferrer">DeArrow</a> / <a href="https://sponsor.ajay.app/" rel="noopener noreferrer">SponsorBlock</a> (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>).</p><% end %>
+</section></div>
+<script src="/js/settings.js?v=<%= ASSET_COMMIT %>" defer></script>

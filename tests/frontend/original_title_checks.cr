@@ -44,7 +44,7 @@ def check_original_titles(output)
     Invidious::User::Import.from_invidious(user, {preferences: exported["preferences"]}.to_json)
     raise "Backup title choice lost" unless user.preferences.show_original_title == enabled
     old = preferences_post_env("save_player_pos=on")
-    old.set "preferences", prefs
+    seed_saved_preferences(old, prefs)
     Invidious::Routes::PreferencesRoute.update(old)
     raise "Old form reset title choice" unless Preferences.from_json(URI.decode_www_form(old.response.cookies["PREFS"].value)).show_original_title == enabled
   end

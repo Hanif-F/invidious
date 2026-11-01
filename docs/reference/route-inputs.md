@@ -156,14 +156,14 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `GET /blocked_channels`. Source: [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr).
 
-Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+- Query: `format`.
 
 ## Routes::BlockedChannels.update
 
 `POST /blocked_channels`. Source: [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr).
 
-- Query: `redirect`.
-- Form: `action`, `csrf_token`, `name`, `ucid`.
+- Query: `format`, `redirect`.
+- Form: `action`, `browser_profile`, `csrf_token`, `name`, `ucid`.
 
 ## Routes::DeArrowContributions.submit
 
@@ -175,7 +175,13 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `POST /dearrow_identity`. Source: [src/invidious/routes/dearrow_contributions.cr](../../src/invidious/routes/dearrow_contributions.cr).
 
-Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+- Query: `format`.
+
+## Routes::DeArrowContributions.identity_page
+
+`GET /preferences/dearrow/identity`. Source: [src/invidious/routes/dearrow_contributions.cr](../../src/invidious/routes/dearrow_contributions.cr).
+
+- Query: `format`.
 
 ## Routes::BlockedChannels.video_actions
 
@@ -187,38 +193,38 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `GET /preferences/sponsorblock/channels`. Source: [src/invidious/routes/sponsorblock_preferences.cr](../../src/invidious/routes/sponsorblock_preferences.cr).
 
-- Query: `channel`.
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 
 ## Routes::SponsorBlockPreferences.update
 
 `POST /preferences/sponsorblock/channels`. Source: [src/invidious/routes/sponsorblock_preferences.cr](../../src/invidious/routes/sponsorblock_preferences.cr).
 
-- Form: `action`, `channel`, `csrf_token`, `enabled`, `mode_#{category}`.
+- Form: `action`, `browser_profile`, `channel`, `csrf_token`, `enabled`, `mode_#{category}`.
 
 ## Routes::ChannelSpoilerPreferences.show
 
 `GET /preferences/spoilers/channels`. Source: [src/invidious/routes/channel_spoiler_preferences.cr](../../src/invidious/routes/channel_spoiler_preferences.cr).
 
-- Query: `channel`.
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 
 ## Routes::ChannelSpoilerPreferences.update
 
 `POST /preferences/spoilers/channels`. Source: [src/invidious/routes/channel_spoiler_preferences.cr](../../src/invidious/routes/channel_spoiler_preferences.cr).
 
-- Form: `action`, `channel`, `csrf_token`, `hide_thumbnail`, `hide_title`, `reveal_after_days`.
+- Form: `action`, `browser_profile`, `channel`, `csrf_token`, `hide_thumbnail`, `hide_title`, `reveal_after_days`.
 
 ## Routes::PreferencesRoute.show
 
 `GET /preferences`. Source: [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr).
 
-Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+- Query: `format`, `section`.
 
 ## Routes::PreferencesRoute.update
 
 `POST /preferences`. Source: [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr).
 
-- Query: `redirect`.
-- Form: `admin_default_home`, `admin_feed_menu[#{index}]`, `ai_blocklist_action`, `ai_blocklist_feeds`, `ai_blocklist_other_pages`, `ai_blocklist_recommendations`, `ai_blocklist_search`, `ai_filter_enabled`, `ai_filter_form_version`, `ai_warnlist_action`, `ai_warnlist_feeds`, `ai_warnlist_other_pages`, `ai_warnlist_recommendations`, `ai_warnlist_search`, `ai_{{ kind.id }}_{{ surface.id }}_action`, `annotations`, `annotations_subscribed`, `automatic_instance_redirect`, `autoplay`, `captcha_enabled`, `captions[#{i}]`, `comments[#{i}]`, `continue`, `continue_autoplay`, `dark_mode`, `dearrow_enabled`, `dearrow_show_original`, `default_home`, `default_playlist`, `extend_desc`, `feed_menu[#{index}]`, `latest_only`, `listen`, `local`, `locale`, `login_enabled`, `login_required`, `max_results`, `modified_source_code_url`, `notifications_only`, `player_style`, `popular_enabled`, `preferred_audio`, `preload`, `quality`, `quality_dash`, `region`, `registration_enabled`, `related_videos`, `save_player_pos`, `search_privacy`, `seek_seconds`, `show_member_videos`, `show_nick`, `show_original_title`, `show_original_title_present`, `sort`, `speed`, `sponsorblock_color_#{category}`, `sponsorblock_enabled`, `sponsorblock_mode_#{category}`, `statistics_enabled`, `thin_mode`, `timezone`, `ui_density`, `unseen_only`, `video_codec`, `video_loop`, `vr_mode`, `watch_history`.
+- Query: `format`, `redirect`.
+- Form: `ai_blocklist_action`, `ai_blocklist_feeds`, `ai_blocklist_other_pages`, `ai_blocklist_recommendations`, `ai_blocklist_search`, `ai_filter_enabled`, `ai_filter_form_version`, `ai_warnlist_action`, `ai_warnlist_feeds`, `ai_warnlist_other_pages`, `ai_warnlist_recommendations`, `ai_warnlist_search`, `ai_{{ kind.id }}_{{ surface.id }}_action`, `annotations`, `annotations_subscribed`, `automatic_instance_redirect`, `autoplay`, `captions[#{i}]`, `comments[#{i}]`, `continue`, `continue_autoplay`, `dark_mode`, `dearrow_enabled`, `dearrow_show_original`, `default_home`, `default_playlist`, `extend_desc`, `feed_menu[#{index}]`, `latest_only`, `listen`, `local`, `locale`, `max_results`, `notifications_only`, `player_style`, `preferred_audio`, `preload`, `quality`, `quality_dash`, `region`, `related_videos`, `save_player_pos`, `search_privacy`, `section`, `seek_seconds`, `show_member_videos`, `show_nick`, `show_original_title`, `show_original_title_present`, `sort`, `speed`, `sponsorblock_color_#{category}`, `sponsorblock_enabled`, `sponsorblock_mode_#{category}`, `thin_mode`, `timezone`, `ui_density`, `unseen_only`, `video_codec`, `video_loop`, `vr_mode`, `watch_history`.
 
 ## Routes::PreferencesRoute.detect_timezone
 
@@ -236,7 +242,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `GET /data_control`. Source: [src/invidious/routes/preferences.cr](../../src/invidious/routes/preferences.cr).
 
-Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+- Query: `source`.
 
 ## Routes::PreferencesRoute.update_data_control
 
@@ -303,7 +309,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 `POST /token_ajax`. Source: [src/invidious/routes/account.cr](../../src/invidious/routes/account.cr).
 
 - Query: `action`, `redirect`, `session`.
-- Form: `csrf_token`.
+- Form: `csrf_token`, `session`.
 
 ## Routes::Subscriptions.toggle_subscription
 
@@ -348,33 +354,33 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 `POST /delete_playlist`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
 
 - Query: `list`.
-- Form: `csrf_token`.
+- Form: `csrf_token`, `operation`.
 
 ## Routes::Playlists.edit
 
 `GET /edit_playlist`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
 
-- Query: `list`, `page`.
+- Query: `list`.
 
 ## Routes::Playlists.update
 
 `POST /edit_playlist`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
 
-- Query: `list`.
+- Query: `list`, `redirect`.
 - Form: `csrf_token`, `description`, `privacy`, `title`.
 
 ## Routes::Playlists.add_playlist_items_page
 
-`GET /add_playlist_items`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
+`GET /add_playlist_items`; `POST /add_playlist_items`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
 
-- Query: `list`, `page`, `region`.
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 
 ## Routes::Playlists.playlist_ajax
 
 `POST /playlist_ajax`. Source: [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr).
 
 - Query: `action`, `playlist_id`, `redirect`, `set_video_id`, `video_id`.
-- Form: `anchor`, `csrf_token`, `placement`, `source`.
+- Form: `anchor`, `csrf_token`, `include_positions`, `placement`, `source`.
 
 ## Routes::Feeds.view_all_playlists_redirect
 
@@ -386,7 +392,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `GET /feed/playlists`. Source: [src/invidious/routes/feeds.cr](../../src/invidious/routes/feeds.cr).
 
-Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
+- Query: `video_id`.
 
 ## Routes::Feeds.popular
 
@@ -508,7 +514,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `GET /channel/:ucid/community`; `GET /channel/:ucid/posts`. Source: [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr).
 
-- Query: `continuation`, `lb`, `thin_mode`.
+- Query: `continuation`, `lb`.
 
 ## Routes::Channels.channels
 
@@ -533,7 +539,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 `GET /post/:id`. Source: [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr).
 
 - Path: `id`.
-- Query: `nojs`, `thin_mode`, `ucid`.
+- Query: `continuation`, `nojs`, `ucid`.
 
 ## Routes::Channels.redirect_home
 
@@ -557,7 +563,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `GET /watch`. Source: [src/invidious/routes/watch.cr](../../src/invidious/routes/watch.cr).
 
-- Query: `clip_preview`, `end`, `iv_load_policy`, `list`, `listen`, `nojs`, `quality`, `region`, `start`, `v`.
+- Query: `clip_preview`, `comments_continuation`, `comments_sort`, `comments_source`, `end`, `format`, `iv_load_policy`, `list`, `listen`, `nojs`, `quality`, `region`, `start`, `v`.
 
 ## Routes::Watch.mark_watched
 
@@ -1168,7 +1174,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 `PATCH /api/v1/auth/chat_preferences`. Source: [src/invidious/routes/api/v1/authenticated.cr](../../src/invidious/routes/api/v1/authenticated.cr).
 
-- Local data keys: `chat_font_scale`, `chat_overlay_height`, `chat_overlay_mode`, `chat_overlay_opacity`, `chat_overlay_width`, `chat_overlay_x`, `chat_overlay_y`, `chat_show_timestamps`, `chat_user_blacklist`, `chat_width_px`, `chat_word_blacklist`.
+Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 
 ## Routes::API::V1::Authenticated.get_chat_timing
 
@@ -1385,14 +1391,14 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 `GET /api/v1/playlists/:plid`; `GET /api/v1/auth/playlists/:plid`. Source: [src/invidious/routes/api/v1/misc.cr](../../src/invidious/routes/api/v1/misc.cr).
 
 - Path: `plid`, `rdid`.
-- Query: `continuation`, `current_removed`, `format`, `index`, `listen`, `page`.
+- Query: `continuation`, `current_removed`, `format`, `index`, `listen`, `occurrence`, `page`, `ui`.
 
 ## Routes::API::V1::Misc.mixes
 
 `GET /api/v1/mixes/:rdid`. Source: [src/invidious/routes/api/v1/misc.cr](../../src/invidious/routes/api/v1/misc.cr).
 
 - Path: `rdid`.
-- Query: `continuation`, `format`, `listen`.
+- Query: `continuation`, `format`, `listen`, `ui`.
 
 ## Routes::API::V1::Misc.resolve_url
 

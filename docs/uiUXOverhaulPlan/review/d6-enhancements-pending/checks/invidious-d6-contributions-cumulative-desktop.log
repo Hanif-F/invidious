@@ -1,0 +1,1834 @@
+TAP version 13
+# Subtest: chromium: D1 representative light/dark desktop matrix
+ok 1 - chromium: D1 representative light/dark desktop matrix
+  ---
+  duration_ms: 3341.583985
+  type: 'test'
+  ...
+# Subtest: chromium: D1 RTL, enlarged desktop text, forced colors and contrast
+ok 2 - chromium: D1 RTL, enlarged desktop text, forced colors and contrast
+  ---
+  duration_ms: 1335.506969
+  type: 'test'
+  ...
+# Subtest: chromium: D1 shell menus, collapse, watch drawer and focus
+ok 3 - chromium: D1 shell menus, collapse, watch drawer and focus
+  ---
+  duration_ms: 759.584615
+  type: 'test'
+  ...
+# Subtest: chromium: D1 actual player survives tab changes and transcript is deferred
+ok 4 - chromium: D1 actual player survives tab changes and transcript is deferred
+  ---
+  duration_ms: 400.609839
+  type: 'test'
+  ...
+# Subtest: chromium: D1 appearance preview/Discard and live System mode
+ok 5 - chromium: D1 appearance preview/Discard and live System mode
+  ---
+  duration_ms: 153.156946
+  type: 'test'
+  ...
+# Subtest: chromium: D1 occurrence grip keyboard/pointer, cancel and failed writes
+ok 6 - chromium: D1 occurrence grip keyboard/pointer, cancel and failed writes
+  ---
+  duration_ms: 456.472412
+  type: 'test'
+  ...
+# Subtest: firefox: D1 representative light/dark desktop matrix
+ok 7 - firefox: D1 representative light/dark desktop matrix
+  ---
+  duration_ms: 5392.371724
+  type: 'test'
+  ...
+# Subtest: firefox: D1 RTL, enlarged desktop text, forced colors and contrast
+ok 8 - firefox: D1 RTL, enlarged desktop text, forced colors and contrast
+  ---
+  duration_ms: 3521.244926
+  type: 'test'
+  ...
+# Subtest: firefox: D1 shell menus, collapse, watch drawer and focus
+ok 9 - firefox: D1 shell menus, collapse, watch drawer and focus
+  ---
+  duration_ms: 1500.083951
+  type: 'test'
+  ...
+# Subtest: firefox: D1 actual player survives tab changes and transcript is deferred
+ok 10 - firefox: D1 actual player survives tab changes and transcript is deferred
+  ---
+  duration_ms: 709.225239
+  type: 'test'
+  ...
+# Subtest: firefox: D1 appearance preview/Discard and live System mode
+ok 11 - firefox: D1 appearance preview/Discard and live System mode
+  ---
+  duration_ms: 394.035097
+  type: 'test'
+  ...
+# Subtest: firefox: D1 occurrence grip keyboard/pointer, cancel and failed writes
+ok 12 - firefox: D1 occurrence grip keyboard/pointer, cancel and failed writes
+  ---
+  duration_ms: 1730.100441
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+ok 13 - chromium: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+  ---
+  duration_ms: 730.777208
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution reads distinguish failed, malformed, empty and locked lists
+ok 14 - chromium: D6 contribution reads distinguish failed, malformed, empty and locked lists
+  ---
+  duration_ms: 690.145141
+  type: 'test'
+  ...
+# Subtest: chromium: D6 bounded contribution asset loading recovers explicitly and playback continues through the dialog
+ok 15 - chromium: D6 bounded contribution asset loading recovers explicitly and playback continues through the dialog
+  ---
+  duration_ms: 640.70954
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution review retains literal drafts, renews consent and submits one exact Unicode title
+ok 16 - chromium: D6 contribution review retains literal drafts, renews consent and submits one exact Unicode title
+  ---
+  duration_ms: 1126.737001
+  type: 'test'
+  ...
+# Subtest: chromium: D6 rejected contributions preserve review and an accepted vote never repeats after refresh failure
+ok 17 - chromium: D6 rejected contributions preserve review and an accepted vote never repeats after refresh failure
+  ---
+  duration_ms: 795.831859
+  type: 'test'
+  ...
+# Subtest: chromium: D6 unknown votes lock both directions across refresh and reopen without leaking upstream errors
+ok 18 - chromium: D6 unknown votes lock both directions across refresh and reopen without leaking upstream errors
+  ---
+  duration_ms: 2766.328791
+  type: 'test'
+  ...
+# Subtest: chromium: D6 unknown title creation retains acknowledgements and prevents the same trimmed proposal
+ok 19 - chromium: D6 unknown title creation retains acknowledgements and prevents the same trimmed proposal
+  ---
+  duration_ms: 1203.816712
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution writes reject duplicate dispatch and late replies across close, cache, profile and removal
+ok 20 - chromium: D6 contribution writes reject duplicate dispatch and late replies across close, cache, profile and removal
+  ---
+  duration_ms: 2726.264295
+  type: 'test'
+  ...
+# Subtest: chromium: D6 late contribution reads and assets cannot open or populate a cancelled dialog
+ok 21 - chromium: D6 late contribution reads and assets cannot open or populate a cancelled dialog
+  ---
+  duration_ms: 3312.0898
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution title masking covers labels, hover, notices and scoped reveal without changing playback
+ok 22 - chromium: D6 contribution title masking covers labels, hover, notices and scoped reveal without changing playback
+  ---
+  duration_ms: 927.832923
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution role and no-JavaScript fallbacks explain the available destination
+ok 23 - chromium: D6 contribution role and no-JavaScript fallbacks explain the available destination
+  ---
+  duration_ms: 1489.002284
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution persistent header, review and uncertainty fit Light, Dark and enlarged RTL desktops
+ok 24 - chromium: D6 contribution persistent header, review and uncertainty fit Light, Dark and enlarged RTL desktops
+  ---
+  duration_ms: 1838.568475
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+ok 25 - firefox: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+  ---
+  duration_ms: 1094.401759
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution reads distinguish failed, malformed, empty and locked lists
+ok 26 - firefox: D6 contribution reads distinguish failed, malformed, empty and locked lists
+  ---
+  duration_ms: 954.86693
+  type: 'test'
+  ...
+# Subtest: firefox: D6 bounded contribution asset loading recovers explicitly and playback continues through the dialog
+ok 27 - firefox: D6 bounded contribution asset loading recovers explicitly and playback continues through the dialog
+  ---
+  duration_ms: 1012.972632
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution review retains literal drafts, renews consent and submits one exact Unicode title
+ok 28 - firefox: D6 contribution review retains literal drafts, renews consent and submits one exact Unicode title
+  ---
+  duration_ms: 1812.257307
+  type: 'test'
+  ...
+# Subtest: firefox: D6 rejected contributions preserve review and an accepted vote never repeats after refresh failure
+ok 29 - firefox: D6 rejected contributions preserve review and an accepted vote never repeats after refresh failure
+  ---
+  duration_ms: 1215.698637
+  type: 'test'
+  ...
+# Subtest: firefox: D6 unknown votes lock both directions across refresh and reopen without leaking upstream errors
+ok 30 - firefox: D6 unknown votes lock both directions across refresh and reopen without leaking upstream errors
+  ---
+  duration_ms: 4448.05957
+  type: 'test'
+  ...
+# Subtest: firefox: D6 unknown title creation retains acknowledgements and prevents the same trimmed proposal
+ok 31 - firefox: D6 unknown title creation retains acknowledgements and prevents the same trimmed proposal
+  ---
+  duration_ms: 2767.316521
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution writes reject duplicate dispatch and late replies across close, cache, profile and removal
+ok 32 - firefox: D6 contribution writes reject duplicate dispatch and late replies across close, cache, profile and removal
+  ---
+  duration_ms: 4508.312106
+  type: 'test'
+  ...
+# Subtest: firefox: D6 late contribution reads and assets cannot open or populate a cancelled dialog
+ok 33 - firefox: D6 late contribution reads and assets cannot open or populate a cancelled dialog
+  ---
+  duration_ms: 6226.665491
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution title masking covers labels, hover, notices and scoped reveal without changing playback
+ok 34 - firefox: D6 contribution title masking covers labels, hover, notices and scoped reveal without changing playback
+  ---
+  duration_ms: 1418.793641
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution role and no-JavaScript fallbacks explain the available destination
+ok 35 - firefox: D6 contribution role and no-JavaScript fallbacks explain the available destination
+  ---
+  duration_ms: 2954.739049
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution persistent header, review and uncertainty fit Light, Dark and enlarged RTL desktops
+ok 36 - firefox: D6 contribution persistent header, review and uncertainty fit Light, Dark and enlarged RTL desktops
+  ---
+  duration_ms: 3614.193429
+  type: 'test'
+  ...
+# Subtest: chromium: D2 category drafts, local search, Discard and guarded departure
+ok 37 - chromium: D2 category drafts, local search, Discard and guarded departure
+  ---
+  duration_ms: 1277.836314
+  type: 'test'
+  ...
+# Subtest: chromium: D2 canonical category read-back, unchecked values and duplicate submit guard
+ok 38 - chromium: D2 canonical category read-back, unchecked values and duplicate submit guard
+  ---
+  duration_ms: 195.380701
+  type: 'test'
+  ...
+# Subtest: chromium: D2 failed and unconfirmed saves retain drafts without write retries
+ok 39 - chromium: D2 failed and unconfirmed saves retain drafts without write retries
+  ---
+  duration_ms: 782.578089
+  type: 'test'
+  ...
+# Subtest: chromium: D2 all nine category forms and normal HTML fallback without JavaScript
+ok 40 - chromium: D2 all nine category forms and normal HTML fallback without JavaScript
+  ---
+  duration_ms: 1337.262841
+  type: 'test'
+  ...
+# Subtest: chromium: D2 appended shared primitives initialize once and dispose on departure
+ok 41 - chromium: D2 appended shared primitives initialize once and dispose on departure
+  ---
+  duration_ms: 448.059097
+  type: 'test'
+  ...
+# Subtest: firefox: D2 category drafts, local search, Discard and guarded departure
+ok 42 - firefox: D2 category drafts, local search, Discard and guarded departure
+  ---
+  duration_ms: 2920.505953
+  type: 'test'
+  ...
+# Subtest: firefox: D2 canonical category read-back, unchecked values and duplicate submit guard
+ok 43 - firefox: D2 canonical category read-back, unchecked values and duplicate submit guard
+  ---
+  duration_ms: 469.514586
+  type: 'test'
+  ...
+# Subtest: firefox: D2 failed and unconfirmed saves retain drafts without write retries
+ok 44 - firefox: D2 failed and unconfirmed saves retain drafts without write retries
+  ---
+  duration_ms: 1853.02096
+  type: 'test'
+  ...
+# Subtest: firefox: D2 all nine category forms and normal HTML fallback without JavaScript
+ok 45 - firefox: D2 all nine category forms and normal HTML fallback without JavaScript
+  ---
+  duration_ms: 1600.470426
+  type: 'test'
+  ...
+# Subtest: firefox: D2 appended shared primitives initialize once and dispose on departure
+ok 46 - firefox: D2 appended shared primitives initialize once and dispose on departure
+  ---
+  duration_ms: 850.253878
+  type: 'test'
+  ...
+# Subtest: chromium: D2 component departure aborts pending category reads and suppresses late output
+ok 47 - chromium: D2 component departure aborts pending category reads and suppresses late output
+  ---
+  duration_ms: 163.930542
+  type: 'test'
+  ...
+# Subtest: firefox: D2 component departure aborts pending category reads and suppresses late output
+ok 48 - firefox: D2 component departure aborts pending category reads and suppresses late output
+  ---
+  duration_ms: 1164.548906
+  type: 'test'
+  ...
+# Subtest: chromium: D3 search submits, literal escape, filter chips and POST privacy
+ok 49 - chromium: D3 search submits, literal escape, filter chips and POST privacy
+  ---
+  duration_ms: 655.143076
+  type: 'test'
+  ...
+# Subtest: chromium: D3 mixed result types, real scopes and desktop rows
+ok 50 - chromium: D3 mixed result types, real scopes and desktop rows
+  ---
+  duration_ms: 399.498627
+  type: 'test'
+  ...
+# Subtest: chromium: D3 channel primary tabs, selected More and no-JS search home
+ok 51 - chromium: D3 channel primary tabs, selected More and no-JS search home
+  ---
+  duration_ms: 374.975774
+  type: 'test'
+  ...
+# Subtest: chromium: D3 append failure, filtered-empty continuation and Back descriptors
+ok 52 - chromium: D3 append failure, filtered-empty continuation and Back descriptors
+  ---
+  duration_ms: 296.366462
+  type: 'test'
+  ...
+# Subtest: chromium: D3 shared community replies keep independent opaque cursors and content on failure
+ok 53 - chromium: D3 shared community replies keep independent opaque cursors and content on failure
+  ---
+  duration_ms: 375.482221
+  type: 'test'
+  ...
+# Subtest: firefox: D3 search submits, literal escape, filter chips and POST privacy
+ok 54 - firefox: D3 search submits, literal escape, filter chips and POST privacy
+  ---
+  duration_ms: 1191.798651
+  type: 'test'
+  ...
+# Subtest: firefox: D3 mixed result types, real scopes and desktop rows
+ok 55 - firefox: D3 mixed result types, real scopes and desktop rows
+  ---
+  duration_ms: 973.03551
+  type: 'test'
+  ...
+# Subtest: firefox: D3 channel primary tabs, selected More and no-JS search home
+ok 56 - firefox: D3 channel primary tabs, selected More and no-JS search home
+  ---
+  duration_ms: 1045.689532
+  type: 'test'
+  ...
+# Subtest: firefox: D3 append failure, filtered-empty continuation and Back descriptors
+ok 57 - firefox: D3 append failure, filtered-empty continuation and Back descriptors
+  ---
+  duration_ms: 493.755577
+  type: 'test'
+  ...
+# Subtest: firefox: D3 shared community replies keep independent opaque cursors and content on failure
+ok 58 - firefox: D3 shared community replies keep independent opaque cursors and content on failure
+  ---
+  duration_ms: 1416.917887
+  type: 'test'
+  ...
+# Subtest: chromium: D3 browse to watch, Back and reload reconstruct GET pages and scroll
+ok 59 - chromium: D3 browse to watch, Back and reload reconstruct GET pages and scroll
+  ---
+  duration_ms: 567.293599
+  type: 'test'
+  ...
+# Subtest: chromium: D3 stale and unsafe continuations preserve rows and require a new page
+ok 60 - chromium: D3 stale and unsafe continuations preserve rows and require a new page
+  ---
+  duration_ms: 298.412166
+  type: 'test'
+  ...
+# Subtest: chromium: D3 private POST appends stay out of durable state and have HTML pagination
+ok 61 - chromium: D3 private POST appends stay out of durable state and have HTML pagination
+  ---
+  duration_ms: 333.51734
+  type: 'test'
+  ...
+# Subtest: chromium: D3 failed avatar fallback, channel About and desktop content matrix
+ok 62 - chromium: D3 failed avatar fallback, channel About and desktop content matrix
+  ---
+  duration_ms: 1123.262968
+  type: 'test'
+  ...
+# Subtest: chromium: D3 standalone posts retry initial comments and preserve no-JS continuations
+ok 63 - chromium: D3 standalone posts retry initial comments and preserve no-JS continuations
+  ---
+  duration_ms: 337.295276
+  type: 'test'
+  ...
+# Subtest: firefox: D3 browse to watch, Back and reload reconstruct GET pages and scroll
+ok 64 - firefox: D3 browse to watch, Back and reload reconstruct GET pages and scroll
+  ---
+  duration_ms: 1083.484878
+  type: 'test'
+  ...
+# Subtest: firefox: D3 stale and unsafe continuations preserve rows and require a new page
+ok 65 - firefox: D3 stale and unsafe continuations preserve rows and require a new page
+  ---
+  duration_ms: 753.698285
+  type: 'test'
+  ...
+# Subtest: firefox: D3 private POST appends stay out of durable state and have HTML pagination
+ok 66 - firefox: D3 private POST appends stay out of durable state and have HTML pagination
+  ---
+  duration_ms: 758.30143
+  type: 'test'
+  ...
+# Subtest: firefox: D3 failed avatar fallback, channel About and desktop content matrix
+ok 67 - firefox: D3 failed avatar fallback, channel About and desktop content matrix
+  ---
+  duration_ms: 3371.706144
+  type: 'test'
+  ...
+# Subtest: firefox: D3 standalone posts retry initial comments and preserve no-JS continuations
+ok 68 - firefox: D3 standalone posts retry initial comments and preserve no-JS continuations
+  ---
+  duration_ms: 718.939606
+  type: 'test'
+  ...
+# Subtest: chromium: D3 discovery grids, empty states and explicit Trending controls
+ok 69 - chromium: D3 discovery grids, empty states and explicit Trending controls
+  ---
+  duration_ms: 1239.260946
+  type: 'test'
+  ...
+# Subtest: chromium: D3 private scoped channel search retains literal input through direct pagination
+ok 70 - chromium: D3 private scoped channel search retains literal input through direct pagination
+  ---
+  duration_ms: 284.54924
+  type: 'test'
+  ...
+# Subtest: firefox: D3 discovery grids, empty states and explicit Trending controls
+ok 71 - firefox: D3 discovery grids, empty states and explicit Trending controls
+  ---
+  duration_ms: 4260.900069
+  type: 'test'
+  ...
+# Subtest: firefox: D3 private scoped channel search retains literal input through direct pagination
+ok 72 - firefox: D3 private scoped channel search retains literal input through direct pagination
+  ---
+  duration_ms: 736.314166
+  type: 'test'
+  ...
+# Subtest: chromium: D3 stale restoration fingerprints and profile changes cannot mix views
+ok 73 - chromium: D3 stale restoration fingerprints and profile changes cannot mix views
+  ---
+  duration_ms: 452.44874
+  type: 'test'
+  ...
+# Subtest: chromium: D3 a cached page cancels pending append and can load again after return
+ok 74 - chromium: D3 a cached page cancels pending append and can load again after return
+  ---
+  duration_ms: 194.720574
+  type: 'test'
+  ...
+# Subtest: firefox: D3 stale restoration fingerprints and profile changes cannot mix views
+ok 75 - firefox: D3 stale restoration fingerprints and profile changes cannot mix views
+  ---
+  duration_ms: 934.275998
+  type: 'test'
+  ...
+# Subtest: firefox: D3 a cached page cancels pending append and can load again after return
+ok 76 - firefox: D3 a cached page cancels pending append and can load again after return
+  ---
+  duration_ms: 443.930111
+  type: 'test'
+  ...
+# Subtest: chromium: D3 append bound retains the current native Next destination
+ok 77 - chromium: D3 append bound retains the current native Next destination
+  ---
+  duration_ms: 1978.575834
+  type: 'test'
+  ...
+# Subtest: firefox: D3 append bound retains the current native Next destination
+ok 78 - firefox: D3 append bound retains the current native Next destination
+  ---
+  duration_ms: 3019.039653
+  type: 'test'
+  ...
+# Subtest: chromium: D3 AI replacements and watched progress remain visible without extra metadata
+ok 79 - chromium: D3 AI replacements and watched progress remain visible without extra metadata
+  ---
+  duration_ms: 396.614618
+  type: 'test'
+  ...
+# Subtest: firefox: D3 AI replacements and watched progress remain visible without extra metadata
+ok 80 - firefox: D3 AI replacements and watched progress remain visible without extra metadata
+  ---
+  duration_ms: 1081.928376
+  type: 'test'
+  ...
+# Subtest: chromium: D4 owned/saved library, seeds, forms and desktop geometry
+ok 81 - chromium: D4 owned/saved library, seeds, forms and desktop geometry
+  ---
+  duration_ms: 617.45875
+  type: 'test'
+  ...
+# Subtest: chromium: D4 playlist form failure keeps fields, guards duplicates and does not retry uncertain creation
+ok 82 - chromium: D4 playlist form failure keeps fields, guards duplicates and does not retry uncertain creation
+  ---
+  duration_ms: 334.048847
+  type: 'test'
+  ...
+# Subtest: chromium: D4 add-items selects loaded rows, appends unchecked and retains partial failures without ambiguous retry
+ok 83 - chromium: D4 add-items selects loaded rows, appends unchecked and retains partial failures without ambiguous retry
+  ---
+  duration_ms: 331.936846
+  type: 'test'
+  ...
+# Subtest: chromium: D4 private playlist-item search keeps scope, literal input and continuation in POST only
+ok 84 - chromium: D4 private playlist-item search keeps scope, literal input and continuation in POST only
+  ---
+  duration_ms: 267.264954
+  type: 'test'
+  ...
+# Subtest: chromium: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order
+ok 85 - chromium: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order
+  ---
+  duration_ms: 350.65087
+  type: 'test'
+  ...
+# Subtest: chromium: D4 history merges adjacent date groups, keeps unknown metadata and removes explicitly
+ok 86 - chromium: D4 history merges adjacent date groups, keeps unknown metadata and removes explicitly
+  ---
+  duration_ms: 545.419627
+  type: 'test'
+  ...
+# Subtest: chromium: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe
+ok 87 - chromium: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe
+  ---
+  duration_ms: 299.900917
+  type: 'test'
+  ...
+# Subtest: chromium: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh
+ok 88 - chromium: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh
+  ---
+  duration_ms: 975.033766
+  type: 'test'
+  ...
+# Subtest: firefox: D4 owned/saved library, seeds, forms and desktop geometry
+ok 89 - firefox: D4 owned/saved library, seeds, forms and desktop geometry
+  ---
+  duration_ms: 2208.022803
+  type: 'test'
+  ...
+# Subtest: firefox: D4 playlist form failure keeps fields, guards duplicates and does not retry uncertain creation
+ok 90 - firefox: D4 playlist form failure keeps fields, guards duplicates and does not retry uncertain creation
+  ---
+  duration_ms: 801.390249
+  type: 'test'
+  ...
+# Subtest: firefox: D4 add-items selects loaded rows, appends unchecked and retains partial failures without ambiguous retry
+ok 91 - firefox: D4 add-items selects loaded rows, appends unchecked and retains partial failures without ambiguous retry
+  ---
+  duration_ms: 633.981013
+  type: 'test'
+  ...
+# Subtest: firefox: D4 private playlist-item search keeps scope, literal input and continuation in POST only
+ok 92 - firefox: D4 private playlist-item search keeps scope, literal input and continuation in POST only
+  ---
+  duration_ms: 753.529325
+  type: 'test'
+  ...
+# Subtest: firefox: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order
+ok 93 - firefox: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order
+  ---
+  duration_ms: 687.872963
+  type: 'test'
+  ...
+# Subtest: firefox: D4 history merges adjacent date groups, keeps unknown metadata and removes explicitly
+ok 94 - firefox: D4 history merges adjacent date groups, keeps unknown metadata and removes explicitly
+  ---
+  duration_ms: 1960.847092
+  type: 'test'
+  ...
+# Subtest: firefox: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe
+ok 95 - firefox: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe
+  ---
+  duration_ms: 578.495051
+  type: 'test'
+  ...
+# Subtest: firefox: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh
+ok 96 - firefox: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh
+  ---
+  duration_ms: 1617.120567
+  type: 'test'
+  ...
+# Subtest: chromium: D4 cached-page interruption stops a batch and blocks the uncertain occurrence on return
+ok 97 - chromium: D4 cached-page interruption stops a batch and blocks the uncertain occurrence on return
+  ---
+  duration_ms: 239.605245
+  type: 'test'
+  ...
+# Subtest: chromium: D4 subscription controls verify actual membership after failures and only retry the read
+ok 98 - chromium: D4 subscription controls verify actual membership after failures and only retry the read
+  ---
+  duration_ms: 359.392148
+  type: 'test'
+  ...
+# Subtest: chromium: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition
+ok 99 - chromium: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition
+  ---
+  duration_ms: 584.804603
+  type: 'test'
+  ...
+# Subtest: chromium: D4 playlist forms keep no-JavaScript failed values and navigate after confirmed JSON saves
+ok 100 - chromium: D4 playlist forms keep no-JavaScript failed values and navigate after confirmed JSON saves
+  ---
+  duration_ms: 533.481818
+  type: 'test'
+  ...
+# Subtest: chromium: D4 grip scrolling uses the same pointer and canceled page lifetimes cannot apply a late order
+ok 101 - chromium: D4 grip scrolling uses the same pointer and canceled page lifetimes cannot apply a late order
+  ---
+  duration_ms: 433.978916
+  type: 'test'
+  ...
+# Subtest: firefox: D4 cached-page interruption stops a batch and blocks the uncertain occurrence on return
+ok 102 - firefox: D4 cached-page interruption stops a batch and blocks the uncertain occurrence on return
+  ---
+  duration_ms: 534.885521
+  type: 'test'
+  ...
+# Subtest: firefox: D4 subscription controls verify actual membership after failures and only retry the read
+ok 103 - firefox: D4 subscription controls verify actual membership after failures and only retry the read
+  ---
+  duration_ms: 601.134232
+  type: 'test'
+  ...
+# Subtest: firefox: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition
+ok 104 - firefox: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition
+  ---
+  duration_ms: 884.648422
+  type: 'test'
+  ...
+# Subtest: firefox: D4 playlist forms keep no-JavaScript failed values and navigate after confirmed JSON saves
+ok 105 - firefox: D4 playlist forms keep no-JavaScript failed values and navigate after confirmed JSON saves
+  ---
+  duration_ms: 2414.981766
+  type: 'test'
+  ...
+# Subtest: firefox: D4 grip scrolling uses the same pointer and canceled page lifetimes cannot apply a late order
+ok 106 - firefox: D4 grip scrolling uses the same pointer and canceled page lifetimes cannot apply a late order
+  ---
+  duration_ms: 698.264571
+  type: 'test'
+  ...
+# Subtest: chromium: D4 confirmed occurrence removal reconciles the count and every surviving ordinal
+ok 107 - chromium: D4 confirmed occurrence removal reconciles the count and every surviving ordinal
+  ---
+  duration_ms: 288.632703
+  type: 'test'
+  ...
+# Subtest: firefox: D4 confirmed occurrence removal reconciles the count and every surviving ordinal
+ok 108 - firefox: D4 confirmed occurrence removal reconciles the count and every surviving ordinal
+  ---
+  duration_ms: 457.655569
+  type: 'test'
+  ...
+# Subtest: chromium: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages
+ok 109 - chromium: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages
+  ---
+  duration_ms: 482.621306
+  type: 'test'
+  ...
+# Subtest: chromium: D4 inline failures retain manager rows and stale profiles disable the owner before reloading
+ok 110 - chromium: D4 inline failures retain manager rows and stale profiles disable the owner before reloading
+  ---
+  duration_ms: 322.647862
+  type: 'test'
+  ...
+# Subtest: firefox: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages
+ok 111 - firefox: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages
+  ---
+  duration_ms: 844.617015
+  type: 'test'
+  ...
+# Subtest: firefox: D4 inline failures retain manager rows and stale profiles disable the owner before reloading
+ok 112 - firefox: D4 inline failures retain manager rows and stale profiles disable the owner before reloading
+  ---
+  duration_ms: 602.957367
+  type: 'test'
+  ...
+# Subtest: chromium: D4 light/dark screen matrix fits desktop widths and retains real mix save forms
+ok 113 - chromium: D4 light/dark screen matrix fits desktop widths and retains real mix save forms
+  ---
+  duration_ms: 3609.08989
+  type: 'test'
+  ...
+# Subtest: firefox: D4 light/dark screen matrix fits desktop widths and retains real mix save forms
+ok 114 - firefox: D4 light/dark screen matrix fits desktop widths and retains real mix save forms
+  ---
+  duration_ms: 11101.26906
+  type: 'test'
+  ...
+# Subtest: chromium: D5 production layout and utility tabs preserve the same paused media
+ok 115 - chromium: D5 production layout and utility tabs preserve the same paused media
+  ---
+  duration_ms: 1076.124317
+  type: 'test'
+  ...
+# Subtest: chromium: D5 player Settings delegates speed and captions and keeps docking off by default
+ok 116 - chromium: D5 player Settings delegates speed and captions and keeps docking off by default
+  ---
+  duration_ms: 842.181112
+  type: 'test'
+  ...
+# Subtest: firefox: D5 production layout and utility tabs preserve the same paused media
+ok 117 - firefox: D5 production layout and utility tabs preserve the same paused media
+  ---
+  duration_ms: 1578.880403
+  type: 'test'
+  ...
+# Subtest: firefox: D5 player Settings delegates speed and captions and keeps docking off by default
+ok 118 - firefox: D5 player Settings delegates speed and captions and keeps docking off by default
+  ---
+  duration_ms: 1366.228903
+  type: 'test'
+  ...
+# Subtest: chromium: D5 utility defaults and deliberate transcript loading keep replay outside media
+ok 119 - chromium: D5 utility defaults and deliberate transcript loading keep replay outside media
+  ---
+  duration_ms: 1661.856224
+  type: 'test'
+  ...
+# Subtest: chromium: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+ok 120 - chromium: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+  ---
+  duration_ms: 748.911539
+  type: 'test'
+  ...
+# Subtest: firefox: D5 utility defaults and deliberate transcript loading keep replay outside media
+ok 121 - firefox: D5 utility defaults and deliberate transcript loading keep replay outside media
+  ---
+  duration_ms: 4638.526822
+  type: 'test'
+  ...
+# Subtest: firefox: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+ok 122 - firefox: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+  ---
+  duration_ms: 1362.733708
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+ok 123 - chromium: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+  ---
+  duration_ms: 346.857592
+  type: 'test'
+  ...
+# Subtest: chromium: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+ok 124 - chromium: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+  ---
+  duration_ms: 404.890658
+  type: 'test'
+  ...
+# Subtest: chromium: D5 caption failures expose a retry that replaces the text track without replacing media
+ok 125 - chromium: D5 caption failures expose a retry that replaces the text track without replacing media
+  ---
+  duration_ms: 563.171073
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+ok 126 - firefox: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+  ---
+  duration_ms: 631.463956
+  type: 'test'
+  ...
+# Subtest: firefox: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+ok 127 - firefox: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+  ---
+  duration_ms: 706.188425
+  type: 'test'
+  ...
+# Subtest: firefox: D5 caption failures expose a retry that replaces the text track without replacing media
+ok 128 - firefox: D5 caption failures expose a retry that replaces the text track without replacing media
+  ---
+  duration_ms: 1032.828541
+  type: 'test'
+  ...
+# Subtest: chromium: D5 progressive quality choices decode both sizes and retain pause, time and rate
+ok 129 - chromium: D5 progressive quality choices decode both sizes and retain pause, time and rate
+  ---
+  duration_ms: 576.045541
+  type: 'test'
+  ...
+# Subtest: chromium: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+ok 130 - chromium: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+  ---
+  duration_ms: 1206.022671
+  type: 'test'
+  ...
+# Subtest: firefox: D5 progressive quality choices decode both sizes and retain pause, time and rate
+ok 131 - firefox: D5 progressive quality choices decode both sizes and retain pause, time and rate
+  ---
+  duration_ms: 984.06382
+  type: 'test'
+  ...
+# Subtest: firefox: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+ok 132 - firefox: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+  ---
+  duration_ms: 1367.675036
+  type: 'test'
+  ...
+# Subtest: chromium: D5 layout follows same-profile tabs and isolates a different signed-in account
+ok 133 - chromium: D5 layout follows same-profile tabs and isolates a different signed-in account
+  ---
+  duration_ms: 1147.708702
+  type: 'test'
+  ...
+# Subtest: chromium: D5 light/dark watch geometry and contained controls fit the desktop matrix
+ok 134 - chromium: D5 light/dark watch geometry and contained controls fit the desktop matrix
+  ---
+  duration_ms: 5063.502969
+  type: 'test'
+  ...
+# Subtest: firefox: D5 layout follows same-profile tabs and isolates a different signed-in account
+ok 135 - firefox: D5 layout follows same-profile tabs and isolates a different signed-in account
+  ---
+  duration_ms: 2742.414785
+  type: 'test'
+  ...
+# Subtest: firefox: D5 light/dark watch geometry and contained controls fit the desktop matrix
+ok 136 - firefox: D5 light/dark watch geometry and contained controls fit the desktop matrix
+  ---
+  duration_ms: 10466.00318
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+ok 137 - chromium: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+  ---
+  duration_ms: 444.566196
+  type: 'test'
+  ...
+# Subtest: chromium: D5 cached queue lifetimes reject old reads even when transport ignores abort
+ok 138 - chromium: D5 cached queue lifetimes reject old reads even when transport ignores abort
+  ---
+  duration_ms: 309.332593
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue advances to the surviving successor after the playing occurrence disappeared
+ok 139 - chromium: D5 queue advances to the surviving successor after the playing occurrence disappeared
+  ---
+  duration_ms: 498.119115
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+ok 140 - firefox: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+  ---
+  duration_ms: 742.218623
+  type: 'test'
+  ...
+# Subtest: firefox: D5 cached queue lifetimes reject old reads even when transport ignores abort
+ok 141 - firefox: D5 cached queue lifetimes reject old reads even when transport ignores abort
+  ---
+  duration_ms: 582.598919
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue advances to the surviving successor after the playing occurrence disappeared
+ok 142 - firefox: D5 queue advances to the surviving successor after the playing occurrence disappeared
+  ---
+  duration_ms: 884.578525
+  type: 'test'
+  ...
+# Subtest: chromium: D5 native picture-in-picture suspends docking where the browser exposes it
+ok 143 - chromium: D5 native picture-in-picture suspends docking where the browser exposes it
+  ---
+  duration_ms: 387.631875
+  type: 'test'
+  ...
+# Subtest: chromium: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+ok 144 - chromium: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+  ---
+  duration_ms: 567.78562
+  type: 'test'
+  ...
+# Subtest: firefox: D5 native picture-in-picture suspends docking where the browser exposes it
+ok 145 - firefox: D5 native picture-in-picture suspends docking where the browser exposes it
+  ---
+  duration_ms: 657.618652
+  type: 'test'
+  ...
+# Subtest: firefox: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+ok 146 - firefox: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+  ---
+  duration_ms: 746.215317
+  type: 'test'
+  ...
+# Subtest: chromium: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+ok 147 - chromium: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+  ---
+  duration_ms: 554.188821
+  type: 'test'
+  ...
+# Subtest: chromium: D5 a network-aborted caption load offers a bounded explicit retry
+ok 148 - chromium: D5 a network-aborted caption load offers a bounded explicit retry
+  ---
+  duration_ms: 8909.988066
+  type: 'test'
+  ...
+# Subtest: firefox: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+ok 149 - firefox: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+  ---
+  duration_ms: 1830.062535
+  type: 'test'
+  ...
+# Subtest: firefox: D5 a network-aborted caption load offers a bounded explicit retry
+ok 150 - firefox: D5 a network-aborted caption load offers a bounded explicit retry
+  ---
+  duration_ms: 9016.60974
+  type: 'test'
+  ...
+# Subtest: chromium: D5 title cycles use one SVG control and reveal masked names only after a click
+ok 151 - chromium: D5 title cycles use one SVG control and reveal masked names only after a click
+  ---
+  duration_ms: 1106.239532
+  type: 'test'
+  ...
+# Subtest: firefox: D5 title cycles use one SVG control and reveal masked names only after a click
+ok 152 - firefox: D5 title cycles use one SVG control and reveal masked names only after a click
+  ---
+  duration_ms: 1542.332453
+  type: 'test'
+  ...
+# Subtest: chromium: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+ok 153 - chromium: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+  ---
+  duration_ms: 760.105751
+  type: 'test'
+  ...
+# Subtest: firefox: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+ok 154 - firefox: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+  ---
+  duration_ms: 1398.10969
+  type: 'test'
+  ...
+# Subtest: chromium: D6 transcript language, safe search, exact current line and manual following preserve media
+ok 155 - chromium: D6 transcript language, safe search, exact current line and manual following preserve media
+  ---
+  duration_ms: 718.792316
+  type: 'test'
+  ...
+# Subtest: chromium: D6 transcript failure, unavailable, empty and invalid responses retain explicit retry
+ok 156 - chromium: D6 transcript failure, unavailable, empty and invalid responses retain explicit retry
+  ---
+  duration_ms: 591.476669
+  type: 'test'
+  ...
+# Subtest: chromium: D6 transcript script recovery stays deferred and initializes only once
+ok 157 - chromium: D6 transcript script recovery stays deferred and initializes only once
+  ---
+  duration_ms: 504.035918
+  type: 'test'
+  ...
+# Subtest: chromium: D6 transcript generations and cached-page lifetimes reject transport that ignores abort
+ok 158 - chromium: D6 transcript generations and cached-page lifetimes reject transport that ignores abort
+  ---
+  duration_ms: 373.606276
+  type: 'test'
+  ...
+# Subtest: firefox: D6 transcript language, safe search, exact current line and manual following preserve media
+ok 159 - firefox: D6 transcript language, safe search, exact current line and manual following preserve media
+  ---
+  duration_ms: 1275.632508
+  type: 'test'
+  ...
+# Subtest: firefox: D6 transcript failure, unavailable, empty and invalid responses retain explicit retry
+ok 160 - firefox: D6 transcript failure, unavailable, empty and invalid responses retain explicit retry
+  ---
+  duration_ms: 885.405117
+  type: 'test'
+  ...
+# Subtest: firefox: D6 transcript script recovery stays deferred and initializes only once
+ok 161 - firefox: D6 transcript script recovery stays deferred and initializes only once
+  ---
+  duration_ms: 867.985573
+  type: 'test'
+  ...
+# Subtest: firefox: D6 transcript generations and cached-page lifetimes reject transport that ignores abort
+ok 162 - firefox: D6 transcript generations and cached-page lifetimes reject transport that ignores abort
+  ---
+  duration_ms: 639.585008
+  type: 'test'
+  ...
+# Subtest: chromium: D6 transcript light, dark and enlarged RTL keyboard views
+ok 163 - chromium: D6 transcript light, dark and enlarged RTL keyboard views
+  ---
+  duration_ms: 1223.244791
+  type: 'test'
+  ...
+# Subtest: firefox: D6 transcript light, dark and enlarged RTL keyboard views
+ok 164 - firefox: D6 transcript light, dark and enlarged RTL keyboard views
+  ---
+  duration_ms: 3173.853509
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch comments retain source/sort controls, compact independent replies and explicit continuations
+ok 165 - chromium: D6 watch comments retain source/sort controls, compact independent replies and explicit continuations
+  ---
+  duration_ms: 863.850808
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch comments distinguish unavailable and empty results, known disabled sources, thin mode and no-JS
+ok 166 - chromium: D6 watch comments distinguish unavailable and empty results, known disabled sources, thin mode and no-JS
+  ---
+  duration_ms: 1430.737353
+  type: 'test'
+  ...
+# Subtest: chromium: D6 comment source/sort and cached-page generations reject late reads after cancellation
+ok 167 - chromium: D6 comment source/sort and cached-page generations reject late reads after cancellation
+  ---
+  duration_ms: 320.672337
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch comments retain source/sort controls, compact independent replies and explicit continuations
+ok 168 - firefox: D6 watch comments retain source/sort controls, compact independent replies and explicit continuations
+  ---
+  duration_ms: 1195.719231
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch comments distinguish unavailable and empty results, known disabled sources, thin mode and no-JS
+ok 169 - firefox: D6 watch comments distinguish unavailable and empty results, known disabled sources, thin mode and no-JS
+  ---
+  duration_ms: 2593.290935
+  type: 'test'
+  ...
+# Subtest: firefox: D6 comment source/sort and cached-page generations reject late reads after cancellation
+ok 170 - firefox: D6 comment source/sort and cached-page generations reject late reads after cancellation
+  ---
+  duration_ms: 589.018962
+  type: 'test'
+  ...
+# Subtest: chromium: D6 chat editor saves explicit guest deltas, retains native overlay values and shares Settings search
+ok 171 - chromium: D6 chat editor saves explicit guest deltas, retains native overlay values and shares Settings search
+  ---
+  duration_ms: 231.303785
+  type: 'test'
+  ...
+# Subtest: chromium: D6 chat account editor retains drafts, checks uncertain writes and confirms only changed fields
+ok 172 - chromium: D6 chat account editor retains drafts, checks uncertain writes and confirms only changed fields
+  ---
+  duration_ms: 381.115283
+  type: 'test'
+  ...
+# Subtest: chromium: D6 chat editor reports denied persistence and restores the literal unsaved draft
+ok 173 - chromium: D6 chat editor reports denied persistence and restores the literal unsaved draft
+  ---
+  duration_ms: 187.654991
+  type: 'test'
+  ...
+# Subtest: chromium: D6 chat editor ignores cached-page and profile completions without repeating a write
+ok 174 - chromium: D6 chat editor ignores cached-page and profile completions without repeating a write
+  ---
+  duration_ms: 284.296188
+  type: 'test'
+  ...
+# Subtest: firefox: D6 chat editor saves explicit guest deltas, retains native overlay values and shares Settings search
+ok 175 - firefox: D6 chat editor saves explicit guest deltas, retains native overlay values and shares Settings search
+  ---
+  duration_ms: 1514.898557
+  type: 'test'
+  ...
+# Subtest: firefox: D6 chat account editor retains drafts, checks uncertain writes and confirms only changed fields
+ok 176 - firefox: D6 chat account editor retains drafts, checks uncertain writes and confirms only changed fields
+  ---
+  duration_ms: 626.758688
+  type: 'test'
+  ...
+# Subtest: firefox: D6 chat editor reports denied persistence and restores the literal unsaved draft
+ok 177 - firefox: D6 chat editor reports denied persistence and restores the literal unsaved draft
+  ---
+  duration_ms: 450.449061
+  type: 'test'
+  ...
+# Subtest: firefox: D6 chat editor ignores cached-page and profile completions without repeating a write
+ok 178 - firefox: D6 chat editor ignores cached-page and profile completions without repeating a write
+  ---
+  duration_ms: 502.69349
+  type: 'test'
+  ...
+# Subtest: chromium: D6 chat Settings light, dark and enlarged RTL views retain keyboard focus
+ok 179 - chromium: D6 chat Settings light, dark and enlarged RTL views retain keyboard focus
+  ---
+  duration_ms: 447.482714
+  type: 'test'
+  ...
+# Subtest: firefox: D6 chat Settings light, dark and enlarged RTL views retain keyboard focus
+ok 180 - firefox: D6 chat Settings light, dark and enlarged RTL views retain keyboard focus
+  ---
+  duration_ms: 995.445502
+  type: 'test'
+  ...
+# Subtest: chromium: D6 replay panel and dialog fit desktop light, dark, enlarged RTL and forced colors
+ok 181 - chromium: D6 replay panel and dialog fit desktop light, dark, enlarged RTL and forced colors
+  ---
+  duration_ms: 2112.095815
+  type: 'test'
+  ...
+# Subtest: chromium: D6 replay suspends outside native fullscreen and returns to its cached panel
+ok 182 - chromium: D6 replay suspends outside native fullscreen and returns to its cached panel
+  ---
+  duration_ms: 364.178753
+  type: 'test'
+  ...
+# Subtest: firefox: D6 replay panel and dialog fit desktop light, dark, enlarged RTL and forced colors
+ok 183 - firefox: D6 replay panel and dialog fit desktop light, dark, enlarged RTL and forced colors
+  ---
+  duration_ms: 4444.330584
+  type: 'test'
+  ...
+# Subtest: firefox: D6 replay suspends outside native fullscreen and returns to its cached panel
+ok 184 - firefox: D6 replay suspends outside native fullscreen and returns to its cached panel
+  ---
+  duration_ms: 645.216083
+  type: 'test'
+  ...
+# Subtest: chromium: D6 replay settings, filters, timing and timestamp seeks retain the same real media
+ok 185 - chromium: D6 replay settings, filters, timing and timestamp seeks retain the same real media
+  ---
+  duration_ms: 588.952947
+  type: 'test'
+  ...
+# Subtest: chromium: D6 replay manual reading stays anchored until current-time return and DOM stays bounded
+ok 186 - chromium: D6 replay manual reading stays anchored until current-time return and DOM stays bounded
+  ---
+  duration_ms: 1888.863926
+  type: 'test'
+  ...
+# Subtest: chromium: D6 replay error, unavailable, invalid, waiting, filtered and empty states remain distinct
+ok 187 - chromium: D6 replay error, unavailable, invalid, waiting, filtered and empty states remain distinct
+  ---
+  duration_ms: 2833.886891
+  type: 'test'
+  ...
+# Subtest: chromium: D6 replay tab, cached-page and profile owners reject ignored aborts
+ok 188 - chromium: D6 replay tab, cached-page and profile owners reject ignored aborts
+  ---
+  duration_ms: 570.788807
+  type: 'test'
+  ...
+# Subtest: chromium: D6 account video timing uses native millisecond limits and explicit recovery
+ok 189 - chromium: D6 account video timing uses native millisecond limits and explicit recovery
+  ---
+  duration_ms: 597.34117
+  type: 'test'
+  ...
+# Subtest: firefox: D6 replay settings, filters, timing and timestamp seeks retain the same real media
+ok 190 - firefox: D6 replay settings, filters, timing and timestamp seeks retain the same real media
+  ---
+  duration_ms: 1016.475076
+  type: 'test'
+  ...
+# Subtest: firefox: D6 replay manual reading stays anchored until current-time return and DOM stays bounded
+ok 191 - firefox: D6 replay manual reading stays anchored until current-time return and DOM stays bounded
+  ---
+  duration_ms: 2315.903434
+  type: 'test'
+  ...
+# Subtest: firefox: D6 replay error, unavailable, invalid, waiting, filtered and empty states remain distinct
+ok 192 - firefox: D6 replay error, unavailable, invalid, waiting, filtered and empty states remain distinct
+  ---
+  duration_ms: 3693.4549
+  type: 'test'
+  ...
+# Subtest: firefox: D6 replay tab, cached-page and profile owners reject ignored aborts
+ok 193 - firefox: D6 replay tab, cached-page and profile owners reject ignored aborts
+  ---
+  duration_ms: 838.546018
+  type: 'test'
+  ...
+# Subtest: firefox: D6 account video timing uses native millisecond limits and explicit recovery
+ok 194 - firefox: D6 account video timing uses native millisecond limits and explicit recovery
+  ---
+  duration_ms: 1018.260982
+  type: 'test'
+  ...
+# Subtest: chromium: D6 replay cache eviction is bounded and removed IDs cannot reappear in a chunk
+ok 195 - chromium: D6 replay cache eviction is bounded and removed IDs cannot reappear in a chunk
+  ---
+  duration_ms: 1936.298776
+  type: 'test'
+  ...
+# Subtest: firefox: D6 replay cache eviction is bounded and removed IDs cannot reappear in a chunk
+ok 196 - firefox: D6 replay cache eviction is bounded and removed IDs cannot reappear in a chunk
+  ---
+  duration_ms: 3965.308152
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip side editor previews on the same media and restores its tab, draft and local progress
+ok 197 - chromium: D6 clip side editor previews on the same media and restores its tab, draft and local progress
+  ---
+  duration_ms: 828.872616
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip editor creates an empty utility slot and excludes account progress and queue advancement
+ok 198 - chromium: D6 clip editor creates an empty utility slot and excludes account progress and queue advancement
+  ---
+  duration_ms: 1439.133143
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip publishing keeps rejected drafts and blocks an ambiguous duplicate creation
+ok 199 - chromium: D6 clip publishing keeps rejected drafts and blocks an ambiguous duplicate creation
+  ---
+  duration_ms: 585.65816
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip side editor previews on the same media and restores its tab, draft and local progress
+ok 200 - firefox: D6 clip side editor previews on the same media and restores its tab, draft and local progress
+  ---
+  duration_ms: 1333.131885
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip editor creates an empty utility slot and excludes account progress and queue advancement
+ok 201 - firefox: D6 clip editor creates an empty utility slot and excludes account progress and queue advancement
+  ---
+  duration_ms: 2507.864913
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip publishing keeps rejected drafts and blocks an ambiguous duplicate creation
+ok 202 - firefox: D6 clip publishing keeps rejected drafts and blocks an ambiguous duplicate creation
+  ---
+  duration_ms: 1029.079298
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip preview escapes and restores native saved bounds across a real source refresh
+ok 203 - chromium: D6 clip preview escapes and restores native saved bounds across a real source refresh
+  ---
+  duration_ms: 679.370743
+  type: 'test'
+  ...
+# Subtest: chromium: D6 a published clip received after close is shown once before a new draft
+ok 204 - chromium: D6 a published clip received after close is shown once before a new draft
+  ---
+  duration_ms: 598.65828
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip preview escapes and restores native saved bounds across a real source refresh
+ok 205 - firefox: D6 clip preview escapes and restores native saved bounds across a real source refresh
+  ---
+  duration_ms: 1122.746225
+  type: 'test'
+  ...
+# Subtest: firefox: D6 a published clip received after close is shown once before a new draft
+ok 206 - firefox: D6 a published clip received after close is shown once before a new draft
+  ---
+  duration_ms: 963.905933
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip creation rejects stale cached-page and profile completions without another POST
+ok 207 - chromium: D6 clip creation rejects stale cached-page and profile completions without another POST
+  ---
+  duration_ms: 910.615095
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip editor light, dark, enlarged RTL and forced-color states fit the desktop panel
+ok 208 - chromium: D6 clip editor light, dark, enlarged RTL and forced-color states fit the desktop panel
+  ---
+  duration_ms: 1946.426127
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip creation rejects stale cached-page and profile completions without another POST
+ok 209 - firefox: D6 clip creation rejects stale cached-page and profile completions without another POST
+  ---
+  duration_ms: 1536.393822
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip editor light, dark, enlarged RTL and forced-color states fit the desktop panel
+ok 210 - firefox: D6 clip editor light, dark, enlarged RTL and forced-color states fit the desktop panel
+  ---
+  duration_ms: 4268.272933
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip fallback retains literal failed drafts with and without JavaScript
+ok 211 - chromium: D6 clip fallback retains literal failed drafts with and without JavaScript
+  ---
+  duration_ms: 199.309516
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip boundary keyboard, playhead capture, Unicode title and looping preview retain the original state
+ok 212 - chromium: D6 clip boundary keyboard, playhead capture, Unicode title and looping preview retain the original state
+  ---
+  duration_ms: 738.684143
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 213 - chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 617.358683
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip missing metadata and uncertain standalone POSTs retain drafts without duplicate publication
+ok 214 - chromium: D6 clip missing metadata and uncertain standalone POSTs retain drafts without duplicate publication
+  ---
+  duration_ms: 488.535181
+  type: 'test'
+  ...
+# Subtest: chromium: D6 saved clips, deletion and unavailable sources use shared pages and owner controls
+ok 215 - chromium: D6 saved clips, deletion and unavailable sources use shared pages and owner controls
+  ---
+  duration_ms: 832.248065
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip asset failure keeps the timestamp-aware standalone fallback and guest login return
+ok 216 - chromium: D6 clip asset failure keeps the timestamp-aware standalone fallback and guest login return
+  ---
+  duration_ms: 1011.549537
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip fallback retains literal failed drafts with and without JavaScript
+ok 217 - firefox: D6 clip fallback retains literal failed drafts with and without JavaScript
+  ---
+  duration_ms: 606.395613
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip boundary keyboard, playhead capture, Unicode title and looping preview retain the original state
+ok 218 - firefox: D6 clip boundary keyboard, playhead capture, Unicode title and looping preview retain the original state
+  ---
+  duration_ms: 1095.293453
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 219 - firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 998.125183
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip missing metadata and uncertain standalone POSTs retain drafts without duplicate publication
+ok 220 - firefox: D6 clip missing metadata and uncertain standalone POSTs retain drafts without duplicate publication
+  ---
+  duration_ms: 2542.385698
+  type: 'test'
+  ...
+# Subtest: firefox: D6 saved clips, deletion and unavailable sources use shared pages and owner controls
+ok 221 - firefox: D6 saved clips, deletion and unavailable sources use shared pages and owner controls
+  ---
+  duration_ms: 2272.0562
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip asset failure keeps the timestamp-aware standalone fallback and guest login return
+ok 222 - firefox: D6 clip asset failure keeps the timestamp-aware standalone fallback and guest login return
+  ---
+  duration_ms: 3184.929373
+  type: 'test'
+  ...
+# Subtest: chromium: D6 AI actions have one matrix owner, retain paused drafts and preserve ordinary form fields
+ok 223 - chromium: D6 AI actions have one matrix owner, retain paused drafts and preserve ordinary form fields
+  ---
+  duration_ms: 788.800046
+  type: 'test'
+  ...
+# Subtest: firefox: D6 AI actions have one matrix owner, retain paused drafts and preserve ordinary form fields
+ok 224 - firefox: D6 AI actions have one matrix owner, retain paused drafts and preserve ordinary form fields
+  ---
+  duration_ms: 1582.724845
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+ok 225 - chromium: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+  ---
+  duration_ms: 439.242411
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+ok 226 - chromium: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+  ---
+  duration_ms: 740.001551
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock cached pages and profile changes reject late completed writes
+ok 227 - chromium: D6 SponsorBlock cached pages and profile changes reject late completed writes
+  ---
+  duration_ms: 500.001557
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+ok 228 - chromium: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+  ---
+  duration_ms: 204.283912
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+ok 229 - firefox: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+  ---
+  duration_ms: 588.753789
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+ok 230 - firefox: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+  ---
+  duration_ms: 1127.255333
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock cached pages and profile changes reject late completed writes
+ok 231 - firefox: D6 SponsorBlock cached pages and profile changes reject late completed writes
+  ---
+  duration_ms: 2374.215289
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+ok 232 - firefox: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+  ---
+  duration_ms: 546.357733
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+ok 233 - chromium: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+  ---
+  duration_ms: 519.834097
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock literal invalid maps and future native values stay visible
+ok 234 - chromium: D6 SponsorBlock literal invalid maps and future native values stay visible
+  ---
+  duration_ms: 186.141378
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+ok 235 - chromium: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+  ---
+  duration_ms: 230.453177
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+ok 236 - chromium: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+  ---
+  duration_ms: 160.171
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+ok 237 - chromium: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+  ---
+  duration_ms: 557.323804
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+ok 238 - chromium: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+  ---
+  duration_ms: 506.171056
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+ok 239 - chromium: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 1353.034019
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+ok 240 - firefox: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+  ---
+  duration_ms: 787.672304
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock literal invalid maps and future native values stay visible
+ok 241 - firefox: D6 SponsorBlock literal invalid maps and future native values stay visible
+  ---
+  duration_ms: 601.973552
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+ok 242 - firefox: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+  ---
+  duration_ms: 513.755772
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+ok 243 - firefox: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+  ---
+  duration_ms: 403.169343
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+ok 244 - firefox: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+  ---
+  duration_ms: 2800.754153
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+ok 245 - firefox: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+  ---
+  duration_ms: 1190.91248
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+ok 246 - firefox: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 3911.189955
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking editor owns canonical fields, Discard, searchable rules and native age semantics
+ok 247 - chromium: D6 masking editor owns canonical fields, Discard, searchable rules and native age semantics
+  ---
+  duration_ms: 480.407588
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking uncertain and rejected writes retain drafts and require explicit read-back
+ok 248 - chromium: D6 masking uncertain and rejected writes retain drafts and require explicit read-back
+  ---
+  duration_ms: 754.844885
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking validates literal days and preserves retryable guest drafts under denied storage
+ok 249 - chromium: D6 masking validates literal days and preserves retryable guest drafts under denied storage
+  ---
+  duration_ms: 437.239182
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking external updates, Discard and targeted removal preserve other guest rules
+ok 250 - chromium: D6 masking external updates, Discard and targeted removal preserve other guest rules
+  ---
+  duration_ms: 299.258282
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking cached pages, profile changes and detached editors reject completed stale writes
+ok 251 - chromium: D6 masking cached pages, profile changes and detached editors reject completed stale writes
+  ---
+  duration_ms: 513.567886
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking ordinary forms and unavailable guest scripts retain their scope
+ok 252 - chromium: D6 masking ordinary forms and unavailable guest scripts retain their scope
+  ---
+  duration_ms: 510.157496
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking failure views retain literal days in Light, Dark, RTL and forced colors
+ok 253 - chromium: D6 masking failure views retain literal days in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 1186.522398
+  type: 'test'
+  ...
+# Subtest: chromium: D6 channel editors reject a new entry at the persisted limit without losing existing rules
+ok 254 - chromium: D6 channel editors reject a new entry at the persisted limit without losing existing rules
+  ---
+  duration_ms: 851.673252
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking editor owns canonical fields, Discard, searchable rules and native age semantics
+ok 255 - firefox: D6 masking editor owns canonical fields, Discard, searchable rules and native age semantics
+  ---
+  duration_ms: 731.834985
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking uncertain and rejected writes retain drafts and require explicit read-back
+ok 256 - firefox: D6 masking uncertain and rejected writes retain drafts and require explicit read-back
+  ---
+  duration_ms: 1193.440933
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking validates literal days and preserves retryable guest drafts under denied storage
+ok 257 - firefox: D6 masking validates literal days and preserves retryable guest drafts under denied storage
+  ---
+  duration_ms: 965.592583
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking external updates, Discard and targeted removal preserve other guest rules
+ok 258 - firefox: D6 masking external updates, Discard and targeted removal preserve other guest rules
+  ---
+  duration_ms: 614.63539
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking cached pages, profile changes and detached editors reject completed stale writes
+ok 259 - firefox: D6 masking cached pages, profile changes and detached editors reject completed stale writes
+  ---
+  duration_ms: 1171.136288
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking ordinary forms and unavailable guest scripts retain their scope
+ok 260 - firefox: D6 masking ordinary forms and unavailable guest scripts retain their scope
+  ---
+  duration_ms: 2614.803686
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking failure views retain literal days in Light, Dark, RTL and forced colors
+ok 261 - firefox: D6 masking failure views retain literal days in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 2350.151145
+  type: 'test'
+  ...
+# Subtest: firefox: D6 channel editors reject a new entry at the persisted limit without losing existing rules
+ok 262 - firefox: D6 channel editors reject a new entry at the persisted limit without losing existing rules
+  ---
+  duration_ms: 3006.858267
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking failed preflight and malformed/profile responses cannot report Saved
+ok 263 - chromium: D6 masking failed preflight and malformed/profile responses cannot report Saved
+  ---
+  duration_ms: 507.926266
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking failed preflight and malformed/profile responses cannot report Saved
+ok 264 - firefox: D6 masking failed preflight and malformed/profile responses cannot report Saved
+  ---
+  duration_ms: 1136.427831
+  type: 'test'
+  ...
+# Subtest: chromium: D6 channel failure drafts retain omitted-field semantics in ordinary forms
+ok 265 - chromium: D6 channel failure drafts retain omitted-field semantics in ordinary forms
+  ---
+  duration_ms: 215.805694
+  type: 'test'
+  ...
+# Subtest: firefox: D6 channel failure drafts retain omitted-field semantics in ordinary forms
+ok 266 - firefox: D6 channel failure drafts retain omitted-field semantics in ordinary forms
+  ---
+  duration_ms: 785.957871
+  type: 'test'
+  ...
+# Subtest: chromium: D6 blocked manager searches locally and removes canonical rows with explicit profile/CSRF and focus
+ok 267 - chromium: D6 blocked manager searches locally and removes canonical rows with explicit profile/CSRF and focus
+  ---
+  duration_ms: 210.451478
+  type: 'test'
+  ...
+# Subtest: chromium: D6 blocked manager retains failed rows and requires read-back after uncertain unblocks
+ok 268 - chromium: D6 blocked manager retains failed rows and requires read-back after uncertain unblocks
+  ---
+  duration_ms: 744.828961
+  type: 'test'
+  ...
+# Subtest: chromium: D6 blocked manager invalidates cached, switched-profile and detached late responses without duplicate writes
+ok 269 - chromium: D6 blocked manager invalidates cached, switched-profile and detached late responses without duplicate writes
+  ---
+  duration_ms: 516.275617
+  type: 'test'
+  ...
+# Subtest: chromium: D6 blocked manager preserves ordinary forms when JavaScript is absent or its script fails
+ok 270 - chromium: D6 blocked manager preserves ordinary forms when JavaScript is absent or its script fails
+  ---
+  duration_ms: 402.418473
+  type: 'test'
+  ...
+# Subtest: chromium: D6 blocked manager distinguishes unavailable lists and rejects malformed or foreign canonical state
+ok 271 - chromium: D6 blocked manager distinguishes unavailable lists and rejects malformed or foreign canonical state
+  ---
+  duration_ms: 648.667076
+  type: 'test'
+  ...
+# Subtest: chromium: D6 blocked manager Light/Dark/RTL error views fit desktop and keep truthful states
+ok 272 - chromium: D6 blocked manager Light/Dark/RTL error views fit desktop and keep truthful states
+  ---
+  duration_ms: 2764.618327
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+ok 273 - chromium: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+  ---
+  duration_ms: 748.779633
+  type: 'test'
+  ...
+# Subtest: chromium: D6 uncertain contextual block responses retain visible content until an explicit canonical reload
+ok 274 - chromium: D6 uncertain contextual block responses retain visible content until an explicit canonical reload
+  ---
+  duration_ms: 643.653704
+  type: 'test'
+  ...
+# Subtest: firefox: D6 blocked manager searches locally and removes canonical rows with explicit profile/CSRF and focus
+ok 275 - firefox: D6 blocked manager searches locally and removes canonical rows with explicit profile/CSRF and focus
+  ---
+  duration_ms: 1234.213248
+  type: 'test'
+  ...
+# Subtest: firefox: D6 blocked manager retains failed rows and requires read-back after uncertain unblocks
+ok 276 - firefox: D6 blocked manager retains failed rows and requires read-back after uncertain unblocks
+  ---
+  duration_ms: 1173.40113
+  type: 'test'
+  ...
+# Subtest: firefox: D6 blocked manager invalidates cached, switched-profile and detached late responses without duplicate writes
+ok 277 - firefox: D6 blocked manager invalidates cached, switched-profile and detached late responses without duplicate writes
+  ---
+  duration_ms: 1156.729248
+  type: 'test'
+  ...
+# Subtest: firefox: D6 blocked manager preserves ordinary forms when JavaScript is absent or its script fails
+ok 278 - firefox: D6 blocked manager preserves ordinary forms when JavaScript is absent or its script fails
+  ---
+  duration_ms: 1223.787038
+  type: 'test'
+  ...
+# Subtest: firefox: D6 blocked manager distinguishes unavailable lists and rejects malformed or foreign canonical state
+ok 279 - firefox: D6 blocked manager distinguishes unavailable lists and rejects malformed or foreign canonical state
+  ---
+  duration_ms: 2689.430123
+  type: 'test'
+  ...
+# Subtest: firefox: D6 blocked manager Light/Dark/RTL error views fit desktop and keep truthful states
+ok 280 - firefox: D6 blocked manager Light/Dark/RTL error views fit desktop and keep truthful states
+  ---
+  duration_ms: 6505.595498
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+ok 281 - firefox: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+  ---
+  duration_ms: 1128.463323
+  type: 'test'
+  ...
+# Subtest: firefox: D6 uncertain contextual block responses retain visible content until an explicit canonical reload
+ok 282 - firefox: D6 uncertain contextual block responses retain visible content until an explicit canonical reload
+  ---
+  duration_ms: 2377.682284
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor imports only explicit credentials and keeps private values out of page/storage metadata
+ok 283 - chromium: D6 identity editor imports only explicit credentials and keeps private values out of page/storage metadata
+  ---
+  duration_ms: 386.475843
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor preserves literal invalid and rejected drafts and discards explicitly
+ok 284 - chromium: D6 identity editor preserves literal invalid and rejected drafts and discards explicitly
+  ---
+  duration_ms: 316.657948
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor rejects changed revisions before dispatch and requires renewed replacement consent
+ok 285 - chromium: D6 identity editor rejects changed revisions before dispatch and requires renewed replacement consent
+  ---
+  duration_ms: 293.816272
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor requires explicit status reconciliation after committed or unknown write outcomes
+ok 286 - chromium: D6 identity editor requires explicit status reconciliation after committed or unknown write outcomes
+  ---
+  duration_ms: 739.185393
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor ignores duplicate and late writes across cached, switched-profile and detached lifetimes
+ok 287 - chromium: D6 identity editor ignores duplicate and late writes across cached, switched-profile and detached lifetimes
+  ---
+  duration_ms: 811.190842
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity ordinary forms retain route/profile/revision/confirmation when scripting is absent or unavailable
+ok 288 - chromium: D6 identity ordinary forms retain route/profile/revision/confirmation when scripting is absent or unavailable
+  ---
+  duration_ms: 377.050013
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity setup and unavailable states recover through read-only checks without false empty claims
+ok 289 - chromium: D6 identity setup and unavailable states recover through read-only checks without false empty claims
+  ---
+  duration_ms: 290.937422
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity malformed reads and write receipts never clear credentials or claim success
+ok 290 - chromium: D6 identity malformed reads and write receipts never clear credentials or claim success
+  ---
+  duration_ms: 603.021775
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity Settings shortcuts and local search respect account ownership
+ok 291 - chromium: D6 identity Settings shortcuts and local search respect account ownership
+  ---
+  duration_ms: 202.073148
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity Light/Dark and enlarged RTL error/setup states fit desktop without credential disclosure
+ok 292 - chromium: D6 identity Light/Dark and enlarged RTL error/setup states fit desktop without credential disclosure
+  ---
+  duration_ms: 3134.488842
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor imports only explicit credentials and keeps private values out of page/storage metadata
+ok 293 - firefox: D6 identity editor imports only explicit credentials and keeps private values out of page/storage metadata
+  ---
+  duration_ms: 899.492883
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor preserves literal invalid and rejected drafts and discards explicitly
+ok 294 - firefox: D6 identity editor preserves literal invalid and rejected drafts and discards explicitly
+  ---
+  duration_ms: 602.478879
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor rejects changed revisions before dispatch and requires renewed replacement consent
+ok 295 - firefox: D6 identity editor rejects changed revisions before dispatch and requires renewed replacement consent
+  ---
+  duration_ms: 541.772845
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor requires explicit status reconciliation after committed or unknown write outcomes
+ok 296 - firefox: D6 identity editor requires explicit status reconciliation after committed or unknown write outcomes
+  ---
+  duration_ms: 1184.05088
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor ignores duplicate and late writes across cached, switched-profile and detached lifetimes
+ok 297 - firefox: D6 identity editor ignores duplicate and late writes across cached, switched-profile and detached lifetimes
+  ---
+  duration_ms: 1540.841911
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity ordinary forms retain route/profile/revision/confirmation when scripting is absent or unavailable
+ok 298 - firefox: D6 identity ordinary forms retain route/profile/revision/confirmation when scripting is absent or unavailable
+  ---
+  duration_ms: 2082.386705
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity setup and unavailable states recover through read-only checks without false empty claims
+ok 299 - firefox: D6 identity setup and unavailable states recover through read-only checks without false empty claims
+  ---
+  duration_ms: 721.242968
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity malformed reads and write receipts never clear credentials or claim success
+ok 300 - firefox: D6 identity malformed reads and write receipts never clear credentials or claim success
+  ---
+  duration_ms: 1300.331312
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity Settings shortcuts and local search respect account ownership
+ok 301 - firefox: D6 identity Settings shortcuts and local search respect account ownership
+  ---
+  duration_ms: 624.664065
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity Light/Dark and enlarged RTL error/setup states fit desktop without credential disclosure
+ok 302 - firefox: D6 identity Light/Dark and enlarged RTL error/setup states fit desktop without credential disclosure
+  ---
+  duration_ms: 8647.610711
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity cached preflight and status reads reject late metadata and leave no loading claim
+ok 303 - chromium: D6 identity cached preflight and status reads reject late metadata and leave no loading claim
+  ---
+  duration_ms: 431.67196
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity cached preflight and status reads reject late metadata and leave no loading claim
+ok 304 - firefox: D6 identity cached preflight and status reads reject late metadata and leave no loading claim
+  ---
+  duration_ms: 962.779376
+  type: 'test'
+  ...
+1..304
+# tests 304
+# suites 0
+# pass 304
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 404491.977944

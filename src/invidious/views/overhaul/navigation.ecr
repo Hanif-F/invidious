@@ -1,0 +1,8 @@
+<% {"popular" => {"house", "Popular"}, "trending" => {"trending-up", "Trending"}, "subscriptions" => {"bell", "Subscriptions"}, "history" => {"history", "Watch history"}, "playlists" => {"list-video", "Playlists"}, "clips" => {"scissors", "clips_my"}}.each do |feed, entry| %>
+<% next if feed == "popular" && !CONFIG.popular_enabled %>
+<% next if {"subscriptions", "history", "playlists", "clips"}.includes?(feed) && !env.get?("user") %>
+<% navigation_path = env.request.path %>
+<% navigation_current = navigation_path == "/feed/#{feed}" || (feed == "playlists" && {"/playlist", "/mix", "/create_playlist", "/edit_playlist", "/add_playlist_items", "/delete_playlist"}.includes?(navigation_path)) || (feed == "history" && navigation_path == "/clear_watch_history") || (feed == "subscriptions" && navigation_path == "/subscription_manager") || (feed == "clips" && (navigation_path.starts_with?("/clip/") || {"/create_clip", "/delete_clip"}.includes?(navigation_path))) %>
+<a class="sidebar-link" href="/feed/<%= feed %>" title="<%= I18n.translate(locale, entry[1]) %>" aria-label="<%= I18n.translate(locale, entry[1]) %>" <%= "aria-current=page" if navigation_current %>><%= Invidious::Frontend::Icons.render(entry[0]) %><span><%= I18n.translate(locale, entry[1]) %></span></a>
+<% end %>
+<a class="sidebar-link sidebar-settings" href="/preferences?section=appearance" title="<%= I18n.translate(locale, "overhaul_settings") %>" aria-label="<%= I18n.translate(locale, "overhaul_settings") %>" <%= "aria-current=page" if Invidious::Frontend::Desktop.settings?(env) %>><%= Invidious::Frontend::Icons.render("settings") %><span><%= I18n.translate(locale, "overhaul_settings") %></span></a>

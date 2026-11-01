@@ -77,28 +77,35 @@ module Invidious::Routes::Verification
 
   def self.admin(env)
     Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     unless user = env.get?("user").try(&.as(User))
       return env.redirect("/login?referer=%2Fadmin%2Fbot-protection", 303)
     end
     unless Authentication.admin?(user)
-      env.response.status_code = 403
-      return "Administrator access required."
+      return Frontend::Standalone.notice(env, 403, "Administrator access required.", "Only instance administrators can change verification settings. Sign out to use another account.", "/login?referer=%2Fadmin%2Fbot-protection", "verify_admin_login", sign_out: true)
     end
     message = nil
+    draft_enabled = nil.as(Bool?)
+    draft_duration = nil.as(Int32?)
     if env.request.method == "POST"
+      draft_enabled = env.params.body["enabled"]? == "on"
+      draft_duration = env.params.body["duration_hours"]?.try(&.to_i?)
       unless Authentication.valid_session_csrf?(env)
         env.response.status_code = 403
-        return "Invalid CSRF token. Reload this page and retry."
-      end
-      begin
-        Protection.save(env.params.body["enabled"]? == "on", (env.params.body["duration_hours"]? || "").to_i)
-        message = "Bot protection settings saved."
-      rescue ex : ArgumentError
-        env.response.status_code = 400
-        message = ex.message
+        message = "This form has expired. Review it and save again."
+      else
+        begin
+          Protection.save(draft_enabled, (env.params.body["duration_hours"]? || "").to_i)
+          message = "Bot protection settings saved."
+        rescue ex : ArgumentError
+          env.response.status_code = 400
+          message = ex.message
+        end
       end
     end
     policy = Protection.settings
+    form_enabled = env.response.status_code >= 400 && !draft_enabled.nil? ? draft_enabled : policy.enabled
+    form_duration = env.response.status_code >= 400 && {1, 12, 24}.includes?(draft_duration) ? draft_duration : policy.duration_hours
     problems = Protection.readiness
     csrf_token = env.get("csrf_token").as(String)
     env.response.content_type = "text/html; charset=utf-8"

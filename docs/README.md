@@ -1,6 +1,6 @@
 # Invidious application documentation
 
-This handbook documents **this repository's implementation**, including its fork-specific features. It is based on the source tree reviewed on **2026-10-11**. It describes code behavior, not a claim that a particular deployment or every upstream integration has been tested. Companion software and native client implementations live outside this repository; their server contracts are documented here.
+This handbook documents **this repository's implementation**, including its fork-specific features. It is based on the source tree reviewed on **2026-11-01**. It describes code behavior, not a claim that a particular deployment or every upstream integration has been tested. Companion software and native client implementations live outside this repository; their server contracts are documented here.
 
 ## Start here
 
@@ -11,7 +11,7 @@ This handbook documents **this repository's implementation**, including its fork
 | Use search, channels and feeds | [Discovery guide](search-and-feeds.md) |
 | Understand the player, streams and downloads | [Playback guide](playback.md) |
 | Manage accounts, subscriptions and playlists | [Accounts and library](accounts-and-library.md) |
-| Configure appearance and behavior | [Preferences](preferences.md), [Diary styling](theming.md) |
+| Configure appearance and behavior | [Preferences](preferences.md), [Shared web styling](theming.md) |
 | Move user data | [Import and export](data-import-export.md) |
 | Build an API client | [API guide](api.md), [native/mobile API contract](mobile-api.md) |
 | Understand backend design and storage | [Architecture](architecture.md), [database](database.md) |
@@ -29,7 +29,11 @@ The existing detailed guides remain part of this handbook:
 - [SponsorBlock](sponsorblock.md): skipping modes, categories and per-channel overrides.
 - [TV phone approval](tv-pairing.md): contract v1, browser approval, native redemption and deployment prerequisites.
 - [Mobivious API](mobile-api.md): native authentication, safe preference patches, library, history, downloads, chat and classification contracts.
-- [Theming](theming.md): authoring interface and design guidance.
+- [Shared web styling](theming.md): tokens, components, icons and media lifecycle guidance.
+
+## Change plans and historical evidence
+
+The [desktop overhaul plan](uiUXOverhaulPlan/README.md) records the repository implementation and its staged acceptance evidence. The [current interface gallery](../screenshots/README.md) uses synthetic production-template fixtures. The [user handoff](uiUXOverhaulPlan/user-handoff.md) covers building, asset caches, deployment and rollback; no remote deployment was performed. The [documentation archive](archive/README.md) separates dated rollout/release reports from current guidance. The [historical rollout pointer](bot-protection-rollout.md) preserves its old entry point.
 
 ## Complete source references
 
@@ -40,7 +44,7 @@ The existing detailed guides remain part of this handbook:
 | [Configuration defaults](reference/configuration.md) | Top-level settings and nested configuration structures, including instance preference defaults |
 | [Preference fields](reference/preferences.md) | Serialized user settings and legacy AI compatibility fields |
 | [SQL schema](reference/schema.md) | All fresh-install columns, indexes, defaults, keys and constraints |
-| [Migrations](reference/migrations.md) | All 23 versioned database migrations |
+| [Migrations](reference/migrations.md) | All registered versioned database migrations |
 | [Source map](reference/source-map.md) | Application modules, templates, browser assets and project tooling |
 
 The [coverage map](documentation.md#coverage-map) ties each subsystem to its guide and implementation. Source-derived references can be regenerated and checked with the scripts in [tools](tools/). Examples use placeholders and do not contain deployment secrets.

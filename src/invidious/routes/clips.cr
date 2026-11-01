@@ -18,26 +18,37 @@ module Invidious::Routes::Clips
     templated "feeds/clips"
   end
 
-  def new_page(env, error : String? = nil)
+  def new_page(env, error : String? = nil, clip_unconfirmed : Bool = false)
     Authentication.no_store(env)
     return login(env) unless env.get?("user")
     locale = env.get("preferences").as(Preferences).locale
     values = env.request.method == "POST" ? env.params.body : env.params.query
     video_id = values["videoId"]? || ""
     return error_template(400, "Invalid video ID.") unless validate_video_id(video_id)
+    video = nil.as(Video?)
+    source_failure = nil.as(String?)
+    source_status = 400
     begin
       video = get_video(video_id)
-      if message = Invidious::Clips.source_error(video)
-        return error_template(400, message)
-      end
+      source_failure = Invidious::Clips.source_error(video)
     rescue ex : NotFoundException
-      return error_template(404, ex)
+      source_failure = ex.message || "Video unavailable."
+      source_status = 404
     rescue ex
-      return error_template(500, ex)
+      source_failure = "Unable to load the source video."
+      source_status = 500
     end
+    if source_failure
+      return error_template(source_status, source_failure) unless env.request.method == "POST"
+      # A source lookup can fail while returning a rejected POST. Keep its raw
+      # draft without requiring metadata or attempting another creation.
+      error ||= source_failure
+      env.response.status_code = source_status if env.response.status_code < 400
+    end
+    clip_source_available = source_failure.nil? && !video.nil?
     clip_title = values["title"]? || ""
     position = values["startTime"]?.try(&.to_f64?) || 0.0
-    start_time, end_time = Invidious::Clips::Validation.default_range(position, video.length_seconds)
+    start_time, end_time = Invidious::Clips::Validation.default_range(position, video.try(&.length_seconds) || 30)
     hours = end_time >= 3600
     clip_start_value = Invidious::Clips::Validation.timestamp(start_time, hours)
     clip_end_value = Invidious::Clips::Validation.timestamp(end_time, hours)
@@ -53,7 +64,10 @@ module Invidious::Routes::Clips
   def create(env)
     Authentication.no_store(env)
     return login(env) unless user = env.get?("user").try(&.as(User))
-    return error_template(403, "Invalid CSRF token") unless Authentication.valid_session_csrf?(env)
+    unless Authentication.valid_session_csrf?(env)
+      env.response.status_code = 403
+      return new_page(env, I18n.translate(user.preferences.locale, "clips_session_error"))
+    end
     begin
       clip = Invidious::Clips.create(user, env.params.body["videoId"]? || "", env.params.body["title"]? || "",
         Invidious::Clips::Validation.form_time(env.params.body["startTime"]? || ""),
@@ -63,9 +77,13 @@ module Invidious::Routes::Clips
       env.response.status_code = 400
       new_page(env, ex.message)
     rescue ex : NotFoundException
-      error_template(404, ex)
+      env.response.status_code = 404
+      new_page(env, ex.message)
     rescue ex
-      error_template(500, ex)
+      # The insert may have committed before a connection/response failed.
+      # Do not offer an immediate duplicate POST, including without JavaScript.
+      env.response.status_code = 500
+      new_page(env, nil, clip_unconfirmed: true)
     end
   end
 

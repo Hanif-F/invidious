@@ -1,0 +1,243 @@
+{
+  "scope": "Current first-party Crystal/ECR/JS/CSS; vendored minified player libraries excluded. Exact retired-file reference scan plus named branch/class scan. Production template/render, normal/API builds and full regressions supplement dynamic-path coverage.",
+  "removedFileCount": 38,
+  "runtimeFilesScanned": 398,
+  "removedFiles": [
+    {
+      "path": "assets/css/carousel.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/carousel.css",
+      "retainedSha256": "eda6777cc4b1076c4c3ed431ce6982ba3093a27dffec3f567520ee96eb48caa4",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/css/default.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/default.css",
+      "retainedSha256": "3faa6ed3f0269a09483c12d2ccba4901961345b45d7541c98a7fdf715e6d8656",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/css/empty.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/empty.css",
+      "retainedSha256": "17db90c65ab31841080ddfeb62dff61ebde609192ed484807864573d2353e748",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/css/grids-responsive-min.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/grids-responsive-min.css",
+      "retainedSha256": "e2fe4c6fc768aad6174b83ba5a39167825f28bfe9f7b330c00837316910ce605",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/css/ionicons.min.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/ionicons.min.css",
+      "retainedSha256": "5140ee56c3a7bc3647cea348ce790a7831ad599fc1c3d6655bedbac6a28b57b7",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/css/pure-min.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/pure-min.css",
+      "retainedSha256": "7cf5ef32a2637b2756d39e94ec050cfdda792feb11cf4c4f2b4331de9db49e42",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/css/search.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/search.css",
+      "retainedSha256": "65665078b59034c3aeeddb68387ed89441733270c969440ec874f351b10fb962",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/css/ui.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/ui.css",
+      "retainedSha256": "166076c30820017067abedc6c391008d2110ef4e4ed837b328993982935300ba",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/css/video-actions.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/css/video-actions.css",
+      "retainedSha256": "0c67b27c52332b6a483915915d12b28c2108dbd300c2a9ba7b86fa2519335d96",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/fonts/ionicons.eot",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/fonts/ionicons.eot",
+      "retainedSha256": "8751f1f265bbfd16f3d7c9f6c806b94420d7b014e473f1d4775242eb74d02852",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/fonts/ionicons.svg",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/fonts/ionicons.svg",
+      "retainedSha256": "54e03743bd2ed3e52db3390ac9c3c2d511d8246c9f734dee5af5c790e913d4e3",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/fonts/ionicons.ttf",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/fonts/ionicons.ttf",
+      "retainedSha256": "badc25db220635b67adc912f8f6ca3ea1e8cc2b1596a1a56216843c1e7c17302",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/fonts/ionicons.woff",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/fonts/ionicons.woff",
+      "retainedSha256": "00c2b506071e799ac6c44ddd2b7eba91d84f09bdcff9562ae92c0643d7666025",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/fonts/ionicons.woff2",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/fonts/ionicons.woff2",
+      "retainedSha256": "2d02d165cb720aec2fde78a93113a459729e0503951353f719076bc5b4a7a845",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/comments.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/comments.js",
+      "retainedSha256": "46ca5eaa61b359c1b4e6dcd92ccb1932c3b616bdbf8fc9b174a61d125956525e",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/community.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/community.js",
+      "retainedSha256": "274e6569ad7c5eff80bdc4ca443f687d16d6208ca2f66d4ac1ecf4e402e358dc",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/interface.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/interface.js",
+      "retainedSha256": "1500cd8ea0bf5143b012ee78d526dd329f356c331f9a6c442812307ab2288602",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/pagination.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/pagination.js",
+      "retainedSha256": "53ec4830e59fad1881c44df63387557ad6649800d7ebfcfad588dc6b8407bb99",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/playlist_widget.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/playlist_widget.js",
+      "retainedSha256": "33d01139e8d4cfa55cf06c664eb59e5e2c57c058393d74eac665425aabf364fd",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/post.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/post.js",
+      "retainedSha256": "3342380174926d20e297a30a4a73f60dafee66cf98745125a8c0ee53be0ca201",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/preferences.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/preferences.js",
+      "retainedSha256": "c1d3171df3e9d62601510b1520c297cbba32153a07e1dc36e5322ea3d63c6b0d",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/subscribe_widget.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/subscribe_widget.js",
+      "retainedSha256": "3a01879c98df1bd848921b6aa715ee6d5032c951a32b44c6f1c4e6178535f9fe",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/js/watched_widget.js",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/js/watched_widget.js",
+      "retainedSha256": "badf6628fe4fbf2a61a9849c7a0d6172759aed29f9c165cb30eab316be1d3d31",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/themes/diary/Dudu_Calligraphy.ttf",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/themes/diary/Dudu_Calligraphy.ttf",
+      "retainedSha256": "df295b0c39265a64f320b1d0d3396aebeb25fbb3f5e20be7ae893ee7657a0f4c",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/themes/diary/Helvetica-Punk.ttf",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/themes/diary/Helvetica-Punk.ttf",
+      "retainedSha256": "f1647c4e606436072efeaa5601ced2ba8fd210829dc2df7f501a95269553c59d",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/themes/diary/doodles.svg",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/themes/diary/doodles.svg",
+      "retainedSha256": "8e1fcc07e21817c9431843be31589eca7c52f19bb5968f1145eb6f06835c7b5a",
+      "runtimeReferences": []
+    },
+    {
+      "path": "assets/themes/diary/theme.css",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/assets/themes/diary/theme.css",
+      "retainedSha256": "2ffbcbc7ad97fdb3c5df5fa94549b620bd674a51793b66505bd8606a5d56dea7",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/components/ai-filter-preferences.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/components/ai-filter-preferences.ecr",
+      "retainedSha256": "a30b6f70421add23fd02738647470049fe7dce71c2882a3834c34ab3bac94e1a",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/components/clip_dialog.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/components/clip_dialog.ecr",
+      "retainedSha256": "88e258ff8b18a6a56e3e5f3075a924f5d2e8bb931dd4bac19154bc47bf8a9640",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/components/feed_menu.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/components/feed_menu.ecr",
+      "retainedSha256": "2ccb3b2b6605b2b0d6925d30dd69f1f9c4a0dd6e59f99a9cff0f1f0a2008aeeb",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/components/navigation.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/components/navigation.ecr",
+      "retainedSha256": "dc9883caeac00643eea03662938503f43e5242b0e62b2b0c37d8d4818e72c220",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/components/search_box.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/components/search_box.ecr",
+      "retainedSha256": "b0d83dd849a206fecfa6cd922a4b8f538ce04da12d9643724084c7d231222f85",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/components/subscribe_widget.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/components/subscribe_widget.ecr",
+      "retainedSha256": "9599ffe467080139c47dbfa1c2259168768c752bb449deb779ef3a319ad8832d",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/components/video-context-buttons.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/components/video-context-buttons.ecr",
+      "retainedSha256": "3a86a2546849fa8e2fed78222afb7bb7983b0815fbd61a34a781ee02dadff2d9",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/overhaul/browse.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/overhaul/browse.ecr",
+      "retainedSha256": "9d93b8c878adfab88ed6984d3de7c06b30b5b97b991bb3dff87f48d62a5b5d33",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/overhaul/playlist.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/overhaul/playlist.ecr",
+      "retainedSha256": "c66ba98d994ceb503227519a2312e1ee07296ab18fa14aa2ea7ffb259097b482",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/user/change_password.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/user/change_password.ecr",
+      "retainedSha256": "b00f885c71722580a895eead78b08ccdc898b1f2d131aaa8e53da1c75e73fa52",
+      "runtimeReferences": []
+    },
+    {
+      "path": "src/invidious/views/user/preferences.ecr",
+      "retainedSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/src/invidious/views/user/preferences.ecr",
+      "retainedSha256": "6903f117cf813c5e523e14c157b2e85841520e7eba407c1f3a6eba9670914f80",
+      "runtimeReferences": []
+    }
+  ],
+  "retiredBranchReferences": [],
+  "retiredFoundations": [],
+  "retainedCapabilities": [
+    "Video.js/plugins, annotations, VR, captions, progressive fallback and licensing",
+    "Native/legacy preference fields and ordinary/native API HTML compatibility",
+    "POST-only legacy preference and account endpoints",
+    "Intentional immutable historical evidence, asset baselines and negative regression assertions"
+  ]
+}

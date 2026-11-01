@@ -1,0 +1,286 @@
+TAP version 13
+# Subtest: chromium: AI channel filter controls, status and empty results work without JavaScript
+not ok 1 - chromium: AI channel filter controls, status and empty results work without JavaScript
+  ---
+  duration_ms: 2334.401995
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:867:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.textContent: Error: strict mode violation: locator('[role=status]') resolved to 3 elements:
+        1) <p class="h-box" role="status">…</p> aka getByText('The AI channel filter hid all')
+        2) <span role="status" data-browse-status=""></span> aka locator('.browse-controls > span')
+        3) <span role="status"></span> aka locator('#ui-notice > span')
+    
+    Call log:
+    [2m  - waiting for locator('[role=status]')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:950:65)
+  ...
+# Subtest: chromium: cached history titles and compact desktop playlist library
+not ok 2 - chromium: cached history titles and compact desktop playlist library
+  ---
+  duration_ms: 10318.65721
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1395:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.media-item').first().locator('[data-collection-action=remove] button')[22m
+    [2m    - locator resolved to <button type="submit">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    19 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1414:78)
+  ...
+# Subtest: chromium: queue selects a repeated occurrence, and keeps recommendations separate
+ok 3 - chromium: queue selects a repeated occurrence, and keeps recommendations separate
+  ---
+  duration_ms: 432.339346
+  type: 'test'
+  ...
+# Subtest: chromium: queue failure is retryable and does not enable recommendation autoplay
+ok 4 - chromium: queue failure is retryable and does not enable recommendation autoplay
+  ---
+  duration_ms: 565.962179
+  type: 'test'
+  ...
+# Subtest: chromium: missing, empty and ended queues never fall back to recommendation autoplay
+ok 5 - chromium: missing, empty and ended queues never fall back to recommendation autoplay
+  ---
+  duration_ms: 726.898834
+  type: 'test'
+  ...
+# Subtest: chromium: desktop queue remains visible, scrollable and keyboard operable after viewport changes
+not ok 6 - chromium: desktop queue remains visible, scrollable and keyboard operable after viewport changes
+  ---
+  duration_ms: 178.324916
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1554:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(scroll>0)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1560:88)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: firefox: AI channel filter controls, status and empty results work without JavaScript
+not ok 7 - firefox: AI channel filter controls, status and empty results work without JavaScript
+  ---
+  duration_ms: 4102.490387
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:867:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.textContent: Error: strict mode violation: locator('[role=status]') resolved to 3 elements:
+        1) <p class="h-box" role="status">…</p> aka getByText('The AI channel filter hid all')
+        2) <span role="status" data-browse-status=""></span> aka locator('.browse-controls > span')
+        ...
+    
+    Call log:
+    [2m  - waiting for locator('[role=status]')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:950:65)
+  ...
+# Subtest: firefox: cached history titles and compact desktop playlist library
+not ok 8 - firefox: cached history titles and compact desktop playlist library
+  ---
+  duration_ms: 12111.808753
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1395:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.boundingBox: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.media-item .thumbnail img').first()[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1427:32)
+  ...
+# Subtest: firefox: queue selects a repeated occurrence, and keeps recommendations separate
+ok 9 - firefox: queue selects a repeated occurrence, and keeps recommendations separate
+  ---
+  duration_ms: 810.485106
+  type: 'test'
+  ...
+# Subtest: firefox: queue failure is retryable and does not enable recommendation autoplay
+ok 10 - firefox: queue failure is retryable and does not enable recommendation autoplay
+  ---
+  duration_ms: 978.506016
+  type: 'test'
+  ...
+# Subtest: firefox: missing, empty and ended queues never fall back to recommendation autoplay
+ok 11 - firefox: missing, empty and ended queues never fall back to recommendation autoplay
+  ---
+  duration_ms: 1229.848919
+  type: 'test'
+  ...
+# Subtest: firefox: desktop queue remains visible, scrollable and keyboard operable after viewport changes
+not ok 12 - firefox: desktop queue remains visible, scrollable and keyboard operable after viewport changes
+  ---
+  duration_ms: 404.870711
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1554:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(scroll>0)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1560:88)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: chromium: owned queue removes a specific occurrence and keeps playback running
+not ok 13 - chromium: owned queue removes a specific occurrence and keeps playback running
+  ---
+  duration_ms: 10196.43764
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1941:5'
+  failureType: 'testCodeFailure'
+  error: 'page.waitForFunction: Timeout 10000ms exceeded.'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1969:24)
+  ...
+# Subtest: firefox: owned queue removes a specific occurrence and keeps playback running
+not ok 14 - firefox: owned queue removes a specific occurrence and keeps playback running
+  ---
+  duration_ms: 10585.808198
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1941:5'
+  failureType: 'testCodeFailure'
+  error: 'page.waitForFunction: Timeout 10000ms exceeded.'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1969:24)
+  ...
+# Subtest: chromium: DeArrow targets stay fixed across title lengths and page layouts
+not ok 15 - chromium: DeArrow targets stay fixed across title lengths and page layouts
+  ---
+  duration_ms: 11432.475531
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:2184:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.scrollIntoViewIfNeeded: Timeout 9997.362000000008ms exceeded.
+    Call log:
+    [2m  - attempting scroll into view action[22m
+    [2m    2 × waiting for element to be stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying scroll into view action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying scroll into view action[22m
+    [2m      - waiting 100ms[22m
+    [2m    19 × waiting for element to be stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying scroll into view action[22m
+    [2m       - waiting 500ms[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:2193:29)
+  ...
+# Subtest: chromium: DeArrow preference controls submit without JavaScript
+ok 16 - chromium: DeArrow preference controls submit without JavaScript
+  ---
+  duration_ms: 191.229906
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow targets stay fixed across title lengths and page layouts
+not ok 17 - firefox: DeArrow targets stay fixed across title lengths and page layouts
+  ---
+  duration_ms: 12228.573557
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:2184:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.scrollIntoViewIfNeeded: Timeout 9992.475999999995ms exceeded.
+    Call log:
+    [2m  - attempting scroll into view action[22m
+    [2m    2 × waiting for element to be stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying scroll into view action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying scroll into view action[22m
+    [2m      - waiting 100ms[22m
+    [2m    20 × waiting for element to be stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying scroll into view action[22m
+    [2m       - waiting 500ms[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:2193:29)
+  ...
+# Subtest: firefox: DeArrow preference controls submit without JavaScript
+ok 18 - firefox: DeArrow preference controls submit without JavaScript
+  ---
+  duration_ms: 485.974344
+  type: 'test'
+  ...
+# Subtest: chromium: mobile quality and track settings follow available options
+ok 19 - chromium: mobile quality and track settings follow available options
+  ---
+  duration_ms: 1118.847563
+  type: 'test'
+  ...
+# Subtest: firefox: mobile quality and track settings follow available options
+ok 20 - firefox: mobile quality and track settings follow available options
+  ---
+  duration_ms: 1781.202297
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 10
+# fail 10
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 82915.84619

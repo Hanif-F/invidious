@@ -1,18 +1,17 @@
-<% content_for "header" do %><title>Approve TV access - Invidious</title><% end %>
-<div class="pure-g"><div class="pure-u-1 pure-u-lg-1-5"></div>
-<div class="pure-u-1 pure-u-lg-3-5"><div class="h-box">
-  <h1>Approve TV access</h1>
-  <p>Signed in as <strong><%= HTML.escape(user.username) %></strong>.</p>
-  <% if message %><p role="status"><%= HTML.escape(message) %></p><% end %>
+<% content_for "header" do %><title><%= I18n.translate(locale, "ux_tv_heading") %> - Invidious</title><% end %>
+<section class="reading-page auth-page" aria-labelledby="tv-heading">
+  <h1 id="tv-heading"><%= I18n.translate(locale, "ux_tv_heading") %></h1>
+  <p><%= I18n.translate(locale, "ux_tv_account") %> <strong><%= HTML.escape(user.username) %></strong></p>
+  <% if message %><p class="form-feedback" role="<%= finished ? "status" : "alert" %>"><%= HTML.escape(I18n.translate(locale, message)) %></p><% end %>
   <% unless finished %>
-    <p>Tividious will receive a native session for your account, allowing it to read and change your subscriptions, history, playlists, preferences, clips and account settings.</p>
-    <p>Only approve a code currently shown on a TV you are signing into. Compare the code below with your TV. You can revoke this session later from your account session manager.</p>
-    <form class="pure-form pure-form-stacked" action="/tv" method="post">
+    <p><%= I18n.translate(locale, "ux_tv_permissions") %></p>
+    <p class="muted"><%= I18n.translate(locale, "ux_tv_compare") %></p>
+    <form class="stacked-form" action="/tv" method="post" data-account-form>
       <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-      <label for="user_code">Code shown on your TV</label>
-      <input id="user_code" name="user_code" value="<%= HTML.escape(user_code) %>" maxlength="9" minlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
-      <button class="pure-button pure-button-primary" name="decision" value="approve" type="submit">Approve TV access</button>
-      <button class="pure-button" name="decision" value="deny" type="submit">Deny</button>
+      <label for="user_code"><%= I18n.translate(locale, "ux_tv_code") %></label>
+      <input id="user_code" class="pairing-code" name="user_code" value="<%= HTML.escape(user_code) %>" maxlength="9" minlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+      <div class="toolbar"><button class="button button-primary" name="decision" value="approve" type="submit"><%= I18n.translate(locale, "ux_tv_heading") %></button><button class="button" name="decision" value="deny" type="submit"><%= I18n.translate(locale, "ux_tv_deny") %></button></div>
     </form>
   <% end %>
-</div></div></div>
+  <nav class="toolbar auth-alternative"><a class="button" href="/token_manager"><%= I18n.translate(locale, "overhaul_sessions") %></a><a class="button" href="/account"><%= I18n.translate(locale, "Account settings") %></a></nav>
+</section>

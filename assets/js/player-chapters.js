@@ -1,9 +1,10 @@
 'use strict';
 (function () {
-    if (!player.el) return;
+    if (!window.player || typeof player.el !== 'function' || player.invidiousChaptersStarted || player.isDisposed()) return;
     var root = player.el(), bar = root.querySelector('.vjs-progress-holder');
     var durationDisplay = root.querySelector('.vjs-control-bar .vjs-duration');
     if (!bar || !durationDisplay) return;
+    player.invidiousChaptersStarted = true;
     var progress = bar.closest('.vjs-progress-control') || bar;
     var chapters = [], segments = [], labels = player_data.sponsorblock.labels;
     function element(parent, name) {

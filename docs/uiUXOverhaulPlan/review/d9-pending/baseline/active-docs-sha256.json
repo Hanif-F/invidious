@@ -1,0 +1,212 @@
+[
+  {
+    "path": ".github/workflows/ci.yml",
+    "sha256": "83196f92625bbd9ba4a8e9d545c654330ef0c4ecf43be862e1f67083b1820118",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/.github/workflows/ci.yml.txt"
+  },
+  {
+    "path": ".github/workflows/frontend.yml",
+    "sha256": "4c111ecc2fc3869ccc1e517c8ce1b5b7bc828aa280d1e5d95028026d9a1f7eaa",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/.github/workflows/frontend.yml.txt"
+  },
+  {
+    "path": "README.md",
+    "sha256": "58f71c59e5de2aa48447728a70f8673a709c4e25d015863a23208bd8249fcf81",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/README.md.txt"
+  },
+  {
+    "path": "docs/README.md",
+    "sha256": "af4af013ebfb88e839cc85c944d979f17a6ab5c4e21795a24c7d67539e01eb31",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/README.md.txt"
+  },
+  {
+    "path": "docs/accounts-and-library.md",
+    "sha256": "7c265a5a9f6c419ca94c61ddd3bfd2a866a6e395d79d94faae60b2093b04f590",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/accounts-and-library.md.txt"
+  },
+  {
+    "path": "docs/ai-channel-filter.md",
+    "sha256": "879b484a0e8c3874253745e9ae3dde57a8860c36d769e4f0c46d2e45cd723a4f",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/ai-channel-filter.md.txt"
+  },
+  {
+    "path": "docs/api.md",
+    "sha256": "512ff49d4e4f9b8e92210e94e22a8cf7e09949a296695de064eac1b1ad49f7ce",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/api.md.txt"
+  },
+  {
+    "path": "docs/architecture.md",
+    "sha256": "dba77fb1fb5465a9ce9f0c4dc6f68550ccdb24ad5b37f7661c24cf7ccc7d81bf",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/architecture.md.txt"
+  },
+  {
+    "path": "docs/bot-protection-rollout.md",
+    "sha256": "7a07d6faad41373d8179ddc2ec1e80f80755e82109a00810f8b1b6772e5b2c22",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/bot-protection-rollout.md.txt"
+  },
+  {
+    "path": "docs/bot-protection.md",
+    "sha256": "7175f18e0a82aa7aae5e15cbf4074790c2774f48deb3c1a23563d355c487eeea",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/bot-protection.md.txt"
+  },
+  {
+    "path": "docs/channel-spoilers.md",
+    "sha256": "af9fd9df8a9f523ffcea3a0889dd05efbe812e783329f8439bbf3891c73b18a7",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/channel-spoilers.md.txt"
+  },
+  {
+    "path": "docs/configuration.md",
+    "sha256": "8818b428bffb89948d05b24d73ecff58e046e3e2260057a70a6190fb00e9bed2",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/configuration.md.txt"
+  },
+  {
+    "path": "docs/data-import-export.md",
+    "sha256": "8fe58721b0e0cbe84de13175d4f3fe5d0c2de86daca706005a841907a2636c02",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/data-import-export.md.txt"
+  },
+  {
+    "path": "docs/database.md",
+    "sha256": "fce37af31354068789a6792c0c7eafa2fbe746f236dac00110d52f8e15370bbb",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/database.md.txt"
+  },
+  {
+    "path": "docs/dearrow-contributions.md",
+    "sha256": "b84a5a2d1f919019709b7c60489a28f7a67c33ffdbcdbb8f133fc68882e93e53",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/dearrow-contributions.md.txt"
+  },
+  {
+    "path": "docs/development.md",
+    "sha256": "9e142941c84e70ca45d1b4710aaa4fda04d9dbca007e7a1cfd0b9ceb6be6252e",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/development.md.txt"
+  },
+  {
+    "path": "docs/documentation.md",
+    "sha256": "034f82814f4018faf36d5df442c9705ab05b8867d1123182275a0a6f61bae719",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/documentation.md.txt"
+  },
+  {
+    "path": "docs/features.md",
+    "sha256": "e5c8f6fbb965814438214dff98f13b6fe9552effee37686f0834bfe1194bfd70",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/features.md.txt"
+  },
+  {
+    "path": "docs/frontend.md",
+    "sha256": "b850d8cfe52078d0a1c0ff87868b640931ab3ac23b7a969446fc1ad189590537",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/frontend.md.txt"
+  },
+  {
+    "path": "docs/getting-started.md",
+    "sha256": "65ad27366c0faa20333a854a16bf3e31f07b4ac8b1f325a3310f26ca77507167",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/getting-started.md.txt"
+  },
+  {
+    "path": "docs/integrations.md",
+    "sha256": "3b2a1d0d2aad69af5bfe75c82c3c39d2b4e834b78245e26d059af9a6a78b3404",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/integrations.md.txt"
+  },
+  {
+    "path": "docs/mobile-api.md",
+    "sha256": "8e9ae54c795ffd1cde87477301774073877e792ae5b0b5c36d8ed29283e5d8c9",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/mobile-api.md.txt"
+  },
+  {
+    "path": "docs/native-clips.md",
+    "sha256": "c59888d9ed36c5f42274cfde7f257321720e41f2e476a48e9d3f9e11b66c2fe1",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/native-clips.md.txt"
+  },
+  {
+    "path": "docs/operations.md",
+    "sha256": "b4f4f58f4d8d5c1edd50abd2ea731bbdffb512baa171067a8d0ca5cb7a0e4288",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/operations.md.txt"
+  },
+  {
+    "path": "docs/overview.md",
+    "sha256": "e9255c0f3802ff700c5bdd77017bdfcbe0ecfa7ab7941a8ba6f1935331dd6a1f",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/overview.md.txt"
+  },
+  {
+    "path": "docs/playback.md",
+    "sha256": "fd15dff5ae0b903ced082abd26c3a7cb129a6489227a9cc2e3f7ee1f9bf94b3c",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/playback.md.txt"
+  },
+  {
+    "path": "docs/preferences.md",
+    "sha256": "5b9a8606db711f69d851cc92d6f44607f9047200e470585bb78ea4042eefe098",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/preferences.md.txt"
+  },
+  {
+    "path": "docs/search-and-feeds.md",
+    "sha256": "36bb2ae54530018af61d3ca34b98359e6da542b8ca389810b60d20f80ef8cbbc",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/search-and-feeds.md.txt"
+  },
+  {
+    "path": "docs/security.md",
+    "sha256": "7d1ff407bbacde1d20fe1ef27a89bea3add6dddb16fb282ed0997fa801defe11",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/security.md.txt"
+  },
+  {
+    "path": "docs/sponsorblock.md",
+    "sha256": "1e13b58617fc8c8ba9669e11e613d2a2d2309a628825bb4312a6395a72e208a2",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/sponsorblock.md.txt"
+  },
+  {
+    "path": "docs/theming.md",
+    "sha256": "a7c5ed137695440adb9fcd722ba5aa228d9135b5bf91a611b1630191c38696ff",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/theming.md.txt"
+  },
+  {
+    "path": "docs/troubleshooting.md",
+    "sha256": "660066ba8da40046ff7b8140122363310d82e996a408825c6d7333a08269e582",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/troubleshooting.md.txt"
+  },
+  {
+    "path": "docs/tv-pairing.md",
+    "sha256": "1b83a016a9412b82aa9a102916eb09cd32e3a13640bbdb9ad7ea9a498ac46c75",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/tv-pairing.md.txt"
+  },
+  {
+    "path": "docs/uiUXOverhaulPlan/README.md",
+    "sha256": "3fa2f7e3244fc400d1c28a3568dee693a67ef2589da3d042416c62d5ca55a0b7",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/uiUXOverhaulPlan/README.md.txt"
+  },
+  {
+    "path": "docs/uiUXOverhaulPlan/coverage.md",
+    "sha256": "a596af10387644da11bebe06991ca8a0aa32ab25c045f9b41d8f8478077e8015",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/uiUXOverhaulPlan/coverage.md.txt"
+  },
+  {
+    "path": "docs/uiUXOverhaulPlan/design-system.md",
+    "sha256": "760a85a8f7dc6259bb388a36df7a80a1caf14b896132369f2bde6a7fd56afc63",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/uiUXOverhaulPlan/design-system.md.txt"
+  },
+  {
+    "path": "docs/uiUXOverhaulPlan/settings-ownership.md",
+    "sha256": "d88472f82987307f2fc9322d86bbc999ff0580b257201dd4ab499553695f9f14",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/uiUXOverhaulPlan/settings-ownership.md.txt"
+  },
+  {
+    "path": "docs/uiUXOverhaulPlan/tasks.md",
+    "sha256": "6c6ed9d5b7a7125250d93ededde6da174bb343d28f951212b76e184aa93c3cf5",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/uiUXOverhaulPlan/tasks.md.txt"
+  },
+  {
+    "path": "docs/uiUXOverhaulPlan/verification.md",
+    "sha256": "3457f5edbe1b7dbdea8215820d6152a547100a63d08349a0e9c6df1f58daa423",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/docs/uiUXOverhaulPlan/verification.md.txt"
+  },
+  {
+    "path": "screenshots/README.md",
+    "sha256": "a748374264d2238bcbbb6ee8ff2e5645091bb00432c51c97fdbd9937c99f03f7",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/screenshots/README.md.txt"
+  },
+  {
+    "path": "tests/database/README.md",
+    "sha256": "eb82c5cfecf396309360693339642013a887608daef541c98a488381b613ce31",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/tests/database/README.md.txt"
+  },
+  {
+    "path": "tests/frontend/README.md",
+    "sha256": "794cdb1aca9029545d65f9f432704610c8530174b5add185fafab8ac0020a271",
+    "snapshot": "docs/uiUXOverhaulPlan/review/d9-pending/baseline/active-docs/tests/frontend/README.md.txt"
+  }
+]

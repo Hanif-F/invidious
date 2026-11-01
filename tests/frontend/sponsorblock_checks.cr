@@ -51,7 +51,9 @@ def check_sponsorblock_channels
   env = preferences_post_env("sponsorblock_enabled=on")
   env.set "preferences", prefs
   env.set "user", user
+  seed_saved_preferences(env, prefs)
   Invidious::Routes::PreferencesRoute.update(env)
+  user.preferences = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
   raise "Global form lost overrides" unless user.preferences.sponsorblock_channel_overrides.has_key?(id)
   exported = Invidious::User::Export.to_invidious(user)
   Invidious::User::Import.from_invidious(user, {preferences: JSON.parse(exported)["preferences"]}.to_json)
@@ -59,7 +61,7 @@ def check_sponsorblock_channels
   path = Invidious::Routes::SponsorBlockPreferences::PATH
   guest = fixture_env(path)
   html = Invidious::Routes::SponsorBlockPreferences.show(guest)
-  raise "Guest browser settings missing" unless html.includes?("sponsorblock-preferences.js") && html.includes?("signed-out use") && html.includes?("<noscript>")
+  raise "Guest browser settings missing" unless html.includes?("sponsorblock-preferences.js") && html.includes?("signed-out use") && html.includes?("data-sb-browser-required")
   File.write("tests/frontend/.generated/sponsorblock-channels-guest.html", html)
   page = signed_in_env("#{path}?channel=#{id}")
   page.set "preferences", prefs
@@ -98,6 +100,7 @@ def check_sponsorblock_channels
     post.set "sid", "fixture-session"
     Invidious::Routes::SponsorBlockPreferences.update(post)
     raise "Save failed" unless post.response.status_code == 302
+    user.preferences = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
     if fields.starts_with?("enabled=true")
       raise "Override not saved" unless user.preferences.sponsorblock_channel_overrides[id].modes["sponsor"] == "marker"
     else
@@ -105,6 +108,7 @@ def check_sponsorblock_channels
     end
   end
   user.preferences.sponsorblock_channel_overrides[id] = Invidious::SponsorBlock::ChannelOverride.new("Channel", false, {} of String => String)
+  PG_DB.exec("UPDATE users SET preferences = ? WHERE email = ?", user.preferences.to_json, user.email)
   {false, true}.each do |valid|
     body = "channel=#{id}&action=reset"
     body += "&csrf_token=#{URI.encode_www_form(token)}" if valid
@@ -113,6 +117,7 @@ def check_sponsorblock_channels
     post.set "preferences", user.preferences
     post.set "sid", "fixture-session"
     Invidious::Routes::SponsorBlockPreferences.update(post)
+    user.preferences = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
     raise "CSRF or reset failure" unless valid ? user.preferences.sponsorblock_channel_overrides.empty? : post.response.status_code == 403
   end
 end
@@ -125,4 +130,40 @@ def guest_sponsorblock_editor(channel_id : String)
   entry = Invidious::SponsorBlock::ChannelOverride.new("<Channel>", nil, {} of String => String)
   csrf_token = ""
   templated "user/sponsorblock_channels"
+end
+
+def write_sponsorblock_editor_fixtures(output)
+  id = "UC" + "a" * 22
+  {"light", "dark"}.each do |mode|
+    {"invalid", "uncertain", "stale", "missing"}.each do |kind|
+      env = signed_in_env(Invidious::Routes::SponsorBlockPreferences::PATH)
+      prefs = env.get("preferences").as(Preferences)
+      prefs.dark_mode = mode
+      prefs.sponsorblock_channel_overrides[id] = Invidious::SponsorBlock::ChannelOverride.new("<Channel> مقطع", false, {"sponsor" => "manual"})
+      user = env.get("user").as(User)
+      user.preferences = prefs
+      env.set "user", user
+      env.set "preferences", prefs
+      env.set "sid", "fixture-session"
+      token = generate_response("fixture-session", {"POST:preferences/sponsorblock/channels"}, HMAC_KEY)
+      fields = {"channel" => id, "enabled" => "true", "mode_sponsor" => "marker", "mode_intro" => "manual<draft>&", "csrf_token" => token, "browser_profile" => Invidious::BrowserProfiles.render_scope(env), "action" => "save"}
+      fields["browser_profile"] = "earlier-profile" if kind == "stale"
+      if kind == "missing"
+        fields.delete("enabled")
+        fields.delete("mode_sponsor")
+      end
+      request = HTTP::Request.new("POST", Invidious::Routes::SponsorBlockPreferences::PATH, HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}, URI::Params.encode(fields))
+      post = HTTP::Server::Context.new(request, HTTP::Server::Response.new(IO::Memory.new))
+      %w(user preferences sid csrf_token).each { |key| post.set key, env.get(key) }
+      html = if kind == "uncertain"
+               post.set "sb_error", I18n.translate(prefs.locale, "overhaul_channel_unconfirmed")
+               post.set "sb_uncertain", true
+               post.set "sb_draft", URI::Params.encode(fields)
+               Invidious::Routes::SponsorBlockPreferences.show(post)
+             else
+               Invidious::Routes::SponsorBlockPreferences.update(post)
+             end
+      File.write("#{output}/d6-sb-#{kind}-#{mode}.html", html)
+    end
+  end
 end

@@ -2,6 +2,7 @@
 
 module Invidious::Routes::Watch
   def self.handle(env)
+    return enhancements(env) if env.params.query["format"]? == "enhancements"
     preferences = env.get("preferences").as(Preferences)
     locale = preferences.locale
     region = env.params.query["region"]?
@@ -10,14 +11,18 @@ module Invidious::Routes::Watch
     return error_template(404, "Clip not found.") if native_clip_id && !native_clip
     preview_clip = env.params.query["clip_preview"]? == "1"
     if native_clip
-      %w[t start end time_continue list index continuation raw clip_preview].each { |key| env.params.query.delete_all(key) }
+      %w[t start end time_continue list index occurrence continuation raw clip_preview].each { |key| env.params.query.delete_all(key) }
       env.params.query["v"] = native_clip.video_id
       env.set "native_clip_title", native_clip.title
     end
 
-    if env.params.query.to_s.includes?("%20") || env.params.query.to_s.includes?("+")
-      url = "#{native_clip ? native_clip.permalink : "/watch"}?" + env.params.query.to_s.gsub("%20", "").delete("+")
-      return env.redirect url
+    # Normalize accidental spaces in the video ID without rewriting opaque
+    # comment/playlist cursors or any other query value.
+    if requested_id = env.params.query["v"]?
+      if requested_id.includes?(' ')
+        env.params.query["v"] = requested_id.delete(' ')
+        return env.redirect "#{native_clip ? native_clip.permalink : "/watch"}?#{env.params.query}"
+      end
     end
 
     if env.params.query["v"]?
@@ -35,7 +40,7 @@ module Invidious::Routes::Watch
     end
 
     plid = env.params.query["list"]?.try &.gsub(/[^a-zA-Z0-9_-]/, "")
-    continuation = process_continuation(env.params.query, plid, id)
+    continuation = Invidious::Frontend::WatchPage.playlist_cursor(env, plid, id)
 
     nojs = env.params.query["nojs"]?
 
@@ -89,9 +94,7 @@ module Invidious::Routes::Watch
       continuation = nil
     end
 
-    related_videos = Frontend::BlockedChannels.recommendations(video.related_videos, Frontend::BlockedChannels.ids(env))
-    related_videos = Frontend::AiChannels.recommendations(related_videos, env)
-    related_videos = Frontend::MemberVideos.recommendations(related_videos, env.get("preferences").as(Preferences).show_member_videos)
+    related_videos = Frontend::WatchEnhancements.recommendations(env, video)
 
     if preferences.annotations_subscribed &&
        subscriptions.includes?(video.ucid) &&
@@ -123,12 +126,19 @@ module Invidious::Routes::Watch
           source = preferences.comments[1]
         end
 
+        requested_source = env.params.query["comments_source"]?
+        source = requested_source if {"youtube", "reddit"}.includes?(requested_source) && preferences.comments.any? { |item| {"youtube", "reddit"}.includes?(item) }
+        comment_cursor = env.params.query["comments_continuation"]?
+        comment_sort = env.params.query["comments_sort"]? || (source == "reddit" ? "confidence" : "top")
+        allowed_sorts = source == "reddit" ? {"confidence", "top", "new", "controversial", "old"} : {"top", "new"}
+        comment_sort = allowed_sorts.first unless allowed_sorts.includes?(comment_sort)
+
         if source == "youtube"
           begin
-            comment_html = JSON.parse(Comments.fetch_youtube(id, nil, "html", locale, preferences.thin_mode, region))["contentHtml"]
+            comment_html = JSON.parse(Comments.fetch_youtube(id, comment_cursor, "html", locale, preferences.thin_mode, region, sort_by: source == "youtube" ? comment_sort : "top"))["contentHtml"]
           rescue
             if preferences.comments[1] == "reddit"
-              comments, reddit_thread = Comments.fetch_reddit(id)
+              comments, reddit_thread = Comments.fetch_reddit(id, sort_by: source == "reddit" ? comment_sort : "confidence")
               comment_html = Frontend::Comments.template_reddit(comments, locale)
 
               comment_html = Comments.fill_links(comment_html, "https", "www.reddit.com")
@@ -137,14 +147,14 @@ module Invidious::Routes::Watch
           end
         elsif source == "reddit"
           begin
-            comments, reddit_thread = Comments.fetch_reddit(id)
+            comments, reddit_thread = Comments.fetch_reddit(id, sort_by: source == "reddit" ? comment_sort : "confidence")
             comment_html = Frontend::Comments.template_reddit(comments, locale)
 
             comment_html = Comments.fill_links(comment_html, "https", "www.reddit.com")
             comment_html = Comments.replace_links(comment_html)
           rescue
             if preferences.comments[1] == "youtube"
-              comment_html = JSON.parse(Comments.fetch_youtube(id, nil, "html", locale, preferences.thin_mode, region))["contentHtml"]
+              comment_html = JSON.parse(Comments.fetch_youtube(id, comment_cursor, "html", locale, preferences.thin_mode, region, sort_by: source == "youtube" ? comment_sort : "top"))["contentHtml"]
             end
           end
         end
@@ -153,6 +163,9 @@ module Invidious::Routes::Watch
       end
 
       comment_html ||= ""
+      if native_clip
+        comment_html = comment_html.to_s.gsub(%(href="/watch?v=#{id}&amp;nojs=1&amp;), %(href="#{native_clip.permalink}?nojs=1&amp;))
+      end
     end
 
     fmt_stream = video.fmt_stream
@@ -239,6 +252,33 @@ module Invidious::Routes::Watch
     end
 
     templated "watch"
+  end
+
+  # Optional read for the existing watch document. A cache miss is unavailable,
+  # never a hidden video/stream fetch or a second watch/history mutation.
+  def self.enhancements(env)
+    Authentication.no_store(env)
+    env.response.content_type = "application/json"
+    id = env.params.query["v"]? || ""
+    ids = (env.params.query["ids"]? || "").split(',', remove_empty: true).uniq
+    channels = (env.params.query["channels"]? || "").split(',', remove_empty: true).uniq
+    return error_json(400, "Invalid watch presentation request.") unless validate_video_id(id) && ids.size <= 200 && channels.size <= 200 &&
+                                                                         ids.all? { |value| validate_video_id(value) } && channels.all?(&.matches?(/\AUC[A-Za-z0-9_-]{22}\z/))
+    user = env.get?("user").try(&.as(User))
+    preferences = PreferencesRoute.runtime_preferences(env)
+    blocked = user ? Database::BlockedChannels.ids(user.email) : [] of String
+    fingerprint = Frontend::Misc.browse_fingerprint(preferences, blocked: blocked)
+    return error_json(409, "Enhancement settings changed. Check them again.") unless env.params.query["owner"]? == fingerprint
+    env.set "preferences", preferences
+    env.set "blocked_channels", blocked
+    video = Database::Videos.select(id)
+    return error_json(503, "Cached watch information is unavailable. Try again.") unless video
+    result = Frontend::WatchEnhancements.projection(env, video, ids, channels, env.params.query["listen"]? == "1")
+    result.merge({profile: Invidious::BrowserProfiles.render_scope(env), browseFingerprint: fingerprint}).to_json
+  rescue DB::NoResultsError
+    error_json(403, "This account is no longer available. Reload to sign in again.")
+  rescue
+    error_json(503, "Watch information could not be checked. Try again.")
   end
 
   def self.redirect(env)

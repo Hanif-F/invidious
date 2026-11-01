@@ -17,30 +17,8 @@
 
 <%= rendered "components/channel_info" %>
 
-<div class="h-box">
-    <hr>
-</div>
-
-<% if error_message %>
-    <div class="h-box">
-        <p><%= error_message %></p>
-    </div>
-<% else %>
-    <div class="h-box pure-g comments" id="comments">
-        <%= IV::Frontend::Comments.template_youtube(items.not_nil!, locale, thin_mode) %>
-    </div>
-<% end %>
-
-<script id="community_data" type="application/json">
-<%=
-{
-    "ucid" => ucid,
-    "youtube_comments_text" => HTML.escape(I18n.translate(locale, "View YouTube comments")),
-    "comments_text" => HTML.escape(I18n.translate(locale, "View `x` comments", "{commentCount}")),
-    "hide_replies_text" => HTML.escape(I18n.translate(locale, "Hide replies")),
-    "show_replies_text" => HTML.escape(I18n.translate(locale, "Show replies")),
-    "preferences" => env.get("preferences").as(Preferences)
-}.to_pretty_json
-%>
-</script>
-<script src="/js/community.js?v=<%= ASSET_COMMIT %>"></script>
+<section aria-labelledby="comments-heading" class="comment-list"><h2 id="comments-heading"><%= I18n.translate(locale, "channel_tab_posts_label") %></h2>
+<% if error_message %><p role="status" class="status-panel"><%= HTML.escape(error_message) %></p><% else %><div id="comments"><%= IV::Frontend::Comments.template_youtube(items.not_nil!, locale, env.get("preferences").as(Preferences).thin_mode) %></div>
+<% if token = items.not_nil!["continuation"]?.try(&.as_s?) %><noscript><a class="button" href="/channel/<%= HTML.escape(ucid) %>/community?continuation=<%= URI.encode_www_form(token) %>"><%= I18n.translate(locale, "Next page") %></a></noscript><% end %>
+<% end %></section>
+<% comment_initial = false; comment_base_url = "/api/v1/channels/comments/#{URI.encode_www_form(ucid)}"; comment_ucid = ucid %><%= rendered "overhaul/comment_config" %>

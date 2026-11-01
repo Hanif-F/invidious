@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+ok 1 - chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+  ---
+  duration_ms: 1500.244824
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+ok 2 - firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+  ---
+  duration_ms: 2255.591531
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4501.698115

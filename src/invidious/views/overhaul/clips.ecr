@@ -1,0 +1,16 @@
+<% if clips.empty? %><p class="empty-state" role="status"><%= I18n.translate(locale, "clips_empty") %></p><% end %>
+<% Invidious::Frontend::AiChannels.prepare_ids(env, clips.map(&.ucid)) %>
+<% Invidious::Frontend::ViewCounts.prepare(env, clips) %>
+<% Invidious::Frontend::ChannelSpoilers.prepare(env, clips) %>
+<% Invidious::Frontend::ChannelAvatars.prepare(env, clips) %>
+<div class="media-grid clip-library" data-browse-items><% clips.each do |clip| %>
+<article class="media-item" data-kind="clip" data-clip-id="<%= HTML.escape(clip.id) %>" data-channel-id="<%= HTML.escape(clip.ucid) %>">
+<div class="thumbnail video-thumbnail"><a href="<%= HTML.escape(clip.permalink) %>" tabindex="-1"><% image = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, clip.ucid)
+ Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale)
+ else
+ %(<img src="/vi/#{HTML.escape(clip.video_id)}/mqdefault.jpg" width="320" height="180" alt="" loading="lazy">)
+ end %><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, clip.video_id, clip.ucid, nil, image) %></a><span class="duration"><%= (clip.end_time - clip.start_time).round(3) %> s</span></div>
+<div class="media-details"><h3 class="media-title" data-dearrow-row><a href="<%= HTML.escape(clip.permalink) %>" dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.title, nil, false, false, custom: true) %></a></h3><a class="channel-attribution" href="/channel/<%= HTML.escape(clip.ucid) %>"><%= Invidious::Frontend::ChannelAvatars.render(env, clip.ucid, 24, name: clip.channel_name) %><span dir="auto"><%= HTML.escape(clip.channel_name) %></span></a><div class="media-meta"><span dir="auto"><%= I18n.translate(locale, "clips_by") %> <%= HTML.escape(clip.creator) %></span><time datetime="<%= clip.created_at.to_rfc3339 %>"><%= clip.created_at.to_s("%Y-%m-%d") %></time></div>
+<p class="clip-source" data-dearrow-row><a href="/watch?v=<%= URI.encode_www_form(clip.video_id) %>" dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.video_title, nil) %></a></p><% if count = Invidious::Frontend::ViewCounts.get(env, clip.video_id) %><p class="media-meta"><%= I18n.translate(locale, "overhaul_source_video") %> · <%= HTML.escape(count.text(locale)) %></p><% end %>
+<details class="ui-menu" data-ui-menu><summary class="icon-button" aria-label="<%= I18n.translate(locale, "Video actions") %>" title="<%= I18n.translate(locale, "Video actions") %>"><%= Invidious::Frontend::Icons.render("ellipsis-vertical") %></summary><div class="menu-content"><a href="/watch?v=<%= URI.encode_www_form(clip.video_id) %>"><%= Invidious::Frontend::Icons.render("play") %><%= I18n.translate(locale, "overhaul_source_video") %></a><a href="https://www.youtube.com/watch?v=<%= URI.encode_www_form(clip.video_id) %>" rel="noreferrer noopener"><%= Invidious::Frontend::Icons.render("external-link") %><%= I18n.translate(locale, "videoinfo_watch_on_youTube") %></a><% if env.get?("user").try(&.as(Invidious::User).email) == clip.owner %><hr><a href="/delete_clip?id=<%= URI.encode_www_form(clip.id) %>"><%= Invidious::Frontend::Icons.render("trash-2") %><%= I18n.translate(locale, "clips_delete") %></a><% end %></div></details>
+</div></article><% end %></div>

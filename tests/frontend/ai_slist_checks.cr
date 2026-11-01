@@ -192,12 +192,12 @@ end
 
 def save_ai_page_preferences(previous : Preferences, body : String, account : Bool) : Preferences
   env = preferences_post_env(body)
-  env.set "preferences", previous
   if account
     user = signed_in_env("/preferences").get("user").as(User)
     user.preferences = previous
     env.set "user", user
   end
+  seed_saved_preferences(env, previous)
   Invidious::Routes::PreferencesRoute.update(env)
   if account
     Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", env.get("user").as(User).email, as: String))
@@ -491,11 +491,11 @@ def check_ai_filtering(output)
   # Render available and stale list status, independent switches and empty states.
   env = fixture_env("/preferences")
   env.set "preferences", Preferences.from_json(%({"ai_blocklist_feeds":true,"ai_blocklist_search":true,"ai_blocklist_recommendations":true}))
-  File.write("#{output}/preferences-ai-filter.html", preferences_fixture(env))
+  File.write("#{output}/preferences-ai-filter.html", preferences_fixture(env, "ai-filter"))
   {false, true}.each do |enabled|
     setting_env = fixture_env("/preferences")
     setting_env.set "preferences", Preferences.from_json({dark_mode: "dark", ai_filter_enabled: enabled, ai_blocklist_feeds_action: "hide", ai_blocklist_search_action: "replace_thumbnail", ai_blocklist_recommendations_action: "off", ai_warnlist_search_action: "hide", ai_blocklist_other_pages_action: "replace_thumbnail"}.to_json)
-    File.write("#{output}/preferences-ai-filter-diary#{enabled ? "" : "-paused"}.html", preferences_fixture(setting_env))
+    File.write("#{output}/preferences-ai-filter-diary#{enabled ? "" : "-paused"}.html", preferences_fixture(setting_env, "ai-filter"))
   end
   search_env = fixture_env("/search?q=videos&page=2")
   search_env.set "preferences", env.get("preferences").as(Preferences)

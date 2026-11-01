@@ -43,6 +43,12 @@ module Invidious::Search
       return @query
     end
 
+    # The literal-search escape is part of the input, including on Apply and
+    # continuation requests. Dropping it would turn a literal URL into navigation.
+    def input : String
+      @inhibit_ssf ? "\\#{@query}" : @query
+    end
+
     # Initialize a new search query.
     # Parameters are used to get the query string, the page number
     # and the search filters (if any). Type tells this function
@@ -69,7 +75,8 @@ module Invidious::Search
       end
 
       # Get the page number (also common to all search types)
-      @page = params["page"]?.try &.to_i? || 1
+      @type = Type::Subscriptions if @type.regular? && params["subscriptions"]? == "true"
+      @page = Math.max(1, params["page"]?.try(&.to_i?) || 1)
       @include_blocked = params["include_blocked"]? == "1"
       @include_blocked_explicit = {"0", "1"}.includes?(params["include_blocked"]?)
       @show_member_videos = case params["show_member_videos"]?
@@ -91,10 +98,19 @@ module Invidious::Search
         _, _, @query, _ = Filters.from_legacy_filters(@raw_query)
         #
       when .playlist?
-        # In "add playlist item" mode, filters are parsed from the query
-        # string itself (legacy), and the channel is ignored.
-        #
-        @filters, _, @query, _ = Filters.from_legacy_filters(@raw_query)
+        # The item-search form uses explicit filters, with legacy input retained.
+        if params["sp"]?
+          @filters = Filters.from_yt_params(params)
+          @query = @raw_query
+        else
+          @filters = Filters.from_iv_params(params)
+          if @filters.default? && !@inhibit_ssf && @raw_query.index(/\w:\w/)
+            @filters, _, @query, _ = Filters.from_legacy_filters(@raw_query)
+          else
+            @query = @raw_query
+          end
+        end
+        @filters.type = Filters::Type::Video
         #
       when .subscriptions?, .regular?
         if params["sp"]?
@@ -106,14 +122,16 @@ module Invidious::Search
           @filters = Filters.from_iv_params(params)
           @channel = params["channel"]? || ""
 
-          if @filters.default? && @raw_query.index(/\w:\w/)
+          if @filters.default? && !@inhibit_ssf && @raw_query.index(/\w:\w/)
             # Parse legacy filters from query
             @filters, @channel, @query, subs = Filters.from_legacy_filters(@raw_query)
           else
             @query = @raw_query || ""
           end
 
-          if !@channel.empty?
+          if @type.subscriptions?
+            @channel = ""
+          elsif !@channel.empty?
             # Switch to channel search mode (filters will be ignored)
             @type = Type::Channel
           elsif subs
@@ -154,8 +172,10 @@ module Invidious::Search
 
       params["include_blocked"] = @include_blocked ? "1" : "0" if @include_blocked_explicit || @include_blocked
       params["show_member_videos"] = @show_member_videos ? "1" : "0" unless @show_member_videos.nil?
-      params["q"] = @query
+      params["q"] = self.input
+      params["subscriptions"] = "true" if @type.subscriptions?
       params["channel"] = @channel if !@channel.empty?
+      params["region"] = @region.not_nil! unless @region.nil?
 
       return params
     end

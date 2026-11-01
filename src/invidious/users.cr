@@ -38,21 +38,22 @@ def create_user(sid, email, password)
   return user, sid
 end
 
-def get_subscription_feed(user, max_results = 40, page = 1)
+def get_subscription_feed(user, max_results = 40, page = 1, preferences : Preferences? = nil)
+  prefs = preferences || user.preferences
   limit = max_results.clamp(0, MAX_ITEMS_PER_PAGE)
   offset = (page - 1) * limit
 
   notifications = Invidious::Database::Users.select_notifications(user)
   view_name = "subscriptions_#{sha256(user.email)}"
 
-  if user.preferences.notifications_only && !notifications.empty?
+  if prefs.notifications_only
     # Only show notifications
     notifications = Invidious::Database::ChannelVideos.select(notifications)
     videos = [] of ChannelVideo
 
     notifications.sort_by!(&.published).reverse!
 
-    case user.preferences.sort
+    case prefs.sort
     when "alphabetically"
       notifications.sort_by!(&.title)
     when "alphabetically - reverse"
@@ -63,8 +64,8 @@ def get_subscription_feed(user, max_results = 40, page = 1)
       notifications.sort_by!(&.author).reverse!
     end
   else
-    if user.preferences.latest_only
-      if user.preferences.unseen_only
+    if prefs.latest_only
+      if prefs.unseen_only
         # Show latest video from a channel that a user hasn't watched
         # "unseen_only" isn't really correct here, more accurate would be "unwatched_only"
 
@@ -77,7 +78,7 @@ def get_subscription_feed(user, max_results = 40, page = 1)
 
       videos.sort_by!(&.published).reverse!
     else
-      if user.preferences.unseen_only
+      if prefs.unseen_only
         # Only show unwatched
 
         videos = PG_DB.query_all("SELECT * FROM #{view_name} WHERE NOT id = ANY ($1::text[]) ORDER BY published DESC LIMIT $2 OFFSET $3", user.watched, limit, offset, as: ChannelVideo)
@@ -88,7 +89,7 @@ def get_subscription_feed(user, max_results = 40, page = 1)
       end
     end
 
-    case user.preferences.sort
+    case prefs.sort
     when "published - reverse"
       videos.sort_by!(&.published)
     when "alphabetically"

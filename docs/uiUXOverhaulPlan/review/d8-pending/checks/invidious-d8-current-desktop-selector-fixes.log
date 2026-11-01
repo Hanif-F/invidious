@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: chromium: D1 occurrence grip keyboard/pointer, cancel and failed writes
+ok 1 - chromium: D1 occurrence grip keyboard/pointer, cancel and failed writes
+  ---
+  duration_ms: 1020.16617
+  type: 'test'
+  ...
+# Subtest: firefox: D1 occurrence grip keyboard/pointer, cancel and failed writes
+ok 2 - firefox: D1 occurrence grip keyboard/pointer, cancel and failed writes
+  ---
+  duration_ms: 1490.424083
+  type: 'test'
+  ...
+# Subtest: chromium: D3 stale restoration fingerprints and profile changes cannot mix views
+ok 3 - chromium: D3 stale restoration fingerprints and profile changes cannot mix views
+  ---
+  duration_ms: 485.857892
+  type: 'test'
+  ...
+# Subtest: firefox: D3 stale restoration fingerprints and profile changes cannot mix views
+ok 4 - firefox: D3 stale restoration fingerprints and profile changes cannot mix views
+  ---
+  duration_ms: 999.604795
+  type: 'test'
+  ...
+# Subtest: chromium: D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript
+ok 5 - chromium: D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript
+  ---
+  duration_ms: 738.137438
+  type: 'test'
+  ...
+# Subtest: firefox: D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript
+ok 6 - firefox: D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript
+  ---
+  duration_ms: 2114.322637
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7606.666017

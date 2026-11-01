@@ -1,10 +1,11 @@
 # Loaded by accounts.cr after migration, against its guarded disposable database.
 # Exercise production authentication, before filters, and route implementations.
 DEARROW_TEST_WRITES = [] of String
+DEARROW_TEST_STATUS = [200]
 DEARROW_TEST_CLIENT = Invidious::DeArrow::Contributions.new(->(method : String, _path : String, body : String?) {
   if method == "POST"
     DEARROW_TEST_WRITES << body.not_nil!
-    HTTP::Client::Response.new(200)
+    HTTP::Client::Response.new(DEARROW_TEST_STATUS[0])
   else
     HTTP::Client::Response.new(200, body: {"abcdefghijk" => {titles: [
       {title: "Original title", original: true, votes: 1, locked: false, UUID: "original"},
@@ -25,6 +26,20 @@ class SecurityTestEndpoint
                Invidious::Routes::API::V1::TvPairing.start(env)
              when "/api/v1/tv/pairing/token"
                Invidious::Routes::API::V1::TvPairing.token(env)
+             when "/account", "/change_password"
+               env.request.method == "GET" ? Invidious::Routes::Account.get_account(env) : Invidious::Routes::Account.post_change_password(env)
+             when "/account/username"
+               Invidious::Routes::Account.post_username(env)
+             when "/delete_account"
+               env.request.method == "GET" ? Invidious::Routes::Account.get_delete(env) : Invidious::Routes::Account.post_delete(env)
+             when "/authorize_token"
+               env.request.method == "GET" ? Invidious::Routes::Account.get_authorize_token(env) : Invidious::Routes::Account.post_authorize_token(env)
+             when "/token_manager"
+               Invidious::Routes::Account.token_manager(env)
+             when "/token_ajax"
+               Invidious::Routes::Account.token_ajax(env)
+             when "/api/v1/auth/tokens/register"
+               Invidious::Routes::API::V1::Authenticated.register_token(env)
              when "/tv"
                if env.request.method == "POST"
                  Invidious::Routes::TvPairing.submit(env)
@@ -67,6 +82,11 @@ class SecurityTestEndpoint
                Invidious::Routes::API::V1::Authenticated.get_tokens(env)
              when "/api/v1/auth/tokens/unregister"
                Invidious::Routes::API::V1::Authenticated.unregister_token(env)
+             when .starts_with?("/api/v1/auth/chat_timing/")
+               env.params.url["id"] = env.request.path.split('/').last
+               env.request.method == "GET" ? Invidious::Routes::API::V1::Authenticated.get_chat_timing(env) : Invidious::Routes::API::V1::Authenticated.set_chat_timing(env)
+             when "/api/v1/auth/chat_preferences"
+               Invidious::Routes::API::V1::Authenticated.set_chat_preferences(env)
              when "/api/v1/auth/preferences"
                if env.request.method == "PATCH"
                  Invidious::Routes::API::V1::Authenticated.patch_preferences(env)
@@ -101,6 +121,9 @@ class SecurityTestEndpoint
                else
                  Invidious::Routes::API::V1::DeArrow.identity(env)
                end
+             when "/api/v1/dearrow/abcdefghijk/submissions"
+               env.params.url["id"] = "abcdefghijk"
+               Invidious::Routes::API::V1::DeArrow.submissions(env, DEARROW_TEST_CLIENT)
              when "/api/v1/auth/dearrow/abcdefghijk/submissions"
                env.params.url["id"] = "abcdefghijk"
                Invidious::Routes::API::V1::DeArrow.submissions(env, DEARROW_TEST_CLIENT)
@@ -120,10 +143,42 @@ class SecurityTestEndpoint
                else
                  Invidious::Routes::API::V1::BlockedChannels.unblock(env)
                end
+             when "/preferences/dearrow/identity"
+               Invidious::Routes::DeArrowContributions.identity_page(env)
+             when "/dearrow_identity"
+               Invidious::Routes::DeArrowContributions.identity(env)
+             when "/dearrow_submit"
+               Invidious::Routes::DeArrowContributions.submit(env, DEARROW_TEST_CLIENT)
+             when "/blocked_channels"
+               env.request.method == "GET" ? Invidious::Routes::BlockedChannels.index(env) : Invidious::Routes::BlockedChannels.update(env)
+             when "/admin/settings"
+               Invidious::Routes::AdminSettings.handle(env)
+             when "/toggle_theme"
+               Invidious::Routes::PreferencesRoute.toggle_theme(env)
+             when "/preferences/timezone"
+               Invidious::Routes::PreferencesRoute.detect_timezone(env)
              when "/preferences"
-               Invidious::Routes::PreferencesRoute.update(env)
+               env.request.method == "GET" ? Invidious::Routes::PreferencesRoute.show(env) : Invidious::Routes::PreferencesRoute.update(env)
+             when "/watch"
+               Invidious::Routes::Watch.enhancements(env)
+             when "/preferences/sponsorblock/channels"
+               env.request.method == "GET" ? Invidious::Routes::SponsorBlockPreferences.show(env) : Invidious::Routes::SponsorBlockPreferences.update(env)
+             when "/preferences/spoilers/channels"
+               env.request.method == "GET" ? Invidious::Routes::ChannelSpoilerPreferences.show(env) : Invidious::Routes::ChannelSpoilerPreferences.update(env)
              when "/data_control"
-               Invidious::Routes::PreferencesRoute.update_data_control(env)
+               env.request.method == "GET" ? Invidious::Routes::PreferencesRoute.data_control(env) : Invidious::Routes::PreferencesRoute.update_data_control(env)
+             when "/create_playlist"
+               env.request.method == "POST" ? Invidious::Routes::Playlists.create(env) : Invidious::Routes::Playlists.new(env)
+             when "/edit_playlist"
+               env.request.method == "POST" ? Invidious::Routes::Playlists.update(env) : Invidious::Routes::Playlists.edit(env)
+             when "/delete_playlist"
+               env.request.method == "POST" ? Invidious::Routes::Playlists.delete(env) : Invidious::Routes::Playlists.delete_page(env)
+             when "/playlist"
+               Invidious::Routes::Playlists.show(env)
+             when "/feed/subscriptions"
+               Invidious::Routes::Feeds.subscriptions(env)
+             when "/clear_watch_history"
+               env.request.method == "POST" ? Invidious::Routes::Account.post_clear_history(env) : Invidious::Routes::Account.get_clear_history(env)
              when "/subscribe_playlist"
                Invidious::Routes::Playlists.subscribe(env)
              when "/subscription_manager"
@@ -137,8 +192,8 @@ class SecurityTestEndpoint
              when "/embed/videoseries"
                env.params.url["id"] = "videoseries"
                Invidious::Routes::Embed.show(env)
-             when "/api/v1/playlists/IVsecurity"
-               env.params.url["plid"] = "IVsecurity"
+             when .starts_with?("/api/v1/playlists/")
+               env.params.url["plid"] = env.request.path.split('/').last
                Invidious::Routes::API::V1::Misc.get_playlist(env)
              when "/feed/playlist/IVsecurity"
                env.params.url["plid"] = "IVsecurity"
@@ -152,9 +207,12 @@ class SecurityTestEndpoint
   end
 end
 
-def security_request(method, path, sid = nil, bearer = nil, body = "", content_type = "application/json", csrf = nil)
+def security_request(method, path, sid = nil, bearer = nil, body = "", content_type = "application/json", csrf = nil, cookies = nil)
   headers = HTTP::Headers{"Content-Type" => content_type}
-  headers["Cookie"] = "SID=#{sid}" if sid
+  cookie_parts = [] of String
+  cookie_parts << "SID=#{sid}" if sid
+  cookie_parts << cookies if cookies
+  headers["Cookie"] = cookie_parts.join("; ") unless cookie_parts.empty?
   headers["Authorization"] = "Bearer #{bearer}" if bearer
   headers["X-CSRF-Token"] = csrf if csrf
   env = HTTP::Server::Context.new(HTTP::Request.new(method, path, headers, body), HTTP::Server::Response.new(IO::Memory.new))
@@ -254,8 +312,14 @@ def check_public_security
         check(result.response.status_code == 404 && !result.response.headers.has_key?("Location"), "Private playlist leaked through #{path}")
       end
     end
-    result = security_request("GET", "#{path}?list=IVsecurity&index=1", alice_sid)
-    check(result.response.status_code == 302 && result.response.headers["Location"].includes?("lmnopqrstuv"), "Owner cannot embed own playlist")
+    opaque = "opaque+/= &=日本語"
+    embed_query = URI::Params{"list" => "IVsecurity", "index" => "1", "speed" => "1.25", "opaque" => opaque}
+    result = security_request("GET", "#{path}?#{embed_query}", alice_sid)
+    check(result.response.status_code == 302, "Owner cannot embed own playlist")
+    target = URI.parse(result.response.headers["Location"])
+    query = URI::Params.parse(target.query.not_nil!)
+    check(target.path == "/embed/lmnopqrstuv" && query["list"] == "IVsecurity" && query["index"] == "1", "Embed redirect corrupted its playlist cursor")
+    check(query["speed"] == "1.25" && query["opaque"] == opaque && target.query.not_nil!.count('?') == 0, "Embed redirect duplicated or changed its compatible query")
   end
   {"/api/v1/playlists/IVsecurity", "/feed/playlist/IVsecurity"}.each do |path|
     {nil, bob_sid}.each do |visitor|
@@ -266,6 +330,22 @@ def check_public_security
   {"Public", "Unlisted"}.each do |privacy|
     PG_DB.exec("UPDATE playlists SET privacy = $1::privacy WHERE id = 'IVsecurity'", privacy)
     check(security_request("GET", "/embed/videoseries?list=IVsecurity").response.status_code == 302, "Public/unlisted embeds broken")
+  end
+  thin_cookie = "PREFS=#{URI.encode_www_form({thin_mode: true}.to_json)}"
+  native_html = security_request("GET", "/api/v1/playlists/IVsecurity?format=html", cookies: thin_cookie)
+  native_data = JSON.parse(native_html.get("test_result").as(String))
+  check(native_html.response.status_code == 200 && !native_data["playlistHtml"].as_s.includes?("<img"), "Legacy/native HTML lost thin rendering")
+  check(native_data.as_h.keys.sort == %w(currentIndex index nextVideo playlistHtml), "Legacy HTML gained desktop-only wire fields")
+  desktop_html = security_request("GET", "/api/v1/playlists/IVsecurity?format=html&ui=desktop", cookies: thin_cookie)
+  desktop_data = JSON.parse(desktop_html.get("test_result").as(String))
+  check(desktop_html.response.status_code == 200 && desktop_data["playlistHtml"].as_s.includes?("<img") && desktop_data["positions"].as_h.keys.sort == %w(1 2), "Desktop queue lost its full thumbnail/occurrence projection")
+  browser_html = security_request("GET", "/playlist?list=IVsecurity", cookies: thin_cookie)
+  browser_body = browser_html.get("test_result").as(String)
+  card_images = XML.parse_html(browser_body).xpath_nodes("//*[@data-video-id]//img")
+  check(browser_html.response.status_code == 200 && card_images.size == 2 && browser_body.includes?("data-overhaul"), "Browser playlist restored the retired thin presentation")
+  check(!browser_body.includes?("/themes/diary/") && !browser_body.includes?("/css/pure-min.css"), "Browser playlist loaded the retired shell")
+  {native_html, desktop_html, browser_html}.each do |response|
+    check(response.get("preferences").as(Preferences).thin_mode, "Presentation rewrote the retained native preference")
   end
   PG_DB.exec("INSERT INTO playlists VALUES ('Bob', 'IVsecurityBob', $1, '', 0, now(), now(), 'Private', '{}')", bob.email)
   # A failure after playlist-video removal must roll back the entire deletion.

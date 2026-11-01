@@ -1,10 +1,10 @@
 # AI channel filter
 
-Preferences → Enhancements → AI channel filter starts with **Enable AI Channel
+Settings → AI channel filter starts with **Enable AI Channel
 Filter**, a master switch for both lists on every supported page. Turning it off
 pauses hiding, thumbnail replacement and filter-triggered channel lookups without
 clearing any choices. Edit the actions while paused, then enable the filter and
-**Save preferences** to apply them. Settings are saved to the account or the guest
+**Save** to apply them. Settings are saved to the account or the guest
 preference cookie, and included in preference JSON and exports/imports.
 
 The section explains AiSList's **High confidence — Blocklist** and **Moderate
@@ -28,8 +28,7 @@ classification API described in [Mobile API](mobile-api.md#ai-channel-filter).
 
 Replacement thumbnails use a muted charcoal background and grey, regular-weight
 text: “Likely AI-generated” with “AiSList Blocklist”, or “Possibly AI-generated”
-with “AiSList Warnlist”. They replace the image markup entirely, including in thin
-mode, while preserving links, titles and controls. Player posters, avatars and
+with “AiSList Warnlist”. They replace the image markup entirely while preserving links, titles and controls. Desktop layouts retain imagery regardless of legacy thin-mode preferences. Player posters, avatars and
 aggregate playlist covers retain their existing behavior. Direct links and current
 playback remain accessible. Manual channel blocking and membership filtering continue to apply
 independently. Pagination uses the original upstream result count; filtered pages

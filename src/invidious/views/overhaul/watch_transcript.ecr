@@ -1,0 +1,14 @@
+                <% if !video.captions.empty? %>
+                <section id="transcript-panel" class="transcript-panel js-only" aria-labelledby="tab-transcript">
+                    <div class="transcript-toolbar">
+                        <label for="transcript-language"><%= I18n.translate(locale, "ui_language") %><select id="transcript-language">
+                            <% video.captions.each do |caption| %><option value="<%= HTML.escape(caption.name) %>" data-auto="<%= caption.auto_generated %>"><%= HTML.escape(caption.name) %></option><% end %>
+                        </select></label>
+                        <label for="transcript-search"><%= I18n.translate(locale, "ui_search_transcript") %><input type="search" id="transcript-search"></label>
+                        <label class="transcript-follow"><input id="transcript-follow" type="checkbox" checked><%= I18n.translate(locale, "ux_follow") %></label>
+                    </div>
+                    <p id="transcript-status" role="status"></p>
+                    <button type="button" id="transcript-retry" class="button" hidden><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "ui_retry") %></button>
+                    <div id="transcript-lines" class="transcript-lines" role="region" tabindex="0" aria-label="<%= I18n.translate(locale, "overhaul_transcript_lines") %>"></div>
+                </section>
+                <% end %>

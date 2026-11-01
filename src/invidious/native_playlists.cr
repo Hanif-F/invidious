@@ -52,14 +52,4 @@ module Invidious::NativePlaylists
     end
     metadata(playlist, email)
   end
-
-  # Reuse the existing web card renderer without changing the page layout.
-  def items(email : String) : Array(SearchPlaylist)
-    Database::SavedPlaylists.list(email).map do |item|
-      SearchPlaylist.new({title: item["title"].as_s, id: item["playlistId"].as_s,
-                          author: "", ucid: "",
-                          video_count: item["videoCount"].as_i, videos: [] of SearchPlaylistVideo,
-                          thumbnail: item["playlistThumbnail"]?.try(&.as_s?), author_verified: false})
-    end
-  end
 end

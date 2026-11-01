@@ -1,0 +1,104 @@
+TAP version 13
+# Subtest: chromium: browser profiles restore guest and two accounts independently on watch and embed
+not ok 1 - chromium: browser profiles restore guest and two accounts independently on watch and embed
+  ---
+  duration_ms: 1173.150464
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4337:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+        captions: 1.5,
+    +   font: '100',
+    -   font: '125',
+        pages: [
+          null,
+          '125'
+        ],
+        position: 125,
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    volume: 0.3
+    speed: 0.75
+    captions: 1.5
+    font: '125'
+    position: 125
+    pages:
+      0: ~
+      1: '125'
+  actual:
+    volume: 0.3
+    speed: 0.75
+    captions: 1.5
+    font: '100'
+    position: 125
+    pages:
+      0: ~
+      1: '125'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4376:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: firefox: browser profiles restore guest and two accounts independently on watch and embed
+not ok 2 - firefox: browser profiles restore guest and two accounts independently on watch and embed
+  ---
+  duration_ms: 1582.489333
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4337:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+        captions: 1.5,
+    +   font: '100',
+    -   font: '125',
+        pages: [
+          null,
+          '125'
+        ],
+        position: 125,
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    volume: 0.3
+    speed: 0.75
+    captions: 1.5
+    font: '125'
+    position: 125
+    pages:
+      0: ~
+      1: '125'
+  actual:
+    volume: 0.3
+    speed: 0.75
+    captions: 1.5
+    font: '100'
+    position: 125
+    pages:
+      0: ~
+      1: '125'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4376:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3519.245463

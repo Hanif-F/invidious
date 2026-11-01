@@ -4,13 +4,13 @@
 
 ## Baseline and limits
 
-Audit date: 26 October 2026. Implementation baseline: **22fc2a66**, including the 23 October JavaScript enhancement and subsequent video metadata fix. This is a planning audit for the required documentation pass before interface implementation. Its findings describe current code; the proposed corrections have not been applied. It is not a fresh remote/deployment test.
+Audit date: 26 October 2026. Implementation baseline: **22fc2a66**, including the 23 October JavaScript enhancement and subsequent video metadata fix. This audit began during planning and was reconciled against the source on 26 October 2026 for D0. The corrections below have now been applied to the baseline handbook before interface implementation. It is not a fresh remote/deployment test.
 
-Sources include the route registry, all 64 template/partial paths, presentation helpers, first-party browser-module inventory, preference/write handlers and storage validation, migration registry/SQL, native contracts, test harness documentation and historical reports. The [coverage matrix](coverage.md) assigns every template and dynamic surface to a future implementation task. The [generated references](../README.md#complete-source-references) remain the exhaustive code-derived route/input/config/preference/schema/migration/source inventory.
+Sources include the route registry, all 64 template/partial paths, presentation helpers, first-party browser-module inventory, preference/write handlers and storage validation, migration registry/SQL, native contracts, test harness documentation and historical reports. The [coverage matrix](coverage.md) assigns every template and dynamic surface to an implementation task. The [generated references](../README.md#complete-source-references) remain the exhaustive code-derived route/input/config/preference/schema/migration/source inventory.
 
 No account, production database, upstream contribution, remote host or deployed policy was changed. No browser/media/database test is claimed by this documentation audit. Existing screenshot artifacts were inspected as dated examples during planning and are not new-runtime evidence.
 
-## Findings and planned corrections
+## Findings and applied corrections
 
 | Finding | Authoritative source | Planned correction |
 | --- | --- | --- |
@@ -46,7 +46,7 @@ No account, production database, upstream contribution, remote host or deployed 
 
 ## Required structural checks
 
-Run reference generation in check mode, the handbook link/reachability checker and whitespace checks. As part of the future documentation cleanup, make the plan and any new archive documents reachable from docs/README.md. Check the template inventory against actual paths and ensure plan/archive files are not ignored.
+Run reference generation in check mode, the handbook link/reachability checker and whitespace checks. As part of the documentation cleanup, make the plan and any new archive documents reachable from docs/README.md. Check the template inventory against actual paths and ensure plan/archive files are not ignored.
 
 The result and commands belong in [progress](progress.md). Passing these checks confirms structural consistency, not live runtime/deployment behavior. Later implementation tasks update guides when behavior actually changes, and D9 repeats this semantic reconciliation against the completed interface.
 

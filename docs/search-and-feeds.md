@@ -6,13 +6,13 @@ Discovery combines upstream requests with locally cached subscription data. Publ
 
 ## Home, popular and trending
 
-`/` redirects/renders according to `default_home`; a blank home uses search. Feed navigation follows `feed_menu`. Popular uses the instance's channel-video collection and refresh job, so it reflects instance activity/data rather than an exact YouTube homepage. `popular_enabled` controls its availability. Trending requests YouTube data with optional region/category; empty or restricted upstream responses can yield no results.
+`/` redirects/renders according to `default_home`; a blank home uses search. The desktop sidebar provides discovery and account destinations; `feed_menu` remains readable by compatible clients and older callers. Popular uses the instance's channel-video collection and refresh job, so it reflects instance activity/data rather than an exact YouTube homepage. `popular_enabled` controls its availability. Trending offers the supported Livestreams/Gaming choices and region with an explicit Apply form. It requests YouTube data; empty or restricted upstream responses can yield no results.
 
 `/feed/subscriptions`, `/feed/history`, `/feed/playlists` and `/feed/clips` are local account/library entry points. Their collection-specific behavior is in [accounts and library](accounts-and-library.md). Pagination preserves upstream result counts even if local visibility controls hide cards, so a filtered page may contain fewer entries or be empty while a next page still exists.
 
 ## General search
 
-Use `/search?q=...`; `/results?search_query=...` accepts compatible YouTube-style input. `page` defaults 1. Search privacy uses POST form submission and browser-local choices; it does not prevent the server from contacting YouTube with the query.
+Use `/search?q=...`; `/results?search_query=...` accepts compatible YouTube-style input. `page` defaults 1. Desktop search submits explicitly; typing does not fetch suggestions or results. Filters use an expandable Apply form, removable active chips and Clear filters, with full HTML navigation. Search privacy uses POST form submission and browser-local choices; it does not prevent the server from contacting YouTube with the query.
 
 | Parameter | Supported values/meaning |
 | --- | --- |
@@ -36,17 +36,25 @@ Standalone supported YouTube URLs are interpreted as navigation in regular unfil
 
 ## Search choices and filtering
 
-Browser search UI choices are stored in profile-specific host-only cookies rather than global account preference fields. This avoids leaking one account's choices to another browser profile. General/channel/subscription search and pagination retain supported visibility choices. Some settings require a full preference save; per-search overrides do not rewrite the account's entire JSON.
+Browser search UI choices are stored in profile-specific host-only cookies rather than global account preference fields. This avoids leaking one account's choices to another browser profile. General/channel/subscription search and pagination retain supported visibility choices. Per-search overrides do not rewrite the account's preference document. Channel and subscription searches identify their scope and omit unsupported general-search filters. Literal URL escapes and subscription scope remain present in pagination.
 
 Manual blocking, members-only visibility and AI classifications operate independently. AI hide applies to general search/hashtags, while channel/subscription searches use the replacement-only library/channel page group. Turning the AI master off preserves all actions and stops extra filter-triggered lookups. See [AI channel filter](ai-channel-filter.md).
+
+Playlist-item search has a fixed owned-playlist target and video scope. Explicit filters and literal-search input survive Apply and pagination; typing makes no requests. Private item searches submit/continue by POST without URL/session reconstruction. Subscription search similarly keeps its explicit scope rather than treating query text as a scope switch.
 
 ## Channel pages and posts
 
 Canonical channels use `/channel/:ucid`; handles and `/c/`, `/user/`, attribution/profile links resolve to the canonical channel. `/channel/:ucid/live` and legacy live paths resolve an available live video. Unknown future channel tab paths redirect to the channel home after specific routes have had a chance to match.
 
-Tabs include videos, shorts, streams, podcasts, releases, courses, playlists, clips, community/posts, related channels and about. Tabs backed by upstream only appear/work when upstream provides them. Local clips are advertised independently, in website order between playlists and posts. Videos/shorts/streams and playlist-like tabs use upstream continuation tokens; clients must pass tokens through unchanged instead of inventing offsets.
+Core tabs show Videos, Shorts, Live, Playlists, Clips and Posts when available. More contains Podcasts, Releases, Courses, related channels and About, and identifies the selected overflow destination. Channel tools use a contained menu; scoped search and supported sorting submit explicitly. Tabs backed by upstream only appear/work when upstream provides them. Local clips are advertised independently, in website order between playlists and posts. Videos/shorts/streams and playlist-like tabs use upstream continuation tokens; clients must pass tokens through unchanged instead of inventing offsets.
 
-Community pages and `/post/:id` display upstream posts and load supported comments/replies. `/api/v1/post/:id/comments` needs a channel ID for the initial request, or a continuation for subsequent requests. Channel author metadata and avatars are extracted from existing responses; missing avatars use placeholders rather than extra avatar-only requests.
+Community pages and `/post/:id` display upstream posts and load supported comments/replies. `/api/v1/post/:id/comments` needs a channel ID for the initial request, or a continuation for subsequent requests. Channel author metadata and avatars are extracted from existing responses; missing or failed avatars use local placeholders rather than extra avatar-only requests. Community/post attachments and replies share structured threads, independent opaque cursors and explicit retry after failed reads. No-JavaScript entry points retain server-rendered comments and continuation links.
+
+## Explicit content loading and Back
+
+Shared listings retain ordinary Previous/Next links or POST forms for direct pagination and no-JavaScript use. JavaScript exposes an explicit Load more control. A filtered-empty batch can continue; repeated video IDs remain separate occurrences. Read failures keep existing rows and offer Retry. A changed preference fingerprint requires reloading instead of mixing incompatible results.
+
+Public GET browsing remembers at most ten tab-local views and one hundred appended page descriptors per view, plus scroll position. Back or reload can reconstruct those pages; HTML and media are never stored. At the append limit, the current native Next destination remains available. Private POST searches keep query/filter/continuation data in the current page only and do not create restoration records or query-bearing history titles. Storage/profile safeguards remain those of [browser state](frontend.md).
 
 ## Notifications and refresh
 

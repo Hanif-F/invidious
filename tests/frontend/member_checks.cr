@@ -67,13 +67,14 @@ def check_member_preferences
   raise "API discarded membership" unless JSON.parse(stored.to_json(nil))["isMember"].as_bool
 end
 
-def member_search_fixture(show : Bool, empty = false)
+def member_search_fixture(show : Bool, empty = false, channel_id = "UCfixture", blocked = false)
   env = signed_in_env("/search?q=light")
+  env.set "blocked_channels", [channel_id] if blocked
   preferences = env.get("preferences").as(Preferences)
   locale = preferences.locale
   query = Invidious::Search::Query.new(HTTP::Params.parse("q=light&page=2&show_member_videos=#{show ? 1 : 0}&include_blocked=1"))
   env.set "show_member_videos", show
-  items = [SearchVideo.new({title: "Member video", id: "members0001", author: "Studio North", ucid: "UCfixture", published: Time.utc, views: 100_i64, description_html: "", length_seconds: 60, premiere_timestamp: nil, author_verified: false, author_thumbnail: nil, badges: VideoBadges::MembersOnly})]
+  items = [SearchVideo.new({title: "Member video", id: "members0001", author: "Studio North", ucid: channel_id, published: Time.utc, views: 100_i64, description_html: "", length_seconds: 60, premiere_timestamp: nil, author_verified: false, author_thumbnail: nil, badges: VideoBadges::MembersOnly})]
   unless empty
     public_video = items.first
     public_video.id = "public00001"

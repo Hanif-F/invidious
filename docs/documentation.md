@@ -21,14 +21,14 @@ The handbook describes application behavior and operational workflows. Generated
 | Owned/saved playlists, source flags and occurrence identity | [Accounts](accounts-and-library.md), [native API](mobile-api.md) | playlists, native_playlists, saved_playlists, native_library |
 | Native/YouTube clips and editor/player | [Clips](native-clips.md), [playback](playback.md), [API](api.md) | clips, clip validation, database/clips, templates and browser editor/player |
 | Detailed history, watch indicators and synchronized positions | [Accounts](accounts-and-library.md), [playback](playback.md), [native API](mobile-api.md) | history, database history/positions, watched presentation/browser modules |
-| Chat replay, filters, overlay and offsets | [Playback](playback.md), [preferences](preferences.md), [native API](mobile-api.md) | videos/live_chat, API chat settings, offsets, live-chat.js |
+| Browser panel replay, filters/offsets and preserved native overlay fields | [Playback](playback.md), [preferences](preferences.md), [native API](mobile-api.md) | videos/live_chat, API chat settings, offsets, live-chat.js |
 | Blocking and members-only visibility | [Accounts](accounts-and-library.md), [discovery](search-and-feeds.md), [native API](mobile-api.md) | blocked/member frontend, database, routes, extraction flags |
 | SponsorBlock | [SponsorBlock](sponsorblock.md), [native API](mobile-api.md) | sponsorblock, channel preferences and browser skipping |
 | DeArrow reads/contributions/identity encryption | [Integrations](integrations.md), [contributions](dearrow-contributions.md) | dearrow modules, identity, account APIs and browser modules |
 | AI classifications/actions/status/handle lookup | [AI filter](ai-channel-filter.md), [native API](mobile-api.md) | ai_slist modules/API/runtime/job/database and thumbnail rendering |
 | Avatars and safe shared cache enrichment | [Frontend](frontend.md), [native API](mobile-api.md) | helpers/frontend/jsonify/database/channel-avatar extraction |
 | Guest/account preferences, browser storage and local fallbacks | [Preferences](preferences.md), [frontend](frontend.md) | preferences, browser_profiles, browser-storage.js, native validation |
-| Diary styling, CSS, accessibility, localization and static caching | [Frontend](frontend.md), [theming](theming.md) | views, assets/css/themes/fonts, locales, i18n, static_assets_handler |
+| Shared design, SVG icons, accessibility, localization and static caching | [Frontend](frontend.md), [theming](theming.md) | views, assets/css/icons, locales, i18n, static_assets_handler |
 | Portable data formats and backup omissions | [Import/export](data-import-export.md), [operations](operations.md) | user/imports/exports, data_control, native_library |
 | Tables, indexes, transactions, retention and migrations | [Database](database.md), [schema](reference/schema.md), [migrations](reference/migrations.md) | database, config/sql, migration runner |
 | Background jobs, logs, monitoring, upgrades and rollback | [Operations](operations.md), [troubleshooting](troubleshooting.md) | jobs, logger, config, SQL, account security procedure |
@@ -50,14 +50,18 @@ git diff --check
 
 The generator requires Python 3.9+ with only its standard library and reads local source. It writes seven deterministic Markdown references: explicit method/path registrations and implementations, observed handler inputs, configuration defaults, preference fields, all fresh-install DDL, numbered migrations and first-party source/assets/tooling. `--check` compares expected content without rewriting documents and fails on drift.
 
-The link checker validates local Markdown targets/fragments, fenced-code balance and reachability of every handbook page from the index. Remote links are retained references and are not network-checked. It also checks generated-reference drift. These are documentation checks, not application integration tests.
+The link checker validates local Markdown targets/fragments (including explicit HTML anchor IDs), fenced-code balance and reachability of every handbook page from the index. It also checks the root README, active account/security/SponsorBlock pointers and screenshot/frontend/database READMEs. Remote links are retained references and are not network-checked. It also checks generated-reference drift. The [documentation workflow](../.github/workflows/documentation.yml) runs them on every push and pull request, including doc-only changes, with read-only repository permission and no app startup. These are documentation checks, not application integration tests.
 
 Extraction is deliberately conservative. Route inputs list direct literal reads; shared helpers and nested JSON keys add behavior explained in guides/source. Defaults are Crystal expressions, not a machine-generated deployment YAML. Source-map subjects are navigational labels, not complete per-function API docs. Static asset paths, implicit HEAD handling, error fallbacks and upstream renderer variants are documented by their subsystem rather than falsely presented as explicit route registrations.
+
+## Semantic audits and interface changes
+
+A link/reference pass establishes structural consistency, not semantic accuracy. Compare guides with current route handlers, templates, dynamic browser markup, persistence and failure paths. Keep useful dated reports in the [archive](archive/README.md), preserving attribution and security procedures. The [overhaul plan](uiUXOverhaulPlan/README.md) records requirements and dated acceptance phases; the [final semantic audit](uiUXOverhaulPlan/d9-semantic-audit.md) reconciles current guidance with the completed source. Keep future proposals distinct from implemented behavior and dated evidence distinct from current execution. Reconcile guides incrementally and repeat this audit when behavior changes.
 
 ## Updating the handbook
 
 When adding a feature, document its entry point, guest/account/build availability, input/output and permissions, persistence, failure behavior and limits. Update the relevant guide/coverage row, then regenerate references. For schema changes, document both fresh-install DDL and the migration/restore path. For native contracts, explain optional fields and whether old tokens need renewed sign-in.
 
-When modifying upstream-facing code, distinguish fixture tests from live integration checks. Keep prior verification reports dated and avoid reusing their pass counts as current claims. Document actual current source behavior even when a historical README/example suggests otherwise; examples include nested job switches, `--dry-run` release behavior, theme registration and portable export omissions.
+When modifying upstream-facing code, distinguish fixture tests from live integration checks. Keep prior verification reports dated and avoid reusing their pass counts as current claims. Document actual current source behavior even when a historical README/example suggests otherwise; examples include nested job switches, `--dry-run` release behavior, shared token/icon ownership and portable export omissions.
 
 Keep deployment secrets and user data out of examples. The sample config intentionally fails with `CHANGE_ME!!` until configured. Screenshots, build artifacts and Python bytecode are not part of these generated references. `.gitignore` admits handbook Markdown/reference/tools/examples so the new documentation can be reviewed and committed.

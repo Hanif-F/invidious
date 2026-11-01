@@ -1,3 +1,8 @@
+<%
+  clip_inline = false
+  clip_video_id = video.try(&.id) || env.params.body["videoId"]? || env.params.query["videoId"]? || ""
+  clip_duration = video.try(&.length_seconds)
+%>
 <% content_for "header" do %>
 <title><%= I18n.translate(locale, "clips_create") %> - Invidious</title>
 <link rel="stylesheet" href="/css/clips.css?v=<%= ASSET_COMMIT %>">
@@ -5,7 +10,13 @@
 <% end %>
 <div class="clip-fallback">
     <h1><%= I18n.translate(locale, "clips_create") %></h1>
-    <p dir="auto"><a href="/watch?v=<%= video.id %>"><%= HTML.escape(Invidious::OriginalTitles.title(env, video.id, video.title)) %></a></p>
+    <% if video %>
+        <% clip_source_date = Invidious::ChannelSpoilers.video_publication(video.info) %>
+        <% clip_source_title = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, clip_source_date, :title) ? Invidious::Frontend::ChannelSpoilers.label(env, :title, clip_source_date.nil?) : Invidious::OriginalTitles.title(env, video.id, video.title) %>
+        <p dir="auto"><a href="/watch?v=<%= clip_video_id %>"><%= HTML.escape(clip_source_title) %></a></p>
+    <% else %>
+        <p><a href="/watch?v=<%= clip_video_id %>"><%= I18n.translate(locale, "clips_full_video") %></a></p>
+    <% end %>
     <% if error %><p role="alert"><%= HTML.escape(error) %></p><% end %>
     <%= rendered "components/clip_editor" %>
 </div>

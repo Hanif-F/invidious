@@ -1,76 +1,14 @@
-<% content_for "header" do %>
-<title><%= I18n.translate(locale, "Subscription manager") %> - Invidious</title>
-<% end %>
-
-<div class="pure-g h-box">
-    <div class="pure-u-1-3">
-        <h3>
-            <a href="/feed/subscriptions">
-                <%= I18n.translate_count(locale, "generic_subscriptions_count", subscriptions.size, I18n::NumberFormatting::HtmlSpan) %>
-            </a>
-        </h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:center">
-            <a href="/feed/history">
-                <%= I18n.translate(locale, "Watch history") %>
-            </a>
-        </h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:right">
-            <a href="/data_control?referer=<%= URI.encode_www_form(referer) %>">
-                <%= I18n.translate(locale, "Import/export") %>
-            </a>
-        </h3>
-    </div>
-</div>
-
-<div class="h-box subscription-sorting">
-    <form class="pure-form" action="/subscription_manager" method="get">
-        <label for="subscription-sort"><%= I18n.translate(locale, "subscription_manager_sort_label") %></label>
-        <select id="subscription-sort" name="sort_by" aria-describedby="subscription-sort-help">
-            <% Invidious::Frontend::SubscriptionManager::SORTS.each do |option| %>
-                <option value="<%= option %>"<% if sort_by == option %> selected<% end %>><%= I18n.translate(locale, "subscription_manager_sort_#{option}") %></option>
-            <% end %>
-        </select>
-        <button class="pure-button pure-button-primary" type="submit"><%= I18n.translate(locale, "subscription_manager_sort_apply") %></button>
-    </form>
-    <p id="subscription-sort-help" class="subscription-details"><%= I18n.translate(locale, "subscription_manager_sort_help") %></p>
-</div>
-
+<% content_for "header" do %><title><%= I18n.translate(locale, "Subscription manager") %> - Invidious</title><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "Subscription manager") %></h1><p><%= I18n.translate(locale, "Subscriptions") %>: <span id="count"><%= subscriptions.size %></span></p></header>
+<div class="toolbar"><a class="button" href="/feed/subscriptions"><%= Invidious::Frontend::Icons.render("arrow-left") %><%= I18n.translate(locale, "Subscriptions") %></a><a class="button" href="/data_control"><%= Invidious::Frontend::Icons.render("download") %><%= I18n.translate(locale, "Import/export") %></a></div>
+<form class="toolbar collection-filters" action="/subscription_manager" method="get"><label for="subscription-sort"><%= I18n.translate(locale, "subscription_manager_sort_label") %></label><select id="subscription-sort" name="sort_by" aria-describedby="subscription-sort-help"><% Invidious::Frontend::SubscriptionManager::SORTS.each do |option| %><option value="<%= option %>" <%= "selected" if sort_by == option %>><%= I18n.translate(locale, "subscription_manager_sort_#{option}") %></option><% end %></select><button class="button"><%= I18n.translate(locale, "subscription_manager_sort_apply") %></button></form>
+<p id="subscription-sort-help" class="muted"><%= I18n.translate(locale, "subscription_manager_sort_help") %></p>
 <% Invidious::Frontend::ChannelAvatars.prepare_ids(env, subscriptions.map(&.id)) %>
-<% subscriptions.each_with_index do |channel, index| %>
-    <% stats = subscription_stats[channel.id] %>
-    <div class="h-box">
-        <div class="pure-g subscription-row<% if channel.deleted %> deleted <% end %>">
-            <div class="pure-u-2-5">
-                <h3 style="padding-left:0.5em">
-                    <a class="channel-name-link" href="/channel/<%= channel.id %>"><%= Invidious::Frontend::ChannelAvatars.render(env, channel.id, 40, name: channel.author) %><span dir="auto"><%= HTML.escape(channel.author) %></span></a>
-                </h3>
-                <p class="subscription-details">
-                    <% if uploaded = stats.latest_upload %>
-                        <%= I18n.translate(locale, "subscription_manager_last_upload", recode_date(uploaded, locale)) %>
-                    <% else %>
-                        <%= I18n.translate(locale, "subscription_manager_upload_unknown") %>
-                    <% end %>
-                    <span aria-hidden="true"> · </span>
-                    <%= I18n.translate_count(locale, sort_by == "most_watched" ? "subscription_manager_watched_total" : "subscription_manager_watched_recent", sort_by == "most_watched" ? stats.all_time_watched : stats.recent_watched) %>
-                </p>
-            </div>
-            <div class="pure-u-2-5"></div>
-            <div class="pure-u-1-5" style="text-align:right">
-                <h3 style="padding-right:0.5em">
-                    <form data-onsubmit="return_false" action="/subscription_ajax?action=remove_subscriptions&c=<%= channel.id %>&referer=<%= env.get("current_page") %>" method="post">
-                        <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try &.as(String) || "") %>">
-                        <input style="all:unset" type="submit" data-onclick="remove_subscription" data-ucid="<%= channel.id %>" value="<%= I18n.translate(locale, "unsubscribe") %>">
-                    </form>
-                </h3>
-            </div>
-        </div>
-
-        <% if index < subscriptions.size - 1 %>
-            <hr>
-        <% end %>
-    </div>
-<% end %>
+<% collection_kind = "manager" %><section data-collection data-collection-kind="manager"><%= rendered "overhaul/collection_toolbar" %>
+<% if subscriptions.empty? %><p class="status-panel"><%= I18n.translate(locale, "overhaul_no_subscriptions") %></p><% end %>
+<div class="management-rows"><% subscriptions.each do |channel| %><% stats = subscription_stats[channel.id] %>
+<article class="subscription-row<%= " deleted" if channel.deleted %>" data-channel-id="<%= HTML.escape(channel.id) %>"><%= rendered "overhaul/selection" %>
+<a class="channel-attribution" href="/channel/<%= HTML.escape(channel.id) %>"><%= Invidious::Frontend::ChannelAvatars.render(env, channel.id, 40, name: channel.author) %><span dir="auto"><%= HTML.escape(channel.author) %></span></a>
+<div class="subscription-statistics"><p><% if uploaded = stats.latest_upload %><%= I18n.translate(locale, "subscription_manager_last_upload", recode_date(uploaded, locale)) %><% else %><%= I18n.translate(locale, "subscription_manager_upload_unknown") %><% end %></p><p><%= I18n.translate_count(locale, sort_by == "most_watched" ? "subscription_manager_watched_total" : "subscription_manager_watched_recent", sort_by == "most_watched" ? stats.all_time_watched : stats.recent_watched) %></p></div>
+<form action="/subscription_ajax?action=remove_subscriptions&c=<%= URI.encode_www_form(channel.id) %>&referer=/subscription_manager" method="post" data-collection-action="unsubscribe"><input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button class="button" type="submit"><%= I18n.translate(locale, "Unsubscribe") %></button></form>
+</article><% end %></div></section>

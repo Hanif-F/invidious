@@ -34,7 +34,7 @@ def check_audio_preferences
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Guest audio lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).preferred_audio == audio
     env = preferences_post_env("")
-    env.set "preferences", prefs
+    seed_saved_preferences(env, prefs)
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Older form erased audio" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).preferred_audio == audio
 

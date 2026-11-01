@@ -16,9 +16,11 @@ def check_playlist_order
   end
   url = "/playlist_ajax?action=move_video_before&redirect=false&playlist_id=#{list.id}"
   token = generate_response(sid, {"POST:playlist_ajax"}, HMAC_KEY)
-  fields = {"source" => original[0].to_s, "anchor" => "43", "placement" => "after", "csrf_token" => token}
+  fields = {"source" => original[0].to_s, "anchor" => "43", "placement" => "after", "csrf_token" => token, "include_positions" => "1"}
   response = security_request("POST", url, sid: sid, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded")
   check(response.response.status_code == 200, "Owner reorder failed")
+  saved = JSON.parse(response.get("test_result").as(String))
+  check(saved["total"].as_i == 5 && saved["positions"][original[0].to_s].as_i == 4, "Canonical positions lost occurrence precision or unloaded entries")
   order = PG_DB.query_one("SELECT index FROM playlists WHERE id=$1", list.id, as: Array(Int64))
   check(order == [original[1], 42_i64, 43_i64, original[0], 44_i64], "Reorder lost precision, duplicates, or unloaded entries")
   check(PG_DB.query_one("SELECT video_count FROM playlists WHERE id=$1", list.id, as: Int32) == 5, "Reorder changed playlist count")

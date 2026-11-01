@@ -1,0 +1,9 @@
+<% form_error = env.get?("playlist_form_error").try(&.as(String)) || ""; form_field = env.get?("playlist_form_field").try(&.as(String)) || "" %>
+<div class="status-panel" id="playlist-form-error" data-playlist-form-status role="alert" <%= "hidden" if form_error.empty? %>><%= HTML.escape(form_error) %></div>
+<a class="button" href="/feed/playlists" data-check-playlist <%= "hidden" unless env.get?("playlist_form_uncertain") == true %>><%= I18n.translate(locale, "Playlists") %></a>
+<label for="playlist-title"><%= I18n.translate(locale, "Title") %></label><input id="playlist-title" name="title" type="text" required maxlength="150" value="<%= HTML.escape(form_title) %>" aria-invalid="<%= form_field == "title" %>" aria-describedby="playlist-form-error" dir="auto">
+<label for="playlist-privacy"><%= I18n.translate(locale, "Playlist privacy") %></label><select name="privacy" id="playlist-privacy" aria-invalid="<%= form_field == "privacy" %>" aria-describedby="playlist-privacy-help playlist-form-error">
+<% unless PlaylistPrivacy.parse?(form_privacy) %><option value="<%= HTML.escape(form_privacy) %>" selected><%= HTML.escape(form_privacy) %></option><% end %>
+<% PlaylistPrivacy.names.each do |option| %><option value="<%= option %>" <%= "selected" if option.downcase == form_privacy.downcase %>><%= I18n.translate(locale, option) %></option><% end %></select>
+<p id="playlist-privacy-help" class="muted"><%= I18n.translate(locale, "overhaul_playlist_privacy_help") %></p>
+<% if is_edit %><label for="playlist-description"><%= I18n.translate(locale, "ui_description") %></label><textarea id="playlist-description" name="description" rows="8" maxlength="5000" aria-invalid="<%= form_field == "description" %>" aria-describedby="playlist-form-error" dir="auto"><%= HTML.escape(form_description) %></textarea><% end %>

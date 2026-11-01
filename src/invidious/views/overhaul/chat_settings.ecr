@@ -1,0 +1,10 @@
+<% section = "chat" %>
+<% content_for "header" do %><title><%= I18n.translate(locale, "ui_chat_replay") %> - Invidious</title><link rel="stylesheet" href="/css/chat-preferences.css?v=<%= ASSET_COMMIT %>"><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_settings") %></h1></header>
+<div class="settings-layout"><%= rendered "overhaul/settings_navigation" %>
+<section class="settings-category" aria-labelledby="chat-settings-heading"><h2 id="chat-settings-heading"><%= I18n.translate(locale, "ui_chat_replay") %></h2><p><%= I18n.translate(locale, "overhaul_chat_scope") %></p>
+<% if error = env.get?("chat_settings_error").try(&.as(String)) %><p role="alert" class="settings-error"><%= HTML.escape(error) %></p><% elsif env.params.query["saved"]? == "1" %><p role="status"><%= I18n.translate(locale, "settings_saved") %></p><% end %>
+<%= rendered "overhaul/chat_preferences" %>
+</section></div>
+
+<script src="/js/chat-preferences.js?v=<%= ASSET_COMMIT %>" defer></script>

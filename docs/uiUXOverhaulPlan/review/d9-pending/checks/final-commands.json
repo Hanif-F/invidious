@@ -1,0 +1,58 @@
+[
+  {
+    "command": [
+      "python3",
+      "docs/tools/generate_reference.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "docs/uiUXOverhaulPlan/review/d9-pending/checks/reference-final.log",
+    "elapsed_seconds": 0.1
+  },
+  {
+    "command": [
+      "python3",
+      "docs/tools/check_docs.py"
+    ],
+    "exit_code": 0,
+    "log": "docs/uiUXOverhaulPlan/review/d9-pending/checks/documentation-final.log",
+    "elapsed_seconds": 0.336
+  },
+  {
+    "command": [
+      "python3",
+      "docs/uiUXOverhaulPlan/review/d9-pending/checks/validate-checker.py"
+    ],
+    "exit_code": 0,
+    "log": "docs/uiUXOverhaulPlan/review/d9-pending/checks/checker-final.log",
+    "elapsed_seconds": 0.143
+  },
+  {
+    "command": [
+      "python3",
+      "docs/uiUXOverhaulPlan/review/d9-pending/checks/validate-workflow.py"
+    ],
+    "exit_code": 0,
+    "log": "docs/uiUXOverhaulPlan/review/d9-pending/checks/workflow-final.log",
+    "elapsed_seconds": 0.127
+  },
+  {
+    "command": [
+      "python3",
+      "docs/uiUXOverhaulPlan/review/d9-pending/checks/audit-final.py"
+    ],
+    "exit_code": 0,
+    "log": "docs/uiUXOverhaulPlan/review/d9-pending/checks/conservation-final.log",
+    "elapsed_seconds": 0.149
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "docs/uiUXOverhaulPlan/review/d9-pending/checks/whitespace-final.log",
+    "elapsed_seconds": 0.051
+  }
+]

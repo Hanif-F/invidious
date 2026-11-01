@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: chromium: D1 shell menus, collapse, watch drawer and focus
+ok 1 - chromium: D1 shell menus, collapse, watch drawer and focus
+  ---
+  duration_ms: 1341.95214
+  type: 'test'
+  ...
+# Subtest: firefox: D1 shell menus, collapse, watch drawer and focus
+ok 2 - firefox: D1 shell menus, collapse, watch drawer and focus
+  ---
+  duration_ms: 2147.4746
+  type: 'test'
+  ...
+# Subtest: chromium: D2 category drafts, local search, Discard and guarded departure
+ok 3 - chromium: D2 category drafts, local search, Discard and guarded departure
+  ---
+  duration_ms: 1515.903281
+  type: 'test'
+  ...
+# Subtest: chromium: D2 canonical category read-back, unchecked values and duplicate submit guard
+ok 4 - chromium: D2 canonical category read-back, unchecked values and duplicate submit guard
+  ---
+  duration_ms: 197.615681
+  type: 'test'
+  ...
+# Subtest: chromium: D2 all nine category forms and normal HTML fallback without JavaScript
+ok 5 - chromium: D2 all nine category forms and normal HTML fallback without JavaScript
+  ---
+  duration_ms: 1386.422057
+  type: 'test'
+  ...
+# Subtest: firefox: D2 category drafts, local search, Discard and guarded departure
+ok 6 - firefox: D2 category drafts, local search, Discard and guarded departure
+  ---
+  duration_ms: 2850.660652
+  type: 'test'
+  ...
+# Subtest: firefox: D2 canonical category read-back, unchecked values and duplicate submit guard
+ok 7 - firefox: D2 canonical category read-back, unchecked values and duplicate submit guard
+  ---
+  duration_ms: 435.585568
+  type: 'test'
+  ...
+# Subtest: firefox: D2 all nine category forms and normal HTML fallback without JavaScript
+ok 8 - firefox: D2 all nine category forms and normal HTML fallback without JavaScript
+  ---
+  duration_ms: 1599.823927
+  type: 'test'
+  ...
+# Subtest: chromium: D2 component departure aborts pending category reads and suppresses late output
+ok 9 - chromium: D2 component departure aborts pending category reads and suppresses late output
+  ---
+  duration_ms: 169.166968
+  type: 'test'
+  ...
+# Subtest: firefox: D2 component departure aborts pending category reads and suppresses late output
+ok 10 - firefox: D2 component departure aborts pending category reads and suppresses late output
+  ---
+  duration_ms: 414.166142
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12833.960107

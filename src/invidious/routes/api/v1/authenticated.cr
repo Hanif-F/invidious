@@ -98,59 +98,18 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
     begin
       data = JSON.parse(env.request.body.try(&.gets_to_end) || "{}").as_h
-      timestamps = data["chat_show_timestamps"]?.try(&.as_bool)
-      font = data["chat_font_scale"]?.try(&.as_i)
-      width = data["chat_width_px"]?.try(&.as_i)
-      overlay_mode = data["chat_overlay_mode"]?.try(&.as_bool)
-      overlay_opacity = data["chat_overlay_opacity"]?.try(&.as_i)
-      overlay_x = data["chat_overlay_x"]?.try(&.as_i)
-      overlay_y = data["chat_overlay_y"]?.try(&.as_i)
-      overlay_width = data["chat_overlay_width"]?.try(&.as_i)
-      overlay_height = data["chat_overlay_height"]?.try(&.as_i)
-      users = data["chat_user_blacklist"]?.try(&.as_s)
-      words = data["chat_word_blacklist"]?.try(&.as_s)
-      allowed = ["chat_show_timestamps", "chat_font_scale", "chat_width_px", "chat_overlay_mode",
-                 "chat_overlay_opacity", "chat_overlay_x", "chat_overlay_y", "chat_overlay_width",
-                 "chat_overlay_height", "chat_user_blacklist", "chat_word_blacklist"]
-      raise "Invalid chat settings" if data.empty? || data.keys.any? { |key| !allowed.includes?(key) } ||
-                                       (font && !(75..150).includes?(font)) ||
-                                       (width && !(280..640).includes?(width)) ||
-                                       (overlay_opacity && !(0..100).includes?(overlay_opacity)) ||
-                                       (overlay_x && !(0..1000).includes?(overlay_x)) ||
-                                       (overlay_y && !(0..1000).includes?(overlay_y)) ||
-                                       (overlay_width && !(1..1000).includes?(overlay_width)) ||
-                                       (overlay_height && !(1..1000).includes?(overlay_height)) ||
-                                       (users && users.bytesize > 1024) ||
-                                       (words && words.bytesize > 1024)
+      Invidious::ChatPreferences.validate_patch(data)
     rescue
       return error_json(400, "Invalid chat settings")
     end
-
-    saved = false
-    4.times do
-      raw = Invidious::Database::Users.preference_json(user.email)
-      preferences = Preferences.from_json(raw)
-      return error_json(400, "Invalid chat settings") if (overlay_x || preferences.chat_overlay_x) + (overlay_width || preferences.chat_overlay_width) > 1000 ||
-                                                         (overlay_y || preferences.chat_overlay_y) + (overlay_height || preferences.chat_overlay_height) > 1000
-      preferences.chat_show_timestamps = timestamps unless timestamps.nil?
-      preferences.chat_font_scale = font if font
-      preferences.chat_width_px = width if width
-      preferences.chat_overlay_mode = overlay_mode unless overlay_mode.nil?
-      preferences.chat_overlay_opacity = overlay_opacity unless overlay_opacity.nil?
-      preferences.chat_overlay_x = overlay_x unless overlay_x.nil?
-      preferences.chat_overlay_y = overlay_y unless overlay_y.nil?
-      preferences.chat_overlay_width = overlay_width unless overlay_width.nil?
-      preferences.chat_overlay_height = overlay_height unless overlay_height.nil?
-      preferences.chat_user_blacklist = users if users
-      preferences.chat_word_blacklist = words if words
-      if Invidious::Database::Users.compare_and_set_preferences(user.email, raw, preferences)
-        user.preferences = preferences
-        saved = true
-        break
-      end
+    begin
+      user.preferences = Invidious::ChatPreferences.save_account(user.email, data)
+      user.preferences.to_json
+    rescue ArgumentError
+      error_json(400, "Invalid chat settings")
+    rescue Invidious::Database::Users::PreferenceConflict
+      error_json(409, "Chat settings changed; try again")
     end
-    return error_json(409, "Chat settings changed; try again") unless saved
-    user.preferences.to_json
   end
 
   def self.get_chat_timing(env)
@@ -283,8 +242,7 @@ module Invidious::Routes::API::V1::Authenticated
   def self.clear_history(env)
     user = env.get("user").as(User)
 
-    Invidious::Database::Users.clear_watch_history(user)
-    Invidious::Database::PlaybackPositions.clear(user.email)
+    Invidious::Database::Users.clear_watch_history(user, clear_positions: true)
     env.response.status_code = 204
   end
 
@@ -471,7 +429,7 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.content_type = "application/json"
     user = env.get("user").as(User)
 
-    title = env.params.json["title"]?.try &.as(String).delete("<>").byte_slice(0, 150)
+    title = env.params.json["title"]?.try &.as(String).delete("<>").byte_slice(0, 150).scrub("")
     if !title
       return error_json(400, "Invalid title.")
     end
@@ -485,7 +443,11 @@ module Invidious::Routes::API::V1::Authenticated
       return error_json(400, "User cannot have more than 100 playlists.")
     end
 
-    playlist = create_playlist(title, privacy, user)
+    begin
+      playlist = create_playlist(title, privacy, user)
+    rescue ex : InfoException
+      return error_json(400, ex)
+    end
     env.response.headers["Location"] = "#{HOST_URL}/api/v1/auth/playlists/#{playlist.id}"
     env.response.status_code = 201
     {
@@ -512,7 +474,7 @@ module Invidious::Routes::API::V1::Authenticated
       return error_json(403, "Only owned playlists can be edited.")
     end
 
-    title = env.params.json["title"].try &.as(String).delete("<>").byte_slice(0, 150) || playlist.title
+    title = env.params.json["title"].try &.as(String).delete("<>").byte_slice(0, 150).scrub("") || playlist.title
     privacy = env.params.json["privacy"]?.try { |p| PlaylistPrivacy.parse(p.as(String).downcase) } || playlist.privacy
     description = env.params.json["description"]?.try &.as(String).delete("\r") || playlist.description
 
@@ -601,8 +563,10 @@ module Invidious::Routes::API::V1::Authenticated
       index:          Random::Secure.rand(0_i64..Int64::MAX),
     })
 
-    Invidious::Database::PlaylistVideos.insert(playlist_video)
-    Invidious::Database::Playlists.update_video_added(plid, playlist_video.index)
+    outcome, position = Invidious::Database::Playlists.append_video(plid, user.email, playlist_video)
+    return error_json(404, "Playlist does not exist.") if outcome == :missing
+    return error_json(403, "Only owned playlists can be edited.") if outcome == :forbidden
+    return error_json(400, "Playlist cannot have more than #{CONFIG.playlist_length_limit} videos") if outcome == :full
 
     if count = Invidious::Videos::ViewCounts.from_item(video)
       playlist_video.views = count.value
@@ -614,7 +578,7 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.status_code = 201
 
     JSON.build do |json|
-      playlist_video.to_json(json, index: playlist.index.size, locale: env.get("preferences").as(Preferences).locale)
+      playlist_video.to_json(json, index: position, locale: env.get("preferences").as(Preferences).locale)
     end
   end
 
@@ -638,8 +602,11 @@ module Invidious::Routes::API::V1::Authenticated
       return error_json(404, "Playlist does not contain index")
     end
 
-    Invidious::Database::PlaylistVideos.delete(index, plid)
-    Invidious::Database::Playlists.update_video_removed(plid, index)
+    case Invidious::Database::Playlists.remove_video(plid, user.email, index)
+    when :missing   then return error_json(404, "Playlist does not exist.")
+    when :forbidden then return error_json(403, "Only owned playlists can be edited.")
+    when :conflict  then return error_json(404, "Playlist does not contain index")
+    end
 
     env.response.status_code = 204
   end
@@ -700,6 +667,9 @@ module Invidious::Routes::API::V1::Authenticated
       # Used by template bellow.
       # ameba:disable Lint/UselessAssign
       csrf_token = generate_response(sid, {":authorize_token"}, HMAC_KEY, use_nonce: true)
+      env.set "account_surface", true
+      Invidious::Authentication.no_store(env)
+      env.response.headers["Referrer-Policy"] = "no-referrer"
       return templated "user/authorize_token"
     else
       env.response.content_type = "application/json"

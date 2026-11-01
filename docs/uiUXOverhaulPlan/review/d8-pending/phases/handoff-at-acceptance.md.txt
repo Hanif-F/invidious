@@ -1,0 +1,160 @@
+# D8 continuation handoff — 1 November 2026
+
+> Latest phase: corrected canonical context fixtures compile/render and pass 8/8
+> focused Block/Undo cases. The complete npm suite is now running as session
+> **29154**, log checks/resumed-2026-11-01-npm-current.log. Prior complete attempts
+> both finished 901/902 and remain retained. Runtime application code is unchanged;
+> five test fixture/assertion files differ from the initial resumed snapshot, as
+> recorded in resumed-2026-11-01-current-source-delta.json. Do not mutate production
+> assets or generated fixtures during this live run. The verification-state JSON
+> records the authoritative active handle.
+
+
+
+[Master plan](README.md) · [Contract](d8-contract.md) · [Journey audit](d8-verification.md) · [Test audit](d8-test-audit.md)
+
+## Current stage and live work
+
+Goal ACTIVE. D0–D7 are accepted; D8 final verification is active. D9 remains
+required. The user requested extensive implementation in stage order and approved
+the D1 visual direction. The latest user status question did not pause work.
+
+The second complete npm suite (session 11964) finished **901/902**. Its failed
+phase is retained as resumed-2026-11-01-npm-full-final.log. The remaining Library
+block fixture is being corrected as described above. The next complete suite must
+finish with all 902 cases passing before D8 acceptance. Do not sum focused checks
+into a complete-run claim, and do not mutate assets/fixtures during its readers.
+
+The preceding complete run finished **901/902**. The sole failure expected a link
+inside the retired full-form Administration section. The current test checks the
+native account-menu Admin entry, both instance access states, no instance fields
+in personal categories, ordinary guest navigation and the recognized hidden
+bookmark. Its corrected focused run passes 1/1. An initial migration wrongly
+prohibited the hidden guest bookmark; accepted D6 keeps that finite bridge and
+leaves destination authorization authoritative. Both failed phases are retained.
+No production behavior changed after the 901/902 run.
+
+[Verification state](review/d8-pending/checks/resumed-2026-11-01-verification-state.json)
+records completed commands and active handles. All changes remain uncommitted;
+HEAD is 0f8703fd66e58be7c2001cabe55eddc091aabd04 and .git is read-only. Reuse this
+checkout. No skills or sub-agents have been used. No deployed server, real provider,
+external contribution service, native device or native TV app source was accessed.
+TV work is the existing browser approval flow for a native client.
+
+## Completed final checks
+
+- Fresh full normal and API-only application builds, full production fixture
+  build/render and API-only recovery build/render pass, with existing
+  Time.monotonic deprecation warnings. All fresh logs use the persistent prefix
+  `review/d8-pending/checks/resumed-2026-11-01-*`.
+- The fresh complete production backend harness passes, including native APIs,
+  security/CSRF, scopes, concurrency, private embeds, required-login/admin/YAML,
+  settings/read-back/unknown fields, identity/contributions and TV redemption.
+  Its final guard verifies exactly five empty tables and zero other clients.
+- The retained complete specs pass 300 Spectator plus 137 standard examples.
+  Production Crystal source has only been automatically formatted since that run.
+  Normal/API builds and the fresh backend/fixture compilation include that format.
+- Source syntax, Crystal formatting, generated references, docs graph and whitespace
+  gates pass; repeat appropriate final gates after the acceptance docs change.
+  The current docs graph has 80 Markdown pages and 2051 links/anchors.
+
+The 1 November device/environment continuation retained the workspace and generated
+media but cleared /tmp binaries/logs/handles. Fresh tools were rebuilt. The prior
+container was absent. Never infer a live process from an old handoff session ID.
+
+## Implemented D8 consolidation
+
+One shared browser shell/item/clip wrapper/player presentation replaces the
+transitional switch and prototypes. Ordinary/native API HTML keeps its thin wire
+contract via Desktop.browser_html?; browser imagery does not mutate legacy raw
+preferences. Thirty-eight unused files were retired in three accounted batches:
+old widgets/templates/controllers, Pure/Ionicons/Diary assets, and the unreachable
+full Preferences form/scripts. Originals and hashes remain in baseline/.
+
+Per-document/media guards preserve the existing player, shared stream descriptors,
+Settings, chapter/stats/dock/mobile owners, keyboard/theme handlers and shareOptions
+reference. Hidden duplicate rich stream controls and old wide aliases were removed.
+Shared overhaul.js owns menu positioning/keys; video-actions.js now owns dispatch
+once. Actual repeated-script tests verify one block and Undo write.
+
+Real regressions found during reconciliation were fixed: malformed category values
+could be marked Saved; settings.js now validates exact keys and scalar/nested types.
+Useful category help and public description/feature search were restored, excluding
+private playlist titles and speculative requests. The unified timeline retains a
+usable desktop hover/drag target and coarse scrub geometry. Verified creator names
+now use the shared ellipsis selector even beside a verification badge.
+
+## Reconciliation and source evidence
+
+The original interrupted full npm attempt observed 113 failures after 28 minutes;
+it is not a completed baseline. The later retained UI audit finished 197/293.
+After migration the complete UI file finished 282/284; its two test setup failures
+were corrected (committed-navigation wait and explicit viewport precondition) and
+passed focused checks. The current complete suite is the final acceptance gate.
+Do not add overlapping focused totals or relabel failed phases as passes.
+
+[The complete UI inventory](review/d8-pending/checks/ui-complete-test-reconciliation.json)
+accounts for all 349 original cases: 282 retained across 140 source families,
+67 explicitly mapped replacements and two added ownership cases produce 284
+current cases. Current desktop suite has 416 cases, QoL 22 and embed lifecycle 10.
+The clip/style/chat/QoL/enhancement/admin maps retain exact old/replacement names,
+assertions, phases and native compatibility boundaries. Recheck replacement names
+and final callback hashes before freezing the manifest.
+
+Exact first full-run sources (118 files) are in phases/resumed-full-run/ with a
+source hash inventory. The final delta is only required-login-admin.test.cjs,
+retained in phases/admin-check-final/. The final source-delta JSON proves that no
+runtime implementation changed. Do not overwrite accepted historical evidence.
+
+Nineteen manifests and 786 historical review files remain protected. The resumed
+inventory is baseline/protected-review-2026-11-01-sha256.json. Frozen manifests
+independently digest 741 of the 767 non-manifest artifacts; 26 older auxiliary
+images/progress files lack embedded hashes. Do not claim a new complete historical
+hash comparison from a lost /tmp inventory. All 786 have a persistent resumed
+conservation inventory for subsequent checks.
+
+## Remaining D8 gates
+
+1. Observe session 11964 to completion. Fix any actual remaining failure, retain
+   its phase, then obtain a complete passing run. Current product/runtime sources
+   are frozen during that run.
+2. Finish all V01–V36 audit rows against the actual complete output and source.
+   Inspect the ten copied images in review/d8-pending/images/; all ten final
+   copies were inspected on the resumed run; exact hashes and findings are in
+   checks/resumed-2026-11-01-visual-inspection.json. Eight
+   representative and RTL/forced-color source images were inspected before the
+   restart, but final copies should be explicit in the new manifest.
+3. Freeze final request and gzip reports after the suite completes. The current
+   comparable file sums are 69 / 285854 gzip bytes before versus 66 / 199050 after,
+   a reduction of 86804 bytes. Icons/fonts (6160 gzip) and vendor player (789725)
+   are separate inventories. These are file sums, not deployed/per-page transfer.
+   D1 synthetic request observations are in artifacts/overhaul/requests.json.
+4. Finish exact asset/template/module reference accounting, source/phase hashes,
+   docs/reference/format/syntax/whitespace checks and write D8 evidence/acceptance.
+   Only then update README/tasks/progress to D8 accepted and begin D9.
+5. D9 must semantically reconcile the entire handbook and every coverage row,
+   replace stale retained-form/Diary guidance, refresh active screenshot/test
+   destinations and documentation CI, and provide deployment/build/cache refresh/
+   rollback/local-vs-upstream handoff. Audit every plan requirement before marking
+   the overall goal complete. No remote deployment is authorized or required.
+
+## Owned disposable database and tools
+
+Current container: invidious-ui-overhaul-01a176a0-d8-final, full ID
+9f3a957dd9216ff11365e8ee0463145168bcf7912d262f35ab809e10bac4d21c,
+label codex.task=01a176a0-bf7a-71b0-af8d-2955647ae8f0, stage=d8-final,
+cached image sha256:c2427de38f998489d36de7ca3553db2134872c400f2b08be4b824e5c50e4d619.
+Only 127.0.0.1:32768 maps to 5432. DB invidious_accounts_test uses the dummy
+password overhaul-test-only. The current guard script is
+review/d8-pending/checks/resumed-2026-11-01-database-guard.py: `empty` requires zero
+tables before the harness; `final` requires exact names and empty rows for
+auth_rate_limits, saved_playlists, session_ids, tv_pairings and users, plus zero
+other clients. It performs no reset. Never apply the old container guards here.
+
+Fresh /tmp binaries: invidious-d8-final-{renderer,recovery,accounts,app-normal,app-api}.
+Crystal cache is /tmp/invidious-ui-crystal-cache; use installed dependencies and
+-Dskip_videojs_download. Host permission is needed for local browser children and
+loopback DB/spec checks; sandbox filenames-only TAP results are not coverage.
+The persistent checks/index-browser-tests.cjs inventories real registered cases
+without executing callbacks. Keep snapshot Markdown under .md.txt to avoid
+polluting the handbook graph.

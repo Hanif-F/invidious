@@ -132,7 +132,7 @@ class BotTestEndpoint
              when "/admin/bot-protection"
                Invidious::Routes::Verification.admin(env)
              when "/login"
-               Invidious::Routes::Login.login_page(env)
+               env.request.method == "POST" ? Invidious::Routes::Login.login(env) : Invidious::Routes::Login.login_page(env)
              else
                self.class.upstream_calls += 1
                check(!env.request.headers.has_key?(Protection::HEADER), "Verification header forwarded upstream")
@@ -157,6 +157,7 @@ if ARGV.includes?("--read-policy")
   exit
 end
 
+check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
 PG_DB.exec("DROP SCHEMA public CASCADE")
 PG_DB.exec("CREATE SCHEMA public")
 PG_DB.using_connection do |conn|
@@ -283,17 +284,42 @@ begin
 
   CONFIG.admins = ["wingress"]
   # Seed exact account rows without generating channel feeds or calling YouTube.
+  recovery_password = "disposable recovery sign-in password"
+  recovery_hash = Crypto::Bcrypt::Password.create(recovery_password, cost: 4).to_s
   %w[wingress outsider].each do |name|
-    PG_DB.exec("INSERT INTO users (updated, notifications, subscriptions, email, preferences, password, token, watched, feed_needs_update, username, credential_version) VALUES (now(), '{}', '{}', $1, '{}', 'unused', $1, '{}', false, $2, 1)", "account:#{name}", name)
+    PG_DB.exec("INSERT INTO users (updated, notifications, subscriptions, email, preferences, password, token, watched, feed_needs_update, username, credential_version) VALUES (now(), '{}', '{}', $1, '{}', $3, $1, '{}', false, $2, 1)", "account:#{name}", name, recovery_hash)
     PG_DB.exec("INSERT INTO session_ids (id, email, issued, expires_at) VALUES ($1, $2, now(), now() + interval '1 day')", "sid-#{name}", "account:#{name}")
   end
+  login_form = request(base, "/login?referer=%2Fadmin%2Fbot-protection")
+  login_tree = XML.parse_html(login_form.body)
+  form = login_tree.xpath_node("//form[contains(@action, '/login')]").not_nil!
+  auth_csrf = form.xpath_node(".//input[@name='csrf_token']").not_nil!["value"]
+  login_headers = HTTP::Headers{"Cookie" => "AUTH_CSRF=#{login_form.cookies["AUTH_CSRF"].value}", "Content-Type" => "application/x-www-form-urlencoded"}
+  signed_in = request(base, form["action"], "POST", body: URI::Params.encode({"csrf_token" => auth_csrf, "username" => "wingress", "password" => recovery_password}), headers: login_headers)
+  check(signed_in.status_code == 302 && signed_in.headers["Location"] == "/admin/bot-protection" && signed_in.cookies.has_key?("SID"), "Recovery login lost its ordinary CSRF/session/return contract")
+  authenticated_recovery = request(base, "/admin/bot-protection", headers: HTTP::Headers{"Cookie" => "SID=#{signed_in.cookies["SID"].value}"})
+  check(authenticated_recovery.status_code == 200, "Recovery login cannot reach its admin destination")
+  {% if flag?(:api_only) %}
+    check(!login_form.body.includes?("app-sidebar") && !login_form.body.includes?("href=\"/signup"), "API-only login exposes unavailable navigation")
+    default_login = request(base, "/login")
+    default_action = XML.parse_html(default_login.body).xpath_node("//form[contains(@action, '/login')]").not_nil!["action"]
+    check(default_action.includes?(URI.encode_www_form("/admin/settings")), "API-only default login return is unavailable")
+  {% end %}
   check(request(base, "/watch", headers: HTTP::Headers{"Cookie" => "SID=sid-wingress"}).status_code == 403, "Signed-in administrator bypassed gate")
-  check(request(base, "/admin/bot-protection", headers: HTTP::Headers{"Cookie" => "SID=sid-outsider"}).status_code == 403, "Non-admin got recovery controls")
+  outsider = request(base, "/admin/bot-protection", headers: HTTP::Headers{"Cookie" => "SID=sid-outsider"})
+  check(outsider.status_code == 403 && !outsider.body.includes?("name=\"enabled\"") && outsider.body.includes?("/css/foundation.css"), "Non-admin got recovery controls or lost readable denial")
+  check(outsider.body.includes?("/signout?referer=") && outsider.body.includes?("name=\"csrf_token\""), "Non-admin cannot safely leave the wrong account")
   admin = request(base, "/admin/bot-protection", headers: HTTP::Headers{"Cookie" => "SID=sid-wingress"})
   check(admin.status_code == 200 && admin.body.includes?("Bot protection"), "Administrator recovery blocked")
   csrf = HTML.unescape(admin.body.match(/name="csrf_token" value="([^"]+)"/).not_nil![1])
   admin_headers = HTTP::Headers{"Cookie" => "SID=sid-wingress", "Content-Type" => "application/x-www-form-urlencoded"}
-  check(request(base, "/admin/bot-protection", "POST", body: "duration_hours=1", headers: admin_headers).status_code == 403, "Missing CSRF accepted")
+  before_invalid = Protection.settings
+  invalid_form = request(base, "/admin/bot-protection", "POST", body: "duration_hours=1&enabled=on", headers: admin_headers)
+  check(invalid_form.status_code == 403, "Missing CSRF accepted")
+  invalid_tree = XML.parse_html(invalid_form.body)
+  check(invalid_tree.xpath_node("//input[@name='enabled']").not_nil!["checked"]? && invalid_tree.xpath_node("//select[@name='duration_hours']/option[@selected]").not_nil!["value"] == "1", "Rejected recovery save lost its choices")
+  check(Protection.settings == before_invalid, "Rejected recovery save mutated policy")
+  check(invalid_tree.xpath_node("//*[@role='alert']") && invalid_tree.xpath_node("//input[@name='csrf_token']"), "Rejected recovery save lost feedback or fresh form")
   changed = request(base, "/admin/bot-protection", "POST", body: URI::Params.encode({"duration_hours" => "1", "csrf_token" => csrf}), headers: admin_headers)
   check(changed.status_code == 200 && !Protection.settings.enabled && Protection.settings.duration_hours == 1, "Recovery disable failed")
   check(request(base, "/watch").status_code == 200, "Disable not immediate")

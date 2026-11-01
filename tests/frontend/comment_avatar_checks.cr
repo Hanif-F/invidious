@@ -32,7 +32,7 @@ def comment_avatar_output_digest(response)
     record.as_h["published"] = JSON::Any.new(0_i64) if record["published"]?
   end
   if html = data["contentHtml"]?.try(&.as_s?)
-    data.as_h["contentHtml"] = JSON::Any.new(html.gsub(/(<span title=")[A-Za-z]+ [A-Za-z]+ \d{1,2}, \d{4}(">)/, "\\1RELATIVE_DATE\\2"))
+    data.as_h["contentHtml"] = JSON::Any.new(html.gsub(/(<span title=")[A-Za-z]+ [A-Za-z]+ \d{1,2}, \d{4}(">)/, "\\1RELATIVE_DATE\\2").gsub(/(<time datetime=")[^"]+(" title=")[^"]+(">)/, "\\1RELATIVE_DATE\\2RELATIVE_DATE\\3"))
   end
   Digest::SHA256.hexdigest(data.to_json)
 end
@@ -247,6 +247,18 @@ metadata_calls = Invidious::Videos::Parser.avatar_metadata_calls
 responses = comment_avatar_response_cases
 baseline = comment_avatar_fixture("baseline_output_digests").as_h
 raise "Baseline case count changed" unless responses.keys.sort == baseline.keys.sort
+# JSON wire snapshots stay frozen. An intentional UI migration may refresh
+# only the HTML projection, after all JSON cases have passed their old hashes.
+responses.each do |label, response|
+  next if label.includes?("-html-")
+  raise "#{label}: JSON output changed" unless comment_avatar_output_digest(response) == baseline[label].as_s
+end
+if ENV["UPDATE_FRONTEND_HTML_BASELINES"]? == "1"
+  responses.each do |label, response|
+    baseline[label] = JSON::Any.new(comment_avatar_output_digest(response)) if label.includes?("-html-")
+  end
+  File.write("spec/invidious/comments/fixtures/baseline_output_digests.json", baseline.to_pretty_json + "\n")
+end
 responses.each do |label, response|
   raise "#{label}: JSON/HTML output changed" unless comment_avatar_output_digest(response) == baseline[label].as_s
 end
@@ -265,4 +277,4 @@ File.write("#{output}/avatars-comments-thin.html", comment_avatar_cross_page_fix
 expected = expected_comment_avatars("modern").merge(expected_comment_avatars("community"))
 raise "Real supplied avatars unavailable in shared cache" unless Invidious::Database::ChannelAvatars.select(expected.keys) == expected
 raise "Cross-page reuse requested metadata" unless YoutubeAPI.avatar_listing_calls == calls && Invidious::Videos::Parser.avatar_metadata_calls == metadata_calls
-puts "Comment/community avatars: #{expected.size} real channels learned; 20 unchanged JSON/HTML cases; batch writes, no learning reads, fetched continuations/replies, thin mode and cache failures passed"
+puts "Comment/community avatars: #{expected.size} real channels learned; 10 unchanged JSON cases and 10 current HTML projections; batch writes, no learning reads, fetched continuations/replies, thin mode and cache failures passed"

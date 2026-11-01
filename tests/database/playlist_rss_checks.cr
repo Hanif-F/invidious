@@ -33,7 +33,11 @@ def check_mobile_playlist_rss(token, email, sid)
   page.set "user", Invidious::Database::Users.select!(email: email)
   page.set "sid", sid
   html = Invidious::Routes::Feeds.playlists(page).not_nil!
-  check(html.includes?(%(My playlists (<span id="count">0</span>))) && html.includes?(%(Subscribed playlists (<span id="count">2</span>))), "Web headings lost labels or counts")
+  library_html = XML.parse_html(html)
+  created_count = library_html.xpath_node("//span[@id='created-count']").not_nil!
+  saved_count = library_html.xpath_node("//span[@id='saved-count']").not_nil!
+  check(created_count.content == "0" && saved_count.content == "2", "Web library lost owned/saved counts")
+  check(created_count.parent.not_nil!.content.starts_with?("My playlists") && saved_count.parent.not_nil!.content.starts_with?("Saved playlists"), "Web library lost owned/saved labels")
   Invidious::Database::Playlists.update(public_list.id, "Owner changed title", public_list.privacy, "New description", Time.utc)
   changed_video = PlaylistVideo.new({title: "Owner added video", id: "abcdefghijk", author: "Owner", ucid: "UCowner", length_seconds: 10, published: Time.utc, plid: public_list.id, index: 7_i64, live_now: false, members_only: false})
   Invidious::Database::PlaylistVideos.insert(changed_video)

@@ -1,0 +1,33 @@
+<div class="preference-subgroup ai-filter-preferences" id="preferences-ai-filter">
+    <h2><%= I18n.translate(locale, "ai_filter_title") %></h2>
+    <input type="hidden" name="ai_filter_form_version" value="2">
+    <div class="pure-control-group ai-filter-master">
+        <label for="ai_filter_enabled"><%= I18n.translate(locale, "ai_filter_enable") %></label>
+        <input type="checkbox" name="ai_filter_enabled" id="ai_filter_enabled" aria-describedby="ai-filter-master-hint" <% if preferences.ai_filter_enabled %>checked<% end %>>
+        <p id="ai-filter-master-hint" class="preference-description"><%= I18n.translate(locale, "ai_filter_enable_hint") %></p>
+    </div>
+    <p class="preference-description ai-filter-paused"><%= I18n.translate(locale, "ai_filter_paused") %></p>
+    <p class="preference-description"><%= I18n.translate(locale, "ai_filter_description") %></p>
+    <p class="preference-description" id="ai-filter-actions-hint"><%= I18n.translate(locale, "ai_filter_actions_hint") %></p>
+    <div class="ai-filter-page-groups">
+        <% { {"feeds", :feeds}, {"search", :search}, {"recommendations", :recommendations}, {"other_pages", :other} }.each do |surface, scope| %>
+        <fieldset class="ai-filter-page-group" aria-describedby="ai-filter-<%= surface %>-hint ai-filter-actions-hint">
+            <legend><%= I18n.translate(locale, "ai_filter_#{surface}") %></legend>
+            <p class="preference-description" id="ai-filter-<%= surface %>-hint"><%= I18n.translate(locale, "ai_filter_#{surface}_hint") %></p>
+            <% {"blocklist", "warnlist"}.each do |kind| %>
+            <% # Show saved actions even while the global switch pauses filtering. %>
+            <% action = Invidious::Frontend::AiChannels.saved_action(preferences, kind, scope) %>
+            <div class="pure-control-group">
+                <label for="ai_<%= kind %>_<%= surface %>_action"><%= I18n.translate(locale, "ai_filter_#{kind}") %></label>
+                <select name="ai_<%= kind %>_<%= surface %>_action" id="ai_<%= kind %>_<%= surface %>_action" aria-describedby="ai-filter-<%= surface %>-hint ai-filter-actions-hint">
+                    <% (surface == "other_pages" ? {"off", "replace_thumbnail"} : {"off", "hide", "replace_thumbnail"}).each do |choice| %>
+                    <option value="<%= choice %>" <% if choice == action %>selected<% end %>><%= I18n.translate(locale, "ai_filter_action_#{choice}") %></option>
+                    <% end %>
+                </select>
+            </div>
+            <% end %>
+        </fieldset>
+        <% end %>
+    </div>
+    <%= rendered "components/ai-filter-status" %>
+</div>

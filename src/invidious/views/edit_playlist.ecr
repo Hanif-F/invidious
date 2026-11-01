@@ -1,60 +1,8 @@
-<% title = HTML.escape(playlist.title) %>
-
-<% content_for "header" do %>
-<title><%= title %> - Invidious</title>
-<link rel="alternate" type="application/rss+xml" title="RSS" href="/feed/playlist/<%= plid %>" />
-<% end %>
-
-<form class="pure-form" action="/edit_playlist?list=<%= plid %>" method="post">
-    <div class="h-box flexible">
-        <div class="flex-right button-container">
-            <div class="pure-u">
-                <a class="pure-button pure-button-secondary low-profile" dir="auto" href="/playlist?list=<%= plid %>">
-                    <i class="icon ion-md-close"></i>&nbsp;<%= I18n.translate(locale, "generic_button_cancel") %>
-                </a>
-            </div>
-            <div class="pure-u">
-                <button class="pure-button pure-button-secondary low-profile" dir="auto" type="submit">
-                    <i class="icon ion-md-save"></i>&nbsp;<%= I18n.translate(locale, "generic_button_save") %>
-                </button>
-            </div>
-            <div class="pure-u">
-                <a class="pure-button pure-button-secondary low-profile" dir="auto" href="/delete_playlist?list=<%= plid %>">
-                    <i class="icon ion-md-trash"></i>&nbsp;<%= I18n.translate(locale, "generic_button_delete") %>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="h-box flexible title">
-        <div>
-            <h3><input class="pure-input-1" maxlength="150" name="title" type="text" value="<%= title %>"></h3>
-        </div>
-    </div>
-
-    <div class="h-box">
-        <div class="pure-u-1-1">
-            <b>
-                <%= HTML.escape(playlist.display_author) %> |
-                <%= I18n.translate_count(locale, "generic_videos_count", playlist.video_count) %> |
-            </b>
-            <select name="privacy">
-            <%- {"Public", "Unlisted", "Private"}.each do |option| -%>
-                <option value="<%= option %>" <% if option == playlist.privacy.to_s %>selected<% end %>><%= I18n.translate(locale, option) %></option>
-            <%- end -%>
-            </select>
-        </div>
-    </div>
-
-    <div class="h-box">
-        <textarea maxlength="5000" name="description" style="margin-top:10px;max-width:100%;height:20vh" class="pure-input-1"><%= playlist.description %></textarea>
-    </div>
-    <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-</form>
-
-<div class="h-box">
-    <hr>
-</div>
-
-
-<%= rendered "components/items_paginated" %>
+<% content_for "header" do %><title><%= I18n.translate(locale, "generic_button_edit") %> - <%= HTML.escape(playlist.title) %> - Invidious</title><% end %>
+<section class="reading-page playlist-form-page"><header class="page-heading"><h1><%= I18n.translate(locale, "generic_button_edit") %></h1><p dir="auto"><%= HTML.escape(playlist.title) %></p></header>
+<form action="/edit_playlist?list=<%= URI.encode_www_form(plid) %>" method="post" data-playlist-form="edit" data-playlist-id="<%= HTML.escape(plid) %>" class="stacked-form">
+<% form_title = env.params.body["title"]? || playlist.title; form_privacy = env.params.body["privacy"]? || playlist.privacy.to_s; form_description = env.params.body["description"]? || playlist.description; is_edit = true %>
+<%= rendered "overhaul/playlist_fields" %>
+<div class="toolbar"><button type="submit" class="button button-primary"><%= Invidious::Frontend::Icons.render("check") %><%= I18n.translate(locale, "generic_button_save") %></button><a class="button" href="/playlist?list=<%= URI.encode_www_form(plid) %>"><%= I18n.translate(locale, "generic_button_cancel") %></a><a class="button button-danger" href="/delete_playlist?list=<%= URI.encode_www_form(plid) %>"><%= Invidious::Frontend::Icons.render("trash-2") %><%= I18n.translate(locale, "Delete playlist") %></a></div>
+<input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
+</form></section>

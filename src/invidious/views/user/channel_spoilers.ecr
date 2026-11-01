@@ -1,40 +1,53 @@
-<% content_for "header" do %><title><%= I18n.translate(locale, "spoilers_settings") %> - Invidious</title><% end %>
-<div class="h-box" id="channel-spoilers" data-guest="<%= !user %>">
-    <h1><%= I18n.translate(locale, "spoilers_settings") %></h1>
-    <p><%= I18n.translate(locale, "spoilers_hint") %></p>
-    <% unless user %><p><%= I18n.translate(locale, "spoilers_guest") %></p><noscript><p><%= I18n.translate(locale, "spoilers_guest_js") %></p></noscript><% end %>
+<%
+  section = "channel-masking"
+  draft = env.get?("mask_draft").try { |value| URI::Params.parse(value.as(String)) }
+  error = env.get?("mask_error").try(&.as(String))
+  uncertain = env.get?("mask_uncertain") == true
+  stale = env.get?("mask_stale") == true
+  channel_input = draft.try(&.["channel"]?) || env.params.query["channel"]? || channel_id || ""
+  profile = Invidious::BrowserProfiles.render_scope(env)
+  form_profile = draft.try(&.["browser_profile"]?) || profile
+  title_hidden = draft ? draft["hide_title"]? == "on" : entry.hide_title
+  thumbnail_hidden = draft ? draft["hide_thumbnail"]? == "on" : entry.hide_thumbnail
+  days_value = draft ? (draft["reveal_after_days"]? || "") : (entry.reveal_after_days.try(&.to_s) || "")
+  valid_days = days_value.strip.empty? || (days_value.strip.matches?(/\A\d+\z/) && days_value.strip.to_i32?.try { |value| value > 0 })
+%>
+<% content_for "header" do %><title><%= I18n.translate(locale, "spoilers_settings") %> - Invidious</title><script src="/js/channel-spoiler-preferences.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_settings") %></h1></header>
+<div class="settings-layout"><%= rendered "overhaul/settings_navigation" %>
+<section class="settings-category" id="channel-spoilers" data-guest="<%= !user %>" aria-labelledby="masking-heading">
+    <h2 id="masking-heading"><%= I18n.translate(locale, "spoilers_settings") %></h2>
+    <p><%= I18n.translate(locale, user ? "overhaul_masking_account_scope" : "spoilers_guest") %></p>
+    <% unless user %><p data-mask-browser-required><%= I18n.translate(locale, "spoilers_guest_js") %></p><% end %>
+    <form class="channel-lookup" method="get" action="/preferences/spoilers/channels">
+        <label for="channel"><%= I18n.translate(locale, "sb_channel_input") %></label><div class="toolbar"><input id="channel" name="channel" type="text" required maxlength="2048" dir="ltr" value="<%= HTML.escape(channel_input) %>"><button class="button" type="submit"><%= I18n.translate(locale, "sb_channel_edit") %></button></div>
+    </form>
+    <p id="spoiler-save-status" role="<%= error ? "alert" : "status" %>" tabindex="-1"><% if error %><%= HTML.escape(error) %><% elsif env.params.query["saved"]? == "1" %><%= I18n.translate(locale, "settings_saved") %><% end %></p>
     <div id="spoiler-controls" <%= "hidden" unless user %>>
-        <p id="spoiler-save-status" role="status"></p>
-        <form class="pure-form pure-form-stacked" method="get" action="/preferences/spoilers/channels">
-            <label for="spoiler-channel"><%= I18n.translate(locale, "sb_channel_input") %></label>
-            <input id="spoiler-channel" name="channel" type="text" required>
-            <button type="submit" class="pure-button"><%= I18n.translate(locale, "sb_channel_edit") %></button>
-        </form>
+        <p class="muted"><%= I18n.translate(locale, "spoilers_hint") %></p>
         <% if channel_id %>
-        <h2><a href="/channel/<%= channel_id %>" dir="auto"><%= HTML.escape(entry.name) %></a></h2>
-        <form class="pure-form pure-form-stacked spoiler-channel-form" method="post" action="/preferences/spoilers/channels" data-name="<%= HTML.escape(entry.name) %>">
-            <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-            <input type="hidden" name="channel" value="<%= channel_id %>">
-            <label><input type="checkbox" name="hide_thumbnail" <%= "checked" if entry.hide_thumbnail %>> <%= I18n.translate(locale, "spoilers_hide_thumbnail") %></label>
-            <label><input type="checkbox" name="hide_title" <%= "checked" if entry.hide_title %>> <%= I18n.translate(locale, "spoilers_hide_title") %></label>
-            <label for="spoiler-days"><%= I18n.translate(locale, "spoilers_days") %></label>
-            <input id="spoiler-days" name="reveal_after_days" type="number" min="1" max="2147483647" step="1" value="<%= entry.reveal_after_days %>" aria-describedby="spoiler-days-hint">
-            <p id="spoiler-days-hint"><%= I18n.translate(locale, "spoilers_days_hint") %></p>
-            <button class="pure-button pure-button-primary" type="submit" name="action" value="save"><%= I18n.translate(locale, "Save preferences") %></button>
-            <button class="pure-button" type="submit" name="action" value="reset" formnovalidate><%= I18n.translate(locale, "sb_channel_reset") %></button>
-        </form>
-        <% end %>
-        <h2><%= I18n.translate(locale, "sb_configured_channels") %></h2>
-        <div id="spoiler-saved-channels" data-edit="<%= I18n.translate(locale, "sb_channel_edit") %>" data-reset="<%= I18n.translate(locale, "sb_channel_reset") %>" data-empty="<%= I18n.translate(locale, "sb_channels_empty") %>">
-        <% if preferences.channel_spoiler_settings.empty? %><p><%= I18n.translate(locale, "sb_channels_empty") %></p><% end %>
-        <% preferences.channel_spoiler_settings.to_a.sort_by { |id, saved| saved.name.downcase }.each do |id, saved| %>
-            <p><a href="/channel/<%= id %>" dir="auto"><%= HTML.escape(saved.name) %></a> · <a href="/preferences/spoilers/channels?channel=<%= id %>"><%= I18n.translate(locale, "sb_channel_edit") %></a></p>
-            <form method="post" action="/preferences/spoilers/channels">
-                <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>"><input type="hidden" name="channel" value="<%= id %>">
-                <button class="pure-button" type="submit" name="action" value="reset"><%= I18n.translate(locale, "sb_channel_reset") %></button>
+            <h3><a href="/channel/<%= channel_id %>" dir="auto"><%= HTML.escape(entry.name) %></a></h3>
+            <form class="spoiler-channel-form" data-name="<%= HTML.escape(entry.name) %>" method="post" action="/preferences/spoilers/channels">
+                <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>"><input type="hidden" name="browser_profile" value="<%= HTML.escape(form_profile) %>"><input type="hidden" name="channel" value="<%= channel_id %>">
+                <fieldset <%= "disabled" if !user || stale %>><legend class="sr-only"><%= I18n.translate(locale, "sb_channel_edit") %></legend>
+                <div class="field-row"><label for="spoiler-hide-title"><%= I18n.translate(locale, "spoilers_hide_title") %></label><input type="checkbox" id="spoiler-hide-title" name="hide_title" <%= "checked" if title_hidden %>></div>
+                <div class="field-row"><label for="spoiler-hide-thumbnail"><%= I18n.translate(locale, "spoilers_hide_thumbnail") %></label><input type="checkbox" id="spoiler-hide-thumbnail" name="hide_thumbnail" <%= "checked" if thumbnail_hidden %>></div>
+                <div class="field-row"><label for="spoiler-days"><%= I18n.translate(locale, "spoilers_days") %></label><input type="text" inputmode="numeric" id="spoiler-days" name="reveal_after_days" value="<%= HTML.escape(days_value) %>" aria-describedby="spoiler-days-hint" <%= %(aria-invalid="true") unless valid_days %>></div>
+                <p class="muted" id="spoiler-days-hint"><%= I18n.translate(locale, "spoilers_days_hint") %></p>
+                </fieldset>
+                <div class="settings-actions"><button class="button button-primary" type="submit" name="action" value="save" <%= "disabled" if !user || uncertain || stale %>><%= I18n.translate(locale, "Save preferences") %></button><button class="button js-only" type="reset" hidden><%= I18n.translate(locale, "ux_discard") %></button><noscript><a class="button" href="/preferences/spoilers/channels?channel=<%= channel_id %>"><%= I18n.translate(locale, "ux_discard") %></a></noscript><button class="button" type="submit" name="action" value="reset" formnovalidate <%= "disabled" if !user || uncertain || stale %>><%= I18n.translate(locale, "overhaul_rule_remove") %></button></div>
             </form>
         <% end %>
+        <div class="toolbar channel-readback"><button class="button js-only" type="button" data-mask-readback hidden><%= I18n.translate(locale, "overhaul_channel_check") %></button><a class="button" href="/preferences/spoilers/channels<%= channel_id ? "?channel=#{channel_id}" : "" %>"><%= I18n.translate(locale, "settings_reload") %></a></div>
+        <h3><%= I18n.translate(locale, "sb_configured_channels") %></h3>
+        <label class="js-only" hidden for="spoiler-search"><%= I18n.translate(locale, "overhaul_channel_search") %></label><input class="js-only" hidden id="spoiler-search" type="search" autocomplete="off" aria-controls="spoiler-saved-channels">
+        <div id="spoiler-saved-channels" data-edit="<%= I18n.translate(locale, "sb_channel_edit") %>" data-reset="<%= I18n.translate(locale, "overhaul_rule_remove") %>" data-empty="<%= I18n.translate(locale, "sb_channels_empty") %>">
+        <% if user && preferences.channel_spoiler_settings.empty? %><p><%= I18n.translate(locale, "sb_channels_empty") %></p><% end %>
+        <% if user %><% preferences.channel_spoiler_settings.to_a.sort_by { |id, saved| saved.name.downcase }.each do |id, saved| %><div class="channel-rule-row" data-channel="<%= id %>"><a href="/channel/<%= id %>" dir="auto"><%= HTML.escape(saved.name) %></a><div class="toolbar"><a class="button" href="/preferences/spoilers/channels?channel=<%= id %>"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "sb_channel_edit") %></a><form method="post" action="/preferences/spoilers/channels" data-mask-reset>
+            <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>"><input type="hidden" name="browser_profile" value="<%= profile %>"><input type="hidden" name="channel" value="<%= id %>"><button class="button" type="submit" name="action" value="reset" <%= "disabled" if uncertain || stale %>><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "overhaul_rule_remove") %></button>
+        </form></div></div><% end %><% end %>
         </div>
     </div>
-</div>
-<script src="/js/channel-spoiler-preferences.js?v=<%= ASSET_COMMIT %>" defer></script>
+</section></div>
+<template id="masking-row"><div class="channel-rule-row"><a data-mask-channel dir="auto"></a><div class="toolbar"><a class="button" data-mask-edit><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "sb_channel_edit") %></a><form method="post" action="/preferences/spoilers/channels" data-mask-reset><input type="hidden" name="csrf_token"><input type="hidden" name="browser_profile"><input type="hidden" name="channel"><button class="button" type="submit" name="action" value="reset"><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "overhaul_rule_remove") %></button></form></div></div></template>
+<script id="masking-editor-config" type="application/json"><%= {account: !!user, profile: profile, uncertain: uncertain, stale: stale, failed: !!draft, rules: user ? preferences.channel_spoiler_settings : {} of String => Invidious::ChannelSpoilers::Rule, words: {limit: I18n.translate(locale, "overhaul_channel_limit"), saved: I18n.translate(locale, "settings_saved"), unsaved: I18n.translate(locale, "settings_unsaved"), saving: I18n.translate(locale, "settings_saving"), error: I18n.translate(locale, "settings_save_error"), load: I18n.translate(locale, "overhaul_channel_load_failed"), invalid: I18n.translate(locale, "spoilers_invalid_days"), unconfirmed: I18n.translate(locale, "overhaul_channel_unconfirmed"), changed: I18n.translate(locale, "overhaul_channel_changed"), profile: I18n.translate(locale, "overhaul_channel_profile_changed"), local: I18n.translate(locale, "overhaul_channel_storage_failed"), empty: I18n.translate(locale, "sb_channels_empty"), no_matches: I18n.translate(locale, "overhaul_channel_no_matches")}}.to_json.gsub("<", "\\u003c") %></script>

@@ -1,0 +1,112 @@
+{
+  "status": "Contribution/voting editor locally verified; legacy/coexistence and D7\u2013D9 remain required",
+  "recordedAt": "2026-10-28T18:11:30.163376+00:00",
+  "verified": [
+    "304/304 cumulative and 24/24 final focused Chromium/Firefox desktop cases",
+    "13 DeArrow specs",
+    "Guarded PostgreSQL production Settings/admin/chat/channel/identity/contribution routes, exact resolution, privacy and one-attempt transport failure",
+    "Final fixtures, normal/API-only type checks, JavaScript syntax, Crystal format, references/docs/whitespace",
+    "Seven inspected Light/Dark/enlarged RTL/no-JavaScript views"
+  ],
+  "remaining": [
+    "Recognized legacy Settings destinations/anchors",
+    "Full enhancement filtering/masking/lookup/media/Back coexistence including cached watch config after account writes",
+    "D7\u2013D9"
+  ],
+  "database": {
+    "container": "invidious-ui-overhaul-01a176a0",
+    "containerId": "619968f55f2e19b84588f31bc87cc7bb6db1582f3227b95c16a13665682e534b",
+    "taskLabel": "01a176a0-bf7a-71b0-af8d-2955647ae8f0",
+    "binding": "127.0.0.1:32768",
+    "database": "invidious_accounts_test",
+    "beforeHarness": {
+      "publicTables": 0,
+      "otherConnections": 0
+    },
+    "afterHarness": {
+      "publicTables": 24,
+      "otherConnections": 0
+    },
+    "guard": "New task-owned container from cached postgres:14; exact id/task label/running state/loopback binding and empty database/idle connections verified before harness. No existing database reset."
+  },
+  "phases": {
+    "cumulative": "Final implementation with short unknown-status rendering text. The subsequent loader generic error feedback and stronger masking/no-lookup/no-JavaScript screenshot assertions were verified by the final 24-case focused run. No broader code changed after the cumulative run.",
+    "native": "Backend/store/handler final; binary predates only short unknown-status rendering text. Final fixtures and normal/API-only checks include that text."
+  },
+  "limits": [
+    "Intercepted synthetic browser requests/media and dummy credentials; no deployed server, real external votes or physical native client",
+    "Earlier 12 manifests byte-identical; historical evidence is not relabelled as full D6 acceptance",
+    "D6 and full repository acceptance remain incomplete; D8 owns broader legacy/mobile tests",
+    "Existing Crystal deprecation warnings remain"
+  ],
+  "sha256": {
+    "assets/js/dearrow-loader.js": "d1535f518db6e521e6f29f8a131756b86d51c8db8dddf555ae49a23004aa89e7",
+    "assets/js/dearrow-contributions.js": "0662e451a876c490cbc4602c72a4650f056b9b54178751c375103b1606dbfb60",
+    "assets/js/ui.js": "da56e329f76cfc6a176baafc889fdf9cc437762621dee119c79c3efb3963572e",
+    "assets/css/dearrow-contributions.css": "f13f23b44e26640045fbbcc4e7cb1ad05b2550cd285007e6cd02eeb3c66f6da4",
+    "assets/css/foundation.css": "8b58b1e611c78fd45cfedba29ed9e388eefd4c135dae594b4a810ff474763ca9",
+    "src/invidious/views/components/dearrow_contributions.ecr": "23f39ab88745cc7427ec8afae18a2311f81f27e10d760f1ab48ba19abcb868c3",
+    "src/invidious/views/watch.ecr": "814eedecfb5c2c1c7e2149ebcd9c13217060816bf6b6f149775f97959b3c636f",
+    "src/invidious/routes/dearrow_contributions.cr": "10b520f2b5766e24f3191506a43142a85643291ce0d631342a76a121e892b39c",
+    "locales/en-US.json": "875ac7e6918dd302074263c044dbdfe453170b67cf0fe8e8ce13dd43d1e3c711",
+    "locales/id.json": "55f92b1cf78b73b7184b01868edcc4bc38388a0410dfc585b5e1764178f3e546",
+    "tests/frontend/dearrow_contribution_editor_checks.cr": "631f073aedbc2a5ed1b6ef3baabe1c5f175baffb1a16d5d26322cee2a18b05a4",
+    "tests/frontend/render_fixtures.cr": "ca2f1562e6c41cdeac2cb0538150307c5fde66a6419cb2c3dd8a83f82106e2d9",
+    "tests/frontend/overhaul.test.cjs": "442b0df5b68182e66ad5ec9f70dea6e01a6d5d066e655b95def0a14148047daf",
+    "tests/database/dearrow_contribution_editor_checks.cr": "8196af253d452c006dc4bbcd5e483c05ff19130d79be7c490e29d4567f0741db",
+    "tests/database/accounts.cr": "d912021f28b776214c988959892d8a9f58de82808416e7d846386c8f231621d0",
+    "tests/database/settings_checks.cr": "fcc875780b296eb447d4bed43bc9765e6a6934f304d6c0709131ff1692d12f93",
+    "tests/database/security_checks.cr": "d549570178a25e276a648b8b12e4496e00e28a1ccd5c60bd0bc9f0cfb484a76d",
+    "tests/frontend/README.md": "f253386faa3ee2331814921cff40ab5c6d19e26f8a4d69f4c39b3f9e04cc4c61",
+    "tests/database/README.md": "044dca453e5cfbb0f2f4b8a3fd3127dda9747b863830eec02e53b01c7dd6bb0d",
+    "docs/dearrow-contributions.md": "b84a5a2d1f919019709b7c60489a28f7a67c33ffdbcdbb8f133fc68882e93e53",
+    "docs/uiUXOverhaulPlan/d6-contributions-checkpoint.md": "2bee4a7c82bebe6c014c1cd8408670c97073d22bcd67e0d98b272a3b79088869",
+    "docs/uiUXOverhaulPlan/d6-handoff.md": "bb753494630b385a2c80c34f4a36e4d9ab7153f31ebc49d89e6484b24dc8063d",
+    "docs/uiUXOverhaulPlan/d6-enhancements-contract.md": "67f85a5a476e705662337d85b07b1b451fd68da89e2b9b63c19b0e57bf6af221",
+    "docs/uiUXOverhaulPlan/tasks.md": "3aa9a2fff87d916fb08cdda45b22efdfbf7dc296870c40243cd0bb5110f09223",
+    "docs/uiUXOverhaulPlan/coverage.md": "b14ad2a8c2ae8306d17c3b919cf3247204df27e2ed358a9006abb8b6c779b1de",
+    "docs/uiUXOverhaulPlan/progress.md": "8363f0f5959e68ccb5ae76d8959db7d1ddb14dc4cbe0abee583f42e90007c5ed"
+  },
+  "inspectedImages": {
+    "chromium-d6-contribution-list-light.png": "db6366a133b77a2d6c9cb6221042a53da080002ac948d7d514eeb41a82568c60",
+    "chromium-d6-contribution-review-light.png": "b2ff127ce4df26fce5ea5b2bee8e2c5cbac96dc2cbb16edf2d34df058c195605",
+    "chromium-d6-contribution-uncertain-light.png": "69b2ee80ecf3ff3a4f5712462a4d4be4a6dd65816e6b622d1af562522e626d78",
+    "chromium-d6-contribution-list-dark-rtl.png": "dec24fc07f8c97f8af33370ffaf859f3cb1a23719a07435dc93079f41f156006",
+    "firefox-d6-contribution-review-dark-rtl.png": "b5fb59ca549a43f2f25dd4fdc2a887ed0dd9ca4ab514d9671b663c16a2d599b1",
+    "firefox-d6-contribution-uncertain-dark-rtl.png": "ef046e9a4f202f04018b893452454d227191b68d2c394cdece0402abfa1e7b1e",
+    "chromium-d6-contribution-nojs-light.png": "b9eb11ca5f0e0e50dea39e3e37b975df0d43c5cade92bd8f245aae216aa3b77a"
+  },
+  "checks": {
+    "invidious-d6-contributions-initial-typecheck.log": "298aa52904d80a0b14a48e6ecf8c81586773953a5ada09c775ab07e22a5125b4",
+    "invidious-d6-contributions-fixture-build.log": "b0d2e048a5dc55c812edbbec4a82f4ed92f7213ac35d9a121497cfd7535d6afd",
+    "invidious-d6-contributions-db-build.log": "298aa52904d80a0b14a48e6ecf8c81586773953a5ada09c775ab07e22a5125b4",
+    "invidious-d6-contributions-specs.log": "c9e38c79c83229b17722a892e670a6afa7b869805991144827b18e971bd5b0c7",
+    "invidious-d6-contributions-cumulative-desktop.log": "1ecf3ef3875ecb0bc829139661c85ac65a1154d6aca3e1005b4247dd926e154f",
+    "invidious-d6-contributions-whitespace.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "invidious-d6-contributions-docs.log": "ff86d44e76b72e9b2347b6d1851e5e4ac18155ccb91348f3a2e336ee81bef3fb",
+    "invidious-d6-contributions-reference.log": "63d1498423ca4a4e3792257fe8ce8dd5beb56c24a8b09005f7c5afa51253f438",
+    "invidious-d6-contributions-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "invidious-d6-contributions-final-api-typecheck.log": "298aa52904d80a0b14a48e6ecf8c81586773953a5ada09c775ab07e22a5125b4",
+    "invidious-d6-contributions-final-typecheck.log": "298aa52904d80a0b14a48e6ecf8c81586773953a5ada09c775ab07e22a5125b4",
+    "invidious-d6-contributions-db-checks.log": "09e032c81d67c61fe5f301067925902ce4da170c8e1020c5d4aa695a8905f5a1",
+    "invidious-d6-contributions-browser.log": "3ba49c202fd7f42d14f1bdf2fcd1f88511dd64a902da44add226464289e6e626",
+    "invidious-d6-contributions-fixtures.log": "c58fde5c5220bcead633fc418372e0aad056aeda21353e60c5d33e3f20436ba0",
+    "contributions-cumulative-requests.json": "4d833c11b42c6de2465d129551a990b73bc5bcb8ec43cd71b69dbd72b84758f6",
+    "invidious-d6-contributions-source-checks.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contributions-database-guard.json": "5ddf60828bf844f8ba34e91e52d11eaedad8ffbe203bdfefafaffcadaaa175ce"
+  },
+  "frozenEarlierManifests": {
+    "docs/uiUXOverhaulPlan/review/evidence.json": "367adcdd39ad36b493f233e8d79d32a02fa1c3f340c7f007ed74575ee011aaae",
+    "docs/uiUXOverhaulPlan/review/d2-evidence.json": "135004083a29dd7dbd300b7350e8c65b532009dda33ed18c7f90d6a408478abf",
+    "docs/uiUXOverhaulPlan/review/d3-evidence.json": "903f6cc4df15db25d6e66decabd1a74c2feb58a32f864a015acb25bfffe5e8b5",
+    "docs/uiUXOverhaulPlan/review/d4-evidence.json": "ea3d5e1691f0e7e405c81fee95c7489123094851aa9486c4eb326290283d9a19",
+    "docs/uiUXOverhaulPlan/review/d5-evidence.json": "fc360aa0b5a4260c6665adc079fd8e8b2e44f83947be26def43d3dae1e5634af",
+    "docs/uiUXOverhaulPlan/review/d6-utilities-evidence.json": "355291e06179abfc7167048a4c5ae65f005bce61fdb114c71450387526c570e3",
+    "docs/uiUXOverhaulPlan/review/d6-chat-evidence.json": "6991c6bfa41ff47332774dd6e790a7dd54efb0d6a2484e9b3648b7fe5f8f6032",
+    "docs/uiUXOverhaulPlan/review/d6-clips-evidence.json": "177dffadc9f419ecb3d188b749414b8b777b5d2962718393b452d6a363061e69",
+    "docs/uiUXOverhaulPlan/review/d6-sponsorblock-editor-evidence.json": "e0aa908410c3fc06dd5524b214575da93ce2105e681cf8a4c313b0fbdd6328e8",
+    "docs/uiUXOverhaulPlan/review/d6-masking-editor-evidence.json": "d580cb425386478606df5313b5954da0a57c3659bd6463314965bef7b21a4272",
+    "docs/uiUXOverhaulPlan/review/d6-blocks-editor-evidence.json": "d2f8f8c06be38f79d6dbbd672c4081037d1191da448d97319b7adc392d1f4df6",
+    "docs/uiUXOverhaulPlan/review/d6-identity-editor-evidence.json": "9cb1741331c4a41df271126a4ed89f1c9470562b21f37fa7f1bf1e46d71a73b4"
+  }
+}

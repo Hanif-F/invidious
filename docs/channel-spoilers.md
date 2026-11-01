@@ -1,7 +1,6 @@
 # Channel titles and thumbnails
 
-Open **Preferences → Enhancements → Channel title and thumbnail settings → Manage channel settings**, or the same link on
-a channel or watch page. Select a channel by ID or `/channel/UC…` URL, choose
+Open **Settings → Channel title and thumbnail settings** (`/preferences/spoilers/channels`), or the contextual Settings destination in a channel/watch menu. Select a channel by ID or `/channel/UC…` URL, choose
 **Hide title**, **Hide thumbnail**, or both, then save.
 
 The optional **Reveal after this many days since upload** field is shared by both
@@ -22,7 +21,7 @@ open the video; clicking again follows the link. A hidden player poster has its
 own reveal button that does not start playback. Hiding does not prevent playback
 or autoplay. Scrubbing previews remain disabled while the poster is hidden.
 
-The title uses the existing blue DeArrow button. With DeArrow enabled and a
+The title uses the shared title-cycle icon. With DeArrow enabled and a
 replacement available, clicks cycle **Hidden → DeArrow → Original → Hidden**.
 Otherwise they cycle **Hidden → Original → Hidden**. A hidden title stays hidden
 while its replacement loads; hover and keyboard focus alone never reveal it.
@@ -48,9 +47,7 @@ saves preserve the map. No database migration is required. Public video metadata
 Blank delays serialize explicitly as `null`; omitted delays in older saved rules
 also mean indefinite hiding. Both forms retain the same manual reveal controls.
 The browser runtime receives only hiding switches and delays, without channel
-names. Accounts with no rules load no masking assets or extra card attributes;
-guests with no local rules install no masking observer. Guest storage changes
-still activate rules in an already open tab by reloading it.
+names. Watch/embed/listing pages retain the masking controller and presentation metadata so their first rule can activate without replacing the media element. Empty rules install no masking observers/scans and trigger no publication-date cache reads. Guest storage changes update an open document in place; confirmed account owner-state reads refresh cached pages. Settings editor pages omit the content runtime so external changes cannot reload an unsaved draft.
 
 Date fallback reads only missing publication dates in a batch. Account lookups
 include matching channels only; guest lookups use the optional browser marker

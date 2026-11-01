@@ -1,0 +1,482 @@
+/* Shared player timeline and controls. Retired style preferences do not select CSS variants. */
+.video-js.player-style-unified .vjs-progress-control {
+  /* Keep the thin rail inside a usable desktop hover/drag target. */
+  height: 24px;
+  top: auto;
+  bottom: calc(100% - 12px);
+}
+
+.video-js.player-style-unified .vjs-progress-control .vjs-progress-holder, .video-js.player-style-unified .vjs-progress-control {
+  position: absolute;
+  right: 0;
+  left: 0;
+  width: 100%;
+  margin: 0;
+}
+
+.video-js.player-style-unified .vjs-control-bar {
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.2));
+}
+
+.video-js.player-style-unified .vjs-slider {
+  background-color: rgba(255,255,255,0.2);
+}
+
+.video-js.player-style-unified .vjs-load-progress > div {
+  background-color: rgba(255,255,255,0.5);
+}
+
+.video-js.player-style-unified .vjs-play-progress {
+  background-color: red;
+}
+
+.video-js.player-style-unified .vjs-progress-control:hover .vjs-progress-holder {
+  font-size: 15px;
+}
+
+.video-js.player-style-unified .vjs-control-bar > .vjs-spacer {
+  flex: 1;
+  order: 2;
+}
+
+.video-js.player-style-unified .vjs-play-progress .vjs-time-tooltip {
+  display: none;
+}
+
+.video-js.player-style-unified .vjs-play-progress::before {
+  color: red;
+  font-size: 0.85em;
+  display: none;
+}
+
+.video-js.player-style-unified .vjs-progress-holder:hover .vjs-play-progress::before {
+  display: unset;
+}
+
+.video-js.player-style-unified .vjs-control-bar {
+  display: flex;
+  flex-direction: row;
+}
+
+.video-js.player-style-unified .vjs-big-play-button {
+  /*
+    Styles copied from video-js.min.css, definition of
+    .vjs-big-play-centered .vjs-big-play-button
+  */
+  top: 50%;
+  left: 50%;
+  margin-top: -0.81666em;
+  margin-left: -1.5em;
+}
+
+.video-js.player-style-unified .vjs-menu-button-popup .vjs-menu {
+  margin-bottom: 2em;
+  padding-top: 2em
+}
+
+.video-js.player-style-unified .vjs-progress-holder { height: 5px; }
+
+ul.vjs-menu-content::-webkit-scrollbar {
+  display: none;
+}
+
+.vjs-user-inactive {
+  cursor: none;
+}
+
+.video-js .vjs-text-track-display > div > div > div {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  border-radius: 9px !important;
+  padding: 5px !important;
+  line-height: 1.5 !important;
+}
+
+.vjs-play-control,
+.vjs-volume-panel,
+.vjs-current-time,
+.vjs-time-control,
+.vjs-duration,
+.vjs-progress-control,
+.vjs-remaining-time {
+  order: 1;
+}
+
+.vjs-refresh-buffer,
+.vjs-captions-button {
+  order: 2;
+}
+
+.video-js .vjs-refresh-buffer .vjs-icon-placeholder::before {
+  content: '\21bb';
+  font: 30px/1 sans-serif;
+}
+
+/* Video.js hides the entire bar on errors; leave recovery accessible. */
+.video-js.vjs-error.vjs-buffer-refreshable .vjs-control-bar {
+  display: flex !important;
+  z-index: 3;
+}
+
+.vjs-audio-button {
+  order: 3;
+}
+
+.vjs-rich-audio {
+  order: 3;
+}
+
+.vjs-quality-selector,
+.video-js .vjs-http-source-selector,
+.vjs-rich-quality {
+  order: 4;
+}
+
+.vjs-playback-rate {
+  order: 5;
+}
+
+.vjs-share-control {
+  order: 6;
+}
+
+.vjs-wide-control {
+  order: 8;
+}
+
+.vjs-fullscreen-control {
+  order: 9;
+}
+
+.vjs-playback-rate > .vjs-menu {
+  width: 50px;
+}
+
+.vjs-control-bar {
+  display: flex;
+  flex-direction: row;
+  scrollbar-width: none;
+}
+
+.vjs-control-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.video-js:not(.invidious-mobile) .vjs-control-bar > :is(.vjs-rich-quality, .vjs-rich-audio) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.video-js:not(.invidious-mobile) .vjs-control-bar > :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-icon-placeholder::before {
+  font-size: 24px;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.video-js .vjs-control-bar {
+  background-color: rgba(35, 35, 35, 0.2);
+  text-shadow: 0 1px 2px #000;
+}
+
+.vjs-menu-button-popup .vjs-menu .vjs-menu-content {
+  background-color: rgba(35, 35, 35, 0.75);
+}
+
+/* Keep hover-open menus flush with the enlarged watch-page control bar. */
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile) .vjs-menu-button-popup .vjs-menu .vjs-menu-content {
+  bottom: 0;
+}
+
+.vjs-menu li.vjs-menu-item:focus,
+.vjs-menu li.vjs-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.75);
+  color: rgba(49, 49, 51, 0.75);
+}
+
+.vjs-menu li.vjs-selected,
+.vjs-menu li.vjs-selected:focus,
+.vjs-menu li.vjs-selected:hover {
+  background-color: rgba(0, 182, 240, 0.75);
+}
+
+.video-js :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-menu-content {
+  width: max-content;
+  min-width: 15em;
+  max-width: min(28em, 90vw);
+  max-height: min(70vh, 34em);
+}
+.video-js :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-menu-item { text-align: start; }
+.stream-option-primary, .stream-option-secondary { display: block; }
+.stream-option-primary { font-weight: 600; }
+.stream-option-secondary { margin-top: 2px; font-size: .82em; opacity: .72; }
+.video-js .stream-option-divider,
+.mobile-player-settings .stream-option-divider {
+  margin-top: 6px; padding: 8px 12px 4px; border-top: 1px solid #777;
+  color: #ddd; font-size: .82em; font-weight: 600; text-transform: uppercase;
+}
+
+/* Progress Bar */
+.video-js .vjs-slider {
+  background-color: rgba(15, 15, 15, 0.5);
+}
+
+.video-js .vjs-load-progress,
+.video-js .vjs-load-progress div {
+  background: rgba(87, 87, 88, 1);
+}
+
+.video-js .vjs-slider:hover,
+.video-js button:hover {
+  color: rgba(0, 182, 240, 1);
+}
+
+
+/* Overlay */
+.video-js .vjs-overlay {
+  background-color: rgba(35, 35, 35, 0.75) !important;
+}
+.video-js .vjs-overlay * {
+  color: rgba(255, 255, 255, 1) !important;
+  text-align: center;
+}
+
+/* ProgressBar marker */
+.vjs-marker {
+  background-color: rgba(255, 255, 255, 1);
+  z-index: 0;
+}
+
+/* Big "Play" Button */
+.video-js .vjs-big-play-button {
+  background-color: rgba(35, 35, 35, 0.5);
+}
+
+.video-js:hover .vjs-big-play-button {
+  background-color: rgba(35, 35, 35, 0.75);
+}
+
+.video-js .vjs-current-time,
+.video-js .vjs-time-divider,
+.video-js .vjs-duration {
+  display: block;
+}
+
+.video-js .vjs-time-divider {
+  min-width: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+.video-js .vjs-poster {
+  background-size: cover;
+  object-fit: cover;
+}
+
+.player-dimensions.vjs-fluid {
+  padding-top: 82vh;
+}
+
+video.video-js {
+  position: absolute;
+  height: 100%;
+}
+
+#player-container {
+  position: relative;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: 1em;
+  margin-right: 1em;
+  padding-bottom: 82vh;
+  height: 0;
+}
+
+@media screen and (max-width: 700px) {
+  .video-js .vjs-share {
+    justify-content: unset;
+  }
+}
+
+@media screen and (max-width: 650px) {
+  .vjs-modal-dialog-content {
+    overflow-x: hidden;
+  }
+}
+
+/* Center play/pause and both mobile bars share activity state and fade timing.
+   Ignore mobile-ui's show-play-toggle class, which it clears on `playing`. */
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .2s, visibility .2s;
+}
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started:is(.vjs-user-active, .vjs-ended) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control),
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started:has(.vjs-control-bar :focus-visible, .vjs-touch-overlay .vjs-play-control:focus-visible, .vjs-menu.vjs-lock-showing) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+/* Animate the seek feedback separately so double-tap seeking cannot fade controls. */
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile) .vjs-touch-overlay.skip {
+  opacity: 1;
+  animation: none;
+  -webkit-animation: none;
+  background-size: 0;
+}
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile) .vjs-touch-overlay.skip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: inherit;
+  background-position: inherit;
+  background-repeat: no-repeat;
+  background-size: 10%;
+  animation: fadeAndScale .6s linear;
+}
+
+.sb-ranges { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.sb-range { position: absolute; top: 0; height: 100%; opacity: .85; }
+.video-js .sb-overlay {
+    position: absolute; left: 12px; bottom: 70px; max-width: calc(100% - 24px);
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: rgba(20,20,20,.9); color: white; border-radius: 6px;
+    font: 14px/1.4 sans-serif; z-index: 25; opacity: 0; visibility: hidden;
+    transition: opacity .18s, visibility .18s; pointer-events: none;
+    box-sizing: border-box; flex-wrap: wrap;
+}
+.video-js .sb-overlay.sb-visible { opacity: 1; visibility: visible; pointer-events: auto; }
+.video-js .sb-overlay button { cursor: pointer; color: white; background: transparent; padding: 5px; border: 1px solid #aaa; border-radius: 4px; font: inherit; }
+.video-js .sb-overlay .sb-close { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 4px; border-color: transparent; }
+.video-js .sb-overlay button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.video-js .sb-notice { bottom: 130px; }
+@media (prefers-reduced-motion: reduce) { .video-js .sb-overlay { transition: none; } }
+
+/* Mobile uses one settings entry point; playback components still own their state. */
+.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-refresh-buffer, .vjs-captions-button, .vjs-audio-button, .vjs-rich-audio, .vjs-quality-selector, .vjs-rich-quality, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-wide-control) { display: none; }
+.video-js .vjs-mobile-settings { order: 6; min-width: 44px; min-height: 44px; align-self: center; }
+.vjs-mobile-settings .vjs-icon-placeholder::before { content: '⚙'; font: 26px/44px sans-serif; }
+.video-js .mobile-player-settings {
+    position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh;
+    max-width: none; max-height: none; margin: 0; border: 0; box-sizing: border-box;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    background: rgba(0, 0, 0, 0.5); color: #fff; font: 16px/1.5 sans-serif; overflow: auto; overscroll-behavior: contain;
+}
+.mobile-player-settings::backdrop { background: transparent; }
+.mobile-player-settings header { display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: transparent; z-index: 1; }
+.mobile-player-settings h2 { flex: 1; font-size: 20px; }
+.video-js .mobile-player-settings button { min-height: 48px; padding: 12px; color: inherit; cursor: pointer; text-align: start; border-bottom: 1px solid #555; }
+.mobile-player-settings > div > button { display: flex; width: 100%; min-width: 0; flex-direction: column; }
+.mobile-player-settings > div > button.mobile-setting-row { flex-direction: row; align-items: center; gap: 12px; }
+.mobile-player-settings .mobile-setting-title { flex: none; }
+.mobile-player-settings .mobile-setting-value {
+    display: block; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; color: #ccc; font-size: .88em; text-align: end;
+}
+.mobile-player-settings button[aria-pressed=true]::after { content: ' ✓'; }
+.mobile-player-settings :focus-visible { outline: 2px solid #7cc7ff; outline-offset: -2px; }
+.mobile-player-settings input { width: 100%; min-height: 44px; box-sizing: border-box; }
+.mobile-player-settings .vjs-modal-dialog { position: relative; display: block; height: auto; min-height: 300px; }
+.mobile-player-settings .vjs-modal-dialog-content { position: relative; }
+.mobile-settings-open .sb-overlay { visibility: hidden !important; pointer-events: none !important; }
+.invidious-mobile .sb-overlay:not(.sb-notice) { padding: 0; gap: 4px; flex-wrap: nowrap; }
+.invidious-mobile .sb-overlay:not(.sb-notice) > span { display: none; }
+.invidious-mobile .sb-overlay button { min-width: 44px; min-height: 44px; }
+.invidious-mobile .sb-skip { font-size: 0; }
+.invidious-mobile .sb-skip::before { content: ''; display: block; width: 24px; height: 24px; margin: auto; background: currentColor;
+    mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath d="M4 5v14l10-7zM16 5h3v14h-3z"/%3E%3C/svg%3E') center / contain no-repeat;
+}
+.mobile-seek-feedback { position: absolute; top: 35%; pointer-events: none; z-index: 30; font: bold 22px/1.5 sans-serif; color: white; background: #000b; border-radius: 24px; padding: 12px; }
+.mobile-seek-feedback:empty { display: none; }
+.mobile-seek-feedback[data-direction=left] { left: 8%; }
+.mobile-seek-feedback[data-direction=right] { right: 8%; }
+.video-js .mobile-player-settings .vjs-close-button { display: none; }
+.video-js .mobile-player-settings .vjs-text-track-settings { background: transparent; }
+.video-js .mobile-player-settings .vjs-text-track-settings .vjs-modal-dialog-content { display: block; padding: 0; overflow: visible; }
+.video-js .mobile-player-settings :is(.vjs-track-settings-colors, .vjs-track-settings-font, .vjs-track-settings-controls) { display: block; }
+.video-js .mobile-player-settings .vjs-text-track-settings fieldset { margin: 0 0 16px; }
+.video-js .mobile-player-settings .vjs-text-track-settings fieldset span { display: block; }
+.video-js .mobile-player-settings select { min-height: 44px; width: 100%; max-width: none; margin: 0 0 8px; padding: 8px; background: #303030; color: white; border: 1px solid #777; border-radius: 4px; }
+.video-js .mobile-player-settings .vjs-track-settings-controls button { background: #303030; color: white; margin: 8px; }
+
+/* Local, read-only playback diagnostics. */
+.video-js .vjs-stats-control .vjs-icon-placeholder::before { content: '▥'; font-size: 22px; }
+.invidious-mobile .vjs-stats-control { display: none; }
+.video-js .player-stats { position: absolute; inset-block-start: 8px; inset-inline-start: 8px; z-index: 10; width: min(540px, calc(100% - 16px)); max-height: calc(100% - 72px); overflow: auto; box-sizing: border-box; background: rgb(15 15 15 / 92%); color: #fff; padding: 8px; font: 12px/1.4 monospace; text-align: start; overscroll-behavior: contain; }
+.video-js .player-stats[hidden], .player-stats [hidden], .player-stats:not(.stats-expanded) .stats-extra { display: none; }
+.player-stats header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.player-stats header strong { flex: 1; }
+.video-js .player-stats button { min-height: 44px; min-width: 44px; padding: 6px; cursor: pointer; border: 1px solid #777; border-radius: 3px; }
+.player-stats :focus-visible { outline: 2px solid #7cc7ff; outline-offset: -2px; }
+.player-stats dl { margin: 4px 0; }
+.player-stats dl > div { display: grid; grid-template-columns: minmax(100px, 42%) 1fr; gap: 8px; border-bottom: 1px solid #444; padding: 3px 0; }
+.player-stats dd { margin: 0; overflow-wrap: anywhere; }
+.player-stats svg { display: block; width: 100%; height: 40px; }
+.player-stats polyline { stroke: #7cc7ff; stroke-width: 2; fill: none; }
+.player-stats summary { cursor: pointer; min-height: 44px; }
+.player-stats textarea { width: 100%; min-height: 100px; color: #fff; background: #222; }
+@media (max-width: 600px) {
+    .video-js .player-stats { font-size: 11px; padding: 4px; }
+    .player-stats:not(.stats-expanded) dl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .player-stats:not(.stats-expanded) dl > div { display: block; }
+    .video-js .player-stats.stats-expanded { inset: 0 0 56px; width: 100%; max-height: none; padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left)); }
+}
+.video-js .vjs-stats-control { order: 6; }
+.player-stats footer { display: flex; gap: 8px; flex-wrap: wrap; }
+.player-stats header { position: sticky; top: -8px; z-index: 1; background: #171717; }
+
+/* Shared mobile surfaces remain neutral across themes, inline and fullscreen. */
+body .video-js.invidious-mobile .vjs-touch-overlay .vjs-play-control,
+body .video-js.invidious-mobile .vjs-big-play-button {
+    background: rgba(0, 0, 0, 0.15) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: white !important;
+}
+body .video-js.invidious-mobile .vjs-touch-overlay .vjs-play-control {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+}
+
+/* Shared neutral selections override theme accents in every player menu. */
+body .video-js .vjs-menu li.vjs-menu-item.vjs-selected,
+body .video-js .mobile-player-settings button[aria-pressed="true"] {
+  background: #d6d6d6;
+  color: #202020;
+  text-shadow: none;
+}
+body .video-js .vjs-menu li.vjs-selected .stream-option-secondary,
+body .video-js .mobile-player-settings button[aria-pressed="true"] .stream-option-secondary {
+  color: inherit;
+  opacity: 1;
+}
+body .video-js .vjs-menu li.vjs-menu-item:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+.video-js :is(.vjs-rich-quality, .vjs-rich-audio) > .vjs-menu-button {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.chapter-markers { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.chapter-marker { position: absolute; top: 0; height: 100%; width: 2px; background: rgba(0,0,0,.65); transform: translateX(-1px); }
+.video-js.has-chapters .vjs-duration { display: block !important; }
+.video-js .current-chapter { order: 1; flex: 0 1 auto; align-self: center; box-sizing: border-box; min-width: 0; max-width: min(24em, 30%); padding-inline: .6em .3em; border-inline-start: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; }
+.video-js .current-chapter[hidden] { display: none; }
+.video-js.invidious-mobile.has-chapters .vjs-remaining-time { display: none; }
+.video-js.invidious-mobile.has-chapters.player-style-unified .vjs-progress-control { position: absolute; top: -30px; bottom: auto; left: 12px; right: 12px; width: auto; height: 44px; margin: 0; }
+.video-js.invidious-mobile.has-chapters.player-style-unified .vjs-progress-holder { width: 100%; margin: 0; }
+.video-js .chapter-tooltip { position: absolute; z-index: 30; pointer-events: none; max-width: min(320px, calc(100% - 8px)); box-sizing: border-box; padding: 6px 9px; border-radius: 4px; background: rgba(20,20,20,.95); color: white; font: 13px/1.4 sans-serif; overflow-wrap: anywhere; text-align: center; }
+.video-js .chapter-tooltip[hidden] { display: none; }
+.chapter-tooltip > :first-child { font-weight: bold; }
+.video-js.spoiler-thumbnails-hidden .vjs-vtt-thumbnail-display { display: none !important; }

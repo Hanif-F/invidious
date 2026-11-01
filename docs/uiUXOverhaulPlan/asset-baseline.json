@@ -1,0 +1,282 @@
+{
+  "revision": "22fc2a66",
+  "scope": "All files directly in assets/css and assets/js, including vendored plugins there, plus Diary assets. Packages under assets/videojs are separately accounted. File sum is not per-page transfer.",
+  "files": {
+    "assets/css/carousel.css": {
+      "bytes": 2787,
+      "gzipBytes": 1247
+    },
+    "assets/css/clips.css": {
+      "bytes": 6880,
+      "gzipBytes": 1956
+    },
+    "assets/css/dearrow-contributions.css": {
+      "bytes": 2495,
+      "gzipBytes": 873
+    },
+    "assets/css/dearrow.css": {
+      "bytes": 1670,
+      "gzipBytes": 659
+    },
+    "assets/css/default.css": {
+      "bytes": 27149,
+      "gzipBytes": 6839
+    },
+    "assets/css/embed.css": {
+      "bytes": 432,
+      "gzipBytes": 244
+    },
+    "assets/css/empty.css": {
+      "bytes": 255,
+      "gzipBytes": 177
+    },
+    "assets/css/grids-responsive-min.css": {
+      "bytes": 8035,
+      "gzipBytes": 1281
+    },
+    "assets/css/ionicons.min.css": {
+      "bytes": 45198,
+      "gzipBytes": 7930
+    },
+    "assets/css/live-chat.css": {
+      "bytes": 9770,
+      "gzipBytes": 2421
+    },
+    "assets/css/player.css": {
+      "bytes": 18394,
+      "gzipBytes": 4495
+    },
+    "assets/css/pure-min.css": {
+      "bytes": 17215,
+      "gzipBytes": 3944
+    },
+    "assets/css/quality-selector.css": {
+      "bytes": 450,
+      "gzipBytes": 240
+    },
+    "assets/css/search.css": {
+      "bytes": 2380,
+      "gzipBytes": 908
+    },
+    "assets/css/video-actions.css": {
+      "bytes": 3316,
+      "gzipBytes": 1097
+    },
+    "assets/css/videojs-youtube-annotations.min.css": {
+      "bytes": 1232,
+      "gzipBytes": 461
+    },
+    "assets/css/channel-spoilers.css": {
+      "bytes": 992,
+      "gzipBytes": 485
+    },
+    "assets/css/verification.css": {
+      "bytes": 588,
+      "gzipBytes": 353
+    },
+    "assets/css/ui.css": {
+      "bytes": 4963,
+      "gzipBytes": 1549
+    },
+    "assets/js/_helpers.js": {
+      "bytes": 7708,
+      "gzipBytes": 2396
+    },
+    "assets/js/clip-editor.js": {
+      "bytes": 13141,
+      "gzipBytes": 3732
+    },
+    "assets/js/clip-loader.js": {
+      "bytes": 3316,
+      "gzipBytes": 1140
+    },
+    "assets/js/clip-player.js": {
+      "bytes": 1742,
+      "gzipBytes": 642
+    },
+    "assets/js/comments.js": {
+      "bytes": 7316,
+      "gzipBytes": 1937
+    },
+    "assets/js/community.js": {
+      "bytes": 2875,
+      "gzipBytes": 807
+    },
+    "assets/js/dearrow-contributions.js": {
+      "bytes": 7555,
+      "gzipBytes": 2049
+    },
+    "assets/js/dearrow-loader.js": {
+      "bytes": 1188,
+      "gzipBytes": 409
+    },
+    "assets/js/dearrow.js": {
+      "bytes": 6356,
+      "gzipBytes": 1836
+    },
+    "assets/js/embed.js": {
+      "bytes": 2816,
+      "gzipBytes": 686
+    },
+    "assets/js/handlers.js": {
+      "bytes": 5290,
+      "gzipBytes": 1503
+    },
+    "assets/js/interface.js": {
+      "bytes": 3393,
+      "gzipBytes": 1104
+    },
+    "assets/js/live-chat.js": {
+      "bytes": 39590,
+      "gzipBytes": 8262
+    },
+    "assets/js/notifications.js": {
+      "bytes": 6039,
+      "gzipBytes": 1914
+    },
+    "assets/js/pagination.js": {
+      "bytes": 3346,
+      "gzipBytes": 1149
+    },
+    "assets/js/player-chapters.js": {
+      "bytes": 4773,
+      "gzipBytes": 1535
+    },
+    "assets/js/player-mobile.js": {
+      "bytes": 17048,
+      "gzipBytes": 4346
+    },
+    "assets/js/player-stats.js": {
+      "bytes": 12728,
+      "gzipBytes": 3942
+    },
+    "assets/js/player-stream-menu.js": {
+      "bytes": 37531,
+      "gzipBytes": 8093
+    },
+    "assets/js/player-ui.js": {
+      "bytes": 2765,
+      "gzipBytes": 1044
+    },
+    "assets/js/player.js": {
+      "bytes": 40878,
+      "gzipBytes": 10923
+    },
+    "assets/js/playlist_widget.js": {
+      "bytes": 1509,
+      "gzipBytes": 531
+    },
+    "assets/js/post.js": {
+      "bytes": 72,
+      "gzipBytes": 89
+    },
+    "assets/js/silvermine-videojs-quality-selector.min.js": {
+      "bytes": 23303,
+      "gzipBytes": 8114
+    },
+    "assets/js/sponsorblock.js": {
+      "bytes": 7743,
+      "gzipBytes": 2363
+    },
+    "assets/js/sse.js": {
+      "bytes": 5044,
+      "gzipBytes": 1588
+    },
+    "assets/js/subscribe_widget.js": {
+      "bytes": 918,
+      "gzipBytes": 387
+    },
+    "assets/js/themes.js": {
+      "bytes": 2336,
+      "gzipBytes": 896
+    },
+    "assets/js/timezone.js": {
+      "bytes": 513,
+      "gzipBytes": 329
+    },
+    "assets/js/transcript.js": {
+      "bytes": 5185,
+      "gzipBytes": 1664
+    },
+    "assets/js/video-actions.js": {
+      "bytes": 12913,
+      "gzipBytes": 3357
+    },
+    "assets/js/videojs-youtube-annotations.min.js": {
+      "bytes": 25235,
+      "gzipBytes": 5897
+    },
+    "assets/js/watch.js": {
+      "bytes": 18587,
+      "gzipBytes": 4685
+    },
+    "assets/js/watched_indicator.js": {
+      "bytes": 3446,
+      "gzipBytes": 1211
+    },
+    "assets/js/watched_widget.js": {
+      "bytes": 528,
+      "gzipBytes": 257
+    },
+    "assets/js/browser-storage.js": {
+      "bytes": 17503,
+      "gzipBytes": 4840
+    },
+    "assets/js/sponsorblock-preferences.js": {
+      "bytes": 4030,
+      "gzipBytes": 1136
+    },
+    "assets/js/channel-spoilers.js": {
+      "bytes": 9503,
+      "gzipBytes": 2639
+    },
+    "assets/js/channel-spoiler-preferences.js": {
+      "bytes": 3676,
+      "gzipBytes": 1187
+    },
+    "assets/js/verification.js": {
+      "bytes": 3054,
+      "gzipBytes": 1043
+    },
+    "assets/js/bot-protection.js": {
+      "bytes": 3225,
+      "gzipBytes": 1228
+    },
+    "assets/js/ui.js": {
+      "bytes": 6742,
+      "gzipBytes": 2237
+    },
+    "assets/js/preferences.js": {
+      "bytes": 6534,
+      "gzipBytes": 1942
+    },
+    "assets/js/browse.js": {
+      "bytes": 9436,
+      "gzipBytes": 2795
+    },
+    "assets/js/player-dock.js": {
+      "bytes": 3648,
+      "gzipBytes": 1296
+    },
+    "assets/js/library.js": {
+      "bytes": 13557,
+      "gzipBytes": 3722
+    },
+    "assets/themes/diary/Dudu_Calligraphy.ttf": {
+      "bytes": 73684,
+      "gzipBytes": 42566
+    },
+    "assets/themes/diary/Helvetica-Punk.ttf": {
+      "bytes": 319064,
+      "gzipBytes": 81409
+    },
+    "assets/themes/diary/doodles.svg": {
+      "bytes": 1172,
+      "gzipBytes": 579
+    },
+    "assets/themes/diary/theme.css": {
+      "bytes": 44148,
+      "gzipBytes": 9259
+    }
+  }
+}

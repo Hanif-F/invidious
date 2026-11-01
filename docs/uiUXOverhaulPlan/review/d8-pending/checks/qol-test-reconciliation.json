@@ -1,0 +1,78 @@
+[
+  {
+    "oldCaseFamily": "QoL settings search preserves fields, previews, discards, and retains failed edits",
+    "registeredCases": [
+      "chromium: QoL settings search preserves fields, previews, discards, and retains failed edits",
+      "firefox: QoL settings search preserves fields, previews, discards, and retains failed edits"
+    ],
+    "oldCallbackSha256": "20e6ecf80fec1d3b39baed33309cea862316027e5156b1fe698a47c846725733",
+    "disposition": "Unreachable full-form controller retired; current categories verify canonical saves and draft/search/Discard behavior. Native/legacy receipts remain in the production harness. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 category drafts, local search, Discard and guarded departure"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 appearance preview/Discard and live System mode"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 failed and unconfirmed saves retain drafts without write retries"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_entry_checks.cr",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "QoL preferences accept canonical saves and clear the dirty state",
+    "registeredCases": [
+      "chromium: QoL preferences accept canonical saves and clear the dirty state",
+      "firefox: QoL preferences accept canonical saves and clear the dirty state"
+    ],
+    "oldCallbackSha256": "dfe4fe34d73b235ad66bf124158c82ff5b36436f6c47ca2055c9a22b64b9bd0d",
+    "disposition": "Unreachable full-form controller retired; current categories verify canonical saves and draft/search/Discard behavior. Native/legacy receipts remain in the production harness. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 canonical category read-back, unchecked values and duplicate submit guard"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D8 category canonical arrays, maps, nulls and future selections become the saved Discard baseline"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_entry_checks.cr",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "QoL unconfirmed cookie saves keep the draft unsaved",
+    "registeredCases": [
+      "chromium: QoL unconfirmed cookie saves keep the draft unsaved",
+      "firefox: QoL unconfirmed cookie saves keep the draft unsaved"
+    ],
+    "oldCallbackSha256": "54725db1b91c0564e90b63f2ef85c664f6c74574d3cd8c55b22f53ec0c9b08d7",
+    "disposition": "Unreachable full-form controller retired; current categories verify canonical saves and draft/search/Discard behavior. Native/legacy receipts remain in the production harness. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 failed and unconfirmed saves retain drafts without write retries"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D8 category malformed receipts and matching malformed read-backs retain the draft and never claim Saved"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_entry_checks.cr",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  }
+]

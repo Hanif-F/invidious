@@ -1,7 +1,8 @@
-<% if preferences.dearrow_enabled || Invidious::Frontend::ChannelSpoilers.enabled?(env) %>
+<% spoiler_scripts = Invidious::Frontend::ChannelSpoilers.enabled?(env) || Invidious::Frontend::ChannelSpoilers.runtime_enabled?(env) %>
+<% if preferences.dearrow_enabled || spoiler_scripts %>
 <link rel="stylesheet" href="/css/dearrow.css?v=<%= ASSET_COMMIT %>">
 <% end %>
-<% if Invidious::Frontend::ChannelSpoilers.enabled?(env) %>
+<% if spoiler_scripts %>
 <link rel="stylesheet" href="/css/channel-spoilers.css?v=<%= ASSET_COMMIT %>">
 <script id="channel-spoiler-config" type="application/json"><%= Invidious::Frontend::ChannelSpoilers.config(env) %></script>
 <script src="/js/channel-spoilers.js?v=<%= ASSET_COMMIT %>"></script>

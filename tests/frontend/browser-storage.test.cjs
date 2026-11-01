@@ -22,11 +22,13 @@ function browser() {
     const local = memoryStorage(), cookies = new Map(), writes = [];
     function page(scope = 'guest', options = {}) {
         if (options.marker !== false) cookies.set('IV_BROWSER_PROFILE', options.marker || scope);
-        const events = {}, docEvents = {}, timers = [];
+        const events = {}, docEvents = {}, timers = new Map(); let timerId = 0;
         const session = options.session || memoryStorage();
         const document = {
             getElementById(id) { return id === 'browser-profile' ? {textContent: JSON.stringify({scope, saveError: 'Save failed'})} : null; },
-            addEventListener(name, callback) { (docEvents[name] ||= []).push(callback); }
+            addEventListener(name, callback) { (docEvents[name] ||= []).push(callback); },
+            dispatchEvent(event) { for (const callback of docEvents[event.type] || []) callback(event); },
+            querySelector() { return null; }
         };
         Object.defineProperty(document, 'cookie', {
             get() { if (options.cookieDenied) throw new Error('Cookie access denied'); if (options.noCookies) return ''; return [...cookies].map(([name, value]) => name + '=' + (options.formEncoding ? encodeURIComponent(value).replace(/%20/g, '+') : encodeURIComponent(value))).join('; '); },
@@ -48,11 +50,11 @@ function browser() {
         }
         let reloads = 0;
         const context = vm.createContext({window, document, location: {protocol: 'https:', hostname: 'invidious.test', reload() { reloads++; }},
-            Event: function (type) { this.type = type; }, setTimeout(callback) { timers.push(callback); }});
+            Event: function (type) { this.type = type; }, setTimeout(callback) { timers.set(++timerId,callback); return timerId; }, clearTimeout(id) { timers.delete(id); }});
         vm.runInContext(source, context);
         return {api: window.InvidiousStorage, context, session, document, events,
             dispatch(name, event = {type: name}) { window.dispatchEvent({...event, type: name}); },
-            flush() { while (timers.length) timers.shift()(); }, reloads: () => reloads};
+            flush() { while (timers.size) { const [id, callback] = timers.entries().next().value; timers.delete(id); callback(); } }, reloads: () => reloads};
     }
     return {page, local, cookies, writes};
 }
@@ -280,20 +282,21 @@ test('delayed helper responses and retries are discarded after switching profile
     assert.equal(requests.length, 2);
 });
 
-function loadNotifications(p) {
+function loadNotifications(p, options = {}) {
     const streams = [], intervals = new Map();
     const original = p.document.getElementById;
-    p.document.getElementById = id => id === 'notification_data' ? {textContent: '{"csrf_token":"fixture"}'} :
-        id === 'notification_ticker' ? {innerHTML: ''} : original(id);
+    p.document.getElementById = id => id === 'notification_data' ? {textContent: JSON.stringify({csrf_token: 'fixture', initial_count: options.initialCount})} :
+        id === 'notification_ticker' ? (options.ticker === false ? null : {innerHTML: ''}) : original(id);
     Object.assign(p.context, {
-        helpers: {storage: p.api.local, xhr(method, url, options, callbacks) { callbacks.on200([]); }},
+        InvidiousStorage: p.api,
+        helpers: {storage: p.api.local, xhr(method, url, requestOptions, callbacks) { callbacks.on200(options.subscriptions === undefined ? [{authorId: channel}] : options.subscriptions); }},
         addEventListener: (...args) => p.context.window.addEventListener(...args),
         setInterval(callback) { const id = intervals.size + 1; intervals.set(id, callback); return id; },
         clearInterval(id) { intervals.delete(id); },
         console: {info() {}, warn() {}},
         SSE: class {
-            constructor() { streams.push(this); this.closed = false; }
-            close() { this.closed = true; } addEventListener() {} stream() {}
+            constructor(url, options) { streams.push(this); this.closed = false; this.options = options; this.listeners = {}; }
+            close() { this.closed = true; } addEventListener(name, callback) { this.listeners[name] = callback; } stream() {}
         }
     });
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../../assets/js/notifications.js'), 'utf8'), p.context);
@@ -325,6 +328,22 @@ test('one notification tab owns each profile lease; expired owners close and acc
     assert.equal(JSON.parse(b.local.getItem(prefix + alice + ':notification_count')), 1);
 });
 
+test('notifications retain server counts without a header ticker and skip empty or malformed subscription reads', () => {
+    for (const subscriptions of [[], {}]) {
+        const b = browser(), p = b.page(alice);
+        const state = loadNotifications(p, {ticker: false, initialCount: 3, subscriptions});
+        assert.equal(state.streams.length, 0);
+        assert.equal(p.api.local.get('notification_count'), 3);
+        assert.doesNotThrow(() => p.context.update_notification_count());
+    }
+    const b = browser(), p = b.page(alice), state = loadNotifications(p, {ticker: false, initialCount: 3});
+    assert.equal(state.streams.length, 1);
+    const event = {id: 'message', data: JSON.stringify({videoId: video, published: Math.round(Date.now() / 1000) + 1})};
+    state.streams[0].onmessage(event);
+    state.streams[0].onmessage(event);
+    assert.equal(p.api.local.get('notification_count'), 4, 'one delivery increments the server count once');
+});
+
 test('channel spoiler rules reject malformed timers and remain isolated from account profiles', () => {
     const b = browser();
     const p = b.page();
@@ -354,4 +373,114 @@ test('browse restoration keeps bounded GET descriptors in the owning tab/profile
     assert.deepEqual(plain(clean),{views:[entry]});
     assert.equal(p.api.normalize('navigation_collapsed','yes'),undefined);
     assert.equal(p.api.normalize('navigation_collapsed',true),true);
+});
+
+test('watch layout and docking use isolated validated profiles without inheriting guest state', () => {
+    const b = browser();
+    let p = b.page();
+    assert.equal(p.api.local.get('watch_layout'), undefined);
+    assert.equal(p.api.local.get('player_dock_enabled'), undefined);
+    assert.equal(p.api.local.set('watch_layout', 'theater'), true);
+    assert.equal(p.api.local.set('player_dock_enabled', true), true);
+    for (const value of ['wide', '', true, {}, null]) assert.equal(p.api.local.set('watch_layout', value), false);
+    for (const value of ['true', 1, {}, null]) assert.equal(p.api.local.set('player_dock_enabled', value), false);
+    assert.equal(p.api.local.get('watch_layout'), 'theater');
+    assert.equal(p.api.local.get('player_dock_enabled'), true);
+    const guest = p;
+    p = b.page(alice);
+    assert.equal(p.api.local.get('watch_layout'), undefined);
+    assert.equal(p.api.local.get('player_dock_enabled'), undefined);
+    assert.equal(guest.api.local.set('watch_layout', 'standard'), false, 'stale guest cannot write after account change');
+    p.api.local.set('watch_layout', 'standard'); p.api.local.set('player_dock_enabled', false);
+    p = b.page(bob);
+    assert.equal(p.api.local.get('watch_layout'), undefined);
+    p = b.page();
+    assert.equal(p.api.local.get('watch_layout'), 'theater');
+    assert.equal(p.api.local.get('player_dock_enabled'), true);
+    p = b.page(alice);
+    assert.equal(p.api.local.get('watch_layout'), 'standard');
+    assert.equal(p.api.local.get('player_dock_enabled'), false);
+});
+
+test('watch browser state distinguishes durable cookie fallback from page-only storage', () => {
+    const b = browser();
+    let p = b.page(alice, {denied:true});
+    assert.equal(p.api.local.set('watch_layout', 'theater'), true);
+    assert.equal(p.api.local.set('player_dock_enabled', true), true);
+    p = b.page(alice, {denied:true});
+    assert.equal(p.api.local.get('watch_layout'), 'theater');
+    assert.equal(p.api.local.get('player_dock_enabled'), true);
+    const c = browser();
+    let ephemeral = c.page(alice, {denied:true,noCookies:true});
+    assert.equal(ephemeral.api.local.set('watch_layout', 'theater'), false);
+    assert.equal(ephemeral.api.local.set('player_dock_enabled', true), false);
+    assert.equal(ephemeral.api.local.get('watch_layout'), 'theater');
+    assert.equal(ephemeral.api.local.get('player_dock_enabled'), true);
+    ephemeral = c.page(alice, {denied:true,noCookies:true});
+    assert.equal(ephemeral.api.local.get('watch_layout'), undefined);
+    assert.equal(ephemeral.api.local.get('player_dock_enabled'), undefined);
+});
+
+
+test('notification cached-page departure releases its lease and timers, then return starts one new stream', () => {
+    const b = browser(), p = b.page(alice), state = loadNotifications(p);
+    assert.equal(state.streams.length, 1);
+    const old = state.streams[0];
+    old.listeners.error();
+    p.dispatch('pagehide', {persisted: true});
+    p.flush();
+    assert.equal(state.streams.length, 1, 'queued reconnect was canceled');
+    assert.equal(old.closed, true);
+    assert.equal(state.intervals.size, 0);
+    assert.equal(p.api.local.get('stream'), undefined);
+    p.dispatch('pageshow', {persisted: true}); p.flush();
+    assert.equal(state.streams.length, 2);
+    assert.equal(state.intervals.size, 1);
+    const event = {id: 'message', data: JSON.stringify({videoId: video, published: Math.round(Date.now()/1000)+1})};
+    old.onmessage(event);
+    assert.equal(p.api.local.get('notification_count'), 0, 'closed stream callbacks are ignored after return');
+    state.streams[1].onmessage(event);
+    assert.equal(p.api.local.get('notification_count'), 1);
+});
+
+test('notification messages retain masking and tolerate missing optional avatar metadata', () => {
+    const b = browser(), p = b.page(alice), messages = [];
+    class Notification { static permission = 'granted'; constructor(title, options) { messages.push({title, options}); } }
+    const spoilers = {decision() { return {hidden:true,label:'Title hidden'}; }};
+    Object.assign(p.context, {Notification, InvidiousSpoilers: spoilers});
+    Object.assign(p.context.window, {Notification, InvidiousSpoilers: spoilers});
+    const state = loadNotifications(p);
+    assert.doesNotThrow(() => state.streams[0].onmessage({id:'message',data:JSON.stringify({videoId:video,authorId:channel,author:'Creator',title:'Secret title',published:Math.round(Date.now()/1000)+1})}));
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0].options.body, 'Title hidden');
+    assert.equal(messages[0].options.icon, undefined);
+    p.context.document.dispatchEvent({type:'iv:subscriptions-change'});
+    assert.equal(typeof p.api.local.get('subscription_revision'), 'number');
+    assert.equal(state.streams[0].closed, true);
+});
+
+test('unresolved notification channel identity keeps the in-page count without exposing a title in OS notifications', () => {
+    const b=browser(),p=b.page(alice),messages=[];
+    class Notification { static permission='granted'; constructor(title,options){messages.push({title,options});} }
+    Object.assign(p.context,{Notification});Object.assign(p.context.window,{Notification});
+    const state=loadNotifications(p);
+    state.streams[0].onmessage({id:'unknown',data:JSON.stringify({videoId:video,title:'Unresolved title',published:Math.ceil(Date.now()/1000)+1})});
+    assert.equal(p.api.local.get('notification_count'),1);assert.equal(messages.length,0);
+});
+
+test('persisted reads distinguish failed page-memory drafts from durable channel overrides',()=>{
+    const b=browser(),p=b.page('guest',{denied:true,cookieDenied:true}),value={[channel]:{name:'Draft',enabled:true,modes:{sponsor:'manual'}}};
+    assert.equal(p.api.local.set('sponsorblock_channel_overrides',value),false);
+    assert.deepEqual(plain(p.api.local.get('sponsorblock_channel_overrides')),value);
+    assert.equal(p.api.local.readStored('sponsorblock_channel_overrides'),undefined);
+});
+
+test('persisted channel reads follow durable changes and remain profile guarded',()=>{
+    const b=browser(),p=b.page(alice),value={[channel]:{name:'Saved',enabled:null,modes:{intro:'marker'}}};
+    assert.equal(p.api.local.set('sponsorblock_channel_overrides',value),true);
+    assert.deepEqual(plain(p.api.local.readStored('sponsorblock_channel_overrides')),value);
+    b.local[prefix+alice+':sponsorblock_channel_overrides']=JSON.stringify({});
+    assert.deepEqual(plain(p.api.local.readStored('sponsorblock_channel_overrides')),{});
+    b.cookies.set('IV_BROWSER_PROFILE',bob);
+    assert.equal(p.api.local.readStored('sponsorblock_channel_overrides'),undefined);
 });

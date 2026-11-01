@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: chromium: D6 cross-document invalidations clear same-profile previews with bounded metadata and no echo
+ok 1 - chromium: D6 cross-document invalidations clear same-profile previews with bounded metadata and no echo
+  ---
+  duration_ms: 692.478489
+  type: 'test'
+  ...
+# Subtest: chromium: D6 cross-document invalidations reject foreign, malformed and disposed-profile signals
+ok 2 - chromium: D6 cross-document invalidations reject foreign, malformed and disposed-profile signals
+  ---
+  duration_ms: 172.157223
+  type: 'test'
+  ...
+# Subtest: chromium: D6 cross-document channels close for cached pages and reconnect once on restoration
+ok 3 - chromium: D6 cross-document channels close for cached pages and reconnect once on restoration
+  ---
+  duration_ms: 193.955795
+  type: 'test'
+  ...
+# Subtest: chromium: D6 cross-document channel denial preserves local invalidation and ordinary requests
+ok 4 - chromium: D6 cross-document channel denial preserves local invalidation and ordinary requests
+  ---
+  duration_ms: 89.004487
+  type: 'test'
+  ...
+# Subtest: firefox: D6 cross-document invalidations clear same-profile previews with bounded metadata and no echo
+ok 5 - firefox: D6 cross-document invalidations clear same-profile previews with bounded metadata and no echo
+  ---
+  duration_ms: 1136.953258
+  type: 'test'
+  ...
+# Subtest: firefox: D6 cross-document invalidations reject foreign, malformed and disposed-profile signals
+ok 6 - firefox: D6 cross-document invalidations reject foreign, malformed and disposed-profile signals
+  ---
+  duration_ms: 342.990514
+  type: 'test'
+  ...
+# Subtest: firefox: D6 cross-document channels close for cached pages and reconnect once on restoration
+ok 7 - firefox: D6 cross-document channels close for cached pages and reconnect once on restoration
+  ---
+  duration_ms: 559.267599
+  type: 'test'
+  ...
+# Subtest: firefox: D6 cross-document channel denial preserves local invalidation and ordinary requests
+ok 8 - firefox: D6 cross-document channel denial preserves local invalidation and ordinary requests
+  ---
+  duration_ms: 248.910754
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4295.328914

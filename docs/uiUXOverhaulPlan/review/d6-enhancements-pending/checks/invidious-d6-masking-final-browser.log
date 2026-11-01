@@ -1,0 +1,262 @@
+TAP version 13
+# Subtest: chromium: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+ok 1 - chromium: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+  ---
+  duration_ms: 1039.185772
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+ok 2 - chromium: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+  ---
+  duration_ms: 770.321997
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock cached pages and profile changes reject late completed writes
+ok 3 - chromium: D6 SponsorBlock cached pages and profile changes reject late completed writes
+  ---
+  duration_ms: 548.784152
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+ok 4 - chromium: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+  ---
+  duration_ms: 220.816062
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+ok 5 - firefox: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+  ---
+  duration_ms: 1077.577106
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+ok 6 - firefox: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+  ---
+  duration_ms: 1214.568741
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock cached pages and profile changes reject late completed writes
+ok 7 - firefox: D6 SponsorBlock cached pages and profile changes reject late completed writes
+  ---
+  duration_ms: 1168.949687
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+ok 8 - firefox: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+  ---
+  duration_ms: 498.352605
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+ok 9 - chromium: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+  ---
+  duration_ms: 522.735269
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock literal invalid maps and future native values stay visible
+ok 10 - chromium: D6 SponsorBlock literal invalid maps and future native values stay visible
+  ---
+  duration_ms: 203.745875
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+ok 11 - chromium: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+  ---
+  duration_ms: 248.319183
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+ok 12 - chromium: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+  ---
+  duration_ms: 167.35467
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+ok 13 - chromium: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+  ---
+  duration_ms: 570.673053
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+ok 14 - chromium: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+  ---
+  duration_ms: 524.18097
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+ok 15 - chromium: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 1490.291356
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+ok 16 - firefox: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+  ---
+  duration_ms: 819.339973
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock literal invalid maps and future native values stay visible
+ok 17 - firefox: D6 SponsorBlock literal invalid maps and future native values stay visible
+  ---
+  duration_ms: 1259.337517
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+ok 18 - firefox: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+  ---
+  duration_ms: 575.342036
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+ok 19 - firefox: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+  ---
+  duration_ms: 419.201117
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+ok 20 - firefox: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+  ---
+  duration_ms: 1543.436551
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+ok 21 - firefox: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+  ---
+  duration_ms: 2067.063144
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+ok 22 - firefox: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 2473.587416
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking editor owns canonical fields, Discard, searchable rules and native age semantics
+ok 23 - chromium: D6 masking editor owns canonical fields, Discard, searchable rules and native age semantics
+  ---
+  duration_ms: 467.042329
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking uncertain and rejected writes retain drafts and require explicit read-back
+ok 24 - chromium: D6 masking uncertain and rejected writes retain drafts and require explicit read-back
+  ---
+  duration_ms: 765.601387
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking validates literal days and preserves retryable guest drafts under denied storage
+ok 25 - chromium: D6 masking validates literal days and preserves retryable guest drafts under denied storage
+  ---
+  duration_ms: 468.973869
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking external updates, Discard and targeted removal preserve other guest rules
+ok 26 - chromium: D6 masking external updates, Discard and targeted removal preserve other guest rules
+  ---
+  duration_ms: 285.519056
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking cached pages, profile changes and detached editors reject completed stale writes
+ok 27 - chromium: D6 masking cached pages, profile changes and detached editors reject completed stale writes
+  ---
+  duration_ms: 552.172264
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking ordinary forms and unavailable guest scripts retain their scope
+ok 28 - chromium: D6 masking ordinary forms and unavailable guest scripts retain their scope
+  ---
+  duration_ms: 517.964073
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking failure views retain literal days in Light, Dark, RTL and forced colors
+ok 29 - chromium: D6 masking failure views retain literal days in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 1188.336592
+  type: 'test'
+  ...
+# Subtest: chromium: D6 channel editors reject a new entry at the persisted limit without losing existing rules
+ok 30 - chromium: D6 channel editors reject a new entry at the persisted limit without losing existing rules
+  ---
+  duration_ms: 853.934003
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking editor owns canonical fields, Discard, searchable rules and native age semantics
+ok 31 - firefox: D6 masking editor owns canonical fields, Discard, searchable rules and native age semantics
+  ---
+  duration_ms: 683.34919
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking uncertain and rejected writes retain drafts and require explicit read-back
+ok 32 - firefox: D6 masking uncertain and rejected writes retain drafts and require explicit read-back
+  ---
+  duration_ms: 1176.40219
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking validates literal days and preserves retryable guest drafts under denied storage
+ok 33 - firefox: D6 masking validates literal days and preserves retryable guest drafts under denied storage
+  ---
+  duration_ms: 1595.160621
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking external updates, Discard and targeted removal preserve other guest rules
+ok 34 - firefox: D6 masking external updates, Discard and targeted removal preserve other guest rules
+  ---
+  duration_ms: 616.355317
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking cached pages, profile changes and detached editors reject completed stale writes
+ok 35 - firefox: D6 masking cached pages, profile changes and detached editors reject completed stale writes
+  ---
+  duration_ms: 1219.495671
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking ordinary forms and unavailable guest scripts retain their scope
+ok 36 - firefox: D6 masking ordinary forms and unavailable guest scripts retain their scope
+  ---
+  duration_ms: 1511.178174
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking failure views retain literal days in Light, Dark, RTL and forced colors
+ok 37 - firefox: D6 masking failure views retain literal days in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 3060.287545
+  type: 'test'
+  ...
+# Subtest: firefox: D6 channel editors reject a new entry at the persisted limit without losing existing rules
+ok 38 - firefox: D6 channel editors reject a new entry at the persisted limit without losing existing rules
+  ---
+  duration_ms: 1772.002888
+  type: 'test'
+  ...
+# Subtest: chromium: D6 masking failed preflight and malformed/profile responses cannot report Saved
+ok 39 - chromium: D6 masking failed preflight and malformed/profile responses cannot report Saved
+  ---
+  duration_ms: 516.211
+  type: 'test'
+  ...
+# Subtest: firefox: D6 masking failed preflight and malformed/profile responses cannot report Saved
+ok 40 - firefox: D6 masking failed preflight and malformed/profile responses cannot report Saved
+  ---
+  duration_ms: 1861.422698
+  type: 'test'
+  ...
+# Subtest: chromium: D6 channel failure drafts retain omitted-field semantics in ordinary forms
+ok 41 - chromium: D6 channel failure drafts retain omitted-field semantics in ordinary forms
+  ---
+  duration_ms: 239.746063
+  type: 'test'
+  ...
+# Subtest: firefox: D6 channel failure drafts retain omitted-field semantics in ordinary forms
+ok 42 - firefox: D6 channel failure drafts retain omitted-field semantics in ordinary forms
+  ---
+  duration_ms: 767.796414
+  type: 'test'
+  ...
+1..42
+# tests 42
+# suites 0
+# pass 42
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 40362.985582

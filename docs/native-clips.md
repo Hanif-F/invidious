@@ -1,33 +1,39 @@
 # Native clips
 
-Signed-in users can create public 5–120 second clips from playable videos and
-completed livestream archives. Click **Create clip** beside **Share** to open a
-centered desktop popup or a full-screen mobile overlay. Choose a title and range,
-preview inside the popup, and publish without leaving the watch page. A successful
-publish shows **Copy link**, **Watch clip**, and **Done**; if copying is unavailable,
-select and copy the displayed link.
+Signed-in users can create public 5–120-second clips from playable finite videos
+and completed livestream archives. The watch **Clip** action opens the editor in
+the utility side panel, temporarily replacing its selected tab. Preview uses the
+existing Video.js media element; it does not load a second preview player. A
+successful publication offers **Copy link**, **Watch clip**, and **Done**, with a
+selectable link when copying is unavailable.
 
 Enter whole-second timestamps as **MM:SS** (for example, `00:01`) or **HH:MM:SS**
-(`01:00:05`). Both fields show hours when either boundary reaches an hour.
-The highlighted timeline has keyboard-accessible start/end handles, one-second
-adjustments, and **Use playback time** buttons. These capture the preview's
-playhead, or the main player's position when the popup opened. The initial
-selection spans 30 seconds around the current position rounded down to a whole
-second, bounded by the source duration. The 5–120 second clip limit still applies.
+(`01:00:05`). Both fields show hours when either boundary reaches an hour. Two
+keyboard-accessible range handles adjust in one-second steps. Select Start or End
+beside **Use playback time** to capture the current playhead. The initial range
+spans up to 30 seconds around the opening position rounded down to a whole second,
+bounded by the source duration. The 5–120-second limit still applies.
 
-Opening pauses the main player; closing resumes it only if it was already playing.
-Closing keeps an unpublished draft for reopening within that page. Changing the
-range stops the previous preview, and closing unloads it. Preview playback never
-saves full-video resume positions. Guests sign in and return to the popup.
-The normal `/create_clip` form is used if popup assets cannot load. It accepts
-formatted timestamps and existing numeric-second submissions, retaining typed
-fields after validation errors.
+Opening captures the playhead, playing/paused state, loop choice and existing clip
+bounds, then pauses playback. Preview temporarily applies the selected bounds;
+stopping/closing restores the previous state, resuming only when appropriate.
+Closing restores the previous utility tab and keeps an unpublished draft in this
+page. Changing a range stops its preview. Editing/preview never saves full-video
+progress or triggers completion/automatic queue advancement, and docking is
+suspended. Departure, profile changes and disposal invalidate pending work.
+
+Guests sign in and return to the editor. The ordinary `/create_clip` form remains
+the no-JavaScript and asset-failure fallback. It accepts formatted timestamps and
+existing numeric-second submissions, retaining literal typed fields after
+validation errors. Its optional standalone preview uses a bounded embed. A lost
+or ambiguous publication response keeps the draft, blocks another Publish and
+links to My Clips for reconciliation; no creation is automatically retried.
 
 Published clips play the selected range on a loop, with a
 loop toggle and a link to the full video. Playback does not change full-video
 resume positions.
 
-**My Clips**, directly below **Playlists** in Library, lists clips created by the
+**Clips** in the sidebar (`/feed/clips`) lists clips created by the
 current account. Each source channel also has a public **Clips** tab containing
 clips made by all users on this instance. Lists contain 30 clips per page, newest
 first. The creator's current username is public; internal account identifiers are
@@ -75,7 +81,7 @@ Times use seconds and are stored at millisecond precision. Native metadata has
 Native lookup does not fetch the source video. Legacy YouTube lookup responses
 retain their existing shape.
 
-The popup obtains a browser-session token from `/api/v1/auth/csrf`, then posts
+The side-panel editor obtains a browser-session token from `/api/v1/auth/csrf`, then posts
 numeric seconds to the existing authenticated creation API. Whole-second
 timestamp editing does not change API schemas or existing fractional clips.
 
@@ -102,8 +108,7 @@ settings do not control native clips.
 
 ## Verification
 
-Run `crystal spec`, the normal/API-only builds, and the frontend harness described
-in `tests/frontend/README.md`. Database/route checks require an **empty disposable**
+Run `crystal spec`, the normal/API-only builds, and the [frontend harness](../tests/frontend/README.md#native-clips). The [D6 clip checkpoint](uiUXOverhaulPlan/d6-clips-checkpoint.md) and [D8 acceptance](uiUXOverhaulPlan/d8-acceptance.md) retain same-media restoration, bounds, failure and complete regression evidence. Database/route checks require an **empty disposable**
 PostgreSQL database named `invidious_clips_test`:
 
 ```sh

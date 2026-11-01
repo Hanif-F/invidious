@@ -1,0 +1,80 @@
+TAP version 13
+# Subtest: chromium: subscription sorting details, GET forms and desktop layouts work without JavaScript
+ok 1 - chromium: subscription sorting details, GET forms and desktop layouts work without JavaScript
+  ---
+  duration_ms: 1436.953371
+  type: 'test'
+  ...
+# Subtest: chromium: sorting keeps subscription removal working
+not ok 2 - chromium: sorting keeps subscription removal working
+  ---
+  duration_ms: 30136.226707
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:177:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('#batch-confirm [value=confirm]')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:180:62)
+  ...
+# Subtest: firefox: subscription sorting details, GET forms and desktop layouts work without JavaScript
+ok 3 - firefox: subscription sorting details, GET forms and desktop layouts work without JavaScript
+  ---
+  duration_ms: 2662.651006
+  type: 'test'
+  ...
+# Subtest: firefox: sorting keeps subscription removal working
+not ok 4 - firefox: sorting keeps subscription removal working
+  ---
+  duration_ms: 30330.134029
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:177:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('#batch-confirm [value=confirm]')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:180:62)
+  ...
+# Subtest: chromium: System follows live appearance changes and color modes synchronize across tabs
+ok 5 - chromium: System follows live appearance changes and color modes synchronize across tabs
+  ---
+  duration_ms: 629.252088
+  type: 'test'
+  ...
+# Subtest: chromium: signed-in color-mode controls submit CSRF by POST with and without JavaScript
+ok 6 - chromium: signed-in color-mode controls submit CSRF by POST with and without JavaScript
+  ---
+  duration_ms: 434.425933
+  type: 'test'
+  ...
+# Subtest: firefox: System follows live appearance changes and color modes synchronize across tabs
+ok 7 - firefox: System follows live appearance changes and color modes synchronize across tabs
+  ---
+  duration_ms: 1047.473822
+  type: 'test'
+  ...
+# Subtest: firefox: signed-in color-mode controls submit CSRF by POST with and without JavaScript
+ok 8 - firefox: signed-in color-mode controls submit CSRF by POST with and without JavaScript
+  ---
+  duration_ms: 836.51025
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 6
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 68242.542758

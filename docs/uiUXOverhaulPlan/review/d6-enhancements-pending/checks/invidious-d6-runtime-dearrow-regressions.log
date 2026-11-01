@@ -1,0 +1,706 @@
+TAP version 13
+# Subtest: chromium: D5 production layout and utility tabs preserve the same paused media
+ok 1 - chromium: D5 production layout and utility tabs preserve the same paused media
+  ---
+  duration_ms: 1616.749846
+  type: 'test'
+  ...
+# Subtest: chromium: D5 player Settings delegates speed and captions and keeps docking off by default
+ok 2 - chromium: D5 player Settings delegates speed and captions and keeps docking off by default
+  ---
+  duration_ms: 928.273593
+  type: 'test'
+  ...
+# Subtest: firefox: D5 production layout and utility tabs preserve the same paused media
+ok 3 - firefox: D5 production layout and utility tabs preserve the same paused media
+  ---
+  duration_ms: 2216.659789
+  type: 'test'
+  ...
+# Subtest: firefox: D5 player Settings delegates speed and captions and keeps docking off by default
+ok 4 - firefox: D5 player Settings delegates speed and captions and keeps docking off by default
+  ---
+  duration_ms: 1490.288817
+  type: 'test'
+  ...
+# Subtest: chromium: D5 utility defaults and deliberate transcript loading keep replay outside media
+ok 5 - chromium: D5 utility defaults and deliberate transcript loading keep replay outside media
+  ---
+  duration_ms: 1834.237256
+  type: 'test'
+  ...
+# Subtest: chromium: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+ok 6 - chromium: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+  ---
+  duration_ms: 806.656409
+  type: 'test'
+  ...
+# Subtest: firefox: D5 utility defaults and deliberate transcript loading keep replay outside media
+ok 7 - firefox: D5 utility defaults and deliberate transcript loading keep replay outside media
+  ---
+  duration_ms: 3446.813263
+  type: 'test'
+  ...
+# Subtest: firefox: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+ok 8 - firefox: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+  ---
+  duration_ms: 1289.743271
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+ok 9 - chromium: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+  ---
+  duration_ms: 376.665572
+  type: 'test'
+  ...
+# Subtest: chromium: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+ok 10 - chromium: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+  ---
+  duration_ms: 434.351611
+  type: 'test'
+  ...
+# Subtest: chromium: D5 caption failures expose a retry that replaces the text track without replacing media
+ok 11 - chromium: D5 caption failures expose a retry that replaces the text track without replacing media
+  ---
+  duration_ms: 599.980897
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+ok 12 - firefox: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+  ---
+  duration_ms: 1326.766152
+  type: 'test'
+  ...
+# Subtest: firefox: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+ok 13 - firefox: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+  ---
+  duration_ms: 768.169621
+  type: 'test'
+  ...
+# Subtest: firefox: D5 caption failures expose a retry that replaces the text track without replacing media
+ok 14 - firefox: D5 caption failures expose a retry that replaces the text track without replacing media
+  ---
+  duration_ms: 1017.895349
+  type: 'test'
+  ...
+# Subtest: chromium: D5 progressive quality choices decode both sizes and retain pause, time and rate
+ok 15 - chromium: D5 progressive quality choices decode both sizes and retain pause, time and rate
+  ---
+  duration_ms: 618.891973
+  type: 'test'
+  ...
+# Subtest: chromium: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+ok 16 - chromium: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+  ---
+  duration_ms: 1141.896659
+  type: 'test'
+  ...
+# Subtest: firefox: D5 progressive quality choices decode both sizes and retain pause, time and rate
+ok 17 - firefox: D5 progressive quality choices decode both sizes and retain pause, time and rate
+  ---
+  duration_ms: 1024.972856
+  type: 'test'
+  ...
+# Subtest: firefox: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+ok 18 - firefox: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+  ---
+  duration_ms: 1463.656966
+  type: 'test'
+  ...
+# Subtest: chromium: D5 layout follows same-profile tabs and isolates a different signed-in account
+ok 19 - chromium: D5 layout follows same-profile tabs and isolates a different signed-in account
+  ---
+  duration_ms: 1375.268744
+  type: 'test'
+  ...
+# Subtest: chromium: D5 light/dark watch geometry and contained controls fit the desktop matrix
+ok 20 - chromium: D5 light/dark watch geometry and contained controls fit the desktop matrix
+  ---
+  duration_ms: 5344.686755
+  type: 'test'
+  ...
+# Subtest: firefox: D5 layout follows same-profile tabs and isolates a different signed-in account
+ok 21 - firefox: D5 layout follows same-profile tabs and isolates a different signed-in account
+  ---
+  duration_ms: 2140.572126
+  type: 'test'
+  ...
+# Subtest: firefox: D5 light/dark watch geometry and contained controls fit the desktop matrix
+ok 22 - firefox: D5 light/dark watch geometry and contained controls fit the desktop matrix
+  ---
+  duration_ms: 10569.272593
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+ok 23 - chromium: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+  ---
+  duration_ms: 477.630027
+  type: 'test'
+  ...
+# Subtest: chromium: D5 cached queue lifetimes reject old reads even when transport ignores abort
+ok 24 - chromium: D5 cached queue lifetimes reject old reads even when transport ignores abort
+  ---
+  duration_ms: 341.015304
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue advances to the surviving successor after the playing occurrence disappeared
+ok 25 - chromium: D5 queue advances to the surviving successor after the playing occurrence disappeared
+  ---
+  duration_ms: 599.99323
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+ok 26 - firefox: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+  ---
+  duration_ms: 1483.760577
+  type: 'test'
+  ...
+# Subtest: firefox: D5 cached queue lifetimes reject old reads even when transport ignores abort
+ok 27 - firefox: D5 cached queue lifetimes reject old reads even when transport ignores abort
+  ---
+  duration_ms: 645.640303
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue advances to the surviving successor after the playing occurrence disappeared
+ok 28 - firefox: D5 queue advances to the surviving successor after the playing occurrence disappeared
+  ---
+  duration_ms: 939.096861
+  type: 'test'
+  ...
+# Subtest: chromium: D5 native picture-in-picture suspends docking where the browser exposes it
+ok 29 - chromium: D5 native picture-in-picture suspends docking where the browser exposes it
+  ---
+  duration_ms: 410.786247
+  type: 'test'
+  ...
+# Subtest: chromium: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+ok 30 - chromium: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+  ---
+  duration_ms: 601.847065
+  type: 'test'
+  ...
+# Subtest: firefox: D5 native picture-in-picture suspends docking where the browser exposes it
+ok 31 - firefox: D5 native picture-in-picture suspends docking where the browser exposes it
+  ---
+  duration_ms: 672.345893
+  type: 'test'
+  ...
+# Subtest: firefox: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+ok 32 - firefox: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+  ---
+  duration_ms: 774.164492
+  type: 'test'
+  ...
+# Subtest: chromium: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+ok 33 - chromium: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+  ---
+  duration_ms: 576.219893
+  type: 'test'
+  ...
+# Subtest: chromium: D5 a network-aborted caption load offers a bounded explicit retry
+ok 34 - chromium: D5 a network-aborted caption load offers a bounded explicit retry
+  ---
+  duration_ms: 8911.808327
+  type: 'test'
+  ...
+# Subtest: firefox: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+ok 35 - firefox: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+  ---
+  duration_ms: 1160.277291
+  type: 'test'
+  ...
+# Subtest: firefox: D5 a network-aborted caption load offers a bounded explicit retry
+ok 36 - firefox: D5 a network-aborted caption load offers a bounded explicit retry
+  ---
+  duration_ms: 8957.308824
+  type: 'test'
+  ...
+# Subtest: chromium: D5 title cycles use one SVG control and reveal masked names only after a click
+not ok 37 - chromium: D5 title cycles use one SVG control and reveal masked names only after a click
+  ---
+  duration_ms: 462.88179
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:1703:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Show original title'
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 'Show original title'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:1716:94)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: firefox: D5 title cycles use one SVG control and reveal masked names only after a click
+not ok 38 - firefox: D5 title cycles use one SVG control and reveal masked names only after a click
+  ---
+  duration_ms: 641.26901
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:1703:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Show original title'
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual: 'Show original title'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:1716:94)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: chromium: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+ok 39 - chromium: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+  ---
+  duration_ms: 783.132764
+  type: 'test'
+  ...
+# Subtest: firefox: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+ok 40 - firefox: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+  ---
+  duration_ms: 1447.7236
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+ok 41 - chromium: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+  ---
+  duration_ms: 660.85858
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes
+ok 42 - chromium: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes
+  ---
+  duration_ms: 1285.27283
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry
+ok 43 - chromium: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry
+  ---
+  duration_ms: 1798.931971
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID
+ok 44 - chromium: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID
+  ---
+  duration_ms: 280.794814
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+ok 45 - firefox: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+  ---
+  duration_ms: 1033.584965
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes
+ok 46 - firefox: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes
+  ---
+  duration_ms: 2867.727051
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry
+ok 47 - firefox: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry
+  ---
+  duration_ms: 2776.752338
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID
+ok 48 - firefox: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID
+  ---
+  duration_ms: 545.011182
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+ok 49 - chromium: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+  ---
+  duration_ms: 629.175371
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+ok 50 - chromium: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+  ---
+  duration_ms: 456.015511
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads
+ok 51 - chromium: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads
+  ---
+  duration_ms: 583.266644
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order
+ok 52 - chromium: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order
+  ---
+  duration_ms: 434.142937
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking rejects pending title reveals after rule and profile changes
+ok 53 - chromium: D6 runtime masking rejects pending title reveals after rule and profile changes
+  ---
+  duration_ms: 866.979705
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read
+ok 54 - chromium: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read
+  ---
+  duration_ms: 479.986882
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+ok 55 - firefox: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+  ---
+  duration_ms: 1003.693603
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+ok 56 - firefox: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+  ---
+  duration_ms: 747.750124
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads
+ok 57 - firefox: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads
+  ---
+  duration_ms: 1093.872072
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order
+ok 58 - firefox: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order
+  ---
+  duration_ms: 1605.185898
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking rejects pending title reveals after rule and profile changes
+ok 59 - firefox: D6 runtime masking rejects pending title reveals after rule and profile changes
+  ---
+  duration_ms: 1812.477164
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read
+ok 60 - firefox: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read
+  ---
+  duration_ms: 911.040219
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+ok 61 - chromium: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+  ---
+  duration_ms: 434.877144
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+ok 62 - chromium: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+  ---
+  duration_ms: 5055.577023
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+ok 63 - chromium: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+  ---
+  duration_ms: 610.174545
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+ok 64 - chromium: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+  ---
+  duration_ms: 733.640273
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+ok 65 - chromium: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+  ---
+  duration_ms: 872.227985
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+ok 66 - chromium: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+  ---
+  duration_ms: 362.760388
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+ok 67 - firefox: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+  ---
+  duration_ms: 662.803206
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+ok 68 - firefox: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+  ---
+  duration_ms: 8587.548434
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+ok 69 - firefox: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+  ---
+  duration_ms: 823.74448
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+ok 70 - firefox: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+  ---
+  duration_ms: 1285.597675
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+ok 71 - firefox: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+  ---
+  duration_ms: 2201.888238
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+ok 72 - firefox: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+  ---
+  duration_ms: 687.747355
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+ok 73 - chromium: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+  ---
+  duration_ms: 510.197366
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+ok 74 - chromium: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+  ---
+  duration_ms: 1544.630574
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+ok 75 - chromium: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+  ---
+  duration_ms: 1471.537803
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+ok 76 - chromium: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+  ---
+  duration_ms: 374.319357
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+ok 77 - firefox: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+  ---
+  duration_ms: 877.874788
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+ok 78 - firefox: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+  ---
+  duration_ms: 2606.261733
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+ok 79 - firefox: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+  ---
+  duration_ms: 2647.624979
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+ok 80 - firefox: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+  ---
+  duration_ms: 1415.527
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 81 - chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 632.502
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 82 - firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 968.555896
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow can replace an original title and reveal it again
+ok 83 - chromium: DeArrow can replace an original title and reveal it again
+  ---
+  duration_ms: 1192.970689
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow can replace an original title and reveal it again
+ok 84 - firefox: DeArrow can replace an original title and reveal it again
+  ---
+  duration_ms: 1156.150161
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+ok 85 - chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+  ---
+  duration_ms: 966.306384
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow keeps replacements on hover when original display is disabled
+ok 86 - chromium: DeArrow keeps replacements on hover when original display is disabled
+  ---
+  duration_ms: 207.052425
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+ok 87 - chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+  ---
+  duration_ms: 2599.307609
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+ok 88 - firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+  ---
+  duration_ms: 1333.757959
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow keeps replacements on hover when original display is disabled
+ok 89 - firefox: DeArrow keeps replacements on hover when original display is disabled
+  ---
+  duration_ms: 441.089868
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+ok 90 - firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+  ---
+  duration_ms: 3515.12154
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+ok 91 - chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+  ---
+  duration_ms: 348.603258
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+ok 92 - chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+  ---
+  duration_ms: 868.66531
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+ok 93 - chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+  ---
+  duration_ms: 266.927212
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers prefetch hidden cards only within the viewport margin
+ok 94 - chromium: channel spoilers prefetch hidden cards only within the viewport margin
+  ---
+  duration_ms: 165.283282
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+ok 95 - chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+  ---
+  duration_ms: 600.376365
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+ok 96 - firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+  ---
+  duration_ms: 691.014761
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+ok 97 - firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+  ---
+  duration_ms: 2549.862877
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+ok 98 - firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+  ---
+  duration_ms: 568.523176
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers prefetch hidden cards only within the viewport margin
+ok 99 - firefox: channel spoilers prefetch hidden cards only within the viewport margin
+  ---
+  duration_ms: 398.378163
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+ok 100 - firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+  ---
+  duration_ms: 976.407377
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+ok 101 - chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+  ---
+  duration_ms: 349.347184
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers mask a guest watch title and poster before player setup
+ok 102 - chromium: channel spoilers mask a guest watch title and poster before player setup
+  ---
+  duration_ms: 308.104816
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+ok 103 - firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+  ---
+  duration_ms: 605.951724
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers mask a guest watch title and poster before player setup
+ok 104 - firefox: channel spoilers mask a guest watch title and poster before player setup
+  ---
+  duration_ms: 580.842942
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+ok 105 - chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+  ---
+  duration_ms: 818.948104
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers skip inactive work and batch large subtree insertions
+ok 106 - chromium: channel spoilers skip inactive work and batch large subtree insertions
+  ---
+  duration_ms: 230.134224
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers activate blank-delay guest rules in an already open inactive tab
+ok 107 - chromium: channel spoilers activate blank-delay guest rules in an already open inactive tab
+  ---
+  duration_ms: 206.841426
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+ok 108 - firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+  ---
+  duration_ms: 1588.539091
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers skip inactive work and batch large subtree insertions
+ok 109 - firefox: channel spoilers skip inactive work and batch large subtree insertions
+  ---
+  duration_ms: 1725.486773
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers activate blank-delay guest rules in an already open inactive tab
+ok 110 - firefox: channel spoilers activate blank-delay guest rules in an already open inactive tab
+  ---
+  duration_ms: 723.611146
+  type: 'test'
+  ...
+1..110
+# tests 110
+# suites 0
+# pass 108
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129592.492688

@@ -8,6 +8,11 @@ The versioned API lives under `/api/v1`. [All routes](reference/routes.md) lists
 
 Responses are usually JSON, but captions/storyboards can return VTT, annotations XML, feeds Atom/OPML and download selectors redirects. `format=html` on supported APIs returns a JSON object containing rendered HTML and continuation/navigation fields; it is not a universal switch for every endpoint. Check status and Content-Type before parsing. A 204 has no JSON body.
 
+The desktop interface requests `ui=desktop` only on HTML-capable endpoints that
+support its shared card/queue projection. Ordinary/native HTML keeps its existing
+thin-mode contract. Browser styling changes do not personalize public discovery
+JSON or replace native schemas, token scopes or occurrence identifiers.
+
 Canonical video IDs are 11-character YouTube IDs; channel IDs are normally `UC` plus 22 characters. Local playlist IDs start `IV`, local clip IDs `IVCL`, and mixes generally `RD`. Different handlers have different historical validation; use returned canonical IDs. Continuations are opaque and endpoint-specific. Most pages start at 1; playlist `index` is a zero-based offset, separate from the stable occurrence ID.
 
 Time fields use their documented units: publication/created/updated/expiry timestamps usually Unix seconds; clip API boundaries seconds; replay/timing `offsetMs` milliseconds; database clip bounds milliseconds; detailed watch dates `YYYY-MM-DD`. Many metadata fields are optional/nullable; sparse upstream data is normal. Do not parse localized `publishedText`, abbreviated counts or labels as exact machine data.
@@ -188,6 +193,12 @@ DeArrow writes are explicit and are not safely auto-retryable on ambiguous timeo
 Common JSON errors have `{"error":"message"}`. 400 generally means invalid request; 401 is used by native credential/account checks; 403 includes auth/scope/CSRF failures or disabled features; 404 includes absent and owner-hidden resources; 409 includes state/collision/conflict; 429 includes `Retry-After`; 5xx indicates server/upstream failures. Historical endpoints are not uniform: some return an empty enhancement result or 500/503. Imports report invalid watched-video IDs as 400 and other failures as 500; earlier import sections can already have been saved. Never infer success from body parsing alone.
 
 Treat additions as optional, preserve unknown preference keys through safe patches, follow returned URLs/continuations and renew tokens for added scopes. Do not cache private content in shared storage. [Route references](reference/routes.md) cover browser actions, RSS, manifests, images and media outside this JSON guide. [Troubleshooting](troubleshooting.md) explains common integration failures.
+
+When instance login is required, its gate returns no-store 401 responses with
+`error: "login_required"`, `loginUrl` and the CORS-exposed header
+`X-Invidious-Login-Required: 1`. Other authorization failures do not carry that
+marker. HEAD `/api/v1/stats` can check this gate without requesting video metadata;
+it uses the existing stats route and adds no response schema or token scope.
 
 ## TV phone approval
 

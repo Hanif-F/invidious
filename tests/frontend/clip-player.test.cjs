@@ -9,14 +9,14 @@ function session(loop = true, duration = 100) {
     const events = {}; let time = 0, paused = false, error;
     const player = {
         currentTime(value) { if (value !== undefined) time = value; return time; },
-        on(event, fn) { events[event] = fn; }, ready(fn) { fn(); }, readyState() { return 1; },
+        on(event, fn) { events[event] = fn; }, off(event, fn) { if(events[event]===fn)delete events[event]; }, ready(fn) { fn(); }, readyState() { return 1; },
         loop() { return loop; }, pause() { paused = true; }, duration() { return duration; },
         error(value) { error = value; }
     };
     const context = {window: {}};
     vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../../assets/js/clip-player.js'), 'utf8'), context);
-    context.window.InvidiousClipPlayer(player, {startTime: 10.25, endTime: 15.25});
-    return {player, events, setTime(value) { time = value; }, setDuration(value) { duration = value; }, paused: () => paused, error: () => error};
+    const originalTime=player.currentTime, bounds=context.window.InvidiousClipPlayer(player, {startTime: 10.25, endTime: 15.25});
+    return {player, events, bounds, originalTime, create:context.window.InvidiousClipPlayer, setTime(value) { time = value; }, setDuration(value) { duration = value; }, paused: () => paused, error: () => error};
 }
 test('native seeks clamp keyboard, scrub, refresh and SponsorBlock targets', () => {
     const s = session();
@@ -47,4 +47,26 @@ test('a recovered source reactivates the saved boundaries after refresh', () => 
     assert.equal(s.player.currentTime(), 10.25);
     s.setTime(20); s.events.timeupdate();
     assert.equal(s.player.currentTime(), 10.25);
+});
+
+test('temporary preview ownership releases and restores native fractional bounds', () => {
+    const s=session(false);s.player.currentTime(12.5);const oldBoundary=s.events.timeupdate;
+    assert.equal(s.bounds.suspend(),true);assert.equal(s.player.currentTime,s.originalTime);
+    s.player.currentTime(40);oldBoundary();assert.equal(s.player.currentTime(),40,'a detached callback cannot enforce old bounds');
+    const preview=s.create(s.player,{startTime:30,endTime:35});assert.equal(s.player.currentTime(),30);
+    s.player.currentTime(100);assert.ok(s.player.currentTime()<35);preview.dispose();
+    assert.equal(s.player.currentTime,s.originalTime);assert.equal(s.player.invidiousClipBounds,s.bounds);
+    s.player.currentTime(12.5);assert.equal(s.bounds.resume(),true);assert.equal(s.player.currentTime(),12.5);
+    s.player.currentTime(0);assert.equal(s.player.currentTime(),10.25);s.bounds.dispose();
+    assert.equal(s.player.currentTime,s.originalTime);assert.equal(s.player.invidiousClipBounds,undefined);
+});
+test('an active owner cannot be overwritten and disposed bounds cannot reattach', () => {
+    const s=session();assert.equal(s.create(s.player,{startTime:30,endTime:40}),undefined);
+    s.bounds.dispose();assert.equal(s.bounds.resume(),false);assert.equal(s.player.currentTime,s.originalTime);
+    assert.equal(s.events.loadedmetadata,undefined);assert.equal(s.events.seeked,undefined);
+});
+test('preview source failures can report to their editor without poisoning the media', () => {
+    const s=session();s.bounds.dispose();s.setDuration(12);let failures=0;
+    const p=s.create(s.player,{startTime:10,endTime:15},'unavailable',{onUnavailable(){failures++;}});
+    assert.equal(failures,1);assert.equal(s.error(),undefined);p.dispose();
 });

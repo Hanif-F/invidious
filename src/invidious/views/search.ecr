@@ -1,16 +1,20 @@
 <%
-    search_privacy = preferences.search_privacy
+    env.set "search_scope", query.type.to_s.downcase
+    search_privacy = Invidious::Frontend::Desktop.private_search?(env)
     search_query = query.text.size > 30 ? HTML.escape(query.text[0,30].rstrip(".")) + "&hellip;" : HTML.escape(query.text)
 %>
 
 <% content_for "header" do %>
-<title><%= search_privacy ? "Search" : search_query %> - Invidious</title>
-<link rel="stylesheet" href="/css/search.css?v=<%= ASSET_COMMIT %>">
+<title><%= search_privacy ? I18n.translate(locale, "search") : search_query %> - Invidious</title>
+
 <% end %>
 
-<!-- Search redirection and filtering UI -->
+<header class="page-heading"><h1><%= I18n.translate(locale, "search") %></h1><p><%= I18n.translate(locale, query.type.subscriptions? ? "overhaul_subscriptions_search_scope" : (query.type.channel? ? "channel_search_label" : "overhaul_global_search_scope")) %></p></header>
+<% if query.type.regular? || query.type.playlist? %>
 <% member_reset = query.to_http_params; member_reset.delete_all("show_member_videos"); member_reset["reset_member_videos"] = "1" %>
-<%= Invidious::Frontend::SearchFilters.generate(query.filters, query.text, query.page, locale, query.include_blocked, !!env.get?("user"), Invidious::Frontend::MemberVideos.show?(env), "/search?#{member_reset}", search_privacy) %>
+<%= Invidious::Frontend::SearchFilters.generate(query.filters, query.input, query.page, locale, query.include_blocked, !!env.get?("user"), Invidious::Frontend::MemberVideos.show?(env), "/search?#{member_reset}", search_privacy, query.region) %>
+<% member_override = !query.show_member_videos.nil? && query.show_member_videos != preferences.show_member_videos %>
+<% blocked_override = !!env.get?("user") && query.include_blocked %>
 <div class="active-filters">
 <% query.filters.to_iv_params.each do |key, value| %>
     <% value.split(",").each do |option| %>
@@ -23,37 +27,37 @@
                 remaining.delete(key)
             end
         %>
-        <% if search_privacy %>
-        <form action="/search" method="post" class="filter-chip">
-            <% remaining.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %>
-            <button class="pure-button" type="submit" aria-label="<%= I18n.translate(locale, "ui_remove_filter") %>: <%= HTML.escape(I18n.translate(locale, "search_filters_#{key}_option_#{option}")) %>"><%= I18n.translate(locale, "search_filters_#{key}_option_#{option}") %> ×</button>
-        </form>
-        <% else %>
-        <a href="/search?<%= HTML.escape(remaining.to_s) %>" aria-label="<%= I18n.translate(locale, "ui_remove_filter") %>: <%= HTML.escape(I18n.translate(locale, "search_filters_#{key}_option_#{option}")) %>"><%= I18n.translate(locale, "search_filters_#{key}_option_#{option}") %> <span aria-hidden="true">×</span></a>
-        <% end %>
+        <% chip_label = I18n.translate(locale, "search_filters_#{key}_option_#{option}"); chip_params = remaining %><%= rendered "overhaul/filter_chip" %>
     <% end %>
 <% end %>
+<% if member_override %><% chip_params = query.to_http_params; chip_params.delete_all("show_member_videos"); chip_params.delete_all("page"); chip_params["reset_member_videos"] = "1"; chip_label = I18n.translate(locale, query.show_member_videos ? "Show members-only videos" : "Hide members-only videos") %><%= rendered "overhaul/filter_chip" %><% end %>
+<% if blocked_override %><% chip_params = query.to_http_params; chip_params.delete_all("page"); chip_params["include_blocked"] = "0"; chip_label = I18n.translate(locale, "Include blocked channels") %><%= rendered "overhaul/filter_chip" %><% end %>
 </div>
 <% clear_params = query.to_http_params; %w(date type duration features sort page sp).each { |key| clear_params.delete_all(key) } %>
+<% if !query.filters.to_iv_params.empty? || member_override || blocked_override %>
+<% clear_params["include_blocked"] = "0" if blocked_override %>
+<% unless query.show_member_videos.nil? %><% clear_params.delete_all("show_member_videos"); clear_params["reset_member_videos"] = "1" %><% end %>
 <form action="/search" method="<%= search_privacy ? "post" : "get" %>" class="clear-filters">
     <% clear_params.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %>
-    <button class="pure-button" type="submit"><%= I18n.translate(locale, "ux_clear_filters") %></button>
+    <button class="button" type="submit"><%= I18n.translate(locale, "ux_clear_filters") %></button>
 </form>
+<% end %>
+<% end %>
 
 <%- if items.empty? -%>
-<div data-browse-items></div>
-<div class="h-box no-results-error">
+<div class="media-rows" data-browse-items></div>
+<div class="h-box no-results-error" data-browse-empty>
     <div>
         <% if env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
         <% if blocked_results %>
         <p><%= I18n.translate(locale, "Blocked channels hid these results") %></p>
         <% unblocked_query = query.to_http_params; unblocked_query["include_blocked"] = "1" %>
-        <% if search_privacy %><form action="/search" method="post" class="filter-chip"><% unblocked_query.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %><button class="pure-button"><%= I18n.translate(locale, "Include blocked channels") %></button></form><% else %><a href="/search?<%= HTML.escape(unblocked_query.to_s) %>"><%= I18n.translate(locale, "Include blocked channels") %></a><% end %>
+        <% if search_privacy %><form action="/search" method="post" class="filter-chip"><% unblocked_query.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %><button class="button"><%= I18n.translate(locale, "Include blocked channels") %></button></form><% else %><a href="/search?<%= HTML.escape(unblocked_query.to_s) %>"><%= I18n.translate(locale, "Include blocked channels") %></a><% end %>
         <% end %>
         <% if member_results %>
         <p><%= I18n.translate(locale, "Members-only videos hid these results") %></p>
         <% member_query = query.to_http_params; member_query["show_member_videos"] = "1" %>
-        <% if search_privacy %><form action="/search" method="post" class="filter-chip"><% member_query.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %><button class="pure-button"><%= I18n.translate(locale, "Show members-only videos") %></button></form><% else %><a href="/search?<%= HTML.escape(member_query.to_s) %>"><%= I18n.translate(locale, "Show members-only videos") %></a><% end %>
+        <% if search_privacy %><form action="/search" method="post" class="filter-chip"><% member_query.each do |name, value| %><input type="hidden" name="<%= HTML.escape(name) %>" value="<%= HTML.escape(value) %>"><% end %><button class="button"><%= I18n.translate(locale, "Show members-only videos") %></button></form><% else %><a href="/search?<%= HTML.escape(member_query.to_s) %>"><%= I18n.translate(locale, "Show members-only videos") %></a><% end %>
         <% end %>
         <%= I18n.translate(locale, "search_message_no_results") %><br/><br/>
         <%= I18n.translate(locale, "search_message_change_filters_or_query") %><br/><br/>
@@ -61,6 +65,7 @@
     </div>
 </div>
     <%= page_nav_html %>
+    <%= rendered "components/browse_controls" %>
 <%- else -%>
     <%= rendered "components/items_paginated" %>
 <%- end -%>

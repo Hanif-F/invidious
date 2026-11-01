@@ -1,0 +1,120 @@
+TAP version 13
+# Subtest: chromium: diagnostics are local, accessible and sanitize snapshots
+ok 1 - chromium: diagnostics are local, accessible and sanitize snapshots
+  ---
+  duration_ms: 3857.767592
+  type: 'test'
+  ...
+# Subtest: firefox: diagnostics are local, accessible and sanitize snapshots
+ok 2 - firefox: diagnostics are local, accessible and sanitize snapshots
+  ---
+  duration_ms: 4180.321314
+  type: 'test'
+  ...
+# Subtest: chromium: chapter title fits unified touch desktop and mobile embed controls
+ok 3 - chromium: chapter title fits unified touch desktop and mobile embed controls
+  ---
+  duration_ms: 1527.912486
+  type: 'test'
+  ...
+# Subtest: chromium: manual chapter markers and SponsorBlock hover priority
+not ok 4 - chromium: manual chapter markers and SponsorBlock hover priority
+  ---
+  duration_ms: 324.392825
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4118:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(nearbyY < bounds.y || nearbyY > bounds.y + bounds.height)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4142:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: chromium: manual chapters survive disabled and failed SponsorBlock
+ok 5 - chromium: manual chapters survive disabled and failed SponsorBlock
+  ---
+  duration_ms: 586.380603
+  type: 'test'
+  ...
+# Subtest: firefox: chapter title fits unified touch desktop and mobile embed controls
+ok 6 - firefox: chapter title fits unified touch desktop and mobile embed controls
+  ---
+  duration_ms: 2239.601102
+  type: 'test'
+  ...
+# Subtest: firefox: manual chapter markers and SponsorBlock hover priority
+not ok 7 - firefox: manual chapter markers and SponsorBlock hover priority
+  ---
+  duration_ms: 612.156224
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4118:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(nearbyY < bounds.y || nearbyY > bounds.y + bounds.height)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4142:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: firefox: manual chapters survive disabled and failed SponsorBlock
+ok 8 - firefox: manual chapters survive disabled and failed SponsorBlock
+  ---
+  duration_ms: 1078.324701
+  type: 'test'
+  ...
+# Subtest: chromium: manual chapters in embeds, player styles and thumbnail previews
+ok 9 - chromium: manual chapters in embeds, player styles and thumbnail previews
+  ---
+  duration_ms: 887.216437
+  type: 'test'
+  ...
+# Subtest: firefox: manual chapters in embeds, player styles and thumbnail previews
+ok 10 - firefox: manual chapters in embeds, player styles and thumbnail previews
+  ---
+  duration_ms: 1344.713945
+  type: 'test'
+  ...
+# Subtest: manual chapter template serializes titles safely for watch and embed
+ok 11 - manual chapter template serializes titles safely for watch and embed
+  ---
+  duration_ms: 1.064501
+  type: 'test'
+  ...
+# Subtest: chromium: seek intervals use video seconds for keyboard media keys and mobile taps
+ok 12 - chromium: seek intervals use video seconds for keyboard media keys and mobile taps
+  ---
+  duration_ms: 6070.553791
+  type: 'test'
+  ...
+# Subtest: firefox: seek intervals use video seconds for keyboard media keys and mobile taps
+ok 13 - firefox: seek intervals use video seconds for keyboard media keys and mobile taps
+  ---
+  duration_ms: 7160.583904
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 11
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30880.988196

@@ -1,0 +1,1903 @@
+{
+  "file": "/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs",
+  "families": [
+    {
+      "name": "firefox: view counts stay visible across cards, history, clips and dynamic queues",
+      "start": 870,
+      "end": 3924,
+      "bodyStart": 962,
+      "bodyEnd": 3922,
+      "names": [
+        "chromium: view counts stay visible across cards, history, clips and dynamic queues",
+        "firefox: view counts stay visible across cards, history, clips and dynamic queues"
+      ]
+    },
+    {
+      "name": "firefox: original titles remain literal in watch, embed and custom clips",
+      "start": 6254,
+      "end": 7363,
+      "bodyStart": 6337,
+      "bodyEnd": 7361,
+      "names": [
+        "chromium: original titles remain literal in watch, embed and custom clips",
+        "firefox: original titles remain literal in watch, embed and custom clips"
+      ]
+    },
+    {
+      "name": "firefox: original-title setting defaults on and submits explicit on and off",
+      "start": 7369,
+      "end": 8784,
+      "bodyStart": 7455,
+      "bodyEnd": 8782,
+      "names": [
+        "chromium: original-title setting defaults on and submits explicit on and off",
+        "firefox: original-title setting defaults on and submits explicit on and off"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow can replace an original title and reveal it again",
+      "start": 8790,
+      "end": 9618,
+      "bodyStart": 8867,
+      "bodyEnd": 9616,
+      "names": [
+        "chromium: DeArrow can replace an original title and reveal it again",
+        "firefox: DeArrow can replace an original title and reveal it again"
+      ]
+    },
+    {
+      "name": "firefox: subscription sorting details, GET forms and mobile layouts work without JavaScript",
+      "start": 9624,
+      "end": 11820,
+      "bodyStart": 9726,
+      "bodyEnd": 11818,
+      "names": [
+        "chromium: subscription sorting details, GET forms and mobile layouts work without JavaScript",
+        "firefox: subscription sorting details, GET forms and mobile layouts work without JavaScript"
+      ]
+    },
+    {
+      "name": "firefox: sorting keeps subscription removal working",
+      "start": 11826,
+      "end": 12567,
+      "bodyStart": 11888,
+      "bodyEnd": 12565,
+      "names": [
+        "chromium: sorting keeps subscription removal working",
+        "firefox: sorting keeps subscription removal working"
+      ]
+    },
+    {
+      "name": "firefox: native clip cards, tab, attribution and no-JavaScript library",
+      "start": 28996,
+      "end": 30321,
+      "bodyStart": 29077,
+      "bodyEnd": 30319,
+      "names": [
+        "chromium: native clip cards, tab, attribution and no-JavaScript library",
+        "firefox: native clip cards, tab, attribution and no-JavaScript library"
+      ]
+    },
+    {
+      "name": "firefox: clip creation timestamps, draggable selection, preview and no-JavaScript form",
+      "start": 30326,
+      "end": 32629,
+      "bodyStart": 30423,
+      "bodyEnd": 32627,
+      "names": [
+        "chromium: clip creation timestamps, draggable selection, preview and no-JavaScript form",
+        "firefox: clip creation timestamps, draggable selection, preview and no-JavaScript form"
+      ]
+    },
+    {
+      "name": "firefox: clip popup preserves playback, timestamps, drafts and keyboard focus",
+      "start": 32634,
+      "end": 36655,
+      "bodyStart": 32722,
+      "bodyEnd": 36653,
+      "names": [
+        "chromium: clip popup preserves playback, timestamps, drafts and keyboard focus",
+        "firefox: clip popup preserves playback, timestamps, drafts and keyboard focus"
+      ]
+    },
+    {
+      "name": "firefox: clip popup publishes once, recovers errors and shows a safe share result",
+      "start": 36660,
+      "end": 40557,
+      "bodyStart": 36752,
+      "bodyEnd": 40555,
+      "names": [
+        "chromium: clip popup publishes once, recovers errors and shows a safe share result",
+        "firefox: clip popup publishes once, recovers errors and shows a safe share result"
+      ]
+    },
+    {
+      "name": "firefox: closing during publishing preserves the pending draft and unseen result",
+      "start": 40562,
+      "end": 42285,
+      "bodyStart": 40653,
+      "bodyEnd": 42283,
+      "names": [
+        "chromium: closing during publishing preserves the pending draft and unseen result",
+        "firefox: closing during publishing preserves the pending draft and unseen result"
+      ]
+    },
+    {
+      "name": "firefox: clip popup preview uses its playhead and never changes source resume data",
+      "start": 42290,
+      "end": 44492,
+      "bodyStart": 42383,
+      "bodyEnd": 44490,
+      "names": [
+        "chromium: clip popup preview uses its playhead and never changes source resume data",
+        "firefox: clip popup preview uses its playhead and never changes source resume data"
+      ]
+    },
+    {
+      "name": "firefox: clip popup themes, RTL, short videos and responsive actions",
+      "start": 44497,
+      "end": 46252,
+      "bodyStart": 44576,
+      "bodyEnd": 46250,
+      "names": [
+        "chromium: clip popup themes, RTL, short videos and responsive actions",
+        "firefox: clip popup themes, RTL, short videos and responsive actions"
+      ]
+    },
+    {
+      "name": "firefox: clip popup enlarged text and landscape keep fields and actions reachable",
+      "start": 46257,
+      "end": 47354,
+      "bodyStart": 46349,
+      "bodyEnd": 47352,
+      "names": [
+        "chromium: clip popup enlarged text and landscape keep fields and actions reachable",
+        "firefox: clip popup enlarged text and landscape keep fields and actions reachable"
+      ]
+    },
+    {
+      "name": "firefox: guests return from login to the clip popup and asset failures use the fallback form",
+      "start": 47359,
+      "end": 48852,
+      "bodyStart": 47462,
+      "bodyEnd": 48850,
+      "names": [
+        "chromium: guests return from login to the clip popup and asset failures use the fallback form",
+        "firefox: guests return from login to the clip popup and asset failures use the fallback form"
+      ]
+    },
+    {
+      "name": "firefox: native clip boundaries, loop toggle, canonical sharing and resume isolation",
+      "start": 48857,
+      "end": 51631,
+      "bodyStart": 48952,
+      "bodyEnd": 51629,
+      "names": [
+        "chromium: native clip boundaries, loop toggle, canonical sharing and resume isolation",
+        "firefox: native clip boundaries, loop toggle, canonical sharing and resume isolation"
+      ]
+    },
+    {
+      "name": "firefox: native clip SponsorBlock, audio settings and source refresh retain saved bounds",
+      "start": 51636,
+      "end": 53757,
+      "bodyStart": 51735,
+      "bodyEnd": 53755,
+      "names": [
+        "chromium: native clip SponsorBlock, audio settings and source refresh retain saved bounds",
+        "firefox: native clip SponsorBlock, audio settings and source refresh retain saved bounds"
+      ]
+    },
+    {
+      "name": "firefox: chat replay keeps fetched messages across pause and seeks",
+      "start": 53797,
+      "end": 56376,
+      "bodyStart": 53874,
+      "bodyEnd": 56374,
+      "names": [
+        "chromium: chat replay keeps fetched messages across pause and seeks",
+        "firefox: chat replay keeps fetched messages across pause and seeks"
+      ]
+    },
+    {
+      "name": "firefox: cached ranges are reused and distant seeks fetch near the playhead",
+      "start": 56382,
+      "end": 58486,
+      "bodyStart": 56468,
+      "bodyEnd": 58484,
+      "names": [
+        "chromium: cached ranges are reused and distant seeks fetch near the playhead",
+        "firefox: cached ranges are reused and distant seeks fetch near the playhead"
+      ]
+    },
+    {
+      "name": "firefox: stale chat responses cannot replace a later seek",
+      "start": 58492,
+      "end": 59832,
+      "bodyStart": 58560,
+      "bodyEnd": 59830,
+      "names": [
+        "chromium: stale chat responses cannot replace a later seek",
+        "firefox: stale chat responses cannot replace a later seek"
+      ]
+    },
+    {
+      "name": "firefox: removals and timing changes reuse cached replay",
+      "start": 59838,
+      "end": 61157,
+      "bodyStart": 59905,
+      "bodyEnd": 61155,
+      "names": [
+        "chromium: removals and timing changes reuse cached replay",
+        "firefox: removals and timing changes reuse cached replay"
+      ]
+    },
+    {
+      "name": "firefox: scrolling up exposes earlier cached chat without another request",
+      "start": 61163,
+      "end": 62379,
+      "bodyStart": 61247,
+      "bodyEnd": 62377,
+      "names": [
+        "chromium: scrolling up exposes earlier cached chat without another request",
+        "firefox: scrolling up exposes earlier cached chat without another request"
+      ]
+    },
+    {
+      "name": "firefox: chat cache evicts beyond 5000 messages and refetches evicted time",
+      "start": 62385,
+      "end": 63140,
+      "bodyStart": 62470,
+      "bodyEnd": 63138,
+      "names": [
+        "chromium: chat cache evicts beyond 5000 messages and refetches evicted time",
+        "firefox: chat cache evicts beyond 5000 messages and refetches evicted time"
+      ]
+    },
+    {
+      "name": "firefox: ordinary VOD does not load chat replay",
+      "start": 63146,
+      "end": 63625,
+      "bodyStart": 63204,
+      "bodyEnd": 63623,
+      "names": [
+        "chromium: ordinary VOD does not load chat replay",
+        "firefox: ordinary VOD does not load chat replay"
+      ]
+    },
+    {
+      "name": "firefox: player chat control hides and restores replay",
+      "start": 63631,
+      "end": 66127,
+      "bodyStart": 63696,
+      "bodyEnd": 66125,
+      "names": [
+        "chromium: player chat control hides and restores replay",
+        "firefox: player chat control hides and restores replay"
+      ]
+    },
+    {
+      "name": "firefox: chat keeps 120 messages and lets readers resync scrolling",
+      "start": 66133,
+      "end": 69434,
+      "bodyStart": 66210,
+      "bodyEnd": 69432,
+      "names": [
+        "chromium: chat keeps 120 messages and lets readers resync scrolling",
+        "firefox: chat keeps 120 messages and lets readers resync scrolling"
+      ]
+    },
+    {
+      "name": "firefox: mobile player settings can hide and show chat",
+      "start": 69440,
+      "end": 70548,
+      "bodyStart": 69505,
+      "bodyEnd": 70546,
+      "names": [
+        "chromium: mobile player settings can hide and show chat",
+        "firefox: mobile player settings can hide and show chat"
+      ]
+    },
+    {
+      "name": "firefox: chat replay errors can be retried",
+      "start": 70554,
+      "end": 71051,
+      "bodyStart": 70607,
+      "bodyEnd": 71049,
+      "names": [
+        "chromium: chat replay errors can be retried",
+        "firefox: chat replay errors can be retried"
+      ]
+    },
+    {
+      "name": "firefox: unavailable chat replay has a clear state",
+      "start": 71057,
+      "end": 71499,
+      "bodyStart": 71118,
+      "bodyEnd": 71497,
+      "names": [
+        "chromium: unavailable chat replay has a clear state",
+        "firefox: unavailable chat replay has a clear state"
+      ]
+    },
+    {
+      "name": "firefox: chat is beside the video in normal, wide, and fullscreen modes",
+      "start": 71505,
+      "end": 75047,
+      "bodyStart": 71587,
+      "bodyEnd": 75045,
+      "names": [
+        "chromium: chat is beside the video in normal, wide, and fullscreen modes",
+        "firefox: chat is beside the video in normal, wide, and fullscreen modes"
+      ]
+    },
+    {
+      "name": "firefox: mobile play/pause stays over the video with docked chat",
+      "start": 75053,
+      "end": 77230,
+      "bodyStart": 75128,
+      "bodyEnd": 77228,
+      "names": [
+        "chromium: mobile play/pause stays over the video with docked chat",
+        "firefox: mobile play/pause stays over the video with docked chat"
+      ]
+    },
+    {
+      "name": "firefox: mobile docked chat follows orientation in and out of fullscreen",
+      "start": 77236,
+      "end": 79759,
+      "bodyStart": 77319,
+      "bodyEnd": 79757,
+      "names": [
+        "chromium: mobile docked chat follows orientation in and out of fullscreen",
+        "firefox: mobile docked chat follows orientation in and out of fullscreen"
+      ]
+    },
+    {
+      "name": "firefox: chat overlay can be edited, saved, and restored",
+      "start": 79765,
+      "end": 85983,
+      "bodyStart": 79832,
+      "bodyEnd": 85981,
+      "names": [
+        "chromium: chat overlay can be edited, saved, and restored",
+        "firefox: chat overlay can be edited, saved, and restored"
+      ]
+    },
+    {
+      "name": "firefox: chat overlay stays within mobile and fullscreen video",
+      "start": 85989,
+      "end": 89132,
+      "bodyStart": 86062,
+      "bodyEnd": 89130,
+      "names": [
+        "chromium: chat overlay stays within mobile and fullscreen video",
+        "firefox: chat overlay stays within mobile and fullscreen video"
+      ]
+    },
+    {
+      "name": "firefox: chat settings filter messages and persist for guests",
+      "start": 89138,
+      "end": 93107,
+      "bodyStart": 89210,
+      "bodyEnd": 93105,
+      "names": [
+        "chromium: chat settings filter messages and persist for guests",
+        "firefox: chat settings filter messages and persist for guests"
+      ]
+    },
+    {
+      "name": "firefox: typed chat sizes extend the sliders and persist locally",
+      "start": 93113,
+      "end": 95337,
+      "bodyStart": 93188,
+      "bodyEnd": 95335,
+      "names": [
+        "chromium: typed chat sizes extend the sliders and persist locally",
+        "firefox: typed chat sizes extend the sliders and persist locally"
+      ]
+    },
+    {
+      "name": "firefox: signed-in chat display settings are independent by browser",
+      "start": 95343,
+      "end": 99018,
+      "bodyStart": 95421,
+      "bodyEnd": 99016,
+      "names": [
+        "chromium: signed-in chat display settings are independent by browser",
+        "firefox: signed-in chat display settings are independent by browser"
+      ]
+    },
+    {
+      "name": "firefox: Diary chat overlay has no frame or reserved heading band",
+      "start": 99024,
+      "end": 100681,
+      "bodyStart": 99100,
+      "bodyEnd": 100679,
+      "names": [
+        "chromium: Diary chat overlay has no frame or reserved heading band",
+        "firefox: Diary chat overlay has no frame or reserved heading band"
+      ]
+    },
+    {
+      "name": "firefox: custom chat timing shifts messages and account changes are saved",
+      "start": 100687,
+      "end": 104104,
+      "bodyStart": 100771,
+      "bodyEnd": 104102,
+      "names": [
+        "chromium: custom chat timing shifts messages and account changes are saved",
+        "firefox: custom chat timing shifts messages and account changes are saved"
+      ]
+    },
+    {
+      "name": "firefox: AI channel filter controls, status and empty results work without JavaScript",
+      "start": 104110,
+      "end": 111461,
+      "bodyStart": 104206,
+      "bodyEnd": 111459,
+      "names": [
+        "chromium: AI channel filter controls, status and empty results work without JavaScript",
+        "firefox: AI channel filter controls, status and empty results work without JavaScript"
+      ]
+    },
+    {
+      "name": "firefox: AI channel filter global Off restores cards, recommendations and queue thumbnails",
+      "start": 111467,
+      "end": 114457,
+      "bodyStart": 111568,
+      "bodyEnd": 114455,
+      "names": [
+        "chromium: AI channel filter global Off restores cards, recommendations and queue thumbnails",
+        "firefox: AI channel filter global Off restores cards, recommendations and queue thumbnails"
+      ]
+    },
+    {
+      "name": "firefox: AI channel filter replacement is quiet, keeps Discovery results and works in thin mode",
+      "start": 114463,
+      "end": 116780,
+      "bodyStart": 114569,
+      "bodyEnd": 116778,
+      "names": [
+        "chromium: AI channel filter replacement is quiet, keeps Discovery results and works in thin mode",
+        "firefox: AI channel filter replacement is quiet, keeps Discovery results and works in thin mode"
+      ]
+    },
+    {
+      "name": "firefox: AI channel filter other pages only replace thumbnails and retain every card",
+      "start": 116786,
+      "end": 118780,
+      "bodyStart": 116881,
+      "bodyEnd": 118778,
+      "names": [
+        "chromium: AI channel filter other pages only replace thumbnails and retain every card",
+        "firefox: AI channel filter other pages only replace thumbnails and retain every card"
+      ]
+    },
+    {
+      "name": "firefox: AI channel filter watch queues preserve duplicate occurrences and advancement",
+      "start": 118786,
+      "end": 120740,
+      "bodyStart": 118883,
+      "bodyEnd": 120738,
+      "names": [
+        "chromium: AI channel filter watch queues preserve duplicate occurrences and advancement",
+        "firefox: AI channel filter watch queues preserve duplicate occurrences and advancement"
+      ]
+    },
+    {
+      "name": "firefox: preferences sections, labels, and form fields",
+      "start": 120746,
+      "end": 124854,
+      "bodyStart": 120811,
+      "bodyEnd": 124852,
+      "names": [
+        "chromium: preferences sections, labels, and form fields",
+        "firefox: preferences sections, labels, and form fields"
+      ]
+    },
+    {
+      "name": "firefox: Diary is the only design and color preferences submit with and without JavaScript",
+      "start": 124859,
+      "end": 126246,
+      "bodyStart": 124960,
+      "bodyEnd": 126244,
+      "names": [
+        "chromium: Diary is the only design and color preferences submit with and without JavaScript",
+        "firefox: Diary is the only design and color preferences submit with and without JavaScript"
+      ]
+    },
+    {
+      "name": "firefox: Diary palettes, mode toggle and keyboard color selection",
+      "start": 126251,
+      "end": 127348,
+      "bodyStart": 126327,
+      "bodyEnd": 127346,
+      "names": [
+        "chromium: Diary palettes, mode toggle and keyboard color selection",
+        "firefox: Diary palettes, mode toggle and keyboard color selection"
+      ]
+    },
+    {
+      "name": "firefox: Diary local lettering loads and decorations stay noninteractive",
+      "start": 127353,
+      "end": 128494,
+      "bodyStart": 127436,
+      "bodyEnd": 128492,
+      "names": [
+        "chromium: Diary local lettering loads and decorations stay noninteractive",
+        "firefox: Diary local lettering loads and decorations stay noninteractive"
+      ]
+    },
+    {
+      "name": "firefox: Diary preserves real player controls",
+      "start": 128499,
+      "end": 129442,
+      "bodyStart": 128555,
+      "bodyEnd": 129440,
+      "names": [
+        "chromium: Diary preserves real player controls",
+        "firefox: Diary preserves real player controls"
+      ]
+    },
+    {
+      "name": "firefox: Diary responsive paper layouts",
+      "start": 129447,
+      "end": 131318,
+      "bodyStart": 129497,
+      "bodyEnd": 131316,
+      "names": [
+        "chromium: Diary responsive paper layouts",
+        "firefox: Diary responsive paper layouts"
+      ]
+    },
+    {
+      "name": "firefox: actual Video.js player retains playback, seeking and controls",
+      "start": 131323,
+      "end": 133467,
+      "bodyStart": 131404,
+      "bodyEnd": 133465,
+      "names": [
+        "chromium: actual Video.js player retains playback, seeking and controls",
+        "firefox: actual Video.js player retains playback, seeking and controls"
+      ]
+    },
+    {
+      "name": "firefox: buffer refresh reloads the selected source and restores playback",
+      "start": 133473,
+      "end": 137315,
+      "bodyStart": 133557,
+      "bodyEnd": 137313,
+      "names": [
+        "chromium: buffer refresh reloads the selected source and restores playback",
+        "firefox: buffer refresh reloads the selected source and restores playback"
+      ]
+    },
+    {
+      "name": "firefox: mobile refresh is in settings on watch and embed players",
+      "start": 137321,
+      "end": 139569,
+      "bodyStart": 137397,
+      "bodyEnd": 139567,
+      "names": [
+        "chromium: mobile refresh is in settings on watch and embed players",
+        "firefox: mobile refresh is in settings on watch and embed players"
+      ]
+    },
+    {
+      "name": "firefox: refresh can retry a player error and then refresh again",
+      "start": 139575,
+      "end": 141061,
+      "bodyStart": 139650,
+      "bodyEnd": 141059,
+      "names": [
+        "chromium: refresh can retry a player error and then refresh again",
+        "firefox: refresh can retry a player error and then refresh again"
+      ]
+    },
+    {
+      "name": "firefox: refresh restores DASH quality and audio after tracks are recreated",
+      "start": 141067,
+      "end": 143547,
+      "bodyStart": 141153,
+      "bodyEnd": 143545,
+      "names": [
+        "chromium: refresh restores DASH quality and audio after tracks are recreated",
+        "firefox: refresh restores DASH quality and audio after tracks are recreated"
+      ]
+    },
+    {
+      "name": "firefox: header is horizontal and Library navigation is always available",
+      "start": 143553,
+      "end": 145164,
+      "bodyStart": 143636,
+      "bodyEnd": 145162,
+      "names": [
+        "chromium: header is horizontal and Library navigation is always available",
+        "firefox: header is horizontal and Library navigation is always available"
+      ]
+    },
+    {
+      "name": "firefox: account link lives in Preferences and the mobile header stays visible",
+      "start": 145170,
+      "end": 149191,
+      "bodyStart": 145259,
+      "bodyEnd": 149189,
+      "names": [
+        "chromium: account link lives in Preferences and the mobile header stays visible",
+        "firefox: account link lives in Preferences and the mobile header stays visible"
+      ]
+    },
+    {
+      "name": "firefox: header stays visible on tablet and desktop pages",
+      "start": 149197,
+      "end": 152384,
+      "bodyStart": 149265,
+      "bodyEnd": 152382,
+      "names": [
+        "chromium: header stays visible on tablet and desktop pages",
+        "firefox: header stays visible on tablet and desktop pages"
+      ]
+    },
+    {
+      "name": "firefox: sticky header covers thumbnails while video menus can overlap it",
+      "start": 152390,
+      "end": 155881,
+      "bodyStart": 152474,
+      "bodyEnd": 155879,
+      "names": [
+        "chromium: sticky header covers thumbnails while video menus can overlap it",
+        "firefox: sticky header covers thumbnails while video menus can overlap it"
+      ]
+    },
+    {
+      "name": "firefox: player wide control, paused idle state and keyboard access",
+      "start": 155887,
+      "end": 158200,
+      "bodyStart": 155965,
+      "bodyEnd": 158198,
+      "names": [
+        "chromium: player wide control, paused idle state and keyboard access",
+        "firefox: player wide control, paused idle state and keyboard access"
+      ]
+    },
+    {
+      "name": "firefox: player menus support transient hover and persistent click modes",
+      "start": 158206,
+      "end": 159715,
+      "bodyStart": 158289,
+      "bodyEnd": 159713,
+      "names": [
+        "chromium: player menus support transient hover and persistent click modes",
+        "firefox: player menus support transient hover and persistent click modes"
+      ]
+    },
+    {
+      "name": "firefox: history search by title or channel",
+      "start": 159721,
+      "end": 161414,
+      "bodyStart": 159775,
+      "bodyEnd": 161412,
+      "names": [
+        "chromium: history search by title or channel",
+        "firefox: history search by title or channel"
+      ]
+    },
+    {
+      "name": "firefox: cached history titles and compact desktop playlist library",
+      "start": 161420,
+      "end": 164213,
+      "bodyStart": 161498,
+      "bodyEnd": 164211,
+      "names": [
+        "chromium: cached history titles and compact desktop playlist library",
+        "firefox: cached history titles and compact desktop playlist library"
+      ]
+    },
+    {
+      "name": "firefox: mobile paused controls hide, wake on tap, and keep menus usable",
+      "start": 164219,
+      "end": 166467,
+      "bodyStart": 164302,
+      "bodyEnd": 166465,
+      "names": [
+        "chromium: mobile paused controls hide, wake on tap, and keep menus usable",
+        "firefox: mobile paused controls hide, wake on tap, and keep menus usable"
+      ]
+    },
+    {
+      "name": "firefox: mobile video taps toggle all controls while playing",
+      "start": 166473,
+      "end": 167859,
+      "bodyStart": 166544,
+      "bodyEnd": 167857,
+      "names": [
+        "chromium: mobile video taps toggle all controls while playing",
+        "firefox: mobile video taps toggle all controls while playing"
+      ]
+    },
+    {
+      "name": "firefox: queue selects a repeated occurrence, and keeps recommendations separate",
+      "start": 167865,
+      "end": 168832,
+      "bodyStart": 167956,
+      "bodyEnd": 168830,
+      "names": [
+        "chromium: queue selects a repeated occurrence, and keeps recommendations separate",
+        "firefox: queue selects a repeated occurrence, and keeps recommendations separate"
+      ]
+    },
+    {
+      "name": "firefox: queue failure is retryable and does not enable recommendation autoplay",
+      "start": 168838,
+      "end": 169637,
+      "bodyStart": 168928,
+      "bodyEnd": 169635,
+      "names": [
+        "chromium: queue failure is retryable and does not enable recommendation autoplay",
+        "firefox: queue failure is retryable and does not enable recommendation autoplay"
+      ]
+    },
+    {
+      "name": "firefox: missing, empty and ended queues do not attach an advancement handler",
+      "start": 169643,
+      "end": 170399,
+      "bodyStart": 169731,
+      "bodyEnd": 170397,
+      "names": [
+        "chromium: missing, empty and ended queues do not attach an advancement handler",
+        "firefox: missing, empty and ended queues do not attach an advancement handler"
+      ]
+    },
+    {
+      "name": "firefox: transcript loads on demand, searches safely, seeks, caches, and retries",
+      "start": 170405,
+      "end": 172352,
+      "bodyStart": 170496,
+      "bodyEnd": 172350,
+      "names": [
+        "chromium: transcript loads on demand, searches safely, seeks, caches, and retries",
+        "firefox: transcript loads on demand, searches safely, seeks, caches, and retries"
+      ]
+    },
+    {
+      "name": "firefox: mobile queue is immediately below player, collapsible, and keyboard operable",
+      "start": 172358,
+      "end": 174175,
+      "bodyStart": 172454,
+      "bodyEnd": 174173,
+      "names": [
+        "chromium: mobile queue is immediately below player, collapsible, and keyboard operable",
+        "firefox: mobile queue is immediately below player, collapsible, and keyboard operable"
+      ]
+    },
+    {
+      "name": "firefox: System follows live appearance changes and color modes synchronize across tabs",
+      "start": 174181,
+      "end": 176653,
+      "bodyStart": 174279,
+      "bodyEnd": 176651,
+      "names": [
+        "chromium: System follows live appearance changes and color modes synchronize across tabs",
+        "firefox: System follows live appearance changes and color modes synchronize across tabs"
+      ]
+    },
+    {
+      "name": "firefox: signed-in color-mode controls submit CSRF by POST with and without JavaScript",
+      "start": 176659,
+      "end": 177378,
+      "bodyStart": 176756,
+      "bodyEnd": 177376,
+      "names": [
+        "chromium: signed-in color-mode controls submit CSRF by POST with and without JavaScript",
+        "firefox: signed-in color-mode controls submit CSRF by POST with and without JavaScript"
+      ]
+    },
+    {
+      "name": "firefox: color-mode switching preserves density and page layout",
+      "start": 177384,
+      "end": 177871,
+      "bodyStart": 177458,
+      "bodyEnd": 177869,
+      "names": [
+        "chromium: color-mode switching preserves density and page layout",
+        "firefox: color-mode switching preserves density and page layout"
+      ]
+    },
+    {
+      "name": "firefox: no-JavaScript and thin modes retain essential navigation",
+      "start": 177877,
+      "end": 178867,
+      "bodyStart": 177953,
+      "bodyEnd": 178865,
+      "names": [
+        "chromium: no-JavaScript and thin modes retain essential navigation",
+        "firefox: no-JavaScript and thin modes retain essential navigation"
+      ]
+    },
+    {
+      "name": "firefox: responsive layouts and representative visual snapshots",
+      "start": 178873,
+      "end": 179952,
+      "bodyStart": 178947,
+      "bodyEnd": 179950,
+      "names": [
+        "chromium: responsive layouts and representative visual snapshots",
+        "firefox: responsive layouts and representative visual snapshots"
+      ]
+    },
+    {
+      "name": "firefox: enlarged text and phone landscape keep navigation usable",
+      "start": 179958,
+      "end": 181539,
+      "bodyStart": 180034,
+      "bodyEnd": 181537,
+      "names": [
+        "chromium: enlarged text and phone landscape keep navigation usable",
+        "firefox: enlarged text and phone landscape keep navigation usable"
+      ]
+    },
+    {
+      "name": "library navigation survives custom feed settings without channel management links",
+      "start": 181543,
+      "end": 182071,
+      "bodyStart": 181633,
+      "bodyEnd": 182069,
+      "names": [
+        "library navigation survives custom feed settings without channel management links"
+      ]
+    },
+    {
+      "name": "UI asset additions report compressed sizes without a target",
+      "start": 182073,
+      "end": 183306,
+      "bodyStart": 182141,
+      "bodyEnd": 183304,
+      "names": [
+        "UI asset additions report compressed sizes without a target"
+      ]
+    },
+    {
+      "name": "firefox: video menus support keyboard dismissal and signed-out sign-in links",
+      "start": 183344,
+      "end": 184387,
+      "bodyStart": 183431,
+      "bodyEnd": 184385,
+      "names": [
+        "chromium: video menus support keyboard dismissal and signed-out sign-in links",
+        "firefox: video menus support keyboard dismissal and signed-out sign-in links"
+      ]
+    },
+    {
+      "name": "firefox: block removes discovery cards only after success and Undo restores them",
+      "start": 184393,
+      "end": 186023,
+      "bodyStart": 184484,
+      "bodyEnd": 186021,
+      "names": [
+        "chromium: block removes discovery cards only after success and Undo restores them",
+        "firefox: block removes discovery cards only after success and Undo restores them"
+      ]
+    },
+    {
+      "name": "firefox: block notice disappears after five seconds and a new status resets the timer",
+      "start": 186029,
+      "end": 187780,
+      "bodyStart": 186125,
+      "bodyEnd": 187778,
+      "names": [
+        "chromium: block notice disappears after five seconds and a new status resets the timer",
+        "firefox: block notice disappears after five seconds and a new status resets the timer"
+      ]
+    },
+    {
+      "name": "firefox: playlist creation retains the created playlist when adding fails",
+      "start": 187786,
+      "end": 190341,
+      "bodyStart": 187870,
+      "bodyEnd": 190339,
+      "names": [
+        "chromium: playlist creation retains the created playlist when adding fails",
+        "firefox: playlist creation retains the created playlist when adding fails"
+      ]
+    },
+    {
+      "name": "firefox: search Filters owns the override and filtered-empty pages retain pagination",
+      "start": 190347,
+      "end": 191500,
+      "bodyStart": 190442,
+      "bodyEnd": 191498,
+      "names": [
+        "chromium: search Filters owns the override and filtered-empty pages retain pagination",
+        "firefox: search Filters owns the override and filtered-empty pages retain pagination"
+      ]
+    },
+    {
+      "name": "firefox: members-only search controls work without JavaScript and retain pagination",
+      "start": 191506,
+      "end": 194108,
+      "bodyStart": 191600,
+      "bodyEnd": 194106,
+      "names": [
+        "chromium: members-only search controls work without JavaScript and retain pagination",
+        "firefox: members-only search controls work without JavaScript and retain pagination"
+      ]
+    },
+    {
+      "name": "firefox: blocking the next recommendation updates autoplay and Undo restores it",
+      "start": 194114,
+      "end": 195483,
+      "bodyStart": 194204,
+      "bodyEnd": 195481,
+      "names": [
+        "chromium: blocking the next recommendation updates autoplay and Undo restores it",
+        "firefox: blocking the next recommendation updates autoplay and Undo restores it"
+      ]
+    },
+    {
+      "name": "firefox: blocking leaves subscribed and explicitly included search results visible",
+      "start": 195523,
+      "end": 197010,
+      "bodyStart": 195616,
+      "bodyEnd": 197008,
+      "names": [
+        "chromium: blocking leaves subscribed and explicitly included search results visible",
+        "firefox: blocking leaves subscribed and explicitly included search results visible"
+      ]
+    },
+    {
+      "name": "firefox: blocking the only remaining recommendation disables autoplay",
+      "start": 197016,
+      "end": 198011,
+      "bodyStart": 197096,
+      "bodyEnd": 198009,
+      "names": [
+        "chromium: blocking the only remaining recommendation disables autoplay",
+        "firefox: blocking the only remaining recommendation disables autoplay"
+      ]
+    },
+    {
+      "name": "firefox: video menus stay within mobile and compact viewports",
+      "start": 198017,
+      "end": 199947,
+      "bodyStart": 198089,
+      "bodyEnd": 199945,
+      "names": [
+        "chromium: video menus stay within mobile and compact viewports",
+        "firefox: video menus stay within mobile and compact viewports"
+      ]
+    },
+    {
+      "name": "firefox: control-bar transparency preserves opaque controls on bright and dark video",
+      "start": 199953,
+      "end": 201213,
+      "bodyStart": 200048,
+      "bodyEnd": 201211,
+      "names": [
+        "chromium: control-bar transparency preserves opaque controls on bright and dark video",
+        "firefox: control-bar transparency preserves opaque controls on bright and dark video"
+      ]
+    },
+    {
+      "name": "firefox: owned queue removes a specific occurrence and keeps playback running",
+      "start": 201253,
+      "end": 205303,
+      "bodyStart": 201341,
+      "bodyEnd": 205301,
+      "names": [
+        "chromium: owned queue removes a specific occurrence and keeps playback running",
+        "firefox: owned queue removes a specific occurrence and keeps playback running"
+      ]
+    },
+    {
+      "name": "firefox: mobile center play and control bars share visibility through play, pause, idle and seeking",
+      "start": 205309,
+      "end": 208465,
+      "bodyStart": 205419,
+      "bodyEnd": 208463,
+      "names": [
+        "chromium: mobile center play and control bars share visibility through play, pause, idle and seeking",
+        "firefox: mobile center play and control bars share visibility through play, pause, idle and seeking"
+      ]
+    },
+    {
+      "name": "firefox: playback shortcuts work from page content and respect interactive controls",
+      "start": 208505,
+      "end": 210816,
+      "bodyStart": 208599,
+      "bodyEnd": 210814,
+      "names": [
+        "chromium: playback shortcuts work from page content and respect interactive controls",
+        "firefox: playback shortcuts work from page content and respect interactive controls"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals",
+      "start": 210856,
+      "end": 215351,
+      "bodyStart": 210950,
+      "bodyEnd": 215349,
+      "names": [
+        "chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals",
+        "firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow icon stays fixed with wrapping, RTL and touch",
+      "start": 215357,
+      "end": 217145,
+      "bodyStart": 215430,
+      "bodyEnd": 217143,
+      "names": [
+        "chromium: DeArrow icon stays fixed with wrapping, RTL and touch",
+        "firefox: DeArrow icon stays fixed with wrapping, RTL and touch"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow targets stay fixed across title lengths and page layouts",
+      "start": 217151,
+      "end": 220477,
+      "bodyStart": 217235,
+      "bodyEnd": 220475,
+      "names": [
+        "chromium: DeArrow targets stay fixed across title lengths and page layouts",
+        "firefox: DeArrow targets stay fixed across title lengths and page layouts"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow keeps replacements on hover when original display is disabled",
+      "start": 220483,
+      "end": 221453,
+      "bodyStart": 220572,
+      "bodyEnd": 221451,
+      "names": [
+        "chromium: DeArrow keeps replacements on hover when original display is disabled",
+        "firefox: DeArrow keeps replacements on hover when original display is disabled"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals",
+      "start": 221459,
+      "end": 222432,
+      "bodyStart": 221553,
+      "bodyEnd": 222430,
+      "names": [
+        "chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals",
+        "firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow preference controls submit without JavaScript",
+      "start": 222438,
+      "end": 223313,
+      "bodyStart": 222511,
+      "bodyEnd": 223311,
+      "names": [
+        "chromium: DeArrow preference controls submit without JavaScript",
+        "firefox: DeArrow preference controls submit without JavaScript"
+      ]
+    },
+    {
+      "name": "embed playlist requests identify the current video and preserve advancement settings",
+      "start": 223394,
+      "end": 224838,
+      "bodyStart": 223487,
+      "bodyEnd": 224836,
+      "names": [
+        "embed playlist requests identify the current video and preserve advancement settings"
+      ]
+    },
+    {
+      "name": "firefox: synced playback restores progress after seeking back from completion",
+      "start": 224876,
+      "end": 226756,
+      "bodyStart": 224964,
+      "bodyEnd": 226754,
+      "names": [
+        "chromium: synced playback restores progress after seeking back from completion",
+        "firefox: synced playback restores progress after seeking back from completion"
+      ]
+    },
+    {
+      "name": "firefox: rejected progress beacon falls back to a keepalive request",
+      "start": 226762,
+      "end": 227735,
+      "bodyStart": 226840,
+      "bodyEnd": 227733,
+      "names": [
+        "chromium: rejected progress beacon falls back to a keepalive request",
+        "firefox: rejected progress beacon falls back to a keepalive request"
+      ]
+    },
+    {
+      "name": "firefox: SponsorBlock modes, overlay, keyboard, ranges and replay",
+      "start": 227776,
+      "end": 232109,
+      "bodyStart": 227852,
+      "bodyEnd": 232107,
+      "names": [
+        "chromium: SponsorBlock modes, overlay, keyboard, ranges and replay",
+        "firefox: SponsorBlock modes, overlay, keyboard, ranges and replay"
+      ]
+    },
+    {
+      "name": "firefox: SponsorBlock auto skips once per segment and resets on reload or another tab",
+      "start": 232114,
+      "end": 234929,
+      "bodyStart": 232210,
+      "bodyEnd": 234927,
+      "names": [
+        "chromium: SponsorBlock auto skips once per segment and resets on reload or another tab",
+        "firefox: SponsorBlock auto skips once per segment and resets on reload or another tab"
+      ]
+    },
+    {
+      "name": "firefox: SponsorBlock disabled avoids requests",
+      "start": 234934,
+      "end": 235315,
+      "bodyStart": 234991,
+      "bodyEnd": 235313,
+      "names": [
+        "chromium: SponsorBlock disabled avoids requests",
+        "firefox: SponsorBlock disabled avoids requests"
+      ]
+    },
+    {
+      "name": "firefox: preference Save remains visible throughout Diary preferences",
+      "start": 235320,
+      "end": 236278,
+      "bodyStart": 235400,
+      "bodyEnd": 236276,
+      "names": [
+        "chromium: preference Save remains visible throughout Diary preferences",
+        "firefox: preference Save remains visible throughout Diary preferences"
+      ]
+    },
+    {
+      "name": "firefox: SponsorBlock overlap, end boundary and upstream failure",
+      "start": 236318,
+      "end": 238325,
+      "bodyStart": 236393,
+      "bodyEnd": 238323,
+      "names": [
+        "chromium: SponsorBlock overlap, end boundary and upstream failure",
+        "firefox: SponsorBlock overlap, end boundary and upstream failure"
+      ]
+    },
+    {
+      "name": "firefox: SponsorBlock respects clip end and loop in audio mode",
+      "start": 238365,
+      "end": 240623,
+      "bodyStart": 238438,
+      "bodyEnd": 240621,
+      "names": [
+        "chromium: SponsorBlock respects clip end and loop in audio mode",
+        "firefox: SponsorBlock respects clip end and loop in audio mode"
+      ]
+    },
+    {
+      "name": "firefox: mobile accumulated seeking commits once and restores playback",
+      "start": 240663,
+      "end": 244109,
+      "bodyStart": 240744,
+      "bodyEnd": 244107,
+      "names": [
+        "chromium: mobile accumulated seeking commits once and restores playback",
+        "firefox: mobile accumulated seeking commits once and restores playback"
+      ]
+    },
+    {
+      "name": "firefox: mobile settings preserve playing, captions, sharing and SponsorBlock",
+      "start": 244149,
+      "end": 246811,
+      "bodyStart": 244237,
+      "bodyEnd": 246809,
+      "names": [
+        "chromium: mobile settings preserve playing, captions, sharing and SponsorBlock",
+        "firefox: mobile settings preserve playing, captions, sharing and SponsorBlock"
+      ]
+    },
+    {
+      "name": "firefox: embed mobile settings fill viewport and fullscreen",
+      "start": 246816,
+      "end": 248028,
+      "bodyStart": 246886,
+      "bodyEnd": 248026,
+      "names": [
+        "chromium: embed mobile settings fill viewport and fullscreen",
+        "firefox: embed mobile settings fill viewport and fullscreen"
+      ]
+    },
+    {
+      "name": "firefox: mobile quality and track settings follow available options",
+      "start": 248068,
+      "end": 251574,
+      "bodyStart": 248146,
+      "bodyEnd": 251572,
+      "names": [
+        "chromium: mobile quality and track settings follow available options",
+        "firefox: mobile quality and track settings follow available options"
+      ]
+    },
+    {
+      "name": "DASH player source keeps the complete rendition manifest",
+      "start": 251578,
+      "end": 251904,
+      "bodyStart": 251643,
+      "bodyEnd": 251902,
+      "names": [
+        "DASH player source keeps the complete rendition manifest"
+      ]
+    },
+    {
+      "name": "firefox: preferred video codec setting precedes quality and saves without JavaScript",
+      "start": 252712,
+      "end": 254087,
+      "bodyStart": 252807,
+      "bodyEnd": 254085,
+      "names": [
+        "chromium: preferred video codec setting precedes quality and saves without JavaScript",
+        "firefox: preferred video codec setting precedes quality and saves without JavaScript"
+      ]
+    },
+    {
+      "name": "firefox: preferred codec reaches the initial DASH rendition selector on watch and embed",
+      "start": 254093,
+      "end": 257018,
+      "bodyStart": 254191,
+      "bodyEnd": 257016,
+      "names": [
+        "chromium: preferred codec reaches the initial DASH rendition selector on watch and embed",
+        "firefox: preferred codec reaches the initial DASH rendition selector on watch and embed"
+      ]
+    },
+    {
+      "name": "firefox: preferred codec Auto and manual selections survive buffer refresh on mobile",
+      "start": 257024,
+      "end": 260593,
+      "bodyStart": 257119,
+      "bodyEnd": 260591,
+      "names": [
+        "chromium: preferred codec Auto and manual selections survive buffer refresh on mobile",
+        "firefox: preferred codec Auto and manual selections survive buffer refresh on mobile"
+      ]
+    },
+    {
+      "name": "firefox: rich stream menus rank video and audio variants consistently",
+      "start": 260633,
+      "end": 277987,
+      "bodyStart": 260713,
+      "bodyEnd": 277985,
+      "names": [
+        "chromium: rich stream menus rank video and audio variants consistently",
+        "firefox: rich stream menus rank video and audio variants consistently"
+      ]
+    },
+    {
+      "name": "firefox: diagnostics are local, accessible and sanitize snapshots",
+      "start": 278027,
+      "end": 283693,
+      "bodyStart": 278103,
+      "bodyEnd": 283691,
+      "names": [
+        "chromium: diagnostics are local, accessible and sanitize snapshots",
+        "firefox: diagnostics are local, accessible and sanitize snapshots"
+      ]
+    },
+    {
+      "name": "firefox: mobile and embed diagnostics fit and return to compact view",
+      "start": 283698,
+      "end": 285273,
+      "bodyStart": 283777,
+      "bodyEnd": 285271,
+      "names": [
+        "chromium: mobile and embed diagnostics fit and return to compact view",
+        "firefox: mobile and embed diagnostics fit and return to compact view"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow contributions at 1440px",
+      "start": 285361,
+      "end": 290808,
+      "bodyStart": 285416,
+      "bodyEnd": 290806,
+      "names": [
+        "chromium: DeArrow contributions at 320px",
+        "chromium: DeArrow contributions at 390px",
+        "chromium: DeArrow contributions at 1440px",
+        "firefox: DeArrow contributions at 320px",
+        "firefox: DeArrow contributions at 390px",
+        "firefox: DeArrow contributions at 1440px"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow identity import stays outside ordinary preferences",
+      "start": 290819,
+      "end": 291649,
+      "bodyStart": 290897,
+      "bodyEnd": 291647,
+      "names": [
+        "chromium: DeArrow identity import stays outside ordinary preferences",
+        "firefox: DeArrow identity import stays outside ordinary preferences"
+      ]
+    },
+    {
+      "name": "firefox: DeArrow contribution themes, empty results and loading errors",
+      "start": 291689,
+      "end": 293180,
+      "bodyStart": 291770,
+      "bodyEnd": 293178,
+      "names": [
+        "chromium: DeArrow contribution themes, empty results and loading errors",
+        "firefox: DeArrow contribution themes, empty results and loading errors"
+      ]
+    },
+    {
+      "name": "firefox: browser volume is local, ignores legacy values and preserves speed",
+      "start": 293220,
+      "end": 296455,
+      "bodyStart": 293306,
+      "bodyEnd": 296453,
+      "names": [
+        "chromium: browser volume is local, ignores legacy values and preserves speed",
+        "firefox: browser volume is local, ignores legacy values and preserves speed"
+      ]
+    },
+    {
+      "name": "firefox: mobile volume stays device controlled with neutral translucent controls",
+      "start": 296461,
+      "end": 300420,
+      "bodyStart": 296552,
+      "bodyEnd": 300418,
+      "names": [
+        "chromium: mobile volume stays device controlled with neutral translucent controls",
+        "firefox: mobile volume stays device controlled with neutral translucent controls"
+      ]
+    },
+    {
+      "name": "firefox: channel playlists match library sizing in Diary",
+      "start": 300426,
+      "end": 301784,
+      "bodyStart": 300493,
+      "bodyEnd": 301782,
+      "names": [
+        "chromium: channel playlists match library sizing in Diary",
+        "firefox: channel playlists match library sizing in Diary"
+      ]
+    },
+    {
+      "name": "firefox: channel search preserves scope, query, and numeric pagination",
+      "start": 301824,
+      "end": 303859,
+      "bodyStart": 301905,
+      "bodyEnd": 303857,
+      "names": [
+        "chromium: channel search preserves scope, query, and numeric pagination",
+        "firefox: channel search preserves scope, query, and numeric pagination"
+      ]
+    },
+    {
+      "name": "firefox: channel search privacy and empty results work without JavaScript",
+      "start": 303865,
+      "end": 305048,
+      "bodyStart": 303949,
+      "bodyEnd": 305046,
+      "names": [
+        "chromium: channel search privacy and empty results work without JavaScript",
+        "firefox: channel search privacy and empty results work without JavaScript"
+      ]
+    },
+    {
+      "name": "firefox: channel SponsorBlock editor supports mobile and no-JavaScript forms",
+      "start": 305088,
+      "end": 306373,
+      "bodyStart": 305175,
+      "bodyEnd": 306371,
+      "names": [
+        "chromium: channel SponsorBlock editor supports mobile and no-JavaScript forms",
+        "firefox: channel SponsorBlock editor supports mobile and no-JavaScript forms"
+      ]
+    },
+    {
+      "name": "firefox: browser profiles restore guest and two accounts independently on watch and embed",
+      "start": 306413,
+      "end": 310204,
+      "bodyStart": 306513,
+      "bodyEnd": 310202,
+      "names": [
+        "chromium: browser profiles restore guest and two accounts independently on watch and embed",
+        "firefox: browser profiles restore guest and two accounts independently on watch and embed"
+      ]
+    },
+    {
+      "name": "firefox: stale browser tabs reload and delayed authenticated saves never write another profile",
+      "start": 310210,
+      "end": 311749,
+      "bodyStart": 310315,
+      "bodyEnd": 311747,
+      "names": [
+        "chromium: stale browser tabs reload and delayed authenticated saves never write another profile",
+        "firefox: stale browser tabs reload and delayed authenticated saves never write another profile"
+      ]
+    },
+    {
+      "name": "firefox: failed account speed saves preserve guest preferences and denied browser saves report failure",
+      "start": 311755,
+      "end": 313848,
+      "bodyStart": 311868,
+      "bodyEnd": 313846,
+      "names": [
+        "chromium: failed account speed saves preserve guest preferences and denied browser saves report failure",
+        "firefox: failed account speed saves preserve guest preferences and denied browser saves report failure"
+      ]
+    },
+    {
+      "name": "firefox: authenticated response headers invalidate stale saves when browser storage and cookie access are denied",
+      "start": 313854,
+      "end": 315119,
+      "bodyStart": 313977,
+      "bodyEnd": 315117,
+      "names": [
+        "chromium: authenticated response headers invalidate stale saves when browser storage and cookie access are denied",
+        "firefox: authenticated response headers invalidate stale saves when browser storage and cookie access are denied"
+      ]
+    },
+    {
+      "name": "firefox: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests",
+      "start": 315125,
+      "end": 318773,
+      "bodyStart": 315255,
+      "bodyEnd": 318771,
+      "names": [
+        "chromium: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests",
+        "firefox: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests"
+      ]
+    },
+    {
+      "name": "firefox: account thumbnail bars ignore local progress and update dynamic queues at 1440px",
+      "start": 318856,
+      "end": 321653,
+      "bodyStart": 318960,
+      "bodyEnd": 321651,
+      "names": [
+        "chromium: account thumbnail bars ignore local progress and update dynamic queues at 390px",
+        "chromium: account thumbnail bars ignore local progress and update dynamic queues at 1440px",
+        "firefox: account thumbnail bars ignore local progress and update dynamic queues at 390px",
+        "firefox: account thumbnail bars ignore local progress and update dynamic queues at 1440px"
+      ]
+    },
+    {
+      "name": "firefox: current chapter beside duration follows playback and seeking",
+      "start": 321699,
+      "end": 324271,
+      "bodyStart": 321779,
+      "bodyEnd": 324269,
+      "names": [
+        "chromium: current chapter beside duration follows playback and seeking",
+        "firefox: current chapter beside duration follows playback and seeking"
+      ]
+    },
+    {
+      "name": "firefox: chapter title fits mobile watch and embed controls",
+      "start": 324277,
+      "end": 328470,
+      "bodyStart": 324347,
+      "bodyEnd": 328468,
+      "names": [
+        "chromium: chapter title fits mobile watch and embed controls",
+        "firefox: chapter title fits mobile watch and embed controls"
+      ]
+    },
+    {
+      "name": "firefox: manual chapter markers and SponsorBlock hover priority",
+      "start": 328476,
+      "end": 331453,
+      "bodyStart": 328550,
+      "bodyEnd": 331451,
+      "names": [
+        "chromium: manual chapter markers and SponsorBlock hover priority",
+        "firefox: manual chapter markers and SponsorBlock hover priority"
+      ]
+    },
+    {
+      "name": "firefox: manual chapters survive disabled and failed SponsorBlock",
+      "start": 331458,
+      "end": 332932,
+      "bodyStart": 331534,
+      "bodyEnd": 332930,
+      "names": [
+        "chromium: manual chapters survive disabled and failed SponsorBlock",
+        "firefox: manual chapters survive disabled and failed SponsorBlock"
+      ]
+    },
+    {
+      "name": "firefox: manual chapters in embeds, player styles and thumbnail previews",
+      "start": 332972,
+      "end": 335481,
+      "bodyStart": 333055,
+      "bodyEnd": 335479,
+      "names": [
+        "chromium: manual chapters in embeds, player styles and thumbnail previews",
+        "firefox: manual chapters in embeds, player styles and thumbnail previews"
+      ]
+    },
+    {
+      "name": "manual chapter template serializes titles safely for watch and embed",
+      "start": 335485,
+      "end": 336150,
+      "bodyStart": 335562,
+      "bodyEnd": 336148,
+      "names": [
+        "manual chapter template serializes titles safely for watch and embed"
+      ]
+    },
+    {
+      "name": "firefox: production thumbnail progress spans history, all card types and thin layouts at 1440px",
+      "start": 336231,
+      "end": 339084,
+      "bodyStart": 336341,
+      "bodyEnd": 339082,
+      "names": [
+        "chromium: production thumbnail progress spans history, all card types and thin layouts at 390px",
+        "chromium: production thumbnail progress spans history, all card types and thin layouts at 1440px",
+        "firefox: production thumbnail progress spans history, all card types and thin layouts at 390px",
+        "firefox: production thumbnail progress spans history, all card types and thin layouts at 1440px"
+      ]
+    },
+    {
+      "name": "firefox: production queue and recommendation progress survives thin mode and refresh at 1440px",
+      "start": 339094,
+      "end": 341229,
+      "bodyStart": 339203,
+      "bodyEnd": 341227,
+      "names": [
+        "chromium: production queue and recommendation progress survives thin mode and refresh at 390px",
+        "chromium: production queue and recommendation progress survives thin mode and refresh at 1440px",
+        "firefox: production queue and recommendation progress survives thin mode and refresh at 390px",
+        "firefox: production queue and recommendation progress survives thin mode and refresh at 1440px"
+      ]
+    },
+    {
+      "name": "firefox: history search and browser-local progress use existing saved positions",
+      "start": 341241,
+      "end": 342736,
+      "bodyStart": 341331,
+      "bodyEnd": 342734,
+      "names": [
+        "chromium: history search and browser-local progress use existing saved positions",
+        "firefox: history search and browser-local progress use existing saved positions"
+      ]
+    },
+    {
+      "name": "firefox: account forms are accessible and responsive",
+      "start": 342776,
+      "end": 344698,
+      "bodyStart": 342839,
+      "bodyEnd": 344696,
+      "names": [
+        "chromium: account forms are accessible and responsive",
+        "firefox: account forms are accessible and responsive"
+      ]
+    },
+    {
+      "name": "firefox: Popular avatars learned during channel refreshes render without metadata lookups",
+      "start": 347769,
+      "end": 349453,
+      "bodyStart": 347869,
+      "bodyEnd": 349451,
+      "names": [
+        "chromium: Popular avatars learned during channel refreshes render without metadata lookups",
+        "firefox: Popular avatars learned during channel refreshes render without metadata lookups"
+      ]
+    },
+    {
+      "name": "firefox: channel avatars learned from comments and community posts render on another page without metadata lookups",
+      "start": 349459,
+      "end": 351012,
+      "bodyStart": 349584,
+      "bodyEnd": 351010,
+      "names": [
+        "chromium: channel avatars learned from comments and community posts render on another page without metadata lookups",
+        "firefox: channel avatars learned from comments and community posts render on another page without metadata lookups"
+      ]
+    },
+    {
+      "name": "firefox: comment avatar cache learning preserves modern and legacy comment rendering and thin mode",
+      "start": 351018,
+      "end": 352623,
+      "bodyStart": 351127,
+      "bodyEnd": 352621,
+      "names": [
+        "chromium: comment avatar cache learning preserves modern and legacy comment rendering and thin mode",
+        "firefox: comment avatar cache learning preserves modern and legacy comment rendering and thin mode"
+      ]
+    },
+    {
+      "name": "firefox: channel avatars learned from recommendations render on another page without metadata lookups",
+      "start": 352629,
+      "end": 353709,
+      "bodyStart": 352741,
+      "bodyEnd": 353707,
+      "names": [
+        "chromium: channel avatars learned from recommendations render on another page without metadata lookups",
+        "firefox: channel avatars learned from recommendations render on another page without metadata lookups"
+      ]
+    },
+    {
+      "name": "firefox: real modern recommendations preserve creator links, duration and collaboration labels",
+      "start": 353715,
+      "end": 355269,
+      "bodyStart": 353820,
+      "bodyEnd": 355267,
+      "names": [
+        "chromium: real modern recommendations preserve creator links, duration and collaboration labels",
+        "firefox: real modern recommendations preserve creator links, duration and collaboration labels"
+      ]
+    },
+    {
+      "name": "firefox: channel avatars recovered from a real playlist response render without metadata lookups",
+      "start": 355275,
+      "end": 356305,
+      "bodyStart": 355382,
+      "bodyEnd": 356303,
+      "names": [
+        "chromium: channel avatars recovered from a real playlist response render without metadata lookups",
+        "firefox: channel avatars recovered from a real playlist response render without metadata lookups"
+      ]
+    },
+    {
+      "name": "firefox: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles",
+      "start": 356311,
+      "end": 359867,
+      "bodyStart": 356444,
+      "bodyEnd": 359865,
+      "names": [
+        "chromium: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles",
+        "firefox: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles"
+      ]
+    },
+    {
+      "name": "firefox: channel avatars fit compact rows, history and subscription manager without JavaScript",
+      "start": 359873,
+      "end": 361878,
+      "bodyStart": 359978,
+      "bodyEnd": 361876,
+      "names": [
+        "chromium: channel avatars fit compact rows, history and subscription manager without JavaScript",
+        "firefox: channel avatars fit compact rows, history and subscription manager without JavaScript"
+      ]
+    },
+    {
+      "name": "firefox: channel avatars preserve thin mode, channel ownership and RTL layout",
+      "start": 361884,
+      "end": 363014,
+      "bodyStart": 361972,
+      "bodyEnd": 363012,
+      "names": [
+        "chromium: channel avatars preserve thin mode, channel ownership and RTL layout",
+        "firefox: channel avatars preserve thin mode, channel ownership and RTL layout"
+      ]
+    },
+    {
+      "name": "firefox: channel avatar initials preserve Unicode, stable colors and readable contrast",
+      "start": 363020,
+      "end": 366093,
+      "bodyStart": 363117,
+      "bodyEnd": 366091,
+      "names": [
+        "chromium: channel avatar initials preserve Unicode, stable colors and readable contrast",
+        "firefox: channel avatar initials preserve Unicode, stable colors and readable contrast"
+      ]
+    },
+    {
+      "name": "firefox: failed avatar images keep placeholders and never retry metadata",
+      "start": 366099,
+      "end": 366992,
+      "bodyStart": 366182,
+      "bodyEnd": 366990,
+      "names": [
+        "chromium: failed avatar images keep placeholders and never retry metadata",
+        "firefox: failed avatar images keep placeholders and never retry metadata"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation",
+      "start": 367032,
+      "end": 369265,
+      "bodyStart": 367141,
+      "bodyEnd": 369263,
+      "names": [
+        "chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation",
+        "firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles",
+      "start": 369271,
+      "end": 371201,
+      "bodyStart": 369381,
+      "bodyEnd": 371199,
+      "names": [
+        "chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles",
+        "firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles",
+      "start": 371207,
+      "end": 373358,
+      "bodyStart": 371309,
+      "bodyEnd": 373356,
+      "names": [
+        "chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles",
+        "firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers prefetch hidden cards only within the viewport margin",
+      "start": 373364,
+      "end": 374964,
+      "bodyStart": 373454,
+      "bodyEnd": 374962,
+      "names": [
+        "chromium: channel spoilers prefetch hidden cards only within the viewport margin",
+        "firefox: channel spoilers prefetch hidden cards only within the viewport margin"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers preserve no-JavaScript masking and account settings",
+      "start": 374970,
+      "end": 376256,
+      "bodyStart": 375058,
+      "bodyEnd": 376254,
+      "names": [
+        "chromium: channel spoilers preserve no-JavaScript masking and account settings",
+        "firefox: channel spoilers preserve no-JavaScript masking and account settings"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers save guest rules and apply before initial rendering",
+      "start": 376262,
+      "end": 377747,
+      "bodyStart": 376350,
+      "bodyEnd": 377745,
+      "names": [
+        "chromium: channel spoilers save guest rules and apply before initial rendering",
+        "firefox: channel spoilers save guest rules and apply before initial rendering"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences",
+      "start": 377753,
+      "end": 380711,
+      "bodyStart": 377854,
+      "bodyEnd": 380709,
+      "names": [
+        "chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences",
+        "firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated",
+      "start": 380751,
+      "end": 382196,
+      "bodyStart": 380852,
+      "bodyEnd": 382194,
+      "names": [
+        "chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated",
+        "firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers mask a guest watch title and poster before player setup",
+      "start": 382202,
+      "end": 383382,
+      "bodyStart": 382294,
+      "bodyEnd": 383380,
+      "names": [
+        "chromium: channel spoilers mask a guest watch title and poster before player setup",
+        "firefox: channel spoilers mask a guest watch title and poster before player setup"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary",
+      "start": 383422,
+      "end": 386236,
+      "bodyStart": 383523,
+      "bodyEnd": 386234,
+      "names": [
+        "chromium: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary",
+        "firefox: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional",
+      "start": 386242,
+      "end": 388721,
+      "bodyStart": 386346,
+      "bodyEnd": 388719,
+      "names": [
+        "chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional",
+        "firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers skip inactive work and batch large subtree insertions",
+      "start": 388727,
+      "end": 390467,
+      "bodyStart": 388817,
+      "bodyEnd": 390465,
+      "names": [
+        "chromium: channel spoilers skip inactive work and batch large subtree insertions",
+        "firefox: channel spoilers skip inactive work and batch large subtree insertions"
+      ]
+    },
+    {
+      "name": "firefox: channel spoilers activate blank-delay guest rules in an already open inactive tab",
+      "start": 390473,
+      "end": 391982,
+      "bodyStart": 390574,
+      "bodyEnd": 391980,
+      "names": [
+        "chromium: channel spoilers activate blank-delay guest rules in an already open inactive tab",
+        "firefox: channel spoilers activate blank-delay guest rules in an already open inactive tab"
+      ]
+    },
+    {
+      "name": "firefox: preferred audio settings save without JavaScript and include regional choices",
+      "start": 392022,
+      "end": 393954,
+      "bodyStart": 392119,
+      "bodyEnd": 393952,
+      "names": [
+        "chromium: preferred audio settings save without JavaScript and include regional choices",
+        "firefox: preferred audio settings save without JavaScript and include regional choices"
+      ]
+    },
+    {
+      "name": "firefox: preferred audio selects late DASH tracks and preserves manual choices on watch and embed",
+      "start": 393960,
+      "end": 396982,
+      "bodyStart": 394068,
+      "bodyEnd": 396980,
+      "names": [
+        "chromium: preferred audio selects late DASH tracks and preserves manual choices on watch and embed",
+        "firefox: preferred audio selects late DASH tracks and preserves manual choices on watch and embed"
+      ]
+    },
+    {
+      "name": "firefox: preferred audio-only sources keep track identity when switching quality",
+      "start": 396988,
+      "end": 398479,
+      "bodyStart": 397079,
+      "bodyEnd": 398477,
+      "names": [
+        "chromium: preferred audio-only sources keep track identity when switching quality",
+        "firefox: preferred audio-only sources keep track identity when switching quality"
+      ]
+    },
+    {
+      "name": "firefox: seek interval settings submit all choices without JavaScript",
+      "start": 398519,
+      "end": 399646,
+      "bodyStart": 398599,
+      "bodyEnd": 399644,
+      "names": [
+        "chromium: seek interval settings submit all choices without JavaScript",
+        "firefox: seek interval settings submit all choices without JavaScript"
+      ]
+    },
+    {
+      "name": "firefox: seek intervals use video seconds for keyboard media keys and mobile taps",
+      "start": 399652,
+      "end": 402745,
+      "bodyStart": 399744,
+      "bodyEnd": 402743,
+      "names": [
+        "chromium: seek intervals use video seconds for keyboard media keys and mobile taps",
+        "firefox: seek intervals use video seconds for keyboard media keys and mobile taps"
+      ]
+    }
+  ],
+  "registeredCases": 349
+}

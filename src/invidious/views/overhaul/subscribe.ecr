@@ -1,0 +1,5 @@
+<% if user %>
+<% subscribed = subscriptions.includes?(ucid) %>
+<form action="/subscription_ajax?action=<%= subscribed ? "remove_subscriptions" : "create_subscription_to_channel" %>&c=<%= URI.encode_www_form(ucid) %>&referer=<%= URI.encode_www_form(env.get("current_page").as(String)) %>" method="post" data-channel-subscription data-channel-id="<%= HTML.escape(ucid) %>" data-subscribe="<%= I18n.translate(locale, "Subscribe") %>" data-unsubscribe="<%= I18n.translate(locale, "Unsubscribe") %>">
+<input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button id="subscribe" class="button<%= " button-primary" unless subscribed %>" data-type="<%= subscribed ? "unsubscribe" : "subscribe" %>"><%= I18n.translate(locale, subscribed ? "Unsubscribe" : "Subscribe") %></button><span role="status" class="subscription-status" data-subscription-status></span></form>
+<% elsif CONFIG.login_enabled %><a class="button button-primary" id="subscribe" href="/login?referer=<%= URI.encode_www_form(env.get("current_page").as(String)) %>"><%= I18n.translate(locale, "Subscribe") %></a><% end %>

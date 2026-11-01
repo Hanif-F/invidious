@@ -2,7 +2,7 @@
 
 [Documentation index](README.md)
 
-Signed-in users manage imports from `/data_control` and exports from supported subscription/data controls. API clients use the authenticated export/import and OPML routes. User exports are portable application data, not full database backups.
+Signed-in users manage imports from `/data_control` and exports from supported subscription/data controls. API clients use the authenticated export/import and OPML routes. The page groups portable JSON data separately from subscription OPML downloads and explains their scope and exclusions. User exports are portable application data, not full database backups.
 
 ## Supported imports
 
@@ -18,7 +18,7 @@ Signed-in users manage imports from `/data_control` and exports from supported s
 
 Exact format detection, MIME/extension handling and parsers live in [user/imports.cr](../src/invidious/user/imports.cr). These parsers implement known export formats; arbitrary/newer variants may not be compatible. NewPipe archives have an implementation size guard. Playlist imports may perform upstream fetches and skip unavailable videos, so timeouts and partial imports are possible.
 
-Browser multipart field names are `import_invidious`, `import_youtube`, `import_youtube_pl`, `import_youtube_wh`, `import_freetube`, `import_newpipe_subscriptions`, `import_newpipe`. Send `csrf_token` as the **first multipart part**, or supply `X-CSRF-Token`, before any file is processed. Unsupported browser input can return 415. The page displays the supported upload choices.
+Browser multipart field names are `import_invidious`, `import_youtube`, `import_youtube_pl`, `import_youtube_wh`, `import_freetube`, `import_newpipe_subscriptions`, `import_newpipe`. Send `csrf_token` as the **first multipart part**, or supply `X-CSRF-Token`, before any file is processed. Unsupported browser input can return 415. The browser page selects one source with an ordinary GET form, then displays its single existing upload field and format guidance. Source switching and upload work without JavaScript; changing the source does not submit a file. The optional duplicate-submit guard never automatically retries an import. When an importer rejects the source format, the form retains a private 415 response with the selected source, an empty file input and guidance that earlier parts may already have been saved. Other browser parser/import failures retain a 500 response and the source form with a generic message, without echoing uploaded contents or reporting them to a public issue page. Select the file again only after checking the result. Existing multi-field callers retain their multipart names and processing order.
 
 ## Invidious JSON export
 

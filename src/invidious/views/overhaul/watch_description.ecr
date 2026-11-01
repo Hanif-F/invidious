@@ -1,0 +1,50 @@
+        <section class="watch-description panel">
+            <div class="panel-body">
+                <details id="description-box" <%= "open" if params.extend_desc || video.description.size < 200 %>>
+                    <summary><%= I18n.translate(locale, "ui_description") %></summary>
+                    <div id="descriptionWrapper"><%= video.description_html %></div>
+                </details>
+                <details id="timestamp-panel" hidden>
+                    <summary><%= I18n.translate(locale, "ui_timestamps") %></summary>
+                    <ol id="timestamp-list" class="timestamp-list"></ol>
+                </details>
+                <details class="video-details"><summary><%= I18n.translate(locale, "ui_video_details") %></summary><div class="metadata-grid">
+            <p id="genre"><%= I18n.translate(locale, "Genre: ") %>
+                <% if !video.genre_url %>
+                    <%= HTML.escape(video.genre) %>
+                <% else %>
+                    <a href="<%= video.genre_url %>"><%= HTML.escape(video.genre) %></a>
+                <% end %>
+            </p>
+            <% if video.license %>
+                <% if video.license.empty? %>
+                    <p id="license"><%= I18n.translate(locale, "License: ") %><%= I18n.translate(locale, "Standard YouTube license") %></p>
+                <% else %>
+                    <p id="license"><%= I18n.translate(locale, "License: ") %><%= HTML.escape(video.license.to_s) %></p>
+                <% end %>
+            <% end %>
+            <p id="family_friendly"><%= I18n.translate(locale, "Family friendly? ") %><%= I18n.translate_bool(locale, video.is_family_friendly) %></p>
+            <p id="wilson" style="display: none; visibility: hidden;"></p>
+            <p id="rating" style="display: none; visibility: hidden;"></p>
+            <p id="engagement" style="display: none; visibility: hidden;"></p>
+            <% if video.allowed_regions.size != REGIONS.size %>
+                <p id="allowed_regions">
+                    <% if video.allowed_regions.size < REGIONS.size // 2 %>
+                        <%= I18n.translate(locale, "Whitelisted regions: ") %><%= video.allowed_regions.join(", ") %>
+                    <% else %>
+                        <%= I18n.translate(locale, "Blacklisted regions: ") %><%= (REGIONS.to_a - video.allowed_regions).join(", ") %>
+                    <% end %>
+                </p>
+            <% end %>
+
+                </div><% if !video.music.empty? %>
+    <h3><%= I18n.translate(locale, "Music in this video") %></h3>
+    <% video.music.each do |music| %>
+        <div class="music-item">
+            <p><strong><%= HTML.escape(music.song) %></strong></p>
+            <p><%= HTML.escape(music.artist) %> · <%= HTML.escape(music.album) %></p>
+        </div>
+    <% end %>
+<% end %></details>
+            </div>
+        </section>

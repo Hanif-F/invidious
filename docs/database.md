@@ -28,6 +28,8 @@ PostgreSQL is mandatory. Application persistence is implemented in [database/](.
 | `channel_avatars` | Canonical channel ID → observed avatar URL/time, learned through normal responses |
 | `channel_handles` | Canonical ID → nullable normalized handle, checked/expiry timestamps |
 | `ai_slist_snapshots` | Last valid blocklist/warnlist text and successful update timestamp |
+| `original_video_titles` | Video ID → original title/unavailable/failure cache with expiry; independent of the detailed video cache |
+| `bot_protection_settings` | Singleton enabled/duration/revision policy, persisted independently from provider secrets |
 | `annotations` | Optional archived annotation XML cache |
 | `invidious_migrations` | Runtime-created migration version tracking, rather than a fresh-install SQL file |
 
@@ -67,6 +69,8 @@ Sparse native preference patches select stored JSON `FOR UPDATE`, validate befor
 | --- | --- |
 | Detailed video cache | Cleanup removes entries older than six hours; UNLOGGED contents are disposable and can be lost after an unclean PostgreSQL restart |
 | Playback positions | At most 1000 per account; older than 365 days expire; disabling sync/clearing history removes them |
+| Original titles | Success six hours, unavailable ten minutes, transient failure thirty seconds; expired rows cleaned hourly |
+| Bot policy | Persistent singleton; changing enabled/duration increments the revision and invalidates old passes |
 | Nonces | Expire and are deleted by cleanup; consumed nonces cannot validate again |
 | Browser sessions | 30 days; selection rejects expired sessions |
 | Native sessions | 30-day signature and database expiry; legacy API token rules can differ |
@@ -88,6 +92,6 @@ The Docker init hook only runs for a fresh PostgreSQL volume and does not execut
 
 ## Migration milestones
 
-Versions 1–9 create the original tables; 10 makes videos UNLOGGED; 11–13 add playback, blocking and identities; 14 detailed history; 15 membership metadata; 16 history duration; 17 secured account identities/sessions/throttles; 18 chat offsets; 19 clips; 20 saved sources/backfill; 21 avatars; 22 AiSList snapshots/handle cache; 23 TV pairing grants. See the linked [migration inventory](reference/migrations.md) for exact implementations.
+Versions 1–9 create the original tables; 10 makes videos UNLOGGED; 11–13 add playback, blocking and identities; 14 detailed history; 15 membership metadata; 16 history duration; 17 secured account identities/sessions/throttles; 18 chat offsets; 19 clips; 20 saved sources/backfill; 21 avatars; 22 AiSList snapshots/handle cache; 23 TV pairing grants; 24 original-title cache; 25 bot-protection policy. See the linked [migration inventory](reference/migrations.md) for exact implementations.
 
 Back up and stop every writer before upgrades, especially the account-schema transition. Restore into a separate empty database for rollback; never point the prior binary's legacy schema checker at an upgraded production database. [Operations](operations.md) provides the full procedure.

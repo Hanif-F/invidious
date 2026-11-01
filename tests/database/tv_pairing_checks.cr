@@ -124,7 +124,7 @@ def check_tv_pairing
   check(html.includes?(URI.encode_www_form("/tv?user_code=#{code}")), "Login form lost approval destination")
   page = security_request("GET", "/tv?user_code=#{code}", sid)
   html = page.get("test_result").as(String)
-  check(html.includes?("PairingAlice") && html.includes?(code) && html.includes?("Compare the code"), "Approval page lacks account and device intent")
+  check(html.includes?("PairingAlice") && html.includes?(code) && html.includes?("Compare this code with your TV"), "Approval page lacks account and device intent")
   check(!html.includes?(device) && !html.includes?("accessToken"), "Approval HTML exposed private credentials")
   check(PG_DB.query_one("SELECT state FROM tv_pairings WHERE device_hash = $1", store.digest("device", device), as: String) == "pending", "QR GET approved access")
   wrong_csrf = generate_response(other_sid, {"POST:tv"}, HMAC_KEY)

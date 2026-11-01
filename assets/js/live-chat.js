@@ -1,282 +1,68 @@
 'use strict';
-
+// Replay owns one utility panel. Settings and per-video timing have separate editors.
 (function () {
     var panel = document.getElementById('chat-panel');
-    if (!panel || !window.player || !window.video_data) return;
-
-    var list = document.getElementById('chat-messages');
-    var status = document.getElementById('chat-status');
-    var retry = document.getElementById('chat-retry');
-    var sync = document.getElementById('chat-sync');
-    var container = document.getElementById('player-container');
-    var layout = document.getElementById('watch-layout');
-    var labels = JSON.parse(document.getElementById('watch_ui_data').textContent);
-    var controls = {
-        timestamps: document.getElementById('chat-show-timestamps'),
-        hideUserIds: document.getElementById('chat-hide-user-ids'),
-        overlay: document.getElementById('chat-overlay-mode'),
-        opacity: document.getElementById('chat-overlay-opacity'),
-        font: document.getElementById('chat-font-scale'),
-        fontValue: document.getElementById('chat-font-value'),
-        width: document.getElementById('chat-width'),
-        widthValue: document.getElementById('chat-width-value'),
-        users: document.getElementById('chat-user-blacklist'),
-        words: document.getElementById('chat-word-blacklist'),
-        timing: document.getElementById('chat-timing')
-    };
-    var settingsStatus = document.getElementById('chat-settings-status');
-    var overlayOptions = document.getElementById('chat-overlay-options');
-    var overlayEditor = document.getElementById('chat-overlay-editor');
-    var editRect = null;
-    var account = !!video_data.chat_account;
-    var defaults = {
-        chat_show_timestamps: true, chat_hide_user_ids: false, chat_font_scale: 100, chat_width_px: 440,
-        chat_overlay_mode: false, chat_overlay_opacity: 75,
-        chat_overlay_x: 560, chat_overlay_y: 50, chat_overlay_width: 400, chat_overlay_height: 750,
-        chat_user_blacklist: '', chat_word_blacklist: ''
-    };
-    var localKeys = ['chat_hide_user_ids', 'chat_font_scale', 'chat_width_px', 'chat_overlay_mode', 'chat_overlay_opacity',
-        'chat_overlay_x', 'chat_overlay_y', 'chat_overlay_width', 'chat_overlay_height'];
-    var localSettings = readLocal('chat-settings-v1', {});
-    var savedSettings = account ? video_data.preferences : localSettings;
-    var settings = Object.keys(defaults).reduce(function (result, key) {
-        var source = account && localKeys.includes(key) ? localSettings : savedSettings;
-        result[key] = source && source[key] !== undefined ? source[key] : defaults[key];
-        return result;
-    }, {});
-    var timingMs = account ? (video_data.chat_timing_ms || 0) : Number(readLocal('chat-timing-v1-' + video_data.id, 0));
-    if (!Number.isFinite(timingMs) || Math.abs(timingMs) > 3600000) timingMs = 0;
-    var wordPatterns = [];
-    var userBlacklist = [];
-    var saveTimer;
-    var csrfToken;
-    var segments = [];
-    var activeSegment = null;
-    var removed = new Set();
-    var cacheUse = 0;
-    var displayCursor = 0;
-    var lastPlaybackPosition = 0;
-    var seekStartPosition = null;
-    var loading = false;
-    var generation = 0;
-    var controller;
-    var prefetchTimer;
-    window.addEventListener('browserprofilechange', function () {
-        generation++;
-        clearTimeout(prefetchTimer);
-        clearTimeout(saveTimer);
-        if (controller) controller.abort();
-    });
-    var nextRequestAt = 0;
-    var autoScroll = true;
-    var windowAtTail = true;
-    var MAX_CACHED_MESSAGES = 5000;
-    var MAX_SEGMENTS = 24;
-    var MAX_VISIBLE_MESSAGES = 120;
-    var PREFETCH_MS = 30000;
-
-    function readLocal(key, fallback) {
-        var value = helpers.storage.get(key);
-        return value === undefined ? fallback : value;
+    if (!panel || !window.player || !window.video_data || panel.dataset.initialized) return;
+    panel.dataset.initialized = 'true';
+    var list = document.getElementById('chat-messages'), status = document.getElementById('chat-status'), retry = document.getElementById('chat-retry'), sync = document.getElementById('chat-sync');
+    var labels = JSON.parse(document.getElementById('watch_ui_data').textContent), ui = InvidiousUI, storage = InvidiousStorage;
+    var preferences = window.InvidiousChatPreferences, timing = window.InvidiousChatTiming;
+    if (!preferences || !timing || !preferences.values() || timing.value() === null) { status.textContent = labels.chat_error; return; }
+    var settings = null, timingMs = timing.value(), life = new AbortController(), activePage = true, disposed = false, shown = false;
+    var layout = document.getElementById('watch-layout'), host = panel.closest('[role=tabpanel]'), ownedWidth = null, previousWidth = '';
+    var segments = [], activeSegment = null, removed = new Set(), cacheUse = 0, displayCursor = 0;
+    var lastPlaybackPosition = 0, seekStartPosition = null, loading = false, generation = 0, controller = null, prefetchTimer = null;
+    var nextRequestAt = 0, autoScroll = true, windowAtTail = true, wordPatterns = [], userBlacklist = [];
+    var MAX_CACHED_MESSAGES = 5000, MAX_SEGMENTS = 24, MAX_VISIBLE_MESSAGES = 120, PREFETCH_MS = 30000;
+    function on(target,name,handler,options) { target.addEventListener(name,handler,Object.assign({signal:life.signal},options)); }
+    function alive() { return activePage && !disposed && panel.isConnected && storage.isCurrent() && !(player.isDisposed && player.isDisposed()); }
+    function visible() { return shown && alive(); }
+    function selected() {
+        var fullscreen = document.fullscreenElement;
+        return !document.hidden && (!host || !host.hidden) && (!fullscreen || fullscreen.contains(panel)) &&
+            (!(player.isFullscreen && player.isFullscreen()) || fullscreen && fullscreen.contains(panel));
     }
-
-    function writeLocal(key, value) {
-        window.InvidiousStorage.report(helpers.storage.set(key, value), settingsStatus);
+    function stop() {
+        generation++; clearTimeout(prefetchTimer); prefetchTimer = null;
+        if (controller) controller.abort(); controller = null; loading = false; list.setAttribute('aria-busy','false');
     }
-
-    function clamp(value, min, max, fallback) {
-        value = Number(value);
-        return Math.max(min, Math.min(max, Math.round(Number.isFinite(value) ? value : fallback)));
+    function setWidth() {
+        if (!visible()) return;
+        if (ownedWidth === null) previousWidth = layout.style.getPropertyValue('--utility-width');
+        var width = settings.chat_width_px+'px';
+        if (layout.style.getPropertyValue('--utility-width') !== width) { layout.style.setProperty('--utility-width',width); player.trigger('playerresize'); }
+        ownedWidth = width;
     }
-
-    function overlayRect(source) {
-        return {x: source.chat_overlay_x, y: source.chat_overlay_y,
-            width: source.chat_overlay_width, height: source.chat_overlay_height};
+    function releaseWidth() {
+        if (ownedWidth === null) return;
+        if (layout.style.getPropertyValue('--utility-width') === ownedWidth) {
+            if (previousWidth) layout.style.setProperty('--utility-width',previousWidth); else layout.style.removeProperty('--utility-width');
+            if (!(player.isDisposed && player.isDisposed())) player.trigger('playerresize');
+        }
+        ownedWidth = null;
     }
-
-    function setOverlayRect(target, rect) {
-        target.chat_overlay_x = rect.x;
-        target.chat_overlay_y = rect.y;
-        target.chat_overlay_width = rect.width;
-        target.chat_overlay_height = rect.height;
-    }
-
-    function compilePatterns(raw) {
-        return raw.trim().split(/\s+/).filter(Boolean).map(function (token) {
-            if (token.length > 128) throw new Error(labels.chat_invalid_pattern);
-            if (token[0] === '/' && token[token.length - 1] === '/')
-                return new RegExp(token.slice(1, -1), 'i');
-            return {test: function (value) { return value.toLocaleLowerCase().includes(token.toLocaleLowerCase()); }};
-        });
-    }
-
     function validMessage(message) {
-        var id = (message.authorChannelId || '').toLocaleLowerCase();
-        var handle = (message.authorHandle || '').toLocaleLowerCase().replace(/^@/, '');
-        if (userBlacklist.some(function (entry) { return entry === id || entry.replace(/^@/, '') === handle && !!handle; })) return false;
-        return !wordPatterns.some(function (pattern) { return pattern.test(message.text); });
+        var id = message.authorChannelId.toLocaleLowerCase(), handle = message.authorHandle.toLocaleLowerCase().replace(/^@/,'');
+        return !userBlacklist.some(function (entry) { return entry === id || entry.replace(/^@/,'') === handle && !!handle; }) &&
+            !wordPatterns.some(function (pattern) { return pattern.test(message.text); });
     }
-
-    function applySettings() {
-        settings.chat_font_scale = clamp(settings.chat_font_scale, 25, 300, 100);
-        settings.chat_width_px = clamp(settings.chat_width_px, 160, 1000, 440);
-        settings.chat_overlay_mode = settings.chat_overlay_mode === true;
-        settings.chat_overlay_opacity = clamp(settings.chat_overlay_opacity, 0, 100, 75);
-        settings.chat_overlay_width = clamp(settings.chat_overlay_width, 1, 1000, 400);
-        settings.chat_overlay_height = clamp(settings.chat_overlay_height, 1, 1000, 750);
-        settings.chat_overlay_x = clamp(settings.chat_overlay_x, 0, 1000 - settings.chat_overlay_width, 560);
-        settings.chat_overlay_y = clamp(settings.chat_overlay_y, 0, 1000 - settings.chat_overlay_height, 50);
-        controls.timestamps.checked = !!settings.chat_show_timestamps;
-        controls.hideUserIds.checked = !!settings.chat_hide_user_ids;
-        controls.overlay.checked = settings.chat_overlay_mode;
-        controls.opacity.value = String(settings.chat_overlay_opacity);
-        document.getElementById('chat-overlay-opacity-output').value = settings.chat_overlay_opacity + '%';
-        overlayOptions.hidden = !settings.chat_overlay_mode;
-        document.getElementById('chat-docked-size').hidden = settings.chat_overlay_mode;
-        controls.font.value = String(clamp(settings.chat_font_scale, 75, 150, 100));
-        controls.fontValue.value = String(settings.chat_font_scale);
-        controls.width.value = String(clamp(settings.chat_width_px, 280, 640, 440));
-        controls.widthValue.value = String(settings.chat_width_px);
-        controls.users.value = settings.chat_user_blacklist || '';
-        controls.words.value = settings.chat_word_blacklist || '';
-        controls.timing.value = String(timingMs / 1000);
-        panel.classList.toggle('chat-hide-timestamps', !settings.chat_show_timestamps);
-        panel.classList.toggle('chat-hide-user-ids', !!settings.chat_hide_user_ids);
-        panel.style.setProperty('--chat-font-scale', String(settings.chat_font_scale / 100));
-        panel.style.setProperty('--chat-overlay-opacity', String(settings.chat_overlay_opacity / 100));
-        player.el().style.setProperty('--chat-width', settings.chat_width_px + 'px');
-        player.el().classList.toggle('chat-overlay', settings.chat_overlay_mode && !panel.hidden);
-        player.el().classList.toggle('chat-docked', !settings.chat_overlay_mode && !panel.hidden);
-        container.classList.toggle('chat-docked', !settings.chat_overlay_mode && !panel.hidden);
-        layout.classList.toggle('watch-chat-docked', !settings.chat_overlay_mode && !panel.hidden);
-        if (settings.chat_overlay_mode) {
-            container.style.removeProperty('--chat-container-height');
-            player.el().classList.remove('chat-mobile');
-            var tech = player.el().querySelector('.vjs-tech');
-            if (tech) tech.style.removeProperty('height');
-        } else {
-            ['left', 'top', 'width', 'height'].forEach(function (property) { panel.style.removeProperty(property); });
-        }
-        userBlacklist = (settings.chat_user_blacklist || '').trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-        try { wordPatterns = compilePatterns(settings.chat_word_blacklist || ''); settingsStatus.textContent = ''; }
-        catch (error) { settingsStatus.textContent = labels.chat_invalid_pattern; return false; }
-        updateGeometry();
-        return true;
+    function normalizeChunk(data) {
+        if (!data || !Array.isArray(data.messages) || !Array.isArray(data.removedIds) || data.removedIds.some(function (id) { return typeof id !== 'string'; })) throw new Error('Invalid replay');
+        var messages = data.messages.filter(function (message) { return message && typeof message.id === 'string' && message.id && typeof message.text === 'string' && Number.isFinite(message.offsetMs) && message.offsetMs >= 0; }).map(function (message) {
+            var result = {id:message.id,text:message.text,offsetMs:message.offsetMs};
+            ['author','authorChannelId','authorHandle','amount','kind'].forEach(function (key) { result[key] = typeof message[key] === 'string' ? message[key] : ''; }); return result;
+        });
+        if (data.messages.length && !messages.length) throw new Error('Invalid replay messages');
+        var continuation = data.continuation;
+        if (continuation !== undefined && continuation !== null && (typeof continuation !== 'string' || new TextEncoder().encode(continuation).length > 4096)) throw new Error('Invalid replay continuation');
+        return {messages:messages,removedIds:data.removedIds,continuation:continuation || null};
     }
-
-    function updateGeometry() {
-        if (panel.hidden) return;
-        if (settings.chat_overlay_mode) { renderOverlay(); return; }
-        var fullscreen = player.isFullscreen();
-        var width = fullscreen ? innerWidth : container.clientWidth;
-        if (!width) return;
-        var mobile = (matchMedia('(max-width: 1099px)').matches ||
-            /\bMobile\b|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) &&
-            matchMedia('(orientation: portrait)').matches;
-        player.el().classList.toggle('chat-mobile', mobile);
-        var chatWidth = Math.min(settings.chat_width_px, Math.max(160, width - 480));
-        var videoWidth = mobile ? width : width - chatWidth;
-        var videoHeight = Math.round(videoWidth * 9 / 16);
-        if (fullscreen && mobile) videoHeight = Math.min(videoHeight, Math.round(innerHeight * .65));
-        else if (!fullscreen && !mobile && layout.classList.contains('watch-wide')) videoHeight = Math.min(videoHeight, Math.round(innerHeight * .78));
-        var chatHeight = mobile ? (fullscreen ? innerHeight - videoHeight : Math.max(240, Math.min(360, Math.round(innerHeight * .38)))) : 0;
-        player.el().style.setProperty('--chat-video-height', videoHeight + 'px', 'important');
-        var tech = player.el().querySelector('.vjs-tech');
-        if (mobile) {
-            if (tech) tech.style.setProperty('height', videoHeight + 'px', 'important');
-            panel.style.setProperty('top', videoHeight + 'px', 'important');
-            panel.style.setProperty('height', chatHeight + 'px', 'important');
-        } else {
-            if (tech) tech.style.removeProperty('height');
-            panel.style.removeProperty('top');
-            panel.style.removeProperty('height');
-        }
-        if (!fullscreen) container.style.setProperty('--chat-container-height', videoHeight + chatHeight + 'px');
+    function refreshStatus() {
+        if (!visible() || !activeSegment || activeSegment.failed || loading) return;
+        if (list.children.length) { status.textContent = ''; return; }
+        var due = activeSegment.messages.filter(function (message) { return message.offsetMs <= duePositionMs()+250; });
+        status.textContent = due.length ? labels.chat_filtered_empty : activeSegment.messages.length ? labels.chat_waiting : activeSegment.complete ? labels.chat_empty : '';
     }
-
-    function renderOverlay() {
-        if (!settings.chat_overlay_mode || panel.hidden) return;
-        var width = player.el().clientWidth;
-        var height = player.el().clientHeight;
-        if (!width || !height) return;
-        var rect = editRect || overlayRect(settings);
-        var boxWidth = Math.min(width, Math.max(Math.min(220, width), Math.round(width * rect.width / 1000)));
-        var boxHeight = Math.min(height, Math.max(Math.min(120, height), Math.round(height * rect.height / 1000)));
-        var left = clamp(Math.round(width * rect.x / 1000), 0, width - boxWidth, 0);
-        var top = clamp(Math.round(height * rect.y / 1000), 0, height - boxHeight, 0);
-        panel.style.setProperty('left', left + 'px');
-        panel.style.setProperty('top', top + 'px');
-        panel.style.setProperty('width', boxWidth + 'px');
-        panel.style.setProperty('height', boxHeight + 'px');
-    }
-
-    function currentOverlayPixels() {
-        return {x: parseFloat(panel.style.left) || 0, y: parseFloat(panel.style.top) || 0,
-            width: parseFloat(panel.style.width) || panel.offsetWidth, height: parseFloat(panel.style.height) || panel.offsetHeight};
-    }
-
-    function updateDraft(kind, original, dx, dy) {
-        var width = player.el().clientWidth;
-        var height = player.el().clientHeight;
-        if (!width || !height) return;
-        var next = {x: original.x, y: original.y, width: original.width, height: original.height};
-        if (kind === 'move') {
-            next.x = clamp(original.x + dx, 0, width - original.width, 0);
-            next.y = clamp(original.y + dy, 0, height - original.height, 0);
-        } else {
-            next.width = clamp(original.width + dx, Math.min(220, width), width - original.x, original.width);
-            next.height = clamp(original.height + dy, Math.min(120, height), height - original.y, original.height);
-        }
-        var x = clamp(next.x * 1000 / width, 0, 1000, 0);
-        var y = clamp(next.y * 1000 / height, 0, 1000, 0);
-        editRect = {x: x, y: y, width: clamp(next.width * 1000 / width, 1, 1000 - x, 400),
-            height: clamp(next.height * 1000 / height, 1, 1000 - y, 750)};
-        renderOverlay();
-    }
-
-    function cancelOverlayEdit() {
-        if (!editRect) return;
-        editRect = null;
-        overlayEditor.hidden = true;
-        panel.classList.remove('chat-editing');
-        renderOverlay();
-        document.querySelector('#chat-settings summary').focus();
-    }
-
-    function saveSettings(scope) {
-        if (!window.InvidiousStorage.isCurrent()) return;
-        if (!account) { writeLocal('chat-settings-v1', settings); return; }
-        if (scope === 'local') {
-            var local = Object.assign({}, readLocal('chat-settings-v1', {}));
-            localKeys.forEach(function (key) { local[key] = settings[key]; });
-            writeLocal('chat-settings-v1', local);
-            return;
-        }
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(function () {
-            if (!window.InvidiousStorage.isCurrent()) return;
-            fetch('/api/v1/auth/csrf').then(function (response) { if (!window.InvidiousStorage.checkResponse(response) || !response.ok) throw new Error(); return response.json(); })
-                .then(function (data) { if (!window.InvidiousStorage.isCurrent()) throw new Error(); csrfToken = data.csrfToken; return fetch('/api/v1/auth/chat_preferences', {
-                    method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
-                    body: JSON.stringify({chat_show_timestamps: settings.chat_show_timestamps,
-                        chat_user_blacklist: settings.chat_user_blacklist,
-                        chat_word_blacklist: settings.chat_word_blacklist})
-                }); }).then(function (response) { if (!window.InvidiousStorage.checkResponse(response)) return; if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
-                .catch(function () { if (window.InvidiousStorage.isCurrent()) settingsStatus.textContent = labels.chat_save_error; });
-        }, 350);
-    }
-
-    function saveTiming() {
-        if (!window.InvidiousStorage.isCurrent()) return;
-        if (!account) { writeLocal('chat-timing-v1-' + video_data.id, timingMs); return; }
-        fetch('/api/v1/auth/csrf').then(function (response) { if (!window.InvidiousStorage.checkResponse(response) || !response.ok) throw new Error(); return response.json(); })
-            .then(function (data) { if (!window.InvidiousStorage.isCurrent()) throw new Error(); return fetch('/api/v1/auth/chat_timing/' + encodeURIComponent(video_data.id), {
-                method: 'PUT', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': data.csrfToken},
-                body: JSON.stringify({offsetMs: timingMs})
-            }); }).then(function (response) { if (!window.InvidiousStorage.checkResponse(response)) return; if (!response.ok) throw new Error(); settingsStatus.textContent = ''; })
-            .catch(function () { if (window.InvidiousStorage.isCurrent()) settingsStatus.textContent = labels.chat_save_error; });
-    }
-
     function nearBottom() {
         return list.scrollHeight - list.clientHeight - list.scrollTop <= 32;
     }
@@ -325,8 +111,9 @@
         row.dataset.messageId = message.id;
         row.dataset.offsetMs = String(message.offsetMs);
         row.dataset.kind = message.kind;
-        var time = document.createElement('span');
-        time.className = 'chat-time';
+        var time = document.createElement('button'); time.type = 'button';
+        time.className = 'text-button chat-time'; time.dataset.chatSeek = String(message.offsetMs);
+        time.setAttribute('aria-label',labels.chat_seek.replace('{time}',timestamp(message.offsetMs)));
         time.textContent = timestamp(message.offsetMs);
         row.appendChild(time);
         var content = document.createElement('div');
@@ -412,18 +199,23 @@
         });
     }
 
-    function rebuildVisible() {
-        if (panel.hidden || !activeSegment) return;
-        var due = dueMessages();
+    function rebuildVisible(preserveManual) {
+        if (!visible() || !activeSegment) return;
+        var wasFollowing = autoScroll, oldTop = list.getBoundingClientRect().top;
+        var anchor = preserveManual && !autoScroll && Array.from(list.children).find(function (row) { return row.getBoundingClientRect().bottom > oldTop; });
+        var anchorId = anchor && anchor.dataset.messageId, anchorOffset = anchor && anchor.getBoundingClientRect().top-oldTop;
+        var due = dueMessages(), start = Math.max(0,due.length-MAX_VISIBLE_MESSAGES);
+        if (anchor) { var index = due.findIndex(function (message) { return message.id === anchorId; }); if (index >= 0) start = Math.max(0,index-8); }
+        var shown = due.slice(start,start+MAX_VISIBLE_MESSAGES);
         list.textContent = '';
-        due.slice(-MAX_VISIBLE_MESSAGES).forEach(function (message) { list.appendChild(messageRow(message)); });
+        shown.forEach(function (message) { list.appendChild(messageRow(message)); });
         displayCursor = activeSegment.messages.findIndex(function (message) { return message.offsetMs > duePositionMs() + 250; });
         if (displayCursor < 0) displayCursor = activeSegment.messages.length;
-        windowAtTail = true;
-        setAutoScroll(true);
-        list.scrollTop = list.scrollHeight;
-        if (activeSegment.complete && !due.length) status.textContent = labels.chat_empty;
-        else if (!activeSegment.failed) status.textContent = '';
+        windowAtTail = start+shown.length >= due.length;
+        setAutoScroll(!(preserveManual && !wasFollowing));
+        if (autoScroll) list.scrollTop = list.scrollHeight;
+        else if (anchorId) { var target = Array.from(list.children).find(function (row) { return row.dataset.messageId === anchorId; }); if (target) list.scrollTop = target.getBoundingClientRect().top-list.getBoundingClientRect().top+list.scrollTop-anchorOffset; }
+        refreshStatus();
     }
 
     function showOlder() {
@@ -445,9 +237,9 @@
     }
 
     function showDue() {
-        if (panel.hidden || !activeSegment) return;
+        if (!visible() || !activeSegment) return;
         var now = duePositionMs() + 250;
-        if (windowAtTail && activeSegment.messages[displayCursor] && activeSegment.messages[displayCursor].offsetMs <= now) {
+        if (autoScroll && windowAtTail && activeSegment.messages[displayCursor] && activeSegment.messages[displayCursor].offsetMs <= now) {
             maintainScroll(function () {
                 var removedHeight = 0;
                 while (activeSegment.messages[displayCursor] && activeSegment.messages[displayCursor].offsetMs <= now) {
@@ -457,46 +249,42 @@
                 return removedHeight;
             });
         }
-        if (!autoScroll) sync.hidden = false;
-        maybePrefetch();
+        sync.hidden = autoScroll || !list.children.length;
+        refreshStatus(); maybePrefetch();
     }
 
     function maybePrefetch() {
         clearTimeout(prefetchTimer);
-        if (panel.hidden || !activeSegment || loading || activeSegment.failed || activeSegment.complete ||
+        if (!visible() || !activeSegment || loading || activeSegment.failed || activeSegment.complete ||
             activeSegment.end > duePositionMs() + PREFETCH_MS) return;
         var delay = Math.max(0, nextRequestAt - Date.now());
         prefetchTimer = setTimeout(load, delay);
     }
 
     function load() {
-        if (!window.InvidiousStorage.isCurrent() || panel.hidden || !activeSegment || loading || activeSegment.failed || activeSegment.complete) return;
+        if (!alive() || !visible() || !activeSegment || loading || activeSegment.failed || activeSegment.complete) return;
         var segment = activeSegment;
         var request = generation;
         var initial = !segment.started;
         var url = new URL('/api/v1/live_chat/' + encodeURIComponent(video_data.id), location.origin);
         url.searchParams.set('offset_ms', String(initial ? segment.requestOffset : Math.max(segment.requestOffset, segment.end)));
         if (!initial && segment.continuation) url.searchParams.set('continuation', segment.continuation);
+        var readKey = JSON.stringify([url.searchParams.get('continuation'),url.searchParams.get('offset_ms')]);
+        if (segment.reads.has(readKey)) { segment.failed = true; segment.errorText = labels.chat_error; status.textContent = segment.errorText; retry.hidden = false; return; }
         loading = true;
         controller = new AbortController();
         list.setAttribute('aria-busy', 'true');
         retry.hidden = true;
         if (initial && !list.children.length) status.textContent = labels.chat_loading;
 
-        fetch(url.pathname + url.search, {signal: controller.signal}).then(function (response) {
-            if (response.status === 404) {
-                var error = new Error('unavailable');
-                error.unavailable = true;
-                throw error;
-            }
-            if (!response.ok) throw new Error('request failed');
-            return response.json();
-        }).then(function (data) {
-            if (!window.InvidiousStorage.isCurrent() || request !== generation || segment !== activeSegment) return;
-            if (!data || !Array.isArray(data.messages) || !Array.isArray(data.removedIds))
-                throw new Error('invalid chat response');
+        var read = controller;
+        ui.request(url.pathname + url.search,{signal:read.signal}).then(function (data) {
+            if (!alive() || !visible() || read.signal.aborted || request !== generation || segment !== activeSegment) return;
+            data = normalizeChunk(data);
+            segment.reads.add(readKey); while (segment.reads.size > 32) segment.reads.delete(segment.reads.values().next().value);
             var removedInChunk = new Set(data.removedIds);
             removedInChunk.forEach(function (id) { removed.add(id); });
+            while (removed.size > 10000) removed.delete(removed.values().next().value);
             if (removedInChunk.size) {
                 segments.forEach(function (cached) {
                     cached.messages = cached.messages.filter(function (message) { return !removedInChunk.has(message.id); });
@@ -527,6 +315,7 @@
                 Array.from(list.children).forEach(function (row) {
                     if (removed.has(row.dataset.messageId)) row.remove();
                 });
+                if (!list.children.length) rebuildVisible(true);
                 if (windowAtTail) {
                     var last = list.lastElementChild && list.lastElementChild.dataset.messageId;
                     var lastIndex = segment.messages.findIndex(function (message) { return message.id === last; });
@@ -539,24 +328,25 @@
             }
             maybePrefetch();
         }).catch(function (error) {
-            if (!window.InvidiousStorage.isCurrent() || request !== generation || error.name === 'AbortError') return;
+            if (!alive() || !visible() || read.signal.aborted || request !== generation || segment !== activeSegment) return;
             loading = false;
             controller = null;
             segment.failed = true;
             list.setAttribute('aria-busy', 'false');
-            status.textContent = error.unavailable ? labels.chat_unavailable : labels.chat_error;
-            retry.hidden = !!error.unavailable;
+            segment.errorText = error.status === 404 ? labels.chat_unavailable : labels.chat_error;
+            status.textContent = segment.errorText;
+            retry.hidden = false;
         });
     }
 
     function selectPosition(force) {
-        if (panel.hidden) return;
+        if (!visible()) return;
         var position = requestPositionMs();
         var segment = segmentFor(position);
         if (!segment) {
             segment = {requestOffset: position, start: Math.max(0, position - 15000), end: -1,
                 messages: [], ids: new Set(), continuation: null, started: false, complete: false,
-                failed: false, lastUsed: 0};
+                failed: false, lastUsed: 0, reads:new Set()};
             segments.push(segment);
         }
         if (segment !== activeSegment) {
@@ -566,6 +356,7 @@
             controller = null;
             loading = false;
             activeSegment = segment;
+            retry.hidden = !segment.failed; if (segment.failed) status.textContent = segment.errorText || labels.chat_error;
             nextRequestAt = 0;
             force = true;
         }
@@ -575,229 +366,77 @@
         maybePrefetch();
     }
 
-    function setVisible(visible) {
-        if (visible === !panel.hidden) return;
-        if (!visible) cancelOverlayEdit();
-        panel.hidden = !visible;
-        player.el().classList.toggle('chat-docked', visible && !settings.chat_overlay_mode);
-        player.el().classList.toggle('chat-overlay', visible && settings.chat_overlay_mode);
-        container.classList.toggle('chat-docked', visible && !settings.chat_overlay_mode);
-        layout.classList.toggle('watch-chat-docked', visible && !settings.chat_overlay_mode);
-        if (visible) updateGeometry();
+
+    function applyPreferences(event) {
+        if (!alive()) return;
+        var next = event ? event.detail.values : preferences.values();
+        if (!next || settings && Object.keys(next).every(function (key) { return next[key] === settings[key]; })) return;
+        var filtersChanged = !settings || next.chat_user_blacklist !== settings.chat_user_blacklist || next.chat_word_blacklist !== settings.chat_word_blacklist;
+        settings = Object.assign({},next); userBlacklist = settings.chat_user_blacklist.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean); wordPatterns = preferences.patterns(settings.chat_word_blacklist);
+        maintainScroll(function () {
+            panel.classList.toggle('chat-hide-timestamps',!settings.chat_show_timestamps); panel.classList.toggle('chat-hide-user-ids',settings.chat_hide_user_ids);
+            panel.style.setProperty('--chat-font-scale',String(settings.chat_font_scale/100)); setWidth(); return 0;
+        });
+        if (filtersChanged) rebuildVisible(true);
+    }
+    function setVisible(value) {
+        if (disposed) return;
+        var next = value === true && alive() && selected();
+        if (next === shown) return;
+        shown = next; panel.hidden = !next;
+        if (next) { setWidth(); selectPosition(false); showDue(); }
+        else { stop(); releaseWidth(); }
+    }
+    function navigate(value) {
+        if (!alive()) return;
+        var tab = document.getElementById('tab-chat');
+        if (value) { if (tab) tab.click(); else setVisible(true); }
         else {
-            container.style.removeProperty('--chat-container-height');
-            var tech = player.el().querySelector('.vjs-tech');
-            if (tech) tech.style.removeProperty('height');
-            panel.style.removeProperty('top');
-            panel.style.removeProperty('height');
-        }
-        if (player.chatControl) {
-            player.chatControl.controlText(visible ? labels.hide_chat : labels.show_chat);
-            player.chatControl.el().setAttribute('aria-pressed', String(visible));
-        }
-        if (visible) selectPosition(true);
-        else {
-            generation++;
-            clearTimeout(prefetchTimer);
-            if (controller) controller.abort();
-            controller = null;
-            loading = false;
-            list.setAttribute('aria-busy', 'false');
+            var alternative = host && host.parentNode.querySelector('[role=tab]:not(#tab-chat)');
+            if (alternative) alternative.click();
+            else { if (tab) tab.setAttribute('aria-selected','false'); if (host) host.hidden = true; setVisible(false); }
         }
     }
-
-    window.invidiousChat = {
-        toggle: function () { setVisible(panel.hidden); },
-        isVisible: function () { return !panel.hidden; },
-        showLabel: labels.show_chat,
-        hideLabel: labels.hide_chat
-    };
-
-    // A child of Video.js's fullscreen element remains visible in page-element fullscreen.
-    player.el().appendChild(panel);
-    panel.addEventListener('click', function (event) { event.stopPropagation(); });
-    panel.addEventListener('keydown', function (event) { if (event.target.closest('input')) event.stopPropagation(); });
-    applySettings();
-    if (window.ResizeObserver) {
-        var geometryObserver = new ResizeObserver(updateGeometry);
-        geometryObserver.observe(container);
-        player.on('dispose', function () { geometryObserver.disconnect(); });
-    }
-    player.on('fullscreenchange', updateGeometry);
-    player.on('playerresize', updateGeometry);
-    window.addEventListener('resize', updateGeometry);
-
-    controls.timestamps.addEventListener('change', function () {
-        settings.chat_show_timestamps = controls.timestamps.checked;
-        if (applySettings()) saveSettings('account');
-    });
-    controls.hideUserIds.addEventListener('change', function () {
-        settings.chat_hide_user_ids = controls.hideUserIds.checked;
-        if (applySettings()) saveSettings('local');
-    });
-    controls.overlay.addEventListener('change', function () {
-        if (!controls.overlay.checked) cancelOverlayEdit();
-        settings.chat_overlay_mode = controls.overlay.checked;
-        if (applySettings()) {
-            requestAnimationFrame(updateGeometry);
-            saveSettings('local');
-        }
-    });
-    controls.opacity.addEventListener('input', function () {
-        settings.chat_overlay_opacity = Number(controls.opacity.value);
-        if (applySettings()) saveSettings('local');
-    });
-    document.getElementById('chat-modify-overlay').addEventListener('click', function () {
-        document.getElementById('chat-settings').open = false;
-        updateDraft('move', currentOverlayPixels(), 0, 0);
-        overlayEditor.hidden = false;
-        panel.classList.add('chat-editing');
-        document.getElementById('chat-overlay-move').focus();
-    });
-    document.getElementById('chat-overlay-save').addEventListener('click', function () {
-        if (!editRect) return;
-        setOverlayRect(settings, editRect);
-        editRect = null;
-        overlayEditor.hidden = true;
-        panel.classList.remove('chat-editing');
-        renderOverlay();
-        saveSettings('local');
-        document.querySelector('#chat-settings summary').focus();
-    });
-    document.getElementById('chat-overlay-cancel').addEventListener('click', cancelOverlayEdit);
-    [['chat-overlay-move', 'move'], ['chat-overlay-resize', 'resize']].forEach(function (entry) {
-        var handle = document.getElementById(entry[0]);
-        var kind = entry[1];
-        var drag = null;
-        handle.addEventListener('pointerdown', function (event) {
-            if (!editRect || !event.isPrimary) return;
-            event.preventDefault();
-            event.stopPropagation();
-            drag = {id: event.pointerId, x: event.clientX, y: event.clientY, rect: currentOverlayPixels()};
-            handle.setPointerCapture(event.pointerId);
-        });
-        handle.addEventListener('pointermove', function (event) {
-            if (!drag || drag.id !== event.pointerId) return;
-            updateDraft(kind, drag.rect, event.clientX - drag.x, event.clientY - drag.y);
-        });
-        function endDrag(event) {
-            if (drag && drag.id === event.pointerId) drag = null;
-        }
-        handle.addEventListener('pointerup', endDrag);
-        handle.addEventListener('pointercancel', endDrag);
-        handle.addEventListener('keydown', function (event) {
-            if (!editRect) return;
-            var step = event.shiftKey ? 20 : 5;
-            var dx = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
-            var dy = event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
-            if (!dx && !dy) return;
-            event.preventDefault();
-            event.stopPropagation();
-            updateDraft(kind, currentOverlayPixels(), dx, dy);
-        });
-    });
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && editRect) {
-            event.preventDefault();
-            cancelOverlayEdit();
-        }
-    });
-    controls.font.addEventListener('input', function () {
-        settings.chat_font_scale = Number(controls.font.value);
-        if (applySettings()) saveSettings('local');
-    });
-    controls.width.addEventListener('input', function () {
-        settings.chat_width_px = Number(controls.width.value);
-        if (applySettings()) saveSettings('local');
-    });
-    [[controls.fontValue, 'chat_font_scale', 25, 300],
-        [controls.widthValue, 'chat_width_px', 160, 1000]].forEach(function (entry) {
-        entry[0].addEventListener('change', function () {
-            var value = Number(entry[0].value);
-            if (!Number.isInteger(value) || value < entry[2] || value > entry[3]) {
-                entry[0].value = String(settings[entry[1]]);
-                return;
-            }
-            settings[entry[1]] = value;
-            if (applySettings()) saveSettings('local');
-        });
-    });
-    controls.users.addEventListener('change', function () {
-        settings.chat_user_blacklist = controls.users.value.slice(0, 1024);
-        if (applySettings()) { rebuildVisible(); saveSettings('account'); }
-    });
-    controls.words.addEventListener('change', function () {
-        var previous = settings.chat_word_blacklist;
-        settings.chat_word_blacklist = controls.words.value.slice(0, 1024);
-        if (applySettings()) { rebuildVisible(); saveSettings('account'); }
-        else { settings.chat_word_blacklist = previous; }
-    });
-    controls.timing.addEventListener('change', function () {
-        var value = Number(controls.timing.value);
-        if (!Number.isFinite(value) || Math.abs(value) > 3600) { controls.timing.value = String(timingMs / 1000); return; }
-        timingMs = Math.round(value * 1000);
-        selectPosition(true); saveTiming();
-    });
-    document.addEventListener('click', function (event) {
-        var menu = document.getElementById('chat-settings');
-        if (menu.open && !menu.contains(event.target)) menu.open = false;
-    });
-    document.getElementById('chat-settings').addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            event.currentTarget.open = false;
-            event.currentTarget.querySelector('summary').focus();
-        }
-    });
-
-    retry.onclick = function () {
-        if (!activeSegment) return;
-        activeSegment.failed = false;
-        status.textContent = labels.chat_loading;
-        nextRequestAt = 0;
-        maybePrefetch();
-    };
-    sync.onclick = function () {
-        rebuildVisible();
-    };
-    list.addEventListener('scroll', function () {
-        if (nearBottom()) {
-            if (!autoScroll) {
-                if (windowAtTail) setAutoScroll(true);
-                else rebuildVisible();
-            }
-        } else {
-            setAutoScroll(false);
-            showOlder();
-        }
-    });
-    player.on('timeupdate', function () {
-        if (!player.seeking || !player.seeking()) lastPlaybackPosition = positionMs();
-        showDue();
-    });
-    player.on('seeking', function () { seekStartPosition = lastPlaybackPosition; });
-    player.on('seeked', function () {
-        var previous = seekStartPosition === null ? lastPlaybackPosition : seekStartPosition;
-        var current = positionMs();
-        var moved = Math.abs(current - previous) > 750;
+    function timeupdate() { if (!player.seeking || !player.seeking()) lastPlaybackPosition = positionMs(); if (visible()) showDue(); }
+    function seeking() { seekStartPosition = lastPlaybackPosition; }
+    function seeked() {
+        if (!visible()) { lastPlaybackPosition = positionMs(); seekStartPosition = null; return; }
+        var previous = seekStartPosition === null ? lastPlaybackPosition : seekStartPosition, current = positionMs(), moved = Math.abs(current-previous)>750;
         selectPosition(moved);
         if (!moved && current < previous && activeSegment) {
-            var now = duePositionMs() + 250;
-            Array.from(list.children).forEach(function (row) {
-                if (Number(row.dataset.offsetMs) > now) row.remove();
-            });
-            displayCursor = activeSegment.messages.findIndex(function (message) { return message.offsetMs > now; });
-            if (displayCursor < 0) displayCursor = activeSegment.messages.length;
+            var now = duePositionMs()+250;
+            Array.from(list.children).forEach(function (row) { if (Number(row.dataset.offsetMs)>now) row.remove(); });
+            displayCursor = activeSegment.messages.findIndex(function (message) { return message.offsetMs>now; }); if (displayCursor<0) displayCursor=activeSegment.messages.length;
         }
-        showDue();
-        lastPlaybackPosition = current;
-        seekStartPosition = null;
+        showDue(); lastPlaybackPosition = current; seekStartPosition = null;
+    }
+    function dispose() {
+        if (disposed) return; stop(); shown = false; releaseWidth(); disposed = true; activePage = false; life.abort();
+        player.off('timeupdate',timeupdate); player.off('seeking',seeking); player.off('seeked',seeked); player.off('fullscreenchange',fullscreen); player.off('dispose',dispose);
+        segments.length=0; activeSegment=null; removed.clear(); wordPatterns=[]; userBlacklist=[]; settings=null;
+    }
+    function fullscreen() { setVisible(selected()); }
+    on(document,'iv:utility-tab-change',function (event) { if (event.target.contains(panel)) setVisible(selected()); });
+    on(document,'iv:chat-preferences',applyPreferences);
+    on(document,'iv:chat-timing',function (event) { if (!alive() || event.detail.offsetMs === timingMs) return; timingMs=event.detail.offsetMs; if (visible()) selectPosition(true); });
+    on(document,'visibilitychange',fullscreen); on(document,'fullscreenchange',fullscreen);
+    on(window,'pagehide',function (event) { setVisible(false); activePage=false; if (!event.persisted) dispose(); });
+    on(window,'pageshow',function () { activePage=!disposed; if (alive()) setVisible(selected()); });
+    on(window,'browserprofilechange',dispose); on(document,'iv:content-added',function () { if (!panel.isConnected) dispose(); });
+    on(list,'keydown',function (event) { if (event.key !== 'Escape') event.stopPropagation(); });
+    on(list,'click',function (event) { var button=event.target.closest('[data-chat-seek]'); if (button && visible()) player.currentTime(Math.max(0,(Number(button.dataset.chatSeek)+timingMs)/1000)); });
+    on(retry,'click',function () {
+        if (!visible() || !activeSegment) return;
+        activeSegment.failed=false; activeSegment.started=false; activeSegment.complete=false; activeSegment.continuation=null; activeSegment.requestOffset=requestPositionMs(); activeSegment.reads.clear();
+        status.textContent=labels.chat_loading; retry.hidden=true; nextRequestAt=0; maybePrefetch();
     });
-    player.on('dispose', function () {
-        generation++;
-        clearTimeout(prefetchTimer);
-        if (controller) controller.abort();
+    on(sync,'click',function () { if (visible()) rebuildVisible(); });
+    on(list,'scroll',function () {
+        if (!visible()) return;
+        if (nearBottom()) { if (!autoScroll) { if (windowAtTail) { setAutoScroll(true); showDue(); } else rebuildVisible(); } }
+        else { setAutoScroll(false); showOlder(); }
     });
-    lastPlaybackPosition = positionMs();
-    selectPosition(true);
-}());
+    player.on('timeupdate',timeupdate); player.on('seeking',seeking); player.on('seeked',seeked); player.on('fullscreenchange',fullscreen); player.on('dispose',dispose);
+    window.invidiousChat={toggle:function () { navigate(!visible()); },setVisible:navigate,isVisible:visible,showLabel:labels.show_chat,hideLabel:labels.hide_chat};
+    applyPreferences(); lastPlaybackPosition=positionMs(); setVisible(selected());
+})();

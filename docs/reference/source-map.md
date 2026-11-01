@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **406 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **459 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -17,6 +17,7 @@ CI, browser/database regression checks, container/release publishing and issue m
 | [.github/workflows/build-stable-container.yml](../../.github/workflows/build-stable-container.yml) | build stable container |
 | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | ci |
 | [.github/workflows/create-release.yml](../../.github/workflows/create-release.yml) | create release |
+| [.github/workflows/documentation.yml](../../.github/workflows/documentation.yml) | documentation |
 | [.github/workflows/frontend.yml](../../.github/workflows/frontend.yml) | frontend |
 | [.github/workflows/stale.yml](../../.github/workflows/stale.yml) | stale |
 ## assets/css
@@ -25,25 +26,30 @@ Base, player, feature and layout styles; minified third-party styles retain thei
 
 | File | Subject |
 | --- | --- |
-| [assets/css/carousel.css](../../assets/css/carousel.css) | carousel |
 | [assets/css/channel-spoilers.css](../../assets/css/channel-spoilers.css) | channel spoilers |
+| [assets/css/chat-preferences.css](../../assets/css/chat-preferences.css) | chat preferences |
 | [assets/css/clips.css](../../assets/css/clips.css) | clips |
 | [assets/css/dearrow-contributions.css](../../assets/css/dearrow-contributions.css) | dearrow contributions |
 | [assets/css/dearrow.css](../../assets/css/dearrow.css) | dearrow |
-| [assets/css/default.css](../../assets/css/default.css) | default |
 | [assets/css/embed.css](../../assets/css/embed.css) | embed |
-| [assets/css/empty.css](../../assets/css/empty.css) | empty |
-| [assets/css/grids-responsive-min.css](../../assets/css/grids-responsive-min.css) | grids responsive min |
-| [assets/css/ionicons.min.css](../../assets/css/ionicons.min.css) | ionicons.min |
+| [assets/css/foundation.css](../../assets/css/foundation.css) | foundation |
 | [assets/css/live-chat.css](../../assets/css/live-chat.css) | live chat |
+| [assets/css/player-interface.css](../../assets/css/player-interface.css) | player interface |
 | [assets/css/player.css](../../assets/css/player.css) | player |
-| [assets/css/pure-min.css](../../assets/css/pure-min.css) | pure min |
 | [assets/css/quality-selector.css](../../assets/css/quality-selector.css) | quality selector |
-| [assets/css/search.css](../../assets/css/search.css) | search |
-| [assets/css/ui.css](../../assets/css/ui.css) | ui |
 | [assets/css/verification.css](../../assets/css/verification.css) | verification |
-| [assets/css/video-actions.css](../../assets/css/video-actions.css) | video actions |
 | [assets/css/videojs-youtube-annotations.min.css](../../assets/css/videojs-youtube-annotations.min.css) | videojs youtube annotations.min |
+| [assets/css/watch-tools.css](../../assets/css/watch-tools.css) | watch tools |
+## assets/icons
+
+Local first-party SVG icon sprite and its upstream license.
+
+| File | Subject |
+| --- | --- |
+| [assets/icons/LICENSE.feather](../../assets/icons/LICENSE.feather) | LICENSE |
+| [assets/icons/LICENSE.lucide](../../assets/icons/LICENSE.lucide) | LICENSE |
+| [assets/icons/lucide-source.json](../../assets/icons/lucide-source.json) | lucide source |
+| [assets/icons/lucide.svg](../../assets/icons/lucide.svg) | lucide |
 ## assets/js
 
 Browser behavior; individual module responsibilities are described in frontend documentation.
@@ -51,41 +57,47 @@ Browser behavior; individual module responsibilities are described in frontend d
 | File | Subject |
 | --- | --- |
 | [assets/js/_helpers.js](../../assets/js/_helpers.js) |  helpers |
+| [assets/js/account-forms.js](../../assets/js/account-forms.js) | account forms |
+| [assets/js/blocked-channels.js](../../assets/js/blocked-channels.js) | blocked channels |
 | [assets/js/bot-protection.js](../../assets/js/bot-protection.js) | bot protection |
 | [assets/js/browse.js](../../assets/js/browse.js) | browse |
 | [assets/js/browser-storage.js](../../assets/js/browser-storage.js) | browser storage |
 | [assets/js/channel-spoiler-preferences.js](../../assets/js/channel-spoiler-preferences.js) | channel spoiler preferences |
 | [assets/js/channel-spoilers.js](../../assets/js/channel-spoilers.js) | channel spoilers |
+| [assets/js/chat-preferences.js](../../assets/js/chat-preferences.js) | chat preferences |
+| [assets/js/chat-timing.js](../../assets/js/chat-timing.js) | chat timing |
 | [assets/js/clip-editor.js](../../assets/js/clip-editor.js) | clip editor |
 | [assets/js/clip-loader.js](../../assets/js/clip-loader.js) | clip loader |
 | [assets/js/clip-player.js](../../assets/js/clip-player.js) | clip player |
-| [assets/js/comments.js](../../assets/js/comments.js) | comments |
-| [assets/js/community.js](../../assets/js/community.js) | community |
+| [assets/js/clip-session.js](../../assets/js/clip-session.js) | clip session |
+| [assets/js/comment-threads.js](../../assets/js/comment-threads.js) | comment threads |
 | [assets/js/dearrow-contributions.js](../../assets/js/dearrow-contributions.js) | dearrow contributions |
+| [assets/js/dearrow-identity.js](../../assets/js/dearrow-identity.js) | dearrow identity |
 | [assets/js/dearrow-loader.js](../../assets/js/dearrow-loader.js) | dearrow loader |
 | [assets/js/dearrow.js](../../assets/js/dearrow.js) | dearrow |
 | [assets/js/embed.js](../../assets/js/embed.js) | embed |
+| [assets/js/enhancements.js](../../assets/js/enhancements.js) | enhancements |
 | [assets/js/handlers.js](../../assets/js/handlers.js) | handlers |
-| [assets/js/interface.js](../../assets/js/interface.js) | interface |
 | [assets/js/library.js](../../assets/js/library.js) | library |
 | [assets/js/live-chat.js](../../assets/js/live-chat.js) | live chat |
 | [assets/js/notifications.js](../../assets/js/notifications.js) | notifications |
-| [assets/js/pagination.js](../../assets/js/pagination.js) | pagination |
+| [assets/js/overhaul.js](../../assets/js/overhaul.js) | overhaul |
 | [assets/js/player-chapters.js](../../assets/js/player-chapters.js) | player chapters |
 | [assets/js/player-dock.js](../../assets/js/player-dock.js) | player dock |
 | [assets/js/player-mobile.js](../../assets/js/player-mobile.js) | player mobile |
+| [assets/js/player-settings.js](../../assets/js/player-settings.js) | player settings |
 | [assets/js/player-stats.js](../../assets/js/player-stats.js) | player stats |
 | [assets/js/player-stream-menu.js](../../assets/js/player-stream-menu.js) | player stream menu |
 | [assets/js/player-ui.js](../../assets/js/player-ui.js) | player ui |
 | [assets/js/player.js](../../assets/js/player.js) | player |
-| [assets/js/playlist_widget.js](../../assets/js/playlist_widget.js) | playlist widget |
-| [assets/js/post.js](../../assets/js/post.js) | post |
-| [assets/js/preferences.js](../../assets/js/preferences.js) | preferences |
+| [assets/js/playlist-forms.js](../../assets/js/playlist-forms.js) | playlist forms |
+| [assets/js/settings-navigation.js](../../assets/js/settings-navigation.js) | settings navigation |
+| [assets/js/settings.js](../../assets/js/settings.js) | settings |
 | [assets/js/silvermine-videojs-quality-selector.min.js](../../assets/js/silvermine-videojs-quality-selector.min.js) | silvermine videojs quality selector.min |
 | [assets/js/sponsorblock-preferences.js](../../assets/js/sponsorblock-preferences.js) | sponsorblock preferences |
 | [assets/js/sponsorblock.js](../../assets/js/sponsorblock.js) | sponsorblock |
 | [assets/js/sse.js](../../assets/js/sse.js) | sse |
-| [assets/js/subscribe_widget.js](../../assets/js/subscribe_widget.js) | subscribe widget |
+| [assets/js/subscriptions.js](../../assets/js/subscriptions.js) | subscriptions |
 | [assets/js/themes.js](../../assets/js/themes.js) | themes |
 | [assets/js/timezone.js](../../assets/js/timezone.js) | timezone |
 | [assets/js/transcript.js](../../assets/js/transcript.js) | transcript |
@@ -93,16 +105,9 @@ Browser behavior; individual module responsibilities are described in frontend d
 | [assets/js/verification.js](../../assets/js/verification.js) | verification |
 | [assets/js/video-actions.js](../../assets/js/video-actions.js) | video actions |
 | [assets/js/videojs-youtube-annotations.min.js](../../assets/js/videojs-youtube-annotations.min.js) | videojs youtube annotations.min |
+| [assets/js/watch-enhancements.js](../../assets/js/watch-enhancements.js) | watch enhancements |
 | [assets/js/watch.js](../../assets/js/watch.js) | watch |
 | [assets/js/watched_indicator.js](../../assets/js/watched_indicator.js) | watched indicator |
-| [assets/js/watched_widget.js](../../assets/js/watched_widget.js) | watched widget |
-## assets/themes
-
-Diary styling, with local fonts and SVG artwork alongside its stylesheet.
-
-| File | Subject |
-| --- | --- |
-| [assets/themes/diary/theme.css](../../assets/themes/diary/theme.css) | theme |
 ## config/migrate-scripts
 
 Historical shell migrations retained for legacy upgrades; not the modern migration runner.
@@ -192,12 +197,15 @@ Domain models and cross-cutting integrations, configuration and routing.
 
 | File | Subject |
 | --- | --- |
+| [src/invidious/admin_settings.cr](../../src/invidious/admin_settings.cr) | admin settings |
 | [src/invidious/ai_slist.cr](../../src/invidious/ai_slist.cr) | ai slist |
 | [src/invidious/ai_slist_api.cr](../../src/invidious/ai_slist_api.cr) | ai slist api |
 | [src/invidious/ai_slist_runtime.cr](../../src/invidious/ai_slist_runtime.cr) | ai slist runtime |
 | [src/invidious/bot_protection.cr](../../src/invidious/bot_protection.cr) | bot protection |
 | [src/invidious/browser_profiles.cr](../../src/invidious/browser_profiles.cr) | browser profiles |
+| [src/invidious/channel_spoiler_preferences.cr](../../src/invidious/channel_spoiler_preferences.cr) | channel spoiler preferences |
 | [src/invidious/channel_spoilers.cr](../../src/invidious/channel_spoilers.cr) | channel spoilers |
+| [src/invidious/chat_preferences.cr](../../src/invidious/chat_preferences.cr) | chat preferences |
 | [src/invidious/clips.cr](../../src/invidious/clips.cr) | clips |
 | [src/invidious/config.cr](../../src/invidious/config.cr) | config |
 | [src/invidious/dearrow.cr](../../src/invidious/dearrow.cr) | dearrow |
@@ -216,9 +224,11 @@ Domain models and cross-cutting integrations, configuration and routing.
 | [src/invidious/routing.cr](../../src/invidious/routing.cr) | routing |
 | [src/invidious/rss.cr](../../src/invidious/rss.cr) | rss |
 | [src/invidious/sponsorblock.cr](../../src/invidious/sponsorblock.cr) | sponsorblock |
+| [src/invidious/sponsorblock_preferences.cr](../../src/invidious/sponsorblock_preferences.cr) | sponsorblock preferences |
 | [src/invidious/trending.cr](../../src/invidious/trending.cr) | trending |
 | [src/invidious/users.cr](../../src/invidious/users.cr) | users |
 | [src/invidious/videos.cr](../../src/invidious/videos.cr) | videos |
+| [src/invidious/web_preferences.cr](../../src/invidious/web_preferences.cr) | web preferences |
 ## src/invidious/channels
 
 Channel metadata and tabs, community posts and upstream pagination.
@@ -323,13 +333,23 @@ Presentation helpers for cards, filters, history, channels and page data.
 | [src/invidious/frontend/channel_spoilers.cr](../../src/invidious/frontend/channel_spoilers.cr) | channel spoilers |
 | [src/invidious/frontend/comments_reddit.cr](../../src/invidious/frontend/comments_reddit.cr) | comments reddit |
 | [src/invidious/frontend/comments_youtube.cr](../../src/invidious/frontend/comments_youtube.cr) | comments youtube |
+| [src/invidious/frontend/data_control.cr](../../src/invidious/frontend/data_control.cr) | data control |
+| [src/invidious/frontend/desktop.cr](../../src/invidious/frontend/desktop.cr) | desktop |
+| [src/invidious/frontend/enhancement_state.cr](../../src/invidious/frontend/enhancement_state.cr) | enhancement state |
+| [src/invidious/frontend/error_pages.cr](../../src/invidious/frontend/error_pages.cr) | error pages |
+| [src/invidious/frontend/icons.cr](../../src/invidious/frontend/icons.cr) | icons |
 | [src/invidious/frontend/member_videos.cr](../../src/invidious/frontend/member_videos.cr) | member videos |
 | [src/invidious/frontend/misc.cr](../../src/invidious/frontend/misc.cr) | misc |
 | [src/invidious/frontend/pagination.cr](../../src/invidious/frontend/pagination.cr) | pagination |
+| [src/invidious/frontend/playlist_forms.cr](../../src/invidious/frontend/playlist_forms.cr) | playlist forms |
 | [src/invidious/frontend/search_filters.cr](../../src/invidious/frontend/search_filters.cr) | search filters |
 | [src/invidious/frontend/search_preferences.cr](../../src/invidious/frontend/search_preferences.cr) | search preferences |
+| [src/invidious/frontend/settings.cr](../../src/invidious/frontend/settings.cr) | settings |
+| [src/invidious/frontend/standalone.cr](../../src/invidious/frontend/standalone.cr) | standalone |
+| [src/invidious/frontend/subscription_feed.cr](../../src/invidious/frontend/subscription_feed.cr) | subscription feed |
 | [src/invidious/frontend/subscription_manager.cr](../../src/invidious/frontend/subscription_manager.cr) | subscription manager |
 | [src/invidious/frontend/view_counts.cr](../../src/invidious/frontend/view_counts.cr) | view counts |
+| [src/invidious/frontend/watch_enhancements.cr](../../src/invidious/frontend/watch_enhancements.cr) | watch enhancements |
 | [src/invidious/frontend/watch_page.cr](../../src/invidious/frontend/watch_page.cr) | watch page |
 | [src/invidious/frontend/watched_indicator.cr](../../src/invidious/frontend/watched_indicator.cr) | watched indicator |
 ## src/invidious/helpers
@@ -397,6 +417,7 @@ HTTP page handlers, authentication context, redirects, RSS and proxy handlers.
 | File | Subject |
 | --- | --- |
 | [src/invidious/routes/account.cr](../../src/invidious/routes/account.cr) | account |
+| [src/invidious/routes/admin_settings.cr](../../src/invidious/routes/admin_settings.cr) | admin settings |
 | [src/invidious/routes/before_all.cr](../../src/invidious/routes/before_all.cr) | before all |
 | [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr) | blocked channels |
 | [src/invidious/routes/channel_spoiler_preferences.cr](../../src/invidious/routes/channel_spoiler_preferences.cr) | channel spoiler preferences |
@@ -465,12 +486,15 @@ User models, credentials, cookies, preference converters, CAPTCHA and data excha
 | --- | --- |
 | [src/invidious/user/authentication.cr](../../src/invidious/user/authentication.cr) | authentication |
 | [src/invidious/user/captcha.cr](../../src/invidious/user/captcha.cr) | captcha |
+| [src/invidious/user/channel_spoiler_preferences.cr](../../src/invidious/user/channel_spoiler_preferences.cr) | channel spoiler preferences |
+| [src/invidious/user/chat_preferences.cr](../../src/invidious/user/chat_preferences.cr) | chat preferences |
 | [src/invidious/user/converters.cr](../../src/invidious/user/converters.cr) | converters |
 | [src/invidious/user/cookies.cr](../../src/invidious/user/cookies.cr) | cookies |
 | [src/invidious/user/credentials.cr](../../src/invidious/user/credentials.cr) | credentials |
 | [src/invidious/user/exports.cr](../../src/invidious/user/exports.cr) | exports |
 | [src/invidious/user/imports.cr](../../src/invidious/user/imports.cr) | imports |
 | [src/invidious/user/preferences.cr](../../src/invidious/user/preferences.cr) | preferences |
+| [src/invidious/user/sponsorblock_preferences.cr](../../src/invidious/user/sponsorblock_preferences.cr) | sponsorblock preferences |
 | [src/invidious/user/user.cr](../../src/invidious/user/user.cr) | user |
 ## src/invidious/videos
 
@@ -505,29 +529,26 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | --- | --- |
 | [src/invidious/views/add_playlist_items.ecr](../../src/invidious/views/add_playlist_items.ecr) | add playlist items |
 | [src/invidious/views/admin/bot_protection.ecr](../../src/invidious/views/admin/bot_protection.ecr) | bot protection |
+| [src/invidious/views/admin/settings.ecr](../../src/invidious/views/admin/settings.ecr) | settings |
+| [src/invidious/views/admin/standalone_shell.ecr](../../src/invidious/views/admin/standalone_shell.ecr) | standalone shell |
 | [src/invidious/views/channel.ecr](../../src/invidious/views/channel.ecr) | channel |
 | [src/invidious/views/channel_clips.ecr](../../src/invidious/views/channel_clips.ecr) | channel clips |
 | [src/invidious/views/channel_search.ecr](../../src/invidious/views/channel_search.ecr) | channel search |
 | [src/invidious/views/clip_unavailable.ecr](../../src/invidious/views/clip_unavailable.ecr) | clip unavailable |
 | [src/invidious/views/community.ecr](../../src/invidious/views/community.ecr) | community |
 | [src/invidious/views/components/ai-filter-empty.ecr](../../src/invidious/views/components/ai-filter-empty.ecr) | ai filter empty |
-| [src/invidious/views/components/ai-filter-preferences.ecr](../../src/invidious/views/components/ai-filter-preferences.ecr) | ai filter preferences |
+| [src/invidious/views/components/ai-filter-status.ecr](../../src/invidious/views/components/ai-filter-status.ecr) | ai filter status |
+| [src/invidious/views/components/browse_controls.ecr](../../src/invidious/views/components/browse_controls.ecr) | browse controls |
 | [src/invidious/views/components/channel_info.ecr](../../src/invidious/views/components/channel_info.ecr) | channel info |
 | [src/invidious/views/components/channel_spoiler_scripts.ecr](../../src/invidious/views/components/channel_spoiler_scripts.ecr) | channel spoiler scripts |
-| [src/invidious/views/components/clip_dialog.ecr](../../src/invidious/views/components/clip_dialog.ecr) | clip dialog |
 | [src/invidious/views/components/clip_editor.ecr](../../src/invidious/views/components/clip_editor.ecr) | clip editor |
 | [src/invidious/views/components/clips.ecr](../../src/invidious/views/components/clips.ecr) | clips |
 | [src/invidious/views/components/dearrow_contributions.ecr](../../src/invidious/views/components/dearrow_contributions.ecr) | dearrow contributions |
-| [src/invidious/views/components/feed_menu.ecr](../../src/invidious/views/components/feed_menu.ecr) | feed menu |
 | [src/invidious/views/components/item.ecr](../../src/invidious/views/components/item.ecr) | item |
 | [src/invidious/views/components/items_paginated.ecr](../../src/invidious/views/components/items_paginated.ecr) | items paginated |
-| [src/invidious/views/components/navigation.ecr](../../src/invidious/views/components/navigation.ecr) | navigation |
 | [src/invidious/views/components/player.ecr](../../src/invidious/views/components/player.ecr) | player |
 | [src/invidious/views/components/player_sources.ecr](../../src/invidious/views/components/player_sources.ecr) | player sources |
-| [src/invidious/views/components/search_box.ecr](../../src/invidious/views/components/search_box.ecr) | search box |
-| [src/invidious/views/components/subscribe_widget.ecr](../../src/invidious/views/components/subscribe_widget.ecr) | subscribe widget |
 | [src/invidious/views/components/video-actions-dialog.ecr](../../src/invidious/views/components/video-actions-dialog.ecr) | video actions dialog |
-| [src/invidious/views/components/video-context-buttons.ecr](../../src/invidious/views/components/video-context-buttons.ecr) | video context buttons |
 | [src/invidious/views/create_clip.ecr](../../src/invidious/views/create_clip.ecr) | create clip |
 | [src/invidious/views/create_playlist.ecr](../../src/invidious/views/create_playlist.ecr) | create playlist |
 | [src/invidious/views/delete_clip.ecr](../../src/invidious/views/delete_clip.ecr) | delete clip |
@@ -545,6 +566,39 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | [src/invidious/views/licenses.ecr](../../src/invidious/views/licenses.ecr) | licenses |
 | [src/invidious/views/message.ecr](../../src/invidious/views/message.ecr) | message |
 | [src/invidious/views/mix.ecr](../../src/invidious/views/mix.ecr) | mix |
+| [src/invidious/views/overhaul/ai_filter_matrix.ecr](../../src/invidious/views/overhaul/ai_filter_matrix.ecr) | ai filter matrix |
+| [src/invidious/views/overhaul/chat_preferences.ecr](../../src/invidious/views/overhaul/chat_preferences.ecr) | chat preferences |
+| [src/invidious/views/overhaul/chat_settings.ecr](../../src/invidious/views/overhaul/chat_settings.ecr) | chat settings |
+| [src/invidious/views/overhaul/clips.ecr](../../src/invidious/views/overhaul/clips.ecr) | clips |
+| [src/invidious/views/overhaul/collection_toolbar.ecr](../../src/invidious/views/overhaul/collection_toolbar.ecr) | collection toolbar |
+| [src/invidious/views/overhaul/comment_config.ecr](../../src/invidious/views/overhaul/comment_config.ecr) | comment config |
+| [src/invidious/views/overhaul/filter_chip.ecr](../../src/invidious/views/overhaul/filter_chip.ecr) | filter chip |
+| [src/invidious/views/overhaul/history_item.ecr](../../src/invidious/views/overhaul/history_item.ecr) | history item |
+| [src/invidious/views/overhaul/item.ecr](../../src/invidious/views/overhaul/item.ecr) | item |
+| [src/invidious/views/overhaul/item_menu.ecr](../../src/invidious/views/overhaul/item_menu.ecr) | item menu |
+| [src/invidious/views/overhaul/navigation.ecr](../../src/invidious/views/overhaul/navigation.ecr) | navigation |
+| [src/invidious/views/overhaul/playlist_fields.ecr](../../src/invidious/views/overhaul/playlist_fields.ecr) | playlist fields |
+| [src/invidious/views/overhaul/playlist_reference_actions.ecr](../../src/invidious/views/overhaul/playlist_reference_actions.ecr) | playlist reference actions |
+| [src/invidious/views/overhaul/selection.ecr](../../src/invidious/views/overhaul/selection.ecr) | selection |
+| [src/invidious/views/overhaul/settings.ecr](../../src/invidious/views/overhaul/settings.ecr) | settings |
+| [src/invidious/views/overhaul/settings_legacy_entry.ecr](../../src/invidious/views/overhaul/settings_legacy_entry.ecr) | settings legacy entry |
+| [src/invidious/views/overhaul/settings_navigation.ecr](../../src/invidious/views/overhaul/settings_navigation.ecr) | settings navigation |
+| [src/invidious/views/overhaul/shell.ecr](../../src/invidious/views/overhaul/shell.ecr) | shell |
+| [src/invidious/views/overhaul/sponsorblock_defaults.ecr](../../src/invidious/views/overhaul/sponsorblock_defaults.ecr) | sponsorblock defaults |
+| [src/invidious/views/overhaul/standalone_notice.ecr](../../src/invidious/views/overhaul/standalone_notice.ecr) | standalone notice |
+| [src/invidious/views/overhaul/status_shell.ecr](../../src/invidious/views/overhaul/status_shell.ecr) | status shell |
+| [src/invidious/views/overhaul/subscribe.ecr](../../src/invidious/views/overhaul/subscribe.ecr) | subscribe |
+| [src/invidious/views/overhaul/watch_chat.ecr](../../src/invidious/views/overhaul/watch_chat.ecr) | watch chat |
+| [src/invidious/views/overhaul/watch_clip_config.ecr](../../src/invidious/views/overhaul/watch_clip_config.ecr) | watch clip config |
+| [src/invidious/views/overhaul/watch_clip_editor.ecr](../../src/invidious/views/overhaul/watch_clip_editor.ecr) | watch clip editor |
+| [src/invidious/views/overhaul/watch_comments.ecr](../../src/invidious/views/overhaul/watch_comments.ecr) | watch comments |
+| [src/invidious/views/overhaul/watch_description.ecr](../../src/invidious/views/overhaul/watch_description.ecr) | watch description |
+| [src/invidious/views/overhaul/watch_destinations.ecr](../../src/invidious/views/overhaul/watch_destinations.ecr) | watch destinations |
+| [src/invidious/views/overhaul/watch_heading.ecr](../../src/invidious/views/overhaul/watch_heading.ecr) | watch heading |
+| [src/invidious/views/overhaul/watch_queue.ecr](../../src/invidious/views/overhaul/watch_queue.ecr) | watch queue |
+| [src/invidious/views/overhaul/watch_recommendation.ecr](../../src/invidious/views/overhaul/watch_recommendation.ecr) | watch recommendation |
+| [src/invidious/views/overhaul/watch_recommendations.ecr](../../src/invidious/views/overhaul/watch_recommendations.ecr) | watch recommendations |
+| [src/invidious/views/overhaul/watch_transcript.ecr](../../src/invidious/views/overhaul/watch_transcript.ecr) | watch transcript |
 | [src/invidious/views/playlist.ecr](../../src/invidious/views/playlist.ecr) | playlist |
 | [src/invidious/views/post.ecr](../../src/invidious/views/post.ecr) | post |
 | [src/invidious/views/privacy.ecr](../../src/invidious/views/privacy.ecr) | privacy |
@@ -554,13 +608,12 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | [src/invidious/views/user/account.ecr](../../src/invidious/views/user/account.ecr) | account |
 | [src/invidious/views/user/authorize_token.ecr](../../src/invidious/views/user/authorize_token.ecr) | authorize token |
 | [src/invidious/views/user/blocked_channels.ecr](../../src/invidious/views/user/blocked_channels.ecr) | blocked channels |
-| [src/invidious/views/user/change_password.ecr](../../src/invidious/views/user/change_password.ecr) | change password |
 | [src/invidious/views/user/channel_spoilers.ecr](../../src/invidious/views/user/channel_spoilers.ecr) | channel spoilers |
 | [src/invidious/views/user/clear_watch_history.ecr](../../src/invidious/views/user/clear_watch_history.ecr) | clear watch history |
 | [src/invidious/views/user/data_control.ecr](../../src/invidious/views/user/data_control.ecr) | data control |
+| [src/invidious/views/user/dearrow_identity.ecr](../../src/invidious/views/user/dearrow_identity.ecr) | dearrow identity |
 | [src/invidious/views/user/delete_account.ecr](../../src/invidious/views/user/delete_account.ecr) | delete account |
 | [src/invidious/views/user/login.ecr](../../src/invidious/views/user/login.ecr) | login |
-| [src/invidious/views/user/preferences.ecr](../../src/invidious/views/user/preferences.ecr) | preferences |
 | [src/invidious/views/user/sponsorblock_channels.ecr](../../src/invidious/views/user/sponsorblock_channels.ecr) | sponsorblock channels |
 | [src/invidious/views/user/subscription_manager.ecr](../../src/invidious/views/user/subscription_manager.ecr) | subscription manager |
 | [src/invidious/views/user/token_manager.ecr](../../src/invidious/views/user/token_manager.ecr) | token manager |

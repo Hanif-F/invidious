@@ -1,0 +1,291 @@
+module Invidious::Routes::API::V1::Misc
+  # Stats API endpoint for Invidious
+  def self.stats(env)
+    env.response.content_type = "application/json"
+
+    if !CONFIG.statistics_enabled
+      return {"software" => SOFTWARE}.to_json
+    else
+      # Calculate playback success rate
+      if (tracker = Invidious::Jobs::StatisticsRefreshJob::STATISTICS["playback"]?)
+        tracker = tracker.as(Hash(String, Int64 | Float64))
+
+        if !tracker.empty?
+          total_requests = tracker["totalRequests"]
+          success_count = tracker["successfulRequests"]
+
+          if total_requests.zero?
+            tracker["ratio"] = 1_i64
+          else
+            tracker["ratio"] = (success_count / (total_requests)).round(2)
+          end
+        end
+      end
+
+      return Invidious::Jobs::StatisticsRefreshJob::STATISTICS.to_json
+    end
+  end
+
+  # APIv1 currently uses the same logic for both
+  # user playlists and Invidious playlists. This means that we can't
+  # reasonably split them yet. This should be addressed in APIv2
+  def self.get_playlist(env : HTTP::Server::Context)
+    env.response.content_type = "application/json"
+    plid = env.params.url["plid"]
+
+    offset = env.params.query["index"]?.try &.to_i?
+    offset ||= env.params.query["page"]?.try &.to_i?.try { |page| (page - 1) * 100 }
+    offset ||= 0
+
+    video_id = env.params.query["continuation"]?
+
+    format = env.params.query["format"]?
+    format ||= "json"
+    desktop_fragment = format == "html" && env.params.query["ui"]? == "desktop"
+    env.set "desktop_fragment", true if desktop_fragment
+
+    listen_param = env.params.query["listen"]?
+    listen = (listen_param == "true" || listen_param == "1")
+
+    if plid.starts_with? "RD"
+      env.params.url["rdid"] = plid
+      return mixes(env)
+    end
+
+    begin
+      playlist = get_playlist(plid)
+    rescue ex : InfoException
+      return error_json(404, ex)
+    rescue
+      return error_json(404, "Playlist does not exist.")
+    end
+
+    user = env.get?("user").try &.as(User)
+    if !playlist || playlist.privacy.private? && playlist.author != user.try &.email
+      return error_json(404, "Playlist does not exist.")
+    end
+
+    requested_occurrence = nil.as(Int64?)
+    explicit_occurrence = false
+    current_removed = playlist.is_a?(InvidiousPlaylist) && env.params.query["current_removed"]? == "1"
+    if desktop_fragment && playlist.is_a?(InvidiousPlaylist)
+      if raw = env.params.query["occurrence"]?
+        explicit_occurrence = true
+        requested_occurrence = raw.matches?(/\A[0-9]{1,19}\z/) ? raw.to_i64? : nil
+        return error_json(400, "Invalid occurrence.") unless requested_occurrence
+        if position = playlist.index.index(requested_occurrence)
+          offset = position
+          current_removed = false
+        else
+          current_removed = true
+        end
+      end
+    end
+    video_id = nil if current_removed || explicit_occurrence
+
+    # includes into the playlist a maximum of 20 videos, before the offset
+    if offset > 0
+      lookback = offset < 50 ? offset : 50
+      response = playlist.to_json(offset - lookback)
+      json_response = JSON.parse(response)
+    else
+      #  Unless the continuation is really the offset 0, it becomes expensive.
+      #  It happens when the offset is not set.
+      #  First we find the actual offset, and then we lookback
+      #  it shouldn't happen often though
+
+      lookback = 0
+      response = playlist.to_json(offset, video_id: video_id)
+      json_response = JSON.parse(response)
+
+      if json_response["videos"].as_a.empty?
+        json_response = JSON.parse(response)
+      elsif json_response["videos"].as_a[0]["index"] != offset
+        offset = json_response["videos"].as_a[0]["index"].as_i
+        lookback = offset < 50 ? offset : 50
+        response = playlist.to_json(offset - lookback)
+        json_response = JSON.parse(response)
+      end
+    end
+
+    if desktop_fragment && playlist.is_a?(InvidiousPlaylist) && !current_removed && !explicit_occurrence
+      requested_occurrence = playlist.index[offset]?
+    end
+
+    fields = Invidious::NativePlaylists.metadata(playlist, user.try(&.email))
+    json_response.as_h.merge!(fields)
+    Database::SavedPlaylists.refresh(user.email, fields) if user
+    response = Invidious::JSONify::APIv1::VideoMetadata.enrich_json(json_response.to_json, env.get("preferences").as(Preferences).locale)
+    json_response = JSON.parse(response)
+
+    if format == "html"
+      env.response.headers["Cache-Control"] = "private, no-store"
+      editable = playlist.is_a?(InvidiousPlaylist) && playlist.author == user.try &.email
+      # Desktop queues retain every occurrence. Visibility preferences only
+      # filter discovery; legacy/native HTML keeps its existing contract.
+      show_members = desktop_fragment || env.get("preferences").as(Preferences).show_member_videos
+      # Removing the playing occurrence leaves a gap at offset; its successor
+      # now occupies that position and must not be skipped during advancement.
+
+      index, next_video = Frontend::MemberVideos.queue_videos(json_response["videos"].as_a.skip((current_removed ? 0 : 1) + lookback), show_members).select { |video| !video["author"].as_s.empty? }[0]?.try { |v| {v["index"], v["videoId"]} } || {nil, nil}
+
+      json_response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(json_response["videos"].as_a, show_members))
+      ai_thumbnails = Frontend::AiChannels.prepare_queue(env, json_response["videos"].as_a)
+      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode && !desktop_fragment, editable, user.try(&.watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: env.get("preferences").as(Preferences).locale, spoiler_env: env)
+
+      data = {
+        "playlistHtml" => playlist_html,
+        "currentIndex" => offset,
+        "index"        => index,
+        "nextVideo"    => next_video,
+      }
+      response = if desktop_fragment && playlist.is_a?(InvidiousPlaylist)
+                   positions = playlist.index.each_with_index.to_h { |occurrence, position| {occurrence.to_s, position + 1} }
+                   data.merge({"currentOccurrence" => requested_occurrence.try(&.to_s), "currentRemoved" => current_removed, "positions" => positions, "total" => playlist.index.size}).to_json
+                 else
+                   data.to_json
+                 end
+    end
+
+    response
+  end
+
+  def self.mixes(env)
+    locale = env.get("preferences").as(Preferences).locale
+
+    env.response.content_type = "application/json"
+
+    rdid = env.params.url["rdid"]
+    desktop_fragment = env.params.query["format"]? == "html" && env.params.query["ui"]? == "desktop"
+    env.set "desktop_fragment", true if desktop_fragment
+
+    continuation = env.params.query["continuation"]?
+    begin
+      continuation = Invidious::NativePlaylists.seed(rdid, continuation)
+    rescue ex
+      return error_json(400, ex)
+    end
+
+    format = env.params.query["format"]?
+    format ||= "json"
+
+    listen_param = env.params.query["listen"]?
+    listen = (listen_param == "true" || listen_param == "1")
+
+    begin
+      mix = fetch_mix(rdid, continuation, locale: locale)
+
+      index = mix.videos.index { |video| video.id == continuation } || 0
+      mix.videos = mix.videos[index..-1]
+    rescue ex
+      return error_json(500, ex)
+    end
+
+    response = JSON.build do |json|
+      json.object do
+        json.field "title", mix.title
+        json.field "mixId", mix.id
+
+        json.field "videos" do
+          json.array do
+            mix.videos.each do |video|
+              json.object do
+                json.field "title", video.title
+                json.field "videoId", video.id
+                json.field "author", video.author
+
+                json.field "authorId", video.ucid
+                json.field "authorUrl", "/channel/#{video.ucid}"
+
+                json.field "videoThumbnails" do
+                  Invidious::JSONify::APIv1.thumbnails(json, video.id)
+                end
+
+                json.field "index", video.index
+                json.field "lengthSeconds", video.length_seconds
+                json.field "isMember", video.members_only
+                Invidious::Videos::ViewCounts.from_item(video).try &.to_json_fields(json, locale)
+              end
+            end
+          end
+        end
+      end
+    end
+
+    fields = Invidious::NativePlaylists.metadata(mix, continuation)
+    if user = env.get?("user").try(&.as(User))
+      if seed = Database::SavedPlaylists.seed(user.email, rdid)
+        fields["seedVideoId"] = JSON::Any.new(seed)
+        fields["playlistThumbnail"] = JSON::Any.new("/vi/#{seed}/mqdefault.jpg")
+      end
+      fields["isSaved"] = JSON::Any.new(Database::SavedPlaylists.exists?(user.email, rdid))
+      Database::SavedPlaylists.refresh(user.email, fields)
+    end
+    parsed = JSON.parse(response).as_h
+    parsed.merge!(fields)
+    response = Invidious::JSONify::APIv1::VideoMetadata.enrich_json(parsed.to_json, env.get("preferences").as(Preferences).locale)
+
+    if format == "html"
+      env.response.headers["Cache-Control"] = "private, no-store"
+      response = JSON.parse(response)
+      response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(response["videos"].as_a, desktop_fragment || env.get("preferences").as(Preferences).show_member_videos))
+      ai_thumbnails = Frontend::AiChannels.prepare_queue(env, response["videos"].as_a)
+      playlist_html = template_mix(response, listen, env.get("preferences").as(Preferences).thin_mode && !desktop_fragment, env.get?("user").try(&.as(User).watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: locale, spoiler_env: env)
+      next_video = response["videos"].as_a.select { |video| !video["author"].as_s.empty? }[0]?.try &.["videoId"]
+
+      response = {
+        "playlistHtml" => playlist_html,
+        "nextVideo"    => next_video,
+      }.to_json
+    end
+
+    response
+  end
+
+  # resolve channel and clip urls, return the UCID
+  def self.resolve_url(env)
+    env.response.content_type = "application/json"
+    url = env.params.query["url"]?
+
+    return error_json(400, "Missing URL to resolve") if !url
+
+    begin
+      resolved_url = YoutubeAPI.resolve_url(url.as(String))
+      endpoint = resolved_url["endpoint"]
+      page_type = endpoint.dig?("commandMetadata", "webCommandMetadata", "webPageType").try &.as_s || ""
+      if page_type == "WEB_PAGE_TYPE_UNKNOWN"
+        return error_json(400, "Unknown url")
+      end
+
+      sub_endpoint = endpoint["watchEndpoint"]? || endpoint["browseEndpoint"]? || endpoint
+      params = sub_endpoint.try &.dig?("params")
+
+      if sub_endpoint["browseId"]?.try &.as_s == "FEpost_detail"
+        decoded_protobuf = params.try &.as_s.try { |i| URI.decode_www_form(i) }
+          .try { |i| Base64.decode(i) }
+          .try { |i| IO::Memory.new(i) }
+          .try { |i| Protodec::Any.parse(i) }
+
+        ucid = decoded_protobuf.try(&.["56:0:embedded"]["2:0:string"].as_s)
+        post_id = decoded_protobuf.try(&.["56:0:embedded"]["3:1:string"].as_s)
+      else
+        ucid = sub_endpoint["browseId"]? if sub_endpoint["browseId"]? && sub_endpoint["browseId"]?.try &.as_s.starts_with? "UC"
+        post_id = nil
+      end
+    rescue ex
+      return error_json(500, ex)
+    end
+    JSON.build do |json|
+      json.object do
+        json.field "browseId", sub_endpoint["browseId"].as_s if sub_endpoint["browseId"]?
+        json.field "ucid", ucid if ucid != nil
+        json.field "videoId", sub_endpoint["videoId"].as_s if sub_endpoint["videoId"]?
+        json.field "playlistId", sub_endpoint["playlistId"].as_s if sub_endpoint["playlistId"]?
+        json.field "startTimeSeconds", sub_endpoint["startTimeSeconds"].as_i if sub_endpoint["startTimeSeconds"]?
+        json.field "postId", post_id if post_id != nil
+        json.field "params", params.try &.as_s
+        json.field "pageType", page_type
+      end
+    end
+  end
+end

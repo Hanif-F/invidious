@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: chromium: D8 Settings search finds descriptions and feature choices without reads or private playlist metadata
+not ok 1 - chromium: D8 Settings search finds descriptions and feature choices without reads or private playlist metadata
+  ---
+  duration_ms: 240.303327
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:3755:31'
+  failureType: 'testCodeFailure'
+  error: 'if your choice is unavailable finds its owning field'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:3766:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 867.432483

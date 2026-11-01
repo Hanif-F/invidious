@@ -1,112 +1,12 @@
-<% content_for "header" do %>
-<title><%= I18n.translate(locale, "History") %> - Invidious</title>
-<% end %>
-
-<h1><%= I18n.translate(locale, "Watch history") %></h1>
-<div class="pure-g h-box">
-    <div class="pure-u-1-3">
-        <h3><%= I18n.translate_count(locale, "generic_videos_count", history_count, I18n::NumberFormatting::HtmlSpan) %></h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:center">
-            <a href="/feed/subscriptions"><%= I18n.translate_count(locale, "generic_subscriptions_count", user.subscriptions.size, I18n::NumberFormatting::HtmlSpan) %></a>
-        </h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:right">
-            <a href="/clear_watch_history"><%= I18n.translate(locale, "Clear watch history") %></a>
-        </h3>
-    </div>
-</div>
-
-<form class="pure-form h-box" action="/feed/history" method="get" role="search" aria-label="<%= I18n.translate(locale, "history_search") %>">
-    <label for="history-search"><%= I18n.translate(locale, "history_search") %></label>
-    <input type="search" id="history-search" name="q" value="<%= HTML.escape(history_query) %>" placeholder="<%= I18n.translate(locale, "history_search_placeholder") %>">
-    <% if env.params.query.has_key?("max_results") %>
-    <input type="hidden" name="max_results" value="<%= max_results %>">
-    <% end %>
-    <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "Search") %></button>
-    <% unless history_query.empty? %>
-    <a href="<%= HTML.escape(history_clear_url) %>"><%= I18n.translate(locale, "history_clear_search") %></a>
-    <% end %>
-</form>
-<% if watched.empty? %>
-<p class="h-box"><%= I18n.translate(locale, history_query.empty? ? "history_empty" : "history_no_matches") %></p>
-<% end %>
-
-<script id="watched_data" type="application/json">
-<%=
-{
-    "csrf_token" => URI.encode_www_form(env.get?("csrf_token").try &.as(String) || "")
-}.to_pretty_json
-%>
-</script>
-<script src="/js/watched_widget.js"></script>
-
-<% Invidious::Frontend::ChannelAvatars.prepare_ids(env, watched.compact_map(&.channel_id)) %>
-<% Invidious::Frontend::ViewCounts.prepare(env, watched) %>
-<% Invidious::Frontend::AiChannels.prepare_ids(env, watched.compact_map(&.channel_id)) %>
-<% Invidious::Frontend::ChannelSpoilers.prepare(env, watched) %>
-<% previous_group = "" %>
-<div class="history-groups" data-browse-items>
-    <% watched.each do |entry| %>
-        <% item = entry.video_id %>
-        <% group = Invidious::History.group(entry.latest_watched, history_today) %>
-        <% if group != previous_group %>
-            <% unless previous_group.empty? %></div></section><% end %>
-            <section class="history-group" data-history-group="<%= HTML.escape(group) %>">
-            <h2><%= I18n.translate(locale, group) %></h2>
-            <div class="pure-g media-grid">
-            <% previous_group = group %>
-        <% end %>
-        <div class="pure-u-1 pure-u-md-1-4 media-item" data-video-id="<%= HTML.escape(item) %>" data-kind="video">
-            <div class="h-box media-card">
-                <div class="thumbnail video-thumbnail">
-                    <% history_date = Invidious::ChannelSpoilers.publication(entry.release_date) %>
-                    <% history_image = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, entry.channel_id || "")
-                        Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale)
-                      elsif env.get("preferences").as(Preferences).thin_mode
-                        %(<span class="thumbnail-placeholder video-placeholder"></span>)
-                      else
-                        %(<img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/#{HTML.escape(item)}/mqdefault.jpg" alt="">)
-                      end %>
-                    <a style="width:100%" href="/watch?v=<%= HTML.escape(item) %>" aria-label="<%= I18n.translate(locale, "ui_open_video") %>"><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, item, entry.channel_id || "", history_date, history_image) %></a>
-
-                    <%= Invidious::Frontend::WatchedIndicator.render(item, entry.length_seconds, true) %>
-
-                    <div class="top-left-overlay"><div class="watched">
-                    <form data-onsubmit="return_false" action="/watch_ajax?action=mark_unwatched&id=<%= HTML.escape(item) %>&referer=<%= env.get("current_page") %>" method="post">
-                        <input type="hidden" name="csrf_token" value="<%= URI.encode_www_form(env.get?("csrf_token").try &.as(String) || "") %>">
-                        <button type="submit" class="pure-button pure-button-secondary low-profile"
-                                data-onclick="mark_unwatched" data-id="<%= HTML.escape(item) %>" aria-label="<%= I18n.translate(locale, "ui_remove_history") %>"><i class="icon ion-md-trash" aria-hidden="true"></i></button>
-                    </form>
-                    </div></div>
-                </div>
-                <% history_channel_id = entry.channel_id || "" %>
-                <% history_avatar = Invidious::Frontend::ChannelAvatars.show?(env, history_channel_id) %>
-                <div class="video-card-details">
-                <p data-dearrow-row><a href="/watch?v=<%= HTML.escape(item) %>" dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, item, entry.channel_id || "", entry.title || "#{I18n.translate(locale, "ui_open_video")} (#{item})", history_date) %></a></p>
-                <p>
-                    <% if channel_id = entry.channel_id %>
-                    <a class="channel-name-link" href="/channel/<%= URI.encode_www_form(channel_id) %>"><% if history_avatar %><%= Invidious::Frontend::ChannelAvatars.render(env, history_channel_id, name: entry.channel_name) %><% end %><span dir="auto"><%= HTML.escape(entry.channel_name || channel_id) %></span></a>
-                    <% else %>
-                    <span dir="auto"><%= HTML.escape(entry.channel_name || I18n.translate(locale, "history_channel_unknown")) %></span>
-                    <% end %>
-                </p>
-                <p><%= I18n.translate(locale, "history_released") %>: <%= HTML.escape(entry.release_date || I18n.translate(locale, "history_date_unknown")) %></p>
-                <p><%= I18n.translate(locale, "history_watched") %>: <%= HTML.escape(entry.latest_watched || I18n.translate(locale, "history_watch_date_unknown")) %></p>
-                <% if count = Invidious::Frontend::ViewCounts.get(env, item) %><p class="video-data" dir="auto"><%= HTML.escape(count.text(locale)) %></p><% end %>
-                </div>
-            </div>
-        </div>
-    <% end %>
-    <% unless previous_group.empty? %></div></section><% end %>
-</div>
-
-<%=
-  IV::Frontend::Pagination.nav_numeric(locale,
-    base_url: base_url,
-    current_page: page,
-    show_next: (max_results > 0 && page.to_i64 * max_results < history_count)
-  )
-%>
+<% content_for "header" do %><title><%= I18n.translate(locale, "History") %> - Invidious</title><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "Watch history") %></h1><p><%= I18n.translate(locale, "channel_tab_videos_label") %>: <span id="count"><%= history_count %></span></p></header>
+<div class="toolbar collection-heading-actions"><a class="button" href="/preferences?section=library"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "overhaul_library_settings") %></a><a class="button button-danger" href="/clear_watch_history?referer=<%= URI.encode_www_form(env.request.resource) %>"><%= Invidious::Frontend::Icons.render("trash-2") %><%= I18n.translate(locale, "Clear watch history") %></a></div>
+<% unless user.preferences.watch_history %><p class="status-panel"><%= I18n.translate(locale, "overhaul_history_paused") %></p><% end %>
+<form class="scoped-search collection-filters" action="/feed/history" method="get" role="search"><label for="history-search"><%= I18n.translate(locale, "history_search") %></label><div><input type="search" id="history-search" name="q" value="<%= HTML.escape(history_query) %>" placeholder="<%= I18n.translate(locale, "history_search_placeholder") %>"><% if env.params.query.has_key?("max_results") %><input type="hidden" name="max_results" value="<%= max_results %>"><% end %><button class="icon-button" aria-label="<%= I18n.translate(locale, "Search") %>"><%= Invidious::Frontend::Icons.render("search") %></button><% unless history_query.empty? %><a class="button" href="<%= HTML.escape(history_clear_url) %>"><%= I18n.translate(locale, "history_clear_search") %></a><% end %></div></form>
+<% Invidious::Frontend::ChannelAvatars.prepare_ids(env, watched.compact_map(&.channel_id)); Invidious::Frontend::ViewCounts.prepare(env, watched); Invidious::Frontend::AiChannels.prepare_ids(env, watched.compact_map(&.channel_id)); Invidious::Frontend::ChannelSpoilers.prepare(env, watched) %>
+<% collection_kind = "history" %><section data-collection data-collection-kind="history"><%= rendered "overhaul/collection_toolbar" %>
+<% if watched.empty? %><p class="status-panel"><%= I18n.translate(locale, history_query.empty? ? "history_empty" : "history_no_matches") %></p><% end %>
+<% previous_group = "" %><div class="history-groups" data-browse-items>
+<% watched.each do |entry| %><% group = Invidious::History.group(entry.latest_watched, history_today) %><% if group != previous_group %><% unless previous_group.empty? %></div></section><% end %><section class="history-group" data-history-group="<%= HTML.escape(group) %>"><h2><%= I18n.translate(locale, group) %></h2><div class="media-rows"><% previous_group = group %><% end %><%= rendered "overhaul/history_item" %><% end %><% unless previous_group.empty? %></div></section><% end %></div>
+<%= Invidious::Frontend::Pagination.nav_numeric(locale, base_url: base_url, current_page: page, show_next: max_results > 0 && page.to_i64 * max_results < history_count) %><%= rendered "components/browse_controls" %>
+</section>

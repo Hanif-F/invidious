@@ -67,8 +67,23 @@ module Invidious::Authentication
     "/login?referer=#{URI.encode_www_form(safe_login_return(destination))}"
   end
 
+  def iframe_login_url(request : HTTP::Request) : String
+    destination = safe_login_return(request.resource)
+    if match = request.path.match(%r{\A/embed/([A-Za-z0-9_-]{11})\z})
+      query = URI::Params.parse(URI.parse(destination).query || "")
+      query.delete_all("v")
+      query["v"] = match[1]
+      destination = "/watch?#{query}"
+    end
+    login_url(destination)
+  end
+
   def login_referer(env) : String
-    safe_login_return(env.params.query["referer"]? || get_referer(env, "/feed/subscriptions", unroll: false))
+    {% if flag?(:api_only) %}
+      safe_login_return(env.params.query["referer"]? || get_referer(env, "/admin/settings", unroll: false))
+    {% else %}
+      safe_login_return(env.params.query["referer"]? || get_referer(env, "/feed/subscriptions", unroll: false))
+    {% end %}
   end
 
   # Companion receives playback headers, never the instance's account secrets.

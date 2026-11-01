@@ -1,0 +1,82 @@
+<% preferences = env.get("preferences").as(Preferences); locale = preferences.locale; dark_mode = preferences.dark_mode %>
+<% browse_preferences = env.get?("subscription_view_preferences").try(&.as(Preferences)) || preferences %>
+<% browse_blocks = Invidious::Frontend::Desktop.watch?(env) || Invidious::Frontend::Desktop.listing?(env) ? Invidious::Frontend::BlockedChannels.ids(env) : nil %>
+<!doctype html>
+<html lang="<%= locale %>" dir="<%= I18n.locale_is_rtl?(locale) ? "rtl" : "ltr" %>">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <script id="browser-profile" type="application/json"><%= {scope: Invidious::BrowserProfiles.render_scope(env), cookieDomain: Invidious::Authentication.cookie_domain(env), saveError: I18n.translate(locale, "browser_save_error")}.to_json.gsub("<", "\\u003c") %></script>
+    <script src="/js/browser-storage.js?v=<%= ASSET_COMMIT %>"></script>
+    <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
+    <script id="ui-config" type="application/json"><%= {"csrf" => env.get?("csrf_token").try(&.as(String)) || "", "signedIn" => !!env.get?("user"), "discovery" => Invidious::Frontend::Desktop.discovery?(env), "unseenOnly" => browse_preferences.unseen_only, "privateBrowse" => env.request.method == "POST", "privateSearch" => Invidious::Frontend::Desktop.private_search?(env), "browseFingerprint" => Invidious::Frontend::Misc.browse_fingerprint(browse_preferences, history: env.request.path == "/feed/history", blocked: browse_blocks), "ownerBrowseFingerprint" => Invidious::Frontend::Misc.browse_fingerprint(preferences, history: env.request.path == "/feed/history", blocked: browse_blocks), "fingerprint" => OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, preferences.to_json), "words" => %w(error read_error saved retry saving unsaved no_matches settings_search discard clear_search load_more end loading clear_filters shortcuts navigation select count select_all clear_selection add_playlist watched unwatched remove unsubscribe confirm_bulk progress partial check_playlist move_up move_down dock_return dock_dismiss play_pause mute follow search_focus close playback_keys navigation_toggle results_updated selection_label operation apply no_playlists page_only drag).to_h { |key| {key, I18n.translate(locale, "ux_#{key}")} }}.to_json.gsub("<", "\\u003c") %></script>
+    <script src="/js/ui.js?v=<%= ASSET_COMMIT %>"></script>
+    <% if expiry = env.get?("verification_expiry") %>
+    <script id="verification-access" type="application/json" data-required-label="<%= HTML.escape(I18n.translate(locale, "Verification required")) %>" data-playback-label="<%= HTML.escape(I18n.translate(locale, "Verification is required to play this video.")) %>" data-open-label="<%= HTML.escape(I18n.translate(locale, "Open this instance to verify and watch")) %>"><%= expiry.as(String).to_i64 %></script>
+    <script src="/js/bot-protection.js?v=<%= ASSET_COMMIT %>"></script>
+    <% end %>
+    <% if Invidious::Frontend::Desktop.watch?(env) || Invidious::Frontend::Desktop.listing?(env) %><%= rendered "components/channel_spoiler_scripts" %><% end %>
+<link rel="icon" href="/favicon-32x32.png?v=<%= ASSET_COMMIT %>">
+<%= yield_content "header" %>
+<link rel="stylesheet" href="/css/foundation.css?v=<%= ASSET_COMMIT %>">
+</head>
+<body class="<%= dark_mode.blank? ? "no" : dark_mode %>-theme" data-overhaul data-page="<%= Invidious::Frontend::Desktop.watch?(env) ? "watch" : (Invidious::Frontend::Desktop.settings?(env) ? "settings" : "browse") %>">
+<a class="skip-link" href="#main-content"><%= I18n.translate(locale, "ui_skip_content") %></a>
+<span id="dark_mode_pref" hidden><%= dark_mode %></span>
+<header class="app-header">
+  <div class="brand-group"><button type="button" id="sidebar-toggle" class="icon-button" aria-controls="app-sidebar" aria-expanded="true" aria-label="<%= I18n.translate(locale, "ux_navigation_toggle") %>" title="<%= I18n.translate(locale, "ux_navigation_toggle") %>"><%= Invidious::Frontend::Icons.render("menu") %></button><a class="brand" href="/"><img src="/invidious-colored-vector.svg" alt="">Invidious</a></div>
+  <% if env.get?("search_homepage") %><div class="header-search"></div><% else %>
+  <form class="header-search" action="/search" method="<%= Invidious::Frontend::Desktop.private_search?(env) ? "post" : "get" %>" role="search"><input type="search" id="searchbox" name="q" aria-label="<%= I18n.translate(locale, "search") %>" placeholder="<%= I18n.translate(locale, "search") %>" value="<%= HTML.escape(env.get?("search").try(&.as(String)) || "") %>" autocapitalize="none" spellcheck="false"><button class="icon-button" aria-label="<%= I18n.translate(locale, "search") %>" title="<%= I18n.translate(locale, "search") %>"><%= Invidious::Frontend::Icons.render("search") %></button></form>
+  <% end %>
+  <div class="header-actions">
+  <details class="ui-menu header-account" data-ui-menu><summary class="icon-button" aria-label="<%= I18n.translate(locale, "overhaul_account_menu") %>" title="<%= I18n.translate(locale, "overhaul_account_menu") %>"><%= Invidious::Frontend::Icons.render("user") %></summary><div class="menu-content">
+    <% if env.get?("user") %><a href="/account"><%= Invidious::Frontend::Icons.render("user") %><%= preferences.show_nick ? HTML.escape(env.get("user").as(Invidious::User).username) : I18n.translate(locale, "overhaul_account") %></a><a href="/token_manager"><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "overhaul_sessions") %></a><% elsif CONFIG.login_enabled %><a href="/login?referer=<%= URI.encode_www_form(env.request.resource) %>"><%= Invidious::Frontend::Icons.render("user") %><%= I18n.translate(locale, "Log in") %></a><% end %>
+    <a href="/preferences?section=appearance"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "overhaul_settings") %></a>
+    <% if env.get?("user") && Invidious::Authentication.admin?(env.get("user").as(Invidious::User)) %><a href="/admin/settings"><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "admin_instance_settings") %></a><% end %>
+    <form action="/toggle_theme?referer=<%= URI.encode_www_form(env.request.resource) %>" method="post"><input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button id="toggle_theme" data-mode-system="<%= I18n.translate(locale, "preferences_color_system") %>" data-mode-light="<%= I18n.translate(locale, "light") %>" data-mode-dark="<%= I18n.translate(locale, "dark") %>"><%= Invidious::Frontend::Icons.render(dark_mode.empty? ? "monitor" : (dark_mode == "light" ? "sun" : "moon")) %><span><%= I18n.translate(locale, "preferences_color_mode_label") %></span></button></form>
+    <button type="button" data-shortcut-help><%= Invidious::Frontend::Icons.render("keyboard") %><%= I18n.translate(locale, "ux_shortcuts") %></button>
+    <% if env.get?("user") %><hr><form action="/signout?referer=/" method="post"><input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button><%= Invidious::Frontend::Icons.render("log-out") %><%= I18n.translate(locale, "Log out") %></button></form><% end %>
+  </div></details></div>
+</header>
+<button type="button" class="nav-scrim" tabindex="-1" aria-label="<%= I18n.translate(locale, "Close") %>" hidden></button>
+<nav class="app-sidebar" id="app-sidebar" aria-label="<%= I18n.translate(locale, "ui_navigation") %>"><%= rendered "overhaul/navigation" %></nav>
+<main class="app-main" id="main-content" tabindex="-1" data-browse-region><%= content %></main>
+<footer class="app-footer"><a href="/privacy"><%= I18n.translate(locale, "View privacy policy.") %></a><a href="/licenses"><%= I18n.translate(locale, "View JavaScript license information.") %></a><a href="<%= HTML.escape(CONFIG.modified_source_code_url || "https://github.com/iv-org/invidious") %>"><%= I18n.translate(locale, "footer_source_code") %></a><% if CONFIG.modified_source_code_url %><a href="https://github.com/iv-org/invidious"><%= I18n.translate(locale, "footer_original_source_code") %></a><% end %><a href="https://github.com/iv-org/documentation"><%= I18n.translate(locale, "footer_documentation") %></a><a href="https://github.com/iv-org/invidious/blob/master/LICENSE">AGPLv3</a><span><%= CURRENT_VERSION %> · <%= CURRENT_COMMIT %></span></footer>
+<aside id="ui-notice" class="ui-notice" hidden><span role="status"></span><button type="button" class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>" data-ui-dismiss><%= Invidious::Frontend::Icons.render("x") %></button></aside>
+<dialog id="shortcut-help" aria-labelledby="shortcut-heading"><form method="dialog"><button class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>"><%= Invidious::Frontend::Icons.render("x") %></button></form><h2 id="shortcut-heading"><%= I18n.translate(locale, "ux_shortcuts") %></h2><dl><dt>/</dt><dd><%= I18n.translate(locale, "ux_search_focus") %></dd><dt>?</dt><dd><%= I18n.translate(locale, "ux_shortcuts") %></dd><dt>K / Space · J / L · M · F · C</dt><dd><%= I18n.translate(locale, "ux_playback_keys") %></dd></dl></dialog>
+<% if Invidious::Frontend::Desktop.listing?(env) || Invidious::Frontend::Desktop.watch?(env) %>
+<%= rendered "components/video-actions-dialog" %>
+<script id="dearrow-config" type="application/json"><%= {"enabled" => preferences.dearrow_enabled, "showOriginal" => preferences.dearrow_show_original, "originalLabel" => I18n.translate(locale, "dearrow_reveal_original")}.to_json.gsub("<", "\\u003c") %></script><script src="/js/dearrow.js?v=<%= ASSET_COMMIT %>" defer></script>
+<script id="watched-config" type="application/json"><%= {"sync" => !!env.get?("user") && env.get("user").as(Invidious::User).preferences.save_player_pos}.to_json %></script>
+<script src="/js/watched_indicator.js?v=<%= ASSET_COMMIT %>" defer></script>
+<script src="/js/video-actions.js?v=<%= ASSET_COMMIT %>" defer></script>
+<% if Invidious::Frontend::Desktop.listing?(env) %><script src="/js/browse.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<% if env.get?("user") %><script src="/js/library.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<% if Invidious::Frontend::Desktop.watch?(env) %><script src="/js/watch-enhancements.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<script src="/js/enhancements.js?v=<%= ASSET_COMMIT %>" defer></script>
+<% end %>
+<% if !Invidious::Frontend::Desktop.account?(env) && env.get?("user") && !env.get("user").as(Invidious::User).preferences.timezone && env.request.path != "/preferences" && !env.request.path.starts_with?("/admin/") %><script id="timezone_data" type="application/json"><%= {"csrf_token" => env.get?("csrf_token").try(&.as(String))}.to_json.gsub("<", "\\u003c") %></script><script src="/js/timezone.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<% if env.get?("user") && !Invidious::Frontend::Desktop.account?(env) %><script src="/js/subscriptions.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<% if {"/create_playlist", "/edit_playlist", "/feed/playlists"}.includes?(env.request.path) %><script src="/js/playlist-forms.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<script src="/js/handlers.js?v=<%= ASSET_COMMIT %>"></script>
+<script src="/js/themes.js?v=<%= ASSET_COMMIT %>"></script>
+<script id="overhaul-config" type="application/json"><%= %w(order_picked order_cancelled order_saved order_failed order_stale order_position preview_save creation_uncertain edit_uncertain).to_h { |key| {key, I18n.translate(locale, "overhaul_#{key}")} }.to_json.gsub("<", "\\u003c") %></script>
+<script src="/js/overhaul.js?v=<%= ASSET_COMMIT %>" defer></script>
+<% if Invidious::Frontend::Desktop.account?(env) %><script src="/js/account-forms.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+    <% if env.get?("user") && !Invidious::Frontend::Desktop.account?(env) %>
+        <script src="/js/sse.js?v=<%= ASSET_COMMIT %>"></script>
+        <script id="notification_data" type="application/json">
+        <%=
+        {
+            "csrf_token" => env.get?("csrf_token").try(&.as(String)) || "",
+            "initial_count" => env.get("user").as(Invidious::User).notifications.size,
+            "reset_count" => env.request.path == "/feed/subscriptions",
+            "upload_text" => I18n.translate(locale, "`x` uploaded a video"),
+            "live_now_text" => I18n.translate(locale, "`x` is live")
+        }.to_json.gsub("<", "\\u003c")
+        %>
+        </script>
+        <% if CONFIG.enable_user_notifications %>
+        <script src="/js/notifications.js?v=<%= ASSET_COMMIT %>"></script>
+        <% end %>
+    <% end %>
+</body></html>

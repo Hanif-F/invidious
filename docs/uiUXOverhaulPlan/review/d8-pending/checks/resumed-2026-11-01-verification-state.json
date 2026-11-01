@@ -1,0 +1,78 @@
+{
+  "recordedAt": "2026-11-01T13:26:38.570636+00:00",
+  "status": "D8 complete; D9 and overall goal remain required",
+  "completedExitZero": [
+    "resumed-2026-11-01-renderer-build.log",
+    "resumed-2026-11-01-renderer-render.log",
+    "resumed-2026-11-01-recovery-build.log",
+    "resumed-2026-11-01-recovery-render.log",
+    "resumed-2026-11-01-accounts-build.log",
+    "resumed-2026-11-01-app-normal-build.log",
+    "resumed-2026-11-01-app-api-build.log",
+    "resumed-2026-11-01-accounts-full.log",
+    "resumed-2026-11-01-admin-reconciled-final.log",
+    "resumed-2026-11-01-block-context-build.log",
+    "resumed-2026-11-01-block-context-render.log",
+    "resumed-2026-11-01-block-context-focused.log",
+    "resumed-2026-11-01-npm-current.log"
+  ],
+  "activeHandles": {},
+  "containerId": "9f3a957dd9216ff11365e8ee0463145168bcf7912d262f35ab809e10bac4d21c",
+  "databaseGuard": "resumed-2026-11-01-database-guard.py",
+  "historical": {
+    "manifests": 19,
+    "artifactFiles": 767,
+    "matchedFrozenDigests": 741,
+    "notIndividuallyDigestedInFrozenManifests": [
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/progress.json",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/firefox-d6-contribution-list-light.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/firefox-d6-contribution-review-light.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/firefox-d6-contribution-uncertain-light.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/chromium-d6-contribution-review-dark-rtl.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/chromium-d6-contribution-uncertain-dark-rtl.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/firefox-d6-contribution-list-dark-rtl.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/firefox-d6-contribution-nojs-light.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/chromium-d6-settings-legacy-nojs-dark.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/chromium-d6-settings-legacy-asset-failure-dark.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/firefox-d6-settings-legacy-nojs-light.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/firefox-d6-settings-legacy-asset-failure-light.png",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/checks/invidious-d6-ai-settings-tests.log",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/checks/invidious-d6-sponsorblock-preferences-specs.log",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/checks/invidious-d6-enhancements-db-checks.log",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/checks/invidious-d6-sb-editor-browser-tests.log",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/checks/invidious-d6-sb-storage-tests.log",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/checks/masking-cumulative-source-phase.json",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/checks/invidious-d6-coexistence-invalidation-browser.log",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/checks/invidious-d6-coexistence-invalidation-regressions.log",
+      "docs/uiUXOverhaulPlan/review/d6-enhancements-pending/screens/firefox-d6-runtime-masking-dialog-error-dark-rtl.png",
+      "docs/uiUXOverhaulPlan/review/d6-clips/checks/invidious-d6-clip-desktop-requests.json",
+      "docs/uiUXOverhaulPlan/review/d6-chat/checks/invidious-d6-chat-desktop-tests.log",
+      "docs/uiUXOverhaulPlan/review/d6-chat/checks/invidious-d6-chat-qol-tests.log",
+      "docs/uiUXOverhaulPlan/review/d6-chat/checks/invidious-d6-chat-specs.log",
+      "docs/uiUXOverhaulPlan/review/d6-chat/checks/invidious-d6-chat-db-tests.log"
+    ]
+  },
+  "completedFrontendPhase": {
+    "file": "resumed-2026-11-01-npm-full.log",
+    "tests": 902,
+    "pass": 901,
+    "fail": 1,
+    "soleFailure": "required-login-admin.test.cjs retained full-form Administration container selector",
+    "status": "failed phase retained; final combined rerun required"
+  },
+  "secondFrontendPhase": {
+    "file": "resumed-2026-11-01-npm-full-final.log",
+    "tests": 902,
+    "pass": 901,
+    "fail": 1,
+    "soleFailure": "Firefox personal-context blocking fixture returned an unchanged unblocked canonical DTO after mock success",
+    "status": "Failed phase retained; fixture before/after states are being corrected."
+  },
+  "diagnosticNote": "A redundant host ps diagnostic exec cell was terminated after the build itself returned exit zero; this was not an application or test interruption.",
+  "finalFrontend": {
+    "file": "resumed-2026-11-01-npm-current.log",
+    "tests": 902,
+    "pass": 902,
+    "fail": 0
+  }
+}

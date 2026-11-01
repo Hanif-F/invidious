@@ -1,167 +1,249 @@
 'use strict';
 (function () {
-    var settings = document.getElementById('channel-spoiler-config');
-    if (!settings || !window.InvidiousStorage) return;
-    var config = JSON.parse(settings.textContent);
-    if (window.InvidiousStorage.scope === 'guest') config.now = Math.floor(Date.now() / 1000);
-    var rules = window.InvidiousStorage.scope === 'guest'
-        ? window.InvidiousStorage.local.get('channel_spoiler_settings') || {} : config.rules;
-    // Keep cross-tab activation working even when this page has no rules.
-    if (window.InvidiousStorage.scope === 'guest') window.addEventListener('storage', function (event) {
-        if (window.InvidiousStorage.local.matchesEvent(event, 'channel_spoiler_settings')) location.reload();
-    });
-    if (!Object.keys(rules).length) return;
-    var titles = new WeakSet();
-    var thumbnails = new WeakSet();
-    var requestTitle;
-    var mainDisplay;
-    var pageTitle = config.page && decision(config.page.channel, config.page.published, 'title');
-    var pageImage = config.page && decision(config.page.channel, config.page.published, 'thumbnail');
-
-    function text(element, value) {
-        if (element.textContent !== value) element.textContent = value;
+    var settings = document.getElementById('channel-spoiler-config'), storage = window.InvidiousStorage;
+    if (!settings || !storage || window.InvidiousSpoilers) return;
+    var config = JSON.parse(settings.textContent), rules = config.rules, requestTitle, playerMask;
+    var titles = new Map(), thumbnails = new Map(), observer, life = new AbortController();
+    var suspended = false, disposed = false, managed = false, mainDisplay;
+    if (storage.scope === 'guest') { rules = storage.local.get('channel_spoiler_settings') || {}; config.now = Math.floor(Date.now()/1000); }
+    function current() { return !disposed && storage.isCurrent(); }
+    function text(element,value) { if (element.textContent !== value) element.textContent = value; }
+    function attribute(element,name,value) { if (element.getAttribute(name) !== value) element.setAttribute(name,value); }
+    function decision(channel,published,kind) {
+        var rule = rules[channel], known = Number.isFinite(published) && published >= 1104537600;
+        return {hidden:suspended || !!rule && !!rule['hide_'+kind] && (rule.reveal_after_days === null || rule.reveal_after_days === undefined || !known || config.now < published+rule.reveal_after_days*86400),
+            label:config.labels[kind+'_hidden'+(known?'':'_unknown')]};
     }
-    function attribute(element, name, value) {
-        if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+    function state(element,kind) {
+        return decision(element.dataset.spoilerChannel,element.dataset.spoilerPublished ? Number(element.dataset.spoilerPublished) : NaN,kind);
     }
-
-    function decision(channel, published, kind) {
-        var rule = rules[channel];
-        var known = Number.isFinite(published) && published >= 1104537600;
-        var hidden = !!rule && !!rule['hide_' + kind] && (rule.reveal_after_days === null || rule.reveal_after_days === undefined ||
-            !known || config.now < published + rule.reveal_after_days * 86400);
-        return {hidden: hidden, label: config.labels[kind + '_hidden' + (known ? '' : '_unknown')]};
+    function updateMain(value) {
+        mainDisplay = value;
+        if (document.title !== value+' - Invidious') document.title = value+' - Invidious';
+        if (window.player_data) window.player_data.title = value;
+        if (window.shareOptions) window.shareOptions.title = value;
+        document.querySelectorAll('.vjs-overlay [data-spoiler-title]').forEach(function (element) { text(element,value); });
     }
-    function state(element, kind) {
-        var value = element.dataset.spoilerPublished;
-        return decision(element.dataset.spoilerChannel, value ? Number(value) : NaN, kind);
+    function identity(element,kind,result) {
+        var rule = rules[element.dataset.spoilerChannel];
+        return JSON.stringify([rule && rule['hide_'+kind],rule && rule.reveal_after_days,result.hidden,result.label,kind==='title'&&config.dearrow]);
     }
-    function updateMain(text) {
-        mainDisplay = text;
-        if (document.title !== text + ' - Invidious') document.title = text + ' - Invidious';
-        if (window.player_data) window.player_data.title = text;
-        if (window.shareOptions) window.shareOptions.title = text;
-        document.querySelectorAll('.vjs-overlay [data-spoiler-title]').forEach(function (element) {
-            if (element.textContent !== text) element.textContent = text;
-        });
+    function signature(channel,published,kind) {
+        var rule = rules[channel], result = decision(channel,published,kind);
+        return JSON.stringify([rule && rule['hide_'+kind],rule && rule.reveal_after_days,result.hidden,result.label,kind==='title'&&config.dearrow]);
+    }
+    function original(element) { return element.dataset.spoilerOriginal !== undefined ? element.dataset.spoilerOriginal : element.dataset.dearrowOriginal !== undefined ? element.dataset.dearrowOriginal : element.textContent; }
+    function primary(element) { return !element.closest('.vjs-overlay') || !document.querySelector('.watch-heading [data-dearrow-watch]'); }
+    function resetDeArrow(element,temporary) {
+        if (element.dearrowCleanup) { element.dearrowCleanup(temporary); delete element.dearrowCleanup; }
+        delete element.dataset.dearrowOriginal;
     }
     function title(element) {
-        if (titles.has(element)) return;
-        var result = state(element, 'title');
-        attribute(element, 'data-spoiler-hidden', String(result.hidden));
-        if (!result.hidden) { titles.add(element); return; }
-        if (element.dearrowCleanup) element.dearrowCleanup();
-        text(element, result.label);
-        var original = element.dataset.spoilerOriginal;
-        var row = element.closest('[data-dearrow-row]');
-        if (!row) return;
-        var button = document.createElement('button');
-        button.type = 'button'; button.className = 'dearrow-reveal spoiler-title-reveal';
-        button.setAttribute('aria-label', config.labels.reveal_title);
-        var entry = {index: 0, replacement: null, loading: false};
-        titles.add(element);
-        row.classList.add('dearrow-title-row');
-        row.appendChild(button);
-        if (element.hasAttribute('data-dearrow-watch')) updateMain(result.label);
-        function show(index) {
-            entry.index = index;
-            var text = index === 0 ? result.label : index === 1 && entry.replacement ? entry.replacement : original;
-            if (element.textContent !== text) element.textContent = text;
-            button.setAttribute('aria-label', index === 0 ? config.labels.reveal_title :
-                index === 1 && entry.replacement ? config.labels.next_original : config.labels.hide_title);
-            button.setAttribute('aria-pressed', String(index !== 0));
-            if (element.hasAttribute('data-dearrow-watch')) updateMain(text);
+        var entry = titles.get(element), result = state(element,'title');
+        if (!entry) { entry = {original:original(element),index:0,replacement:null,serial:0,loading:false,identity:null}; titles.set(element,entry); }
+        var nextIdentity = identity(element,'title',result);
+        // A canonical check temporarily masks display but retains unchanged reveals.
+        if (!suspended && entry.identity !== nextIdentity) {
+            entry.index = 0; entry.replacement = null; entry.loading = false; entry.serial++; entry.identity = nextIdentity;
         }
-        button.addEventListener('click', function () {
-            if (!window.InvidiousStorage.isCurrent() || entry.loading) return;
-            if (entry.index !== 0) { show(entry.index === 1 && entry.replacement ? 2 : 0); return; }
-            if (!config.dearrow || !requestTitle || !element.dataset.dearrowId) { show(2); return; }
-            entry.loading = true; button.disabled = true; button.setAttribute('aria-label', config.labels.loading);
-            requestTitle(element.dataset.dearrowId).then(function (replacement) {
-                if (!window.InvidiousStorage.isCurrent()) return;
-                entry.replacement = replacement && replacement !== original ? replacement : null;
-                show(entry.replacement ? 1 : 2);
-            }).finally(function () { entry.loading = false; button.disabled = false; });
-        });
+        attribute(element,'data-spoiler-hidden',String(result.hidden));
+        if (!result.hidden) {
+            if (entry.button) { entry.buttonLife.abort(); entry.button.remove(); entry.button = null; }
+            var restoredRow = element.closest('[data-dearrow-row]');
+            if (restoredRow && !restoredRow.querySelector('.dearrow-reveal')) restoredRow.classList.remove('dearrow-title-row');
+            if (entry.masked) {
+                resetDeArrow(element); text(element,entry.original); entry.masked = false;
+                if (element.hasAttribute('data-dearrow-watch') && primary(element)) updateMain(entry.original);
+                if (window.InvidiousDeArrow) InvidiousDeArrow.rescan(element);
+            }
+            return;
+        }
+        resetDeArrow(element,suspended); entry.masked = true;
+        var row = element.closest('[data-dearrow-row]');
+        function show() {
+            var value = suspended || entry.index === 0 ? result.label : entry.index === 1 && entry.replacement ? entry.replacement : entry.original;
+            if (element.hasAttribute('data-dearrow-watch') && !primary(element)) value = mainDisplay || result.label;
+            text(element,value);
+            if (entry.button) {
+                entry.button.disabled = suspended || entry.loading;
+                attribute(entry.button,'aria-label',entry.loading ? config.labels.loading : entry.index === 0 ? config.labels.reveal_title : entry.index === 1 && entry.replacement ? config.labels.next_original : config.labels.hide_title);
+                attribute(entry.button,'aria-pressed',String(!suspended && entry.index !== 0));
+            }
+            if (element.hasAttribute('data-dearrow-watch') && primary(element)) updateMain(value);
+        }
+        entry.show = show;
+        if (row && !entry.button) {
+            var button = entry.button = document.createElement('button');
+            entry.buttonLife = new AbortController();
+            button.type = 'button'; button.className = 'dearrow-reveal spoiler-title-reveal';
+            if (document.body && document.body.dataset.page === 'watch' && window.InvidiousPlayerInterface) button.append(InvidiousPlayerInterface.icon('rotate-cw'));
+            row.classList.add('dearrow-title-row'); row.appendChild(button);
+            button.addEventListener('click',function () {
+                if (!current() || suspended || entry.loading || !element.isConnected) return;
+                if (entry.index !== 0) { entry.index = entry.index === 1 && entry.replacement ? 2 : 0; entry.show(); return; }
+                if (!config.dearrow || !requestTitle || !element.dataset.dearrowId) { entry.index = 2; entry.show(); return; }
+                entry.loading = true; var serial = ++entry.serial; entry.show();
+                Promise.resolve(requestTitle(element.dataset.dearrowId)).then(function (replacement) {
+                    if (!current() || suspended || entry.serial !== serial || !element.isConnected) return;
+                    entry.replacement = replacement && replacement !== entry.original ? replacement : null;
+                    entry.index = entry.replacement ? 1 : 2;
+                }).catch(function () { /* Keep the title hidden after a failed reveal. */ }).finally(function () {
+                    if (!current() || entry.serial !== serial || !element.isConnected) return;
+                    entry.loading = false; entry.show();
+                });
+            },{signal:entry.buttonLife.signal});
+        }
+        show();
     }
     function thumbnail(element) {
-        if (thumbnails.has(element)) return;
-        thumbnails.add(element);
-        var result = state(element, 'thumbnail');
-        attribute(element, 'data-spoiler-hidden', String(result.hidden));
-        if (!result.hidden) return;
-        var placeholder = element.firstElementChild;
-        if (!placeholder || !placeholder.classList.contains('spoiler-placeholder')) {
-            placeholder = document.createElement('span');
-            placeholder.className = 'spoiler-placeholder';
-            placeholder.textContent = result.label;
-            element.replaceChildren(placeholder);
-        } else text(placeholder, result.label);
-        var link = element.closest('a');
-        if (link) { link.setAttribute('aria-label', config.labels.reveal_thumbnail); link.tabIndex = 0; }
-        else { element.tabIndex = 0; element.setAttribute('role', 'button'); }
-        element.setAttribute('aria-label', config.labels.reveal_thumbnail);
-        function reveal(event) {
-            if (element.dataset.spoilerHidden !== 'true' || !window.InvidiousStorage.isCurrent()) return;
-            if (link && event.type === 'click' && event.target !== element && !element.contains(event.target) && event.detail !== 0) return;
-            event.preventDefault(); event.stopImmediatePropagation();
-            var img = document.createElement('img');
-            img.src = element.dataset.spoilerOriginal; img.alt = ''; img.className = 'thumbnail';
-            element.replaceChildren(img); element.dataset.spoilerHidden = 'false';
-            element.removeAttribute('aria-label');
-            if (link) link.removeAttribute('aria-label');
+        var entry = thumbnails.get(element), result = state(element,'thumbnail');
+        if (!entry) {
+            entry = {identity:null,revealed:false,life:new AbortController(),normal:element.querySelector('.spoiler-placeholder') ? null : Array.from(element.childNodes,function (node) { return node.cloneNode(true); })};
+            thumbnails.set(element,entry);
+            var link = element.closest('a'), target = link || element;
+            entry.target = target; entry.label = target.getAttribute('aria-label'); entry.tabindex = target.getAttribute('tabindex'); entry.role = element.getAttribute('role');
+            function reveal(event) {
+                if (!current() || suspended || element.dataset.spoilerHidden !== 'true') return;
+                if (link && event.type === 'click' && event.target !== element && !element.contains(event.target) && event.detail !== 0) return;
+                event.preventDefault(); event.stopImmediatePropagation(); entry.revealed = true; thumbnail(element);
+            }
+            target.addEventListener('click',reveal,{capture:true,signal:entry.life.signal});
+            target.addEventListener('keydown',function (event) { if ((!link || event.target === link) && (event.key === 'Enter' || event.key === ' ')) reveal(event); },{signal:entry.life.signal});
         }
-        (link || element).addEventListener('click', reveal, true);
-        (link || element).addEventListener('keydown', function (event) {
-            if ((!link || event.target === link) && (event.key === 'Enter' || event.key === ' ')) reveal(event);
+        var nextIdentity = identity(element,'thumbnail',result);
+        if (!suspended && entry.identity !== nextIdentity) { entry.revealed = false; entry.identity = nextIdentity; }
+        var hidden = result.hidden && (suspended || !entry.revealed);
+        attribute(element,'data-spoiler-hidden',String(hidden));
+        if (hidden) {
+            var placeholder = element.firstElementChild;
+            if (!placeholder || !placeholder.classList.contains('spoiler-placeholder')) {
+                placeholder = document.createElement('span'); placeholder.className = 'spoiler-placeholder'; element.replaceChildren(placeholder);
+            }
+            text(placeholder,result.label);
+            attribute(element,'aria-label',config.labels.reveal_thumbnail); attribute(entry.target,'aria-label',config.labels.reveal_thumbnail);
+            if (entry.target === element) attribute(element,'role','button'); entry.target.tabIndex = 0;
+        } else {
+            if (element.querySelector('.spoiler-placeholder')) {
+                if (entry.normal) element.replaceChildren(...entry.normal.map(function (node) { return node.cloneNode(true); }));
+                else { var image = document.createElement('img'); image.src = element.dataset.spoilerOriginal; image.alt = ''; image.className = 'thumbnail'; element.replaceChildren(image); }
+            }
+            element.removeAttribute('aria-label');
+            if (entry.label === null) entry.target.removeAttribute('aria-label'); else attribute(entry.target,'aria-label',entry.label);
+            if (entry.tabindex === null) entry.target.removeAttribute('tabindex'); else attribute(entry.target,'tabindex',entry.tabindex);
+            if (entry.role === null) element.removeAttribute('role'); else attribute(element,'role',entry.role);
+        }
+    }
+    function metadata() {
+        if (!config.page) return;
+        var titleState = decision(config.page.channel,config.page.published,'title'), imageState = decision(config.page.channel,config.page.published,'thumbnail');
+        var display = titleState.hidden ? mainDisplay || titleState.label : mainDisplay || config.page.title;
+        if (display && document.title !== display+' - Invidious') document.title = display+' - Invidious';
+        document.querySelectorAll('meta').forEach(function (element) {
+            var name = element.getAttribute('property') || element.getAttribute('name');
+            if (['og:title','twitter:title'].includes(name)) attribute(element,'content',titleState.hidden ? titleState.label : config.page.title);
+            if (['thumbnail','og:image','twitter:image'].includes(name)) attribute(element,'content',imageState.hidden ? '' : config.page.thumbnail);
         });
+        // Download forms may move into the dialog. Their submitted filename is
+        // an auxiliary title surface and must stay generic while masked/unknown.
+        document.querySelectorAll('#download-options input[type="hidden"][name="title"]').forEach(function (element) {
+            attribute(element,'value',titleState.hidden ? titleState.label : config.page.title);
+        });
+        var imageRule = rules[config.page.channel];
+        if (playerMask) playerMask({title:titleState,thumbnail:imageState,suspended:suspended,thumbnailIdentity:JSON.stringify([imageRule && imageRule.hide_thumbnail,imageRule && imageRule.reveal_after_days,imageState.hidden,imageState.label])});
     }
     function scan(root) {
-        if (root.nodeType !== 1) return;
-        if (config.page) {
-            var display = (mainDisplay || pageTitle.label) + ' - Invidious';
-            if (root.tagName === 'TITLE' && pageTitle.hidden && root.textContent !== display) root.textContent = display;
-            if (root.tagName === 'META') {
-                var name = root.getAttribute('property') || root.getAttribute('name');
-                if (pageTitle.hidden && ['og:title', 'twitter:title'].includes(name)) attribute(root, 'content', pageTitle.label);
-                if (pageImage.hidden && ['thumbnail', 'og:image', 'twitter:image'].includes(name)) attribute(root, 'content', '');
-            }
-        }
+        if (disposed || !root || root.nodeType !== 1 || !suspended && !Object.keys(rules).length) return;
         function visit(element) {
             if (element.hasAttribute('data-spoiler-title')) title(element);
             if (element.hasAttribute('data-spoiler-thumbnail')) thumbnail(element);
         }
         visit(root);
         if (root.childElementCount) root.querySelectorAll('[data-spoiler-title], [data-spoiler-thumbnail]').forEach(visit);
+        if (root.tagName === 'TITLE' || root.tagName === 'META') metadata();
     }
-    // Runs in the head, so guest rules also apply before the first paint and
-    // before scripts initialize the player. Mutations cover continuation queues.
-    new MutationObserver(function (records) {
-        var roots = new Set();
-        records.forEach(function (record) {
-            if (record.target.nodeType === 1 && record.target.tagName === 'TITLE') roots.add(record.target);
-            record.addedNodes.forEach(function (node) { if (node.nodeType === 1 && node.isConnected) roots.add(node); });
+    function watch() {
+        if (observer || disposed) return;
+        observer = new MutationObserver(function (records) {
+            var roots = new Set();
+            records.forEach(function (record) {
+                if (record.target.nodeType === 1 && record.target.tagName === 'TITLE') roots.add(record.target);
+                record.addedNodes.forEach(function (node) { if (node.nodeType === 1 && node.isConnected) roots.add(node); });
+            });
+            titles.forEach(function (entry,element) { if (!element.isConnected) { entry.serial++; if (entry.button) { entry.buttonLife.abort(); entry.button.remove(); } titles.delete(element); } });
+            thumbnails.forEach(function (entry,element) { if (!element.isConnected) { entry.life.abort(); thumbnails.delete(element); } });
+            roots.forEach(function (root) {
+                for (var parent = root.parentElement; parent; parent = parent.parentElement) if (roots.has(parent)) return;
+                scan(root);
+            });
         });
-        roots.forEach(function (root) {
-            for (var parent = root.parentElement; parent; parent = parent.parentElement) {
-                if (roots.has(parent)) return;
-            }
-            scan(root);
-        });
-    }).observe(document.documentElement, {childList: true, subtree: true});
-    window.InvidiousSpoilers = {
-        decision: decision,
-        scan: scan,
-        bindDeArrow: function (request) { requestTitle = request; },
-        player: function (data, channel, published) {
-            var titleState = decision(channel, published, 'title');
-            var imageState = decision(channel, published, 'thumbnail');
-            if (titleState.hidden) { data.title = titleState.label; document.title = data.title + ' - Invidious'; }
+        observer.observe(document.documentElement,{childList:true,subtree:true});
+    }
+    function refresh() {
+        if (suspended || Object.keys(rules).length) { watch(); scan(document.documentElement); }
+        // A removed last rule must also restore previously masked elements.
+        titles.forEach(function (_,element) { if (element.isConnected) title(element); });
+        thumbnails.forEach(function (_,element) { if (element.isConnected) thumbnail(element); }); metadata();
+        if (!suspended && !Object.keys(rules).length && observer) { observer.disconnect(); observer = null; }
+        document.dispatchEvent(new CustomEvent('iv:masking-change',{detail:{suspended:suspended}}));
+    }
+    function configure(value,now) {
+        if (!current() || !value || !value.rules || !value.labels || !Number.isSafeInteger(now)) return false;
+        rules = storage.scope === 'guest' ? storage.local.get('channel_spoiler_settings') || {} : value.rules;
+        config.labels = value.labels; config.dearrow = value.dearrow === true; config.now = now; suspended = false;
+        api.thumbnailRevealLabel = config.labels.reveal_thumbnail; api.replacementRevealLabel = config.labels.next_dearrow; refresh(); return true;
+    }
+    function suspend() {
+        if (disposed || suspended) return;
+        suspended = true; mainDisplay = null;
+        titles.forEach(function (entry) { entry.serial++; entry.loading = false; }); refresh();
+    }
+    function dispose() {
+        if (disposed) return;
+        suspend(); disposed = true; life.abort(); if (observer) observer.disconnect(); observer = null;
+        titles.forEach(function (entry) { if (entry.buttonLife) entry.buttonLife.abort(); });
+        thumbnails.forEach(function (entry) { entry.life.abort(); });
+        titles.clear(); thumbnails.clear(); requestTitle = playerMask = null;
+    }
+    function updateTitle(element,value) {
+        if (!current() || !element.isConnected || typeof value !== 'string' || original(element) === value) return;
+        var entry = titles.get(element);
+        if (window.InvidiousDeArrow) InvidiousDeArrow.forget(element);
+        if (entry) { entry.serial++; if (entry.buttonLife) entry.buttonLife.abort(); if (entry.button) entry.button.remove(); titles.delete(element); }
+        element.dataset.spoilerOriginal = value; delete element.dataset.dearrowOriginal;
+        if (element.hasAttribute('data-dearrow-watch') && primary(element)) {
+            if (config.page) config.page.title = value;
+            mainDisplay = null;
+        }
+        if (!state(element,'title').hidden) {
+            text(element,value);
+            if (element.hasAttribute('data-dearrow-watch') && primary(element)) updateMain(value);
+        }
+        title(element); metadata();
+        if (window.InvidiousDeArrow) InvidiousDeArrow.rescan(element);
+    }
+    function updateThumbnail(element,content) {
+        if (!current() || !element.isConnected || !content) return;
+        var entry = thumbnails.get(element), nodes = Array.from(content.childNodes,function (node) { return node.cloneNode(true); });
+        if (entry) entry.normal = nodes;
+        if (!state(element,'thumbnail').hidden || entry && entry.revealed && !suspended) element.replaceChildren(...nodes.map(function (node) { return node.cloneNode(true); }));
+        if (entry || suspended || Object.keys(rules).length) thumbnail(element);
+    }
+    var api = window.InvidiousSpoilers = {
+        thumbnailRevealLabel:config.labels.reveal_thumbnail,replacementRevealLabel:config.labels.next_dearrow,decision:decision,signature:signature,isSuspended:function () { return suspended; },scan:scan,configure:configure,suspend:suspend,dispose:dispose,
+        setManaged:function () { managed = true; },bindDeArrow:function (request) { requestTitle = request; },
+        bindPlayer:function (apply) { playerMask = apply; metadata(); },displayTitle:updateMain,updateTitle:updateTitle,updateThumbnail:updateThumbnail,
+        player:function (data,channel,published) {
+            var titleState = decision(channel,published,'title'), imageState = decision(channel,published,'thumbnail');
+            if (titleState.hidden) { data.title = titleState.label; document.title = data.title+' - Invidious'; }
             if (imageState.hidden) data.thumbnail = '';
-            data.spoiler_thumbnail_hidden = imageState.hidden;
-            return data;
+            data.spoiler_thumbnail_hidden = imageState.hidden; return data;
         }
     };
-    scan(document.documentElement);
-    document.querySelectorAll('title, meta').forEach(scan);
+    window.addEventListener('storage',function (event) {
+        if (!managed && storage.scope === 'guest' && storage.local.matchesEvent(event,'channel_spoiler_settings')) configure({rules:{},labels:config.labels,dearrow:config.dearrow},Math.floor(Date.now()/1000));
+    },{signal:life.signal});
+    window.addEventListener('pagehide',function (event) { suspend(); if (!event.persisted) dispose(); },{signal:life.signal});
+    window.addEventListener('pageshow',function () { if (!managed && current() && suspended) configure({rules:rules,labels:config.labels,dearrow:config.dearrow},Math.floor(Date.now()/1000)); },{signal:life.signal});
+    window.addEventListener('browserprofilechange',dispose,{signal:life.signal});
+    if (Object.keys(rules).length) refresh();
 }());

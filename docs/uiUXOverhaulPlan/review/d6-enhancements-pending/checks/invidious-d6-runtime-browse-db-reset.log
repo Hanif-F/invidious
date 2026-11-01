@@ -1,0 +1,42 @@
+NOTICE:  drop cascades to 40 other objects
+DETAIL:  drop cascades to table invidious_migrations
+drop cascades to table channels
+drop cascades to table videos
+drop cascades to table channel_videos
+drop cascades to table users
+drop cascades to table session_ids
+drop cascades to table nonces
+drop cascades to table annotations
+drop cascades to type privacy
+drop cascades to table playlists
+drop cascades to table playlist_videos
+drop cascades to table playback_positions
+drop cascades to table blocked_channels
+drop cascades to table dearrow_identities
+drop cascades to table watch_history
+drop cascades to table auth_rate_limits
+drop cascades to table chat_timing_offsets
+drop cascades to table clips
+drop cascades to table saved_playlists
+drop cascades to table channel_avatars
+drop cascades to table ai_slist_snapshots
+drop cascades to table channel_handles
+drop cascades to table tv_pairings
+drop cascades to table original_video_titles
+drop cascades to table bot_protection_settings
+drop cascades to materialized view subscriptions_c27f5c92a8753644532919f3ae60aa4d740355414a51bbbdb
+drop cascades to materialized view subscriptions_c9fac7c3b95a70aafe8d2767d5de148ed3431499536eb9795
+drop cascades to materialized view subscriptions_8cbef21a644c3ee54940738b97078ff5196a19a90c141f5c6
+drop cascades to materialized view subscriptions_833f70bf6a91f07239bccd2e51c27e87774f62ce87d8c48c9
+drop cascades to materialized view subscriptions_ce61beb000fc672307e4999959e4741b96f97b0d3ca218731
+drop cascades to materialized view subscriptions_949013348f927651d73bbfc16488ecbb5320a7c0a354ab553
+drop cascades to materialized view subscriptions_b4c985176c5e31f27325586902cc00b066cc1521c2e543fa3
+drop cascades to materialized view subscriptions_e08c77dbeb2450a8e99459bc63fcc01079422eb83c37e3a28
+drop cascades to materialized view subscriptions_b8472b81dfd5c4c798d048f9f96e0dd8c57225545e362828a
+drop cascades to materialized view subscriptions_90195830a337c50b6723cb0143833edc390bae01e9cc0f189
+drop cascades to materialized view subscriptions_c4c1acf6a9918edf792faf40b37a03c200d0d509b170c9c5b
+drop cascades to materialized view subscriptions_dc62e792305f2735390141fd06c942c6c9cf567202a9719f7
+drop cascades to materialized view subscriptions_3a904545e800d4bc2d0423a6b0d2a395dc7bcb1e5fb4f223f
+drop cascades to materialized view subscriptions_22a49e21ac51b08bfc74ce85b5a153c6fc616dcf34ac7a831
+drop cascades to materialized view subscriptions_95151afe6e6203a64acbd0cabfb964bc47e2a9c4384931351
+CREATE SCHEMA

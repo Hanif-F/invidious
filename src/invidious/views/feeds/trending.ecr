@@ -1,3 +1,4 @@
+<% display_region = region || "US" %>
 <% content_for "header" do %>
 <meta name="description" content="<%= I18n.translate(locale, "An alternative front-end to YouTube") %>">
 <title>
@@ -9,43 +10,21 @@
 </title>
 <% end %>
 
-<%= rendered "components/feed_menu" %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "Trending") %></h1></header>
+<form class="toolbar trending-filters" action="/feed/trending" method="get"><label for="trending-type"><%= I18n.translate(locale, "search_filters_type_label") %></label><select id="trending-type" name="type"><% {"Livestreams", "Gaming"}.each do |option| %><option value="<%= option %>" <%= "selected" if trending_type.downcase == option.downcase || (option == "Livestreams" && trending_type.downcase != "gaming") %>><%= I18n.translate(locale, option) %></option><% end %></select><label for="trending-region"><%= I18n.translate(locale, "preferences_region_label") %></label><select id="trending-region" name="region"><% unless REGIONS.includes?(display_region) %><option value="<%= HTML.escape(display_region) %>" selected><%= HTML.escape(display_region) %></option><% end %><% REGIONS.each do |option| %><option value="<%= option %>" <%= "selected" if display_region == option %>><%= I18n.translate(locale, option) %></option><% end %></select><button class="button button-primary"><%= I18n.translate(locale, "search_filters_apply_button") %></button><% if plid %><a class="button" href="/playlist?list=<%= URI.encode_www_form(plid) %>"><%= Invidious::Frontend::Icons.render("list-video") %><%= I18n.translate(locale, "View as playlist") %></a><% end %></form>
 
-<div class="pure-g h-box">
-    <div style="align-self:flex-end" class="pure-u-2-3">
-        <% if plid %>
-            <a href="/playlist?list=<%= plid %>">
-                <%= I18n.translate(locale, "View as playlist") %>
-            </a>
-        <% end %>
-    </div>
-    <div class="pure-u-1-3">
-        <div class="pure-g" style="text-align:right">
-            <% {"Livestreams", "Gaming"}.each do |option| %>
-                <div class="pure-u-1 pure-md-1-3">
-                    <% if trending_type == option %>
-                        <b><%= I18n.translate(locale, option) %></b>
-                    <% else %>
-                        <a href="/feed/trending?type=<%= option %>&region=<%= region %>">
-                            <%= I18n.translate(locale, option) %>
-                        </a>
-                    <% end %>
-                </div>
-            <% end %>
-        </div>
-    </div>
-</div>
-
-<div class="h-box">
-    <hr>
-</div>
-
+<% trending = Invidious::Frontend::MemberVideos.filter(trending, Invidious::Frontend::MemberVideos.show?(env)) %>
 <% Invidious::Frontend::ChannelAvatars.prepare(env, trending) %>
 <% Invidious::Frontend::ViewCounts.prepare(env, trending) %>
-<% if trending.empty? && env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
+<% if trending.empty? %><% if env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% else %><p class="status-panel" role="status"><%= I18n.translate(locale, "search_message_no_results") %></p><% end %><% end %>
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, trending) %>
-<div class="pure-g media-grid">
+<% wrap_collection = !!env.get?("user") && !env.get?("collection_kind") %>
+<% if wrap_collection %><% collection_kind = env.get?("remove_playlist_items") ? "playlist" : "listing"; env.set "collection_kind", collection_kind %>
+<section data-collection data-collection-kind="<%= collection_kind %>" <%= %(data-playlist-id="#{HTML.escape(env.get("remove_playlist_items").as(String))}") if env.get?("remove_playlist_items") %>><%= rendered "overhaul/collection_toolbar" %><% end %>
+<div class="media-grid">
 <% trending.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>
+
+<% if wrap_collection %></section><% env.set "collection_kind", false %><% end %>

@@ -11,30 +11,60 @@ module Invidious::Routes::PreferencesRoute
     end
     zone = Invidious::History.timezone(env.params.body["timezone"]?)
     return error_json(400, "Invalid timezone") unless zone
-    PG_DB.transaction do |tx|
-      conn = tx.connection
-      raw = conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", user.email, as: String)
-      preferences = Preferences.from_json(raw)
-      unless preferences.timezone
-        preferences.timezone = zone
-        conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", preferences.to_json, user.email)
-      end
+    Invidious::Database::Users.merge_preferences_cas(user.email) do |stored|
+      stored.merge({"timezone" => JSON::Any.new(zone)})
     end
     env.response.status_code = 204
   end
 
   def self.show(env)
-    preferences = env.get("preferences").as(Preferences)
-    locale = preferences.locale
+    if section = env.params.query["section"]?
+      return show_section(env, section)
+    end
+    return runtime(env) if env.params.query["format"]? == "runtime"
+    # Fragments never reach the server. The default category includes ordinary
+    # links for recognized old anchors; the browser can replace that entry with
+    # its canonical destination without changing legacy POST/native contracts.
+    env.set "settings_legacy_entry", true
+    show_section(env, "appearance")
+  end
 
-    referer = get_referer(env)
+  def self.runtime_preferences(env) : Preferences
+    user = env.get?("user").try(&.as(User))
+    raw = user ? Invidious::Database::Users.preference_json(user.email) : guest_fields(env).to_json
+    Preferences.from_json(raw)
+  end
 
-    templated "user/preferences"
+  def self.runtime(env)
+    Authentication.no_store(env)
+    env.response.content_type = "application/json"
+    user = env.get?("user").try(&.as(User))
+    preferences = runtime_preferences(env)
+    blocked = user ? Invidious::Database::BlockedChannels.ids(user.email) : [] of String
+    Invidious::Frontend::EnhancementState.snapshot(preferences, Invidious::BrowserProfiles.render_scope(env), !!user, blocked, HMAC_KEY).to_json
+  rescue DB::NoResultsError
+    env.response.status_code = 403
+    {error: "This account is no longer available. Reload to sign in again."}.to_json
+  rescue
+    env.response.status_code = 503
+    {error: "Enhancement settings could not be checked. Try again."}.to_json
   end
 
   def self.update(env)
+    if env.params.query["format"]? == "runtime"
+      Authentication.no_store(env)
+      env.response.headers["Allow"] = "GET"
+      return error_json(405, "Use GET to check enhancement settings.")
+    end
     if env.get?("user") && !Authentication.valid_session_csrf?(env)
+      if section = env.params.body["section"]?
+        return section_failure(env, 403, "Your session could not be verified. Reload this page before saving.", section)
+      end
       return error_template(403, "Invalid CSRF token")
+    end
+    if section = env.params.body["section"]?
+      return update_chat(env) if section == "chat"
+      return update_section(env, section)
     end
     locale = env.get("preferences").as(Preferences).locale
     referer = get_referer(env)
@@ -269,57 +299,19 @@ module Invidious::Routes::PreferencesRoute
       {% end %}
     {% end %}
 
-    if user = env.get? "user"
-      user = user.as(User)
-      user.preferences = preferences
-      Invidious::Database::Users.update_preferences(user)
-      Invidious::Database::PlaybackPositions.clear(user.email) unless preferences.save_player_pos
-
-      if Authentication.admin?(user)
-        CONFIG.default_user_preferences.default_home = env.params.body["admin_default_home"]?.try &.as(String) || CONFIG.default_user_preferences.default_home
-
-        admin_feed_menu = [] of String
-        4.times do |index|
-          option = env.params.body["admin_feed_menu[#{index}]"]?.try &.as(String) || ""
-          if !option.empty?
-            admin_feed_menu << option
+    raw = if user = env.get?("user").try(&.as(User))
+            Invidious::Database::Users.merge_preferences_cas(user.email, clear_positions: !preferences.save_player_pos) do |stored|
+              Invidious::WebPreferences.merge_legacy(stored, preferences, env.params.body)
+            end
+          else
+            saved = Invidious::WebPreferences.merge_legacy(guest_fields(env), preferences, env.params.body).to_json
+            cookie = Invidious::User::Cookies.prefs_json(Authentication.cookie_domain(env), saved)
+            return error_template(400, "These browser settings exceed the cookie limit.") if cookie.to_set_cookie_header.bytesize > 4096
+            env.response.cookies["PREFS"] = cookie
+            saved
           end
-        end
-        CONFIG.default_user_preferences.feed_menu = admin_feed_menu
-
-        popular_enabled = env.params.body["popular_enabled"]?.try &.as(String)
-        popular_enabled ||= "off"
-        CONFIG.popular_enabled = popular_enabled == "on"
-
-        captcha_enabled = env.params.body["captcha_enabled"]?.try &.as(String)
-        captcha_enabled ||= "off"
-        CONFIG.captcha_enabled = captcha_enabled == "on"
-
-        login_enabled = env.params.body["login_enabled"]?.try &.as(String)
-        login_enabled ||= "off"
-        CONFIG.login_required = env.params.body["login_required"]? == "on"
-        CONFIG.login_enabled = CONFIG.login_required || login_enabled == "on"
-
-        registration_enabled = env.params.body["registration_enabled"]?.try &.as(String)
-        registration_enabled ||= "off"
-        CONFIG.registration_enabled = registration_enabled == "on"
-
-        statistics_enabled = env.params.body["statistics_enabled"]?.try &.as(String)
-        statistics_enabled ||= "off"
-        CONFIG.statistics_enabled = statistics_enabled == "on"
-
-        CONFIG.modified_source_code_url = env.params.body["modified_source_code_url"]?.presence
-
-        File.write("config/config.yml", CONFIG.to_yaml)
-      end
-    else
-      host = env.get("header_x-forwarded-host")
-      if alt = CONFIG.alternative_domains.index(host)
-        env.response.cookies["PREFS"] = Invidious::User::Cookies.prefs(CONFIG.alternative_domains[alt], preferences)
-      else
-        env.response.cookies["PREFS"] = Invidious::User::Cookies.prefs(CONFIG.domain, preferences)
-      end
-    end
+    preferences = Preferences.from_json(raw)
+    env.set "preferences", preferences
 
     if env.params.query["redirect"]? == "false"
       env.response.content_type = "application/json"
@@ -327,6 +319,151 @@ module Invidious::Routes::PreferencesRoute
       return {preferences: preferences, fingerprint: OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, preferences.to_json)}.to_json
     end
     env.redirect referer
+  end
+
+  private def self.guest_fields(env) : Hash(String, JSON::Any)
+    if cookie = env.request.cookies["PREFS"]?
+      begin
+        return JSON.parse(URI.decode_www_form(cookie.value)).as_h
+      rescue
+        # Invalid legacy cookie data already renders as defaults in BeforeAll.
+      end
+    end
+    {} of String => JSON::Any
+  end
+
+  def self.show_section(env, section : String)
+    Authentication.no_store(env)
+    return show_chat(env) if section == "chat"
+    begin
+      Invidious::WebPreferences.fields(section)
+    rescue
+      return section_failure(env, 400, "Unknown settings category", nil)
+    end
+    if section == "library" && !env.get?("user")
+      return section_failure(env, 403, "Sign in to manage library settings", nil)
+    end
+    raw = if user = env.get?("user").try(&.as(User))
+            Invidious::Database::Users.preference_json(user.email)
+          else
+            guest_fields(env).to_json
+          end
+    canonical_preferences = Preferences.from_json(raw)
+    canonical = JSON.parse(canonical_preferences.to_json).as_h
+    values = Invidious::WebPreferences.values(section, canonical)
+    env.set "settings_section", section
+    env.set "settings_values", values.to_json
+    if env.params.query["format"]? == "json"
+      env.response.content_type = "application/json"
+      # Additive read-back metadata also lets a retained full-form caller verify
+      # its existing POST receipt without resurrecting the retired HTML editor.
+      return {section: section, values: values, profile: Invidious::BrowserProfiles.render_scope(env),
+              fingerprint: OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, canonical_preferences.to_json),
+              browseFingerprint: Invidious::Frontend::Misc.browse_fingerprint(canonical_preferences)}.to_json
+    end
+    preferences = env.get("preferences").as(Preferences)
+    locale = preferences.locale
+    templated "overhaul/settings", "overhaul/shell"
+  end
+
+  private def self.show_chat(env)
+    Authentication.no_store(env)
+    preferences = env.get("preferences").as(Preferences)
+    locale = preferences.locale
+    templated "overhaul/chat_settings", "overhaul/shell"
+  end
+
+  private def self.update_chat(env)
+    Authentication.no_store(env)
+    user = env.get?("user").try(&.as(User))
+    return error_template(403, "Sign in to save chat settings without JavaScript") unless user
+    unless env.params.body["browser_profile"]? == Invidious::BrowserProfiles.render_scope(env)
+      return error_template(409, "Your signed-in profile changed. Reload before saving these settings.")
+    end
+    draft = Preferences.from_json(user.preferences.to_json)
+    draft.chat_show_timestamps = env.params.body["chat_show_timestamps"]? == "on"
+    draft.chat_user_blacklist = env.params.body["chat_user_blacklist"]? || ""
+    draft.chat_word_blacklist = env.params.body["chat_word_blacklist"]? || ""
+    data = {"chat_show_timestamps" => JSON::Any.new(draft.chat_show_timestamps),
+            "chat_user_blacklist"  => JSON::Any.new(draft.chat_user_blacklist),
+            "chat_word_blacklist"  => JSON::Any.new(draft.chat_word_blacklist)}
+    begin
+      marker = env.params.body["chat_show_timestamps"]?
+      raise ArgumentError.new("Invalid chat settings") if marker && !{"on", "off"}.includes?(marker)
+      user.preferences = Invidious::ChatPreferences.save_account(user.email, data)
+    rescue ArgumentError
+      env.response.status_code = 400
+      env.set "preferences", draft
+      env.set "chat_settings_error", I18n.translate(draft.locale, "settings_save_error")
+      return show_chat(env)
+    rescue Invidious::Database::Users::PreferenceConflict
+      env.response.status_code = 409
+      env.set "preferences", draft
+      env.set "chat_settings_error", I18n.translate(draft.locale, "settings_save_unconfirmed")
+      return show_chat(env)
+    end
+    env.redirect "/preferences?section=chat&saved=1"
+  end
+
+  private def self.section_failure(env, status : Int32, message : String, section : String?, field : String? = nil)
+    Authentication.no_store(env)
+    env.response.status_code = status
+    if env.params.query["redirect"]? == "false" || env.params.query["format"]? == "json"
+      env.response.content_type = "application/json"
+      return {error: message, field: field}.to_json
+    end
+    if section && Invidious::WebPreferences::SECTIONS.has_key?(section)
+      env.set "settings_draft", env.params.body.to_s
+      env.set "settings_error", message
+      env.set "settings_section", section
+      preferences = env.get("preferences").as(Preferences)
+      locale = preferences.locale
+      env.set "settings_values", Invidious::WebPreferences.values(section, JSON.parse(preferences.to_json).as_h).to_json
+      return templated "overhaul/settings", "overhaul/shell"
+    end
+    error_template(status, message)
+  end
+
+  private def self.update_section(env, section : String)
+    Authentication.no_store(env)
+    begin
+      Invidious::WebPreferences.fields(section)
+    rescue
+      return section_failure(env, 400, "Unknown settings category", nil)
+    end
+    if env.params.body["browser_profile"]? != Invidious::BrowserProfiles.render_scope(env)
+      return section_failure(env, 409, "Your signed-in profile changed. Reload before saving these settings.", section)
+    end
+    if section == "library" && !env.get?("user")
+      return section_failure(env, 403, "Sign in to manage library settings", nil)
+    end
+    begin
+      raw = if user = env.get?("user").try(&.as(User))
+              Invidious::WebPreferences.save_account(user.email, section, env.params.body, I18n::LOCALES_LIST.keys)
+            else
+              saved = Invidious::WebPreferences.apply(section, env.params.body, guest_fields(env), I18n::LOCALES_LIST.keys).to_json
+              cookie = Invidious::User::Cookies.prefs_json(Authentication.cookie_domain(env), saved)
+              if cookie.to_set_cookie_header.bytesize > 4096
+                return section_failure(env, 400, "These browser settings exceed the cookie limit. Sign in or reduce the saved data before retrying.", section)
+              end
+              env.response.cookies["PREFS"] = cookie
+              saved
+            end
+      preferences = Preferences.from_json(raw)
+      canonical = JSON.parse(preferences.to_json).as_h
+      env.set "preferences", preferences
+      if env.params.query["redirect"]? == "false"
+        env.response.content_type = "application/json"
+        return {preferences: preferences, fingerprint: OpenSSL::HMAC.hexdigest(:sha256, HMAC_KEY, preferences.to_json), section: section, values: Invidious::WebPreferences.values(section, canonical), profile: Invidious::BrowserProfiles.render_scope(env)}.to_json
+      end
+      env.redirect "/preferences?section=#{section}&saved=1", 303
+    rescue ex : Invidious::WebPreferences::InvalidField
+      section_failure(env, 400, "Please check #{Invidious::Frontend::Settings.label(env.get("preferences").as(Preferences).locale, ex.field)}.", section, ex.field)
+    rescue ex : DB::NoResultsError
+      section_failure(env, 403, "This account is no longer available. Sign in again before saving.", section)
+    rescue
+      section_failure(env, 503, "Settings could not be saved. Your draft is still here.", section)
+    end
   end
 
   private def self.next_color_mode(mode : String) : String
@@ -348,25 +485,20 @@ module Invidious::Routes::PreferencesRoute
     redirect ||= "true"
     redirect = redirect == "true"
 
-    if user = env.get? "user"
-      user = user.as(User)
-
-      requested = env.params.query["mode"]?
-      user.preferences.dark_mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : next_color_mode(user.preferences.dark_mode)
-
-      Invidious::Database::Users.update_preferences(user)
+    requested = env.params.query["mode"]?
+    change = ->(stored : Hash(String, JSON::Any)) {
+      current = Preferences.from_json(stored.to_json).dark_mode
+      mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : next_color_mode(current)
+      merged = stored.merge({"dark_mode" => JSON::Any.new(mode)})
+      Preferences.remove_retired_theme_fields(merged)
+      merged
+    }
+    if user = env.get?("user").try(&.as(User))
+      Invidious::Database::Users.merge_preferences_cas(user.email) { |stored| change.call(stored) }
     else
-      preferences = env.get("preferences").as(Preferences)
-
-      requested = env.params.query["mode"]?
-      preferences.dark_mode = requested && {"", "light", "dark"}.includes?(requested) ? requested : next_color_mode(preferences.dark_mode)
-
-      host = env.get("header_x-forwarded-host")
-      if alt = CONFIG.alternative_domains.index(host)
-        env.response.cookies["PREFS"] = Invidious::User::Cookies.prefs(CONFIG.alternative_domains[alt], preferences)
-      else
-        env.response.cookies["PREFS"] = Invidious::User::Cookies.prefs(CONFIG.domain, preferences)
-      end
+      cookie = Invidious::User::Cookies.prefs_json(Authentication.cookie_domain(env), change.call(guest_fields(env)).to_json)
+      return error_json(400, "These browser settings exceed the cookie limit.") if cookie.to_set_cookie_header.bytesize > 4096
+      env.response.cookies["PREFS"] = cookie
     end
 
     if redirect
@@ -377,7 +509,10 @@ module Invidious::Routes::PreferencesRoute
     end
   end
 
-  def self.data_control(env)
+  def self.data_control(env, error : String? = nil)
+    Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
+    source = Frontend::DataControl.source(env.params.query["source"]?)
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -393,6 +528,8 @@ module Invidious::Routes::PreferencesRoute
   end
 
   def self.update_data_control(env)
+    Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -427,27 +564,24 @@ module Invidious::Routes::PreferencesRoute
           success = Invidious::User::Import.from_youtube(user, body, filename, type)
 
           if !success
-            haltf(env, status_code: 415,
-              response: error_template(415, "Invalid subscription file uploaded")
-            )
+            env.response.status_code = 415
+            return data_control(env, "Invalid subscription file uploaded")
           end
         when "import_youtube_pl"
           filename = part.filename || ""
           success = Invidious::User::Import.from_youtube_pl(user, body, filename, type)
 
           if !success
-            haltf(env, status_code: 415,
-              response: error_template(415, "Invalid playlist file uploaded")
-            )
+            env.response.status_code = 415
+            return data_control(env, "Invalid playlist file uploaded")
           end
         when "import_youtube_wh"
           filename = part.filename || ""
           success = Invidious::User::Import.from_youtube_wh(user, body, filename, type)
 
           if !success
-            haltf(env, status_code: 415,
-              response: error_template(415, "Invalid watch history file uploaded")
-            )
+            env.response.status_code = 415
+            return data_control(env, "Invalid watch history file uploaded")
           end
         when "import_freetube"
           Invidious::User::Import.from_freetube(user, body)
@@ -457,14 +591,20 @@ module Invidious::Routes::PreferencesRoute
           success = Invidious::User::Import.from_newpipe(user, body)
 
           if !success
-            haltf(env, status_code: 415,
-              response: error_template(415, "Uploaded file is too large")
-            )
+            env.response.status_code = 415
+            return data_control(env, "Unsupported or oversized NewPipe archive.")
           end
         end
       end
     end
 
     env.redirect referer
+  rescue ex
+    # An upload can contain private data, and earlier sections can already be
+    # committed. Keep the source form and status; never echo parser input or
+    # generate a public issue report containing the uploaded contents.
+    LOGGER.error("Data import failed (#{ex.class})")
+    env.response.status_code = 500
+    data_control(env, "Import could not be completed. Check your imported data before trying again.")
   end
 end

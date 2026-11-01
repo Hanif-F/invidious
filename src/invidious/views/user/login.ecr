@@ -1,31 +1,27 @@
-<% content_for "header" do %>
-<title><%= I18n.translate(locale, signup ? "Register" : "Log in") %> - Invidious</title>
-<% end %>
-<div class="pure-g">
-  <div class="pure-u-1 pure-u-lg-1-5"></div>
-  <div class="pure-u-1 pure-u-lg-3-5"><div class="h-box">
-    <h1><%= I18n.translate(locale, signup ? "Register" : "Log in") %></h1>
-    <% if error %><p role="alert"><%= HTML.escape(I18n.translate(locale, error)) %></p><% end %>
-    <form class="pure-form pure-form-stacked" action="/<%= signup ? "signup" : "login" %>?referer=<%= HTML.escape(URI.encode_www_form(referer)) %>" method="post">
-      <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-      <label for="username"><%= I18n.translate(locale, "Username") %></label>
-      <input id="username" name="username" class="pure-input-1" autocomplete="username" autocapitalize="none" spellcheck="false" value="<%= HTML.escape(username) %>" required <% if signup %>minlength="3" maxlength="32" pattern="[a-zA-Z0-9_.\-]{3,32}" aria-describedby="username-help"<% end %>>
-      <% if signup %><p id="username-help"><%= I18n.translate(locale, "Use 3–32 letters, numbers, underscores, dots, or hyphens.") %></p><% end %>
-      <label for="password"><%= I18n.translate(locale, "Password") %></label>
-      <input id="password" name="password" class="pure-input-1" type="password" autocomplete="<%= signup ? "new-password" : "current-password" %>" required <% if signup %>aria-describedby="password-help"<% end %>>
-      <% if signup %>
-        <p id="password-help"><%= I18n.translate(locale, "Use at least 15 characters and at most 72 UTF-8 bytes.") %></p>
-        <label for="password_confirmation"><%= I18n.translate(locale, "Confirm password") %></label>
-        <input id="password_confirmation" name="password_confirmation" class="pure-input-1" type="password" autocomplete="new-password" required>
-      <% end %>
-      <% if captcha %>
-        <img style="max-width:100%;width:200px" src="<%= captcha[:question] %>" alt="<%= I18n.translate(locale, "CAPTCHA clock") %>">
-        <% captcha[:tokens].each_with_index do |token, i| %><input type="hidden" name="token[<%= i %>]" value="<%= HTML.escape(token) %>"><% end %>
-        <label for="answer"><%= I18n.translate(locale, "Time (h:mm:ss):") %></label>
-        <input id="answer" name="answer" placeholder="h:mm:ss" autocomplete="off" required>
-      <% end %>
-      <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, signup ? "Register" : "Sign In") %></button>
-    </form>
-    <% if signup || CONFIG.registration_enabled %><p><a href="/<%= signup ? "login" : "signup" %>?referer=<%= HTML.escape(URI.encode_www_form(referer)) %>"><%= I18n.translate(locale, signup ? "Log in" : "Register") %></a></p><% end %>
-  </div></div>
-</div>
+<% content_for "header" do %><title><%= I18n.translate(locale, signup ? "Register" : "Log in") %> - Invidious</title><% end %>
+<section class="reading-page auth-page" aria-labelledby="login-heading">
+  <h1 id="login-heading"><%= I18n.translate(locale, signup ? "Register" : "Log in") %></h1>
+  <% if error %><p class="form-feedback" role="alert"><%= HTML.escape(I18n.translate(locale, error)) %></p><% end %>
+  <% if signup %><p class="muted"><%= I18n.translate(locale, "ux_signup_credentials") %></p><% end %>
+  <form class="stacked-form" action="/<%= signup ? "signup" : "login" %>?referer=<%= HTML.escape(URI.encode_www_form(referer)) %>" method="post" data-account-form>
+    <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
+    <label for="username"><%= I18n.translate(locale, "Username") %></label>
+    <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" value="<%= HTML.escape(username) %>" required <% if signup %>minlength="3" maxlength="32" pattern="[a-zA-Z0-9_.\-]{3,32}" aria-describedby="username-help"<% end %>>
+    <% if signup %><p id="username-help" class="muted"><%= I18n.translate(locale, "Use 3–32 letters, numbers, underscores, dots, or hyphens.") %></p><% end %>
+    <label for="password"><%= I18n.translate(locale, "Password") %></label>
+    <input id="password" name="password" type="password" autocomplete="<%= signup ? "new-password" : "current-password" %>" required <% if signup %>aria-describedby="password-help"<% end %>>
+    <% if signup %>
+      <p id="password-help" class="muted"><%= I18n.translate(locale, "Use at least 15 characters and at most 72 UTF-8 bytes.") %></p>
+      <label for="password_confirmation"><%= I18n.translate(locale, "Confirm password") %></label>
+      <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required>
+    <% end %>
+    <% if captcha %>
+      <img class="captcha-image" src="<%= HTML.escape(captcha[:question]) %>" alt="<%= I18n.translate(locale, "CAPTCHA clock") %>">
+      <% captcha[:tokens].each_with_index do |token, i| %><input type="hidden" name="token[<%= i %>]" value="<%= HTML.escape(token) %>"><% end %>
+      <label for="answer"><%= I18n.translate(locale, "Time (h:mm:ss):") %></label>
+      <input id="answer" name="answer" placeholder="h:mm:ss" autocomplete="off" required>
+    <% end %>
+    <div class="toolbar"><button type="submit" class="button button-primary"><%= I18n.translate(locale, signup ? "Register" : "Sign In") %></button></div>
+  </form>
+  <% unless Invidious::Frontend::Desktop.api_only? %><% if signup || CONFIG.registration_enabled %><nav class="toolbar auth-alternative"><a class="button" href="/<%= signup ? "login" : "signup" %>?referer=<%= HTML.escape(URI.encode_www_form(referer)) %>"><%= I18n.translate(locale, signup ? "Log in" : "Register") %></a></nav><% end %><% end %>
+</section>

@@ -7,21 +7,25 @@ const source = fs.readFileSync(require('node:path').join(__dirname, '../../asset
 const start = source.indexOf('if (!video_data.clip && video_data.params.save_player_pos) {');
 const end = source.indexOf('\nif (video_data.params.autoplay)', start);
 assert.notEqual(start, -1, "Resume implementation must be included in this harness");
-function session(saved = 492, clip = false, save = true) {
+function session(saved = 492, clip = false, save = true, sync = true) {
     const events = {}, windowEvents = {}, documentEvents = {}, requests = [];
     let time = 0, now = 20000, cleared = false;
-    const document = {visibilityState: 'visible', addEventListener: (e, cb) => documentEvents[e] = cb};
+    let active = true, available = true;
+    const document = {body:{dataset:{}},visibilityState: 'visible', addEventListener: (e, cb) => documentEvents[e] = cb};
     const context = {
-        video_data: {clip: clip ? {} : null, params: {save_player_pos: save}, playback_sync: true, playback_position: saved, length_seconds: 2000},
+        video_data: {clip: clip ? {} : null, params: {save_player_pos: save}, playback_sync: sync, playback_position: saved, length_seconds: 2000},
         URL, location: 'https://test/watch?v=abcdefghijk', Date: {now: () => now}, isFinite,
         player: {on: (e, cb) => events[e] = cb, currentTime: () => time, ended: () => false},
         window: {addEventListener: (e, cb) => windowEvents[e] = cb}, document,
-        set_seconds_after_start: value => time = value,
+        playerAvailable:()=>available,currentPlayerWork:()=>active&&available,playerWorkLife:{signal:{}},playerWorkEpoch:0,
+        set_seconds_after_start: value => time = value, get_video_time:()=>saved, save_video_time:position=>requests.push({action:"local",position}),
         remove_all_video_times: () => cleared = true,
         send_playback_position: (action, position, beacon, done) => requests.push({action, position, beacon, done})
     };
-    vm.runInNewContext(source.slice(start, end), context);
-    return {requests, events, windowEvents, documentEvents, document, setTime: v => time = v, tick: () => now += 15000, time: () => time, cleared: () => cleared};
+    const guardStart=source.indexOf('function clip_editing()');assert.notEqual(guardStart,-1);
+    vm.runInNewContext(source.slice(guardStart,source.indexOf('\n\n',guardStart))+'\n'+source.slice(start, end), context);
+    return {requests, events, windowEvents, documentEvents, document, setTime: v => time = v, tick: () => now += 15000, time: () => time, cleared: () => cleared,
+        leave:()=>{active=false;context.playerWorkEpoch++;windowEvents.pagehide?.();},resume:()=>{active=true;},dispose:()=>{available=false;active=false;context.playerWorkEpoch++;}};
 }
 test('native clips never restore, save or clear full-video progress', () => {
     for (const save of [true, false]) {
@@ -96,4 +100,25 @@ test('local bars retain rounding and watched fallback; invalid durations hide pa
     const full = indicators(false); assert.equal(full.nodes[0].style.width, '100%');
     const late = indicators(false, {video: 950}); assert.equal(late.nodes[0].style.width, '100%');
     s.nodes[0].dataset.length = '0'; s.render(); assert.equal(s.nodes[0].hidden, true);
+});
+
+test('preview playback cannot start account tracking or save completion and beacon positions',()=>{
+    const s=session();s.document.body.dataset.clipEditing='true';s.events.playing();s.setTime(1990);
+    for(const name of ['timeupdate','seeked','pause','ended'])s.events[name]();s.windowEvents.pagehide();s.document.visibilityState='hidden';s.documentEvents.visibilitychange();assert.equal(s.requests.length,0);
+    delete s.document.body.dataset.clipEditing;s.setTime(600);s.events.timeupdate();assert.equal(s.requests.length,0,'preview playing never enabled normal tracking');
+    s.events.playing();s.events.timeupdate();assert.equal(s.requests[0].position,600);
+});
+test('pending account saves and local progress exclude temporary editing positions',()=>{
+    const s=session();s.events.playing();s.setTime(600);s.events.timeupdate();s.document.body.dataset.clipEditing='true';s.setTime(1990);s.events.seeked();s.events.timeupdate();s.requests[0].done(true);assert.equal(s.requests.length,1);
+    s.setTime(600);delete s.document.body.dataset.clipEditing;s.events.seeked();assert.equal(s.requests.length,1);s.setTime(700);s.events.seeked();assert.equal(s.requests[1].position,700);
+    const local=session(492,false,true,false);local.document.body.dataset.clipEditing='true';local.setTime(1000);local.events.timeupdate();assert.equal(local.requests.length,0);delete local.document.body.dataset.clipEditing;local.events.timeupdate();assert.equal(local.requests[0].position,1000);
+});
+
+test('pagehide still flushes the account beacon while late ordinary saves cannot enqueue another write',()=>{
+    const s=session();s.events.playing();s.setTime(100);s.events.timeupdate();assert.equal(s.requests.length,1);
+    s.setTime(110);s.events.seeked();s.leave();assert.equal(s.requests.length,2);assert.equal(s.requests[1].beacon,true);assert.equal(s.requests[1].position,110);
+    s.resume();s.requests[0].done(true);assert.equal(s.requests.length,2);
+});
+test('disposed media cannot be read or saved by retained visibility/online callbacks',()=>{
+    const s=session();s.events.playing();s.setTime(100);s.dispose();s.document.visibilityState='hidden';s.documentEvents.visibilitychange();s.windowEvents.online();assert.equal(s.requests.length,0);
 });

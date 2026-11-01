@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: chromium: D6 Settings default entry is the real category for guests and accounts without retired or private controls
+ok 1 - chromium: D6 Settings default entry is the real category for guests and accounts without retired or private controls
+  ---
+  duration_ms: 971.758064
+  type: 'test'
+  ...
+# Subtest: chromium: D6 every historical Settings control has one safe bookmark destination
+ok 2 - chromium: D6 every historical Settings control has one safe bookmark destination
+  ---
+  duration_ms: 107.248612
+  type: 'test'
+  ...
+# Subtest: chromium: D6 old category, field, array, AI and SponsorBlock bookmarks open and focus the owning editor
+ok 3 - chromium: D6 old category, field, array, AI and SponsorBlock bookmarks open and focus the owning editor
+  ---
+  duration_ms: 1506.95678
+  type: 'test'
+  ...
+# Subtest: chromium: D6 old identity and channel-mask bookmarks use dedicated routes without echoing credentials
+ok 4 - chromium: D6 old identity and channel-mask bookmarks use dedicated routes without echoing credentials
+  ---
+  duration_ms: 393.852206
+  type: 'test'
+  ...
+# Subtest: chromium: D6 old Settings anchors retain an ordinary visible link when scripts are absent or unavailable
+ok 5 - chromium: D6 old Settings anchors retain an ordinary visible link when scripts are absent or unavailable
+  ---
+  duration_ms: 993.479758
+  type: 'test'
+  ...
+# Subtest: chromium: D6 unknown and malformed Settings anchors cannot navigate or replace an explicit category
+ok 6 - chromium: D6 unknown and malformed Settings anchors cannot navigate or replace an explicit category
+  ---
+  duration_ms: 169.354343
+  type: 'test'
+  ...
+# Subtest: chromium: D6 legacy hash navigation honors an unsaved draft and never saves it automatically
+ok 7 - chromium: D6 legacy hash navigation honors an unsaved draft and never saves it automatically
+  ---
+  duration_ms: 247.557748
+  type: 'test'
+  ...
+# Subtest: chromium: D6 legacy entry replacement preserves normal Back without an intermediate bookmark redirect
+ok 8 - chromium: D6 legacy entry replacement preserves normal Back without an intermediate bookmark redirect
+  ---
+  duration_ms: 188.427516
+  type: 'test'
+  ...
+# Subtest: chromium: D6 retained legacy form verifies canonical JSON and projects normalized arrays, maps and future selections
+ok 9 - chromium: D6 retained legacy form verifies canonical JSON and projects normalized arrays, maps and future selections
+  ---
+  duration_ms: 509.674188
+  type: 'test'
+  ...
+# Subtest: chromium: D6 retained legacy read-back rejects missing cookies, foreign profiles and malformed receipts without retrying writes
+ok 10 - chromium: D6 retained legacy read-back rejects missing cookies, foreign profiles and malformed receipts without retrying writes
+  ---
+  duration_ms: 1210.325705
+  type: 'test'
+  ...
+# Subtest: firefox: D6 Settings default entry is the real category for guests and accounts without retired or private controls
+ok 11 - firefox: D6 Settings default entry is the real category for guests and accounts without retired or private controls
+  ---
+  duration_ms: 1711.533406
+  type: 'test'
+  ...
+# Subtest: firefox: D6 every historical Settings control has one safe bookmark destination
+ok 12 - firefox: D6 every historical Settings control has one safe bookmark destination
+  ---
+  duration_ms: 262.913307
+  type: 'test'
+  ...
+# Subtest: firefox: D6 old category, field, array, AI and SponsorBlock bookmarks open and focus the owning editor
+ok 13 - firefox: D6 old category, field, array, AI and SponsorBlock bookmarks open and focus the owning editor
+  ---
+  duration_ms: 4931.142578
+  type: 'test'
+  ...
+# Subtest: firefox: D6 old identity and channel-mask bookmarks use dedicated routes without echoing credentials
+ok 14 - firefox: D6 old identity and channel-mask bookmarks use dedicated routes without echoing credentials
+  ---
+  duration_ms: 1964.191272
+  type: 'test'
+  ...
+# Subtest: firefox: D6 old Settings anchors retain an ordinary visible link when scripts are absent or unavailable
+ok 15 - firefox: D6 old Settings anchors retain an ordinary visible link when scripts are absent or unavailable
+  ---
+  duration_ms: 1901.945842
+  type: 'test'
+  ...
+# Subtest: firefox: D6 unknown and malformed Settings anchors cannot navigate or replace an explicit category
+ok 16 - firefox: D6 unknown and malformed Settings anchors cannot navigate or replace an explicit category
+  ---
+  duration_ms: 385.741743
+  type: 'test'
+  ...
+# Subtest: firefox: D6 legacy hash navigation honors an unsaved draft and never saves it automatically
+ok 17 - firefox: D6 legacy hash navigation honors an unsaved draft and never saves it automatically
+  ---
+  duration_ms: 578.887169
+  type: 'test'
+  ...
+# Subtest: firefox: D6 legacy entry replacement preserves normal Back without an intermediate bookmark redirect
+ok 18 - firefox: D6 legacy entry replacement preserves normal Back without an intermediate bookmark redirect
+  ---
+  duration_ms: 445.881684
+  type: 'test'
+  ...
+# Subtest: firefox: D6 retained legacy form verifies canonical JSON and projects normalized arrays, maps and future selections
+ok 19 - firefox: D6 retained legacy form verifies canonical JSON and projects normalized arrays, maps and future selections
+  ---
+  duration_ms: 704.12199
+  type: 'test'
+  ...
+# Subtest: firefox: D6 retained legacy read-back rejects missing cookies, foreign profiles and malformed receipts without retrying writes
+ok 20 - firefox: D6 retained legacy read-back rejects missing cookies, foreign profiles and malformed receipts without retrying writes
+  ---
+  duration_ms: 2781.589947
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22827.335409

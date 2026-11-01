@@ -1,0 +1,40 @@
+Running migration: Invidious::Database::Migrations::SecureAccounts
+Running migration: Invidious::Database::Migrations::CreateChatTimingOffsetsTable
+Running migration: Invidious::Database::Migrations::CreateClipsTable
+Running migration: Invidious::Database::Migrations::CreateSavedPlaylistsTable
+Running migration: Invidious::Database::Migrations::CreateChannelAvatarsTable
+Running migration: Invidious::Database::Migrations::CreateAiSListCache
+Running migration: Invidious::Database::Migrations::CreateTvPairings
+Running migration: Invidious::Database::Migrations::CreateOriginalVideoTitles
+Running migration: Invidious::Database::Migrations::BotProtection
+No migrations to run.
+D7 account surfaces passed: private forms, failed drafts, CSRF, native callbacks/scopes, token confidentiality, owner revocation, rotation and deletion
+D7 data surfaces passed: seven legacy source fields, private source/error pages, CSRF-before-file, ordinary import and unchanged JSON/OPML exports
+Native DeArrow authentication, shared identity, validation, voting and settings passed
+Native SponsorBlock preferences, inheritance, isolation, scopes, CSRF and concurrent deltas passed
+Seek interval native/web account roundtrips, old forms, sparse saves, validation and isolation passed
+Original-title native/web account roundtrips, strict types, sparse preservation and isolation passed
+Native core settings, shared reads, unknown preference preservation, atomic rejection and CSRF passed
+Native AI API, legacy canonicalization, shared reads, concurrent sparse edits, atomic rejection and CSRF passed
+Native channel rules, atomic rejection, concurrency, scopes, CSRF and cache-only publication dates passed
+Native blocking, shared web state, scopes, CSRF, isolation and membership serialization passed
+Scoped subscription search and organized history: whole-library matching, pagination, metadata, scopes and isolation passed
+Playlist subscriptions, migration 20, isolation, source updates, private Atom, complete OPML and mix XML passed
+Native sign-in, least privilege, expiry, revocation, settings preservation and history API passed
+Native registration/CAPTCHA, account changes, scoped token authorization, opaque session management and deletion passed
+Browser profile defaults, guest preservation, account isolation, credential rotation, bearer compatibility and deletion passed
+Public security checks passed: ownership, embeds, API scopes, CSRF, deletion and cache headers
+TV pairing migration, explicit approval, CSRF, throttling, atomic redemption, native credentials, revocation and cleanup passed
+Subscription sorting: cache-only queries, decay, freshness, visibility, counts, isolation, cookies, exports and unsubscribe passed
+Upstream import ID validation/error statuses, fork import preservation and parameterized subscription filters passed
+WARNING: Invidious companion is required to view and playback videos. For more information see https://docs.invidious.io/installation/
+Unhandled exception: Login styles are inaccessible (Exception)
+  from tests/database/accounts.cr:73:3 in 'check'
+  from tests/database/required_login_checks.cr:187:5 in 'check_required_login'
+  from tests/database/accounts.cr:364:3 in '__crystal_main'
+  from /usr/share/crystal/src/crystal/main.cr:174:5 in 'main_user_code'
+  from /usr/share/crystal/src/crystal/main.cr:160:7 in 'main'
+  from /usr/share/crystal/src/crystal/system/unix/main.cr:9:12 in 'main'
+  from /lib64/libc.so.6 in '??'
+  from /lib64/libc.so.6 in '__libc_start_main'
+  from /tmp/invidious-d8-hints-accounts in '_start'

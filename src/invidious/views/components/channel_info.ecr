@@ -1,65 +1,16 @@
-<% if channel.banner %>
-    <div class="h-box">
-        <img class="channel-banner" src="/ggpht<%= URI.parse(channel.banner.not_nil!.gsub("=w1060-", "=w1280-")).request_target %>" alt="" />
-    </div>
-
-    <div class="h-box">
-        <hr>
-    </div>
-<% end %>
-
-<div class="pure-g h-box flexible title">
-    <div class="pure-u-1-2 flex-left flexible">
-        <div class="channel-profile">
-            <img src="/ggpht<%= channel_profile_pic %>" alt="" />
-            <div class="channel-name-pronouns">
-                <span class="channel-name"><%= author %></span><% if !channel.verified.nil? && channel.verified %>&nbsp;<i class="icon ion ion-md-checkmark-circle"></i><% end %>
-                <% if !channel.pronouns.nil? %><br /><span class="channel-pronouns"><%= channel.pronouns %></span><% end %>
-            </div>
-        </div>
-    </div>
-
-    <div class="pure-u-1-2 flex-right flexible button-container">
-        <div class="pure-u">
-            <% sub_count_text = number_to_short_text(channel.sub_count) %>
-            <%= rendered "components/subscribe_widget" %>
-        </div>
-
-        <div class="pure-u">
-            <a class="pure-button pure-button-secondary" dir="auto" href="/feed/channel/<%= ucid %>">
-                <i class="icon ion-logo-rss"></i>&nbsp;<%= I18n.translate(locale, "generic_button_rss") %>
-            </a>
-        </div>
-    </div>
-</div>
-
-<div class="h-box">
-    <p><a href="/preferences/sponsorblock/channels?channel=<%= ucid %>"><%= I18n.translate(locale, "sb_channel_settings") %></a></p>
-            <p><a href="/preferences/spoilers/channels?channel=<%= ucid %>"><%= I18n.translate(locale, "spoilers_settings") %></a></p>
-    <details><summary><%= I18n.translate(locale, "ui_description") %></summary><div id="descriptionWrapper"><p><span style="white-space:pre-wrap"><%= channel.description_html %></span></p></div></details>
-</div>
-
-<div class="channel-navigation">
-    <nav class="channel-tabs"><%= Invidious::Frontend::ChannelPage.generate_tabs_links(locale, channel, selected_tab) %></nav>
-    <div class="channel-sort">
-        <% sort_options.each do |sort| %>
-            <% if sort_by == sort %><strong><%= I18n.translate(locale, sort) %></strong><% else %><a href="<%= relative_url %>?sort_by=<%= sort %>"><%= I18n.translate(locale, sort) %></a><% end %>
-        <% end %>
-    </div>
-</div>
-<div class="h-box channel-search">
-    <form class="pure-form" action="/channel/<%= ucid %>/search" method="<%= env.get("preferences").as(Preferences).search_privacy ? "post" : "get" %>" role="search" aria-label="<%= I18n.translate(locale, "channel_search_label") %>">
-        <label for="channel-search"><%= I18n.translate(locale, "channel_search_label") %></label>
-        <div class="channel-search-controls">
-            <input type="search" id="channel-search" name="q" placeholder="<%= I18n.translate(locale, "channel_search_label") %>" value="<%= HTML.escape(env.get?("channel_search_query").try(&.as(String)) || "") %>">
-            <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "search") %></button>
-            <% if selected_tab.search? %>
-                <a href="/channel/<%= ucid %>"><%= I18n.translate(locale, "channel_search_clear") %></a>
-            <% end %>
-        </div>
-    </form>
-</div>
-<details><summary><%= I18n.translate(locale, "ui_more_tools") %></summary>
-    <p><a href="<%= youtube_url %>"><%= I18n.translate(locale, "View channel on YouTube") %></a></p>
-    <p><a href="<%= redirect_url %>"><%= I18n.translate(locale, "Switch Invidious Instance") %></a></p>
-</details>
+<header class="channel-header">
+<% if banner = channel.banner %><img class="channel-banner" src="/ggpht<%= HTML.escape(URI.parse(banner.gsub("=w1060-", "=w1280-")).request_target) %>" alt="" width="1280" height="208"><% end %>
+<div class="channel-identity"><span class="channel-portrait"><%= Invidious::Frontend::ChannelAvatars.render_image(channel.author, channel.author_thumbnail, 88) %></span><div><h1 dir="auto"><%= author %><% if channel.verified %><span class="verified" title="<%= I18n.translate(locale, "Verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></h1><% if pronouns = channel.pronouns %><p class="muted" dir="auto"><%= HTML.escape(pronouns) %></p><% end %><p class="muted"><%= I18n.translate_count(locale, "generic_subscribers_count", channel.sub_count, I18n::NumberFormatting::Separator) %></p></div>
+<div class="channel-controls"><% sub_count_text = number_to_short_text(channel.sub_count) %><%= rendered "overhaul/subscribe" %>
+<details class="ui-menu" data-ui-menu><summary class="icon-button" aria-label="<%= I18n.translate(locale, "ui_more_tools") %>" title="<%= I18n.translate(locale, "ui_more_tools") %>"><%= Invidious::Frontend::Icons.render("ellipsis-vertical") %></summary><div class="menu-content">
+<a href="/feed/channel/<%= HTML.escape(ucid) %>"><%= Invidious::Frontend::Icons.render("rss") %><%= I18n.translate(locale, "generic_button_rss") %></a>
+<a href="/preferences/sponsorblock/channels?channel=<%= URI.encode_www_form(ucid) %>"><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "sb_channel_settings") %></a>
+<a href="/preferences/spoilers/channels?channel=<%= URI.encode_www_form(ucid) %>"><%= Invidious::Frontend::Icons.render("eye-off") %><%= I18n.translate(locale, "spoilers_settings") %></a><hr>
+<a href="<%= HTML.escape(youtube_url) %>" rel="noreferrer noopener"><%= Invidious::Frontend::Icons.render("external-link") %><%= I18n.translate(locale, "View channel on YouTube") %></a>
+<a href="<%= HTML.escape(redirect_url) %>"><%= Invidious::Frontend::Icons.render("external-link") %><%= I18n.translate(locale, "Switch Invidious Instance") %></a>
+</div></details></div></div>
+<details class="channel-about"><summary><%= I18n.translate(locale, "overhaul_about") %></summary><div id="channel-about" tabindex="-1"><div id="descriptionWrapper" dir="auto"><%= channel.description_html %></div></div></details>
+</header>
+<div class="channel-navigation"><nav class="channel-tabs" aria-label="<%= I18n.translate(locale, "ui_navigation") %>"><%= Invidious::Frontend::ChannelPage.generate_tabs_links(locale, channel, selected_tab) %></nav></div>
+<div class="channel-list-tools"><form action="/channel/<%= HTML.escape(ucid) %>/search" method="<%= Invidious::Frontend::Desktop.private_search?(env) ? "post" : "get" %>" role="search" aria-label="<%= I18n.translate(locale, "channel_search_label") %>" class="scoped-search"><label for="channel-search"><%= I18n.translate(locale, "channel_search_label") %></label><div><input type="search" id="channel-search" name="q" value="<%= HTML.escape(env.get?("channel_search_query").try(&.as(String)) || "") %>" autocapitalize="none" spellcheck="false"><button class="icon-button" aria-label="<%= I18n.translate(locale, "search") %>" title="<%= I18n.translate(locale, "search") %>"><%= Invidious::Frontend::Icons.render("search") %></button><% if selected_tab.search? %><a class="button" href="/channel/<%= HTML.escape(ucid) %>"><%= I18n.translate(locale, "channel_search_clear") %></a><% end %></div></form>
+<% unless sort_options.empty? %><form action="<%= HTML.escape(relative_url) %>" method="get" class="channel-sort"><label for="channel-sort"><%= I18n.translate(locale, "search_filters_sort_label") %></label><select id="channel-sort" name="sort_by"><% sort_options.each do |sort| %><option value="<%= HTML.escape(sort) %>" <%= "selected" if sort_by == sort %>><%= I18n.translate(locale, sort) %></option><% end %></select><button class="button"><%= I18n.translate(locale, "subscription_manager_sort_apply") %></button></form><% end %></div>

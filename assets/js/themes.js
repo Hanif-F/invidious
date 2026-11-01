@@ -1,4 +1,7 @@
 'use strict';
+(function () {
+    if (document.documentElement.dataset.themeInitialized) return;
+    document.documentElement.dataset.themeInitialized = 'true';
 var toggle_theme = document.getElementById('toggle_theme');
 const STORAGE_KEY_THEME = 'dark_mode';
 const THEME_DARK = 'dark';
@@ -11,7 +14,11 @@ function setTheme(theme) {
     document.body.classList.remove('no-theme', 'light-theme', 'dark-theme');
     document.body.classList.add((colorMode || 'no') + '-theme');
     if (!toggle_theme) return;
-    toggle_theme.children[0].className = 'icon ' + (colorMode === 'dark' ? 'ion-ios-moon' : colorMode === 'light' ? 'ion-ios-sunny' : 'ion-ios-desktop');
+    var symbol = toggle_theme.querySelector('svg use');
+    if (symbol) {
+        var href = symbol.getAttribute('href').split('#')[0];
+        symbol.setAttribute('href', href + '#' + (colorMode === 'dark' ? 'moon' : colorMode === 'light' ? 'sun' : 'monitor'));
+    }
     var label = toggle_theme.getAttribute('data-mode-' + (colorMode || 'system'));
     toggle_theme.title = label;
     toggle_theme.setAttribute('aria-label', label);
@@ -49,3 +56,6 @@ addEventListener('DOMContentLoaded', function () {
     setTheme(pref.textContent);
     helpers.storage.set(STORAGE_KEY_THEME, colorMode);
 });
+
+window.setTheme = setTheme;
+})();

@@ -1,0 +1,1923 @@
+{
+  "status": "Accepted: all current cases and named replacements pass in the complete 902/902 run",
+  "originalSource": "docs/uiUXOverhaulPlan/review/d8-pending/baseline/tests/frontend/ui.test.cjs",
+  "originalSha256": "921bd8d3468461126aa029664b5e5d03b9c8bbe8d81a337e0a176cf1578de80e",
+  "currentSource": "tests/frontend/ui.test.cjs",
+  "currentSha256": "dcd91a216dbca8be7cdeba9ed2e43c036da086e59c8d1d6d649bfce4def9533a",
+  "counts": {
+    "originalRegistered": 349,
+    "retiredWithExplicitReplacement": 67,
+    "retainedRegistered": 282,
+    "addedRepeatedContextOwner": 2,
+    "currentRegistered": 284,
+    "retainedSourceFamilies": 140
+  },
+  "retiredCases": {
+    "chromium: clip creation timestamps, draggable selection, preview and no-JavaScript form": "clip-test-reconciliation.json",
+    "firefox: clip creation timestamps, draggable selection, preview and no-JavaScript form": "clip-test-reconciliation.json",
+    "chromium: clip popup preserves playback, timestamps, drafts and keyboard focus": "clip-test-reconciliation.json",
+    "firefox: clip popup preserves playback, timestamps, drafts and keyboard focus": "clip-test-reconciliation.json",
+    "chromium: clip popup publishes once, recovers errors and shows a safe share result": "clip-test-reconciliation.json",
+    "firefox: clip popup publishes once, recovers errors and shows a safe share result": "clip-test-reconciliation.json",
+    "chromium: closing during publishing preserves the pending draft and unseen result": "clip-test-reconciliation.json",
+    "firefox: closing during publishing preserves the pending draft and unseen result": "clip-test-reconciliation.json",
+    "chromium: clip popup preview uses its playhead and never changes source resume data": "clip-test-reconciliation.json",
+    "firefox: clip popup preview uses its playhead and never changes source resume data": "clip-test-reconciliation.json",
+    "chromium: clip popup themes, RTL, short videos and responsive actions": "clip-test-reconciliation.json",
+    "firefox: clip popup themes, RTL, short videos and responsive actions": "clip-test-reconciliation.json",
+    "chromium: clip popup enlarged text and landscape keep fields and actions reachable": "clip-test-reconciliation.json",
+    "firefox: clip popup enlarged text and landscape keep fields and actions reachable": "clip-test-reconciliation.json",
+    "chromium: guests return from login to the clip popup and asset failures use the fallback form": "clip-test-reconciliation.json",
+    "firefox: guests return from login to the clip popup and asset failures use the fallback form": "clip-test-reconciliation.json",
+    "chromium: Diary local lettering loads and decorations stay noninteractive": "style-test-reconciliation.json",
+    "firefox: Diary local lettering loads and decorations stay noninteractive": "style-test-reconciliation.json",
+    "chromium: Diary responsive paper layouts": "style-test-reconciliation.json",
+    "firefox: Diary responsive paper layouts": "style-test-reconciliation.json",
+    "chromium: preferences sections, labels, and form fields": "style-test-reconciliation.json",
+    "firefox: preferences sections, labels, and form fields": "style-test-reconciliation.json",
+    "chromium: header is horizontal and Library navigation is always available": "style-test-reconciliation.json",
+    "firefox: header is horizontal and Library navigation is always available": "style-test-reconciliation.json",
+    "chromium: account link lives in Preferences and the mobile header stays visible": "style-test-reconciliation.json",
+    "firefox: account link lives in Preferences and the mobile header stays visible": "style-test-reconciliation.json",
+    "chromium: header stays visible on tablet and desktop pages": "style-test-reconciliation.json",
+    "firefox: header stays visible on tablet and desktop pages": "style-test-reconciliation.json",
+    "chromium: sticky header covers thumbnails while video menus can overlap it": "style-test-reconciliation.json",
+    "firefox: sticky header covers thumbnails while video menus can overlap it": "style-test-reconciliation.json",
+    "chromium: color-mode switching preserves density and page layout": "style-test-reconciliation.json",
+    "firefox: color-mode switching preserves density and page layout": "style-test-reconciliation.json",
+    "chromium: responsive layouts and representative visual snapshots": "style-test-reconciliation.json",
+    "firefox: responsive layouts and representative visual snapshots": "style-test-reconciliation.json",
+    "chromium: enlarged text and phone landscape keep navigation usable": "style-test-reconciliation.json",
+    "firefox: enlarged text and phone landscape keep navigation usable": "style-test-reconciliation.json",
+    "chromium: preference Save remains visible throughout Diary preferences": "style-test-reconciliation.json",
+    "firefox: preference Save remains visible throughout Diary preferences": "style-test-reconciliation.json",
+    "chromium: player chat control hides and restores replay": "chat-test-reconciliation.json",
+    "firefox: player chat control hides and restores replay": "chat-test-reconciliation.json",
+    "chromium: mobile player settings can hide and show chat": "chat-test-reconciliation.json",
+    "firefox: mobile player settings can hide and show chat": "chat-test-reconciliation.json",
+    "chromium: chat is beside the video in normal, wide, and fullscreen modes": "chat-test-reconciliation.json",
+    "firefox: chat is beside the video in normal, wide, and fullscreen modes": "chat-test-reconciliation.json",
+    "chromium: mobile play/pause stays over the video with docked chat": "chat-test-reconciliation.json",
+    "firefox: mobile play/pause stays over the video with docked chat": "chat-test-reconciliation.json",
+    "chromium: mobile docked chat follows orientation in and out of fullscreen": "chat-test-reconciliation.json",
+    "firefox: mobile docked chat follows orientation in and out of fullscreen": "chat-test-reconciliation.json",
+    "chromium: chat overlay can be edited, saved, and restored": "chat-test-reconciliation.json",
+    "firefox: chat overlay can be edited, saved, and restored": "chat-test-reconciliation.json",
+    "chromium: chat overlay stays within mobile and fullscreen video": "chat-test-reconciliation.json",
+    "firefox: chat overlay stays within mobile and fullscreen video": "chat-test-reconciliation.json",
+    "chromium: Diary chat overlay has no frame or reserved heading band": "chat-test-reconciliation.json",
+    "firefox: Diary chat overlay has no frame or reserved heading band": "chat-test-reconciliation.json",
+    "chromium: typed chat sizes extend the sliders and persist locally": "chat-test-reconciliation.json",
+    "firefox: typed chat sizes extend the sliders and persist locally": "chat-test-reconciliation.json",
+    "embed playlist requests identify the current video and preserve advancement settings": "enhancement-test-reconciliation.json",
+    "chromium: DeArrow contributions at 320px": "enhancement-test-reconciliation.json",
+    "chromium: DeArrow contributions at 390px": "enhancement-test-reconciliation.json",
+    "chromium: DeArrow contributions at 1440px": "enhancement-test-reconciliation.json",
+    "firefox: DeArrow contributions at 320px": "enhancement-test-reconciliation.json",
+    "firefox: DeArrow contributions at 390px": "enhancement-test-reconciliation.json",
+    "firefox: DeArrow contributions at 1440px": "enhancement-test-reconciliation.json",
+    "chromium: DeArrow identity import stays outside ordinary preferences": "enhancement-test-reconciliation.json",
+    "firefox: DeArrow identity import stays outside ordinary preferences": "enhancement-test-reconciliation.json",
+    "chromium: DeArrow contribution themes, empty results and loading errors": "enhancement-test-reconciliation.json",
+    "firefox: DeArrow contribution themes, empty results and loading errors": "enhancement-test-reconciliation.json"
+  },
+  "retainedFamilies": [
+    {
+      "oldCases": [
+        "chromium: view counts stay visible across cards, history, clips and dynamic queues",
+        "firefox: view counts stay visible across cards, history, clips and dynamic queues"
+      ],
+      "currentCases": [
+        "chromium: view counts stay visible across cards, history, clips and dynamic queues",
+        "firefox: view counts stay visible across cards, history, clips and dynamic queues"
+      ],
+      "oldCallbackSha256": "ea897cec72aa942c5d5cdd4c48b32e9f484ae11f20b561f75503241a351965b9",
+      "currentCallbackSha256": "e26324efa892d66a560e2f1cbbc8b5d8c91b4c4c5fb0d479daa505964c9d2309",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: original titles remain literal in watch, embed and custom clips",
+        "firefox: original titles remain literal in watch, embed and custom clips"
+      ],
+      "currentCases": [
+        "chromium: original titles remain literal in watch, embed and custom clips",
+        "firefox: original titles remain literal in watch, embed and custom clips"
+      ],
+      "oldCallbackSha256": "dad6f5565af8cce70abff9e82f6fb20049b422486cb2f80c3b977e216b0d74c8",
+      "currentCallbackSha256": "1783a19022df551fc5120bebcc2a5f3bac5cbabe8fcd7fca6c64113795d430cc",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: original-title setting defaults on and submits explicit on and off",
+        "firefox: original-title setting defaults on and submits explicit on and off"
+      ],
+      "currentCases": [
+        "chromium: original-title setting defaults on and submits explicit on and off",
+        "firefox: original-title setting defaults on and submits explicit on and off"
+      ],
+      "oldCallbackSha256": "42587f084cfcf7c75f4d4f4a93a5258e687c0bbda772d74167e005067a2791b5",
+      "currentCallbackSha256": "93b88d3623171fc55905b51f8aed6265d6bc48fa822d37e4841145b62fd2b33c",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: DeArrow can replace an original title and reveal it again",
+        "firefox: DeArrow can replace an original title and reveal it again"
+      ],
+      "currentCases": [
+        "chromium: DeArrow can replace an original title and reveal it again",
+        "firefox: DeArrow can replace an original title and reveal it again"
+      ],
+      "oldCallbackSha256": "43a78cfd52e055f65914430a854e78684fb03046a77b9a148593c477f3d2c94e",
+      "currentCallbackSha256": "43a78cfd52e055f65914430a854e78684fb03046a77b9a148593c477f3d2c94e",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: subscription sorting details, GET forms and mobile layouts work without JavaScript",
+        "firefox: subscription sorting details, GET forms and mobile layouts work without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: subscription sorting details, GET forms and desktop layouts work without JavaScript",
+        "firefox: subscription sorting details, GET forms and desktop layouts work without JavaScript"
+      ],
+      "oldCallbackSha256": "016b423a970b9b846619538c04d78071a3f73bea932609c6c56426de81e1f3be",
+      "currentCallbackSha256": "35a339769b0819c4cd3dffe0be89c8abcd6e9ac2e38a11993cf108e5e8793ccf",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: sorting keeps subscription removal working",
+        "firefox: sorting keeps subscription removal working"
+      ],
+      "currentCases": [
+        "chromium: sorting keeps subscription removal working",
+        "firefox: sorting keeps subscription removal working"
+      ],
+      "oldCallbackSha256": "8090f0cb0ae2db0fef555090c678d5dfe5fae1c33933e30d6a61b35f2ac6290d",
+      "currentCallbackSha256": "0290627eec8f49253e1ebfe797ce1199f14f3d1e1bbee1b13469cda645cf2b46",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: native clip cards, tab, attribution and no-JavaScript library",
+        "firefox: native clip cards, tab, attribution and no-JavaScript library"
+      ],
+      "currentCases": [
+        "chromium: native clip cards, tab, attribution and no-JavaScript library",
+        "firefox: native clip cards, tab, attribution and no-JavaScript library"
+      ],
+      "oldCallbackSha256": "4e2550d6029f1fa698da8a5d97becf2df188649bd85638a08074d44f8fdceb57",
+      "currentCallbackSha256": "77c23a931229372d0f61d55a781e67ad9e652a7081159747ac57dc4ea0d748a8",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: native clip boundaries, loop toggle, canonical sharing and resume isolation",
+        "firefox: native clip boundaries, loop toggle, canonical sharing and resume isolation"
+      ],
+      "currentCases": [
+        "chromium: native clip boundaries, loop toggle, canonical sharing and resume isolation",
+        "firefox: native clip boundaries, loop toggle, canonical sharing and resume isolation"
+      ],
+      "oldCallbackSha256": "93cff4cd98b5e83d58f0d1fb6fa1dd5dd432ec0671ee4952bb9fe55d852ba247",
+      "currentCallbackSha256": "93cff4cd98b5e83d58f0d1fb6fa1dd5dd432ec0671ee4952bb9fe55d852ba247",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: native clip SponsorBlock, audio settings and source refresh retain saved bounds",
+        "firefox: native clip SponsorBlock, audio settings and source refresh retain saved bounds"
+      ],
+      "currentCases": [
+        "chromium: native clip SponsorBlock, audio settings and source refresh retain saved bounds",
+        "firefox: native clip SponsorBlock, audio settings and source refresh retain saved bounds"
+      ],
+      "oldCallbackSha256": "ae0f71c793748ac1917d2ec3c547f0a0ab42c46616dc316d0bd6c6f88267bf2e",
+      "currentCallbackSha256": "ae0f71c793748ac1917d2ec3c547f0a0ab42c46616dc316d0bd6c6f88267bf2e",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: chat replay keeps fetched messages across pause and seeks",
+        "firefox: chat replay keeps fetched messages across pause and seeks"
+      ],
+      "currentCases": [
+        "chromium: chat replay keeps fetched messages across pause and seeks",
+        "firefox: chat replay keeps fetched messages across pause and seeks"
+      ],
+      "oldCallbackSha256": "b3114fd3f7dbdfeff4f5c842db04080140f0b0bb87bd419354c58b45c2ceae94",
+      "currentCallbackSha256": "dc1e91f9c46ae4f2fa17850d53a4d1a14c9a8227c1865f6ea6b859714774b7aa",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: cached ranges are reused and distant seeks fetch near the playhead",
+        "firefox: cached ranges are reused and distant seeks fetch near the playhead"
+      ],
+      "currentCases": [
+        "chromium: cached ranges are reused and distant seeks fetch near the playhead",
+        "firefox: cached ranges are reused and distant seeks fetch near the playhead"
+      ],
+      "oldCallbackSha256": "aebb0f993ca8d88997e0274575e6f9cb35f41c1f551e7acc852b2dabc9c3cdc3",
+      "currentCallbackSha256": "aebb0f993ca8d88997e0274575e6f9cb35f41c1f551e7acc852b2dabc9c3cdc3",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: stale chat responses cannot replace a later seek",
+        "firefox: stale chat responses cannot replace a later seek"
+      ],
+      "currentCases": [
+        "chromium: stale chat responses cannot replace a later seek",
+        "firefox: stale chat responses cannot replace a later seek"
+      ],
+      "oldCallbackSha256": "1cb16228a69e846ed3f49b156a0aaf0db01b9cf2405ceb19ded522074c9ac273",
+      "currentCallbackSha256": "1cb16228a69e846ed3f49b156a0aaf0db01b9cf2405ceb19ded522074c9ac273",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: removals and timing changes reuse cached replay",
+        "firefox: removals and timing changes reuse cached replay"
+      ],
+      "currentCases": [
+        "chromium: removals and timing changes reuse cached replay",
+        "firefox: removals and timing changes reuse cached replay"
+      ],
+      "oldCallbackSha256": "9960346a631fba43e8974f7aa5b374353c13d668f5a415ed239dede2d39c5d8f",
+      "currentCallbackSha256": "e69cd724b8af93ad7d17a51acb135848bcf2b9aac4ac599d6dcbb492569517e8",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: scrolling up exposes earlier cached chat without another request",
+        "firefox: scrolling up exposes earlier cached chat without another request"
+      ],
+      "currentCases": [
+        "chromium: scrolling up exposes earlier cached chat without another request",
+        "firefox: scrolling up exposes earlier cached chat without another request"
+      ],
+      "oldCallbackSha256": "8af79532b2927d306609d1b2e63ef44989b370966a4438cd2628be340ac07313",
+      "currentCallbackSha256": "8af79532b2927d306609d1b2e63ef44989b370966a4438cd2628be340ac07313",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: chat cache evicts beyond 5000 messages and refetches evicted time",
+        "firefox: chat cache evicts beyond 5000 messages and refetches evicted time"
+      ],
+      "currentCases": [
+        "chromium: chat cache evicts beyond 5000 messages and refetches evicted time",
+        "firefox: chat cache evicts beyond 5000 messages and refetches evicted time"
+      ],
+      "oldCallbackSha256": "440b5a590e27979edeed12cc498d5401525eb059c503064033fbd071b4f9fd44",
+      "currentCallbackSha256": "440b5a590e27979edeed12cc498d5401525eb059c503064033fbd071b4f9fd44",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: ordinary VOD does not load chat replay",
+        "firefox: ordinary VOD does not load chat replay"
+      ],
+      "currentCases": [
+        "chromium: ordinary VOD does not load chat replay",
+        "firefox: ordinary VOD does not load chat replay"
+      ],
+      "oldCallbackSha256": "eb4c56efc3de3e146f9a5c55d87a181cd09e642c4945c5d9d26c32e1c5bc42d4",
+      "currentCallbackSha256": "eb4c56efc3de3e146f9a5c55d87a181cd09e642c4945c5d9d26c32e1c5bc42d4",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: chat keeps 120 messages and lets readers resync scrolling",
+        "firefox: chat keeps 120 messages and lets readers resync scrolling"
+      ],
+      "currentCases": [
+        "chromium: chat keeps 120 messages and lets readers resync scrolling",
+        "firefox: chat keeps 120 messages and lets readers resync scrolling"
+      ],
+      "oldCallbackSha256": "16a237efd4eef4492f5b50e9c298a216cb32b4bab30d94b3459d055349a9bb2e",
+      "currentCallbackSha256": "a1b533e042f68e54c51b5a27e2063bf0acb8da8a1d49aea293eca146ada824ae",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: chat replay errors can be retried",
+        "firefox: chat replay errors can be retried"
+      ],
+      "currentCases": [
+        "chromium: chat replay errors can be retried",
+        "firefox: chat replay errors can be retried"
+      ],
+      "oldCallbackSha256": "a42b08cdf0d856e8748297a4bd7515a097634cd5c2842f59c08143eafabbe398",
+      "currentCallbackSha256": "a42b08cdf0d856e8748297a4bd7515a097634cd5c2842f59c08143eafabbe398",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: unavailable chat replay has a clear state",
+        "firefox: unavailable chat replay has a clear state"
+      ],
+      "currentCases": [
+        "chromium: unavailable chat replay has a clear state",
+        "firefox: unavailable chat replay has a clear state"
+      ],
+      "oldCallbackSha256": "4ed5b01de684090b0bc1f0cb9abdfbddfda5fa6eb821755bacc5c46dc2ce8521",
+      "currentCallbackSha256": "754c7fb5824f6d6aec2b4acd46abb4192d398bf7a8cb05bb2839708e756f7351",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: chat settings filter messages and persist for guests",
+        "firefox: chat settings filter messages and persist for guests"
+      ],
+      "currentCases": [
+        "chromium: chat settings filter messages and persist for guests",
+        "firefox: chat settings filter messages and persist for guests"
+      ],
+      "oldCallbackSha256": "7cd470ee4a1b4a2a15d79d7c59f1597dc11068f1fd34c8dc0d687347e69565c1",
+      "currentCallbackSha256": "0814e0ded73caca5ac181fdbd0e7bf1ca6ac3c4089bf3ca65362a5b3d43531b7",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: signed-in chat display settings are independent by browser",
+        "firefox: signed-in chat display settings are independent by browser"
+      ],
+      "currentCases": [
+        "chromium: signed-in chat display settings are independent by browser",
+        "firefox: signed-in chat display settings are independent by browser"
+      ],
+      "oldCallbackSha256": "4325a016093ab2fa417374b0ec5ffc6f5d303498f127dd71ac4f3861884adb54",
+      "currentCallbackSha256": "7872bd96012cee43d664bd93c65e54a96f5710aa2a1dee387ffb9abee21b91a0",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: custom chat timing shifts messages and account changes are saved",
+        "firefox: custom chat timing shifts messages and account changes are saved"
+      ],
+      "currentCases": [
+        "chromium: custom chat timing shifts messages and account changes are saved",
+        "firefox: custom chat timing shifts messages and account changes are saved"
+      ],
+      "oldCallbackSha256": "4738fa7592457e999180d1bf7e115b5935b42d8a5e567baa364403b1f73bbb0c",
+      "currentCallbackSha256": "e8bdab6e5becfd30e07b68d0577baac56c6e1d7b39f1f1dd75d4f91699472abc",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: AI channel filter controls, status and empty results work without JavaScript",
+        "firefox: AI channel filter controls, status and empty results work without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: AI channel filter controls, status and empty results work without JavaScript",
+        "firefox: AI channel filter controls, status and empty results work without JavaScript"
+      ],
+      "oldCallbackSha256": "417c9403e1979b79e542189523741da9643233fedb8c7a4629bded6d8dfd6c8a",
+      "currentCallbackSha256": "bba4b01def64d3017a14faa48e0b7a201d68d7908b2af9baeff8906c072c17b8",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: AI channel filter global Off restores cards, recommendations and queue thumbnails",
+        "firefox: AI channel filter global Off restores cards, recommendations and queue thumbnails"
+      ],
+      "currentCases": [
+        "chromium: AI channel filter global Off restores cards, recommendations and queue thumbnails",
+        "firefox: AI channel filter global Off restores cards, recommendations and queue thumbnails"
+      ],
+      "oldCallbackSha256": "74c0aeada4574f90e8f644bc0cbba6fe58ede600d657f533afde517c2b3a9cb2",
+      "currentCallbackSha256": "5c9862cb92dfeb357f7c2236d25e046e6d63ce0e15144ae033d5573601eff8b9",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: AI channel filter replacement is quiet, keeps Discovery results and works in thin mode",
+        "firefox: AI channel filter replacement is quiet, keeps Discovery results and works in thin mode"
+      ],
+      "currentCases": [
+        "chromium: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral",
+        "firefox: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral"
+      ],
+      "oldCallbackSha256": "3001e43b0e2f122cea1d68872bbfeaf859c3170dfd1a892e5e45d24c1cec2ee9",
+      "currentCallbackSha256": "463b99f1ad43b989f63c5aa3795a825b76bcc98cc2d33f2936d2c7a21bfd1e1b",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: AI channel filter other pages only replace thumbnails and retain every card",
+        "firefox: AI channel filter other pages only replace thumbnails and retain every card"
+      ],
+      "currentCases": [
+        "chromium: AI channel filter other pages only replace thumbnails and retain every card",
+        "firefox: AI channel filter other pages only replace thumbnails and retain every card"
+      ],
+      "oldCallbackSha256": "168da890c616e56cdf266941d3d35567007ae0cb2e0de82fc6f3e34fe79c996f",
+      "currentCallbackSha256": "a480cbe7835cf5544213972542c04d7a69ffcb2993cf7f586f94af4ad82f2528",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: AI channel filter watch queues preserve duplicate occurrences and advancement",
+        "firefox: AI channel filter watch queues preserve duplicate occurrences and advancement"
+      ],
+      "currentCases": [
+        "chromium: AI channel filter watch queues preserve duplicate occurrences and advancement",
+        "firefox: AI channel filter watch queues preserve duplicate occurrences and advancement"
+      ],
+      "oldCallbackSha256": "e6c2ba8e241756a1fa07126ced6428cdb11fc1b9fe1c3b5103929b95568f16d4",
+      "currentCallbackSha256": "1559a5169dda5d1b2697488424f4d1ce28b0bd4ec4be80d9fa3f506008994122",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: Diary is the only design and color preferences submit with and without JavaScript",
+        "firefox: Diary is the only design and color preferences submit with and without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: one shared design and the color category submit without retired theme fields",
+        "firefox: one shared design and the color category submit without retired theme fields"
+      ],
+      "oldCallbackSha256": "3ec7ae21b6699234634893df34b7e0617cb639e5b56af7ccd7ecfe24a264ced9",
+      "currentCallbackSha256": "11203bb4254866c6f0045f64c8fac1dae055d2727cfb8f4b4785a596842384bd",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: Diary palettes, mode toggle and keyboard color selection",
+        "firefox: Diary palettes, mode toggle and keyboard color selection"
+      ],
+      "currentCases": [
+        "chromium: Light, Dark and System palettes follow explicit modes and keyboard color selection",
+        "firefox: Light, Dark and System palettes follow explicit modes and keyboard color selection"
+      ],
+      "oldCallbackSha256": "d23599b05e3f89503356ba9b903fb7bd6e2159d6cae1079039bf30df1e958900",
+      "currentCallbackSha256": "487fe9fa917df57dbefa2380c62d4d1288a969bc46955ca036e562fed320e167",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: Diary preserves real player controls",
+        "firefox: Diary preserves real player controls"
+      ],
+      "currentCases": [
+        "chromium: shared player preserves actual playback, pause and rate on pointer and touch desktops",
+        "firefox: shared player preserves actual playback, pause and rate on pointer and touch desktops"
+      ],
+      "oldCallbackSha256": "891f23119ec4893eae5f1ec54c1cd2ca45dc62bc21af726c29a12165a024c5ea",
+      "currentCallbackSha256": "fe02893395738886665fbc9bf470d5da187af819c52a1e5a768b0c5aafaaf86c",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: actual Video.js player retains playback, seeking and controls",
+        "firefox: actual Video.js player retains playback, seeking and controls"
+      ],
+      "currentCases": [
+        "chromium: actual Video.js player retains playback, seeking and controls",
+        "firefox: actual Video.js player retains playback, seeking and controls"
+      ],
+      "oldCallbackSha256": "0c5890fbf9c4c7b5d8464785b9e37d3a67ed1a9d3a2adf30fb8d55791f3b3730",
+      "currentCallbackSha256": "f40867336cd1b8df1b067b4732ba9e381fa66d33c53b38c717b6782c7c5da07a",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: buffer refresh reloads the selected source and restores playback",
+        "firefox: buffer refresh reloads the selected source and restores playback"
+      ],
+      "currentCases": [
+        "chromium: buffer refresh reloads the selected source and restores playback",
+        "firefox: buffer refresh reloads the selected source and restores playback"
+      ],
+      "oldCallbackSha256": "697da1817c28ca6ebc82954b05051114f17f26a60851e931ea53e9604ae37372",
+      "currentCallbackSha256": "8b0cd0bb8d01e260d15b4547c790c8bcd880476b0add6be1f6943243fe1f4b64",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: mobile refresh is in settings on watch and embed players",
+        "firefox: mobile refresh is in settings on watch and embed players"
+      ],
+      "currentCases": [
+        "chromium: mobile refresh is in settings on watch and embed players",
+        "firefox: mobile refresh is in settings on watch and embed players"
+      ],
+      "oldCallbackSha256": "9b971762f8d48beeec257b98d6eaa4b85ce5643aaa401ee82d9d064c1c0e27a2",
+      "currentCallbackSha256": "10ed20071e93a5a3e81e477feecf06d2827c99946135d3a9eefe15d19aa966c1",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: refresh can retry a player error and then refresh again",
+        "firefox: refresh can retry a player error and then refresh again"
+      ],
+      "currentCases": [
+        "chromium: refresh can retry a player error and then refresh again",
+        "firefox: refresh can retry a player error and then refresh again"
+      ],
+      "oldCallbackSha256": "24771c18f1fa24ff74cd8b49f7d3228a66e2d045077755094f8d41943b016352",
+      "currentCallbackSha256": "cf7eb90b68032779940e9c3423d11777304c3307968d761b5407eef34fc7e3e4",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: refresh restores DASH quality and audio after tracks are recreated",
+        "firefox: refresh restores DASH quality and audio after tracks are recreated"
+      ],
+      "currentCases": [
+        "chromium: refresh restores DASH quality and audio after tracks are recreated",
+        "firefox: refresh restores DASH quality and audio after tracks are recreated"
+      ],
+      "oldCallbackSha256": "168338ca23cb0c4fd233133866c6d3b378863f50081f1940068f575154ca2a02",
+      "currentCallbackSha256": "168338ca23cb0c4fd233133866c6d3b378863f50081f1940068f575154ca2a02",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: player wide control, paused idle state and keyboard access",
+        "firefox: player wide control, paused idle state and keyboard access"
+      ],
+      "currentCases": [
+        "chromium: theater control preserves paused idle state and keyboard access",
+        "firefox: theater control preserves paused idle state and keyboard access"
+      ],
+      "oldCallbackSha256": "56e9edadf8c2fe2d661c13156978a3249d576e5bcac2d3bea2ecdf5898e6125f",
+      "currentCallbackSha256": "bb766852e49b2e1d288c1a60293ab6d92300a828e4cbafb263bace31a0746d4a",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: player menus support transient hover and persistent click modes",
+        "firefox: player menus support transient hover and persistent click modes"
+      ],
+      "currentCases": [
+        "chromium: hierarchical player Settings keeps explicit speed choices and returns keyboard focus",
+        "firefox: hierarchical player Settings keeps explicit speed choices and returns keyboard focus"
+      ],
+      "oldCallbackSha256": "2c0891da69c74e43914bda98c0dbdf1fc92255523c18f350505e0b41a2a480d2",
+      "currentCallbackSha256": "10108fccb687de001a1b5c0825258e4493547da0c7e4fd74581f86e474f928f4",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: history search by title or channel",
+        "firefox: history search by title or channel"
+      ],
+      "currentCases": [
+        "chromium: history search by title or channel",
+        "firefox: history search by title or channel"
+      ],
+      "oldCallbackSha256": "2277c189df1ad2a9c4d98037e88b384c2a27e0c345034093d49dbee662e2afa4",
+      "currentCallbackSha256": "2a7bbb6488384c5f970c7db836b4eaef18c08065edaa4c499b102d8f2bd3f203",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: cached history titles and compact desktop playlist library",
+        "firefox: cached history titles and compact desktop playlist library"
+      ],
+      "currentCases": [
+        "chromium: cached history titles and compact desktop playlist library",
+        "firefox: cached history titles and compact desktop playlist library"
+      ],
+      "oldCallbackSha256": "e70dee6f0e7e54b52c832ceef79ee718c7680d8a2f5e70d91491aaeb09b9bd4e",
+      "currentCallbackSha256": "4acb8c414274283938f1dedfa22a675e8a25bc0647fe187cd11dd736dd15de7d",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: mobile paused controls hide, wake on tap, and keep menus usable",
+        "firefox: mobile paused controls hide, wake on tap, and keep menus usable"
+      ],
+      "currentCases": [
+        "chromium: mobile paused controls hide, wake on tap, and keep menus usable",
+        "firefox: mobile paused controls hide, wake on tap, and keep menus usable"
+      ],
+      "oldCallbackSha256": "fcad6bdb9747f0d49a12268802c00636ed5bfc427b6a707de385c9ccd59aa8de",
+      "currentCallbackSha256": "7d64c9fc0636bcca9dc8dc52de294f93481325345796a0a8d6473eefb88391d7",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: mobile video taps toggle all controls while playing",
+        "firefox: mobile video taps toggle all controls while playing"
+      ],
+      "currentCases": [
+        "chromium: mobile video taps toggle all controls while playing",
+        "firefox: mobile video taps toggle all controls while playing"
+      ],
+      "oldCallbackSha256": "946a4cb36365ea455660752cedb47f29e016935ec7c4fc8673e25d9d0af24e38",
+      "currentCallbackSha256": "950a09ac28bf57102f5441b60da597ca9d2541cca0f11e731e55346a0a4f09f5",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: queue selects a repeated occurrence, and keeps recommendations separate",
+        "firefox: queue selects a repeated occurrence, and keeps recommendations separate"
+      ],
+      "currentCases": [
+        "chromium: queue selects a repeated occurrence, and keeps recommendations separate",
+        "firefox: queue selects a repeated occurrence, and keeps recommendations separate"
+      ],
+      "oldCallbackSha256": "10d570ddb50eadeae881752ffa441651d14b93cfca6d945ff64cda3366048843",
+      "currentCallbackSha256": "450ba956cb486f83904769d8d9b92539d38a6e73a4741bb0db145ef28e66a156",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: queue failure is retryable and does not enable recommendation autoplay",
+        "firefox: queue failure is retryable and does not enable recommendation autoplay"
+      ],
+      "currentCases": [
+        "chromium: queue failure is retryable and does not enable recommendation autoplay",
+        "firefox: queue failure is retryable and does not enable recommendation autoplay"
+      ],
+      "oldCallbackSha256": "c5f8a33db524a4023006a486263908f450dbe60c617ddf6fa3add4889ae7ee93",
+      "currentCallbackSha256": "9db23efae927cfdc81d40870c034fbb44778649e659cc1cc06b2e1d467769e79",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: missing, empty and ended queues do not attach an advancement handler",
+        "firefox: missing, empty and ended queues do not attach an advancement handler"
+      ],
+      "currentCases": [
+        "chromium: missing, empty and ended queues never fall back to recommendation autoplay",
+        "firefox: missing, empty and ended queues never fall back to recommendation autoplay"
+      ],
+      "oldCallbackSha256": "f90c61821c6fae143f8f47d1b8f679db219fca42fd3db195ea9612d9b266580a",
+      "currentCallbackSha256": "c4da92ac8daacef5a79875e1cf86d912d5607d9bde730b95c4443b9402f87e83",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: transcript loads on demand, searches safely, seeks, caches, and retries",
+        "firefox: transcript loads on demand, searches safely, seeks, caches, and retries"
+      ],
+      "currentCases": [
+        "chromium: transcript loads on demand, searches safely, seeks, caches, and retries",
+        "firefox: transcript loads on demand, searches safely, seeks, caches, and retries"
+      ],
+      "oldCallbackSha256": "f4f43eba338fb7c5529b0a80ec318128e75d49a19d327f4b3d968d9336d3ba93",
+      "currentCallbackSha256": "f4f43eba338fb7c5529b0a80ec318128e75d49a19d327f4b3d968d9336d3ba93",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: mobile queue is immediately below player, collapsible, and keyboard operable",
+        "firefox: mobile queue is immediately below player, collapsible, and keyboard operable"
+      ],
+      "currentCases": [
+        "chromium: desktop queue remains visible, scrollable and keyboard operable after viewport changes",
+        "firefox: desktop queue remains visible, scrollable and keyboard operable after viewport changes"
+      ],
+      "oldCallbackSha256": "e51cbfb82a7a9a0dc730f3cb5f866cfd8b48206f0ea257f0989d8aeceeb842fa",
+      "currentCallbackSha256": "e0b5cbe6a1f42a1b089d3797b7d01277d929aee124c24c8bb348f07fd35a1ec7",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: System follows live appearance changes and color modes synchronize across tabs",
+        "firefox: System follows live appearance changes and color modes synchronize across tabs"
+      ],
+      "currentCases": [
+        "chromium: System follows live appearance changes and color modes synchronize across tabs",
+        "firefox: System follows live appearance changes and color modes synchronize across tabs"
+      ],
+      "oldCallbackSha256": "c8ff2aa3353455d7408a93150fd0df623605086280492469ca10a031a471eff1",
+      "currentCallbackSha256": "a7399bb99f8b2f7fdfd41e34ff5fe9fdff8d38caeecddbd800652185cb55e355",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: signed-in color-mode controls submit CSRF by POST with and without JavaScript",
+        "firefox: signed-in color-mode controls submit CSRF by POST with and without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: signed-in color-mode controls submit CSRF by POST with and without JavaScript",
+        "firefox: signed-in color-mode controls submit CSRF by POST with and without JavaScript"
+      ],
+      "oldCallbackSha256": "9f5a20aacf49a6fd5cf7f39ce7b88f19b68bdb547c8fb9c6a556602a87cfbbdb",
+      "currentCallbackSha256": "7094d1a90ae3830ad4ca59478cf04bcbe370670d2bc50ff51e503ca6b786700e",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: no-JavaScript and thin modes retain essential navigation",
+        "firefox: no-JavaScript and thin modes retain essential navigation"
+      ],
+      "currentCases": [
+        "chromium: no-JavaScript watch retains ordinary navigation and retired thin preferences use unified browser imagery",
+        "firefox: no-JavaScript watch retains ordinary navigation and retired thin preferences use unified browser imagery"
+      ],
+      "oldCallbackSha256": "c468b33ff2330ffdcb2694c4942f3ed25a623d93f4686342ab2527ea0d9b89f4",
+      "currentCallbackSha256": "7de55a60aa48deeafb52e6f8980b40ecaacc052c8d78746e4480b20727e39a41",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "library navigation survives custom feed settings without channel management links"
+      ],
+      "currentCases": [
+        "library navigation survives custom feed settings without channel management links"
+      ],
+      "oldCallbackSha256": "71c251b6d196f4af9e9944decc959a82186f3cd7356fdeb33d96d403a3328c68",
+      "currentCallbackSha256": "a4dc6a5f08b733cb8fbe595d70b13858008bd1128c640cf7176dffdb3f1b7b6a",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "UI asset additions report compressed sizes without a target"
+      ],
+      "currentCases": [
+        "UI asset inventory compares the overhaul baseline and separately reports icons, fonts and vendor player assets"
+      ],
+      "oldCallbackSha256": "21e6a2591bd2e7e57088715dd5ae4aecc0ae72ca229ebd9c485b0ec628671062",
+      "currentCallbackSha256": "f8e3628f21467df53b8cfdf51c17584631cb5cc78049493e57eee75b76b8fccb",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: video menus support keyboard dismissal and signed-out sign-in links",
+        "firefox: video menus support keyboard dismissal and signed-out sign-in links"
+      ],
+      "currentCases": [
+        "chromium: video menus support keyboard dismissal and signed-out sign-in links",
+        "firefox: video menus support keyboard dismissal and signed-out sign-in links"
+      ],
+      "oldCallbackSha256": "d43958447ae57bfdae6a1e5a7c94fccbe1ad7d883e94727e25e54ebb460e3c6e",
+      "currentCallbackSha256": "73e23d3653e75f38e0ae735b605bf90b59ff7ceec5714228e3b3b4b371d88569",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: block removes discovery cards only after success and Undo restores them",
+        "firefox: block removes discovery cards only after success and Undo restores them"
+      ],
+      "currentCases": [
+        "chromium: block removes discovery cards only after success and Undo restores them",
+        "firefox: block removes discovery cards only after success and Undo restores them"
+      ],
+      "oldCallbackSha256": "e13907f7064c2a861c2738bfc6b40bc63692607e5196781542ae0b9903c14ab9",
+      "currentCallbackSha256": "f606ebc10ddfada622411d4414f8feae1a0c120c2e6692f2d5419ebcc5f8455a",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: block notice disappears after five seconds and a new status resets the timer",
+        "firefox: block notice disappears after five seconds and a new status resets the timer"
+      ],
+      "currentCases": [
+        "chromium: block notice disappears after five seconds and a new status resets the timer",
+        "firefox: block notice disappears after five seconds and a new status resets the timer"
+      ],
+      "oldCallbackSha256": "3a3d556062d0ceac3bc106d967c968fa3c7c126dfe24b7c45c6b9fcf731d3f4c",
+      "currentCallbackSha256": "366323c98a8186905b81f5358a5d891a3479eaffc3da973ac22c3808e0a48391",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: playlist creation retains the created playlist when adding fails",
+        "firefox: playlist creation retains the created playlist when adding fails"
+      ],
+      "currentCases": [
+        "chromium: playlist creation retains the created playlist when adding fails",
+        "firefox: playlist creation retains the created playlist when adding fails"
+      ],
+      "oldCallbackSha256": "81d2f137b11d73b0e541ea34915c3f13357b524a6cd7075c3269eedc2f372088",
+      "currentCallbackSha256": "59f24604f215bedb76c78431dc42cdcf5cfd2b70d8750ff9adc7a108963def15",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: search Filters owns the override and filtered-empty pages retain pagination",
+        "firefox: search Filters owns the override and filtered-empty pages retain pagination"
+      ],
+      "currentCases": [
+        "chromium: search Filters owns the override and filtered-empty pages retain pagination",
+        "firefox: search Filters owns the override and filtered-empty pages retain pagination"
+      ],
+      "oldCallbackSha256": "83c43b0fd765191fb5f213d543dd67ff070ecf6869825c72d3a6bb337d78fc7d",
+      "currentCallbackSha256": "83c43b0fd765191fb5f213d543dd67ff070ecf6869825c72d3a6bb337d78fc7d",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: members-only search controls work without JavaScript and retain pagination",
+        "firefox: members-only search controls work without JavaScript and retain pagination"
+      ],
+      "currentCases": [
+        "chromium: members-only search controls work without JavaScript and retain pagination",
+        "firefox: members-only search controls work without JavaScript and retain pagination"
+      ],
+      "oldCallbackSha256": "16e522d0bdc88446119370994afd59906998f58ad4631a7f8c804a56fc63bf98",
+      "currentCallbackSha256": "16e522d0bdc88446119370994afd59906998f58ad4631a7f8c804a56fc63bf98",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: blocking the next recommendation updates autoplay and Undo restores it",
+        "firefox: blocking the next recommendation updates autoplay and Undo restores it"
+      ],
+      "currentCases": [
+        "chromium: blocking the next recommendation updates autoplay and Undo restores it",
+        "firefox: blocking the next recommendation updates autoplay and Undo restores it"
+      ],
+      "oldCallbackSha256": "22c8d37bbbd2a42f3859ed87a769b9a71e1a4f58bb8273cf5b3119c35e9247f4",
+      "currentCallbackSha256": "91c412b685caf5f46001abe7bf9f6fa5111c7436e85eeeee8b58a61653d79cb4",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: blocking leaves subscribed and explicitly included search results visible",
+        "firefox: blocking leaves subscribed and explicitly included search results visible"
+      ],
+      "currentCases": [
+        "chromium: blocking leaves subscribed and explicitly included search results visible",
+        "firefox: blocking leaves subscribed and explicitly included search results visible"
+      ],
+      "oldCallbackSha256": "c2a9d76b74b1105c9b3acbe0704b26df14f7c83e9eb85623db7b75d351fc095e",
+      "currentCallbackSha256": "45dc4d269e2ba55df6a3adf2c49e8742c0a2dd57b4922787741af3e18f267746",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: blocking the only remaining recommendation disables autoplay",
+        "firefox: blocking the only remaining recommendation disables autoplay"
+      ],
+      "currentCases": [
+        "chromium: blocking the only remaining recommendation disables autoplay",
+        "firefox: blocking the only remaining recommendation disables autoplay"
+      ],
+      "oldCallbackSha256": "444f73b8fa724c37621cc3d7e77cd1b8d79bf5378368040b1ab7de11e5f411d0",
+      "currentCallbackSha256": "68ed9ce948283d73330af8f1a8662b49e8eb7db2bce8f76c8f0645af27109278",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: video menus stay within mobile and compact viewports",
+        "firefox: video menus stay within mobile and compact viewports"
+      ],
+      "currentCases": [
+        "chromium: video menus stay within desktop and enlarged viewports",
+        "firefox: video menus stay within desktop and enlarged viewports"
+      ],
+      "oldCallbackSha256": "c235f4b6bd5a20e9ffbfcf8f57db081252028b075278dc9135cea542ab626d34",
+      "currentCallbackSha256": "8c1c0ac827580b0f1daab64edc939f8d261ee732e9029fdd3515095dd7015c51",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: control-bar transparency preserves opaque controls on bright and dark video",
+        "firefox: control-bar transparency preserves opaque controls on bright and dark video"
+      ],
+      "currentCases": [
+        "chromium: control-bar transparency preserves opaque controls on bright and dark video",
+        "firefox: control-bar transparency preserves opaque controls on bright and dark video"
+      ],
+      "oldCallbackSha256": "e845344b6fbaed8668912af673d6bce6bde972f1555b3c4710da6d4dc01f226b",
+      "currentCallbackSha256": "d0b653f53efb946721c157586e20e911e5c759a5e0ad125175a448cb624dbe17",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: owned queue removes a specific occurrence and keeps playback running",
+        "firefox: owned queue removes a specific occurrence and keeps playback running"
+      ],
+      "currentCases": [
+        "chromium: owned queue removes a specific occurrence and keeps playback running",
+        "firefox: owned queue removes a specific occurrence and keeps playback running"
+      ],
+      "oldCallbackSha256": "f7cf08f4eb96fb8dd9223fae3f54177d43fd0dde1663ae0ff3f29651f5d8896a",
+      "currentCallbackSha256": "53ccc551eb9ac5b43bd54098b22cd59ba416ebd5e461fc2730a8e08f4b352c08",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: mobile center play and control bars share visibility through play, pause, idle and seeking",
+        "firefox: mobile center play and control bars share visibility through play, pause, idle and seeking"
+      ],
+      "currentCases": [
+        "chromium: mobile center play and control bars share visibility through play, pause, idle and seeking",
+        "firefox: mobile center play and control bars share visibility through play, pause, idle and seeking"
+      ],
+      "oldCallbackSha256": "5c86c11463e3522ff6dd72bf9d9531969aca95badacf1d42dc1f25c6377c0b51",
+      "currentCallbackSha256": "08e8aada7b66c436e0296b4981d20c441236367f156ce9c6488ad9c4981f645f",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: playback shortcuts work from page content and respect interactive controls",
+        "firefox: playback shortcuts work from page content and respect interactive controls"
+      ],
+      "currentCases": [
+        "chromium: playback shortcuts work from page content and respect interactive controls",
+        "firefox: playback shortcuts work from page content and respect interactive controls"
+      ],
+      "oldCallbackSha256": "7885a3db224513aa66e69ffe7d753009d22e5765439f7cb24553b24bb535f887",
+      "currentCallbackSha256": "7885a3db224513aa66e69ffe7d753009d22e5765439f7cb24553b24bb535f887",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals",
+        "firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals"
+      ],
+      "currentCases": [
+        "chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals",
+        "firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals"
+      ],
+      "oldCallbackSha256": "ed42d0994b41a479b3353fbc5a09cbddae8ee0629e2ce5fc0921bf7f95f486b6",
+      "currentCallbackSha256": "ed42d0994b41a479b3353fbc5a09cbddae8ee0629e2ce5fc0921bf7f95f486b6",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: DeArrow icon stays fixed with wrapping, RTL and touch",
+        "firefox: DeArrow icon stays fixed with wrapping, RTL and touch"
+      ],
+      "currentCases": [
+        "chromium: DeArrow icon stays fixed with wrapping, RTL and touch",
+        "firefox: DeArrow icon stays fixed with wrapping, RTL and touch"
+      ],
+      "oldCallbackSha256": "c573ab26e93a92a5be4022a20e218f3ac03a8e62af9d36f0a6671e7d0d24808f",
+      "currentCallbackSha256": "c573ab26e93a92a5be4022a20e218f3ac03a8e62af9d36f0a6671e7d0d24808f",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: DeArrow targets stay fixed across title lengths and page layouts",
+        "firefox: DeArrow targets stay fixed across title lengths and page layouts"
+      ],
+      "currentCases": [
+        "chromium: DeArrow targets stay fixed across title lengths and page layouts",
+        "firefox: DeArrow targets stay fixed across title lengths and page layouts"
+      ],
+      "oldCallbackSha256": "a60ab80924723fae2ad200bb73950373acbcb8a0b7dcf17a602dcbf57c963979",
+      "currentCallbackSha256": "dac5ca08b25d87a6281270c967cb125acf784739e748bcbc4f3919be8b5a3190",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: DeArrow keeps replacements on hover when original display is disabled",
+        "firefox: DeArrow keeps replacements on hover when original display is disabled"
+      ],
+      "currentCases": [
+        "chromium: DeArrow keeps replacements on hover when original display is disabled",
+        "firefox: DeArrow keeps replacements on hover when original display is disabled"
+      ],
+      "oldCallbackSha256": "61eefa5b4a2f7beffc1216d957a68f332c389dc71dd2d86a4a6dd021b28effa5",
+      "currentCallbackSha256": "61eefa5b4a2f7beffc1216d957a68f332c389dc71dd2d86a4a6dd021b28effa5",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals",
+        "firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals"
+      ],
+      "currentCases": [
+        "chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals",
+        "firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals"
+      ],
+      "oldCallbackSha256": "364a8fafd460aa270064059f3c3905089cf1669595ad2466b4faba066a9f1163",
+      "currentCallbackSha256": "364a8fafd460aa270064059f3c3905089cf1669595ad2466b4faba066a9f1163",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: DeArrow preference controls submit without JavaScript",
+        "firefox: DeArrow preference controls submit without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: DeArrow preference controls submit without JavaScript",
+        "firefox: DeArrow preference controls submit without JavaScript"
+      ],
+      "oldCallbackSha256": "d20ed7131845a0d3603646091b7a82e5b2adcf33a419f2efc944e66df7df037e",
+      "currentCallbackSha256": "96f4279445011e33f11c3f090c97e9687cf2bb809ba911633020d3585a0f9b80",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: synced playback restores progress after seeking back from completion",
+        "firefox: synced playback restores progress after seeking back from completion"
+      ],
+      "currentCases": [
+        "chromium: synced playback restores progress after seeking back from completion",
+        "firefox: synced playback restores progress after seeking back from completion"
+      ],
+      "oldCallbackSha256": "b4e746581724922efb1087d51f4c9e698466e3748ed94a22a27ab37a184bc35c",
+      "currentCallbackSha256": "b4e746581724922efb1087d51f4c9e698466e3748ed94a22a27ab37a184bc35c",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: rejected progress beacon falls back to a keepalive request",
+        "firefox: rejected progress beacon falls back to a keepalive request"
+      ],
+      "currentCases": [
+        "chromium: rejected progress beacon falls back to a keepalive request",
+        "firefox: rejected progress beacon falls back to a keepalive request"
+      ],
+      "oldCallbackSha256": "12c98f2d5bfe7f6894756bc8610b1c3c48119323792236cf93003201417a10c9",
+      "currentCallbackSha256": "12c98f2d5bfe7f6894756bc8610b1c3c48119323792236cf93003201417a10c9",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: SponsorBlock modes, overlay, keyboard, ranges and replay",
+        "firefox: SponsorBlock modes, overlay, keyboard, ranges and replay"
+      ],
+      "currentCases": [
+        "chromium: SponsorBlock modes, overlay, keyboard, ranges and replay",
+        "firefox: SponsorBlock modes, overlay, keyboard, ranges and replay"
+      ],
+      "oldCallbackSha256": "c871ebfea5c272e8041d8d71b744b4b96cb6e2e912feafaa73953053505fbfc5",
+      "currentCallbackSha256": "c871ebfea5c272e8041d8d71b744b4b96cb6e2e912feafaa73953053505fbfc5",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: SponsorBlock auto skips once per segment and resets on reload or another tab",
+        "firefox: SponsorBlock auto skips once per segment and resets on reload or another tab"
+      ],
+      "currentCases": [
+        "chromium: SponsorBlock auto skips once per segment and resets on reload or another tab",
+        "firefox: SponsorBlock auto skips once per segment and resets on reload or another tab"
+      ],
+      "oldCallbackSha256": "6e8fe35781f34941ca45e89039852c8ee2c12419b40ada23ef6fc0e741dedb56",
+      "currentCallbackSha256": "6e8fe35781f34941ca45e89039852c8ee2c12419b40ada23ef6fc0e741dedb56",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: SponsorBlock disabled avoids requests",
+        "firefox: SponsorBlock disabled avoids requests"
+      ],
+      "currentCases": [
+        "chromium: SponsorBlock disabled avoids requests",
+        "firefox: SponsorBlock disabled avoids requests"
+      ],
+      "oldCallbackSha256": "4deaf897326d57fa8c5dd246159543d28c2204f773f2a028c66ef7140aa4ac21",
+      "currentCallbackSha256": "4deaf897326d57fa8c5dd246159543d28c2204f773f2a028c66ef7140aa4ac21",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: SponsorBlock overlap, end boundary and upstream failure",
+        "firefox: SponsorBlock overlap, end boundary and upstream failure"
+      ],
+      "currentCases": [
+        "chromium: SponsorBlock overlap, end boundary and upstream failure",
+        "firefox: SponsorBlock overlap, end boundary and upstream failure"
+      ],
+      "oldCallbackSha256": "08ca3a495ce87a5188c650f1c1dce7f0c66b0f343b1f5ca4f36018189198a16b",
+      "currentCallbackSha256": "08ca3a495ce87a5188c650f1c1dce7f0c66b0f343b1f5ca4f36018189198a16b",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: SponsorBlock respects clip end and loop in audio mode",
+        "firefox: SponsorBlock respects clip end and loop in audio mode"
+      ],
+      "currentCases": [
+        "chromium: SponsorBlock respects clip end and loop in audio mode",
+        "firefox: SponsorBlock respects clip end and loop in audio mode"
+      ],
+      "oldCallbackSha256": "e6cfe59f14b9ca964163e270c38f512948c7f8ad7c28a295d23cfacc38c977ef",
+      "currentCallbackSha256": "e6cfe59f14b9ca964163e270c38f512948c7f8ad7c28a295d23cfacc38c977ef",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: mobile accumulated seeking commits once and restores playback",
+        "firefox: mobile accumulated seeking commits once and restores playback"
+      ],
+      "currentCases": [
+        "chromium: mobile accumulated seeking commits once and restores playback",
+        "firefox: mobile accumulated seeking commits once and restores playback"
+      ],
+      "oldCallbackSha256": "b3dd6fa859268855062babaca230ece774536efc63f4329a675edaf3d4eedb1d",
+      "currentCallbackSha256": "96f3629f1a72428132dce1dac829e232e8597a3f19fe0d3e84e1f3cebc96d01c",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: mobile settings preserve playing, captions, sharing and SponsorBlock",
+        "firefox: mobile settings preserve playing, captions, sharing and SponsorBlock"
+      ],
+      "currentCases": [
+        "chromium: mobile settings preserve playing, captions, sharing and SponsorBlock",
+        "firefox: mobile settings preserve playing, captions, sharing and SponsorBlock"
+      ],
+      "oldCallbackSha256": "ce2aed79675076ac9e34e948444d2e295b9af8556c90ef40bfc9d1412021073b",
+      "currentCallbackSha256": "3bba4f34d913278c74c7a3076741763c5b1636570be4c1b0acf6113fca650329",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: embed mobile settings fill viewport and fullscreen",
+        "firefox: embed mobile settings fill viewport and fullscreen"
+      ],
+      "currentCases": [
+        "chromium: embed mobile settings fill viewport and fullscreen",
+        "firefox: embed mobile settings fill viewport and fullscreen"
+      ],
+      "oldCallbackSha256": "fc616b049fe583e0af4945f62b8e114ff02e48604cb0e693fd459063fad30591",
+      "currentCallbackSha256": "fc616b049fe583e0af4945f62b8e114ff02e48604cb0e693fd459063fad30591",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: mobile quality and track settings follow available options",
+        "firefox: mobile quality and track settings follow available options"
+      ],
+      "currentCases": [
+        "chromium: mobile quality and track settings follow available options",
+        "firefox: mobile quality and track settings follow available options"
+      ],
+      "oldCallbackSha256": "f763db712a58b8d1278c9bc9ffcad6bea3c2089fb6b1f31075e2fa31fe1200cc",
+      "currentCallbackSha256": "bced414f61f9744f14ae290bfc387384df80acc96ad38db42f4752fb0a98d2eb",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "DASH player source keeps the complete rendition manifest"
+      ],
+      "currentCases": [
+        "DASH player source keeps the complete rendition manifest"
+      ],
+      "oldCallbackSha256": "2bc28024c3dbf1d27793716adbc5129739b482b53cba00e496166efb2ee2d1fe",
+      "currentCallbackSha256": "2bc28024c3dbf1d27793716adbc5129739b482b53cba00e496166efb2ee2d1fe",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: preferred video codec setting precedes quality and saves without JavaScript",
+        "firefox: preferred video codec setting precedes quality and saves without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: preferred video codec shares the playback category and saves without JavaScript",
+        "firefox: preferred video codec shares the playback category and saves without JavaScript"
+      ],
+      "oldCallbackSha256": "b6983d5e2ef0b7547ecc8bc2900da936a618a46ee2a4797c77b16c79719efcf5",
+      "currentCallbackSha256": "39bd2824b926ec27575c8a4a1c753e162de44731cfe04e1b535300e956ad5d83",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: preferred codec reaches the initial DASH rendition selector on watch and embed",
+        "firefox: preferred codec reaches the initial DASH rendition selector on watch and embed"
+      ],
+      "currentCases": [
+        "chromium: preferred codec reaches the initial DASH rendition selector on watch and embed",
+        "firefox: preferred codec reaches the initial DASH rendition selector on watch and embed"
+      ],
+      "oldCallbackSha256": "51cd265b4128e9baaa47d03db14f4ce02cdf62676ba102fb5dba72fbfbd35e60",
+      "currentCallbackSha256": "51cd265b4128e9baaa47d03db14f4ce02cdf62676ba102fb5dba72fbfbd35e60",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: preferred codec Auto and manual selections survive buffer refresh on mobile",
+        "firefox: preferred codec Auto and manual selections survive buffer refresh on mobile"
+      ],
+      "currentCases": [
+        "chromium: preferred codec Auto and manual selections survive buffer refresh on mobile",
+        "firefox: preferred codec Auto and manual selections survive buffer refresh on mobile"
+      ],
+      "oldCallbackSha256": "99731858034833e2e349c8f387fe9d3018c7136fae1ba07a9a4f9de05b88ac80",
+      "currentCallbackSha256": "b6493495cceed61a882dcfc3e59557e8fd297e53792650444e3e1a0ff591260c",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: rich stream menus rank video and audio variants consistently",
+        "firefox: rich stream menus rank video and audio variants consistently"
+      ],
+      "currentCases": [
+        "chromium: rich stream menus rank video and audio variants consistently",
+        "firefox: rich stream menus rank video and audio variants consistently"
+      ],
+      "oldCallbackSha256": "b49438dcec8bba5efcfcf5b27045495f5709a653bf891c6dfa1b7dddaa593f72",
+      "currentCallbackSha256": "08f3712d6ea321b578e39951554aa11d705b813374984dd1944638490745c305",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: diagnostics are local, accessible and sanitize snapshots",
+        "firefox: diagnostics are local, accessible and sanitize snapshots"
+      ],
+      "currentCases": [
+        "chromium: diagnostics are local, accessible and sanitize snapshots",
+        "firefox: diagnostics are local, accessible and sanitize snapshots"
+      ],
+      "oldCallbackSha256": "1d06aa78945508d7f42436e7376dd59c44faf51e5fed82668e48010adeec908d",
+      "currentCallbackSha256": "70f3c12085c6f8fbf01f7457f71eca6e23bd776f1b9f66538dcbfeb1c6ca2ff6",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: mobile and embed diagnostics fit and return to compact view",
+        "firefox: mobile and embed diagnostics fit and return to compact view"
+      ],
+      "currentCases": [
+        "chromium: mobile and embed diagnostics fit and return to compact view",
+        "firefox: mobile and embed diagnostics fit and return to compact view"
+      ],
+      "oldCallbackSha256": "2867896b82785a3eb547418d58cc2d1d09aec97d10688dfab0d1412918f754f7",
+      "currentCallbackSha256": "9dcec163530ae62c51dcf41d300cb786f00ce35a268708f29fbc394c703349af",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: browser volume is local, ignores legacy values and preserves speed",
+        "firefox: browser volume is local, ignores legacy values and preserves speed"
+      ],
+      "currentCases": [
+        "chromium: browser volume is local, ignores legacy values and preserves speed",
+        "firefox: browser volume is local, ignores legacy values and preserves speed"
+      ],
+      "oldCallbackSha256": "9a3aae111e35db116bb607a26e785160a414b56226ac5019dfeede5bb47541ad",
+      "currentCallbackSha256": "9a3aae111e35db116bb607a26e785160a414b56226ac5019dfeede5bb47541ad",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: mobile volume stays device controlled with neutral translucent controls",
+        "firefox: mobile volume stays device controlled with neutral translucent controls"
+      ],
+      "currentCases": [
+        "chromium: mobile volume stays device controlled with neutral translucent controls",
+        "firefox: mobile volume stays device controlled with neutral translucent controls"
+      ],
+      "oldCallbackSha256": "f923e10e06a3cbb0bcdc154e0246589d0964c1cf7edd0f4ee2f673ffc0f1ed90",
+      "currentCallbackSha256": "c0ea50fa2642aa18ca7a1aded70a4ab527a786df27c5a1fd78a5721dbdef8401",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel playlists match library sizing in Diary",
+        "firefox: channel playlists match library sizing in Diary"
+      ],
+      "currentCases": [
+        "chromium: channel playlists and Library covers keep shared desktop aspect ratios and destinations",
+        "firefox: channel playlists and Library covers keep shared desktop aspect ratios and destinations"
+      ],
+      "oldCallbackSha256": "d28ae6904e45443f4fe553bcf6f92e20023d71a48c58d42b824997720e08579f",
+      "currentCallbackSha256": "40b98591ae7c67becbe31d3adc0bd3fe752ca4543e90ae2b1a487fa2d016da84",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel search preserves scope, query, and numeric pagination",
+        "firefox: channel search preserves scope, query, and numeric pagination"
+      ],
+      "currentCases": [
+        "chromium: channel search preserves scope, query, and numeric pagination",
+        "firefox: channel search preserves scope, query, and numeric pagination"
+      ],
+      "oldCallbackSha256": "02a44ff0f79fb75708e26634b433eb9e838e804d5875d4851cea875a0a9ce55e",
+      "currentCallbackSha256": "b451623187444ae66ededed10e731c3a3898c7f48e6406530211df6a2de31e43",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel search privacy and empty results work without JavaScript",
+        "firefox: channel search privacy and empty results work without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: channel search privacy and empty results work without JavaScript",
+        "firefox: channel search privacy and empty results work without JavaScript"
+      ],
+      "oldCallbackSha256": "d812ee575b897bee81c0c3c2e472fd02005ec05819f09cdc141afbb12e44b0fa",
+      "currentCallbackSha256": "d812ee575b897bee81c0c3c2e472fd02005ec05819f09cdc141afbb12e44b0fa",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel SponsorBlock editor supports mobile and no-JavaScript forms",
+        "firefox: channel SponsorBlock editor supports mobile and no-JavaScript forms"
+      ],
+      "currentCases": [
+        "chromium: channel SponsorBlock editor supports desktop ordinary no-JavaScript forms",
+        "firefox: channel SponsorBlock editor supports desktop ordinary no-JavaScript forms"
+      ],
+      "oldCallbackSha256": "31de79d466e74fa9c6838d7996910d98d234eef8f59566aa821f729302387b75",
+      "currentCallbackSha256": "08f13246a39a2ba7806941e5c6353960efa4c0f6e9a22170f82491c45584a298",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: browser profiles restore guest and two accounts independently on watch and embed",
+        "firefox: browser profiles restore guest and two accounts independently on watch and embed"
+      ],
+      "currentCases": [
+        "chromium: browser profiles restore guest and two accounts independently on watch and embed",
+        "firefox: browser profiles restore guest and two accounts independently on watch and embed"
+      ],
+      "oldCallbackSha256": "6bca12a73b187c65284a35328eb45fda9fe1675687fcf4e1a6305cd17e05b4ad",
+      "currentCallbackSha256": "9218d3f088134043e50a13df8333909a09c5d0d14435ee83a12694276120324e",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: stale browser tabs reload and delayed authenticated saves never write another profile",
+        "firefox: stale browser tabs reload and delayed authenticated saves never write another profile"
+      ],
+      "currentCases": [
+        "chromium: stale browser tabs reload and delayed authenticated saves never write another profile",
+        "firefox: stale browser tabs reload and delayed authenticated saves never write another profile"
+      ],
+      "oldCallbackSha256": "757768b614569c847117d4770bb1a312fc204b96c2d6efc35d0d808a92678878",
+      "currentCallbackSha256": "757768b614569c847117d4770bb1a312fc204b96c2d6efc35d0d808a92678878",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: failed account speed saves preserve guest preferences and denied browser saves report failure",
+        "firefox: failed account speed saves preserve guest preferences and denied browser saves report failure"
+      ],
+      "currentCases": [
+        "chromium: failed account speed saves preserve guest preferences and denied browser saves report failure",
+        "firefox: failed account speed saves preserve guest preferences and denied browser saves report failure"
+      ],
+      "oldCallbackSha256": "9edaf74379fae8ad1efe35da66d7a197d78c9030fc6e07b8e3a3810c3b404316",
+      "currentCallbackSha256": "9edaf74379fae8ad1efe35da66d7a197d78c9030fc6e07b8e3a3810c3b404316",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: authenticated response headers invalidate stale saves when browser storage and cookie access are denied",
+        "firefox: authenticated response headers invalidate stale saves when browser storage and cookie access are denied"
+      ],
+      "currentCases": [
+        "chromium: authenticated response headers invalidate stale saves when browser storage and cookie access are denied",
+        "firefox: authenticated response headers invalidate stale saves when browser storage and cookie access are denied"
+      ],
+      "oldCallbackSha256": "cb5c8a8cc75ea044d368fd5259de6a0fb9982cdbef6a9abb317cc4412bb0b83c",
+      "currentCallbackSha256": "cb5c8a8cc75ea044d368fd5259de6a0fb9982cdbef6a9abb317cc4412bb0b83c",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests",
+        "firefox: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests"
+      ],
+      "currentCases": [
+        "chromium: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests",
+        "firefox: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests"
+      ],
+      "oldCallbackSha256": "93735137d41794eaf1a5bca85982133a529ea33654114ef7456a844fe7d53d85",
+      "currentCallbackSha256": "02a180dfed53167cf02c76de65574d951025162e42b5c2eba0066fe37611ffb4",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: account thumbnail bars ignore local progress and update dynamic queues at 390px",
+        "chromium: account thumbnail bars ignore local progress and update dynamic queues at 1440px",
+        "firefox: account thumbnail bars ignore local progress and update dynamic queues at 390px",
+        "firefox: account thumbnail bars ignore local progress and update dynamic queues at 1440px"
+      ],
+      "currentCases": [
+        "chromium: account thumbnail bars ignore local progress and update dynamic queues at 390px",
+        "chromium: account thumbnail bars ignore local progress and update dynamic queues at 1440px",
+        "firefox: account thumbnail bars ignore local progress and update dynamic queues at 390px",
+        "firefox: account thumbnail bars ignore local progress and update dynamic queues at 1440px"
+      ],
+      "oldCallbackSha256": "52fe7c0586f0847272b2809a89cac2932e36d50ed82bbf93fce0fbd486503d5f",
+      "currentCallbackSha256": "8f18e1964ea7062fb2a987f7a025900213a2912319e43b02e2d0e4bfab8853ac",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: current chapter beside duration follows playback and seeking",
+        "firefox: current chapter beside duration follows playback and seeking"
+      ],
+      "currentCases": [
+        "chromium: current chapter beside duration follows playback and seeking",
+        "firefox: current chapter beside duration follows playback and seeking"
+      ],
+      "oldCallbackSha256": "dec662490244d06fc1caff15ecc24e4d3cfd08fa73e93b880124f19e3f069158",
+      "currentCallbackSha256": "dec662490244d06fc1caff15ecc24e4d3cfd08fa73e93b880124f19e3f069158",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: chapter title fits mobile watch and embed controls",
+        "firefox: chapter title fits mobile watch and embed controls"
+      ],
+      "currentCases": [
+        "chromium: chapter title fits unified touch desktop and mobile embed controls",
+        "firefox: chapter title fits unified touch desktop and mobile embed controls"
+      ],
+      "oldCallbackSha256": "1579983a4e162f467059fc8e243cf688c0e456cfef840941d6907d24b53b5bea",
+      "currentCallbackSha256": "0961ed30f2abc071b3e3ff17e658a5711aaa86f314a306ba9f90cee2ac23e8cc",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: manual chapter markers and SponsorBlock hover priority",
+        "firefox: manual chapter markers and SponsorBlock hover priority"
+      ],
+      "currentCases": [
+        "chromium: manual chapter markers and SponsorBlock hover priority",
+        "firefox: manual chapter markers and SponsorBlock hover priority"
+      ],
+      "oldCallbackSha256": "b69e0dc8c9039e5f10c1922640f0584416f801fcd0e0e9dc2dfba1d0910682e1",
+      "currentCallbackSha256": "b69e0dc8c9039e5f10c1922640f0584416f801fcd0e0e9dc2dfba1d0910682e1",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: manual chapters survive disabled and failed SponsorBlock",
+        "firefox: manual chapters survive disabled and failed SponsorBlock"
+      ],
+      "currentCases": [
+        "chromium: manual chapters survive disabled and failed SponsorBlock",
+        "firefox: manual chapters survive disabled and failed SponsorBlock"
+      ],
+      "oldCallbackSha256": "3b766a656d4b9f237733d1ebc4f5e2f30aa6699647c6929a8929b5b1352846a6",
+      "currentCallbackSha256": "ed7a2df0861c0f89c883e55138b28c68c2baedf5bf1e559df08483f5924790fe",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: manual chapters in embeds, player styles and thumbnail previews",
+        "firefox: manual chapters in embeds, player styles and thumbnail previews"
+      ],
+      "currentCases": [
+        "chromium: manual chapters in embeds, player styles and thumbnail previews",
+        "firefox: manual chapters in embeds, player styles and thumbnail previews"
+      ],
+      "oldCallbackSha256": "eb7d8ac454f174a16735ff6d14d896070dc9020abeff2104a1e2214c27462269",
+      "currentCallbackSha256": "eb7d8ac454f174a16735ff6d14d896070dc9020abeff2104a1e2214c27462269",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "manual chapter template serializes titles safely for watch and embed"
+      ],
+      "currentCases": [
+        "manual chapter template serializes titles safely for watch and embed"
+      ],
+      "oldCallbackSha256": "a556e7c03c2c0c0ef8cfcd0ecba7be749ab41e9a74762fad0ce3cf1be0624eee",
+      "currentCallbackSha256": "a556e7c03c2c0c0ef8cfcd0ecba7be749ab41e9a74762fad0ce3cf1be0624eee",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: production thumbnail progress spans history, all card types and thin layouts at 390px",
+        "chromium: production thumbnail progress spans history, all card types and thin layouts at 1440px",
+        "firefox: production thumbnail progress spans history, all card types and thin layouts at 390px",
+        "firefox: production thumbnail progress spans history, all card types and thin layouts at 1440px"
+      ],
+      "currentCases": [
+        "chromium: production thumbnail progress spans history, all card types and legacy thin preferences at 1280px",
+        "chromium: production thumbnail progress spans history, all card types and legacy thin preferences at 1440px",
+        "firefox: production thumbnail progress spans history, all card types and legacy thin preferences at 1280px",
+        "firefox: production thumbnail progress spans history, all card types and legacy thin preferences at 1440px"
+      ],
+      "oldCallbackSha256": "e792d3f9dff2004f783a1e07504d6adf1f9b8ced32562e494ace23475cc0eb8c",
+      "currentCallbackSha256": "344c8510579d0ca06866ccb827b1117c71b1ec5a0da53d76617ca80149cc756a",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: production queue and recommendation progress survives thin mode and refresh at 390px",
+        "chromium: production queue and recommendation progress survives thin mode and refresh at 1440px",
+        "firefox: production queue and recommendation progress survives thin mode and refresh at 390px",
+        "firefox: production queue and recommendation progress survives thin mode and refresh at 1440px"
+      ],
+      "currentCases": [
+        "chromium: production queue and recommendation progress survives legacy thin preferences and refresh at 1280px",
+        "chromium: production queue and recommendation progress survives legacy thin preferences and refresh at 1440px",
+        "firefox: production queue and recommendation progress survives legacy thin preferences and refresh at 1280px",
+        "firefox: production queue and recommendation progress survives legacy thin preferences and refresh at 1440px"
+      ],
+      "oldCallbackSha256": "d5cae21d00867f89dee3a0b21bad8f156ecdbf5febd1447baa974b98514bd69b",
+      "currentCallbackSha256": "5ecbdfaae3047e69d40f68df9d4dc8a0c8848bd308e12208b71613f36bff2c23",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: history search and browser-local progress use existing saved positions",
+        "firefox: history search and browser-local progress use existing saved positions"
+      ],
+      "currentCases": [
+        "chromium: history search and browser-local progress use existing saved positions",
+        "firefox: history search and browser-local progress use existing saved positions"
+      ],
+      "oldCallbackSha256": "a8f4d04caee6e36d4a434bc15d77921c34025c233fb7ebd4f9bba3d3412dcb91",
+      "currentCallbackSha256": "a8f4d04caee6e36d4a434bc15d77921c34025c233fb7ebd4f9bba3d3412dcb91",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: account forms are accessible and responsive",
+        "firefox: account forms are accessible and responsive"
+      ],
+      "currentCases": [
+        "chromium: account forms are accessible and responsive",
+        "firefox: account forms are accessible and responsive"
+      ],
+      "oldCallbackSha256": "59845f301e85de03bcc132eb5dd7553362378969e2a06d38c398b8953456def4",
+      "currentCallbackSha256": "59845f301e85de03bcc132eb5dd7553362378969e2a06d38c398b8953456def4",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: Popular avatars learned during channel refreshes render without metadata lookups",
+        "firefox: Popular avatars learned during channel refreshes render without metadata lookups"
+      ],
+      "currentCases": [
+        "chromium: Popular avatars learned during channel refreshes render without metadata lookups",
+        "firefox: Popular avatars learned during channel refreshes render without metadata lookups"
+      ],
+      "oldCallbackSha256": "b1db3e247b0e9129b36d0f26fd08a1a4c09ef6decfb5aed8810ac0214b4051d5",
+      "currentCallbackSha256": "27bd8647837793fa402c33c967f3a57882d31146d7b020480a88b497266fc542",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel avatars learned from comments and community posts render on another page without metadata lookups",
+        "firefox: channel avatars learned from comments and community posts render on another page without metadata lookups"
+      ],
+      "currentCases": [
+        "chromium: channel avatars learned from comments and community posts render on another page without metadata lookups",
+        "firefox: channel avatars learned from comments and community posts render on another page without metadata lookups"
+      ],
+      "oldCallbackSha256": "81604243f6c1317b9163b7c32424b00576e9130ecd70ab6702581f1fea1d671e",
+      "currentCallbackSha256": "a2489e0d8bf93da4ac84f24c60d68aed71f0e03e924198434181de16b9a17f62",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: comment avatar cache learning preserves modern and legacy comment rendering and thin mode",
+        "firefox: comment avatar cache learning preserves modern and legacy comment rendering and thin mode"
+      ],
+      "currentCases": [
+        "chromium: comment avatar cache learning preserves modern and legacy comment rendering and thin mode",
+        "firefox: comment avatar cache learning preserves modern and legacy comment rendering and thin mode"
+      ],
+      "oldCallbackSha256": "8ba310e9d98fe8669a82f37925267f60809eade9c931996bc9fa7c69256e7f01",
+      "currentCallbackSha256": "8ba310e9d98fe8669a82f37925267f60809eade9c931996bc9fa7c69256e7f01",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel avatars learned from recommendations render on another page without metadata lookups",
+        "firefox: channel avatars learned from recommendations render on another page without metadata lookups"
+      ],
+      "currentCases": [
+        "chromium: channel avatars learned from recommendations render on another page without metadata lookups",
+        "firefox: channel avatars learned from recommendations render on another page without metadata lookups"
+      ],
+      "oldCallbackSha256": "234ff3eca4abea216cc4996175a40bf6061e2c90797dc90b52dc888d878586fc",
+      "currentCallbackSha256": "b609fee635dc3980452ba52e049364f6318ba4122ee731d22ec236a1118aa660",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: real modern recommendations preserve creator links, duration and collaboration labels",
+        "firefox: real modern recommendations preserve creator links, duration and collaboration labels"
+      ],
+      "currentCases": [
+        "chromium: real modern recommendations preserve creator links, duration and collaboration labels",
+        "firefox: real modern recommendations preserve creator links, duration and collaboration labels"
+      ],
+      "oldCallbackSha256": "d30f67176a29e6b3bfc822efe8bc6d6c04b3128a706ff69de1ab5ac5c2a1885a",
+      "currentCallbackSha256": "85462ef79b71e59eab9bc86de7d1790a7307146a94aef8fa61ebc859e5f1f84a",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel avatars recovered from a real playlist response render without metadata lookups",
+        "firefox: channel avatars recovered from a real playlist response render without metadata lookups"
+      ],
+      "currentCases": [
+        "chromium: channel avatars recovered from a real playlist response render without metadata lookups",
+        "firefox: channel avatars recovered from a real playlist response render without metadata lookups"
+      ],
+      "oldCallbackSha256": "e8ee7e625008acbefa5ff2392d8eb92bc31c4fe82f49dda20cf0dd76fc5b9d43",
+      "currentCallbackSha256": "2c96697dacd4bfd51ad8f34bd47b6512d4b956e783249a11664c53ee0d7a93c8",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles",
+        "firefox: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles"
+      ],
+      "currentCases": [
+        "chromium: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles",
+        "firefox: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles"
+      ],
+      "oldCallbackSha256": "5b3965584f81bc130fd4adc7c944350dfed40e1bb2a2daf9c66324f5779f890e",
+      "currentCallbackSha256": "10f54ff8a9700ea34a8eadeb6a0afb848dd69cf2eda659a0366408b9df65dfcb",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel avatars fit compact rows, history and subscription manager without JavaScript",
+        "firefox: channel avatars fit compact rows, history and subscription manager without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: channel avatars fit compact rows, history and subscription manager without JavaScript",
+        "firefox: channel avatars fit compact rows, history and subscription manager without JavaScript"
+      ],
+      "oldCallbackSha256": "c37e5a8451578e64cba70fa668aafa3a3e55015a44e84b4451980a98065d760f",
+      "currentCallbackSha256": "97bd074b762e4017a4ceddfadfb977a61a95768d29fc135c25c92e5473095882",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel avatars preserve thin mode, channel ownership and RTL layout",
+        "firefox: channel avatars preserve thin mode, channel ownership and RTL layout"
+      ],
+      "currentCases": [
+        "chromium: channel avatars preserve browser imagery with legacy thin preferences, channel ownership and RTL layout",
+        "firefox: channel avatars preserve browser imagery with legacy thin preferences, channel ownership and RTL layout"
+      ],
+      "oldCallbackSha256": "4a121b21b47e9ea9265d4e5b60d74620c43cecfe004de7dabed6f3f09db404a7",
+      "currentCallbackSha256": "61be183ab70f362e7184dfdd0cc28cf01a7e933727cb1584345d730399ef28e5",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel avatar initials preserve Unicode, stable colors and readable contrast",
+        "firefox: channel avatar initials preserve Unicode, stable colors and readable contrast"
+      ],
+      "currentCases": [
+        "chromium: channel avatar initials preserve Unicode, stable colors and readable contrast",
+        "firefox: channel avatar initials preserve Unicode, stable colors and readable contrast"
+      ],
+      "oldCallbackSha256": "4a85e145bafca3c04468a030c6795b5461ba8da2a1b9b744cda295ba895cb862",
+      "currentCallbackSha256": "edd9862a5733306ecf9b95b31487d061fca1416592dcb723c1f0f57e65250acf",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: failed avatar images keep placeholders and never retry metadata",
+        "firefox: failed avatar images keep placeholders and never retry metadata"
+      ],
+      "currentCases": [
+        "chromium: failed avatar images keep placeholders and never retry metadata",
+        "firefox: failed avatar images keep placeholders and never retry metadata"
+      ],
+      "oldCallbackSha256": "c4191e7cbd7660a6e2dc3b565eb8a0f029259d0a0440f1d7e30448f5193f7f7f",
+      "currentCallbackSha256": "c4191e7cbd7660a6e2dc3b565eb8a0f029259d0a0440f1d7e30448f5193f7f7f",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation",
+        "firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation",
+        "firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation"
+      ],
+      "oldCallbackSha256": "bdc4bfede327d8513a14a866cbb1c54a64924216d6387c2c2a0e955e4b5b1ead",
+      "currentCallbackSha256": "bdc4bfede327d8513a14a866cbb1c54a64924216d6387c2c2a0e955e4b5b1ead",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles",
+        "firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles",
+        "firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles"
+      ],
+      "oldCallbackSha256": "fc6ec3f69d237067a9888a1d2cfd57facf519bb4af464ebf400cf54c0a6f17c1",
+      "currentCallbackSha256": "7049f2ba678c4f69902bc79897dbcc7eae3b14b7c7d625aa1a59a53383cafa4a",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles",
+        "firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles",
+        "firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles"
+      ],
+      "oldCallbackSha256": "96fb633e48aaeffd4002044677051c8bed42cad4d60f1de382c992e6b338b132",
+      "currentCallbackSha256": "96fb633e48aaeffd4002044677051c8bed42cad4d60f1de382c992e6b338b132",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers prefetch hidden cards only within the viewport margin",
+        "firefox: channel spoilers prefetch hidden cards only within the viewport margin"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers prefetch hidden cards only within the viewport margin",
+        "firefox: channel spoilers prefetch hidden cards only within the viewport margin"
+      ],
+      "oldCallbackSha256": "2bfd4557ebb78c8292c91e9e795181473e11bf5879e805402ae1c72b73f84dab",
+      "currentCallbackSha256": "2bfd4557ebb78c8292c91e9e795181473e11bf5879e805402ae1c72b73f84dab",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers preserve no-JavaScript masking and account settings",
+        "firefox: channel spoilers preserve no-JavaScript masking and account settings"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers preserve no-JavaScript masking and account settings",
+        "firefox: channel spoilers preserve no-JavaScript masking and account settings"
+      ],
+      "oldCallbackSha256": "4611e2dee70650fbaf40f72ea0f1f3fb40315cf33653824784aa5032f4247fb6",
+      "currentCallbackSha256": "29faa2ed992b84ba738a36ab3abc875c0a9d255eb7a079c978214048fca398c4",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers save guest rules and apply before initial rendering",
+        "firefox: channel spoilers save guest rules and apply before initial rendering"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers save guest rules and apply before initial rendering",
+        "firefox: channel spoilers save guest rules and apply before initial rendering"
+      ],
+      "oldCallbackSha256": "a4e178eaff8ad428fd514bd42e059897ae75a8d67036a55864219398d8d480da",
+      "currentCallbackSha256": "a4e178eaff8ad428fd514bd42e059897ae75a8d67036a55864219398d8d480da",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences",
+        "firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences",
+        "firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences"
+      ],
+      "oldCallbackSha256": "3323a429017228edda63244c453c6507e13b5d1d420ba17b3a9786f6a06ad53d",
+      "currentCallbackSha256": "3323a429017228edda63244c453c6507e13b5d1d420ba17b3a9786f6a06ad53d",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated",
+        "firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated",
+        "firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated"
+      ],
+      "oldCallbackSha256": "65e697699980c90734fae26e17dbe4b98c54fc0f9475540532799c1cdc3423c4",
+      "currentCallbackSha256": "65e697699980c90734fae26e17dbe4b98c54fc0f9475540532799c1cdc3423c4",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers mask a guest watch title and poster before player setup",
+        "firefox: channel spoilers mask a guest watch title and poster before player setup"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers mask a guest watch title and poster before player setup",
+        "firefox: channel spoilers mask a guest watch title and poster before player setup"
+      ],
+      "oldCallbackSha256": "21ec5b041d402ed28faefd28d70ec2e332d42c4313710ed7b2494ec7417e3fbb",
+      "currentCallbackSha256": "21ec5b041d402ed28faefd28d70ec2e332d42c4313710ed7b2494ec7417e3fbb",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary",
+        "firefox: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary",
+        "firefox: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary"
+      ],
+      "oldCallbackSha256": "97eb1d8f82b0ac3c486ec0e350cc3c7f8414c763f76bc09871f8d011c9138f4e",
+      "currentCallbackSha256": "97eb1d8f82b0ac3c486ec0e350cc3c7f8414c763f76bc09871f8d011c9138f4e",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional",
+        "firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional",
+        "firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional"
+      ],
+      "oldCallbackSha256": "0eeb567d8a21b9734d89aabece59f6c38550427f94aa6f07a1de3e962f3237bb",
+      "currentCallbackSha256": "0eeb567d8a21b9734d89aabece59f6c38550427f94aa6f07a1de3e962f3237bb",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers skip inactive work and batch large subtree insertions",
+        "firefox: channel spoilers skip inactive work and batch large subtree insertions"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers skip inactive work and batch large subtree insertions",
+        "firefox: channel spoilers skip inactive work and batch large subtree insertions"
+      ],
+      "oldCallbackSha256": "906a8c55647a81be7f048c40516353032c5582ceb4f12be736990b6e51fd74c8",
+      "currentCallbackSha256": "906a8c55647a81be7f048c40516353032c5582ceb4f12be736990b6e51fd74c8",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: channel spoilers activate blank-delay guest rules in an already open inactive tab",
+        "firefox: channel spoilers activate blank-delay guest rules in an already open inactive tab"
+      ],
+      "currentCases": [
+        "chromium: channel spoilers activate blank-delay guest rules in an already open inactive tab",
+        "firefox: channel spoilers activate blank-delay guest rules in an already open inactive tab"
+      ],
+      "oldCallbackSha256": "5b8a75382accbd1eeb95aae28d92b68eee541144944e21ef727684f3ddd26de3",
+      "currentCallbackSha256": "5b8a75382accbd1eeb95aae28d92b68eee541144944e21ef727684f3ddd26de3",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: preferred audio settings save without JavaScript and include regional choices",
+        "firefox: preferred audio settings save without JavaScript and include regional choices"
+      ],
+      "currentCases": [
+        "chromium: preferred audio settings save without JavaScript and include regional choices",
+        "firefox: preferred audio settings save without JavaScript and include regional choices"
+      ],
+      "oldCallbackSha256": "ce14157fa5bd2ba120df13ac11464b0910930748b41870d91b92a06575280aa0",
+      "currentCallbackSha256": "cb7770a1f7914a3d7d3fc9ed3ef3d98660434cca4d4926a19e4e4f019ff112a6",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: preferred audio selects late DASH tracks and preserves manual choices on watch and embed",
+        "firefox: preferred audio selects late DASH tracks and preserves manual choices on watch and embed"
+      ],
+      "currentCases": [
+        "chromium: preferred audio selects late DASH tracks and preserves manual choices on watch and embed",
+        "firefox: preferred audio selects late DASH tracks and preserves manual choices on watch and embed"
+      ],
+      "oldCallbackSha256": "526c3ccf1c4290381eecda07eb6e3cac26fa3e657a124d777b2546915bf673b7",
+      "currentCallbackSha256": "526c3ccf1c4290381eecda07eb6e3cac26fa3e657a124d777b2546915bf673b7",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: preferred audio-only sources keep track identity when switching quality",
+        "firefox: preferred audio-only sources keep track identity when switching quality"
+      ],
+      "currentCases": [
+        "chromium: preferred audio-only sources keep track identity when switching quality",
+        "firefox: preferred audio-only sources keep track identity when switching quality"
+      ],
+      "oldCallbackSha256": "96e48aebad33234191426533f708abaf9f4b64f8864a4d931677f720d2c00df8",
+      "currentCallbackSha256": "96e48aebad33234191426533f708abaf9f4b64f8864a4d931677f720d2c00df8",
+      "disposition": "Retained unchanged"
+    },
+    {
+      "oldCases": [
+        "chromium: seek interval settings submit all choices without JavaScript",
+        "firefox: seek interval settings submit all choices without JavaScript"
+      ],
+      "currentCases": [
+        "chromium: seek interval settings submit all choices without JavaScript",
+        "firefox: seek interval settings submit all choices without JavaScript"
+      ],
+      "oldCallbackSha256": "dbe1ef1c1ad29ee047fffecce1333912a6d079960adb130ccf399f6e4c9d69de",
+      "currentCallbackSha256": "29d4535a33e797ab11844e4035f2d62c49b6826e19c560220c6dc3d67e82b247",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    },
+    {
+      "oldCases": [
+        "chromium: seek intervals use video seconds for keyboard media keys and mobile taps",
+        "firefox: seek intervals use video seconds for keyboard media keys and mobile taps"
+      ],
+      "currentCases": [
+        "chromium: seek intervals use video seconds for keyboard media keys and mobile taps",
+        "firefox: seek intervals use video seconds for keyboard media keys and mobile taps"
+      ],
+      "oldCallbackSha256": "94718c4e10d90802e2778f44ac9458e4bf903d9cb8c7029ed32c4075154b1913",
+      "currentCallbackSha256": "b2bb4f95b92a0b995bd9579e16213f1b3f9b0fff40b3e65b5b8b5a75a57a9e74",
+      "disposition": "Retained and reconciled with the actual route, component owner, shared presentation or canonical state; exact assertions are in the source snapshots."
+    }
+  ],
+  "addedFamilies": [
+    {
+      "name": "firefox: D8 contextual actions keep one delegated owner after repeated script setup",
+      "start": 334742,
+      "end": 336210,
+      "bodyStart": 334835,
+      "bodyEnd": 336208,
+      "names": [
+        "chromium: D8 contextual actions keep one delegated owner after repeated script setup",
+        "firefox: D8 contextual actions keep one delegated owner after repeated script setup"
+      ]
+    }
+  ]
+}

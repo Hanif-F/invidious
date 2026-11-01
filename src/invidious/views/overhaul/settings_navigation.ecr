@@ -1,0 +1,12 @@
+<aside>
+<div data-settings-search hidden><label class="sr-only" for="settings-search"><%= I18n.translate(locale, "ux_settings_search") %></label><input class="settings-search" type="search" id="settings-search" placeholder="<%= I18n.translate(locale, "ux_settings_search") %>" autocomplete="off">
+<div id="settings-search-results" class="settings-search-results" hidden></div><p class="muted" id="settings-search-status" role="status"></p></div>
+<p class="settings-navigation-status" data-settings-navigation-status role="status" tabindex="-1" hidden></p>
+<nav class="settings-nav" aria-label="<%= I18n.translate(locale, "overhaul_settings_categories") %>">
+<% Invidious::Frontend::Settings::CATEGORIES.each do |id, entry| %><% next if id == "library" && !env.get?("user") %><a href="/preferences?section=<%= id %>" data-settings-category="<%= id %>" <%= "aria-current=page" if id == section %>><%= Invidious::Frontend::Icons.render(entry[1]) %><%= I18n.translate(locale, entry[0]) %></a><% end %>
+<a href="/preferences/sponsorblock/channels" <%= "aria-current=page" if section == "sponsorblock-channels" %>><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "sb_channels") %></a>
+<a href="/preferences?section=chat" <%= "aria-current=page" if section == "chat" %>><%= Invidious::Frontend::Icons.render("captions") %><%= I18n.translate(locale, "ui_chat_replay") %></a>
+<% if env.get?("user") %><a href="/preferences/dearrow/identity" <%= "aria-current=page" if section == "dearrow-identity" %>><%= Invidious::Frontend::Icons.render("lock") %><%= I18n.translate(locale, "overhaul_identity_heading") %></a><a href="/blocked_channels" <%= "aria-current=page" if section == "blocked-channels" %>><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "settings_blocked_channels") %></a><% end %><a href="/preferences/spoilers/channels" <%= "aria-current=page" if section == "channel-masking" %>><%= Invidious::Frontend::Icons.render("eye-off") %><%= I18n.translate(locale, "spoilers_settings") %></a>
+</nav></aside>
+<script id="settings-navigation-config" type="application/json"><%= {search: Invidious::Frontend::Settings.search_index(env)}.to_json.gsub("<", "\\u003c") %></script>
+<script src="/js/settings-navigation.js?v=<%= ASSET_COMMIT %>" defer></script>

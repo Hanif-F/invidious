@@ -1,0 +1,322 @@
+TAP version 13
+# Subtest: chromium: D7 account light/dark layouts, scoped assets and readable security consequences
+ok 1 - chromium: D7 account light/dark layouts, scoped assets and readable security consequences
+  ---
+  duration_ms: 4252.640933
+  type: 'test'
+  ...
+# Subtest: chromium: D7 RTL, enlarged text, keyboard and forced-color focus
+ok 2 - chromium: D7 RTL, enlarged text, keyboard and forced-color focus
+  ---
+  duration_ms: 1042.563711
+  type: 'test'
+  ...
+# Subtest: chromium: D7 failed usernames and private issued tokens remain literal text
+ok 3 - chromium: D7 failed usernames and private issued tokens remain literal text
+  ---
+  duration_ms: 473.14029
+  type: 'test'
+  ...
+# Subtest: chromium: D7 credential forms submit complete ordinary requests with and without JavaScript
+ok 4 - chromium: D7 credential forms submit complete ordinary requests with and without JavaScript
+  ---
+  duration_ms: 1407.251065
+  type: 'test'
+  ...
+# Subtest: chromium: D7 token consent preserves exact scopes and native callback without unsafe Cancel
+ok 5 - chromium: D7 token consent preserves exact scopes and native callback without unsafe Cancel
+  ---
+  duration_ms: 315.90668
+  type: 'test'
+  ...
+# Subtest: chromium: D7 full native expiration timestamps survive consent
+ok 6 - chromium: D7 full native expiration timestamps survive consent
+  ---
+  duration_ms: 96.195946
+  type: 'test'
+  ...
+# Subtest: chromium: D7 session revocation is explicit, private and usable without JavaScript
+ok 7 - chromium: D7 session revocation is explicit, private and usable without JavaScript
+  ---
+  duration_ms: 319.812644
+  type: 'test'
+  ...
+# Subtest: chromium: D7 TV approve and deny retain the chosen ordinary submitter
+ok 8 - chromium: D7 TV approve and deny retain the chosen ordinary submitter
+  ---
+  duration_ms: 564.213222
+  type: 'test'
+  ...
+# Subtest: chromium: D7 data source matrix and grouped portable exports
+ok 9 - chromium: D7 data source matrix and grouped portable exports
+  ---
+  duration_ms: 2782.209395
+  type: 'test'
+  ...
+# Subtest: chromium: D7 source choice works by GET and import keeps CSRF first without JavaScript
+ok 10 - chromium: D7 source choice works by GET and import keeps CSRF first without JavaScript
+  ---
+  duration_ms: 550.186707
+  type: 'test'
+  ...
+# Subtest: chromium: D7 import error keeps source and truthful partial-result guidance
+ok 11 - chromium: D7 import error keeps source and truthful partial-result guidance
+  ---
+  duration_ms: 338.385954
+  type: 'test'
+  ...
+# Subtest: chromium: D7 parser failures retain a safe source form without claiming rollback
+ok 12 - chromium: D7 parser failures retain a safe source form without claiming rollback
+  ---
+  duration_ms: 95.14048
+  type: 'test'
+  ...
+# Subtest: chromium: D7 CAPTCHA is labeled and retained in the ordinary registration form
+ok 13 - chromium: D7 CAPTCHA is labeled and retained in the ordinary registration form
+  ---
+  duration_ms: 318.420513
+  type: 'test'
+  ...
+# Subtest: chromium: D7 duplicate submission guard retains fields and resets on cached return
+ok 14 - chromium: D7 duplicate submission guard retains fields and resets on cached return
+  ---
+  duration_ms: 83.77219
+  type: 'test'
+  ...
+# Subtest: firefox: D7 account light/dark layouts, scoped assets and readable security consequences
+ok 15 - firefox: D7 account light/dark layouts, scoped assets and readable security consequences
+  ---
+  duration_ms: 14461.526296
+  type: 'test'
+  ...
+# Subtest: firefox: D7 RTL, enlarged text, keyboard and forced-color focus
+ok 16 - firefox: D7 RTL, enlarged text, keyboard and forced-color focus
+  ---
+  duration_ms: 2058.466878
+  type: 'test'
+  ...
+# Subtest: firefox: D7 failed usernames and private issued tokens remain literal text
+ok 17 - firefox: D7 failed usernames and private issued tokens remain literal text
+  ---
+  duration_ms: 2177.242669
+  type: 'test'
+  ...
+# Subtest: firefox: D7 credential forms submit complete ordinary requests with and without JavaScript
+ok 18 - firefox: D7 credential forms submit complete ordinary requests with and without JavaScript
+  ---
+  duration_ms: 4204.87611
+  type: 'test'
+  ...
+# Subtest: firefox: D7 token consent preserves exact scopes and native callback without unsafe Cancel
+ok 19 - firefox: D7 token consent preserves exact scopes and native callback without unsafe Cancel
+  ---
+  duration_ms: 654.933902
+  type: 'test'
+  ...
+# Subtest: firefox: D7 full native expiration timestamps survive consent
+ok 20 - firefox: D7 full native expiration timestamps survive consent
+  ---
+  duration_ms: 256.034242
+  type: 'test'
+  ...
+# Subtest: firefox: D7 session revocation is explicit, private and usable without JavaScript
+ok 21 - firefox: D7 session revocation is explicit, private and usable without JavaScript
+  ---
+  duration_ms: 756.302727
+  type: 'test'
+  ...
+# Subtest: firefox: D7 TV approve and deny retain the chosen ordinary submitter
+ok 22 - firefox: D7 TV approve and deny retain the chosen ordinary submitter
+  ---
+  duration_ms: 2580.926053
+  type: 'test'
+  ...
+# Subtest: firefox: D7 data source matrix and grouped portable exports
+ok 23 - firefox: D7 data source matrix and grouped portable exports
+  ---
+  duration_ms: 10172.284593
+  type: 'test'
+  ...
+# Subtest: firefox: D7 source choice works by GET and import keeps CSRF first without JavaScript
+ok 24 - firefox: D7 source choice works by GET and import keeps CSRF first without JavaScript
+  ---
+  duration_ms: 1019.86524
+  type: 'test'
+  ...
+# Subtest: firefox: D7 import error keeps source and truthful partial-result guidance
+ok 25 - firefox: D7 import error keeps source and truthful partial-result guidance
+  ---
+  duration_ms: 789.363053
+  type: 'test'
+  ...
+# Subtest: firefox: D7 parser failures retain a safe source form without claiming rollback
+ok 26 - firefox: D7 parser failures retain a safe source form without claiming rollback
+  ---
+  duration_ms: 286.676306
+  type: 'test'
+  ...
+# Subtest: firefox: D7 CAPTCHA is labeled and retained in the ordinary registration form
+ok 27 - firefox: D7 CAPTCHA is labeled and retained in the ordinary registration form
+  ---
+  duration_ms: 2171.473573
+  type: 'test'
+  ...
+# Subtest: firefox: D7 duplicate submission guard retains fields and resets on cached return
+ok 28 - firefox: D7 duplicate submission guard retains fields and resets on cached return
+  ---
+  duration_ms: 251.982432
+  type: 'test'
+  ...
+# Subtest: standalone browser challenge uses scoped action, retries outages and returns to video position
+ok 29 - standalone browser challenge uses scoped action, retries outages and returns to video position
+  ---
+  duration_ms: 285.033779
+  type: 'test'
+  ...
+# Subtest: native hosted challenge publishes credentials only through the documented event
+ok 30 - native hosted challenge publishes credentials only through the documented event
+  ---
+  duration_ms: 207.04371
+  type: 'test'
+  ...
+# Subtest: a denied media request preserves playback position when verification expires
+ok 31 - a denied media request preserves playback position when verification expires
+  ---
+  duration_ms: 136.233201
+  type: 'test'
+  ...
+# Subtest: media errors check local status and embedded recovery offers a direct link
+ok 32 - media errors check local status and embedded recovery offers a direct link
+  ---
+  duration_ms: 193.494807
+  type: 'test'
+  ...
+# Subtest: chromium: embedded verification retires zero-position playback and duplicate setup keeps one owner
+ok 33 - chromium: embedded verification retires zero-position playback and duplicate setup keeps one owner
+  ---
+  duration_ms: 191.726154
+  type: 'test'
+  ...
+# Subtest: firefox: embedded verification retires zero-position playback and duplicate setup keeps one owner
+ok 34 - firefox: embedded verification retires zero-position playback and duplicate setup keeps one owner
+  ---
+  duration_ms: 1779.665335
+  type: 'test'
+  ...
+# Subtest: chromium: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry
+ok 35 - chromium: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry
+  ---
+  duration_ms: 3519.192225
+  type: 'test'
+  ...
+# Subtest: chromium: D7 recovery policy choices use ordinary forms with and without JavaScript
+ok 36 - chromium: D7 recovery policy choices use ordinary forms with and without JavaScript
+  ---
+  duration_ms: 342.352774
+  type: 'test'
+  ...
+# Subtest: chromium: D7 native challenge is idempotent and keeps issued credentials in the bridge only
+ok 37 - chromium: D7 native challenge is idempotent and keeps issued credentials in the bridge only
+  ---
+  duration_ms: 106.554247
+  type: 'test'
+  ...
+# Subtest: chromium: D7 failed verification is explicit and retries only a fresh challenge
+ok 38 - chromium: D7 failed verification is explicit and retries only a fresh challenge
+  ---
+  duration_ms: 140.535053
+  type: 'test'
+  ...
+# Subtest: chromium: D7 cached verification return rejects late passes and waits for deliberate Retry
+ok 39 - chromium: D7 cached verification return rejects late passes and waits for deliberate Retry
+  ---
+  duration_ms: 134.332047
+  type: 'test'
+  ...
+# Subtest: chromium: D7 provider failure retires its pending completion before explicit retry
+ok 40 - chromium: D7 provider failure retires its pending completion before explicit retry
+  ---
+  duration_ms: 133.676939
+  type: 'test'
+  ...
+# Subtest: chromium: D7 malformed verification replies cannot invent success or expose token fragments
+ok 41 - chromium: D7 malformed verification replies cannot invent success or expose token fragments
+  ---
+  duration_ms: 535.892064
+  type: 'test'
+  ...
+# Subtest: chromium: D7 API-only recovery has usable minimal login and native bootstrap
+ok 42 - chromium: D7 API-only recovery has usable minimal login and native bootstrap
+  ---
+  duration_ms: 607.760562
+  type: 'test'
+  ...
+# Subtest: chromium: D7 disabled and unconfigured verification stay truthful and localized
+ok 43 - chromium: D7 disabled and unconfigured verification stay truthful and localized
+  ---
+  duration_ms: 203.603686
+  type: 'test'
+  ...
+# Subtest: firefox: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry
+ok 44 - firefox: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry
+  ---
+  duration_ms: 10681.446443
+  type: 'test'
+  ...
+# Subtest: firefox: D7 recovery policy choices use ordinary forms with and without JavaScript
+ok 45 - firefox: D7 recovery policy choices use ordinary forms with and without JavaScript
+  ---
+  duration_ms: 768.624555
+  type: 'test'
+  ...
+# Subtest: firefox: D7 native challenge is idempotent and keeps issued credentials in the bridge only
+ok 46 - firefox: D7 native challenge is idempotent and keeps issued credentials in the bridge only
+  ---
+  duration_ms: 292.833884
+  type: 'test'
+  ...
+# Subtest: firefox: D7 failed verification is explicit and retries only a fresh challenge
+ok 47 - firefox: D7 failed verification is explicit and retries only a fresh challenge
+  ---
+  duration_ms: 324.895472
+  type: 'test'
+  ...
+# Subtest: firefox: D7 cached verification return rejects late passes and waits for deliberate Retry
+ok 48 - firefox: D7 cached verification return rejects late passes and waits for deliberate Retry
+  ---
+  duration_ms: 304.598043
+  type: 'test'
+  ...
+# Subtest: firefox: D7 provider failure retires its pending completion before explicit retry
+ok 49 - firefox: D7 provider failure retires its pending completion before explicit retry
+  ---
+  duration_ms: 1158.017602
+  type: 'test'
+  ...
+# Subtest: firefox: D7 malformed verification replies cannot invent success or expose token fragments
+ok 50 - firefox: D7 malformed verification replies cannot invent success or expose token fragments
+  ---
+  duration_ms: 1859.109935
+  type: 'test'
+  ...
+# Subtest: firefox: D7 API-only recovery has usable minimal login and native bootstrap
+ok 51 - firefox: D7 API-only recovery has usable minimal login and native bootstrap
+  ---
+  duration_ms: 2552.112756
+  type: 'test'
+  ...
+# Subtest: firefox: D7 disabled and unconfigured verification stay truthful and localized
+ok 52 - firefox: D7 disabled and unconfigured verification stay truthful and localized
+  ---
+  duration_ms: 744.526135
+  type: 'test'
+  ...
+1..52
+# tests 52
+# suites 0
+# pass 52
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 55389.544762

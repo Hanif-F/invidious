@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: chromium: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+ok 1 - chromium: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+  ---
+  duration_ms: 1244.797509
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+ok 2 - firefox: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+  ---
+  duration_ms: 1317.878785
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+ok 3 - chromium: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+  ---
+  duration_ms: 629.906637
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+ok 4 - chromium: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+  ---
+  duration_ms: 440.015982
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+ok 5 - firefox: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+  ---
+  duration_ms: 1005.759567
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+ok 6 - firefox: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+  ---
+  duration_ms: 778.203242
+  type: 'test'
+  ...
+# Subtest: chromium: D8 repeated player setup preserves one media, controls and keyboard owner across cached return and disposal
+ok 7 - chromium: D8 repeated player setup preserves one media, controls and keyboard owner across cached return and disposal
+  ---
+  duration_ms: 675.155417
+  type: 'test'
+  ...
+# Subtest: firefox: D8 repeated player setup preserves one media, controls and keyboard owner across cached return and disposal
+ok 8 - firefox: D8 repeated player setup preserves one media, controls and keyboard owner across cached return and disposal
+  ---
+  duration_ms: 1121.167059
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8098.531981

@@ -32,12 +32,23 @@ require new token scopes, while account endpoints still enforce existing scopes,
 ownership and CSRF. Form tokens cannot serve as general access credentials.
 Passing the instance gate does not publish bearer account identity on public API
 routes; private playlists remain available through the scoped authenticated APIs.
-Anonymous pages redirect to login; API/media failures return no-store HTTP 401
+Anonymous content pages redirect to login; GET/HEAD Privacy and JavaScript licenses
+remain readable before login. Other methods on those paths receive no exemption. API/media failures return no-store HTTP 401
 JSON with `error: "login_required"` and `loginUrl`. See
 [configuration](configuration.md#private-instances-and-whitelist-access) for
 bootstrap and signed-integration exceptions and the Companion deployment boundary.
 Bot verification remains independent of account login; see
 [bot protection](bot-protection.md) and its [deployment checks](bot-protection-rollout.md).
+
+Instance-gate failures carry the noncredential
+`X-Invidious-Login-Required: 1` marker, exposed to CORS clients on API/media
+responses; existing JSON fields are unchanged. A denied framed GET has a
+script-free 401 notice with a new-window sign-in action. Valid embedded video
+returns map to `/watch` with their range, list and occurrence context. Watch/embed
+access checks can use HEAD `/api/v1/stats`, which remains subject to instance login
+and reads no video/provider metadata. The browser distinguishes this marker from
+ordinary endpoint/scope 401 responses. Old fetch/XHR results and health probes
+cannot trigger recovery after departure or a cached-page return.
 
 ## Throttling and proxies
 

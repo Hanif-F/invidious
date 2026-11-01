@@ -1,0 +1,42 @@
+Running migration: Invidious::Database::Migrations::CreateChannelsTable
+Running migration: Invidious::Database::Migrations::CreateVideosTable
+Running migration: Invidious::Database::Migrations::CreateChannelVideosTable
+Running migration: Invidious::Database::Migrations::CreateUsersTable
+Running migration: Invidious::Database::Migrations::CreateSessionIdsTable
+Running migration: Invidious::Database::Migrations::CreateNoncesTable
+Running migration: Invidious::Database::Migrations::CreateAnnotationsTable
+Running migration: Invidious::Database::Migrations::CreatePlaylistsTable
+Running migration: Invidious::Database::Migrations::CreatePlaylistVideosTable
+Running migration: Invidious::Database::Migrations::MakeVideosUnlogged
+Running migration: Invidious::Database::Migrations::CreatePlaybackPositionsTable
+Running migration: Invidious::Database::Migrations::CreateBlockedChannelsTable
+Running migration: Invidious::Database::Migrations::CreateDeArrowIdentitiesTable
+Running migration: Invidious::Database::Migrations::CreateWatchHistoryTable
+Running migration: Invidious::Database::Migrations::AddMembersOnly
+Running migration: Invidious::Database::Migrations::AddHistoryDuration
+Running migration: Invidious::Database::Migrations::SecureAccounts
+Running migration: Invidious::Database::Migrations::CreateChatTimingOffsetsTable
+Running migration: Invidious::Database::Migrations::CreateClipsTable
+Running migration: Invidious::Database::Migrations::CreateSavedPlaylistsTable
+Running migration: Invidious::Database::Migrations::CreateChannelAvatarsTable
+Running migration: Invidious::Database::Migrations::CreateAiSListCache
+Running migration: Invidious::Database::Migrations::CreateTvPairings
+Running migration: Invidious::Database::Migrations::CreateOriginalVideoTitles
+Running migration: Invidious::Database::Migrations::BotProtection
+Playlist reorder ownership, CSRF, precision, occurrence identity, stale anchors and concurrent updates passed
+Watch occurrence/ordinal resolution, duplicate identity, private visibility and expired-entry fallback passed
+Desktop queue snapshot/private visibility, duplicate cursors, expired successors and unchanged native/ordinary wire fields passed
+Library atomic writes/rollback/limits, duplicate occurrences, draft validation, privacy, reference isolation and history clearing passed
+Owned-playlist quota concurrency and UTF-8 title boundary passed
+Subscription sorting: cache-only queries, decay, freshness, visibility, counts, isolation, cookies, exports and unsubscribe passed
+Upstream import ID validation/error statuses, fork import preservation and parameterized subscription filters passed
+Unhandled exception: Embed redirect corrupted its playlist cursor (Exception)
+  from tests/database/accounts.cr:73:3 in 'check'
+  from tests/database/security_checks.cr:321:5 in 'check_public_security'
+  from tests/database/accounts.cr:152:5 in '__crystal_main'
+  from /usr/share/crystal/src/crystal/main.cr:174:5 in 'main_user_code'
+  from /usr/share/crystal/src/crystal/main.cr:160:7 in 'main'
+  from /usr/share/crystal/src/crystal/system/unix/main.cr:9:12 in 'main'
+  from /lib64/libc.so.6 in '??'
+  from /lib64/libc.so.6 in '__libc_start_main'
+  from /tmp/invidious-d7-resume-accounts in '_start'

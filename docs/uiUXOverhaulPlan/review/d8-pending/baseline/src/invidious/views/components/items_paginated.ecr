@@ -1,0 +1,32 @@
+<% wrap_collection = !!env.get?("user") && !env.get?("collection_kind") %>
+<% if wrap_collection %><% collection_kind = env.get?("remove_playlist_items") ? "playlist" : "listing"; env.set "collection_kind", collection_kind %>
+<section data-collection data-collection-kind="<%= collection_kind %>" <%= %(data-playlist-id="#{HTML.escape(env.get("remove_playlist_items").as(String))}") if env.get?("remove_playlist_items") %>><%= rendered "overhaul/collection_toolbar" %><% end %>
+<% Invidious::Frontend::ChannelSpoilers.prepare(env, items) %>
+<% Invidious::Frontend::AiChannels.prepare(env, items) %>
+<% Invidious::Frontend::ChannelAvatars.prepare(env, items) %>
+<% Invidious::Frontend::ViewCounts.prepare(env, items) %>
+
+<% unless Invidious::Frontend::Desktop.enabled?(env) %><%= page_nav_html %><% end %>
+
+<% if items.empty? %><div data-browse-empty><% if env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% else %><p class="status-panel" role="status"><%= I18n.translate(locale, "search_message_no_results") %></p><% end %></div><% end %>
+
+<div data-browse-items <%= %(data-playlist-id="#{HTML.escape(env.get("remove_playlist_items").as(String))}" data-order-total="#{env.get?("playlist_order_total").try(&.as(String)) || ""}" data-order-offset="#{((env.params.query["page"]?.try(&.to_i?) || 1) - 1) * 100}") if env.get?("remove_playlist_items") %> class="<%= Invidious::Frontend::Desktop.rows?(env) && Invidious::Frontend::Desktop.enabled?(env) ? "media-rows" : "media-grid" %><%= env.get?("playlist_library") == true ? " playlist-library" : "" %>">
+    <%- items.each_with_index do |item, item_position| -%>
+        <%= rendered "components/item" %>
+    <%- end -%>
+</div>
+
+<%= page_nav_html %>
+<% if Invidious::Frontend::Desktop.enabled?(env) %><%= rendered "components/browse_controls" %><% end %>
+
+<script id="pagination-data" type="application/json">
+<%=
+{
+   "next_page" => I18n.translate(locale, "Next page"),
+   "prev_page" => I18n.translate(locale, "Previous page"),
+   "is_rtl"    => I18n.locale_is_rtl?(locale)
+}.to_pretty_json
+%>
+</script>
+
+<% if wrap_collection %></section><% env.set "collection_kind", false %><% end %>

@@ -1,0 +1,28 @@
+/* Watch utility content; player controls and media keep their own ownership. */
+.watch-enhancements-feedback{margin-block:12px;padding:12px;border:1px solid var(--border);border-radius:var(--radius)}
+.watch-enhancements-feedback p{margin:0;flex:1;min-width:0}
+.transcript-panel{min-width:0}
+.transcript-panel .transcript-toolbar{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.transcript-panel .transcript-toolbar>label{display:flex;flex-direction:column;gap:4px;font-size:14px}
+.transcript-panel .transcript-toolbar>.transcript-follow{flex-direction:row;align-items:center;gap:8px}
+.transcript-panel .transcript-toolbar input[type=search],.transcript-panel select{width:100%;min-width:0}
+.transcript-panel #transcript-status{font-size:14px;color:var(--muted);margin:12px 0}
+.transcript-panel #transcript-status:empty{display:none}
+.transcript-panel #transcript-retry{margin-block:12px}
+.transcript-panel .transcript-lines{position:relative;max-height:55vh;overflow:auto;overscroll-behavior:contain;margin-block-start:12px;border-block:1px solid var(--separator);scrollbar-gutter:stable}
+.transcript-panel .transcript-lines:empty{border:0;margin:0}
+.transcript-panel .transcript-line{display:grid;grid-template-columns:4.5em minmax(0,1fr);gap:8px;min-height:40px;align-items:start;padding:8px;border-inline-start:3px solid transparent;border-block-end:1px solid var(--separator);font-size:14px;line-height:1.5}
+.transcript-panel .transcript-line.is-active{background:var(--selection);border-inline-start-color:var(--accent)}
+.transcript-panel .transcript-time{font:inherit;font-variant-numeric:tabular-nums;min-height:32px;padding:4px;text-decoration:none}
+.transcript-panel .transcript-line p,.transcript-panel .transcript-line h3{margin:0;padding-block:4px;overflow-wrap:anywhere;white-space:pre-wrap;font-size:14px;line-height:1.5}
+.transcript-panel .transcript-line h3{font-weight:600}
+.transcript-panel .transcript-lines:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+@media(forced-colors:active){.transcript-panel .transcript-line.is-active{outline:1px solid Highlight}.transcript-panel .transcript-time{color:LinkText}}
+.watch-comments{margin-block-start:24px;border-block-start:1px solid var(--separator);padding-block-start:20px}
+.watch-comments>h2{font-size:20px;margin:0 0 16px}
+.watch-comments .comment-toolbar{display:flex;align-items:end;gap:16px;flex-wrap:wrap;margin-block:16px}
+.watch-comments .comment-toolbar label{display:flex;flex-direction:column;gap:4px;font-size:14px;min-width:10em;max-width:100%}
+.watch-comments .comment-toolbar select{max-width:100%}
+.watch-comments .comment-source-link:empty{display:none}
+.watch-comments .comment-source-link,.watch-comments .thread-status{font-size:14px;color:var(--muted)}
+.watch-comments .comment{margin-block:20px;gap:12px}

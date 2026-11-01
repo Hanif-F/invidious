@@ -2,21 +2,27 @@ module Invidious::Frontend::SearchFilters
   extend self
 
   # Generate the search filters collapsable widget.
-  def generate(filters : Search::Filters, query : String, page : Int, locale : String, include_blocked : Bool = false, signed_in : Bool = false, show_member_videos : Bool = false, member_reset_url : String = "/search?reset_member_videos=1", private_search : Bool = false) : String
+  def generate(filters : Search::Filters, query : String, page : Int, locale : String, include_blocked : Bool = false, signed_in : Bool = false, show_member_videos : Bool = false, member_reset_url : String = "/search?reset_member_videos=1", private_search : Bool = false, region : String? = nil, action : String = "/search", scope : Hash(String, String) = {} of String => String, videos_only = false) : String
     return String.build(8000) do |str|
       str << "<div id='filters'>\n"
       str << "\t<details id='filters-collapse'>"
-      str << "\t\t<summary>" << I18n.translate(locale, "search_filters_title") << "</summary>\n"
+      str << "\t\t<summary class='button'>" << Icons.render("filter") << I18n.translate(locale, "search_filters_title") << "</summary>\n"
 
-      str << "\t\t<div id='filters-box'><form action='/search' method='" << (private_search ? "post" : "get") << "'>\n"
+      str << "\t\t<div id='filters-box'><form action='" << HTML.escape(action) << "' method='" << (private_search ? "post" : "get") << "'>\n"
 
+      scope.each { |key, value| str << "<input type='hidden' name='" << HTML.escape(key) << "' value='" << HTML.escape(value) << "'>" }
       str << "\t\t\t<input type='hidden' name='q' value='" << HTML.escape(query) << "'>\n"
+      str << "<input type='hidden' name='region' value='" << HTML.escape(region) << "'>" if region
       str << "\t\t\t<input type='hidden' name='page' value='" << 1 << "'>\n"
 
       str << "\t\t\t<div id='filters-flex'>"
 
       filter_wrapper(date)
-      filter_wrapper(type)
+      if videos_only
+        str << "<input type='hidden' name='type' value='video'>"
+      else
+        filter_wrapper(type)
+      end
       filter_wrapper(duration)
       filter_wrapper(features)
       filter_wrapper(sort)
@@ -36,7 +42,7 @@ module Invidious::Frontend::SearchFilters
       str << " checked" if show_member_videos
       str << "> " << I18n.translate(locale, "Show members-only videos") << "</label> "
       if private_search
-        str << "<button type='submit' name='reset_member_videos' value='1' class='pure-button'>" << I18n.translate(locale, "Use preference") << "</button>"
+        str << "<button type='submit' name='reset_member_videos' value='1' class='button'>" << I18n.translate(locale, "Use preference") << "</button>"
       else
         str << "<a href='" << HTML.escape(member_reset_url) << "'>" << I18n.translate(locale, "Use preference") << "</a>"
       end
@@ -44,7 +50,7 @@ module Invidious::Frontend::SearchFilters
       str << "</div>"
 
       str << "\t\t\t<div id='filters-apply'>"
-      str << "<button type='submit' class=\"pure-button pure-button-primary\">"
+      str << "<button type='submit' class=\"button button-primary\">"
       str << I18n.translate(locale, "search_filters_apply_button")
       str << "</button></div>\n"
 

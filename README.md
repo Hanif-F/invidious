@@ -53,13 +53,9 @@
 </div>
 
 
-## Screenshots
+## Interface and documentation
 
-| Player                              | Preferences                         | Subscriptions                         |
-|-------------------------------------|-------------------------------------|---------------------------------------|
-| ![](screenshots/01_player.png)      | ![](screenshots/02_preferences.png) | ![](screenshots/03_subscriptions.png) |
-| ![](screenshots/04_description.png) | ![](screenshots/05_preferences.png) | ![](screenshots/06_subscriptions.png) |
-
+The [repository handbook](docs/README.md) describes this fork. The desktop interface uses one shared design with Light, Dark and System modes, category Settings, a tabbed watch panel and unified media controls. [Frontend guidance](docs/frontend.md) and [styling guidance](docs/theming.md) describe its implementation. See the [current fixture gallery](screenshots/README.md), [overhaul evidence](docs/uiUXOverhaulPlan/README.md) and [build/deployment handoff](docs/uiUXOverhaulPlan/user-handoff.md). Older upstream screenshots remain labeled as historical.
 
 ## Features
 
@@ -67,7 +63,7 @@
 - Lightweight
 - No ads
 - No tracking
-- Diary design with Light/Dark/System color modes
+- Shared desktop design with Light/Dark/System color modes
 - Customizable homepage
 - Subscriptions independent from Google
 - Notifications for all subscribed channels
@@ -166,15 +162,15 @@ SUCH DAMAGES.
 
 ### Appearance
 
-Diary is the site’s design. Choose Light, Dark, or System in
-**Preferences → Appearance**, or use the header color-mode toggle. See the
-[Diary styling guide](docs/theming.md) for maintenance details.
+Choose Light, Dark, or System in **Settings → Appearance**, or use the header
+color-mode toggle. See the [shared styling guide](docs/theming.md) for tokens,
+components and maintenance details.
 
 ### Fork playlist subscriptions and native RSS
 
 The Mobivious playlist/RSS API adds per-account source bookmarks via migration 20.
 Run the migration before rollout and renew native sign-in for the new permissions.
 Legacy saves are preserved during backfill; references follow the owner’s current
-playlist on open/refresh. English Library headings are My playlists and Subscribed
+playlist on open/refresh. English Library headings are My playlists and Saved
 playlists with counts. See [the native API contract](docs/mobile-api.md) and
 [guarded integration checks](tests/database/README.md).

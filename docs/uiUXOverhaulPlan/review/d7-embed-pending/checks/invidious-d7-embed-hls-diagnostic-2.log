@@ -1,0 +1,23 @@
+TAP version 13
+# Subtest: chromium: D7 embedded HLS decodes while preserving opaque manifest and segment query fields
+not ok 1 - chromium: D7 embedded HLS decodes while preserving opaque manifest and segment query fields
+  ---
+  duration_ms: 12372.457516
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/embed-surfaces.test.cjs:113:5'
+  failureType: 'testCodeFailure'
+  error: `page.waitForFunction: Timeout 12000ms exceeded.; {"error":{"code":4,"message":"The media could not be loaded, either because the server or network failed or because the format is not supported."},"source":{"label":"livestream","type":"application/x-mpegURL","src":"/api/manifest/hls_variant/id/fixture?opaque=opaque%2Bvalue%3D&keep=1&local=true"},"state":0,"time":0,"paused":true,"network":3,"levels":0,"video":0,"url":"https://invidious.test/embed/2isYuQZMbdU","tech":true,"vhs":{"overrideNative":true},"native":"blob:https://invidious.test/3c895070-4e28-4819-8ff0-d939fdef4d4a","html":"<video data-spoiler-channel=\\"UCX6OQ3DkcsbYNE6H8uQQuVA\\" data-spoiler-published=\\"1659571200\\" data-spoiler-poster=\\"/vi/2isYuQZMbdU/maxres.jpg\\" style=\\"width:100%;background-color:#000\\" playsinline=\\"playsinline\\" poster=\\"/vi/2isYuQZMbdU/maxres.jpg\\" id=\\"player_html5_api\\" class=\\"vjs-tech\\" preload=\\"none\\" tabindex=\\"-1\\" src=\\"blob:https://invidious.test/3c895070-4e28-4819-8ff0-d939fdef4d4a\\" muted=\\"muted\\">\\n    \\n        \\n        <source src=\\"/api/manifest/hls_variant/id/fixture?opaque=opaque%2Bvalue%3D&amp;keep=1&amp;local=true\\" type=\\"application/x-mpegURL\\" label=\\"livestream\\">\\n    \\n</video>"}; console=["VIDEOJS: WARN: videojs.plugin() is deprecated; use videojs.registerPlugin() instead","VIDEOJS: WARN: using Vhs.GOAL_BUFFER_LENGTH is UNSAFE be sure you know what you are doing","VIDEOJS: WARN: using Vhs.MAX_GOAL_BUFFER_LENGTH is UNSAFE be sure you know what you are doing",{"url":"blob:https://invidious.test/3c895070-4e28-4819-8ff0-d939fdef4d4a","failure":{"errorText":"net::ERR_FILE_NOT_FOUND"}},"Failed to load resource: net::ERR_FILE_NOT_FOUND","VIDEOJS: ERROR: (CODE:4 MEDIA_ERR_SRC_NOT_SUPPORTED) The media could not be loaded, either because the server or network failed or because the format is not supported. MediaError","An error occurred in the player, reloading...",{"url":"blob:https://invidious.test/3c895070-4e28-4819-8ff0-d939fdef4d4a","failure":{"errorText":"net::ERR_FILE_NOT_FOUND"}},"Failed to load resource: net::ERR_FILE_NOT_FOUND","VIDEOJS: ERROR: (CODE:4 MEDIA_ERR_SRC_NOT_SUPPORTED) The media could not be loaded, either because the server or network failed or because the format is not supported. MediaError","An error occurred in the player, reloading...",{"url":"blob:https://invidious.test/3c895070-4e28-4819-8ff0-d939fdef4d4a","failure":{"errorText":"net::ERR_FILE_NOT_FOUND"}},"Failed to load resource: net::ERR_FILE_NOT_FOUND","VIDEOJS: ERROR: (CODE:4 MEDIA_ERR_SRC_NOT_SUPPORTED) The media could not be loaded, either because the server or network failed or because the format is not supported. MediaError","VIDEOJS: WARN: Using the tech directly can be dangerous. I hope you know what you're doing.\\nSee https://github.com/videojs/video.js/issues/2617 for more info.\\n","VIDEOJS: WARN: Using the tech directly can be dangerous. I hope you know what you're doing.\\nSee https://github.com/videojs/video.js/issues/2617 for more info.\\n","VIDEOJS: WARN: Using the tech directly can be dangerous. I hope you know what you're doing.\\nSee https://github.com/videojs/video.js/issues/2617 for more info.\\n","VIDEOJS: WARN: Using the tech directly can be dangerous. I hope you know what you're doing.\\nSee https://github.com/videojs/video.js/issues/2617 for more info.\\n","VIDEOJS: WARN: Using the tech directly can be dangerous. I hope you know what you're doing.\\nSee https://github.com/videojs/video.js/issues/2617 for more info.\\n"]; requests=[]`
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/embed-surfaces.test.cjs:114:168)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12856.272668

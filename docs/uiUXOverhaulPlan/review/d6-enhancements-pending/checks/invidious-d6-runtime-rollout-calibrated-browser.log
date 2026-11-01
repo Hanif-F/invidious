@@ -1,0 +1,34 @@
+TAP version 13
+# Subtest: chromium: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+ok 1 - chromium: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+  ---
+  duration_ms: 1970.02156
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+ok 2 - firefox: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+  ---
+  duration_ms: 2909.621824
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+ok 3 - chromium: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+  ---
+  duration_ms: 775.98017
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+ok 4 - firefox: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+  ---
+  duration_ms: 1119.77207
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7643.007777

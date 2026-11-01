@@ -1,0 +1,45 @@
+/* Keep the original-title control independent of title length and direction. */
+[data-dearrow-row].dearrow-title-row {
+    position: relative;
+    display: flow-root;
+    box-sizing: border-box;
+    padding-inline-end: 36px;
+    min-height: 32px;
+}
+.dearrow-title-row > .dearrow-reveal {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 6px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.dearrow-reveal::before {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    border: 4px solid #403cff;
+    border-radius: 50%;
+    background: radial-gradient(circle, #1475b8 3px, #8edcff 3px);
+}
+.dearrow-reveal:focus-visible { outline: 2px solid #2387e8; outline-offset: 2px; }
+/* Card typography can have top margins; contain them without collapsing the row. */
+.dearrow-title-row > h1,
+.video-card-row[data-dearrow-row].dearrow-title-row > a > p { margin-block-start: 0; }
+.queue-row.dearrow-title-row { padding-inline-end: 0; }
+.queue-row.dearrow-title-row > a { padding-inline-end: 44px; align-items: start; }
+.queue-row.dearrow-title-row > .dearrow-reveal { inset-block-start: 10px; inset-inline-end: 8px; }
+.queue-row.dearrow-title-row:has(.queue-remove) { display: flex; }
+.queue-row.dearrow-title-row:has(.queue-remove) > .dearrow-reveal { inset-inline-end: 56px; }
+@media (forced-colors: active) {
+    .dearrow-reveal::before { border-color: ButtonText; background: Highlight; }
+    .dearrow-reveal:focus-visible { outline-color: Highlight; }
+}

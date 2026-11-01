@@ -1,0 +1,142 @@
+TAP version 13
+# Subtest: chromium: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+ok 1 - chromium: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+  ---
+  duration_ms: 1068.154734
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+ok 2 - chromium: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+  ---
+  duration_ms: 736.45941
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock cached pages and profile changes reject late completed writes
+ok 3 - chromium: D6 SponsorBlock cached pages and profile changes reject late completed writes
+  ---
+  duration_ms: 500.432972
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+ok 4 - chromium: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+  ---
+  duration_ms: 222.748885
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+ok 5 - firefox: D6 SponsorBlock channel editor owns inherited drafts, canonical saves and searchable management
+  ---
+  duration_ms: 993.424881
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+ok 6 - firefox: D6 SponsorBlock rejected and uncertain writes keep drafts and require a saved-state check
+  ---
+  duration_ms: 1144.861783
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock cached pages and profile changes reject late completed writes
+ok 7 - firefox: D6 SponsorBlock cached pages and profile changes reject late completed writes
+  ---
+  duration_ms: 1093.612687
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+ok 8 - firefox: D6 SponsorBlock guest saves verify durable state and preserve storage-failure drafts
+  ---
+  duration_ms: 467.750605
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+ok 9 - chromium: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+  ---
+  duration_ms: 502.402504
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock literal invalid maps and future native values stay visible
+ok 10 - chromium: D6 SponsorBlock literal invalid maps and future native values stay visible
+  ---
+  duration_ms: 185.780729
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+ok 11 - chromium: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+  ---
+  duration_ms: 229.102072
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+ok 12 - chromium: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+  ---
+  duration_ms: 182.42703
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+ok 13 - chromium: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+  ---
+  duration_ms: 514.598584
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+ok 14 - chromium: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+  ---
+  duration_ms: 518.734139
+  type: 'test'
+  ...
+# Subtest: chromium: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+ok 15 - chromium: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 1382.429854
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+ok 16 - firefox: D6 SponsorBlock defaults pair mode/color controls with category Save, Discard and search focus
+  ---
+  duration_ms: 765.806664
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock literal invalid maps and future native values stay visible
+ok 17 - firefox: D6 SponsorBlock literal invalid maps and future native values stay visible
+  ---
+  duration_ms: 1050.322382
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+ok 18 - firefox: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels
+  ---
+  duration_ms: 507.63319
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+ok 19 - firefox: D6 SponsorBlock actual denied storage keeps a retryable browser draft
+  ---
+  duration_ms: 402.979444
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+ok 20 - firefox: D6 SponsorBlock unavailable scripts retain ordinary account forms and explain guest storage
+  ---
+  duration_ms: 1418.017591
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+ok 21 - firefox: D6 SponsorBlock rejects failed preflight, malformed canonical results and changed profiles
+  ---
+  duration_ms: 1799.753206
+  type: 'test'
+  ...
+# Subtest: firefox: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+ok 22 - firefox: D6 SponsorBlock failure views preserve literal values in Light, Dark, RTL and forced colors
+  ---
+  duration_ms: 2253.050506
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18814.871782

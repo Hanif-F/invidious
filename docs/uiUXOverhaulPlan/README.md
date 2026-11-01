@@ -1,16 +1,18 @@
 # Desktop UI/UX overhaul: master plan
 
-[Documentation index](../README.md) · [Design contract](design-system.md) · [Feature coverage](coverage.md) · [Implementation tasks](tasks.md) · [Verification](verification.md) · [Decision and progress log](progress.md)
+[Documentation index](../README.md) · [Design contract](design-system.md) · [Feature coverage](coverage.md) · [Implementation tasks](tasks.md) · [Verification](verification.md) · [Decision and progress log](progress.md) · [Baseline audit](current-version-audit.md) · [Visual checkpoint](visual-checkpoint.md)
 
 ## Purpose and authority
 
-**Current authorization: planning only.** This package specifies future work. Do not implement the interface, perform either documentation cleanup pass, or treat these task descriptions as permission to start. Implementation requires a new explicit instruction from the user.
+**Implementation authorized on 26 October 2026.** The user explicitly requested the complete overhaul, following these stages in order. The representative visual checkpoint remains required before broad propagation; remote deployment remains outside scope.
+
+**Current implementation:** D0–D9 are locally complete. [D8 acceptance](d8-acceptance.md) retains the complete product regression and V01–V36 evidence; [D9 acceptance](d9-acceptance.md) and the [final requirements audit](d9-requirement-audit.md) reconcile documentation, coverage and delivery. The [user handoff](user-handoff.md) covers building, cache refresh, deployment and rollback. This repository work is uncommitted and has not been deployed; native app/device work is outside the objective.
 
 Replace the browser interface with a simple, consistent, functional, beautiful desktop design. Familiar video-platform conventions are the starting point; visual restraint, coherent controls and predictable behavior matter more than decoration. This is a complete interface overhaul, not another stylesheet layered over Diary.
 
 This specification records the planning conversation of 26 October 2026. The initial code baseline is commit **22fc2a66**. The user explicitly asked for the plan and supporting specifications to live in **docs/uiUXOverhaulPlan/**, for current-version documentation cleanup before interface development, and for a second documentation cleanup after the overhaul.
 
-The master plan, linked contracts and coverage matrix together define completion. Progress must be evidence-based: existing tests or attractive screenshots do not by themselves prove a requirement is implemented. Future behavior in this package is a specification, not a claim about the currently shipped application.
+The master plan, linked contracts and coverage matrix together define completion. Progress must be evidence-based: existing tests or attractive screenshots do not by themselves prove a requirement is implemented. The requirements below retain their planning form; stage acceptance records identify their completed repository implementation. They do not claim activation on a deployed instance.
 
 ## Fixed scope and decisions
 

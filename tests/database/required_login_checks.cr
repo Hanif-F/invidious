@@ -19,8 +19,14 @@ class RequiredLoginTestEndpoint
                env.request.method == "POST" ? Invidious::Routes::Login.signup(env) : Invidious::Routes::Login.signup_page(env)
              when "/signout"
                Invidious::Routes::Login.signout(env)
+             when "/admin/settings"
+               Invidious::Routes::AdminSettings.handle(env)
              when "/preferences"
                env.request.method == "POST" ? Invidious::Routes::PreferencesRoute.update(env) : Invidious::Routes::PreferencesRoute.show(env)
+             when "/privacy"
+               Invidious::Routes::Misc.privacy(env)
+             when "/licenses"
+               Invidious::Routes::Misc.licenses(env)
              when "/feed/private"
                Invidious::Routes::Feeds.rss_private(env)
              when "/api/v1/playlists/IVgate"
@@ -116,10 +122,16 @@ def check_required_login
 
     content_calls = RequiredLoginTestEndpoint.content_calls
     {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}.each do |method|
-      {"/", "/watch?v=test&list=PLtest", "/embed/test", "/preferences", "/privacy", "/licenses", "/tv",
+      {"/", "/watch?v=test&list=PLtest", "/embed/test", "/preferences", "/tv",
        "/unknown-future-route", "/not-a-local-file.js", "/login/extra", "/signup/extra",
        "/feed/channel/UCtest", "/feed/private/extra?token=#{user.token}", "/feed/webhook/token/extra", "/css/../config/config.yml"}.each do |path|
         response = required_login_response(method, path, body: "sensitive-body")
+        if method == "GET" && path.starts_with?("/embed/")
+          check(response.status_code == 401 && !response.headers.has_key?("Location"), "Anonymous iframe did not offer readable login recovery")
+          check(response.body.includes?("target=\"_blank\"") && !response.body.includes?("<script"), "Login iframe lost script-free top-level action")
+          check(response.headers["Content-Security-Policy"] == "default-src 'none'; style-src 'self'; frame-ancestors *", "Login iframe recovery is frame-denied or permits executable content")
+          next
+        end
         check(response.status_code == 303 && response.headers["Location"].starts_with?("/login?referer="), "Anonymous page escaped gate: #{method} #{path}")
         check(!response.headers["Location"].includes?("sensitive-body"), "Redirect reflected a request body")
         check(response.headers["Cache-Control"] == "private, no-store", "Login redirect is cacheable")
@@ -134,6 +146,7 @@ def check_required_login
           check(response.headers["Access-Control-Allow-Headers"].includes?("Authorization"), "Preflight lost bearer support")
         else
           check(response.status_code == 401, "Anonymous content escaped gate: #{method} #{path}")
+          check(response.headers["X-Invidious-Login-Required"]? == "1", "Instance-login failure lost its non-credential marker")
           unless method == "HEAD"
             failure = JSON.parse(response.body)
             check(failure["error"] == "login_required" && failure["loginUrl"].as_s.starts_with?("/login?referer="), "Missing native login discovery")
@@ -144,10 +157,42 @@ def check_required_login
     end
     check(RequiredLoginTestEndpoint.content_calls == content_calls, "Blocked request reached an upstream/content handler")
 
-    asset = HTTP::Request.new("GET", "/css/default.css")
-    check(Invidious::HttpServer::BotProtectionHandler.local_asset?(asset), "Login styles are inaccessible")
-    check(required_login_response("GET", "/css/default.css").status_code == 200, "Real login stylesheet is blocked")
-    check(required_login_response("HEAD", "/css/default.css").body.empty?, "Static HEAD returned content")
+    embedded_target = "/embed/abcdefghijk?list=IVprivate&index=2&occurrence=9223372036854775807&listen=true&clip_preview=1&start=5&end=12"
+    iframe = required_login_response("GET", embedded_target)
+    link = XML.parse_html(iframe.body).xpath_node("//a[@target='_blank']").not_nil!
+    login_query = URI::Params.parse(URI.parse(link["href"]).query.not_nil!)
+    watch_return = URI.parse(login_query["referer"])
+    check(watch_return.path == "/watch", "Embedded login did not return to a usable top-level watch page")
+    values = URI::Params.parse(watch_return.query.not_nil!)
+    check(values["v"] == "abcdefghijk" && values["list"] == "IVprivate" && values["index"] == "2" && values["occurrence"] == "9223372036854775807", "Embedded recovery lost private playlist or exact occurrence context")
+    check(values["listen"] == "true" && values["clip_preview"] == "1" && values["start"] == "5" && values["end"] == "12", "Embedded recovery changed audio/preview bounds")
+    check(iframe.headers["Cache-Control"] == "private, no-store" && iframe.headers["Referrer-Policy"] == "no-referrer", "Embedded login recovery is not private")
+    framed_watch = required_login_response("GET", "/watch?v=test", extra_headers: HTTP::Headers{"Sec-Fetch-Dest" => "iframe"})
+    check(framed_watch.status_code == 401 && framed_watch.body.includes?("target=\"_blank\""), "Other framed browser content redirected to a frame-denied login")
+
+    {"/privacy", "/licenses"}.each do |path|
+      {"GET", "HEAD"}.each do |method|
+        legal = required_login_response(method, path)
+        check(legal.status_code == 200 && !legal.headers.has_key?("Location"), "Public legal reading was blocked")
+        check(legal.headers["Cache-Control"] == "private, no-store", "Legal response can cache account presentation")
+        check(method == "HEAD" ? legal.body.empty? : legal.body.includes?("legal-page"), "Legal route lost production reading HTML or HEAD semantics")
+      end
+      {"POST", "PUT", "PATCH", "DELETE", "OPTIONS"}.each do |method|
+        check(required_login_response(method, path).status_code == 303, "Legal read exemption admitted another method")
+      end
+    end
+    check(RequiredLoginTestEndpoint.content_calls == content_calls, "Legal reading reached a content/upstream sentinel")
+
+    login_document = XML.parse_html(required_login_response("GET", "/login").body)
+    login_assets = login_document.xpath_nodes("//link[@rel='stylesheet']/@href | //script[@src]/@src").map(&.content)
+    check(login_assets.any? { |url| URI.parse(url).path == "/css/foundation.css" }, "Login did not use the shared stylesheet")
+    login_assets.each do |url|
+      asset = HTTP::Request.new("GET", url)
+      check(Invidious::HttpServer::BotProtectionHandler.local_asset?(asset), "Login asset is inaccessible: #{url}")
+      check(required_login_response("GET", url).status_code == 200, "Real login asset is blocked: #{url}")
+      head = required_login_response("HEAD", url)
+      check(head.status_code == 200 && head.body.empty?, "Static HEAD contract failed: #{url}")
+    end
     check(!Invidious::HttpServer::BotProtectionHandler.local_asset?(HTTP::Request.new("GET", "/vi/test/a.jpg")), "Remote image treated as static asset")
 
     target = "/watch?v=test&list=PLtest&referer=%2Fsearch%3Fq%3Dhello"
@@ -254,28 +299,9 @@ def check_required_login
     pairing = required_login_response("POST", "/api/v1/tv/pairing/start", body: "{}")
     check(pairing.status_code == 200 && JSON.parse(pairing.body)["deviceCode"].as_s.size > 0, "TV pairing bootstrap was blocked")
 
-    # Admin saves must never write the user's real config/config.yml.
-    FileUtils.mkdir_p(File.join(temporary, "config"))
-    CONFIG.admins = [user.username]
-    admin_form = required_login_response("GET", "/preferences", sid)
-    check(admin_form.body.includes?(%(<input name="login_required")) && admin_form.body.includes?("user whitelist mode"), "Admin settings omit access controls")
+    # The isolated admin handler preserves access/recovery behavior and YAML.
     nonadmin = Invidious::Database::Accounts.authenticate("GateBob", password).not_nil!
-    check(!required_login_response("GET", "/preferences", nonadmin).body.includes?(%(<input name="login_required")), "Non-admin sees instance access controls")
-    admin_csrf = generate_response(sid, {"POST:preferences"}, HMAC_KEY)
-    nonadmin_csrf = generate_response(nonadmin, {"POST:preferences"}, HMAC_KEY)
-    Dir.cd(temporary) do
-      check(required_login_response("POST", "/preferences", sid, body: "login_required=off", content_type: "application/x-www-form-urlencoded").status_code == 403, "Admin save bypassed CSRF")
-      fields = {"login_required" => "off", "csrf_token" => nonadmin_csrf}
-      required_login_response("POST", "/preferences", nonadmin, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded")
-      check(CONFIG.login_required && !File.exists?("config/config.yml"), "Non-admin changed or persisted instance settings")
-      fields = {"login_required" => "on", "csrf_token" => admin_csrf}
-      required_login_response("POST", "/preferences", sid, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded")
-      persisted = Config.from_yaml(File.read("config/config.yml"))
-      check(persisted.login_required && persisted.login_enabled && !persisted.registration_enabled, "Admin save lost access settings or disabled sign-in")
-      fields = {"login_enabled" => "on", "registration_enabled" => "on", "csrf_token" => admin_csrf}
-      required_login_response("POST", "/preferences", sid, body: URI::Params.encode(fields), content_type: "application/x-www-form-urlencoded")
-      check(!CONFIG.login_required && CONFIG.registration_enabled, "Admin cannot disable required login or reopen signup")
-    end
+    check_admin_settings(sid, nonadmin)
     puts "Required-login coverage, browser/native credentials, scope/CSRF isolation, bootstrap, whitelist, signed feeds and admin persistence passed"
   ensure
     restored = Config.from_yaml(original)

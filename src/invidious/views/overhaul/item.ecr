@@ -1,0 +1,74 @@
+<% if Invidious::Frontend::MemberVideos.visible?(item, Invidious::Frontend::MemberVideos.show?(env)) %>
+<%
+  row_mode = Invidious::Frontend::Desktop.rows?(env) || item.is_a?(PlaylistVideo)
+  kind = case item
+         when SearchChannel then "channel"
+         when SearchHashtag then "hashtag"
+         when SearchPlaylist, InvidiousPlaylist then "playlist"
+         when Category then "category"
+         when ProblematicTimelineItem then "unavailable"
+         else "video"
+         end
+  video_id = kind == "video" && item.responds_to?(:id) ? item.id : ""
+  channel_id = item.responds_to?(:ucid) ? item.ucid.to_s : ""
+  can_reorder = item.is_a?(PlaylistVideo) && !!env.get?("remove_playlist_items")
+%>
+<article class="media-item<%= " media-row" if row_mode %><%= " media-row-numbered" if item.is_a?(PlaylistVideo) %><%= " media-row-reorderable" if can_reorder %>" data-kind="<%= kind %>" data-video-id="<%= HTML.escape(video_id) %>" data-channel-id="<%= HTML.escape(channel_id) %>" <%= %(data-occurrence="#{item.index}") if item.is_a?(PlaylistVideo) %>>
+<% if kind == "video" && env.get?("collection_kind") %><%= rendered "overhaul/selection" %><% end %>
+<% case item
+when SearchChannel %>
+  <a class="thumbnail channel-result-thumbnail" href="/channel/<%= HTML.escape(item.ucid) %>" tabindex="-1"><%= Invidious::Frontend::ChannelAvatars.render(env, item.ucid, 96, name: item.author) %></a>
+  <div class="media-details"><h3 class="media-title"><a href="/channel/<%= HTML.escape(item.ucid) %>" dir="auto"><%= HTML.escape(item.author) %></a><% if item.author_verified %><span class="verified" title="<%= I18n.translate(locale, "ui_verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></h3>
+    <% if handle = item.channel_handle %><p class="muted" dir="auto"><%= HTML.escape(handle) %></p><% end %>
+    <div class="media-meta"><span><%= I18n.translate_count(locale, "generic_subscribers_count", item.subscriber_count, I18n::NumberFormatting::Separator) %></span><% if !item.auto_generated && item.channel_handle.nil? %><span><%= I18n.translate_count(locale, "generic_videos_count", item.video_count, I18n::NumberFormatting::Separator) %></span><% end %></div>
+    <p class="result-description" dir="auto"><%= HTML.escape(Helpers.html_to_content(item.description_html)) %></p>
+  </div>
+<% when SearchHashtag %>
+  <a class="thumbnail hashtag-result-thumbnail" href="<%= HTML.escape(item.url) %>" tabindex="-1"><img src="/hashtag.svg" width="120" height="120" alt="" loading="lazy"></a><div class="media-details"><h3 class="media-title"><a href="<%= HTML.escape(item.url) %>" dir="auto"><%= HTML.escape(item.title) %></a></h3><div class="media-meta"><span><%= I18n.translate_count(locale, "generic_videos_count", item.video_count, I18n::NumberFormatting::Separator) %></span><span><%= I18n.translate_count(locale, "generic_channels_count", item.channel_count, I18n::NumberFormatting::Separator) %></span></div></div>
+<% when SearchPlaylist, InvidiousPlaylist %>
+  <%
+    cover = item.thumbnail
+    playlist_url = "/playlist?list=#{URI.encode_www_form(item.id)}"
+    if item.id.starts_with?("RD")
+      seed = cover.try { |url| URI.parse(url).path.split('/')[2]? }
+      playlist_url = "/mix?list=#{URI.encode_www_form(item.id)}"
+      playlist_url += "&continuation=#{URI.encode_www_form(seed)}" if seed
+    end
+    display_author = item.is_a?(InvidiousPlaylist) ? item.display_author : item.author
+  %>
+  <a class="thumbnail playlist-result-thumbnail" href="<%= HTML.escape(playlist_url) %>" tabindex="-1"><% if cover && !cover.empty? %><img src="<%= HTML.escape(URI.parse(cover).request_target) %>" width="320" height="180" alt="" loading="lazy"><% else %><span class="playlist-cover-fallback"><%= Invidious::Frontend::Icons.render("list-video") %></span><% end %><span class="duration"><%= I18n.translate_count(locale, "generic_videos_count", item.video_count, I18n::NumberFormatting::Separator) %></span></a>
+  <div class="media-details"><h3 class="media-title"><a href="<%= HTML.escape(playlist_url) %>" dir="auto"><%= HTML.escape(item.title) %></a></h3><% unless channel_id.empty? %><a class="channel-attribution" href="/channel/<%= HTML.escape(channel_id) %>" dir="auto"><%= HTML.escape(display_author) %></a><% else %><p class="channel-attribution" dir="auto"><%= HTML.escape(display_author) %></p><% end %><% if item.responds_to?(:author_verified) && item.author_verified %><span class="verified" title="<%= I18n.translate(locale, "ui_verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></div>
+<% when Category %>
+  <h2><% if item.responds_to?(:title) %><%= HTML.escape(item.title) %><% else %><%= I18n.translate(locale, "channel_tab_videos_label") %><% end %></h2>
+<% when ProblematicTimelineItem %>
+  <div class="status-panel"><h3><%= I18n.translate(locale, "timeline_parse_error_placeholder_heading") %></h3><p><%= I18n.translate(locale, "timeline_parse_error_placeholder_message") %></p><details><summary><%= I18n.translate(locale, "timeline_parse_error_show_technical_details") %></summary><pre><%= HTML.escape(get_issue_template(env, item.parse_exception)[1]) %></pre></details></div>
+<% else %>
+  <%
+    endpoint_params = "?v=#{URI.encode_www_form(item.id)}"
+    if item.is_a?(PlaylistVideo)
+      if item.plid.starts_with?("IV")
+        ordinal = ((env.params.query["page"]?.try(&.to_i?) || 1) - 1) * 100 + item_position
+        endpoint_params += "&list=#{URI.encode_www_form(item.plid)}&index=#{ordinal}&occurrence=#{item.index}"
+      else
+        endpoint_params += "&list=#{URI.encode_www_form(item.plid)}&index=#{item.index}"
+      end
+    elsif item.is_a?(MixVideo)
+      endpoint_params += "&list=#{URI.encode_www_form(item.rdid)}"
+    end
+    item_url = "/watch#{endpoint_params}"
+    item_date = Invidious::Frontend::ChannelSpoilers.date(item)
+    item_watched = !!env.get?("user").try(&.as(Invidious::User).watched.includes?(item.id))
+  %>
+  <% if item.is_a?(PlaylistVideo) %><% if can_reorder %><button type="button" class="playlist-grip" draggable="false" aria-pressed="false" aria-label="<%= I18n.translate(locale, "overhaul_reorder") %>" title="<%= I18n.translate(locale, "overhaul_reorder_help") %>"><%= Invidious::Frontend::Icons.render("grip-vertical") %></button><% end %><span class="playlist-position"><%= item.plid.starts_with?("IV") ? ((env.params.query["page"]?.try(&.to_i?) || 1) - 1) * 100 + item_position + 1 : item.index + 1 %></span><% end %>
+  <div class="thumbnail video-thumbnail"><a href="<%= HTML.escape(item_url) %>" tabindex="-1"><% thumbnail_html = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, channel_id)
+      Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale)
+    else
+      %(<img src="/vi/#{HTML.escape(item.id)}/mqdefault.jpg" width="320" height="180" loading="lazy" alt="">)
+    end %><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, item.id, channel_id, item_date, thumbnail_html) %></a><%= Invidious::Frontend::WatchedIndicator.render(item.id, item.length_seconds, item_watched) %><% if item.responds_to?(:live_now) && item.live_now %><span class="duration"><%= I18n.translate(locale, "LIVE") %></span><% elsif item.length_seconds > 0 %><span class="duration"><%= recode_length_seconds(item.length_seconds) %></span><% end %></div>
+  <div class="media-details"><h3 class="media-title" data-dearrow-row><a href="<%= HTML.escape(item_url) %>" dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, item.id, channel_id, item.title, item_date) %></a></h3>
+  <% unless channel_id.empty? %><a class="channel-attribution" href="/channel/<%= HTML.escape(channel_id) %>"><% if Invidious::Frontend::ChannelAvatars.show?(env, channel_id) %><%= Invidious::Frontend::ChannelAvatars.render(env, channel_id, row_mode ? 24 : 36, name: item.author) %><% end %><span dir="auto"><%= HTML.escape(item.author) %></span><% if item.responds_to?(:author_verified) && item.author_verified %><span class="verified" title="<%= I18n.translate(locale, "ui_verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></a><% else %><p class="channel-attribution" dir="auto"><%= HTML.escape(item.author) %></p><% end %>
+  <div class="media-meta"><% if env.get?("subscription_notification_ids").try(&.as(Array(String)).includes?(item.id)) %><span class="new-upload-badge"><%= I18n.translate(locale, "overhaul_new_upload") %></span><% end %><% if item.responds_to?(:members_only) && item.members_only %><span class="membership-badge"><%= I18n.translate(locale, "ui_members_only") %></span><% end %><% if count = Invidious::Frontend::ViewCounts.get(env, item.id) %><span><%= HTML.escape(count.text(locale)) %></span><% end %><% if item.responds_to?(:premiere_timestamp) && item.premiere_timestamp.try &.> Time.utc %><span><%= I18n.translate(locale, "Premieres in `x`", recode_date((item.premiere_timestamp.as(Time) - Time.utc).ago, locale)) %></span><% elsif item.responds_to?(:published) && (!item.is_a?(PlaylistVideo) || item.published_known) && (Time.utc - item.published) > 1.minute %><span><%= I18n.translate(locale, "Shared `x` ago", recode_date(item.published, locale)) %></span><% end %></div>
+  <% unless row_mode %><%= rendered "overhaul/item_menu" %><% end %></div><% if row_mode %><%= rendered "overhaul/item_menu" %><% end %>
+<% end %>
+</article>
+<% end %>

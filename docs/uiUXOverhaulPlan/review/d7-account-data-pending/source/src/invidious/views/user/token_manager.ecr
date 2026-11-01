@@ -1,0 +1,25 @@
+<% content_for "header" do %><title><%= I18n.translate(locale, "overhaul_sessions") %> - Invidious</title><% end %>
+<section class="reading-page account-page" aria-labelledby="sessions-heading">
+  <header class="page-heading"><h1 id="sessions-heading"><%= I18n.translate(locale, "overhaul_sessions") %></h1><a class="button" href="/account"><%= I18n.translate(locale, "Account settings") %></a></header>
+  <p class="muted"><%= I18n.translate(locale, "ux_sessions_help") %></p>
+  <% if tokens.empty? %><p class="status-panel"><%= I18n.translate(locale, "ux_sessions_empty") %></p><% end %>
+  <div class="session-list">
+  <% tokens.each_with_index do |token, index| %>
+    <article class="session-row" aria-labelledby="session-<%= index %>">
+      <div class="session-identity">
+        <h2 id="session-<%= index %>"><%= I18n.translate(locale, token[:session] == sid ? "ux_session_current" : token[:session].starts_with?("v1:") ? "ux_session_api" : "ux_session_browser") %></h2>
+        <p class="muted"><%= I18n.translate(locale, "ux_session_issued") %> <time datetime="<%= token[:issued].to_rfc3339 %>"><%= HTML.escape(token[:issued].to_s("%Y-%m-%d %H:%M UTC")) %></time></p>
+      </div>
+      <details class="session-revoke">
+        <summary class="button button-danger"><%= I18n.translate(locale, "ux_session_review_revoke") %></summary>
+        <form class="stacked-form" action="/token_ajax?action=revoke_token&amp;referer=%2Ftoken_manager" method="post" data-account-form>
+          <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>">
+          <input type="hidden" name="session" value="<%= HTML.escape(token[:session]) %>">
+          <p><%= I18n.translate(locale, token[:session] == sid ? "ux_session_revoke_current" : "ux_session_revoke_other") %></p>
+          <div class="toolbar"><button type="submit" class="button button-danger"><%= I18n.translate(locale, "ux_session_revoke") %></button></div>
+        </form>
+      </details>
+    </article>
+  <% end %>
+  </div>
+</section>

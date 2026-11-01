@@ -3,6 +3,9 @@ require "./base.cr"
 module Invidious::Database::Users
   extend self
 
+  class PreferenceConflict < DB::Error
+  end
+
   # -------------------
   #  Insert / delete
   # -------------------
@@ -60,11 +63,12 @@ module Invidious::Database::Users
     end
   end
 
-  def clear_watch_history(user : User)
+  def clear_watch_history(user : User, clear_positions = false)
     PG_DB.transaction do |tx|
       conn = tx.connection
       conn.exec("UPDATE users SET watched = '{}' WHERE email = $1", user.email)
       conn.exec("DELETE FROM watch_history WHERE email = $1", user.email)
+      conn.exec("DELETE FROM playback_positions WHERE email = $1", user.email) if clear_positions
     end
   end
 
@@ -162,6 +166,22 @@ module Invidious::Database::Users
       preferences.to_json, email, previous).rows_affected == 1
   end
 
+  # Lock and merge the latest raw account document. The caller owns only its
+  # declared fields; unknown/native keys must survive typed model parsing.
+  def merge_preferences(email : String, &)
+    raw = ""
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      previous = conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", email, as: String)
+      stored = JSON.parse(previous).as_h
+      merged = yield conn, stored
+      Preferences.remove_retired_theme_fields(merged)
+      raw = merged.to_json
+      conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw, email)
+    end
+    raw
+  end
+
   def update_preferences(user : User)
     request = <<-SQL
       UPDATE users
@@ -170,6 +190,31 @@ module Invidious::Database::Users
       SQL
 
     PG_DB.exec(request, user.preferences.to_json, user.email)
+  end
+
+  # A transactional compare-and-set also supports the legacy browser handlers
+  # exercised by the SQLite fixture harness. Production uses the same bounded
+  # retry and SQL condition; a competing write is merged again, never discarded.
+  def merge_preferences_cas(email : String, clear_positions : Bool = false, &)
+    4.times do
+      raw = ""
+      saved = false
+      PG_DB.transaction do |tx|
+        conn = tx.connection
+        previous = conn.query_one("SELECT preferences FROM users WHERE email = $1", email, as: String)
+        merged = yield JSON.parse(previous).as_h
+        Preferences.remove_retired_theme_fields(merged)
+        raw = merged.to_json
+        if conn.exec("UPDATE users SET preferences = $1 WHERE email = $2 AND preferences = $3", raw, email, previous).rows_affected == 1
+          conn.exec("DELETE FROM playback_positions WHERE email = $1", email) if clear_positions
+          saved = true
+        else
+          tx.rollback
+        end
+      end
+      return raw if saved
+    end
+    raise PreferenceConflict.new("Preferences changed concurrently; reload before retrying")
   end
 
   def update_password(user : User, pass : String)

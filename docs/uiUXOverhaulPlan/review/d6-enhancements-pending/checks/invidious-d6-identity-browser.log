@@ -1,0 +1,142 @@
+TAP version 13
+# Subtest: chromium: D6 identity editor imports only explicit credentials and keeps private values out of page/storage metadata
+ok 1 - chromium: D6 identity editor imports only explicit credentials and keeps private values out of page/storage metadata
+  ---
+  duration_ms: 1051.412277
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor preserves literal invalid and rejected drafts and discards explicitly
+ok 2 - chromium: D6 identity editor preserves literal invalid and rejected drafts and discards explicitly
+  ---
+  duration_ms: 344.952139
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor rejects changed revisions before dispatch and requires renewed replacement consent
+ok 3 - chromium: D6 identity editor rejects changed revisions before dispatch and requires renewed replacement consent
+  ---
+  duration_ms: 312.716645
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor requires explicit status reconciliation after committed or unknown write outcomes
+ok 4 - chromium: D6 identity editor requires explicit status reconciliation after committed or unknown write outcomes
+  ---
+  duration_ms: 837.568655
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity editor ignores duplicate and late writes across cached, switched-profile and detached lifetimes
+ok 5 - chromium: D6 identity editor ignores duplicate and late writes across cached, switched-profile and detached lifetimes
+  ---
+  duration_ms: 942.731246
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity ordinary forms retain route/profile/revision/confirmation when scripting is absent or unavailable
+ok 6 - chromium: D6 identity ordinary forms retain route/profile/revision/confirmation when scripting is absent or unavailable
+  ---
+  duration_ms: 443.247812
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity setup and unavailable states recover through read-only checks without false empty claims
+ok 7 - chromium: D6 identity setup and unavailable states recover through read-only checks without false empty claims
+  ---
+  duration_ms: 358.049432
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity malformed reads and write receipts never clear credentials or claim success
+ok 8 - chromium: D6 identity malformed reads and write receipts never clear credentials or claim success
+  ---
+  duration_ms: 652.664668
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity Settings shortcuts and local search respect account ownership
+ok 9 - chromium: D6 identity Settings shortcuts and local search respect account ownership
+  ---
+  duration_ms: 225.62078
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity Light/Dark and enlarged RTL error/setup states fit desktop without credential disclosure
+ok 10 - chromium: D6 identity Light/Dark and enlarged RTL error/setup states fit desktop without credential disclosure
+  ---
+  duration_ms: 3578.178365
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor imports only explicit credentials and keeps private values out of page/storage metadata
+ok 11 - firefox: D6 identity editor imports only explicit credentials and keeps private values out of page/storage metadata
+  ---
+  duration_ms: 1521.517327
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor preserves literal invalid and rejected drafts and discards explicitly
+ok 12 - firefox: D6 identity editor preserves literal invalid and rejected drafts and discards explicitly
+  ---
+  duration_ms: 630.547177
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor rejects changed revisions before dispatch and requires renewed replacement consent
+ok 13 - firefox: D6 identity editor rejects changed revisions before dispatch and requires renewed replacement consent
+  ---
+  duration_ms: 559.364966
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor requires explicit status reconciliation after committed or unknown write outcomes
+ok 14 - firefox: D6 identity editor requires explicit status reconciliation after committed or unknown write outcomes
+  ---
+  duration_ms: 1294.199521
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity editor ignores duplicate and late writes across cached, switched-profile and detached lifetimes
+ok 15 - firefox: D6 identity editor ignores duplicate and late writes across cached, switched-profile and detached lifetimes
+  ---
+  duration_ms: 1594.528074
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity ordinary forms retain route/profile/revision/confirmation when scripting is absent or unavailable
+ok 16 - firefox: D6 identity ordinary forms retain route/profile/revision/confirmation when scripting is absent or unavailable
+  ---
+  duration_ms: 1723.357334
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity setup and unavailable states recover through read-only checks without false empty claims
+ok 17 - firefox: D6 identity setup and unavailable states recover through read-only checks without false empty claims
+  ---
+  duration_ms: 754.588699
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity malformed reads and write receipts never clear credentials or claim success
+ok 18 - firefox: D6 identity malformed reads and write receipts never clear credentials or claim success
+  ---
+  duration_ms: 1350.504764
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity Settings shortcuts and local search respect account ownership
+ok 19 - firefox: D6 identity Settings shortcuts and local search respect account ownership
+  ---
+  duration_ms: 615.16734
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity Light/Dark and enlarged RTL error/setup states fit desktop without credential disclosure
+ok 20 - firefox: D6 identity Light/Dark and enlarged RTL error/setup states fit desktop without credential disclosure
+  ---
+  duration_ms: 8283.504955
+  type: 'test'
+  ...
+# Subtest: chromium: D6 identity cached preflight and status reads reject late metadata and leave no loading claim
+ok 21 - chromium: D6 identity cached preflight and status reads reject late metadata and leave no loading claim
+  ---
+  duration_ms: 448.310961
+  type: 'test'
+  ...
+# Subtest: firefox: D6 identity cached preflight and status reads reject late metadata and leave no loading claim
+ok 22 - firefox: D6 identity cached preflight and status reads reject late metadata and leave no loading claim
+  ---
+  duration_ms: 978.287275
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 29345.542249

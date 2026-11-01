@@ -1,0 +1,25 @@
+In src/invidious/bot_protection.cr:25:34
+
+ 25 | if @@settings.nil? || Time.monotonic - @@refreshed_at >= 1.second
+                                 ^--------
+Warning: Deprecated Time.monotonic. Use `Time.instant` instead.
+
+In src/invidious/bot_protection.cr:30:31
+
+ 30 | @@refreshed_at = Time.monotonic
+                            ^--------
+Warning: Deprecated Time.monotonic. Use `Time.instant` instead.
+
+In src/invidious/bot_protection.cr:49:29
+
+ 49 | @@refreshed_at = Time.monotonic
+                            ^--------
+Warning: Deprecated Time.monotonic. Use `Time.instant` instead.
+
+In src/invidious/bot_protection.cr:21:25
+
+ 21 | @@refreshed_at = Time.monotonic - 2.seconds
+                            ^--------
+Warning: Deprecated Time.monotonic. Use `Time.instant` instead.
+
+A total of 4 warnings were found.

@@ -204,7 +204,7 @@ def make_source_map():
         "src": "Application entry point and startup wiring.",
         "assets/js": "Browser behavior; individual module responsibilities are described in frontend documentation.",
         "assets/css": "Base, player, feature and layout styles; minified third-party styles retain their upstream role.",
-        "assets/themes": "Diary styling, with local fonts and SVG artwork alongside its stylesheet.",
+        "assets/icons": "Local first-party SVG icon sprite and its upstream license.",
         "scripts": "Build, dependency, database, release and Git-hook tooling.",
         "config/sql": "Fresh-install table/index/constraint definitions.",
         "config/migrate-scripts": "Historical shell migrations retained for legacy upgrades; not the modern migration runner.",
@@ -213,9 +213,9 @@ def make_source_map():
         ".github/workflows": "CI, browser/database regression checks, container/release publishing and issue maintenance.",
     }
     paths = set()
-    for base in ("src", "assets/js", "assets/css", "assets/themes", "scripts", "config/sql", "config/migrate-scripts", "docker", "nix", ".github/workflows"):
+    for base in ("src", "assets/js", "assets/css", "assets/icons", "scripts", "config/sql", "config/migrate-scripts", "docker", "nix", ".github/workflows"):
         for path in (ROOT / base).rglob("*"):
-            if path.is_file() and path.suffix not in (".png", ".webp", ".ttf", ".svg"):
+            if path.is_file() and (base == "assets/icons" or path.suffix not in (".png", ".webp", ".ttf", ".svg")):
                 paths.add(path.relative_to(ROOT))
     groups = {}
     for path in sorted(paths):

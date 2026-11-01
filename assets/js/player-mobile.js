@@ -2,7 +2,8 @@
 
 // Shared by watch and embed players. Vendor components retain ownership of playback.
 (function () {
-    if (!window.player || typeof player.ready !== 'function' || !isMobile()) return;
+    if (!window.player || typeof player.ready !== 'function' || !isMobile() || player.invidiousMobileStarted) return;
+    player.invidiousMobileStarted = true;
     player.ready(function () {
         var overlay = player.getChild('TouchOverlay');
         if (!overlay) return;

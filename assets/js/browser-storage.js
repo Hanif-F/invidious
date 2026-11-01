@@ -51,7 +51,8 @@ window.InvidiousStorage = (function () {
     }
 
     function normalize(key, value) {
-        if (key === 'navigation_collapsed') return typeof value === 'boolean' ? value : undefined;
+        if (key === 'navigation_collapsed' || key === 'player_dock_enabled') return typeof value === 'boolean' ? value : undefined;
+        if (key === 'watch_layout') return value === 'standard' || value === 'theater' ? value : undefined;
         if (key === 'browse_state') {
             if (!object(value) || !Array.isArray(value.views)) return;
             function path(text) { return typeof text === 'string' && text.length <= 32768 && /^\/(?!\/)/.test(text); }
@@ -67,7 +68,7 @@ window.InvidiousStorage = (function () {
         }
         if (key === 'invidious_player_volume') return number(value, 0, 1) ? value : undefined;
         if (key === 'dark_mode') return ['', 'light', 'dark'].includes(value) ? value : undefined;
-        if (key === 'notification_count') return Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+        if (key === 'notification_count' || key === 'subscription_revision') return Number.isSafeInteger(value) && value >= 0 ? value : undefined;
         if (key === 'stream') return object(value) && typeof value.owner === 'string' && value.owner.length <= 100 &&
             number(value.expires, 0, Number.MAX_SAFE_INTEGER) ? {owner: value.owner, expires: value.expires} : undefined;
         if (key.startsWith('continuation_cache_')) return Array.isArray(value) && value.length <= 1000 &&
@@ -167,6 +168,13 @@ window.InvidiousStorage = (function () {
                 var value = normalize(name, parse(raw));
                 if (value === undefined) remove(name);
                 return value;
+            },
+            // Read persisted state without accepting a failed write's page memory.
+            readStored: function (name) {
+                if (!usable()) return;
+                var raw = session ? undefined : cookie(cookieKey(name));
+                if (raw === undefined || raw === null) raw = rawGet(backend(session), key(name));
+                return normalize(name, parse(raw));
             },
             set: function (name, value) {
                 if (!usable()) return false;

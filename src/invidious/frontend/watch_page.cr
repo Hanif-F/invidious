@@ -1,6 +1,29 @@
 module Invidious::Frontend::WatchPage
   extend self
 
+  # Display adapter for shared recommendation menus; metadata stays in the source hash.
+  record Recommendation, id : String, author : String
+
+  def playlist_cursor(env, plid : String?, id : String)
+    query = env.params.query
+    if plid && plid.starts_with?("IV")
+      raw = query["occurrence"]?
+      # Older owned-list links placed a large occurrence ID in `index`.
+      if !raw && (legacy = query["index"]?) && legacy.matches?(/\A[0-9]{1,19}\z/) && legacy.to_i64? && !legacy.to_i?
+        raw = legacy
+      end
+      if raw
+        occurrence = raw.matches?(/\A[0-9]{1,19}\z/) ? raw.to_i64? : nil
+        viewer = env.get?("user").try(&.as(User).email)
+        offset = occurrence.try { |value| Database::Playlists.occurrence_offset(plid, value, id, viewer) }
+        env.set "playlist_occurrence_missing", offset.nil?
+        env.set "playlist_occurrence", occurrence.to_s if occurrence
+        return offset || query["index"]?.try(&.to_i?).try { |value| Math.max(0, value) } || 0
+      end
+    end
+    process_continuation(query, plid, id)
+  end
+
   # A handy structure to pass many elements at
   # once to the download widget function
   struct VideoAssets
@@ -18,7 +41,7 @@ module Invidious::Frontend::WatchPage
     end
   end
 
-  def download_widget(locale : String, video : Video, video_assets : VideoAssets) : String
+  def download_widget(locale : String, video : Video, video_assets : VideoAssets, title : String? = nil) : String
     if CONFIG.disabled?("downloads")
       return "<p id=\"download\">#{I18n.translate(locale, "Download is disabled")}</p>"
     end
@@ -35,7 +58,7 @@ module Invidious::Frontend::WatchPage
 
     return String.build(4000) do |str|
       str << "<form"
-      str << " class=\"pure-form pure-form-stacked\""
+      str << " class=\"stacked-form\""
       str << " action='" << HTML.escape(url) << "'"
       str << " method='post'"
       str << " rel='noopener noreferrer'"
@@ -44,9 +67,9 @@ module Invidious::Frontend::WatchPage
 
       # Hidden inputs for video id and title
       str << "<input type='hidden' name='id' value='" << video.id << "'/>\n"
-      str << "<input type='hidden' name='title' value='" << HTML.escape(video.title) << "'/>\n"
+      str << "<input type='hidden' name='title' value='" << HTML.escape(title || video.title) << "'/>\n"
 
-      str << "\t<div class=\"pure-control-group\">\n"
+      str << "\t<div class=\"field-row\">\n"
 
       str << "\t\t<label for='download_widget'>"
       str << I18n.translate(locale, "Download as: ")
@@ -107,7 +130,7 @@ module Invidious::Frontend::WatchPage
       str << "\t\t</select>\n"
       str << "\t</div>\n"
 
-      str << "\t<button type=\"submit\" class=\"pure-button pure-button-primary\">\n"
+      str << "\t<button type=\"submit\" class=\"button button-primary\">\n"
       str << "\t\t<b>" << I18n.translate(locale, "Download") << "</b>\n"
       str << "\t</button>\n"
 

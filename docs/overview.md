@@ -4,7 +4,7 @@
 
 Invidious is a server-rendered alternative interface to YouTube. Users browse videos, channels, playlists, comments and feeds through an Invidious instance. The instance obtains upstream information, renders HTML, provides JSON APIs and proxies selected media and images. It also stores local accounts and libraries independently of Google accounts.
 
-This fork adds account security and native client workflows, synchronized playback positions, detailed watch history, channel blocking, native clips, saved playlist references, archived chat replay, richer stream metadata, SponsorBlock, DeArrow, AI channel filtering, channel-avatar caching and Diary styling with light/dark/system color modes. The [feature catalog](features.md) describes each capability and its dependencies.
+This fork adds account security and native client workflows, synchronized playback positions, detailed watch history, channel blocking, native clips, saved playlist references, archived chat replay, richer stream metadata, SponsorBlock, DeArrow, AI channel filtering, channel-avatar caching and a shared desktop design with Light/Dark/System color modes. The [feature catalog](features.md) describes each capability and its dependencies.
 
 ## System components
 
@@ -15,7 +15,7 @@ This fork adds account security and native client workflows, synchronized playba
 | PostgreSQL | Persistent accounts and libraries, subscriptions, metadata caches and migrations | [database layer](../src/invidious/database), [SQL](../config/sql) |
 | Invidious Companion | Video extraction and playback metadata supplied by a separately deployed service | [connection pools](../src/invidious/yt_backend/connection_pool.cr), [companion routes](../src/invidious/routes/companion.cr) |
 | ECR templates | HTML pages and reusable components compiled into the application | [views](../src/invidious/views) |
-| Browser assets | Video.js player, browser interactions, Diary styling and shared styles | [assets](../assets) |
+| Browser assets | Video.js player, browser interactions, shared design tokens/styles and SVG icons | [assets](../assets) |
 | Background jobs | Subscription refresh, statistics, popular videos, notifications and cache maintenance | [jobs](../src/invidious/jobs) |
 
 There is no separate frontend application build or required Node.js runtime for serving the site. Node.js is used by browser tests. SQLite is a linked dependency used for imports and some test harnesses; PostgreSQL is the application database.

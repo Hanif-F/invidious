@@ -8,6 +8,15 @@ import sys
 
 DOCS = Path(__file__).resolve().parents[1]
 ROOT = DOCS.parent
+EXTRA_DOCS = (
+    "README.md",
+    "ACCOUNT_SECURITY.md",
+    "SECURITY_READINESS.md",
+    "SPONSORBLOCK.md",
+    "screenshots/README.md",
+    "tests/frontend/README.md",
+    "tests/database/README.md",
+)
 
 
 def prose(text, errors, path):
@@ -29,7 +38,7 @@ def prose(text, errors, path):
 
 
 def anchors(text):
-    result = set()
+    result = set(re.findall(r'<a\s+[^>]*id=[\"\']([^\"\']+)[\"\']', text, re.I))
     seen = {}
     for heading in re.findall(r"^#{1,6}\s+(.+?)\s*#*\s*$", text, re.M):
         heading = re.sub(r"\[([^]]+)\]\([^)]*\)", r"\1", heading)
@@ -42,7 +51,8 @@ def anchors(text):
 
 def main():
     errors = []
-    files = sorted(DOCS.rglob("*.md"))
+    handbook = set(DOCS.rglob("*.md"))
+    files = sorted(handbook | {ROOT / name for name in EXTRA_DOCS})
     texts = {path: prose(path.read_text(), errors, path) for path in files}
     edges = {path: set() for path in files}
     count = 0
@@ -74,7 +84,7 @@ def main():
             continue
         reached.add(current)
         pending.extend(edges.get(current, ()))
-    for path in files:
+    for path in handbook:
         if path not in reached:
             errors.append(f"{path.relative_to(ROOT)}: unreachable from docs/README.md")
     result = subprocess.run([sys.executable, str(DOCS / "tools/generate_reference.py"), "--check"], cwd=ROOT, check=False)

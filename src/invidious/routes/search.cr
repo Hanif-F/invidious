@@ -77,13 +77,13 @@ module Invidious::Routes::Search
           items = query.process
         end
       rescue ex : ChannelSearchException
-        return error_template(404, "Unable to find channel with id of '#{HTML.escape(ex.channel)}'. Are you sure that's an actual channel id? It should look like 'UC4QobU6STFB0P71PMvOGN5A'.")
+        return error_template(404, "Unable to find channel with id of '#{ex.channel}'. Are you sure that's an actual channel id? It should look like 'UC4QobU6STFB0P71PMvOGN5A'.")
       rescue ex
         return error_template(500, ex)
       end
 
       upstream_count = items.size
-      unless query.include_blocked
+      if query.type.regular? && !query.include_blocked
         items = Frontend::BlockedChannels.filter(items, Frontend::BlockedChannels.ids(env))
       end
       blocked_results = upstream_count > items.size
@@ -98,14 +98,16 @@ module Invidious::Routes::Search
       page_nav_html = Frontend::Pagination.nav_numeric(locale,
         base_url: "/search?#{query.to_http_params}",
         current_page: query.page,
-        post: preferences.search_privacy,
+        post: Frontend::Desktop.private_search?(env),
         show_next: (upstream_count >= 20)
       )
 
       if query.type == Invidious::Search::Query::Type::Channel
-        env.set "search", "channel:#{query.channel} #{query.text}"
+        env.set "search", "channel:#{query.channel} #{query.input}"
+      elsif query.type.subscriptions?
+        env.set "search", "subscriptions:true #{query.input}"
       else
-        env.set "search", query.text
+        env.set "search", query.input
       end
 
       templated "search"

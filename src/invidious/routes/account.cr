@@ -3,11 +3,13 @@
 module Invidious::Routes::Account
   extend self
 
-  def get_account(env, error : String? = nil)
+  def get_account(env, error : String? = nil, username : String? = nil)
     Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     locale = env.get("preferences").as(Preferences).locale
     return env.redirect "/login?referer=%2Faccount" unless env.get?("user")
     user = env.get("user").as(User)
+    username = username.try(&.byte_slice(0, 254)) || user.username
     sid = env.get("sid").as(String)
     username_token = generate_response(sid, {"POST:account/username"}, HMAC_KEY, 1.hour)
     password_token = generate_response(sid, {"POST:change_password"}, HMAC_KEY, 1.hour)
@@ -28,20 +30,21 @@ module Invidious::Routes::Account
 
   def change_credentials(env, rename : Bool)
     Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     return env.redirect "/login?referer=%2Faccount" unless env.get?("user")
     user = env.get("user").as(User)
     sid = env.get("sid").as(String)
+    username = rename ? (env.params.body["username"]? || "").byte_slice(0, 254) : nil
     begin
       validate_request(env.params.body["csrf_token"]?, sid, env.request, HMAC_KEY)
     rescue
       env.response.status_code = 400
-      return get_account(env, "Invalid form. Please try again.")
+      return get_account(env, "Invalid form. Please try again.", username)
     end
     if Authentication.throttle(env, user.username)
-      return get_account(env, "Too many attempts. Please try again later.")
+      return get_account(env, "Too many attempts. Please try again later.", username)
     end
     password = env.params.body["password"]? || ""
-    username = rename ? (env.params.body["username"]? || "") : nil
     new_password = rename ? nil : (env.params.body["new_password[0]"]? || "")
     error = username.try { |value| Credentials.username_error(value) }
     if new_password
@@ -61,7 +64,7 @@ module Invidious::Routes::Account
       end
     end
     env.response.status_code = 400
-    get_account(env, error)
+    get_account(env, error, username)
   end
 
   # -------------------
@@ -69,8 +72,9 @@ module Invidious::Routes::Account
   # -------------------
 
   # Show the account deletion confirmation prompt (GET request)
-  def get_delete(env)
+  def get_delete(env, error : String? = nil)
     Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -91,6 +95,7 @@ module Invidious::Routes::Account
   # Handle the account deletion (POST request)
   def post_delete(env)
     Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -108,14 +113,17 @@ module Invidious::Routes::Account
     begin
       validate_request(token, sid, env.request, HMAC_KEY, locale)
     rescue ex
-      return error_template(400, ex)
+      env.response.status_code = 400
+      return get_delete(env, "Invalid form. Please try again.")
     end
 
     if Authentication.throttle(env, user.username)
-      return error_template(429, "Too many attempts. Please try again later.")
+      env.response.status_code = 429
+      return get_delete(env, "Too many attempts. Please try again later.")
     end
     unless Database::Accounts.delete(user.email, sid, env.params.body["password"]? || "")
-      return error_template(401, "Incorrect password")
+      env.response.status_code = 401
+      return get_delete(env, "Incorrect password")
     end
 
     BrowserProfiles.delete_profile(env, user.email)
@@ -169,8 +177,7 @@ module Invidious::Routes::Account
       return error_template(400, ex)
     end
 
-    Invidious::Database::Users.clear_watch_history(user)
-    Invidious::Database::PlaybackPositions.clear(user.email)
+    Invidious::Database::Users.clear_watch_history(user, clear_positions: true)
     env.redirect referer
   end
 
@@ -179,8 +186,23 @@ module Invidious::Routes::Account
   # -------------------
 
   # Show the "authorize token?" confirmation prompt (GET request)
+  # Custom native schemes and relative callbacks remain supported. Executable
+  # documents and malformed header values must never receive an issued token.
+  def authorization_callback(value : String?) : URI?
+    return nil unless value
+    raise InfoException.new("Invalid callback address.") if value.blank? || value != value.strip || value.each_char.any? { |char| char.ord < 32 || char.ord == 127 }
+    url = URI.parse(value)
+    if {"javascript", "data", "vbscript", "file", "blob"}.includes?(url.scheme.try(&.downcase))
+      raise InfoException.new("Invalid callback address.")
+    end
+    url
+  rescue URI::Error
+    raise InfoException.new("Invalid callback address.")
+  end
+
   def get_authorize_token(env)
     Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -198,12 +220,13 @@ module Invidious::Routes::Account
     scopes = env.params.query["scopes"]?.try &.split(",")
     scopes ||= [] of String
 
-    callback_url = env.params.query["callback_url"]?
-    if callback_url
-      callback_url = URI.parse(callback_url)
+    begin
+      callback_url = authorization_callback(env.params.query["callback_url"]?)
+    rescue ex : InfoException
+      return error_template(400, ex)
     end
 
-    expire = env.params.query["expire"]?.try &.to_i?
+    expire = env.params.query["expire"]?.try &.to_i64?
 
     templated "user/authorize_token"
   end
@@ -211,6 +234,7 @@ module Invidious::Routes::Account
   # Handle token authorization (POST request)
   def post_authorize_token(env)
     Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -232,14 +256,18 @@ module Invidious::Routes::Account
     end
 
     scopes = env.params.body.select { |k, _| k.match(/^scopes\[\d+\]$/) }.map { |_, v| v }
-    callback_url = env.params.body["callbackUrl"]?
-    expire = env.params.body["expire"]?.try &.to_i?
+    begin
+      callback_url = authorization_callback(env.params.body["callbackUrl"]?)
+    rescue ex : InfoException
+      return error_template(400, ex)
+    end
+    expire = env.params.body["expire"]?.try &.to_i64?
 
     access_token = generate_token(user.email, scopes, expire, HMAC_KEY, sid)
 
     if callback_url
       access_token = URI.encode_www_form(access_token)
-      url = URI.parse(callback_url)
+      url = callback_url
 
       if url.query
         query = HTTP::Params.parse(url.query.not_nil!)
@@ -266,6 +294,7 @@ module Invidious::Routes::Account
   # Show the token manager page (GET request)
   def token_manager(env)
     Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -288,6 +317,8 @@ module Invidious::Routes::Account
 
   # Handle internal (non-API) token actions (POST request)
   def token_ajax(env)
+    Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     locale = env.get("preferences").as(Preferences).locale
 
     user = env.get? "user"
@@ -322,7 +353,10 @@ module Invidious::Routes::Account
 
     case action = env.params.query["action"]?
     when "revoke_token"
-      session = env.params.query["session"]
+      session = env.params.body["session"]? || env.params.query["session"]?
+      unless session && !session.empty?
+        return redirect ? error_template(400, "Invalid form. Please try again.") : error_json(400, "Missing session")
+      end
       Invidious::Database::SessionIDs.delete(sid: session, email: user.email)
       Authentication.clear_session(env) if session == sid
     else

@@ -41,7 +41,8 @@
 <% end %>
 <link rel="alternate" href="https://www.youtube.com/watch?v=<%= video.id %>">
 <%= rendered "components/player_sources" %>
-<% if video.live_chat_replay? %><link rel="stylesheet" href="/css/live-chat.css?v=<%= ASSET_COMMIT %>"><% end %>
+<link rel="stylesheet" href="/css/watch-tools.css?v=<%= ASSET_COMMIT %>">
+<% if video.live_chat_replay? %><link rel="stylesheet" href="/css/live-chat.css?v=<%= ASSET_COMMIT %>"><link rel="stylesheet" href="/css/chat-preferences.css?v=<%= ASSET_COMMIT %>"><% end %>
 <title><%= title %> - Invidious</title>
 
 <noscript><style>.js-only, #try-reddit-comments-link { display: none !important }</style></noscript>
@@ -55,7 +56,8 @@
     "channel_id" => video.ucid,
     "clip" => (native_clip || preview_clip) ? {"url" => native_clip.try(&.permalink), "startTime" => params.video_start, "endTime" => params.video_end} : nil,
     "index" => continuation,
-    "playlist_current_removed" => env.params.query["playlist_current_removed"]? == "1",
+    "playlist_current_removed" => env.params.query["playlist_current_removed"]? == "1" || env.get?("playlist_occurrence_missing") == true,
+    "playlist_occurrence" => env.get?("playlist_occurrence").try(&.as(String)),
     "plid" => plid,
     "length_seconds" => video.length_seconds.to_f,
     "playback_sync" => playback_sync,
@@ -82,14 +84,15 @@
     "live_now" => video.live_now,
     "chat_account" => !!user,
     "chat_timing_ms" => chat_timing_ms
-}.to_pretty_json
+}.to_pretty_json.gsub("<", "\\u003c")
 %>
 </script>
+<script id="watch-enhancements-config" type="application/json"><%= Invidious::Frontend::WatchEnhancements.configuration(preferences, Invidious::Frontend::BlockedChannels.ids(env)).to_json.gsub("<", "\\u003c") %></script>
 <script id="config" type="application/json">
 <%=
 {
     "videojs" => CONFIG.videojs,
-}.to_pretty_json
+}.to_pretty_json.gsub("<", "\\u003c")
 %>
 </script>
 
@@ -101,6 +104,9 @@
     "queue_remove" => I18n.translate(locale, "Remove from this playlist"),
     "queue_removed" => I18n.translate(locale, "Video removed from playlist"),
     "queue_remove_error" => I18n.translate(locale, "Could not remove video; try again"),
+    "queue_uncertain" => I18n.translate(locale, "overhaul_queue_uncertain"),
+    "queue_filtered_empty" => I18n.translate(locale, "overhaul_queue_filtered_empty"),
+    "queue_refresh" => I18n.translate(locale, "overhaul_queue_refresh"),
     "queue_empty" => I18n.translate(locale, "ui_queue_empty"),
     "queue_end" => I18n.translate(locale, "ui_queue_end"),
     "now_playing" => I18n.translate(locale, "ui_now_playing"),
@@ -112,6 +118,7 @@
     "wide_player" => I18n.translate(locale, "ui_wide_player"),
     "copied" => I18n.translate(locale, "ui_copied"),
     "transcript_error" => I18n.translate(locale, "ui_transcript_error"),
+    "transcript_unavailable" => I18n.translate(locale, "overhaul_transcript_unavailable"),
     "transcript_empty" => I18n.translate(locale, "ui_transcript_empty"),
     "no_matches" => I18n.translate(locale, "ui_no_matches"),
     "auto_generated" => I18n.translate(locale, "ui_auto_generated"),
@@ -120,6 +127,9 @@
     "chat_unavailable" => I18n.translate(locale, "ui_chat_unavailable"),
     "chat_error" => I18n.translate(locale, "ui_chat_error"),
     "chat_empty" => I18n.translate(locale, "ui_chat_empty"),
+    "chat_waiting" => I18n.translate(locale, "overhaul_chat_waiting"),
+    "chat_filtered_empty" => I18n.translate(locale, "overhaul_chat_filtered_empty"),
+    "chat_seek" => I18n.translate(locale, "overhaul_chat_seek"),
     "show_chat" => I18n.translate(locale, "ui_show_chat"),
     "hide_chat" => I18n.translate(locale, "ui_hide_chat"),
     "chat_settings" => I18n.translate(locale, "ui_chat_settings"),
@@ -127,375 +137,61 @@
     "chat_save_error" => I18n.translate(locale, "ui_chat_save_error"),
 }.to_json
 %></script>
-<div class="watch-layout watch-wide<%= " watch-without-sidebar" unless params.related_videos || plid %><%= " watch-has-chat" if video.live_chat_replay? %>" id="watch-layout">
-    <div class="watch-player">
-        <div id="player-container"><%= rendered "components/player" %>
-        <% if video.live_chat_replay? %>
-        <section class="chat-panel panel" id="chat-panel" aria-labelledby="chat-heading">
-            <header class="chat-heading">
-                <h2 id="chat-heading"><%= I18n.translate(locale, "ui_chat_replay") %></h2>
-                <details class="chat-settings js-only" id="chat-settings">
-                    <summary aria-label="<%= I18n.translate(locale, "ui_chat_settings") %>" title="<%= I18n.translate(locale, "ui_chat_settings") %>">⚙</summary>
-                    <div class="chat-settings-menu pure-form pure-form-stacked">
-                        <label><input id="chat-show-timestamps" type="checkbox"> <%= I18n.translate(locale, "ui_chat_show_timestamps") %></label>
-                        <label><input id="chat-hide-user-ids" type="checkbox"> <%= I18n.translate(locale, "ui_chat_hide_user_ids") %></label>
-                        <label><input id="chat-overlay-mode" type="checkbox"> <%= I18n.translate(locale, "ui_chat_overlay_mode") %></label>
-                        <div id="chat-overlay-options" hidden>
-                            <button id="chat-modify-overlay" class="pure-button" type="button"><%= I18n.translate(locale, "ui_chat_modify_overlay") %></button>
-                            <label for="chat-overlay-opacity"><%= I18n.translate(locale, "ui_chat_overlay_opacity") %> <output id="chat-overlay-opacity-output"></output></label>
-                            <input id="chat-overlay-opacity" type="range" min="0" max="100" step="1" value="75">
-                        </div>
-                        <div class="chat-setting-label">
-                            <label for="chat-font-scale"><%= I18n.translate(locale, "ui_chat_font_size") %></label>
-                            <span class="chat-setting-value"><input id="chat-font-value" type="number" min="25" max="300" step="1" inputmode="numeric" value="100" aria-label="<%= I18n.translate(locale, "ui_chat_font_size") %> (%)"><span aria-hidden="true">%</span></span>
-                        </div>
-                        <input id="chat-font-scale" type="range" min="75" max="150" step="5" value="100">
-                        <div id="chat-docked-size">
-                            <div class="chat-setting-label">
-                                <label for="chat-width"><%= I18n.translate(locale, "ui_chat_size") %></label>
-                                <span class="chat-setting-value"><input id="chat-width-value" type="number" min="160" max="1000" step="1" inputmode="numeric" value="440" aria-label="<%= I18n.translate(locale, "ui_chat_size") %> (px)"><span aria-hidden="true">px</span></span>
-                            </div>
-                            <input id="chat-width" type="range" min="280" max="640" step="20" value="440">
-                        </div>
-                        <label for="chat-user-blacklist"><%= I18n.translate(locale, "ui_chat_user_blacklist") %></label>
-                        <input id="chat-user-blacklist" type="text" autocomplete="off" placeholder="UC… @handle">
-                        <label for="chat-word-blacklist"><%= I18n.translate(locale, "ui_chat_word_blacklist") %></label>
-                        <input id="chat-word-blacklist" type="text" autocomplete="off" placeholder="word /pattern/">
-                        <label for="chat-timing"><%= I18n.translate(locale, "ui_chat_custom_timing") %></label>
-                        <input id="chat-timing" type="number" min="-3600" max="3600" step="0.1" value="0">
-                        <p id="chat-settings-status" role="status"></p>
-                    </div>
-                </details>
-            </header>
-            <div class="chat-overlay-editor js-only" id="chat-overlay-editor" hidden>
-                <button id="chat-overlay-move" class="chat-overlay-handle chat-overlay-move" type="button"><%= I18n.translate(locale, "ui_chat_move_overlay") %></button>
-                <div class="chat-overlay-actions">
-                    <button id="chat-overlay-save" class="pure-button" type="button"><%= I18n.translate(locale, "generic_button_save") %></button>
-                    <button id="chat-overlay-cancel" class="pure-button" type="button"><%= I18n.translate(locale, "generic_button_cancel") %></button>
-                </div>
-                <button id="chat-overlay-resize" class="chat-overlay-handle chat-overlay-resize" type="button"><%= I18n.translate(locale, "ui_chat_resize_overlay") %></button>
-            </div>
-            <div class="chat-scroll-area js-only">
-                <div class="chat-messages" id="chat-messages" role="log" aria-live="off"></div>
-                <button id="chat-sync" class="chat-sync pure-button" type="button" aria-controls="chat-messages" hidden><%= I18n.translate(locale, "ui_sync_chat") %></button>
-            </div>
-            <div class="chat-footer js-only">
-                <p id="chat-status" role="status"><%= I18n.translate(locale, "ui_chat_loading") %></p>
-                <button id="chat-retry" class="pure-button" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
-            </div>
-        </section>
-        <% end %>
-        </div>
-        <% if video.live_chat_replay? %><noscript><p class="chat-nojs"><%= I18n.translate(locale, "ui_chat_requires_js") %></p></noscript><% end %>
-    </div>
-    <div class="watch-primary">
-        <header class="watch-heading">
-            <% if native_clip %>
-            <div data-dearrow-row><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, true, false, "h1", custom: true) %></div>
-            <p><%= I18n.translate(locale, "clips_by") %> <%= HTML.escape(native_clip.creator) %> · <%= native_clip.start_time %>–<%= native_clip.end_time %> s</p>
-            <p dir="auto" data-dearrow-row><a href="/watch?v=<%= video.id %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, video.title, spoiler_date) %></a></p>
-            <p class="js-only"><label><input id="clip-loop" type="checkbox" <%= "checked" if params.video_loop %>> <%= I18n.translate(locale, "clips_loop") %></label></p>
-            <p><a class="pure-button" href="/watch?v=<%= video.id %>&t=<%= native_clip.start_time %>"><%= I18n.translate(locale, "clips_full_video") %></a>
-            <% if user && user.email == native_clip.owner %><a href="/delete_clip?id=<%= native_clip.id %>"><%= I18n.translate(locale, "clips_delete") %></a><% end %></p>
-            <% else %>
-            <div data-dearrow-row><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, true, true, "h1") %></div>
-            <%= rendered "components/dearrow_contributions" %>
-            <% end %>
-    <% if !video.is_listed %>
-        <h3>
-            <i class="icon ion-ios-unlock"></i> <%= I18n.translate(locale, "Unlisted") %>
-        </h3>
-    <% end %>
-
-    <% if video.reason %>
-        <h3>
-            <%= video.reason %>
-        </h3>
-    <% elsif video.premiere_timestamp.try &.> Time.utc %>
-        <h3>
-            <%= video.premiere_timestamp.try { |t| I18n.translate(locale, "Premieres in `x`", recode_date((t - Time.utc).ago, locale)) } %>
-        </h3>
-    <% elsif video.live_now %>
-        <h3>
-            <%= video.premiere_timestamp.try { |t| I18n.translate(locale, "videoinfo_started_streaming_x_ago", recode_date((Time.utc - t).ago, locale)) } %>
-        </h3>
-    <% end %>
-            <div class="video-stats">
-                <% if count = Invidious::Frontend::ViewCounts.get(env, video.id) %><p id="views"><%= HTML.escape(count.text(locale)) %></p><% end %>
-                <p id="likes"><i class="icon ion-ios-thumbs-up" aria-hidden="true"></i> <%= number_with_separator(video.likes) %> <%= I18n.translate(locale, "ui_likes") %></p>
-                <p id="published-date"><% if video.premiere_timestamp.try &.> Time.utc %>
-                    <%= I18n.translate(locale, "Premieres `x`", video.premiere_timestamp.not_nil!.to_s("%B %-d, %R UTC")) %>
-                <% else %>
-                    <%= I18n.translate(locale, "Shared `x`", video.published.to_s("%B %-d, %Y")) %>
-                <% end %></p>
-            </div>
-        </header>
-        <div class="watch-channel">
-            <a href="/channel/<%= video.ucid %>" class="channel-profile">
-                <% if !video.author_thumbnail.empty? %><img width="48" height="48" src="/ggpht<%= URI.parse(video.author_thumbnail).request_target %>" alt=""><% end %>
-                <span class="channel-name" dir="auto"><%= author %><% if video.author_verified %> <i class="icon ion-md-checkmark-circle" title="<%= I18n.translate(locale, "ui_verified") %>"></i><% end %></span>
-            </a>
-            <a href="/preferences/sponsorblock/channels?channel=<%= video.ucid %>"><%= I18n.translate(locale, "sb_channel_settings") %></a>
-            <p><a href="/preferences/spoilers/channels?channel=<%= video.ucid %>"><%= I18n.translate(locale, "spoilers_settings") %></a></p>
-            <div><% sub_count_text = video.sub_count_text %><%= rendered "components/subscribe_widget" %></div>
-        </div>
-        <div class="watch-actions">
-            <a class="pure-button" id="link-iv-listen" data-base-url="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&listen=<%= params.listen ? 0 : 1 %>" href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&listen=<%= params.listen ? 0 : 1 %>">
-                <i class="icon <%= params.listen ? "ion-ios-videocam" : "ion-md-headset" %>" aria-hidden="true"></i> <%= I18n.translate(locale, params.listen ? "Video mode" : "Audio mode") %>
-            </a>
-            <button type="button" class="pure-button js-only" id="share-video"><%= I18n.translate(locale, "ui_share") %></button>
-            <% unless Invidious::Clips.source_error(video) %><a class="pure-button" id="create-clip" href="/create_clip?videoId=<%= video.id %>" aria-haspopup="dialog"><%= I18n.translate(locale, "clips_create") %></a><% end %>
-            <% if user %><details><summary><%= I18n.translate(locale, "Add to playlist") %></summary><div class="action-content">
-            <% if user %>
-                <% playlists = Invidious::Database::Playlists.select_user_created_playlists(user.email) %>
-                <% if !playlists.empty? %>
-                    <form data-onsubmit="return_false" class="pure-form pure-form-stacked" action="/playlist_ajax?action=add_video" method="post" target="_blank">
-                        <div class="pure-control-group">
-                            <label for="playlist_id"><%= I18n.translate(locale, "Add to playlist: ") %></label>
-                            <select style="width:100%" name="playlist_id" id="playlist_id">
-                                <% playlists.each do |plid, playlist_title| %>
-                                    <option data-plid="<%= plid %>" value="<%= plid %>" <%= "selected" if user.preferences.default_playlist == plid %>><%= HTML.escape(playlist_title) %></option>
-                                <% end %>
-                            </select>
-                        </div>
-
-                        <input type="hidden" name="csrf_token" value="<%= URI.encode_www_form(env.get?("csrf_token").try &.as(String) || "") %>">
-                        <input type="hidden" name="video_id" value="<%= video.id %>">
-                        <button data-onclick="add_playlist_video" data-id="<%= video.id %>" type="submit" class="pure-button pure-button-primary">
-                            <b><%= I18n.translate(locale, "Add to playlist") %></b>
-                        </button>
-                    </form>
-                    <script id="playlist_data" type="application/json">
-                    <%=
-                    {
-                        "csrf_token" => URI.encode_www_form(env.get?("csrf_token").try &.as(String) || "")
-                    }.to_pretty_json
-                    %>
-                    </script>
-                    <script src="/js/playlist_widget.js?v=<%= Time.utc.to_unix_ms %>"></script>
-                <% end %>
-            <% end %>
-
-
-
-
-                <p id="playlist-save-status" role="status" data-saved="<%= I18n.translate(locale, "ui_saved_playlist") %>" data-error="<%= I18n.translate(locale, "ui_save_error") %>"></p>
-                <a href="/create_playlist"><%= I18n.translate(locale, "Create playlist") %></a>
-            </div></details><% end %>
-            <details><summary><%= I18n.translate(locale, "Download") %></summary><div class="action-content">
-                <%= Invidious::Frontend::WatchPage.download_widget(locale, video, video_assets) %>
-            </div></details>
-            <details><summary><%= I18n.translate(locale, "ui_more_tools") %></summary><div class="action-content">
-            <span id="watch-on-youtube">
-                <%-
-                    link_yt_watch = URI.new(scheme: "https", host: "www.youtube.com", path: "/watch", query: "v=#{video.id}")
-                    link_yt_embed = URI.new(scheme: "https", host: "www.youtube.com", path: "/embed/#{video.id}")
-
-                    if !plid.nil? && !continuation.nil?
-                        link_yt_param = URI::Params{"list" => [plid], "index" => [continuation.to_s]}
-                        link_yt_watch = IV::HttpServer::Utils.add_params_to_url(link_yt_watch, link_yt_param)
-                        link_yt_embed = IV::HttpServer::Utils.add_params_to_url(link_yt_embed, link_yt_param)
-                    end
-                -%>
-                <a id="link-yt-watch" rel="noreferrer noopener" data-base-url="<%= link_yt_watch %>" href="<%= link_yt_watch %>"><%= I18n.translate(locale, "videoinfo_watch_on_youTube") %></a>
-                <% unless native_clip %>(<a id="link-yt-embed" referrerpolicy="origin-when-cross-origin" rel="noopener" data-base-url="<%= link_yt_embed %>" href="<%= link_yt_embed %>"><%= I18n.translate(locale, "videoinfo_youTube_embed_link") %></a>)<% end %>
-            </span>
-
-            <% unless native_clip %>
-            <p id="watch-on-another-invidious-instance">
-                <%- link_iv_other = IV::Frontend::Misc.redirect_url(env) -%>
-                <a id="link-iv-other" data-base-url="<%= link_iv_other %>" href="<%= link_iv_other %>"><%= I18n.translate(locale, "Switch Invidious Instance") %></a>
-            </p>
-
-            <p id="embed-link">
-                <%-
-                    params_iv_embed = env.params.query.dup
-                    params_iv_embed.delete_all("v")
-
-                    link_iv_embed = URI.new(path: "/embed/#{id}")
-                    link_iv_embed = IV::HttpServer::Utils.add_params_to_url(link_iv_embed, params_iv_embed)
-                -%>
-                <a id="link-iv-embed" data-base-url="<%= link_iv_embed %>" href="<%= link_iv_embed %>"><%= I18n.translate(locale, "videoinfo_invidious_embed_link") %></a>
-            </p>
-
-            <% end %>
-            <p id="annotations">
-                <% if params.annotations %>
-                    <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&iv_load_policy=3">
-                        <%= I18n.translate(locale, "Hide annotations") %>
-                    </a>
-                <% else %>
-                    <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&iv_load_policy=1">
-                        <%=I18n.translate(locale, "Show annotations")%>
-                    </a>
-                <% end %>
-            </p>
-
-
-            </div></details>
-        </div>
-        <p id="share-status" role="status"></p>
-        <div id="share-fallback" hidden class="pure-form"><label for="share-url"><%= I18n.translate(locale, "ui_share") %></label><input id="share-url" readonly type="url"></div>
-        <section class="watch-description panel">
-            <div class="panel-body">
-                <details id="description-box" <%= "open" if params.extend_desc || video.description.size < 200 %>>
-                    <summary><%= I18n.translate(locale, "ui_description") %></summary>
-                    <div id="descriptionWrapper"><%= video.description_html %></div>
-                </details>
-                <details id="timestamp-panel" hidden>
-                    <summary><%= I18n.translate(locale, "ui_timestamps") %></summary>
-                    <ol id="timestamp-list" class="timestamp-list"></ol>
-                </details>
-                <% if !video.captions.empty? %>
-                <details id="transcript-panel" class="js-only">
-                    <summary><%= I18n.translate(locale, "ui_transcript") %></summary>
-                    <div class="transcript-toolbar pure-form">
-                        <label for="transcript-language"><%= I18n.translate(locale, "ui_language") %><select id="transcript-language">
-                            <% video.captions.each do |caption| %><option value="<%= HTML.escape(caption.name) %>" data-auto="<%= caption.auto_generated %>"><%= HTML.escape(caption.name) %></option><% end %>
-                        </select></label>
-                        <label for="transcript-search"><%= I18n.translate(locale, "ui_search_transcript") %><input type="search" id="transcript-search"></label>
-                    </div>
-                    <p id="transcript-status" role="status"></p>
-                    <button type="button" id="transcript-retry" class="pure-button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
-                    <div id="transcript-lines" class="transcript-lines"></div>
-                </details>
-                <% end %>
-                <details class="video-details"><summary><%= I18n.translate(locale, "ui_video_details") %></summary><div class="metadata-grid">
-            <p id="genre"><%= I18n.translate(locale, "Genre: ") %>
-                <% if !video.genre_url %>
-                    <%= video.genre %>
-                <% else %>
-                    <a href="<%= video.genre_url %>"><%= video.genre %></a>
-                <% end %>
-            </p>
-            <% if video.license %>
-                <% if video.license.empty? %>
-                    <p id="license"><%= I18n.translate(locale, "License: ") %><%= I18n.translate(locale, "Standard YouTube license") %></p>
-                <% else %>
-                    <p id="license"><%= I18n.translate(locale, "License: ") %><%= video.license %></p>
-                <% end %>
-            <% end %>
-            <p id="family_friendly"><%= I18n.translate(locale, "Family friendly? ") %><%= I18n.translate_bool(locale, video.is_family_friendly) %></p>
-            <p id="wilson" style="display: none; visibility: hidden;"></p>
-            <p id="rating" style="display: none; visibility: hidden;"></p>
-            <p id="engagement" style="display: none; visibility: hidden;"></p>
-            <% if video.allowed_regions.size != REGIONS.size %>
-                <p id="allowed_regions">
-                    <% if video.allowed_regions.size < REGIONS.size // 2 %>
-                        <%= I18n.translate(locale, "Whitelisted regions: ") %><%= video.allowed_regions.join(", ") %>
-                    <% else %>
-                        <%= I18n.translate(locale, "Blacklisted regions: ") %><%= (REGIONS.to_a - video.allowed_regions).join(", ") %>
-                    <% end %>
-                </p>
-            <% end %>
-
-                </div><% if !video.music.empty? %>
-    <h3><%= I18n.translate(locale, "Music in this video") %></h3>
-    <% video.music.each do |music| %>
-        <div class="music-item">
-            <p><strong><%= HTML.escape(music.song) %></strong></p>
-            <p><%= HTML.escape(music.artist) %> · <%= HTML.escape(music.album) %></p>
-        </div>
-    <% end %>
-<% end %></details>
-            </div>
-        </section>
-            <div id="comments" class="comments">
-                <% if (params.comments <=> ["", ""]) == 0 %>
-                    <div id="comments-disabled-message" class="h-box v-box">
-                        <p><b><%= HTML.escape(I18n.translate(locale, "comments_invidious_disabled_text")) %></b></p>
-                    </div>
-                <% else %>
-                    <% if video.comments? %>
-                        <% if nojs %>
-                            <%= comment_html %>
-                        <% else %>
-                            <noscript>
-                                <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&nojs=1">
-                                    <%= I18n.translate(locale, "Hi! Looks like you have JavaScript turned off. Click here to view comments, keep in mind they may take a bit longer to load.") %>
-                                </a>
-                            </noscript>
-                        <% end %>
-                    <% else %>
-                        <% if !nojs %>
-                            <div id="comments-turned-off-on-video-message" class="h-box v-box">
-                                <p><b><%= HTML.escape(I18n.translate(locale, "comments_youtube_disabled_text")) %></b></p>
-                                <p><b><button data-comments="reddit" id="try-reddit-comments-link" class="simulated_a">
-                                    <%= HTML.escape(I18n.translate(locale, "comments_youtube_disabled_try_reddit")) %>
-                                </button></b></p>
-                            </div>
-                        <% end %>
-
-                        <noscript>
-                            <% if nojs %>
-                                <%= comment_html %>
-                            <% else %>
-                                <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&nojs=1">
-                                    <%= HTML.escape(I18n.translate(locale, "comments_youtube_disabled_try_reddit_no_js")) %>
-                                </a>
-                            <% end %>
-                        </noscript>
-                    <% end %>
-                <% end %>
-            </div>
-    </div>
-    <% if params.related_videos || plid %>
-    <aside class="watch-sidebar">
-        <% if plid %>
-        <section class="queue-panel panel" id="playlist-panel">
-            <header class="queue-heading">
-                <h2><%= I18n.translate(locale, "ui_playing_playlist") %></h2>
-                <a id="queue-title" href="/<%= plid.starts_with?("RD") ? "mix" : "playlist" %>?list=<%= plid %>"><%= I18n.translate(locale, "ui_open_playlist") %></a>
-                <p class="queue-context"><span id="queue-count"></span><span id="queue-current" data-dearrow-row><%= I18n.translate(locale, "ui_now_playing") %>: <%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, custom: !!native_clip) %></span></p>
-            </header>
-            <div id="queue-navigation" class="queue-navigation" hidden></div>
-            <p id="queue-status" class="queue-status" role="status"></p>
-            <button id="queue-retry" class="pure-button queue-retry" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
-            <button id="queue-toggle" class="queue-toggle pure-button js-only" type="button" aria-expanded="false" aria-controls="playlist"><%= I18n.translate(locale, "ui_show_queue") %></button>
-            <div id="playlist" class="queue-list"></div>
-        </section>
-        <% end %>
-        <% if params.related_videos %>
-        <section class="recommendations panel" aria-labelledby="recommendations-heading">
-            <h2 class="panel-heading" id="recommendations-heading"><%= I18n.translate(locale, "ui_recommended") %></h2>
-            <% if related_videos.empty? && env.get?("ai_filtered_recommendations") == true %><%= rendered "components/ai-filter-empty" %><% end %>
-            <% if !native_clip && !preview_clip && !plid && !related_videos.empty? %>
-            <div class="continue-control"><label for="continue"><%= I18n.translate(locale, "preferences_continue_label") %></label> <input id="continue" name="continue" type="checkbox" <%= "checked" if params.continue %>></div>
-            <% end %>
-            <% related_videos.each do |rv| %>
-                <% if rv["id"]? %>
-                <article class="recommendation" data-video-id="<%= rv["id"] %>" data-channel-id="<%= HTML.escape(rv["ucid"]? || "") %>">
-                    <div class="thumbnail video-thumbnail">
-                        <% rv_date = Invidious::ChannelSpoilers.publication(rv["published"]?) %>
-                        <% rv_thumbnail = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, rv["ucid"]? || "")
-                            Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale)
-                          elsif preferences.thin_mode
-                            %(<span class="thumbnail-placeholder video-placeholder"></span>)
-                          else
-                            %(<img loading="lazy" width="320" height="180" class="thumbnail" src="/vi/#{rv["id"]}/mqdefault.jpg" alt="">)
-                          end %>
-                        <a tabindex="-1" href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, rv["id"], rv["ucid"]? || "", rv_date, rv_thumbnail) %></a>
-                        <%= Invidious::Frontend::WatchedIndicator.render(rv["id"], rv["length_seconds"]?.try(&.to_i?), !!env.get?("user").try(&.as(User).watched.includes?(rv["id"]))) %>
-                        <% if (length = rv["length_seconds"]?.try &.to_i?) && length > 0 %><div class="bottom-right-overlay"><span class="length"><%= recode_length_seconds(length) %></span></div><% end %>
-                    </div>
-                    <div>
-                        <h3 data-dearrow-row><a href="/watch?v=<%= rv["id"] %>&listen=<%= params.listen %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, rv["id"], rv["ucid"]? || "", rv["title"], rv_date) %></a></h3>
-                        <p dir="auto"><% if !(rv["ucid"]? || "").empty? %><a href="/channel/<%= rv["ucid"] %>"><%= HTML.escape(rv["author"]? || "") %></a><% else %><%= HTML.escape(rv["author"]? || "") %><% end %><% if rv["author_verified"]? == "true" %> <i class="icon ion-md-checkmark-circle" title="<%= I18n.translate(locale, "ui_verified") %>"></i><% end %></p>
-                        <% if count = Invidious::Frontend::ViewCounts.get(env, rv["id"]) %><p dir="auto"><%= HTML.escape(count.text(locale)) %></p><% end %>
-                        <% if date = rv["published"]?.try { |value| Time.parse_rfc3339(value) rescue nil } %><p><%= I18n.translate(locale, "`x` ago", recode_date(date, locale)) %></p><% end %>
-                    </div>
-                        <% context_video_id = rv["id"]; context_channel_id = rv["ucid"]? || ""; context_channel_name = rv["author"]? || ""; endpoint_params = "?v=#{rv["id"]}" %>
-                        <%= rendered "components/video-context-buttons" %>
-                </article>
-                <% end %>
-            <% end %>
-        </section>
-        <% end %>
-    </aside>
-    <% end %>
+<%
+  avatar_ids = [video.ucid] + related_videos.compact_map { |entry| entry["ucid"]? }
+  supplied_avatars = {} of String => String
+  supplied_avatars[video.ucid] = video.author_thumbnail unless video.author_thumbnail.empty?
+  Invidious::Frontend::ChannelAvatars.prepare_ids(env, avatar_ids, supplied_avatars)
+  initial_tool = plid ? "queue" : video.live_chat_replay? ? "chat" : params.related_videos ? "next" : ""
+  has_tools = !!plid || video.live_chat_replay? || !video.captions.empty? || params.related_videos
+  clip_available = Invidious::Clips.source_error(video).nil?
+  clip_inline = !!user && clip_available
+  listen_params = env.params.query.dup
+  listen_params["listen"] = params.listen ? "0" : "1"
+  listen_url = "#{native_clip ? native_clip.permalink : "/watch"}?#{listen_params}"
+%>
+<div class="watch-grid <%= "watch-no-tools" unless has_tools %>" id="watch-layout">
+<div class="watch-player"><div id="player-container"><%= rendered "components/player" %></div></div>
+<div class="watch-primary">
+<%= rendered "overhaul/watch_heading" %>
+<div class="toolbar watch-enhancements-feedback" id="watch-enhancements-feedback" hidden><p id="watch-enhancements-status" role="status" aria-live="polite"></p><button class="button" id="watch-enhancements-retry" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button></div>
+<div class="creator-actions">
+<div class="creator"><a href="/channel/<%= HTML.escape(video.ucid) %>" class="creator"><%= Invidious::Frontend::ChannelAvatars.render(env, video.ucid, 40, video.author) %><strong dir="auto"><%= author %></strong><% if video.author_verified %><span aria-label="<%= I18n.translate(locale, "ui_verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></a><% sub_count_text = video.sub_count_text %><%= rendered "overhaul/subscribe" %></div>
+<div class="toolbar watch-actions" data-video-actions data-video-id="<%= HTML.escape(video.id) %>" aria-label="<%= I18n.translate(locale, "ui_more_tools") %>">
+<% if user %><a class="button" href="/feed/playlists?video_id=<%= HTML.escape(video.id) %>" data-video-action="playlist" aria-haspopup="dialog"><%= Invidious::Frontend::Icons.render("bookmark") %><%= I18n.translate(locale, "overhaul_save") %></a><% elsif CONFIG.login_enabled %><a class="button" href="/login?referer=<%= URI.encode_www_form("/feed/playlists?video_id=#{video.id}") %>"><%= Invidious::Frontend::Icons.render("bookmark") %><%= I18n.translate(locale, "overhaul_save") %></a><% end %>
+<button class="button js-only" id="share-video" type="button"><%= Invidious::Frontend::Icons.render("share-2") %><%= I18n.translate(locale, "ui_share") %></button>
+<% if clip_available %><a class="button" id="create-clip" href="/create_clip?videoId=<%= HTML.escape(video.id) %>"><%= Invidious::Frontend::Icons.render("scissors") %><span data-clip-label><%= I18n.translate(locale, "overhaul_clip") %></span></a><% end %>
+<details class="ui-menu video-context" data-ui-menu data-video-id="<%= HTML.escape(video.id) %>" data-channel-id="<%= HTML.escape(video.ucid) %>" data-channel-name="<%= HTML.escape(video.author) %>"><summary class="button"><%= Invidious::Frontend::Icons.render("ellipsis-vertical") %><%= I18n.translate(locale, "overhaul_more") %></summary><div class="menu-content video-context-actions">
+<a id="link-iv-listen" data-base-url="<%= HTML.escape(listen_url) %>" href="<%= HTML.escape(listen_url) %>"><%= Invidious::Frontend::Icons.render(params.listen ? "play" : "headphones") %><%= I18n.translate(locale, params.listen ? "Video mode" : "Audio mode") %></a>
+<button class="js-only" type="button" data-open-dialog="download-dialog"><%= Invidious::Frontend::Icons.render("download") %><%= I18n.translate(locale, "Download") %></button><noscript><a href="#download-fallback"><%= Invidious::Frontend::Icons.render("download") %><%= I18n.translate(locale, "Download") %></a></noscript>
+<hr><a href="/preferences/sponsorblock/channels?channel=<%= URI.encode_www_form(video.ucid) %>"><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "sb_channel_settings") %></a><a href="/preferences/spoilers/channels?channel=<%= URI.encode_www_form(video.ucid) %>"><%= Invidious::Frontend::Icons.render("eye-off") %><%= I18n.translate(locale, "spoilers_settings") %></a>
+<% if user %><% blocked = Invidious::Frontend::BlockedChannels.ids(env).includes?(video.ucid) %><button type="button" data-video-action="<%= blocked ? "unblock" : "block" %>"><%= Invidious::Frontend::Icons.render("shield") %><span data-action-label><%= I18n.translate(locale, blocked ? "Unblock channel" : "Block channel") %></span></button><% end %>
+<% unless native_clip %><% if user && Invidious::DeArrow::IdentityCipher.ready?(CONFIG.dearrow_identity_key) %><button class="js-only" type="button" id="dearrow-open" aria-haspopup="dialog"><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "dearrow_contribute") %></button><noscript><span class="menu-note"><%= I18n.translate(locale, "overhaul_dearrow_nojs") %></span><a href="/preferences/dearrow/identity"><%= Invidious::Frontend::Icons.render("lock") %><%= I18n.translate(locale, "overhaul_identity_heading") %></a></noscript><% else %><a href="/preferences?section=dearrow"><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "dearrow_contribute") %></a><% end %><% end %>
+<hr><%= rendered "overhaul/watch_destinations" %>
+</div></details></div></div>
+<p id="share-status" role="status"></p><div id="share-fallback" hidden><label for="share-url"><%= I18n.translate(locale, "ui_share") %></label><input id="share-url" type="url" readonly></div>
+<%= rendered "overhaul/watch_description" %>
+<%= rendered "overhaul/watch_comments" %>
 </div>
-<% unless Invidious::Clips.source_error(video) %><%= rendered "components/clip_dialog" %><% end %>
-<script src="/js/comments.js?v=<%= ASSET_COMMIT %>"></script>
-<script src="/js/watch.js?v=<%= ASSET_COMMIT %>"></script>
-<script src="/js/player-ui.js?v=<%= ASSET_COMMIT %>"></script>
-<% if video.live_chat_replay? %><script src="/js/live-chat.js?v=<%= ASSET_COMMIT %>"></script><% end %>
+<% if has_tools || clip_inline %><aside class="utility-panel" <%= "hidden" unless has_tools %> data-ui-tabs <%= "data-tab-empty" if initial_tool.empty? %> aria-label="<%= I18n.translate(locale, "overhaul_video_tools") %>">
+<div class="utility-tabs" <%= "hidden" unless has_tools %> role="tablist" aria-label="<%= I18n.translate(locale, "overhaul_video_tools") %>">
+<% if plid %><button type="button" role="tab" id="tab-queue" aria-controls="tool-queue" aria-selected="<%= initial_tool == "queue" %>" tabindex="<%= initial_tool == "queue" ? 0 : -1 %>"><%= I18n.translate(locale, "overhaul_queue") %></button><% end %>
+<% if video.live_chat_replay? %><button type="button" role="tab" id="tab-chat" aria-controls="tool-chat" aria-selected="<%= initial_tool == "chat" %>" tabindex="<%= initial_tool == "chat" ? 0 : -1 %>"><%= I18n.translate(locale, "ui_chat_replay") %></button><% end %>
+<% unless video.captions.empty? %><button type="button" role="tab" id="tab-transcript" aria-controls="tool-transcript" aria-selected="false" tabindex="<%= initial_tool.empty? ? 0 : -1 %>"><%= I18n.translate(locale, "ui_transcript") %></button><% end %>
+<% if params.related_videos %><button type="button" role="tab" id="tab-next" aria-controls="tool-next" aria-selected="<%= initial_tool == "next" %>" tabindex="<%= initial_tool == "next" ? 0 : -1 %>"><%= I18n.translate(locale, "overhaul_up_next") %></button><% end %>
+</div>
+<% if initial_tool.empty? %><p class="utility-body muted" data-tab-placeholder><%= I18n.translate(locale, "overhaul_tool_choose") %></p><% end %>
+<% if plid %><div role="tabpanel" id="tool-queue" aria-labelledby="tab-queue" class="utility-body" <%= "hidden" unless initial_tool == "queue" %>><%= rendered "overhaul/watch_queue" %></div><% end %>
+<% if video.live_chat_replay? %><div role="tabpanel" id="tool-chat" aria-labelledby="tab-chat" class="utility-body" <%= "hidden" unless initial_tool == "chat" %>><%= rendered "overhaul/watch_chat" %><noscript><p><%= I18n.translate(locale, "ui_chat_requires_js") %></p></noscript></div><% end %>
+<% unless video.captions.empty? %><div role="tabpanel" id="tool-transcript" aria-labelledby="tab-transcript" class="utility-body" hidden><%= rendered "overhaul/watch_transcript" %></div><% end %>
+<% if params.related_videos %><div role="tabpanel" id="tool-next" aria-labelledby="tab-next" class="utility-body" <%= "hidden" unless initial_tool == "next" %>><section class="recommendations" aria-labelledby="recommendations-heading"><h2 class="sr-only" id="recommendations-heading"><%= I18n.translate(locale, "ui_recommended") %></h2>
+<% if !native_clip && !preview_clip && !plid %><div class="continue-control" <%= "hidden" if related_videos.empty? %>><label><input id="continue" name="continue" type="checkbox" <%= "checked" if params.continue %>><%= I18n.translate(locale, "preferences_continue_label") %></label></div><% end %>
+<div id="watch-recommendation-items"><%= rendered "overhaul/watch_recommendations" %></div>
+</section></div><% end %><% if clip_inline %><%= rendered "overhaul/watch_clip_editor" %><% end %></aside><% end %>
+</div>
+<% unless native_clip %><% env.set "dearrow_hide_entry", true %><%= rendered "components/dearrow_contributions" %><% end %>
+<dialog id="download-dialog" aria-labelledby="download-heading"><header class="dialog-heading"><h2 id="download-heading"><%= I18n.translate(locale, "Download") %></h2><form method="dialog"><button class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>"><%= Invidious::Frontend::Icons.render("x") %></button></form></header></dialog>
+<details id="download-fallback"><summary><%= I18n.translate(locale, "Download") %></summary><div id="download-options"><%= Invidious::Frontend::WatchPage.download_widget(locale, video, video_assets, spoiler_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, spoiler_date.nil?) : original_title) %></div></details>
+<%= rendered "overhaul/watch_clip_config" %>
+<script src="/js/comment-threads.js?v=<%= ASSET_COMMIT %>"></script><script src="/js/watch.js?v=<%= ASSET_COMMIT %>"></script><script src="/js/player-ui.js?v=<%= ASSET_COMMIT %>"></script><script src="/js/player-dock.js?v=<%= ASSET_COMMIT %>"></script>
+<% if video.live_chat_replay? %><script src="/js/chat-preferences.js?v=<%= ASSET_COMMIT %>"></script><script src="/js/chat-timing.js?v=<%= ASSET_COMMIT %>"></script><script src="/js/live-chat.js?v=<%= ASSET_COMMIT %>"></script><% end %>

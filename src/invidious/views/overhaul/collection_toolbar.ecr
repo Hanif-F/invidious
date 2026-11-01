@@ -1,0 +1,21 @@
+<div class="collection-toolbar" data-collection-toolbar hidden role="group" aria-label="<%= I18n.translate(locale, "ux_select") %>">
+<button type="button" class="button" data-select-toggle aria-pressed="false"><%= Invidious::Frontend::Icons.render("check") %><%= I18n.translate(locale, "ux_select") %></button>
+<div class="selection-actions" data-selection-actions hidden>
+<span role="status" data-selection-count></span>
+<button type="button" class="button" data-select-all><%= I18n.translate(locale, "ux_select_all") %></button>
+<button type="button" class="button" data-select-clear><%= I18n.translate(locale, "ux_clear_selection") %></button>
+<label class="sr-only" for="batch-operation"><%= I18n.translate(locale, "ux_operation") %></label>
+<select id="batch-operation" data-batch-operation>
+<% if collection_kind == "manager" %><option value="unsubscribe"><%= I18n.translate(locale, "ux_unsubscribe") %></option><% else %>
+<option value="playlist"><%= I18n.translate(locale, "ux_add_playlist") %></option>
+<% if !env.get?("add_playlist_items") && env.get?("user").try(&.as(User).preferences.watch_history) %><option value="watched"><%= I18n.translate(locale, "ux_watched") %></option><option value="unwatched"><%= I18n.translate(locale, "ux_unwatched") %></option><% end %>
+<% if env.get?("remove_playlist_items") || (collection_kind == "history" && env.get?("user").try(&.as(User).preferences.watch_history)) %><option value="remove"><%= I18n.translate(locale, "ux_remove") %></option><% end %>
+<% end %>
+</select>
+<% unless collection_kind == "manager" || env.get?("add_playlist_items") %><select data-batch-playlist aria-label="<%= I18n.translate(locale, "ux_add_playlist") %>"><option value=""><%= I18n.translate(locale, "ux_loading") %></option></select><% end %>
+<button type="button" class="button button-primary" data-batch-apply><%= I18n.translate(locale, "ux_apply") %></button>
+</div>
+</div>
+<p role="status" class="collection-status" data-collection-status></p>
+<p class="status-panel" data-collection-empty hidden><%= I18n.translate(locale, "search_message_no_results") %></p>
+<dialog data-batch-confirm aria-labelledby="batch-confirm-heading"><h2 id="batch-confirm-heading"><%= I18n.translate(locale, "overhaul_confirm_changes") %></h2><p data-confirm-description></p><form method="dialog" class="toolbar"><button class="button" value="cancel" autofocus><%= I18n.translate(locale, "generic_button_cancel") %></button><button class="button button-danger" value="confirm"><%= I18n.translate(locale, "overhaul_confirm") %></button></form></dialog>

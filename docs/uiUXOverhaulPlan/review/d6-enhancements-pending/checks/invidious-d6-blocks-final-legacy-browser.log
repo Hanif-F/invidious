@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: chromium: block removes discovery cards only after success and Undo restores them
+ok 1 - chromium: block removes discovery cards only after success and Undo restores them
+  ---
+  duration_ms: 892.9534
+  type: 'test'
+  ...
+# Subtest: chromium: block notice disappears after five seconds and a new status resets the timer
+ok 2 - chromium: block notice disappears after five seconds and a new status resets the timer
+  ---
+  duration_ms: 562.094012
+  type: 'test'
+  ...
+# Subtest: chromium: blocking the next recommendation updates autoplay and Undo restores it
+ok 3 - chromium: blocking the next recommendation updates autoplay and Undo restores it
+  ---
+  duration_ms: 393.056595
+  type: 'test'
+  ...
+# Subtest: firefox: block removes discovery cards only after success and Undo restores them
+ok 4 - firefox: block removes discovery cards only after success and Undo restores them
+  ---
+  duration_ms: 1057.290896
+  type: 'test'
+  ...
+# Subtest: firefox: block notice disappears after five seconds and a new status resets the timer
+ok 5 - firefox: block notice disappears after five seconds and a new status resets the timer
+  ---
+  duration_ms: 1114.632306
+  type: 'test'
+  ...
+# Subtest: firefox: blocking the next recommendation updates autoplay and Undo restores it
+ok 6 - firefox: blocking the next recommendation updates autoplay and Undo restores it
+  ---
+  duration_ms: 720.811507
+  type: 'test'
+  ...
+# Subtest: chromium: blocking leaves subscribed and explicitly included search results visible
+ok 7 - chromium: blocking leaves subscribed and explicitly included search results visible
+  ---
+  duration_ms: 718.334617
+  type: 'test'
+  ...
+# Subtest: chromium: blocking the only remaining recommendation disables autoplay
+ok 8 - chromium: blocking the only remaining recommendation disables autoplay
+  ---
+  duration_ms: 319.551179
+  type: 'test'
+  ...
+# Subtest: firefox: blocking leaves subscribed and explicitly included search results visible
+ok 9 - firefox: blocking leaves subscribed and explicitly included search results visible
+  ---
+  duration_ms: 1380.724782
+  type: 'test'
+  ...
+# Subtest: firefox: blocking the only remaining recommendation disables autoplay
+ok 10 - firefox: blocking the only remaining recommendation disables autoplay
+  ---
+  duration_ms: 612.256616
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8665.324238

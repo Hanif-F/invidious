@@ -2,7 +2,7 @@
 
 [Documentation index](README.md)
 
-SponsorBlock provides community timestamps for supported watch/embed players, excluding live streams. It defaults off. Enable it in Preferences; disabling the master preserves category choices.
+SponsorBlock provides community timestamps for supported watch/embed players, excluding live streams. It defaults off. Enable it in Settings → SponsorBlock; disabling the master preserves category choices.
 
 | Mode | Behavior |
 | --- | --- |
@@ -17,7 +17,7 @@ Auto/manual modes also show colored ranges. Dismissing a manual prompt hides it 
 
 The eight keys are `sponsor`, `selfpromo`, `interaction`, `intro`, `outro`, `preview` (Recap), `music_offtopic`, and `filler`. Missing/invalid mode entries fall back to manual. Preferences serialize the master, mode/color maps and per-channel overrides; instance defaults support the global maps.
 
-`/preferences/sponsorblock/channels` manages account channel overrides. Overrides identify canonical channel IDs, retain display names, and inherit unset global choices. Per-channel master/modes can change effective behavior without duplicating every setting. Native sparse-patch null/removal and merge rules are in [mobile API](mobile-api.md#native-sponsorblock-settings).
+Settings → SponsorBlock channels (`/preferences/sponsorblock/channels`) manages account channel overrides; the same destination supports profile-local guest rules. Overrides identify canonical channel IDs, retain display names, and inherit unset global choices. Per-channel master/modes can change effective behavior without duplicating every setting. Native sparse-patch null/removal and merge rules are in [mobile API](mobile-api.md#native-sponsorblock-settings).
 
 Watch-page/browser controls can maintain current-profile temporary/local changes. They do not automatically mean that account defaults were saved. On sign-in/switch, storage follows the active profile and avoids reusing another account's choices.
 

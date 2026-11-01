@@ -1,0 +1,2 @@
+<% if clip_available %><span id="clip-load-status" class="sr-only" role="status"></span>
+<script id="clip-config" type="application/json"><%= {signed_in: !!user, script: "/js/clip-editor.js?v=#{ASSET_COMMIT}", session: "/js/clip-session.js?v=#{ASSET_COMMIT}", style: "/css/clips.css?v=#{ASSET_COMMIT}", loading: I18n.translate(locale, "ui_loading"), error: I18n.translate(locale, "overhaul_clip_rejected")}.to_json.gsub("<", "\\u003c") %></script><script src="/js/clip-loader.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>

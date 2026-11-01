@@ -14,14 +14,14 @@ UPDATE bot_protection_settings SET enabled = false, revision = revision + 1 WHER
 Set deployment configuration (or the corresponding `INVIDIOUS_…` variables):
 
 ```yaml
-admins: ["wingress"] # existing usernames, compared case-insensitively
+admins: ["administrator"] # existing usernames, compared case-insensitively
 https_only: true
-domain: invidious.wingress.net
+domain: video.example.com
 external_port: 443
 turnstile_site_key: "YOUR_MANAGED_WIDGET_PUBLIC_KEY"
 turnstile_secret_key: "YOUR_SERVER_SECRET"
 turnstile_signing_key: "PERSISTENT_RANDOM_VALUE_AT_LEAST_32_CHARACTERS"
-turnstile_allowed_hostnames: ["invidious.wingress.net"]
+turnstile_allowed_hostnames: ["video.example.com"]
 turnstile_companion_private: true
 ```
 
@@ -34,14 +34,36 @@ configuration and requires the explicit private-routing attestation; operators
 must verify firewall/listener/proxy configuration themselves. Cloudflare remains
 DNS-only. There is no edge preclearance cookie or broad request rate limiter.
 
-Sign in as an existing administrator and open Preferences → Administration → Bot
-protection, or `/admin/bot-protection` directly. Changes require a browser session
+Sign in as an existing administrator and open the account menu → Instance settings
+→ Bot protection, or `/admin/bot-protection` directly. Changes require a browser session
 and scoped CSRF token. The direct panel, sign-in, registration and logout remain
 accessible during provider outages. Administrator identity does not bypass the
 content gate. Only configured usernames receive privileges; this feature never
 creates an `admin` account. The existing registration CAPTCHA is unchanged.
 
-The gate precedes authentication/content filters and all upstream handlers.
+The standalone policy form works without JavaScript and retains checkbox/duration
+choices after rejected CSRF or invalid input. A rejection does not save policy.
+Signed-in administrators and wrong-account denial pages offer a CSRF-protected
+sign-out form. API-only builds use a minimal recovery login and a valid admin
+destination, without unavailable browsing/signup links.
+
+Challenge feedback is localized. Failure or cached-page return waits for explicit
+Retry and a fresh challenge; duplicate callbacks and late results cannot issue a
+second pass. Native completion keeps the existing bridge fields and does not put
+the pass in the visible page, URL or browser storage. An iframe cannot complete
+the top-level cookie flow: it offers an explicit new-window verification/watch
+action. Mid-play expiry pauses/disposes embedded playback and retires its existing
+enhancement consumers before showing recovery.
+
+The same page owner distinguishes the required-login marker from verification
+403 responses. Private watch/embed media failures check HEAD `/api/v1/stats`
+before existing verification discovery; this reads local state without a provider
+or video-metadata request. A failed network check does not establish expired
+access. Departure invalidates outstanding checks and response callbacks; a profile
+change or disposal also retires the wrappers. Late fetch/XHR denials from before
+a cached return cannot interrupt the returned page.
+
+Required-login middleware runs first, then bot protection, then content/upstream handlers. These gates are independent: a verification pass does not authenticate an account, and an administrator session does not bypass verification for content.
 Dynamic images are protected too; only actual local static files are exempt.
 Unknown dynamic routes default to protected. Other exemptions are legal pages,
 `/api/v1/stats` health, verification/bootstrap endpoints and subscription webhooks

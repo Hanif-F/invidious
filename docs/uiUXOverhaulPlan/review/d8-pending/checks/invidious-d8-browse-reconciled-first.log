@@ -1,0 +1,138 @@
+TAP version 13
+# Subtest: chromium: AI channel filter controls, status and empty results work without JavaScript
+not ok 1 - chromium: AI channel filter controls, status and empty results work without JavaScript
+  ---
+  duration_ms: 10576.964601
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:867:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.isChecked: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-settings-panel]').getByRole('checkbox', { name: 'Enable AI Channel Filter', exact: true })[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:875:43)
+  ...
+# Subtest: chromium: AI channel filter global Off restores cards, recommendations and queue thumbnails
+ok 2 - chromium: AI channel filter global Off restores cards, recommendations and queue thumbnails
+  ---
+  duration_ms: 1150.288201
+  type: 'test'
+  ...
+# Subtest: chromium: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral
+ok 3 - chromium: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral
+  ---
+  duration_ms: 862.059362
+  type: 'test'
+  ...
+# Subtest: chromium: AI channel filter other pages only replace thumbnails and retain every card
+ok 4 - chromium: AI channel filter other pages only replace thumbnails and retain every card
+  ---
+  duration_ms: 880.217527
+  type: 'test'
+  ...
+# Subtest: chromium: AI channel filter watch queues preserve duplicate occurrences and advancement
+ok 5 - chromium: AI channel filter watch queues preserve duplicate occurrences and advancement
+  ---
+  duration_ms: 612.732658
+  type: 'test'
+  ...
+# Subtest: chromium: history search by title or channel
+ok 6 - chromium: history search by title or channel
+  ---
+  duration_ms: 236.617503
+  type: 'test'
+  ...
+# Subtest: chromium: cached history titles and compact desktop playlist library
+not ok 7 - chromium: cached history titles and compact desktop playlist library
+  ---
+  duration_ms: 10282.827841
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1395:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.waitFor: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('#ui-notice .ui-retry') to be visible[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1411:60)
+  ...
+# Subtest: firefox: AI channel filter controls, status and empty results work without JavaScript
+not ok 8 - firefox: AI channel filter controls, status and empty results work without JavaScript
+  ---
+  duration_ms: 10923.763981
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:867:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.isChecked: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-settings-panel]').getByRole('checkbox', { name: 'Enable AI Channel Filter', exact: true })[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:875:43)
+  ...
+# Subtest: firefox: AI channel filter global Off restores cards, recommendations and queue thumbnails
+ok 9 - firefox: AI channel filter global Off restores cards, recommendations and queue thumbnails
+  ---
+  duration_ms: 3387.924864
+  type: 'test'
+  ...
+# Subtest: firefox: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral
+ok 10 - firefox: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral
+  ---
+  duration_ms: 2425.606911
+  type: 'test'
+  ...
+# Subtest: firefox: AI channel filter other pages only replace thumbnails and retain every card
+ok 11 - firefox: AI channel filter other pages only replace thumbnails and retain every card
+  ---
+  duration_ms: 3391.921885
+  type: 'test'
+  ...
+# Subtest: firefox: AI channel filter watch queues preserve duplicate occurrences and advancement
+ok 12 - firefox: AI channel filter watch queues preserve duplicate occurrences and advancement
+  ---
+  duration_ms: 2292.22828
+  type: 'test'
+  ...
+# Subtest: firefox: history search by title or channel
+ok 13 - firefox: history search by title or channel
+  ---
+  duration_ms: 645.866726
+  type: 'test'
+  ...
+# Subtest: firefox: cached history titles and compact desktop playlist library
+not ok 14 - firefox: cached history titles and compact desktop playlist library
+  ---
+  duration_ms: 10471.032499
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1395:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.waitFor: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('#ui-notice .ui-retry') to be visible[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:1411:60)
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 10
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 59048.061692

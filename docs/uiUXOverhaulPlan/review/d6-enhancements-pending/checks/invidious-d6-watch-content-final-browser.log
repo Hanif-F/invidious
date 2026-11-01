@@ -1,0 +1,72 @@
+TAP version 13
+# Subtest: chromium: D6 watch content updates filters, original titles and advancement on the same media
+not ok 1 - chromium: D6 watch content updates filters, original titles and advancement on the same media
+  ---
+  duration_ms: 11110.103818
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:2126:5'
+  failureType: 'testCodeFailure'
+  error: 'page.waitForFunction: Timeout 10000ms exceeded.'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:2146:113)
+  ...
+# Subtest: chromium: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation
+ok 2 - chromium: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation
+  ---
+  duration_ms: 783.808018
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads
+ok 3 - chromium: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads
+  ---
+  duration_ms: 568.013248
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch content rejects late reads after owner changes, cached returns and profile disposal
+ok 4 - chromium: D6 watch content rejects late reads after owner changes, cached returns and profile disposal
+  ---
+  duration_ms: 1255.527071
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content updates filters, original titles and advancement on the same media
+not ok 5 - firefox: D6 watch content updates filters, original titles and advancement on the same media
+  ---
+  duration_ms: 11237.146429
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:2126:5'
+  failureType: 'testCodeFailure'
+  error: 'page.waitForFunction: Timeout 10000ms exceeded.'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:2146:113)
+  ...
+# Subtest: firefox: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation
+ok 6 - firefox: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation
+  ---
+  duration_ms: 1160.500734
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads
+ok 7 - firefox: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads
+  ---
+  duration_ms: 770.967714
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content rejects late reads after owner changes, cached returns and profile disposal
+ok 8 - firefox: D6 watch content rejects late reads after owner changes, cached returns and profile disposal
+  ---
+  duration_ms: 2023.345694
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 6
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 29804.157383

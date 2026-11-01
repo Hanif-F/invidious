@@ -1,0 +1,14 @@
+<div class="settings-matrix-scroll"><table class="settings-matrix sponsorblock-defaults">
+    <caption class="sr-only"><%= I18n.translate(locale, "SponsorBlock") %></caption>
+    <thead><tr><th scope="col"><%= I18n.translate(locale, "overhaul_segment_category") %></th><th scope="col"><%= I18n.translate(locale, "settings_segment_modes") %></th><th scope="col"><%= I18n.translate(locale, "overhaul_segment_color") %></th></tr></thead>
+    <tbody><% Invidious::SponsorBlock::CATEGORIES.each_key do |category| %>
+    <% mode_name = "sponsorblock_mode_#{category}" %><% color_name = "sponsorblock_color_#{category}" %><% mode_value = settings_ui.map_value(env, "sponsorblock_modes", category) %><% color_value = settings_ui.map_value(env, "sponsorblock_colors", category) %>
+    <tr><th scope="row"><%= I18n.translate(locale, "sb_category_#{category}") %></th><td>
+        <label class="sr-only" for="<%= mode_name %>"><%= I18n.translate(locale, "sb_category_#{category}") %> · <%= I18n.translate(locale, "settings_segment_modes") %></label><select id="<%= mode_name %>" name="<%= mode_name %>">
+            <% unless {"auto", "manual", "marker", "disabled"}.includes?(mode_value) %><option value="<%= HTML.escape(mode_value) %>" selected><%= HTML.escape(mode_value) %></option><% end %>
+            <% {"auto", "manual", "marker", "disabled"}.each do |choice| %><option value="<%= choice %>" <%= "selected" if choice == mode_value %>><%= I18n.translate(locale, "sb_mode_#{choice}") %></option><% end %>
+        </select></td><td>
+        <label class="sr-only" for="<%= color_name %>"><%= I18n.translate(locale, "sb_category_#{category}") %> · <%= I18n.translate(locale, "settings_segment_colors") %></label><input id="<%= color_name %>" name="<%= color_name %>" type="<%= color_value.matches?(/\A#[0-9a-fA-F]{6}\z/) ? "color" : "text" %>" value="<%= HTML.escape(color_value) %>">
+    </td></tr><% end %></tbody>
+</table></div>
+<div class="toolbar"><a class="button" href="/preferences/sponsorblock/channels"><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "sb_channels") %></a></div>

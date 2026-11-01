@@ -3,7 +3,9 @@ def check_qol_preferences
   original = Invidious::Frontend::Misc.browse_fingerprint(identity)
   identity.dark_mode = "light"
   identity.speed = 1.5
+  history_identity = Invidious::Frontend::Misc.browse_fingerprint(identity, history: true)
   identity.timezone = "Asia/Jakarta"
+  raise "History timezone retained stale groups" if Invidious::Frontend::Misc.browse_fingerprint(identity, history: true) == history_identity
   raise "Automatic/player appearance changes invalidate browsing" unless Invidious::Frontend::Misc.browse_fingerprint(identity) == original
   identity.show_member_videos = !identity.show_member_videos
   raise "Visibility changes preserve stale browsing" if Invidious::Frontend::Misc.browse_fingerprint(identity) == original
@@ -18,9 +20,9 @@ def check_qol_preferences
     raise "Private preferences cached" unless env.response.headers["Cache-Control"] == "private, no-store"
     if account
       raw = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", env.get("user").as(User).email, as: String)
-      raise "Account persistence differed" unless JSON.parse(raw) == result["preferences"]
+      raise "Account persistence differed" unless JSON.parse(Preferences.from_json(raw).to_json) == result["preferences"]
     else
-      raise "Guest persistence differed" unless JSON.parse(URI.decode_www_form(env.response.cookies["PREFS"].value)) == result["preferences"]
+      raise "Guest persistence differed" unless JSON.parse(Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).to_json) == result["preferences"]
     end
   end
   rejected = preferences_post_env("dark_mode=light")

@@ -1,0 +1,62 @@
+{
+  "stage": "D2",
+  "recordedAt": "2026-10-26T08:57:15.839145+00:00",
+  "head": "0f8703fd66e58be7c2001cabe55eddc091aabd04",
+  "workingTree": true,
+  "checks": {
+    "preferenceSpecs": {
+      "examples": 10,
+      "failures": 0
+    },
+    "browserStorage": {
+      "tests": 22,
+      "failures": 0,
+      "command": "node tests/frontend/browser-storage.test.cjs"
+    },
+    "desktopBrowsers": {
+      "tests": 25,
+      "failures": 0,
+      "engines": [
+        "chromium",
+        "firefox"
+      ],
+      "command": "node --test tests/frontend/overhaul.test.cjs tests/frontend/required-login-admin.test.cjs"
+    },
+    "postgresSettings": "--settings-only passed on guarded empty local invidious_accounts_test; 25 migrations; HTTP/category/native/CAS/row-lock/admin YAML assertions",
+    "requiredLogin": "--required-login-only passed with isolated admin persistence and recovery checks",
+    "fixtures": "full deterministic fixture renderer and its functional regressions passed",
+    "apiOnly": "crystal build src/invidious.cr --no-codegen -Dapi_only -Dskip_videojs_download passed; final full linking/build gate remains D8"
+  },
+  "sha256": {
+    "src/invidious/web_preferences.cr": "4d5f918e1cacf3705229b60fed9b4c071b30cdde8cb62324e4142b5a5a51d133",
+    "src/invidious/admin_settings.cr": "3a30498308b2a7acd1c6b08534a6720d564a285f0f03212b84c31fd69a6b3570",
+    "src/invidious/database/users.cr": "65012bace0f0722482cd5ec961dbdc7bfe6f16ff128d0e267b2171781358bb2a",
+    "src/invidious/user/cookies.cr": "c47c191bcd9e3b226d04d8baf210883525c40cf831b79d14f97929c2b8ade545",
+    "src/invidious/frontend/settings.cr": "17887cfffb3dc1752fe18df4f87d43ead7d33c341a391a2464ee01b05b0bb692",
+    "src/invidious/routes/preferences.cr": "0db5157539c003e6559dcbf1cd7505b2f84773311bd9737a92684b49aa852e92",
+    "src/invidious/routes/admin_settings.cr": "731ccd402f4b1eb9234ca69e5258005f30b8244fb00326d34f11874c0188103a",
+    "src/invidious/views/admin/settings.ecr": "633073c60e2542473de609e6b34a5b8bf753235c3c29b61fc1181127e2855a3a",
+    "src/invidious/views/admin/standalone_shell.ecr": "a680087fdd009c2039d9d1685f64fb5461d06b8a3998999527e0a087690676de",
+    "src/invidious/views/overhaul/settings.ecr": "9a9f302bbae584f6b1b74f626589532e4f935441a77f421f8bd5ffa4252c2374",
+    "assets/js/settings.js": "36a985c0a823b7043a23aeaa866f8c57a82cc60ca7313c2adbb554ec7f347752",
+    "assets/js/overhaul.js": "ffbc2979a8956dcda9991c6eb3e208ebc89b2fbf56b2507aeaf3ee3001d4af68",
+    "assets/js/ui.js": "aeaf24f82292762cbb61ebe46b0e6bd4d6415378cb157a813d8becb82eb3520f",
+    "assets/js/browser-storage.js": "918dde3883a80707a0bee27d352cd4b5b6cea460fcd356b9226c4d4b241a9454",
+    "assets/css/foundation.css": "efc4f4d794b0ba877343b8d8b61f1501b65503bc06a257cbb98ed52f3b74ea35",
+    "tests/database/settings_checks.cr": "c98e9a3ed411045a2f4d08c869112a9b658b83c2f69edcd9471c5a34a9c1b227",
+    "tests/database/required_login_checks.cr": "76ef315a0bfff6603d7fbb1ff53f2c42731f48f3f1ba03e6b88dda00f9747639",
+    "tests/frontend/overhaul.test.cjs": "75f160ddaf77da4a6c43220c8b988cf442122d763ef02ccc6c4259a2cb491aa2",
+    "tests/frontend/required-login-admin.test.cjs": "c783134c56441e92b00f77402433d68875105ec22a79efbacf19d2623d8e7535"
+  },
+  "screenshots": {
+    "d2-settings-playback-1440.png": "02b629acf519e4a70ecfe9e114c75daba88f9260063ac7bb83031c23c4c7ba8a",
+    "d2-settings-ai-filter-1440.png": "fb61370f380023952efdbee075442156bb14ebf0bbd6c4c5646fa5fb2af2a906",
+    "d2-admin-settings-1440.png": "dff6cba9514de0198d7109aa1669794cda1ecb44943cbdfd604706cb238ed528"
+  },
+  "limits": [
+    "Local synthetic browser/media evidence, not deployed upstream/native-device playback.",
+    "Desktop website scope; mobile website work is deferred.",
+    "Later dedicated enhancement forms and full runtime migration remain D3\u2013D9.",
+    "D1 approved originals were retained unchanged."
+  ]
+}

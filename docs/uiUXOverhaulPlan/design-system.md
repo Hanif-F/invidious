@@ -2,7 +2,7 @@
 
 [Master plan](README.md) · [Coverage](coverage.md) · [Tasks](tasks.md) · [Verification](verification.md)
 
-This is the target desktop contract. Until a task is verified, it does not describe shipped behavior. Dimensions below are implementation defaults; adjust only when representative-screen evidence warrants it, and record the adjustment in [progress](progress.md).
+This desktop contract is implemented in the locally accepted overhaul; [final requirements](d9-requirement-audit.md) map it to evidence. It does not claim remote activation. Dimensions below are implementation defaults; adjust only when representative-screen evidence warrants it, and record the adjustment in [progress](progress.md).
 
 ## Foundation tokens
 
@@ -87,6 +87,8 @@ Player bar retains common controls. Settings uses one hierarchical menu with ico
 
 ## Settings category ownership
 
+The implementation’s exhaustive [field ownership and persistence inventory](settings-ownership.md) records editable, dedicated and preserved-only fields and current validation evidence.
+
 Each category is a manifest of owned form fields. The first implementation must enumerate every preference field against this table and record preserved-only fields; no category save may rebuild another category.
 
 | Category ID | Owns browser-editable settings |
@@ -97,7 +99,7 @@ Each category is a manifest of owned form fields. The first implementation must 
 | playback | preload, autoplay, continue, continue_autoplay, video_loop, listen, local, quality, quality_dash, video_codec, preferred_audio, speed, seek_seconds, vr_mode, annotations, annotations_subscribed |
 | captions-comments | captions, comments, related_videos, extend_desc |
 | library | watch_history, save_player_pos, max_results, sort, latest_only, unseen_only, notifications_only, default_playlist |
-| chat | Existing chat preference endpoint for timestamps/font/width/filters; hide-user-IDs remains browser-local; offsets remain per video |
+| chat | Existing account endpoint for timestamps/filters; browser font/width/hide-user-IDs are profile-local and preserve raw native appearance fields; offsets remain per video |
 | sponsorblock | sponsorblock_enabled, modes and colors; channel override editor retains its dedicated endpoint |
 | dearrow | dearrow_enabled, dearrow_show_original; identity and contributions retain their dedicated forms/endpoints |
 | ai-filter | ai_filter_enabled and eight canonical page/list action fields; legacy converter compatibility preserved |

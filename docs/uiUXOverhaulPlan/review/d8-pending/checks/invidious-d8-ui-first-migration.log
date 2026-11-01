@@ -1,0 +1,103 @@
+TAP version 13
+# Subtest: chromium: view counts stay visible across cards, history, clips and dynamic queues
+not ok 1 - chromium: view counts stay visible across cards, history, clips and dynamic queues
+  ---
+  duration_ms: 608.470527
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:19:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    5 !== 3
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 3
+  actual: 5
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:23:20)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: firefox: view counts stay visible across cards, history, clips and dynamic queues
+not ok 2 - firefox: view counts stay visible across cards, history, clips and dynamic queues
+  ---
+  duration_ms: 802.725876
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:19:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    5 !== 3
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 3
+  actual: 5
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:23:20)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: chromium: original titles remain literal in watch, embed and custom clips
+ok 3 - chromium: original titles remain literal in watch, embed and custom clips
+  ---
+  duration_ms: 389.163521
+  type: 'test'
+  ...
+# Subtest: chromium: original-title setting defaults on and submits explicit on and off
+ok 4 - chromium: original-title setting defaults on and submits explicit on and off
+  ---
+  duration_ms: 429.618634
+  type: 'test'
+  ...
+# Subtest: firefox: original titles remain literal in watch, embed and custom clips
+ok 5 - firefox: original titles remain literal in watch, embed and custom clips
+  ---
+  duration_ms: 1012.538943
+  type: 'test'
+  ...
+# Subtest: firefox: original-title setting defaults on and submits explicit on and off
+ok 6 - firefox: original-title setting defaults on and submits explicit on and off
+  ---
+  duration_ms: 822.498448
+  type: 'test'
+  ...
+# Subtest: chromium: native clip cards, tab, attribution and no-JavaScript library
+ok 7 - chromium: native clip cards, tab, attribution and no-JavaScript library
+  ---
+  duration_ms: 335.15073
+  type: 'test'
+  ...
+# Overhaul comparable assets: {"before":{"files":69,"bytes":1007903,"gzipBytes":285854},"after":{"files":66,"bytes":734994,"gzipBytes":200724},"delta":{"bytes":-272909,"gzipBytes":-85130},"iconsAndFonts":{"files":4,"bytes":15833,"gzipBytes":6160},"vendorPlayer":{"files":27,"bytes":3609882,"gzipBytes":789725}}
+# Subtest: firefox: native clip cards, tab, attribution and no-JavaScript library
+ok 8 - firefox: native clip cards, tab, attribution and no-JavaScript library
+  ---
+  duration_ms: 1103.888564
+  type: 'test'
+  ...
+# Subtest: library navigation survives custom feed settings without channel management links
+ok 9 - library navigation survives custom feed settings without channel management links
+  ---
+  duration_ms: 0.905561
+  type: 'test'
+  ...
+# Subtest: UI asset inventory compares the overhaul baseline and separately reports icons, fonts and vendor player assets
+ok 10 - UI asset inventory compares the overhaul baseline and separately reports icons, fonts and vendor player assets
+  ---
+  duration_ms: 121.058418
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 8
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6713.687917

@@ -1,0 +1,25 @@
+TAP version 13
+# Subtest: standalone browser challenge uses scoped action, retries outages and returns to video position
+ok 1 - standalone browser challenge uses scoped action, retries outages and returns to video position
+  ---
+  duration_ms: 248.534606
+  type: 'test'
+  ...
+# Subtest: native hosted challenge publishes credentials only through the documented event
+ok 2 - native hosted challenge publishes credentials only through the documented event
+  ---
+  duration_ms: 202.399747
+  type: 'test'
+  ...
+# Subtest: a denied media request preserves playback position when verification expires
+ok 3 - a denied media request preserves playback position when verification expires
+  ---
+  duration_ms: 125.153137
+  type: 'test'
+  ...
+# Subtest: media errors check local status and embedded recovery offers a direct link
+ok 4 - media errors check local status and embedded recovery offers a direct link
+  ---
+  duration_ms: 175.131442
+  type: 'test'
+  ...

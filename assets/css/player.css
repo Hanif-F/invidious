@@ -1,9 +1,12 @@
-/* Youtube player style */
-.video-js.player-style-youtube .vjs-progress-control {
-  height: 0;
+/* Shared player timeline and controls. Retired style preferences do not select CSS variants. */
+.video-js.player-style-unified .vjs-progress-control {
+  /* Keep the thin rail inside a usable desktop hover/drag target. */
+  height: 24px;
+  top: auto;
+  bottom: calc(100% - 12px);
 }
 
-.video-js.player-style-youtube .vjs-progress-control .vjs-progress-holder, .video-js.player-style-youtube .vjs-progress-control {
+.video-js.player-style-unified .vjs-progress-control .vjs-progress-holder, .video-js.player-style-unified .vjs-progress-control {
   position: absolute;
   right: 0;
   left: 0;
@@ -11,51 +14,51 @@
   margin: 0;
 }
 
-.video-js.player-style-youtube .vjs-control-bar {
+.video-js.player-style-unified .vjs-control-bar {
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.2));
 }
 
-.video-js.player-style-youtube .vjs-slider {
+.video-js.player-style-unified .vjs-slider {
   background-color: rgba(255,255,255,0.2);
 }
 
-.video-js.player-style-youtube .vjs-load-progress > div {
+.video-js.player-style-unified .vjs-load-progress > div {
   background-color: rgba(255,255,255,0.5);
 }
 
-.video-js.player-style-youtube .vjs-play-progress {
+.video-js.player-style-unified .vjs-play-progress {
   background-color: red;
 }
 
-.video-js.player-style-youtube .vjs-progress-control:hover .vjs-progress-holder {
+.video-js.player-style-unified .vjs-progress-control:hover .vjs-progress-holder {
   font-size: 15px;
 }
 
-.video-js.player-style-youtube .vjs-control-bar > .vjs-spacer {
+.video-js.player-style-unified .vjs-control-bar > .vjs-spacer {
   flex: 1;
   order: 2;
 }
 
-.video-js.player-style-youtube .vjs-play-progress .vjs-time-tooltip {
+.video-js.player-style-unified .vjs-play-progress .vjs-time-tooltip {
   display: none;
 }
 
-.video-js.player-style-youtube .vjs-play-progress::before {
+.video-js.player-style-unified .vjs-play-progress::before {
   color: red;
   font-size: 0.85em;
   display: none;
 }
 
-.video-js.player-style-youtube .vjs-progress-holder:hover .vjs-play-progress::before {
+.video-js.player-style-unified .vjs-progress-holder:hover .vjs-play-progress::before {
   display: unset;
 }
 
-.video-js.player-style-youtube .vjs-control-bar {
+.video-js.player-style-unified .vjs-control-bar {
   display: flex;
   flex-direction: row;
 }
 
-.video-js.player-style-youtube .vjs-big-play-button {
+.video-js.player-style-unified .vjs-big-play-button {
   /*
     Styles copied from video-js.min.css, definition of
     .vjs-big-play-centered .vjs-big-play-button
@@ -66,13 +69,12 @@
   margin-left: -1.5em;
 }
 
-.video-js.player-style-youtube .vjs-menu-button-popup .vjs-menu {
+.video-js.player-style-unified .vjs-menu-button-popup .vjs-menu {
   margin-bottom: 2em;
   padding-top: 2em
 }
 
-.video-js.player-style-youtube .vjs-progress-control .vjs-progress-holder, .video-js.player-style-youtube .vjs-progress-control {height: 5px;
-margin-bottom: 10px;}
+.video-js.player-style-unified .vjs-progress-holder { height: 5px; }
 
 ul.vjs-menu-content::-webkit-scrollbar {
   display: none;
@@ -119,13 +121,9 @@ ul.vjs-menu-content::-webkit-scrollbar {
   order: 3;
 }
 
-.vjs-rich-audio {
-  order: 3;
-}
 
 .vjs-quality-selector,
-.video-js .vjs-http-source-selector,
-.vjs-rich-quality {
+.video-js .vjs-http-source-selector {
   order: 4;
 }
 
@@ -137,7 +135,7 @@ ul.vjs-menu-content::-webkit-scrollbar {
   order: 6;
 }
 
-.vjs-wide-control {
+.vjs-theater-control {
   order: 8;
 }
 
@@ -159,22 +157,7 @@ ul.vjs-menu-content::-webkit-scrollbar {
   display: none;
 }
 
-.video-js:not(.invidious-mobile) .vjs-control-bar > :is(.vjs-rich-quality, .vjs-rich-audio) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-}
 
-.video-js:not(.invidious-mobile) .vjs-control-bar > :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-icon-placeholder::before {
-  font-size: 24px;
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
 
 .video-js .vjs-control-bar {
   background-color: rgba(35, 35, 35, 0.2);
@@ -202,13 +185,6 @@ ul.vjs-menu-content::-webkit-scrollbar {
   background-color: rgba(0, 182, 240, 0.75);
 }
 
-.video-js :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-menu-content {
-  width: max-content;
-  min-width: 15em;
-  max-width: min(28em, 90vw);
-  max-height: min(70vh, 34em);
-}
-.video-js :is(.vjs-rich-quality, .vjs-rich-audio) .vjs-menu-item { text-align: start; }
 .stream-option-primary, .stream-option-secondary { display: block; }
 .stream-option-primary { font-weight: 600; }
 .stream-option-secondary { margin-top: 2px; font-size: .82em; opacity: .72; }
@@ -233,9 +209,6 @@ ul.vjs-menu-content::-webkit-scrollbar {
   color: rgba(0, 182, 240, 1);
 }
 
-.video-js.player-style-invidious .vjs-play-progress {
-  background-color: rgba(0, 182, 240, 1);
-}
 
 /* Overlay */
 .video-js .vjs-overlay {
@@ -353,13 +326,14 @@ video.video-js {
     box-sizing: border-box; flex-wrap: wrap;
 }
 .video-js .sb-overlay.sb-visible { opacity: 1; visibility: visible; pointer-events: auto; }
-.video-js .sb-overlay button { cursor: pointer; color: white; padding: 5px; border: 1px solid #aaa; border-radius: 4px; }
+.video-js .sb-overlay button { cursor: pointer; color: white; background: transparent; padding: 5px; border: 1px solid #aaa; border-radius: 4px; font: inherit; }
+.video-js .sb-overlay .sb-close { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 4px; border-color: transparent; }
 .video-js .sb-overlay button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 .video-js .sb-notice { bottom: 130px; }
 @media (prefers-reduced-motion: reduce) { .video-js .sb-overlay { transition: none; } }
 
 /* Mobile uses one settings entry point; playback components still own their state. */
-.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-refresh-buffer, .vjs-captions-button, .vjs-audio-button, .vjs-rich-audio, .vjs-quality-selector, .vjs-rich-quality, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-wide-control) { display: none; }
+.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-refresh-buffer, .vjs-captions-button, .vjs-audio-button, .vjs-quality-selector, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-theater-control) { display: none; }
 .video-js .vjs-mobile-settings { order: 6; min-width: 44px; min-height: 44px; align-self: center; }
 .vjs-mobile-settings .vjs-icon-placeholder::before { content: '⚙'; font: 26px/44px sans-serif; }
 .video-js .mobile-player-settings {
@@ -461,12 +435,6 @@ body .video-js .vjs-menu li.vjs-menu-item:focus-visible {
   outline: 2px solid #fff;
   outline-offset: -2px;
 }
-.video-js :is(.vjs-rich-quality, .vjs-rich-audio) > .vjs-menu-button {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
 
 .chapter-markers { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 .chapter-marker { position: absolute; top: 0; height: 100%; width: 2px; background: rgba(0,0,0,.65); transform: translateX(-1px); }
@@ -474,8 +442,9 @@ body .video-js .vjs-menu li.vjs-menu-item:focus-visible {
 .video-js .current-chapter { order: 1; flex: 0 1 auto; align-self: center; box-sizing: border-box; min-width: 0; max-width: min(24em, 30%); padding-inline: .6em .3em; border-inline-start: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; }
 .video-js .current-chapter[hidden] { display: none; }
 .video-js.invidious-mobile.has-chapters .vjs-remaining-time { display: none; }
-.video-js.invidious-mobile.has-chapters.player-style-invidious .vjs-progress-control { position: absolute; top: -30px; left: 12px; right: 12px; width: auto; height: 44px; margin: 0; }
-.video-js.invidious-mobile.has-chapters.player-style-invidious .vjs-progress-holder { width: 100%; margin: 0; }
+.video-js.invidious-mobile.has-chapters.player-style-unified .vjs-progress-control { position: absolute; top: -30px; bottom: auto; left: 12px; right: 12px; width: auto; height: 44px; margin: 0; }
+.video-js.invidious-mobile.has-chapters.player-style-unified .vjs-progress-holder { width: 100%; margin: 0; }
 .video-js .chapter-tooltip { position: absolute; z-index: 30; pointer-events: none; max-width: min(320px, calc(100% - 8px)); box-sizing: border-box; padding: 6px 9px; border-radius: 4px; background: rgba(20,20,20,.95); color: white; font: 13px/1.4 sans-serif; overflow-wrap: anywhere; text-align: center; }
 .video-js .chapter-tooltip[hidden] { display: none; }
 .chapter-tooltip > :first-child { font-weight: bold; }
+.video-js.spoiler-thumbnails-hidden .vjs-vtt-thumbnail-display { display: none !important; }

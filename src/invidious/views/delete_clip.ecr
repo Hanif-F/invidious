@@ -1,10 +1,7 @@
-<% content_for "header" do %><title><%= I18n.translate(locale, "clips_delete") %> - Invidious</title><% end %>
-<h1><%= I18n.translate(locale, "clips_delete") %></h1>
-<p dir="auto"><%= HTML.escape(clip.title) %></p>
+<% content_for "header" do %><title><%= I18n.translate(locale, "clips_delete") %> - Invidious</title><link rel="stylesheet" href="/css/clips.css?v=<%= ASSET_COMMIT %>"><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "clips_delete") %></h1></header>
+<section class="clip-confirmation"><h2 dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.title, nil, false, false, custom: true) %></h2>
+<p class="muted"><%= Invidious::Clips::Validation.timestamp(clip.start_time) %> – <%= Invidious::Clips::Validation.timestamp(clip.end_time) %> · <time datetime="<%= clip.created_at.to_rfc3339 %>"><%= clip.created_at.to_s("%Y-%m-%d") %></time></p>
 <p><%= I18n.translate(locale, "clips_delete_confirm") %></p>
-<form action="/delete_clip" method="post" class="pure-form">
-    <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-    <input type="hidden" name="id" value="<%= clip.id %>">
-    <button type="submit" class="pure-button pure-button-primary"><%= I18n.translate(locale, "clips_delete") %></button>
-    <a class="pure-button" href="<%= clip.permalink %>"><%= I18n.translate(locale, "generic_button_cancel") %></a>
-</form>
+<form action="/delete_clip" method="post"><input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>"><input type="hidden" name="id" value="<%= HTML.escape(clip.id) %>">
+<div class="toolbar"><button type="submit" class="button button-danger"><%= Invidious::Frontend::Icons.render("trash-2") %><%= I18n.translate(locale, "clips_delete") %></button><a class="button" href="<%= HTML.escape(clip.permalink) %>"><%= I18n.translate(locale, "generic_button_cancel") %></a></div></form></section>

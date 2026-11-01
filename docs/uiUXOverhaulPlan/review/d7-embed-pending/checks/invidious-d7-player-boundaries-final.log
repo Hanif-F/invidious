@@ -1,0 +1,418 @@
+TAP version 13
+# Subtest: guest → Alice → guest → Bob → Alice restores only the active profile
+ok 1 - guest → Alice → guest → Bob → Alice restores only the active profile
+  ---
+  duration_ms: 10.348256
+  type: 'test'
+  ...
+# Subtest: legacy raw, encoded, and cookie saves migrate only to guests on an account visit
+ok 2 - legacy raw, encoded, and cookie saves migrate only to guests on an account visit
+  ---
+  duration_ms: 3.488343
+  type: 'test'
+  ...
+# Subtest: migration preserves new-format guest values and removes invalid legacy data
+ok 3 - migration preserves new-format guest values and removes invalid legacy data
+  ---
+  duration_ms: 0.977387
+  type: 'test'
+  ...
+# Subtest: stale tabs reject writes, callbacks and guest preference updates after switching
+ok 4 - stale tabs reject writes, callbacks and guest preference updates after switching
+  ---
+  duration_ms: 2.601927
+  type: 'test'
+  ...
+# Subtest: storage events and session continuations are filtered by profile and backend
+ok 5 - storage events and session continuations are filtered by profile and backend
+  ---
+  duration_ms: 3.050355
+  type: 'test'
+  ...
+# Subtest: denied storage uses bounded profile cookies, larger data stays in memory and reports failure
+ok 6 - denied storage uses bounded profile cookies, larger data stays in memory and reports failure
+  ---
+  duration_ms: 2.096933
+  type: 'test'
+  ...
+# Subtest: cookie and storage denial does not break playback settings in page memory
+ok 7 - cookie and storage denial does not break playback settings in page memory
+  ---
+  duration_ms: 0.950426
+  type: 'test'
+  ...
+# Subtest: quota failures retain current values instead of resurrecting an old save
+ok 8 - quota failures retain current values instead of resurrecting an old save
+  ---
+  duration_ms: 1.627385
+  type: 'test'
+  ...
+# Subtest: failed persistence leaves the last successful save intact for the next visit
+ok 9 - failed persistence leaves the last successful save intact for the next visit
+  ---
+  duration_ms: 2.128192
+  type: 'test'
+  ...
+# Subtest: invalid stored values are removed and complex settings are allowlisted
+ok 10 - invalid stored values are removed and complex settings are allowlisted
+  ---
+  duration_ms: 1.639378
+  type: 'test'
+  ...
+# Subtest: guest SponsorBlock overrides inherit categories, support enablement and never affect accounts or live video
+ok 11 - guest SponsorBlock overrides inherit categories, support enablement and never affect accounts or live video
+  ---
+  duration_ms: 1.721693
+  type: 'test'
+  ...
+# Subtest: account deletion purges only its own profile and leaves guest and other accounts intact
+ok 12 - account deletion purges only its own profile and leaves guest and other accounts intact
+  ---
+  duration_ms: 3.760938
+  type: 'test'
+  ...
+# Subtest: guest playback speed preserves other guest preferences and account calls never write PREFS
+ok 13 - guest playback speed preserves other guest preferences and account calls never write PREFS
+  ---
+  duration_ms: 1.479106
+  type: 'test'
+  ...
+# Subtest: guest speed preserves form-encoded spaces and literal plus signs
+ok 14 - guest speed preserves form-encoded spaces and literal plus signs
+  ---
+  duration_ms: 0.802978
+  type: 'test'
+  ...
+# Subtest: late response cookies cannot override a newer active profile, and response headers guard denied storage
+ok 15 - late response cookies cannot override a newer active profile, and response headers guard denied storage
+  ---
+  duration_ms: 2.146467
+  type: 'test'
+  ...
+# Subtest: large legacy saves remain usable in guest page memory when migration exceeds quota
+ok 16 - large legacy saves remain usable in guest page memory when migration exceeds quota
+  ---
+  duration_ms: 3.271503
+  type: 'test'
+  ...
+# Subtest: delayed helper responses and retries are discarded after switching profiles
+ok 17 - delayed helper responses and retries are discarded after switching profiles
+  ---
+  duration_ms: 3.064772
+  type: 'test'
+  ...
+# Subtest: one notification tab owns each profile lease; expired owners close and account switches discard messages
+ok 18 - one notification tab owns each profile lease; expired owners close and account switches discard messages
+  ---
+  duration_ms: 4.353838
+  type: 'test'
+  ...
+# Subtest: notifications retain server counts without a header ticker and skip empty or malformed subscription reads
+ok 19 - notifications retain server counts without a header ticker and skip empty or malformed subscription reads
+  ---
+  duration_ms: 3.09048
+  type: 'test'
+  ...
+# Subtest: channel spoiler rules reject malformed timers and remain isolated from account profiles
+ok 20 - channel spoiler rules reject malformed timers and remain isolated from account profiles
+  ---
+  duration_ms: 2.232269
+  type: 'test'
+  ...
+# Subtest: browse restoration keeps bounded GET descriptors in the owning tab/profile only
+ok 21 - browse restoration keeps bounded GET descriptors in the owning tab/profile only
+  ---
+  duration_ms: 2.271793
+  type: 'test'
+  ...
+# Subtest: watch layout and docking use isolated validated profiles without inheriting guest state
+ok 22 - watch layout and docking use isolated validated profiles without inheriting guest state
+  ---
+  duration_ms: 3.103144
+  type: 'test'
+  ...
+# Subtest: watch browser state distinguishes durable cookie fallback from page-only storage
+ok 23 - watch browser state distinguishes durable cookie fallback from page-only storage
+  ---
+  duration_ms: 3.370479
+  type: 'test'
+  ...
+# Subtest: notification cached-page departure releases its lease and timers, then return starts one new stream
+ok 24 - notification cached-page departure releases its lease and timers, then return starts one new stream
+  ---
+  duration_ms: 2.648265
+  type: 'test'
+  ...
+# Subtest: notification messages retain masking and tolerate missing optional avatar metadata
+ok 25 - notification messages retain masking and tolerate missing optional avatar metadata
+  ---
+  duration_ms: 1.587561
+  type: 'test'
+  ...
+# Subtest: unresolved notification channel identity keeps the in-page count without exposing a title in OS notifications
+ok 26 - unresolved notification channel identity keeps the in-page count without exposing a title in OS notifications
+  ---
+  duration_ms: 1.157738
+  type: 'test'
+  ...
+# Subtest: persisted reads distinguish failed page-memory drafts from durable channel overrides
+ok 27 - persisted reads distinguish failed page-memory drafts from durable channel overrides
+  ---
+  duration_ms: 0.988178
+  type: 'test'
+  ...
+# Subtest: persisted channel reads follow durable changes and remain profile guarded
+ok 28 - persisted channel reads follow durable changes and remain profile guarded
+  ---
+  duration_ms: 0.883711
+  type: 'test'
+  ...
+# Subtest: missing and null delays hide old uploads indefinitely; timed rules still expire
+ok 29 - missing and null delays hide old uploads indefinitely; timed rules still expire
+  ---
+  duration_ms: 4.739847
+  type: 'test'
+  ...
+# Subtest: inactive rules export a controller without observers or scans; guest activation does not navigate
+ok 30 - inactive rules export a controller without observers or scans; guest activation does not navigate
+  ---
+  duration_ms: 1.379687
+  type: 'test'
+  ...
+# Subtest: a mutation batch scans only topmost subtrees and never queries leaf descendants
+ok 31 - a mutation batch scans only topmost subtrees and never queries leaf descendants
+  ---
+  duration_ms: 2.081072
+  type: 'test'
+  ...
+# Subtest: guest activation reads the current browser rules and returns to zero-observer work after removal
+ok 32 - guest activation reads the current browser rules and returns to zero-observer work after removal
+  ---
+  duration_ms: 1.000871
+  type: 'test'
+  ...
+# Subtest: native seeks clamp keyboard, scrub, refresh and SponsorBlock targets
+ok 33 - native seeks clamp keyboard, scrub, refresh and SponsorBlock targets
+  ---
+  duration_ms: 3.313382
+  type: 'test'
+  ...
+# Subtest: the saved end loops to the fractional start or pauses with looping disabled
+ok 34 - the saved end loops to the fractional start or pauses with looping disabled
+  ---
+  duration_ms: 1.355011
+  type: 'test'
+  ...
+# Subtest: native source ending and direct tech seeks cannot escape the range
+ok 35 - native source ending and direct tech seeks cannot escape the range
+  ---
+  duration_ms: 0.856058
+  type: 'test'
+  ...
+# Subtest: a shortened media source stops with an unavailable range error
+ok 36 - a shortened media source stops with an unavailable range error
+  ---
+  duration_ms: 0.872689
+  type: 'test'
+  ...
+# Subtest: a recovered source reactivates the saved boundaries after refresh
+ok 37 - a recovered source reactivates the saved boundaries after refresh
+  ---
+  duration_ms: 0.9365
+  type: 'test'
+  ...
+# Subtest: temporary preview ownership releases and restores native fractional bounds
+ok 38 - temporary preview ownership releases and restores native fractional bounds
+  ---
+  duration_ms: 0.952951
+  type: 'test'
+  ...
+# Subtest: an active owner cannot be overwritten and disposed bounds cannot reattach
+ok 39 - an active owner cannot be overwritten and disposed bounds cannot reattach
+  ---
+  duration_ms: 0.83584
+  type: 'test'
+  ...
+# Subtest: preview source failures can report to their editor without poisoning the media
+ok 40 - preview source failures can report to their editor without poisoning the media
+  ---
+  duration_ms: 1.023665
+  type: 'test'
+  ...
+# Subtest: preview and stop preserve the original player state and release temporary bounds
+ok 41 - preview and stop preserve the original player state and release temporary bounds
+  ---
+  duration_ms: 4.828896
+  type: 'test'
+  ...
+# Subtest: closing a looped preview restores an originally paused source
+ok 42 - closing a looped preview restores an originally paused source
+  ---
+  duration_ms: 1.58191
+  type: 'test'
+  ...
+# Subtest: editing a native clip suspends and restores its fractional immutable bounds
+ok 43 - editing a native clip suspends and restores its fractional immutable bounds
+  ---
+  duration_ms: 1.384657
+  type: 'test'
+  ...
+# Subtest: invalid or unavailable preview selections leave the source recoverable
+ok 44 - invalid or unavailable preview selections leave the source recoverable
+  ---
+  duration_ms: 1.422819
+  type: 'test'
+  ...
+# Subtest: source refresh failures stop a running preview without a persistent player error
+ok 45 - source refresh failures stop a running preview without a persistent player error
+  ---
+  duration_ms: 1.886425
+  type: 'test'
+  ...
+# Subtest: profile disposal never restores the earlier personal playhead or resumes playback
+ok 46 - profile disposal never restores the earlier personal playhead or resumes playback
+  ---
+  duration_ms: 1.606035
+  type: 'test'
+  ...
+# Subtest: cached-page suspension restores the source once and blocks work until pageshow
+ok 47 - cached-page suspension restores the source once and blocks work until pageshow
+  ---
+  duration_ms: 1.289567
+  type: 'test'
+  ...
+# Subtest: repeated previews and disposal release handlers and the singleton session
+ok 48 - repeated previews and disposal release handlers and the singleton session
+  ---
+  duration_ms: 1.835639
+  type: 'test'
+  ...
+# Subtest: codec quality menus keep every stream in groups of one through four
+ok 49 - codec quality menus keep every stream in groups of one through four
+  ---
+  duration_ms: 11.92142
+  type: 'test'
+  ...
+# Subtest: codec quality menus retain both codec extremes when all AV1 bitrates are below H.264
+ok 50 - codec quality menus retain both codec extremes when all AV1 bitrates are below H.264
+  ---
+  duration_ms: 4.996452
+  type: 'test'
+  ...
+# Subtest: codec quality menus fill spare slots alphabetically with other codec extremes, unknown last
+ok 51 - codec quality menus fill spare slots alphabetically with other codec extremes, unknown last
+  ---
+  duration_ms: 15.592628
+  type: 'test'
+  ...
+# Subtest: codec quality menus deduplicate equal extremes and preserve original order for ties
+ok 52 - codec quality menus deduplicate equal extremes and preserve original order for ties
+  ---
+  duration_ms: 1.825329
+  type: 'test'
+  ...
+# Subtest: codec quality menus exclude missing bitrates from known extremes and retain an unknown family representative
+ok 53 - codec quality menus exclude missing bitrates from known extremes and retain an unknown family representative
+  ---
+  duration_ms: 3.641161
+  type: 'test'
+  ...
+# Subtest: codec quality menus use representation metadata before MIME metadata and localize missing codecs
+ok 54 - codec quality menus use representation metadata before MIME metadata and localize missing codecs
+  ---
+  duration_ms: 4.002244
+  type: 'test'
+  ...
+# Subtest: codec quality menus keep resolution and rounded FPS groups separate
+ok 55 - codec quality menus keep resolution and rounded FPS groups separate
+  ---
+  duration_ms: 1.354079
+  type: 'test'
+  ...
+# Subtest: codec quality menus describe a filtered manual selection without adding a fifth choice
+ok 56 - codec quality menus describe a filtered manual selection without adding a fifth choice
+  ---
+  duration_ms: 1.511016
+  type: 'test'
+  ...
+# Subtest: codec preference keeps Auto selected for one or many preferred renditions and allows manual overrides
+ok 57 - codec preference keeps Auto selected for one or many preferred renditions and allows manual overrides
+  ---
+  duration_ms: 3.186441
+  type: 'test'
+  ...
+# Subtest: codec preference preserves preset resolution before codec and retains highest/lowest FPS and bitrate ranking
+ok 58 - codec preference preserves preset resolution before codec and retains highest/lowest FPS and bitrate ranking
+  ---
+  duration_ms: 3.800021
+  type: 'test'
+  ...
+# Subtest: codec preference filters the first VHS selector call and delegates adaptive bandwidth selection
+ok 59 - codec preference filters the first VHS selector call and delegates adaptive bandwidth selection
+  ---
+  duration_ms: 1.738195
+  type: 'test'
+  ...
+# Subtest: codec preference falls back when missing, unsupported or temporarily excluded
+ok 60 - codec preference falls back when missing, unsupported or temporarily excluded
+  ---
+  duration_ms: 1.480297
+  type: 'test'
+  ...
+# Subtest: codec preference restores Auto or an exact manual codec when levels are recreated
+ok 61 - codec preference restores Auto or an exact manual codec when levels are recreated
+  ---
+  duration_ms: 1.771618
+  type: 'test'
+  ...
+# Subtest: codec preference applies to newly discovered levels without losing Auto or a manual override
+ok 62 - codec preference applies to newly discovered levels without losing Auto or a manual override
+  ---
+  duration_ms: 1.422889
+  type: 'test'
+  ...
+# Subtest: preferred audio distinguishes duplicate itags by language, bitrate and DRC
+ok 63 - preferred audio distinguishes duplicate itags by language, bitrate and DRC
+  ---
+  duration_ms: 5.47678
+  type: 'test'
+  ...
+# Subtest: regional audio is exact while general languages accept regional tracks
+ok 64 - regional audio is exact while general languages accept regional tracks
+  ---
+  duration_ms: 1.872799
+  type: 'test'
+  ...
+# Subtest: manual audio choices survive preference updates and recreated tracks
+ok 65 - manual audio choices survive preference updates and recreated tracks
+  ---
+  duration_ms: 2.941488
+  type: 'test'
+  ...
+# Subtest: audio identity absence preserves the existing default and lifecycle handles late tracks
+ok 66 - audio identity absence preserves the existing default and lifecycle handles late tracks
+  ---
+  duration_ms: 2.257216
+  type: 'test'
+  ...
+# Subtest: a reused legacy audio ID cannot restore a different language over original audio
+ok 67 - a reused legacy audio ID cannot restore a different language over original audio
+  ---
+  duration_ms: 0.940788
+  type: 'test'
+  ...
+# Subtest: progressive source descriptions use exact metadata and preserve duplicate audio identities
+ok 68 - progressive source descriptions use exact metadata and preserve duplicate audio identities
+  ---
+  duration_ms: 2.04211
+  type: 'test'
+  ...
+1..68
+# tests 68
+# suites 0
+# pass 68
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 247.401276

@@ -12,6 +12,12 @@ module Invidious::Frontend::ChannelSpoilers
     !env.get?("user") || !env.get("preferences").as(Preferences).channel_spoiler_settings.empty?
   end
 
+  # A cached watch/listing can receive its first rule without a navigation.
+  # Metadata uses supplied/request-local dates; this does not enable cache reads.
+  def runtime_enabled?(env) : Bool
+    Desktop.watch?(env) || Desktop.embedded?(env) || Desktop.listing?(env)
+  end
+
   def cache_enabled?(env) : Bool
     env.get?("user") ? !env.get("preferences").as(Preferences).channel_spoiler_settings.empty? : env.request.cookies.has_key?("iv_spoilers_guest")
   end
@@ -132,9 +138,11 @@ module Invidious::Frontend::ChannelSpoilers
   end
 
   def title(env, id : String, ucid : String, original : String, published : Time?, watch = false, dearrow = true, tag = "span", *, custom = false) : String
+    source_title = original
     original = Invidious::OriginalTitles.title(env, id, original) unless custom
     base = %( dir="auto"#{dearrow ? " data-dearrow-id=\"#{HTML.escape(id)}\"" : ""}#{watch ? " data-dearrow-watch" : ""})
-    return %(<#{tag}#{base}>#{HTML.escape(original)}</#{tag}>) unless applies?(env, ucid, :title)
+    base += %( data-title-source="#{HTML.escape(source_title)}") if runtime_enabled?(env) && dearrow
+    return %(<#{tag}#{base}>#{HTML.escape(original)}</#{tag}>) unless applies?(env, ucid, :title) || runtime_enabled?(env)
     date = publication(env, id, published)
     hidden = hidden?(env, ucid, date, :title)
     text = hidden ? label(env, :title, date.nil?) : original
@@ -142,11 +150,15 @@ module Invidious::Frontend::ChannelSpoilers
   end
 
   def thumbnail(env, id : String, ucid : String, published : Time?, normal : String, url = "/vi/#{id}/mqdefault.jpg") : String
-    return normal unless applies?(env, ucid, :thumbnail)
+    return normal unless applies?(env, ucid, :thumbnail) || runtime_enabled?(env)
     date = publication(env, id, published)
     hidden = hidden?(env, ucid, date, :thumbnail)
     content = hidden ? %(<span class="spoiler-placeholder">#{HTML.escape(label(env, :thumbnail, date.nil?))}</span>) : normal
     %(<span class="spoiler-thumbnail"#{attributes(env, id, ucid, date, :thumbnail)} data-spoiler-original="#{HTML.escape(url)}">#{content}</span>)
+  end
+
+  def labels(locale : String) : Hash(String, String)
+    %w(title_hidden title_hidden_unknown thumbnail_hidden thumbnail_hidden_unknown reveal_title reveal_thumbnail hide_title next_original next_dearrow loading).to_h { |key| {key, I18n.translate(locale, "spoilers_#{key}")} }
   end
 
   def config(env) : String
@@ -162,7 +174,7 @@ module Invidious::Frontend::ChannelSpoilers
       "now"     => now(env).to_unix,
       "dearrow" => preferences.dearrow_enabled,
       "page"    => JSON.parse(env.get?("spoiler_page").try(&.as(String)) || "null"),
-      "labels"  => %w(title_hidden title_hidden_unknown thumbnail_hidden thumbnail_hidden_unknown reveal_title reveal_thumbnail hide_title next_original next_dearrow loading).to_h { |key| {key, I18n.translate(preferences.locale, "spoilers_#{key}")} },
+      "labels"  => labels(preferences.locale),
     }.to_json.gsub("<", "\\u003c")
   end
 end

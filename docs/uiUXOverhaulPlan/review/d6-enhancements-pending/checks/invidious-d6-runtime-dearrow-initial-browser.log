@@ -1,0 +1,226 @@
+TAP version 13
+# Subtest: chromium: DeArrow can replace an original title and reveal it again
+not ok 1 - chromium: DeArrow can replace an original title and reveal it again
+  ---
+  duration_ms: 805.195002
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:137:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Community title'
+    - '原題 <日本語> & café'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '原題 <日本語> & café'
+  actual: 'Community title'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:143:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: firefox: DeArrow can replace an original title and reveal it again
+not ok 2 - firefox: DeArrow can replace an original title and reveal it again
+  ---
+  duration_ms: 888.115656
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:137:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Community title'
+    - '原題 <日本語> & café'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '原題 <日本語> & café'
+  actual: 'Community title'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:143:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+not ok 3 - chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+  ---
+  duration_ms: 255.79642
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:2954:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'A clear title <img src=x onerror=alert(1)>'
+    - 'A journey through light, color, and motion'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'A journey through light, color, and motion'
+  actual: 'A clear title <img src=x onerror=alert(1)>'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:2967:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: chromium: DeArrow keeps replacements on hover when original display is disabled
+ok 4 - chromium: DeArrow keeps replacements on hover when original display is disabled
+  ---
+  duration_ms: 196.876373
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+ok 5 - chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+  ---
+  duration_ms: 2600.871662
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+not ok 6 - firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+  ---
+  duration_ms: 463.087349
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:2954:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'A clear title <img src=x onerror=alert(1)>'
+    - 'A journey through light, color, and motion'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'A journey through light, color, and motion'
+  actual: 'A clear title <img src=x onerror=alert(1)>'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:2967:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: firefox: DeArrow keeps replacements on hover when original display is disabled
+ok 7 - firefox: DeArrow keeps replacements on hover when original display is disabled
+  ---
+  duration_ms: 369.601113
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+ok 8 - firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+  ---
+  duration_ms: 3344.657073
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+ok 9 - chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+  ---
+  duration_ms: 328.045771
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+ok 10 - chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+  ---
+  duration_ms: 848.803345
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+ok 11 - chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+  ---
+  duration_ms: 250.309497
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers prefetch hidden cards only within the viewport margin
+ok 12 - chromium: channel spoilers prefetch hidden cards only within the viewport margin
+  ---
+  duration_ms: 147.841714
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+ok 13 - chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+  ---
+  duration_ms: 597.972642
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+ok 14 - firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+  ---
+  duration_ms: 635.093731
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+ok 15 - firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+  ---
+  duration_ms: 1559.740622
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+ok 16 - firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+  ---
+  duration_ms: 1050.608475
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers prefetch hidden cards only within the viewport margin
+ok 17 - firefox: channel spoilers prefetch hidden cards only within the viewport margin
+  ---
+  duration_ms: 417.801045
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+ok 18 - firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+  ---
+  duration_ms: 931.555961
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+ok 19 - chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+  ---
+  duration_ms: 324.520979
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers mask a guest watch title and poster before player setup
+ok 20 - chromium: channel spoilers mask a guest watch title and poster before player setup
+  ---
+  duration_ms: 275.047831
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+ok 21 - firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+  ---
+  duration_ms: 603.298389
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers mask a guest watch title and poster before player setup
+ok 22 - firefox: channel spoilers mask a guest watch title and poster before player setup
+  ---
+  duration_ms: 542.058488
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+ok 23 - chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+  ---
+  duration_ms: 793.950838
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+ok 24 - firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+  ---
+  duration_ms: 1519.024868
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 20
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20574.857775

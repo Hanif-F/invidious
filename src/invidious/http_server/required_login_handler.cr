@@ -3,7 +3,7 @@ class Invidious::HttpServer::RequiredLoginHandler < Kemal::Handler
   def self.exempt?(request : HTTP::Request) : Bool
     path = request.path
     if {"GET", "HEAD"}.includes?(request.method)
-      return true if {"/login", "/signup", "/verify", "/api/v1/verification",
+      return true if {"/login", "/signup", "/verify", "/privacy", "/licenses", "/api/v1/verification",
                       "/api/v1/mobile/registration", "/feed/private"}.includes?(path)
     elsif request.method == "POST"
       return true if {"/login", "/signup", "/api/v1/mobile/login", "/api/v1/mobile/register",
@@ -34,12 +34,17 @@ class Invidious::HttpServer::RequiredLoginHandler < Kemal::Handler
     end
     return call_next(env) if user
 
+    env.response.headers["X-Invidious-Login-Required"] = "1"
     login_url = Invidious::Authentication.login_url(env.request.resource)
     if media_or_api
       env.response.headers["Access-Control-Allow-Origin"] = "*"
+      env.response.headers["Access-Control-Expose-Headers"] = "X-Invidious-Login-Required"
       env.response.status_code = 401
       env.response.content_type = "application/json"
       env.response.print({error: "login_required", loginUrl: login_url}.to_json)
+    elsif env.request.method == "GET" && (env.request.path.starts_with?("/embed/") || env.request.headers["Sec-Fetch-Dest"]? == "iframe")
+      env.response.headers["Content-Security-Policy"] = "default-src 'none'; style-src 'self'; frame-ancestors *"
+      env.response.print Invidious::Frontend::Standalone.notice(env, 401, "embed_login_heading", "embed_login_message", Invidious::Authentication.iframe_login_url(env.request), "embed_login_action", new_window: true)
     else
       env.redirect(login_url, 303)
     end

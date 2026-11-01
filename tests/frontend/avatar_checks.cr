@@ -52,7 +52,8 @@ def check_channel_avatars
   frontend.prepare(fixture_env("/channel/UCcached"), sources)
   raise "Own channel avatar repeated" if frontend.show?(fixture_env("/channel/UCcached/shorts"), "UCcached")
   raise "Other channel avatar suppressed" unless frontend.show?(fixture_env("/channel/UCcached"), "UCdirect")
-  raise "Thin mode avatar shown" if frontend.show?(fixture_env("/feed/popular", thin: true), "UCcached")
+  raise "Retired native thin mode changed the desktop avatar" unless frontend.show?(fixture_env("/feed/popular", thin: true), "UCcached")
+  raise "Native HTML thin mode avatar shown" if frontend.show?(fixture_env("/api/v1/search", thin: true), "UCcached")
   raise "Unknown channel has an avatar" unless frontend.render(env, "").empty?
 
   PG_DB.exec("DROP TABLE channel_avatars")
@@ -100,10 +101,11 @@ def avatar_initials_fixture(mode = "dark")
   render "src/invidious/views/components/items_paginated.ecr", "src/invidious/views/template.ecr"
 end
 
-def avatar_manager_fixture(thin = false, sort_by = "alphabetical", locale = "en-US", empty = false)
+def avatar_manager_fixture(thin = false, sort_by = "alphabetical", locale = "en-US", empty = false, mode = "dark")
   env = signed_in_env("/subscription_manager")
   preferences = env.get("preferences").as(Preferences)
   preferences.thin_mode = thin
+  preferences.dark_mode = mode
   preferences.locale = locale
   env.set "preferences", preferences
   locale = preferences.locale

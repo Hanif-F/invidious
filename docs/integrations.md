@@ -7,6 +7,8 @@ This guide describes requests made by this repository. Service availability and 
 | Integration | Purpose | Request boundary and failure behavior |
 | --- | --- | --- |
 | YouTube/Innertube | Search, channels, playlists, comments, transcript, chat and metadata parsing | Server connection pools; upstream changes can invalidate parsers independently of account storage |
+| YouTube oEmbed | Non-translated video titles | Server outbound proxy; bounded/coalesced cache with a five-second cold-response deadline; failure retains the existing title |
+| Cloudflare Turnstile | Optional instance access verification | Server-side Siteverify checks hostname/action; provider outages retain sign-in/admin recovery access; no authentication entitlement |
 | Invidious Companion | Video extraction/playback information and media paths | Separately deployed, shared 16-character API key; missing/broken service prevents playback |
 | Google image/media CDNs | Thumbnails, avatars, storyboards, media | Fixed-host image routes and validated media hosts; direct browser media is possible when proxying is off |
 | Reddit | Alternate video comment source | Server fetch/parse, independently selectable from YouTube comments |

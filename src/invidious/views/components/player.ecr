@@ -5,14 +5,15 @@
 <% player_spoiler_date = Invidious::ChannelSpoilers.video_publication(video.info) %>
 <% player_title_hidden = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, player_spoiler_date, :title) %>
 <% player_thumbnail_hidden = Invidious::Frontend::ChannelSpoilers.hidden?(env, video.ucid, player_spoiler_date, :thumbnail) %>
-<video data-spoiler-channel="<%= video.ucid %>" data-spoiler-published="<%= player_spoiler_date.try(&.to_unix) %>" data-spoiler-poster="<%= thumbnail %>" style="width:100%;background-color:#000" playsinline poster="<%= player_thumbnail_hidden ? "" : thumbnail %>"
-    id="player" class="on-video_player video-js player-style-<%= params.player_style %>"
+<video data-spoiler-channel="<%= HTML.escape(video.ucid) %>" data-spoiler-published="<%= player_spoiler_date.try(&.to_unix) %>" data-spoiler-poster="<%= HTML.escape(thumbnail) %>" style="width:100%;background-color:#000" playsinline poster="<%= HTML.escape(player_thumbnail_hidden ? "" : thumbnail) %>"
+    id="player" class="on-video_player video-js player-style-unified"
     preload="<% if params.preload %>auto<% else %>none<% end %>"
     <% if params.autoplay %>autoplay<% end %>
     <% if params.video_loop %>loop<% end %>
     <% if params.controls %>controls<% end %>>
     <% if (hlsvp = video.hls_manifest_url) && video.live_now && !CONFIG.disabled?("livestreams") %>
-        <source src="<%= URI.parse(hlsvp).request_target %><% if params.local %>?local=true<% end %>" type="application/x-mpegURL" label="livestream">
+        <% hls_source = URI.parse(hlsvp).request_target; hls_source += (hls_source.includes?('?') ? "&local=true" : "?local=true") if params.local %>
+        <source src="<%= HTML.escape(hls_source) %>" type="application/x-mpegURL" label="livestream">
     <% else %>
         <% if params.listen %>
             <% listening_streams = Invidious::Videos::AudioPreferences.select(audio_streams, params.preferred_audio)
@@ -33,9 +34,9 @@
 
                 selected = (i == best_audio_index)
             %>
-                <source src="<%= src_url %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='<%= mimetype %>' label="<%= bitrate %>k" selected="<%= selected %>">
+                <source src="<%= HTML.escape(src_url) %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='<%= mimetype %>' label="<%= HTML.escape(bitrate.to_s) %>k" selected="<%= selected %>">
                 <% if !params.local && !CONFIG.disabled?("local") %>
-                <source src="<%= src_url %>&local=true<%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='<%= mimetype %>' hidequalityoption="true">
+                <source src="<%= HTML.escape(src_url) %>&local=true<%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='<%= mimetype %>' hidequalityoption="true">
                 <% end %>
             <% end %>
         <% else %>
@@ -44,7 +45,7 @@
                src_url = invidious_companion.public_url.to_s + src_url +
                             "&check=#{invidious_companion_check_id}" if (invidious_companion)
             %>
-                <source src="<%= src_url %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='application/dash+xml' label="dash">
+                <source src="<%= HTML.escape(src_url) %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type='application/dash+xml' label="dash">
             <% end %>
 
             <%
@@ -61,9 +62,9 @@
 
                 selected = params.quality ? (params.quality == quality) : (i == 0)
             %>
-                <source src="<%= src_url %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type="<%= mimetype %>" label="<%= quality %>" selected="<%= selected %>">
+                <source src="<%= HTML.escape(src_url) %><%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type="<%= mimetype %>" label="<%= HTML.escape(quality.to_s) %>" selected="<%= selected %>">
                 <% if !params.local && !CONFIG.disabled?("local") %>
-                <source src="<%= src_url %>&local=true<%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type="<%= mimetype %>" hidequalityoption="true">
+                <source src="<%= HTML.escape(src_url) %>&local=true<%= "#t=#{params.video_start},#{params.video_end}" if params.video_end > 0 && (env.get?("native_clip_id") || env.params.query["clip_preview"]? == "1") %>" type="<%= mimetype %>" hidequalityoption="true">
                 <% end %>
             <% end %>
         <% end %>
@@ -72,16 +73,18 @@
             api_captions_url = "/api/v1/captions/"
             api_captions_url = invidious_companion.public_url.to_s + api_captions_url if (invidious_companion)
             api_captions_check_id = "&check=#{invidious_companion_check_id}"
+            caption_source = "#{api_captions_url}#{video.id}?label=#{URI.encode_www_form(caption.name)}#{api_captions_check_id}"
         %>
-            <track kind="captions" src="<%= api_captions_url %><%= video.id %>?label=<%= caption.name %><%= api_captions_check_id %>" label="<%= caption.name %>">
+            <track kind="captions" src="<%= HTML.escape(caption_source) %>" label="<%= HTML.escape(caption.name) %>">
         <% end %>
 
         <% captions.each do |caption|
             api_captions_url = "/api/v1/captions/"
             api_captions_url = invidious_companion.public_url.to_s + api_captions_url if (invidious_companion)
             api_captions_check_id = "&check=#{invidious_companion_check_id}"
+            caption_source = "#{api_captions_url}#{video.id}?label=#{URI.encode_www_form(caption.name)}#{api_captions_check_id}"
         %>
-            <track kind="captions" src="<%= api_captions_url %><%= video.id %>?label=<%= caption.name %><%= api_captions_check_id %>" label="<%= caption.name %>">
+            <track kind="captions" src="<%= HTML.escape(caption_source) %>" label="<%= HTML.escape(caption.name) %>">
         <% end %>
     <% end %>
 </video>
@@ -98,6 +101,8 @@
         "skipped" => I18n.translate(locale, "sb_skipped"),
         "dismiss" => I18n.translate(locale, "sb_dismiss"),
     },
+    "icon_sprite" => "/icons/lucide.svg?v=#{ASSET_COMMIT}",
+    "interface_labels" => %w(quality_codec advanced enhancements dock on play pause mute unmute enter_theater exit_theater caption_error caption_empty caption_waiting caption_retry sponsorblock dearrow playback failed open_watch).to_h { |key| {key, I18n.translate(locale, "overhaul_player_#{key}")} },
     "mobile_labels" => %w(settings quality audio captions speed share back close off appearance).to_h { |key| {key, I18n.translate(locale, "mobile_player_#{key}")} },
     "stream_labels" => %w(auto unknown_codec high_bitrate medium_bitrate low_bitrate stable_volume original_audio dubbed_audio).to_h { |key| {key, I18n.translate(locale, "player_stream_#{key}")} },
     "refresh_buffer" => I18n.translate(locale, "player_refresh_buffer"),
@@ -123,4 +128,5 @@
 <script src="/js/sponsorblock.js?v=<%= ASSET_COMMIT %>"></script>
 
 <script src="/js/player-stats.js?v=<%= ASSET_COMMIT %>"></script>
+<script src="/js/player-settings.js?v=<%= ASSET_COMMIT %>"></script>
 <script src="/js/player-mobile.js?v=<%= ASSET_COMMIT %>"></script>

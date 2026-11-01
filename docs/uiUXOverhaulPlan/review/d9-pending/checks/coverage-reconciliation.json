@@ -1,0 +1,728 @@
+{
+  "status": "pass",
+  "current_template_count": 93,
+  "current_templates": [
+    {
+      "path": "src/invidious/views/add_playlist_items.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "0a584e69575a450188ccb8d9f4d7e4aed93682f00edba9ae8ade2c3a4194a15d"
+    },
+    {
+      "path": "src/invidious/views/admin/bot_protection.ecr",
+      "surface": "S14",
+      "verification": "V33",
+      "evidence": "docs/uiUXOverhaulPlan/d7-verification-checkpoint.md",
+      "sha256": "d7c436244e25fa3762b4b6b5745df7aef3e8f91d3d703fbea8fdb597c261927e"
+    },
+    {
+      "path": "src/invidious/views/admin/settings.ecr",
+      "surface": "S14",
+      "verification": "V33",
+      "evidence": "docs/uiUXOverhaulPlan/d7-verification-checkpoint.md",
+      "sha256": "633073c60e2542473de609e6b34a5b8bf753235c3c29b61fc1181127e2855a3a"
+    },
+    {
+      "path": "src/invidious/views/admin/standalone_shell.ecr",
+      "surface": "S14",
+      "verification": "V33",
+      "evidence": "docs/uiUXOverhaulPlan/d7-verification-checkpoint.md",
+      "sha256": "674f12d977359063e7591d0fabaf1d7ddbf3a0971c750c251a6a9dff8e3fddd0"
+    },
+    {
+      "path": "src/invidious/views/channel.ecr",
+      "surface": "S03",
+      "verification": "V07,V20,V25,V27",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "c3cf4ff6a0e090f5a1986f3d41ff1164784884444f884f0691436a1eb7a41dc8"
+    },
+    {
+      "path": "src/invidious/views/channel_clips.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "12d288f667bc8f10f49c73f02ec0db0ecb92425167a2928a46aa103c2dc8be90"
+    },
+    {
+      "path": "src/invidious/views/channel_search.ecr",
+      "surface": "S03",
+      "verification": "V07,V20,V25,V27",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "1ea1d8f7be12f323ba45352a47604914de2e47f25d6b15312ab05bf126f42aa6"
+    },
+    {
+      "path": "src/invidious/views/clip_unavailable.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "fcca8cc51ca8976bd21a4848af048a55516c5a5056b26ba4b4356d1f7794b1be"
+    },
+    {
+      "path": "src/invidious/views/community.ecr",
+      "surface": "S03",
+      "verification": "V07,V20,V25,V27",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "40207145dbb69b5ab2b5865ca9107e2ff364f4ffc118bf27a8dd08b88531d118"
+    },
+    {
+      "path": "src/invidious/views/components/ai-filter-empty.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "64a101efec5285fe81880c91a5a9c60ef3a34b3186f231c5f6c32d4c9997183a"
+    },
+    {
+      "path": "src/invidious/views/components/ai-filter-status.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "fdbae48080db57a72ce0cde135ed0588b151558b62a584e5ad714ba8cc628e40"
+    },
+    {
+      "path": "src/invidious/views/components/browse_controls.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "2a5ac8c28720ec943e6afc9ed64480874814ec0d0844a114c78c8efc8167fda9"
+    },
+    {
+      "path": "src/invidious/views/components/channel_info.ecr",
+      "surface": "S03",
+      "verification": "V07,V20,V25,V27",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "847029b24c2d7f024e11547804945b69eea56d68258d2c2312ae5629091c1e3d"
+    },
+    {
+      "path": "src/invidious/views/components/channel_spoiler_scripts.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "84661d6219aa3ea1dbfb155c908a8112fa751ecb7652aa72605143ff5198a11e"
+    },
+    {
+      "path": "src/invidious/views/components/clip_editor.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "17b321c1e25c81468d03bfb5306f4be59ae7acb418b8ad00246122c6f73e52cb"
+    },
+    {
+      "path": "src/invidious/views/components/clips.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "18d069bd404367aa91fa414615bbada3f6c22ca1b1050ea60a9840727ec667dc"
+    },
+    {
+      "path": "src/invidious/views/components/dearrow_contributions.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "e72d01d8f058734d0ccacaf00b1fd16f08a0bc65b3e8fb3f4a6972a3e10278ec"
+    },
+    {
+      "path": "src/invidious/views/components/item.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "b21375ca86206a7ac927bc1bd11cd9b9188cbed4c0e47180f132a21a46d9b560"
+    },
+    {
+      "path": "src/invidious/views/components/items_paginated.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "57d8b4c653b59634fb10f64d409c36c41501d9c937a619b4499dae1ec2d55ca3"
+    },
+    {
+      "path": "src/invidious/views/components/player.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "222043e348734eb04a5bc9f92a44a8414b3ddc4cbb98d29848ba4e86cc2821c2"
+    },
+    {
+      "path": "src/invidious/views/components/player_sources.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "f7ee177d16ff446d62b3d277d8546c5e218ff1bb3755058c995900ee5c8f6d6b"
+    },
+    {
+      "path": "src/invidious/views/components/video-actions-dialog.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "3585140e32d92fc41a0171f39c2ad43ea2b67b4b947d7eb2425b619d7d2ce97d"
+    },
+    {
+      "path": "src/invidious/views/create_clip.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "9f258525843f56c78af36882c4ebc0306bd90a905db7a32495920e90e49418aa"
+    },
+    {
+      "path": "src/invidious/views/create_playlist.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "a0703b536812c0fb1b774a80a338a6a992db62c4f566274af5ae94080a5c04f1"
+    },
+    {
+      "path": "src/invidious/views/delete_clip.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "318a9f001c4ae9d5813e7e1d6c347b0c419c82f92ea414754701f48c069bef23"
+    },
+    {
+      "path": "src/invidious/views/delete_playlist.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "1e527117afe85bf83f73e38018864e79f2f043cb6e4cf36f86fb76219144e81c"
+    },
+    {
+      "path": "src/invidious/views/edit_playlist.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "b5a261f7829e4c84dde1323ca0fc6eefa573a2f7014dc42abcce94eceb550468"
+    },
+    {
+      "path": "src/invidious/views/embed.ecr",
+      "surface": "S15",
+      "verification": "V11,V16,V17,V25,V34",
+      "evidence": "docs/uiUXOverhaulPlan/d7-embed-checkpoint.md",
+      "sha256": "6c028b6ff89c8ea7d8bb059ffb64b8f4fdb6d155a0b0cc39b07c89f194c4a206"
+    },
+    {
+      "path": "src/invidious/views/error.ecr",
+      "surface": "S16",
+      "verification": "V34,V35",
+      "evidence": "docs/uiUXOverhaulPlan/d7-reading-checkpoint.md",
+      "sha256": "d36878c9a9433ff39ccc27176526273e5e8f9e61d1b782d091fbe0ff949d7dd2"
+    },
+    {
+      "path": "src/invidious/views/feeds/clips.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "91156570cf360607eb25d0ef647459638b503c048ac10ed41c8ad9a8a3f71b58"
+    },
+    {
+      "path": "src/invidious/views/feeds/history.ecr",
+      "surface": "S05",
+      "verification": "V10,V13,V30",
+      "evidence": "docs/uiUXOverhaulPlan/d7-acceptance.md",
+      "sha256": "3e989dfea69ee214240f0241cd0b593bde3d233cd6a163886cb3faa7f8dcfce9"
+    },
+    {
+      "path": "src/invidious/views/feeds/playlists.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "064d0f3e102fed31d884c8165bdbed59e33c6d11cfb5439de36b1e29cd549da6"
+    },
+    {
+      "path": "src/invidious/views/feeds/popular.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "b387ed045bf858c759cf31b39930d9b7b1101a51fad65f291cc9e1dea1c3dafc"
+    },
+    {
+      "path": "src/invidious/views/feeds/subscriptions.ecr",
+      "surface": "S04",
+      "verification": "V08,V09,V13",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "e849053675a10fc081988186f50e5a69cb406f158bd41d276152089cbe57e12b"
+    },
+    {
+      "path": "src/invidious/views/feeds/trending.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "1cb80768a7df8f1f1bc8c465ac5480247cc497bdbd3ecfcf69d9df785d8e5b36"
+    },
+    {
+      "path": "src/invidious/views/hashtag.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "d73f39b9d75f472347d2915969b09c717adfdf6f4c35983e8a97e3081e261408"
+    },
+    {
+      "path": "src/invidious/views/licenses.ecr",
+      "surface": "S16",
+      "verification": "V34,V35",
+      "evidence": "docs/uiUXOverhaulPlan/d7-reading-checkpoint.md",
+      "sha256": "8538cc0687814183e9ba733ac82d06eccafc959e80c70a765a38266c10851379"
+    },
+    {
+      "path": "src/invidious/views/message.ecr",
+      "surface": "S16",
+      "verification": "V34,V35",
+      "evidence": "docs/uiUXOverhaulPlan/d7-reading-checkpoint.md",
+      "sha256": "c534fb774106ffd591758bf81cdeb961d411a41499b71bd2b876a394a3e34edb"
+    },
+    {
+      "path": "src/invidious/views/mix.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "ed4f9d67f4f5d98b503cb271b7a4ee2418229e840d6d480a2edf49ed08cf5de6"
+    },
+    {
+      "path": "src/invidious/views/overhaul/ai_filter_matrix.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "5b2ae4a47d7c866ce915ee7100ea3bb3348eb2c2cd647197b461f32e0109fd46"
+    },
+    {
+      "path": "src/invidious/views/overhaul/chat_preferences.ecr",
+      "surface": "S08",
+      "verification": "V21,V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-chat-checkpoint.md",
+      "sha256": "bf33a9ad58178b5c4b9e7a6a521eab7c5a22def5ff3f2f56b3e186b70c22f299"
+    },
+    {
+      "path": "src/invidious/views/overhaul/chat_settings.ecr",
+      "surface": "S08",
+      "verification": "V21,V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-chat-checkpoint.md",
+      "sha256": "da709caa8fc14fb5667f788c236dd018d75b74846b641bb0c9bb29830d7be099"
+    },
+    {
+      "path": "src/invidious/views/overhaul/clips.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "20b44b7729b8bc9194f07642bc87f29ded8598492ea30935d5d9f9ad15d234f3"
+    },
+    {
+      "path": "src/invidious/views/overhaul/collection_toolbar.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "73772b4eaabce58ef10cb3363cd78217f0e874de32ba2a3c5e8da632deffaed4"
+    },
+    {
+      "path": "src/invidious/views/overhaul/comment_config.ecr",
+      "surface": "S03",
+      "verification": "V07,V20,V25,V27",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "26415ccdacd6f38491f40832d0469c731080f34a511e329069086d2abe06511d"
+    },
+    {
+      "path": "src/invidious/views/overhaul/filter_chip.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "8ea0dce23cfa20c6c2fbed6d4b2622df8ef5a6a8501e0420c22ae1c8205268a9"
+    },
+    {
+      "path": "src/invidious/views/overhaul/history_item.ecr",
+      "surface": "S05",
+      "verification": "V10,V13,V30",
+      "evidence": "docs/uiUXOverhaulPlan/d7-acceptance.md",
+      "sha256": "4667f5a1423406b7d50b3bb9479c5786bbc6ff6ed4795c66e2849ae9f450b0cc"
+    },
+    {
+      "path": "src/invidious/views/overhaul/item.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "8f36c43cd7501882a15451a7472cfab3aa1fd55d1b14f7f754f7170ff0802037"
+    },
+    {
+      "path": "src/invidious/views/overhaul/item_menu.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "9576e3df4d3dac2afdd5e644bd6f3fa9a38c9bd1939f82ebde5e1f64efa70bc0"
+    },
+    {
+      "path": "src/invidious/views/overhaul/navigation.ecr",
+      "surface": "S01",
+      "verification": "V01,V30,V35,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d8-acceptance.md",
+      "sha256": "fe5ba3333851cd0117991a8693495027f24c77a9778c9e19f72e4ebf40e0362d"
+    },
+    {
+      "path": "src/invidious/views/overhaul/playlist_fields.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "863d2831c238bef8c0d0a18dcd850e0f946b80fd1c3fa322f6952d087966ce33"
+    },
+    {
+      "path": "src/invidious/views/overhaul/playlist_reference_actions.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "f62ab40acbee8996f6e58688ef5263a63fd8039a76dd588075b556e7e7eba58d"
+    },
+    {
+      "path": "src/invidious/views/overhaul/selection.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "76ea4d7e7e1d425252f08e41c080d0e7a25673884269ab98a6a329cb58f73636"
+    },
+    {
+      "path": "src/invidious/views/overhaul/settings.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "1ee781ac4b147e177f5a99e79096d5dfbe9de82684e8261f31187f6d5f12e096"
+    },
+    {
+      "path": "src/invidious/views/overhaul/settings_legacy_entry.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "0a2aaaf6af08f3671b2ff00604b0ace0632bf6d875060ed0663cf55fea906430"
+    },
+    {
+      "path": "src/invidious/views/overhaul/settings_navigation.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "98a3f47abd996673623574f82594ec52b092cc2f84273d315100101705dcee1f"
+    },
+    {
+      "path": "src/invidious/views/overhaul/shell.ecr",
+      "surface": "S01",
+      "verification": "V01,V30,V35,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d8-acceptance.md",
+      "sha256": "3a47094abfe718c1ffd996eb71f86422f88e4508fa284af4eb3737b9e0fd3f1c"
+    },
+    {
+      "path": "src/invidious/views/overhaul/sponsorblock_defaults.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "875ce371eeb733e910fb9512c2fbc3cab4efb8a9a78200f2631ef388bf13b884"
+    },
+    {
+      "path": "src/invidious/views/overhaul/standalone_notice.ecr",
+      "surface": "S16",
+      "verification": "V34,V35",
+      "evidence": "docs/uiUXOverhaulPlan/d7-reading-checkpoint.md",
+      "sha256": "a2418e6db396ee7986ae107e2c39fb537812ccfe8614c45095d4d33df2a02a2a"
+    },
+    {
+      "path": "src/invidious/views/overhaul/status_shell.ecr",
+      "surface": "S16",
+      "verification": "V34,V35",
+      "evidence": "docs/uiUXOverhaulPlan/d7-reading-checkpoint.md",
+      "sha256": "ab230b80943fe249c0ec2a8a1477e147d4347014538fb119b9af4a7c2d712ed7"
+    },
+    {
+      "path": "src/invidious/views/overhaul/subscribe.ecr",
+      "surface": "S04",
+      "verification": "V08,V09,V13",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "80e16dac934660ca1de7b50e53660a6ff4be3e725b72fb916ffe964c1aa9315a"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_chat.ecr",
+      "surface": "S08",
+      "verification": "V21,V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-chat-checkpoint.md",
+      "sha256": "838cee72c726db06c5d11bbe36656f25ba12c94208eaae20bd8ae0502f7a2d78"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_clip_config.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "d63860b07084b69e6253eb32c5da005cbe59f881117ea8c9fb06fc2b47a92414"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_clip_editor.ecr",
+      "surface": "S09",
+      "verification": "V22,V23",
+      "evidence": "docs/uiUXOverhaulPlan/d6-clips-checkpoint.md",
+      "sha256": "05bc59997cc21c7832d79a3d529771597fb3a27bce36437273d4cfef739e58f7"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_comments.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "d909b4d4827c92750ec8432220ef30d91d09839ad37468590a6a921593fd53d9"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_description.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "62c79055df34e2f41df567953b3fa8bd2b6f77ac496a87af16b3d25bff976078"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_destinations.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "b2e3c6e6917bbc58641501150febcdbab56eaf143b4280cc7badb4af833a3bf5"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_heading.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "6c46a20d5dcb3dc76ae915509ff76f5adebd9e4a58112985b52df6f321cfb4d9"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_queue.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "8252c2abecb626c08e451a1dd26559d86fde6cca4a1a8493b8611b63e3b71f27"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_recommendation.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "d4d6c0d185a4f5dda68c013bf9c9647f72fd4ef07bdddd89b3d24c3c3c748c5c"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_recommendations.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "98c447cb535b7c65a07b3b8e0f26284db6bffaa908ceabb084bb06b00bcc6340"
+    },
+    {
+      "path": "src/invidious/views/overhaul/watch_transcript.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "3969a6f08bfc875a628169299bb4aa0ed9daebebb9a0b718521fd1e9884fa16d"
+    },
+    {
+      "path": "src/invidious/views/playlist.ecr",
+      "surface": "S06",
+      "verification": "V11\u2013V13,V18",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "4a40bb13cb03b66426d264055cbf14d21465a25016cdad380c148049db6a3ae1"
+    },
+    {
+      "path": "src/invidious/views/post.ecr",
+      "surface": "S03",
+      "verification": "V07,V20,V25,V27",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "e1fad1a766817659d59814917c140e2834e1ae0af31acbaef92216d585306d5b"
+    },
+    {
+      "path": "src/invidious/views/privacy.ecr",
+      "surface": "S16",
+      "verification": "V34,V35",
+      "evidence": "docs/uiUXOverhaulPlan/d7-reading-checkpoint.md",
+      "sha256": "a4e98f937ece92c4c164d0698d72ca0d2cf1eff252b8c2231c89153cfa123ccd"
+    },
+    {
+      "path": "src/invidious/views/search.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "c7bada57bd5a2cf1d3d91f489877549581dc1e7e15c6f510289317a33f0ac8d7"
+    },
+    {
+      "path": "src/invidious/views/search_homepage.ecr",
+      "surface": "S02",
+      "verification": "V02\u2013V06",
+      "evidence": "docs/uiUXOverhaulPlan/d8-verification.md",
+      "sha256": "7ec3ff232bbc0322c51dde3429559b9d522421bb1059e636ce9e9355bc46854b"
+    },
+    {
+      "path": "src/invidious/views/template.ecr",
+      "surface": "S01",
+      "verification": "V01,V30,V35,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d8-acceptance.md",
+      "sha256": "9c3154b5359668253efc357e4c16b2ad4ca46f7700c3d275f4f3d350dbf8a62c"
+    },
+    {
+      "path": "src/invidious/views/user/account.ecr",
+      "surface": "S11",
+      "verification": "V30,V31",
+      "evidence": "docs/uiUXOverhaulPlan/d7-account-data-checkpoint.md",
+      "sha256": "75db9906daeca04128151ed75fbb49f9675588dfc2fc89d0e32a5ef94c6529b9"
+    },
+    {
+      "path": "src/invidious/views/user/authorize_token.ecr",
+      "surface": "S11",
+      "verification": "V30,V31",
+      "evidence": "docs/uiUXOverhaulPlan/d7-account-data-checkpoint.md",
+      "sha256": "faf9360db01e480036af37de9da1ca3734400d1e2499b248fc2068c158b83fbd"
+    },
+    {
+      "path": "src/invidious/views/user/blocked_channels.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "0d95b9e8fb9377a24abee3db3d572d30dc0a3baa6b0144e90452103995912d7b"
+    },
+    {
+      "path": "src/invidious/views/user/channel_spoilers.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "74d66f7b8d2a320d2d3288517eb774b187e5e7c5641f12f92d6ef6c1363cb74e"
+    },
+    {
+      "path": "src/invidious/views/user/clear_watch_history.ecr",
+      "surface": "S05",
+      "verification": "V10,V13,V30",
+      "evidence": "docs/uiUXOverhaulPlan/d7-acceptance.md",
+      "sha256": "2d3406ab4ec104f0c8f6ce671441416a352bae0100afb89bf8e5dc4dd31e7e32"
+    },
+    {
+      "path": "src/invidious/views/user/data_control.ecr",
+      "surface": "S12",
+      "verification": "V32",
+      "evidence": "docs/uiUXOverhaulPlan/d7-account-data-checkpoint.md",
+      "sha256": "5be7460741230320dfabbb2da6828a03a6e74d562aa6bb0752e1fb37addd88a9"
+    },
+    {
+      "path": "src/invidious/views/user/dearrow_identity.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "3a06a01865c93518ccc6a639dcdc3fca0082b486689cec7c0f3b3236b58a12b5"
+    },
+    {
+      "path": "src/invidious/views/user/delete_account.ecr",
+      "surface": "S11",
+      "verification": "V30,V31",
+      "evidence": "docs/uiUXOverhaulPlan/d7-account-data-checkpoint.md",
+      "sha256": "53a1a67627318cc751f260f198a6b728bcdbcbde13ea6ddaa233420cd2473be0"
+    },
+    {
+      "path": "src/invidious/views/user/login.ecr",
+      "surface": "S11",
+      "verification": "V30,V31",
+      "evidence": "docs/uiUXOverhaulPlan/d7-account-data-checkpoint.md",
+      "sha256": "28044ef48567dc079d653e8cbec2394b26a20c08b23841df7aff94539d6150c8"
+    },
+    {
+      "path": "src/invidious/views/user/sponsorblock_channels.ecr",
+      "surface": "S10",
+      "verification": "V24\u2013V30",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "0cc1813a581a6feb3da5b403fec6fb12a154f3e699873bad070e440a87e9d773"
+    },
+    {
+      "path": "src/invidious/views/user/subscription_manager.ecr",
+      "surface": "S04",
+      "verification": "V08,V09,V13",
+      "evidence": "docs/uiUXOverhaulPlan/d4-acceptance.md",
+      "sha256": "6e1853697a2dbd07c0b029009a8acec8d5d1f0875c805a635a99d422c6c1f1f7"
+    },
+    {
+      "path": "src/invidious/views/user/token_manager.ecr",
+      "surface": "S11",
+      "verification": "V30,V31",
+      "evidence": "docs/uiUXOverhaulPlan/d7-account-data-checkpoint.md",
+      "sha256": "6761141e1d4a457b9f32ae31dce9eb764995e810b5e46c55bd0719154cd7fdfa"
+    },
+    {
+      "path": "src/invidious/views/user/tv_pairing.ecr",
+      "surface": "S13",
+      "verification": "V33",
+      "evidence": "docs/uiUXOverhaulPlan/d7-account-data-checkpoint.md",
+      "sha256": "d3b648c020e39c68d28f9087f81c43414799105a915d4d05c76dbc65ba8d8114"
+    },
+    {
+      "path": "src/invidious/views/verification.ecr",
+      "surface": "S14",
+      "verification": "V33",
+      "evidence": "docs/uiUXOverhaulPlan/d7-verification-checkpoint.md",
+      "sha256": "cc1783c5a44672704ff993d35f1228d071301cf9a8c8ba090f42fcd306e2b60a"
+    },
+    {
+      "path": "src/invidious/views/watch.ecr",
+      "surface": "S07",
+      "verification": "V14\u2013V20,V24\u2013V27,V36",
+      "evidence": "docs/uiUXOverhaulPlan/d6-acceptance.md",
+      "sha256": "59006a5666a4fe9e5cadee73d6e5a35f22b38010bff871cf08c5584ee133743b"
+    }
+  ],
+  "baseline_inventory_rows": [
+    "add_playlist_items.ecr",
+    "admin/bot_protection.ecr",
+    "channel.ecr",
+    "channel_clips.ecr",
+    "channel_search.ecr",
+    "clip_unavailable.ecr",
+    "community.ecr",
+    "components/ai-filter-empty.ecr",
+    "components/ai-filter-preferences.ecr",
+    "components/channel_info.ecr",
+    "components/channel_spoiler_scripts.ecr",
+    "components/clip_dialog.ecr",
+    "components/clip_editor.ecr",
+    "components/clips.ecr",
+    "components/dearrow_contributions.ecr",
+    "components/feed_menu.ecr",
+    "components/item.ecr",
+    "components/items_paginated.ecr",
+    "components/navigation.ecr",
+    "components/player.ecr",
+    "components/player_sources.ecr",
+    "components/search_box.ecr",
+    "components/subscribe_widget.ecr",
+    "components/video-actions-dialog.ecr",
+    "components/video-context-buttons.ecr",
+    "create_clip.ecr",
+    "create_playlist.ecr",
+    "delete_clip.ecr",
+    "delete_playlist.ecr",
+    "edit_playlist.ecr",
+    "embed.ecr",
+    "error.ecr",
+    "feeds/clips.ecr",
+    "feeds/history.ecr",
+    "feeds/playlists.ecr",
+    "feeds/popular.ecr",
+    "feeds/subscriptions.ecr",
+    "feeds/trending.ecr",
+    "hashtag.ecr",
+    "licenses.ecr",
+    "message.ecr",
+    "mix.ecr",
+    "playlist.ecr",
+    "post.ecr",
+    "privacy.ecr",
+    "search.ecr",
+    "search_homepage.ecr",
+    "template.ecr",
+    "user/account.ecr",
+    "user/authorize_token.ecr",
+    "user/blocked_channels.ecr",
+    "user/change_password.ecr",
+    "user/channel_spoilers.ecr",
+    "user/clear_watch_history.ecr",
+    "user/data_control.ecr",
+    "user/dearrow_identity.ecr",
+    "user/delete_account.ecr",
+    "user/login.ecr",
+    "user/preferences.ecr",
+    "user/sponsorblock_channels.ecr",
+    "user/subscription_manager.ecr",
+    "user/token_manager.ecr",
+    "user/tv_pairing.ecr",
+    "verification.ecr",
+    "watch.ecr"
+  ],
+  "baseline_rows_preserved": 65,
+  "screen_families": 16,
+  "dynamic_rows": 27,
+  "all_status_rows_reconciled": true
+}

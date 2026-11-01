@@ -1,0 +1,94 @@
+TAP version 13
+# Subtest: chromium: D2 category drafts, local search, Discard and guarded departure
+ok 1 - chromium: D2 category drafts, local search, Discard and guarded departure
+  ---
+  duration_ms: 1968.778953
+  type: 'test'
+  ...
+# Subtest: chromium: D2 canonical category read-back, unchecked values and duplicate submit guard
+ok 2 - chromium: D2 canonical category read-back, unchecked values and duplicate submit guard
+  ---
+  duration_ms: 188.310436
+  type: 'test'
+  ...
+# Subtest: chromium: D2 failed and unconfirmed saves retain drafts without write retries
+ok 3 - chromium: D2 failed and unconfirmed saves retain drafts without write retries
+  ---
+  duration_ms: 817.844363
+  type: 'test'
+  ...
+# Subtest: chromium: D2 all nine category forms and normal HTML fallback without JavaScript
+ok 4 - chromium: D2 all nine category forms and normal HTML fallback without JavaScript
+  ---
+  duration_ms: 1269.055287
+  type: 'test'
+  ...
+# Subtest: chromium: D2 appended shared primitives initialize once and dispose on departure
+ok 5 - chromium: D2 appended shared primitives initialize once and dispose on departure
+  ---
+  duration_ms: 464.358157
+  type: 'test'
+  ...
+# Subtest: firefox: D2 category drafts, local search, Discard and guarded departure
+ok 6 - firefox: D2 category drafts, local search, Discard and guarded departure
+  ---
+  duration_ms: 3108.561682
+  type: 'test'
+  ...
+# Subtest: firefox: D2 canonical category read-back, unchecked values and duplicate submit guard
+ok 7 - firefox: D2 canonical category read-back, unchecked values and duplicate submit guard
+  ---
+  duration_ms: 531.724731
+  type: 'test'
+  ...
+# Subtest: firefox: D2 failed and unconfirmed saves retain drafts without write retries
+ok 8 - firefox: D2 failed and unconfirmed saves retain drafts without write retries
+  ---
+  duration_ms: 1784.125808
+  type: 'test'
+  ...
+# Subtest: firefox: D2 all nine category forms and normal HTML fallback without JavaScript
+ok 9 - firefox: D2 all nine category forms and normal HTML fallback without JavaScript
+  ---
+  duration_ms: 1613.636467
+  type: 'test'
+  ...
+# Subtest: firefox: D2 appended shared primitives initialize once and dispose on departure
+ok 10 - firefox: D2 appended shared primitives initialize once and dispose on departure
+  ---
+  duration_ms: 799.770923
+  type: 'test'
+  ...
+# Subtest: chromium: D2 component departure aborts pending category reads and suppresses late output
+ok 11 - chromium: D2 component departure aborts pending category reads and suppresses late output
+  ---
+  duration_ms: 171.041916
+  type: 'test'
+  ...
+# Subtest: firefox: D2 component departure aborts pending category reads and suppresses late output
+ok 12 - firefox: D2 component departure aborts pending category reads and suppresses late output
+  ---
+  duration_ms: 1008.105986
+  type: 'test'
+  ...
+# Subtest: chromium: D6 AI actions have one matrix owner, retain paused drafts and preserve ordinary form fields
+ok 13 - chromium: D6 AI actions have one matrix owner, retain paused drafts and preserve ordinary form fields
+  ---
+  duration_ms: 768.167385
+  type: 'test'
+  ...
+# Subtest: firefox: D6 AI actions have one matrix owner, retain paused drafts and preserve ordinary form fields
+ok 14 - firefox: D6 AI actions have one matrix owner, retain paused drafts and preserve ordinary form fields
+  ---
+  duration_ms: 1396.790492
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16730.958681

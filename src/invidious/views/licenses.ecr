@@ -1,14 +1,12 @@
-<!DOCTYPE html>
-<html lang="en-US">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-
-<body>
-    <h1><%= I18n.translate(locale, "JavaScript license information") %></h1>
-    <table id="jslicense-labels1">
+<% content_for "header" do %><title><%= I18n.translate(locale, "JavaScript license information") %> - Invidious</title><% end %>
+<article class="reading-page legal-page licenses-page" aria-labelledby="licenses-heading">
+    <h1 id="licenses-heading"><%= I18n.translate(locale, "JavaScript license information") %></h1>
+    <p><%= I18n.translate(locale, "licenses_explanation") %></p>
+    <div class="toolbar"><a class="button" href="<%= HTML.escape(CONFIG.modified_source_code_url || "https://github.com/iv-org/invidious") %>" rel="noreferrer noopener"><%= I18n.translate(locale, "footer_source_code") %></a><a class="button" href="https://github.com/iv-org/invidious/blob/master/LICENSE" rel="noreferrer noopener">AGPLv3</a></div>
+    <div class="license-table-scroll" role="region" aria-label="<%= I18n.translate(locale, "JavaScript license information") %>" tabindex="0"><table id="jslicense-labels1">
+        <caption><%= I18n.translate(locale, "licenses_table_caption") %></caption>
+        <thead><tr><th scope="col"><%= I18n.translate(locale, "licenses_script") %></th><th scope="col"><%= I18n.translate(locale, "licenses_license") %></th><th scope="col"><%= I18n.translate(locale, "source") %></th></tr></thead>
+        <tbody>
         <tr>
             <td>
                 <a href="/js/silvermine-videojs-quality-selector.min.js?v=<%= ASSET_COMMIT %>">silvermine-videojs-quality-selector.min.js</a>
@@ -180,6 +178,6 @@
         <%- {% for row in run("../../../scripts/generate_js_licenses.cr").stringify.split('\n') %} %>
             <%-= {{row.id}} -%>
         <% {% end %} -%>
-    </table>
-</body>
-</html>
+    </tbody></table></div>
+    <p class="muted"><%= I18n.translate(locale, "licenses_icons") %> <a href="/icons/LICENSE.lucide">Lucide · ISC</a> · <a href="/icons/LICENSE.feather">Feather · MIT</a> · <a href="https://github.com/lucide-icons/lucide/tree/0.468.0/icons" rel="noreferrer noopener"><%= I18n.translate(locale, "source") %></a></p>
+</article>

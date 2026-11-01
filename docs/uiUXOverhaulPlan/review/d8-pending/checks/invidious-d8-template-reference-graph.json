@@ -1,0 +1,824 @@
+[
+  {
+    "template": "src/invidious/views/add_playlist_items.ecr",
+    "productionRefs": [
+      "src/invidious/routes/playlists.cr",
+      "src/invidious/views/components/item.ecr",
+      "src/invidious/views/overhaul/item_menu.ecr",
+      "src/invidious/views/overhaul/collection_toolbar.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/admin/bot_protection.ecr",
+    "productionRefs": [
+      "src/invidious/routes/verification.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/admin/settings.ecr",
+    "productionRefs": [
+      "src/invidious/routes/admin_settings.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/admin/standalone_shell.ecr",
+    "productionRefs": [
+      "src/invidious/helpers/macros.cr",
+      "src/invidious/routes/admin_settings.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/channel.ecr",
+    "productionRefs": [
+      "src/invidious/frontend/settings.cr",
+      "src/invidious/helpers/serialized_yt_data.cr",
+      "src/invidious/routes/sponsorblock_preferences.cr",
+      "src/invidious/routes/channel_spoiler_preferences.cr",
+      "src/invidious/routes/channels.cr",
+      "src/invidious/routes/embed.cr",
+      "src/invidious/search/filters.cr",
+      "src/invidious/search/query.cr",
+      "src/invidious/user/imports.cr",
+      "src/invidious/views/embed.ecr",
+      "src/invidious/views/watch.ecr",
+      "src/invidious/yt_backend/url_sanitizer.cr",
+      "src/invidious/views/components/dearrow_contributions.ecr",
+      "src/invidious/views/components/item.ecr",
+      "src/invidious/views/user/sponsorblock_channels.ecr",
+      "src/invidious/views/user/channel_spoilers.ecr",
+      "src/invidious/views/overhaul/item.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/channel_clips.ecr",
+    "productionRefs": [
+      "src/invidious/routes/channels.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/channel_search.ecr",
+    "productionRefs": [
+      "src/invidious/routes/channels.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/clip_unavailable.ecr",
+    "productionRefs": [
+      "src/invidious/routes/clips.cr",
+      "src/invidious/views/components/player.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/community.ecr",
+    "productionRefs": [
+      "src/invidious/frontend/channel_page.cr",
+      "src/invidious/routes/channels.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/ai-filter-empty.ecr",
+    "productionRefs": [
+      "src/invidious/views/search.ecr",
+      "src/invidious/views/components/items_paginated.ecr",
+      "src/invidious/views/feeds/popular.ecr",
+      "src/invidious/views/feeds/trending.ecr",
+      "src/invidious/views/overhaul/watch_recommendations.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/ai-filter-preferences.ecr",
+    "productionRefs": [
+      "src/invidious/views/user/preferences.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/ai-filter-status.ecr",
+    "productionRefs": [
+      "src/invidious/views/components/ai-filter-preferences.ecr",
+      "src/invidious/views/overhaul/ai_filter_matrix.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/browse_controls.ecr",
+    "productionRefs": [
+      "src/invidious/views/channel_clips.ecr",
+      "src/invidious/views/search.ecr",
+      "src/invidious/views/components/items_paginated.ecr",
+      "src/invidious/views/feeds/history.ecr",
+      "src/invidious/views/feeds/subscriptions.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/channel_info.ecr",
+    "productionRefs": [
+      "src/invidious/views/channel.ecr",
+      "src/invidious/views/channel_clips.ecr",
+      "src/invidious/views/channel_search.ecr",
+      "src/invidious/views/community.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/channel_spoiler_scripts.ecr",
+    "productionRefs": [
+      "src/invidious/views/embed.ecr",
+      "src/invidious/views/template.ecr",
+      "src/invidious/views/overhaul/shell.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/clip_dialog.ecr",
+    "productionRefs": []
+  },
+  {
+    "template": "src/invidious/views/components/clip_editor.ecr",
+    "productionRefs": [
+      "src/invidious/views/create_clip.ecr",
+      "src/invidious/views/components/clip_dialog.ecr",
+      "src/invidious/views/overhaul/watch_clip_editor.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/clips.ecr",
+    "productionRefs": [
+      "src/invidious/views/channel_clips.ecr",
+      "src/invidious/views/feeds/clips.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/dearrow_contributions.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/feed_menu.ecr",
+    "productionRefs": []
+  },
+  {
+    "template": "src/invidious/views/components/item.ecr",
+    "productionRefs": [
+      "src/invidious/views/mix.ecr",
+      "src/invidious/views/components/items_paginated.ecr",
+      "src/invidious/views/feeds/popular.ecr",
+      "src/invidious/views/feeds/trending.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/items_paginated.ecr",
+    "productionRefs": [
+      "src/invidious/views/add_playlist_items.ecr",
+      "src/invidious/views/channel.ecr",
+      "src/invidious/views/channel_search.ecr",
+      "src/invidious/views/hashtag.ecr",
+      "src/invidious/views/playlist.ecr",
+      "src/invidious/views/search.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/navigation.ecr",
+    "productionRefs": [
+      "src/invidious/views/template.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/player.ecr",
+    "productionRefs": [
+      "src/invidious/views/embed.ecr",
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/player_sources.ecr",
+    "productionRefs": [
+      "src/invidious/views/embed.ecr",
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/search_box.ecr",
+    "productionRefs": [
+      "src/invidious/views/template.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/subscribe_widget.ecr",
+    "productionRefs": []
+  },
+  {
+    "template": "src/invidious/views/components/video-actions-dialog.ecr",
+    "productionRefs": [
+      "src/invidious/views/template.ecr",
+      "src/invidious/views/overhaul/shell.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/components/video-context-buttons.ecr",
+    "productionRefs": [
+      "src/invidious/views/components/item.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/create_clip.ecr",
+    "productionRefs": [
+      "src/invidious/routes/clips.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/create_playlist.ecr",
+    "productionRefs": [
+      "src/invidious/routes/playlists.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/delete_clip.ecr",
+    "productionRefs": [
+      "src/invidious/routes/clips.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/delete_playlist.ecr",
+    "productionRefs": [
+      "src/invidious/routes/playlists.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/edit_playlist.ecr",
+    "productionRefs": [
+      "src/invidious/routes/playlists.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/embed.ecr",
+    "productionRefs": [
+      "src/invidious/routes/embed.cr",
+      "src/invidious/yt_backend/url_sanitizer.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/error.ecr",
+    "productionRefs": [
+      "src/invidious/channels/community.cr",
+      "src/invidious/frontend/comments_youtube.cr",
+      "src/invidious/helpers/errors.cr",
+      "src/invidious/helpers/handlers.cr",
+      "src/invidious/routes/blocked_channels.cr",
+      "src/invidious/routes/channels.cr",
+      "src/invidious/routes/playlists.cr",
+      "src/invidious/routes/watch.cr",
+      "src/invidious/yt_backend/youtube_api.cr",
+      "src/invidious/views/components/clip_dialog.ecr",
+      "src/invidious/views/components/clip_editor.ecr",
+      "src/invidious/views/components/dearrow_contributions.ecr",
+      "src/invidious/views/user/dearrow_identity.ecr",
+      "src/invidious/routes/api/v1/feeds.cr",
+      "src/invidious/routes/api/v1/channels.cr",
+      "src/invidious/routes/api/v1/videos.cr",
+      "src/invidious/jsonify/api_v1/video_json.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/feeds/clips.ecr",
+    "productionRefs": [
+      "src/invidious/routes/clips.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/feeds/history.ecr",
+    "productionRefs": [
+      "src/invidious/routes/feeds.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/feeds/playlists.ecr",
+    "productionRefs": [
+      "src/invidious/routes/feeds.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/feeds/popular.ecr",
+    "productionRefs": [
+      "src/invidious/routes/feeds.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/feeds/subscriptions.ecr",
+    "productionRefs": [
+      "src/invidious/routes/feeds.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/feeds/trending.ecr",
+    "productionRefs": [
+      "src/invidious/routes/feeds.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/hashtag.ecr",
+    "productionRefs": [
+      "src/invidious/helpers/serialized_yt_data.cr",
+      "src/invidious/routes/search.cr",
+      "src/invidious/yt_backend/extractors.cr",
+      "src/invidious/views/overhaul/item.ecr",
+      "src/invidious/routes/api/v1/search.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/licenses.ecr",
+    "productionRefs": [
+      "src/invidious/routes/misc.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/message.ecr",
+    "productionRefs": [
+      "src/invidious/routes/feeds.cr",
+      "src/invidious/videos/live_chat.cr",
+      "src/invidious/yt_backend/youtube_api.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/mix.ecr",
+    "productionRefs": [
+      "src/invidious/routes/playlists.cr",
+      "src/invidious/yt_backend/url_sanitizer.cr",
+      "src/invidious/views/overhaul/watch_queue.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/ai_filter_matrix.ecr",
+    "productionRefs": [
+      "src/invidious/views/overhaul/settings.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/browse.ecr",
+    "productionRefs": []
+  },
+  {
+    "template": "src/invidious/views/overhaul/chat_preferences.ecr",
+    "productionRefs": [
+      "src/invidious/views/overhaul/watch_chat.ecr",
+      "src/invidious/views/overhaul/chat_settings.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/chat_settings.ecr",
+    "productionRefs": [
+      "src/invidious/routes/preferences.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/clips.ecr",
+    "productionRefs": [
+      "src/invidious/views/components/clips.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/collection_toolbar.ecr",
+    "productionRefs": [
+      "src/invidious/views/add_playlist_items.ecr",
+      "src/invidious/views/mix.ecr",
+      "src/invidious/views/playlist.ecr",
+      "src/invidious/views/components/items_paginated.ecr",
+      "src/invidious/views/feeds/history.ecr",
+      "src/invidious/views/feeds/popular.ecr",
+      "src/invidious/views/feeds/subscriptions.ecr",
+      "src/invidious/views/feeds/trending.ecr",
+      "src/invidious/views/user/subscription_manager.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/comment_config.ecr",
+    "productionRefs": [
+      "src/invidious/views/community.ecr",
+      "src/invidious/views/post.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/filter_chip.ecr",
+    "productionRefs": [
+      "src/invidious/views/search.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/history_item.ecr",
+    "productionRefs": [
+      "src/invidious/views/feeds/history.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/item.ecr",
+    "productionRefs": [
+      "src/invidious/frontend/desktop.cr",
+      "src/invidious/views/overhaul/browse.ecr",
+      "src/invidious/views/overhaul/playlist.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/item_menu.ecr",
+    "productionRefs": [
+      "src/invidious/views/overhaul/item.ecr",
+      "src/invidious/views/overhaul/watch_recommendation.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/navigation.ecr",
+    "productionRefs": [
+      "src/invidious/views/overhaul/shell.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/playlist.ecr",
+    "productionRefs": []
+  },
+  {
+    "template": "src/invidious/views/overhaul/playlist_fields.ecr",
+    "productionRefs": [
+      "src/invidious/views/create_playlist.ecr",
+      "src/invidious/views/edit_playlist.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/playlist_reference_actions.ecr",
+    "productionRefs": [
+      "src/invidious/views/mix.ecr",
+      "src/invidious/views/playlist.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/selection.ecr",
+    "productionRefs": [
+      "src/invidious/views/user/subscription_manager.ecr",
+      "src/invidious/views/overhaul/item.ecr",
+      "src/invidious/views/overhaul/history_item.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/settings.ecr",
+    "productionRefs": [
+      "src/invidious/routes/preferences.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/settings_legacy_entry.ecr",
+    "productionRefs": [
+      "src/invidious/views/overhaul/settings.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/settings_navigation.ecr",
+    "productionRefs": [
+      "src/invidious/views/user/blocked_channels.ecr",
+      "src/invidious/views/user/sponsorblock_channels.ecr",
+      "src/invidious/views/user/channel_spoilers.ecr",
+      "src/invidious/views/user/dearrow_identity.ecr",
+      "src/invidious/views/overhaul/settings.ecr",
+      "src/invidious/views/overhaul/chat_settings.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/shell.ecr",
+    "productionRefs": [
+      "src/invidious/routes/preferences.cr",
+      "src/invidious/routes/admin_settings.cr",
+      "src/invidious/views/template.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/sponsorblock_defaults.ecr",
+    "productionRefs": [
+      "src/invidious/views/overhaul/settings.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/standalone_notice.ecr",
+    "productionRefs": [
+      "src/invidious/frontend/standalone.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/status_shell.ecr",
+    "productionRefs": [
+      "src/invidious/helpers/errors.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/subscribe.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr",
+      "src/invidious/views/components/channel_info.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_chat.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_clip_config.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_clip_editor.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_comments.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_description.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_destinations.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_heading.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_queue.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_recommendation.ecr",
+    "productionRefs": [
+      "src/invidious/views/overhaul/watch_recommendations.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_recommendations.ecr",
+    "productionRefs": [
+      "src/invidious/frontend/watch_enhancements.cr",
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/overhaul/watch_transcript.ecr",
+    "productionRefs": [
+      "src/invidious/views/watch.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/playlist.ecr",
+    "productionRefs": [
+      "src/invidious/native_playlists.cr",
+      "src/invidious/mixes.cr",
+      "src/invidious/playlists.cr",
+      "src/invidious/frontend/error_pages.cr",
+      "src/invidious/helpers/serialized_yt_data.cr",
+      "src/invidious/routes/embed.cr",
+      "src/invidious/routes/playlists.cr",
+      "src/invidious/views/template.ecr",
+      "src/invidious/views/watch.ecr",
+      "src/invidious/yt_backend/url_sanitizer.cr",
+      "src/invidious/views/components/item.ecr",
+      "src/invidious/views/components/items_paginated.ecr",
+      "src/invidious/views/components/video-context-buttons.ecr",
+      "src/invidious/views/feeds/popular.ecr",
+      "src/invidious/views/feeds/trending.ecr",
+      "src/invidious/views/overhaul/item.ecr",
+      "src/invidious/views/overhaul/item_menu.ecr",
+      "src/invidious/views/overhaul/collection_toolbar.ecr",
+      "src/invidious/views/overhaul/history_item.ecr",
+      "src/invidious/views/overhaul/watch_queue.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/post.ecr",
+    "productionRefs": [
+      "src/invidious/routing.cr",
+      "src/invidious/channels/community.cr",
+      "src/invidious/frontend/pagination.cr",
+      "src/invidious/frontend/search_filters.cr",
+      "src/invidious/routes/channels.cr",
+      "src/invidious/views/add_playlist_items.ecr",
+      "src/invidious/views/create_playlist.ecr",
+      "src/invidious/views/delete_clip.ecr",
+      "src/invidious/views/delete_playlist.ecr",
+      "src/invidious/views/edit_playlist.ecr",
+      "src/invidious/views/search.ecr",
+      "src/invidious/views/search_homepage.ecr",
+      "src/invidious/views/template.ecr",
+      "src/invidious/views/components/channel_info.ecr",
+      "src/invidious/views/components/clip_editor.ecr",
+      "src/invidious/views/components/item.ecr",
+      "src/invidious/views/components/search_box.ecr",
+      "src/invidious/views/components/subscribe_widget.ecr",
+      "src/invidious/views/feeds/playlists.ecr",
+      "src/invidious/views/feeds/subscriptions.ecr",
+      "src/invidious/views/user/account.ecr",
+      "src/invidious/views/user/authorize_token.ecr",
+      "src/invidious/views/user/blocked_channels.ecr",
+      "src/invidious/views/user/change_password.ecr",
+      "src/invidious/views/user/clear_watch_history.ecr",
+      "src/invidious/views/user/data_control.ecr",
+      "src/invidious/views/user/delete_account.ecr",
+      "src/invidious/views/user/preferences.ecr",
+      "src/invidious/views/user/sponsorblock_channels.ecr",
+      "src/invidious/views/user/subscription_manager.ecr",
+      "src/invidious/views/user/token_manager.ecr",
+      "src/invidious/views/user/tv_pairing.ecr",
+      "src/invidious/views/user/channel_spoilers.ecr",
+      "src/invidious/views/user/login.ecr",
+      "src/invidious/views/user/dearrow_identity.ecr",
+      "src/invidious/views/admin/bot_protection.ecr",
+      "src/invidious/views/admin/settings.ecr",
+      "src/invidious/views/overhaul/shell.ecr",
+      "src/invidious/views/overhaul/item_menu.ecr",
+      "src/invidious/views/overhaul/settings.ecr",
+      "src/invidious/views/overhaul/subscribe.ecr",
+      "src/invidious/views/overhaul/filter_chip.ecr",
+      "src/invidious/views/overhaul/history_item.ecr",
+      "src/invidious/views/overhaul/playlist_reference_actions.ecr",
+      "src/invidious/views/overhaul/chat_preferences.ecr",
+      "src/invidious/views/overhaul/standalone_notice.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/privacy.ecr",
+    "productionRefs": [
+      "src/invidious/native_playlists.cr",
+      "src/invidious/database/base.cr",
+      "src/invidious/frontend/playlist_forms.cr",
+      "src/invidious/routes/misc.cr",
+      "src/invidious/routes/playlists.cr",
+      "src/invidious/user/exports.cr",
+      "src/invidious/user/imports.cr",
+      "src/invidious/views/create_playlist.ecr",
+      "src/invidious/views/edit_playlist.ecr",
+      "src/invidious/views/components/video-actions-dialog.ecr",
+      "src/invidious/views/feeds/playlists.ecr",
+      "src/invidious/views/overhaul/playlist_fields.ecr",
+      "src/invidious/routes/api/v1/authenticated.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/search.ecr",
+    "productionRefs": [
+      "src/invidious/config.cr",
+      "src/invidious/frontend/ai_channels.cr",
+      "src/invidious/frontend/settings.cr",
+      "src/invidious/frontend/error_pages.cr",
+      "src/invidious/routes/search.cr",
+      "src/invidious/routes/channels.cr",
+      "src/invidious/routes/preferences.cr",
+      "src/invidious/search/ctoken.cr",
+      "src/invidious/user/preferences.cr",
+      "src/invidious/views/add_playlist_items.ecr",
+      "src/invidious/views/channel_search.ecr",
+      "src/invidious/views/message.ecr",
+      "src/invidious/views/search_homepage.ecr",
+      "src/invidious/views/template.ecr",
+      "src/invidious/yt_backend/url_sanitizer.cr",
+      "src/invidious/views/components/channel_info.ecr",
+      "src/invidious/views/components/search_box.ecr",
+      "src/invidious/views/components/ai-filter-preferences.ecr",
+      "src/invidious/views/feeds/history.ecr",
+      "src/invidious/views/feeds/subscriptions.ecr",
+      "src/invidious/views/user/blocked_channels.ecr",
+      "src/invidious/views/user/preferences.ecr",
+      "src/invidious/views/user/sponsorblock_channels.ecr",
+      "src/invidious/views/user/channel_spoilers.ecr",
+      "src/invidious/views/overhaul/shell.ecr",
+      "src/invidious/views/overhaul/watch_transcript.ecr",
+      "src/invidious/views/overhaul/settings_navigation.ecr",
+      "src/invidious/views/overhaul/ai_filter_matrix.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/search_homepage.ecr",
+    "productionRefs": [
+      "src/invidious/frontend/desktop.cr",
+      "src/invidious/routes/misc.cr",
+      "src/invidious/routes/search.cr",
+      "src/invidious/views/overhaul/shell.ecr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/template.ecr",
+    "productionRefs": [
+      "src/invidious/helpers/macros.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/account.ecr",
+    "productionRefs": [
+      "src/invidious/routes/account.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/authorize_token.ecr",
+    "productionRefs": [
+      "src/invidious/routes/account.cr",
+      "src/invidious/routes/api/v1/authenticated.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/blocked_channels.ecr",
+    "productionRefs": [
+      "src/invidious/routes/blocked_channels.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/change_password.ecr",
+    "productionRefs": []
+  },
+  {
+    "template": "src/invidious/views/user/channel_spoilers.ecr",
+    "productionRefs": [
+      "src/invidious/routes/channel_spoiler_preferences.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/clear_watch_history.ecr",
+    "productionRefs": [
+      "src/invidious/routes/account.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/data_control.ecr",
+    "productionRefs": [
+      "src/invidious/routes/preferences.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/dearrow_identity.ecr",
+    "productionRefs": [
+      "src/invidious/routes/dearrow_contributions.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/delete_account.ecr",
+    "productionRefs": [
+      "src/invidious/routes/account.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/login.ecr",
+    "productionRefs": [
+      "src/invidious/routes/login.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/preferences.ecr",
+    "productionRefs": []
+  },
+  {
+    "template": "src/invidious/views/user/sponsorblock_channels.ecr",
+    "productionRefs": [
+      "src/invidious/routes/sponsorblock_preferences.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/subscription_manager.ecr",
+    "productionRefs": [
+      "src/invidious/routes/subscriptions.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/token_manager.ecr",
+    "productionRefs": [
+      "src/invidious/routes/account.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/user/tv_pairing.ecr",
+    "productionRefs": [
+      "src/invidious/routes/tv_pairing.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/verification.ecr",
+    "productionRefs": [
+      "src/invidious/routes/verification.cr"
+    ]
+  },
+  {
+    "template": "src/invidious/views/watch.ecr",
+    "productionRefs": [
+      "src/invidious/routes/watch.cr",
+      "src/invidious/views/template.ecr",
+      "src/invidious/yt_backend/url_sanitizer.cr",
+      "src/invidious/views/overhaul/shell.ecr",
+      "src/invidious/views/overhaul/watch_comments.ecr"
+    ]
+  }
+]

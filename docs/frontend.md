@@ -6,7 +6,7 @@ The current web interface uses compiled Crystal ECR templates, shared CSS and br
 
 ## Templates and page data
 
-[template.ecr](../src/invidious/views/template.ecr) supplies common document structure, navigation, styling/scripts and browser profile context. [views/](../src/invidious/views) contains watch/embed, channel/search/feed, playlist/clip, account/preferences and error/privacy/licenses pages. `components/` supplies reusable cards, pagination, player/source markup, channel info, subscription widgets, clip dialogs and AI placeholders.
+[template.ecr](../src/invidious/views/template.ecr) delegates to the shared [shell](../src/invidious/views/overhaul/shell.ecr) for document structure, navigation, styling/scripts and browser profile context. [views/](../src/invidious/views) contains watch/embed, channel/search/feed, playlist/clip, account/Settings and error/privacy/licenses pages. `components/` and `overhaul/` supply reusable cards, pagination, player/source markup, channel info, subscription forms, the same-player clip editor and AI placeholders.
 
 [frontend/](../src/invidious/frontend) contains Crystal presentation helpers for search filters, feed/card visibility, pagination, recommendation/queue view data, subscription manager ranking, avatars and watched/progress indicators. These helpers preserve shared API/cache neutrality where page filtering is personalized. Templates receive allowlisted configuration JSON rather than arbitrary upstream objects where feature code requires a safe client interface.
 
@@ -18,27 +18,28 @@ Keep escaping/context correct when adding titles, descriptions, identities or JS
 | --- | --- |
 | `browser-storage.js` | Validated guest/account storage profiles, legacy migration, fallbacks, stale-tab guards and deletion cleanup |
 | `_helpers.js` | Shared browser helpers, requests and storage integration |
-| `handlers.js`, `interface.js` | General interface events and helper behavior |
-| `ui.js`, `preferences.js` | Profile-guarded requests, action feedback, searchable preferences, previews and explicit Save/Discard |
+| `handlers.js` | Shared timestamp/comment-reply delegation; one document owner |
+| `ui.js`, `settings.js`, `settings-navigation.js` | Profile-guarded requests, feedback, category-scoped search/drafts/Save/Discard/canonical read-back and historical bookmark navigation |
 | `browse.js`, `library.js` | Server-rendered Load more, GET restoration, explicit search filters, selection/batch actions and owned-playlist reordering |
 | `player-dock.js` | Desktop watch-page docking of the existing player without replacing its media element |
 | `themes.js`, `timezone.js` | Color-mode updates/CSRF POST and supported timezone detection |
 | `player.js` | Video.js initialization, playback/resume, volume, keyboard shortcuts and lifecycle sync |
-| `player-ui.js`, `player-mobile.js` | Shared player UI, mobile settings and touch gestures |
+| `player-ui.js`, `player-settings.js`, `player-mobile.js` | Profile-scoped watch layout, desktop Settings hierarchy, mobile settings and touch gestures |
 | `player-stream-menu.js` | Audio/quality/codec menus, metadata selection and summaries |
 | `player-chapters.js` | Manual chapter indicators/labels and SponsorBlock boundary coexistence |
 | `player-stats.js` | Local opt-in diagnostics, copy fallback and observation lifecycle |
 | `watch.js`, `embed.js` | Page-specific player/queue behavior |
-| `watched_widget.js`, `watched_indicator.js` | Watched actions and synced/local card progress, including dynamically inserted rows |
-| `comments.js`, `community.js`, `post.js` | Comment/reply/community continuation loading |
+| `watched_indicator.js` | Synced/local card progress, including dynamically inserted rows |
+| `comment-threads.js` | One read-only comment/reply owner shared by watch, community and post pages |
 | `transcript.js` | Transcript display, selection and timestamp navigation |
-| `pagination.js` | Continuation/page state for enhanced browsing |
-| `subscribe_widget.js`, `playlist_widget.js`, `video-actions.js` | Subscription/library/context actions and dialogs |
+| `overhaul.js` | Shared navigation/menus/tabs/dialogs and occurrence-aware playlist grips |
+| `subscriptions.js`, `playlist-forms.js`, `video-actions.js` | Subscription/library/context actions and ordinary form enhancement |
 | `sse.js`, `notifications.js` | Notification streams, tab ownership and counters |
 | `sponsorblock.js`, `sponsorblock-preferences.js` | Segment presentation/skipping and category/channel controls |
+| `enhancements.js`, `watch-enhancements.js` | Canonical owner-state checks on watch/listing pages; in-place cached watch title/thumbnail/Up next refresh, preserving media and queue occurrences |
 | `dearrow.js`, `dearrow-loader.js`, `dearrow-contributions.js` | Lazy title replacement, original-title interaction and explicit contribution flow |
-| `clip-loader.js`, `clip-editor.js`, `clip-player.js` | Clip dialog/editor loading, bounded selection and immutable playback |
-| `live-chat.js` | Replay synchronization, filtering, overlays, appearance and timing |
+| `clip-loader.js`, `clip-editor.js`, `clip-session.js`, `clip-player.js` | Same-player editor loading, temporary preview ownership, standalone fallback and immutable bounded playback |
+| `live-chat.js`, `chat-preferences.js`, `chat-timing.js` | Panel replay synchronization/filtering, explicit display/filter saves and per-video timing |
 
 Pinned/minified player plugins coexist with these first-party files. Their inventory is in [videojs-dependencies.yml](../videojs-dependencies.yml) and `assets/videojs/*/versions.yml`. Vendored plugins and icon/font packages should not be confused with application preference modules.
 
@@ -52,13 +53,13 @@ Storage denial/quota failure uses bounded cookie fallbacks for small validated s
 
 ## Styling and appearance
 
-Base CSS defines layout, cards, navigation and appearance tokens; feature sheets cover the player, search, chat, clips, DeArrow and video actions. Pure.css/responsive grids and Ionicons provide vendored foundation assets. The main template loads [Diary’s stylesheet](../assets/themes/diary/theme.css) directly after the shared styles. Diary is the only site design.
+[foundation.css](../assets/css/foundation.css) defines shared tokens, document layout, cards, navigation, forms, menus and dialogs. Feature sheets cover the player, watch utilities, chat, clips, DeArrow and verification. First-party icons use the local [Lucide sprite](../assets/icons/lucide.svg). The unused Diary theme, Pure stylesheets and Ionicons font assets were retired during D8; required Video.js/plugin assets remain.
 
-Light/dark/system mode uses the existing preference, header toggle and browser synchronization. Thin mode avoids applicable imagery, and compact density changes layout spacing. Diary fonts/SVG doodles and icons are ordinary runtime assets. See [theming](theming.md) for styling and player compatibility guidance.
+Light/Dark/System uses the existing preference, header toggle and browser synchronization. Browser pages use one grid/row and player design. Older density, thin-mode and player-style values remain compatible with native and legacy preference submissions; browser Settings no longer edits them. Ordinary API playlist HTML still honors thin mode; explicitly requested desktop fragments share browser cards. See [styling](theming.md) for component and player guidance.
 
 ## Avatars, card visibility and progress
 
-Channel avatars are learned from existing upstream responses and batch-persisted; misses render text placeholders without an extra metadata lookup. Placeholder initials use a Unicode letter cluster when safe, otherwise `#`, with deterministic colors. Thin mode omits avatar requests. Cached/failed images retain the inline placeholder. Modern lockup/recommendation parsing respects linked identity and avoids assigning uncertain collaboration stacks to one creator.
+Channel avatars are learned from existing upstream responses and batch-persisted; misses render text placeholders without an extra metadata lookup. Placeholder initials use a Unicode letter cluster when safe, otherwise `#`, with deterministic colors. Cached/failed images retain the inline placeholder. Modern lockup/recommendation parsing respects linked identity and avoids assigning uncertain collaboration stacks to one creator.
 
 Membership flags come from existing response/cache metadata. Unknown membership stays visible until normal refresh learns it. Public playlist/mix JSON remains unfiltered, with `isMember`; browser cards/HTML queues use preferences. AI replacement removes image markup entirely while retaining titles/links/actions; player posters and aggregate playlist covers keep their existing behavior.
 
@@ -102,26 +103,100 @@ Batch operations run sequentially, preserve failed selections, and report partia
 success. Removals/unsubscriptions confirm the action and count. Playlist additions
 are never automatically retried after an ambiguous response.
 
-Owned playlists support drag/drop and Move up/down among loaded rows. The web
+Owned playlists use one leading grip for pointer drag or keyboard pickup,
+arrow movement and drop/cancel among loaded rows. The web
 `playlist_ajax` action `move_video_before` accepts POST body fields `source`,
 `anchor` (decimal occurrence IDs as strings), and `placement=before|after`, plus
 the existing CSRF token and playlist ID query parameter. It locks the playlist,
 rechecks ownership and occurrence membership, and changes only its order and
-updated timestamp. Stale occurrences return 409; the browser refreshes the list.
+updated timestamp. Stale occurrences return 409; the browser retains the displayed
+order, disables further dragging and offers an explicit Reload.
 Duplicate video IDs and unloaded entries retain their distinct occurrences.
 
 ## Preferences and watching
 
-Preferences search hides nonmatching rows/sections without disabling their form
-fields. A sticky Save/Discard bar tracks drafts and previews color mode/density.
-The ordinary POST route retains redirects; `redirect=false` returns canonical
-`preferences` plus a fingerprint. The enhanced form reads back the authoritative
-form/cookie before reporting Saved, keeps failed drafts, and reloads after a
-locale change. Saving clears browse restoration state.
+The category interface is the default `/preferences` destination. `settings.js` retains bounded category drafts in page memory, local metadata search makes no typing requests, and Save verifies its own canonical values/profile with a separate GET. Requests are canceled on component departure and stale results cannot replace a newer category. `settings-navigation.js` also replaces recognized historical anchor entries with current destinations; ordinary named links remain usable without that script. Explicit categories take precedence, and leaving with a dirty draft retains the departure warning. Category failures stay beside the owning navigation. See the [Settings ownership contract](uiUXOverhaulPlan/settings-ownership.md). The following whole-form POST behavior remains for cached legacy callers; the default route no longer renders that full form.
 
-At desktop widths (1100px and above), a player that has started playback docks
-when its inline space scrolls above the header. It retains its media element and
+Category search uses public labels, descriptions and option metadata, without
+enumerating private playlist titles. Save/Discard tracks only the active category;
+Appearance previews color mode. Cached whole-form POSTs still return their
+compatible canonical receipt, but their template/controller are retired. Current
+category controllers compare declared keys and canonical scalar/array/map types,
+profile and independent read-back before reporting Saved. Saving invalidates
+affected browse restoration state.
+
+At desktop widths (1100px and above), a player with Automatic mini player enabled
+that has started playback docks when its inline space scrolls above the header.
+Docking defaults off. It retains its media element and
 playback state, with play/pause, mute, return and dismiss controls. Dismiss lasts
 for that watch-page visit. Audio-only, fullscreen, picture-in-picture and narrow
-layouts use the inline player. Transcript following scrolls only its own viewport;
+layouts and clip editing use the inline player. Standard/Theater layout and the
+docking preference use validated, profile-scoped InvidiousStorage keys. Utility
+tabs, layouts and the Settings hierarchy retain the existing media instance.
+Transcript following scrolls only its own viewport;
 manual interaction/search turns following off until explicitly re-enabled.
+
+The D6 masking runtime keeps metadata on watch/listing titles and thumbnails so
+the first channel rule can activate in an open document. Empty rules retain a
+controller without masking observers/scans or date-cache reads. Guest rule
+changes update that document and player in place. Explicit reveals survive an
+unchanged configuration check; changed rules and unknown/failed checks hide the
+affected content. Poster, share, document-title and social metadata follow the
+mask, and hidden hover thumbnails reject late VTT setup. The shared canonical
+owner-state coordinator loads on watch/listing pages; watch presentation updates
+use a separate cache-only read after a relevant confirmed owner change. The
+coordinator performs no initial runtime GET, fetches no private identity and never
+rebuilds playlist membership to apply display choices. Unknown state suspends
+advancement and exposes read-only recovery while playback remains available.
+Cached-page/account transitions and enhancement coexistence are covered by
+[D6 acceptance](uiUXOverhaulPlan/d6-acceptance.md) and the full
+[D8 regression](uiUXOverhaulPlan/d8-acceptance.md).
+
+
+## Embedded media ownership
+
+`embed.ecr` uses Foundation, the shared player styles and a minimal document
+without application navigation or listing/SSE/timezone consumers. `embed.js`
+owns one abortable continuation read and ended handler; it retains exact decimal
+cursors and duplicate series entries. Failures use explicit Retry. The canonical
+enhancement coordinator suspends consumers on departure and reapplies accepted
+profile state on cached return. Player disposal retires the embed and enhancement
+owners. Shared player work guards delayed reloads, source restoration, speed-CSRF
+preflights and keyboard handlers while keeping the permitted pagehide position
+delivery. None of these owners recreates the media element.
+
+The watch link is a real labeled anchor with current playhead/playback choices and
+original playlist/occurrence or preview context. Player/source/caption attributes
+and embedded JSON are escaped while preserving decoded values. HLS proxy flags
+retain existing opaque manifest/segment query fields.
+
+Private watch/embed pages load the access owner even without a bot pass. Marked
+instance-login 401 and verification 403 responses select separate recovery flows;
+media failures can check HEAD on the existing local stats route before verification
+discovery. Framed recovery retires consumers/player, clears stale media metadata
+and offers a new-window action. Generation guards ignore fetch/XHR/probe results
+from before departure. A page-local known position survives a failed media reload;
+it is not written to browser/account state by the access owner.
+
+## Reading and recovery pages
+
+Privacy, JavaScript licenses, ordinary notices and HTML errors use the shared
+reading measure and controls. Privacy describes database/browser ownership,
+optional providers and actual removal limits; logout preserves local profiles.
+GET/HEAD legal pages remain readable on a login-required instance. API-only
+builds retain only their registered recovery destinations.
+
+Generic HTML error reports contain a route pattern, method, timestamp, exception
+class and version. They omit the raw URL/query, headers, body, exception message
+and backtrace. Deliberate information errors are escaped as plain text. Technical
+details are optional and report links carry no private request context. Failed
+writes receive check-current-state guidance and ordinary recovery navigation,
+without automatic replay. Read retries reconstruct only validated public IDs and
+discard unrelated query fields. Embedded errors use a script-free, frame-readable
+panel and explicit new-window actions. Reading/error pages do not load listing,
+watch, enhancement, timezone or subscription/SSE consumers.
+
+The JavaScript license table retains its LibreJS ID and three linked columns,
+including dynamically enumerated first-party scripts and existing player/vendor
+licenses. Lucide attribution remains accessible. The table can scroll inside its
+reading panel without widening the document.

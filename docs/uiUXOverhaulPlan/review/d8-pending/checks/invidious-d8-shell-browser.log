@@ -1,0 +1,730 @@
+TAP version 13
+# Subtest: chromium: D1 representative light/dark desktop matrix
+ok 1 - chromium: D1 representative light/dark desktop matrix
+  ---
+  duration_ms: 3250.253839
+  type: 'test'
+  ...
+# Subtest: chromium: D1 RTL, enlarged desktop text, forced colors and contrast
+ok 2 - chromium: D1 RTL, enlarged desktop text, forced colors and contrast
+  ---
+  duration_ms: 1328.428464
+  type: 'test'
+  ...
+# Subtest: chromium: D1 shell menus, collapse, watch drawer and focus
+ok 3 - chromium: D1 shell menus, collapse, watch drawer and focus
+  ---
+  duration_ms: 749.025831
+  type: 'test'
+  ...
+# Subtest: chromium: D1 actual player survives tab changes and transcript is deferred
+ok 4 - chromium: D1 actual player survives tab changes and transcript is deferred
+  ---
+  duration_ms: 380.790621
+  type: 'test'
+  ...
+# Subtest: chromium: D1 appearance preview/Discard and live System mode
+ok 5 - chromium: D1 appearance preview/Discard and live System mode
+  ---
+  duration_ms: 156.346743
+  type: 'test'
+  ...
+# Subtest: chromium: D1 occurrence grip keyboard/pointer, cancel and failed writes
+ok 6 - chromium: D1 occurrence grip keyboard/pointer, cancel and failed writes
+  ---
+  duration_ms: 440.892599
+  type: 'test'
+  ...
+# Subtest: firefox: D1 representative light/dark desktop matrix
+ok 7 - firefox: D1 representative light/dark desktop matrix
+  ---
+  duration_ms: 5237.177263
+  type: 'test'
+  ...
+# Subtest: firefox: D1 RTL, enlarged desktop text, forced colors and contrast
+ok 8 - firefox: D1 RTL, enlarged desktop text, forced colors and contrast
+  ---
+  duration_ms: 3311.868686
+  type: 'test'
+  ...
+# Subtest: firefox: D1 shell menus, collapse, watch drawer and focus
+ok 9 - firefox: D1 shell menus, collapse, watch drawer and focus
+  ---
+  duration_ms: 1444.702563
+  type: 'test'
+  ...
+# Subtest: firefox: D1 actual player survives tab changes and transcript is deferred
+ok 10 - firefox: D1 actual player survives tab changes and transcript is deferred
+  ---
+  duration_ms: 676.782874
+  type: 'test'
+  ...
+# Subtest: firefox: D1 appearance preview/Discard and live System mode
+ok 11 - firefox: D1 appearance preview/Discard and live System mode
+  ---
+  duration_ms: 372.070977
+  type: 'test'
+  ...
+# Subtest: firefox: D1 occurrence grip keyboard/pointer, cancel and failed writes
+ok 12 - firefox: D1 occurrence grip keyboard/pointer, cancel and failed writes
+  ---
+  duration_ms: 1650.238666
+  type: 'test'
+  ...
+# Subtest: chromium: D3 search submits, literal escape, filter chips and POST privacy
+ok 13 - chromium: D3 search submits, literal escape, filter chips and POST privacy
+  ---
+  duration_ms: 667.024817
+  type: 'test'
+  ...
+# Subtest: chromium: D3 mixed result types, real scopes and desktop rows
+ok 14 - chromium: D3 mixed result types, real scopes and desktop rows
+  ---
+  duration_ms: 416.264727
+  type: 'test'
+  ...
+# Subtest: chromium: D3 channel primary tabs, selected More and no-JS search home
+ok 15 - chromium: D3 channel primary tabs, selected More and no-JS search home
+  ---
+  duration_ms: 412.877797
+  type: 'test'
+  ...
+# Subtest: chromium: D3 append failure, filtered-empty continuation and Back descriptors
+ok 16 - chromium: D3 append failure, filtered-empty continuation and Back descriptors
+  ---
+  duration_ms: 295.380637
+  type: 'test'
+  ...
+# Subtest: chromium: D3 shared community replies keep independent opaque cursors and content on failure
+ok 17 - chromium: D3 shared community replies keep independent opaque cursors and content on failure
+  ---
+  duration_ms: 377.081373
+  type: 'test'
+  ...
+# Subtest: firefox: D3 search submits, literal escape, filter chips and POST privacy
+ok 18 - firefox: D3 search submits, literal escape, filter chips and POST privacy
+  ---
+  duration_ms: 1250.939494
+  type: 'test'
+  ...
+# Subtest: firefox: D3 mixed result types, real scopes and desktop rows
+ok 19 - firefox: D3 mixed result types, real scopes and desktop rows
+  ---
+  duration_ms: 972.622358
+  type: 'test'
+  ...
+# Subtest: firefox: D3 channel primary tabs, selected More and no-JS search home
+ok 20 - firefox: D3 channel primary tabs, selected More and no-JS search home
+  ---
+  duration_ms: 1026.01025
+  type: 'test'
+  ...
+# Subtest: firefox: D3 append failure, filtered-empty continuation and Back descriptors
+ok 21 - firefox: D3 append failure, filtered-empty continuation and Back descriptors
+  ---
+  duration_ms: 513.03726
+  type: 'test'
+  ...
+# Subtest: firefox: D3 shared community replies keep independent opaque cursors and content on failure
+ok 22 - firefox: D3 shared community replies keep independent opaque cursors and content on failure
+  ---
+  duration_ms: 1465.314708
+  type: 'test'
+  ...
+# Subtest: chromium: D3 browse to watch, Back and reload reconstruct GET pages and scroll
+ok 23 - chromium: D3 browse to watch, Back and reload reconstruct GET pages and scroll
+  ---
+  duration_ms: 626.221423
+  type: 'test'
+  ...
+# Subtest: chromium: D3 stale and unsafe continuations preserve rows and require a new page
+ok 24 - chromium: D3 stale and unsafe continuations preserve rows and require a new page
+  ---
+  duration_ms: 365.765313
+  type: 'test'
+  ...
+# Subtest: chromium: D3 private POST appends stay out of durable state and have HTML pagination
+ok 25 - chromium: D3 private POST appends stay out of durable state and have HTML pagination
+  ---
+  duration_ms: 349.680602
+  type: 'test'
+  ...
+# Subtest: chromium: D3 failed avatar fallback, channel About and desktop content matrix
+ok 26 - chromium: D3 failed avatar fallback, channel About and desktop content matrix
+  ---
+  duration_ms: 1140.829641
+  type: 'test'
+  ...
+# Subtest: chromium: D3 standalone posts retry initial comments and preserve no-JS continuations
+ok 27 - chromium: D3 standalone posts retry initial comments and preserve no-JS continuations
+  ---
+  duration_ms: 318.993932
+  type: 'test'
+  ...
+# Subtest: firefox: D3 browse to watch, Back and reload reconstruct GET pages and scroll
+ok 28 - firefox: D3 browse to watch, Back and reload reconstruct GET pages and scroll
+  ---
+  duration_ms: 1151.818784
+  type: 'test'
+  ...
+# Subtest: firefox: D3 stale and unsafe continuations preserve rows and require a new page
+ok 29 - firefox: D3 stale and unsafe continuations preserve rows and require a new page
+  ---
+  duration_ms: 820.484235
+  type: 'test'
+  ...
+# Subtest: firefox: D3 private POST appends stay out of durable state and have HTML pagination
+ok 30 - firefox: D3 private POST appends stay out of durable state and have HTML pagination
+  ---
+  duration_ms: 736.664576
+  type: 'test'
+  ...
+# Subtest: firefox: D3 failed avatar fallback, channel About and desktop content matrix
+ok 31 - firefox: D3 failed avatar fallback, channel About and desktop content matrix
+  ---
+  duration_ms: 3064.690213
+  type: 'test'
+  ...
+# Subtest: firefox: D3 standalone posts retry initial comments and preserve no-JS continuations
+ok 32 - firefox: D3 standalone posts retry initial comments and preserve no-JS continuations
+  ---
+  duration_ms: 666.269861
+  type: 'test'
+  ...
+# Subtest: chromium: D3 discovery grids, empty states and explicit Trending controls
+ok 33 - chromium: D3 discovery grids, empty states and explicit Trending controls
+  ---
+  duration_ms: 1232.1218
+  type: 'test'
+  ...
+# Subtest: chromium: D3 private scoped channel search retains literal input through direct pagination
+ok 34 - chromium: D3 private scoped channel search retains literal input through direct pagination
+  ---
+  duration_ms: 286.6917
+  type: 'test'
+  ...
+# Subtest: firefox: D3 discovery grids, empty states and explicit Trending controls
+ok 35 - firefox: D3 discovery grids, empty states and explicit Trending controls
+  ---
+  duration_ms: 3765.348397
+  type: 'test'
+  ...
+# Subtest: firefox: D3 private scoped channel search retains literal input through direct pagination
+ok 36 - firefox: D3 private scoped channel search retains literal input through direct pagination
+  ---
+  duration_ms: 684.544208
+  type: 'test'
+  ...
+# Subtest: chromium: D3 stale restoration fingerprints and profile changes cannot mix views
+ok 37 - chromium: D3 stale restoration fingerprints and profile changes cannot mix views
+  ---
+  duration_ms: 438.937054
+  type: 'test'
+  ...
+# Subtest: chromium: D3 a cached page cancels pending append and can load again after return
+ok 38 - chromium: D3 a cached page cancels pending append and can load again after return
+  ---
+  duration_ms: 240.513941
+  type: 'test'
+  ...
+# Subtest: firefox: D3 stale restoration fingerprints and profile changes cannot mix views
+ok 39 - firefox: D3 stale restoration fingerprints and profile changes cannot mix views
+  ---
+  duration_ms: 922.473075
+  type: 'test'
+  ...
+# Subtest: firefox: D3 a cached page cancels pending append and can load again after return
+ok 40 - firefox: D3 a cached page cancels pending append and can load again after return
+  ---
+  duration_ms: 453.953377
+  type: 'test'
+  ...
+# Subtest: chromium: D3 append bound retains the current native Next destination
+ok 41 - chromium: D3 append bound retains the current native Next destination
+  ---
+  duration_ms: 1956.18706
+  type: 'test'
+  ...
+# Subtest: firefox: D3 append bound retains the current native Next destination
+ok 42 - firefox: D3 append bound retains the current native Next destination
+  ---
+  duration_ms: 2737.451743
+  type: 'test'
+  ...
+# Subtest: chromium: D3 AI replacements and watched progress remain visible without extra metadata
+ok 43 - chromium: D3 AI replacements and watched progress remain visible without extra metadata
+  ---
+  duration_ms: 413.547644
+  type: 'test'
+  ...
+# Subtest: firefox: D3 AI replacements and watched progress remain visible without extra metadata
+ok 44 - firefox: D3 AI replacements and watched progress remain visible without extra metadata
+  ---
+  duration_ms: 965.813253
+  type: 'test'
+  ...
+# Subtest: chromium: D4 owned/saved library, seeds, forms and desktop geometry
+ok 45 - chromium: D4 owned/saved library, seeds, forms and desktop geometry
+  ---
+  duration_ms: 604.142185
+  type: 'test'
+  ...
+# Subtest: chromium: D4 playlist form failure keeps fields, guards duplicates and does not retry uncertain creation
+ok 46 - chromium: D4 playlist form failure keeps fields, guards duplicates and does not retry uncertain creation
+  ---
+  duration_ms: 336.544011
+  type: 'test'
+  ...
+# Subtest: chromium: D4 add-items selects loaded rows, appends unchecked and retains partial failures without ambiguous retry
+ok 47 - chromium: D4 add-items selects loaded rows, appends unchecked and retains partial failures without ambiguous retry
+  ---
+  duration_ms: 348.634825
+  type: 'test'
+  ...
+# Subtest: chromium: D4 private playlist-item search keeps scope, literal input and continuation in POST only
+ok 48 - chromium: D4 private playlist-item search keeps scope, literal input and continuation in POST only
+  ---
+  duration_ms: 284.991899
+  type: 'test'
+  ...
+# Subtest: chromium: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order
+ok 49 - chromium: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order
+  ---
+  duration_ms: 381.796072
+  type: 'test'
+  ...
+# Subtest: chromium: D4 history merges adjacent date groups, keeps unknown metadata and removes explicitly
+ok 50 - chromium: D4 history merges adjacent date groups, keeps unknown metadata and removes explicitly
+  ---
+  duration_ms: 551.868169
+  type: 'test'
+  ...
+# Subtest: chromium: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe
+ok 51 - chromium: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe
+  ---
+  duration_ms: 310.174107
+  type: 'test'
+  ...
+# Subtest: chromium: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh
+ok 52 - chromium: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh
+  ---
+  duration_ms: 759.167794
+  type: 'test'
+  ...
+# Subtest: firefox: D4 owned/saved library, seeds, forms and desktop geometry
+ok 53 - firefox: D4 owned/saved library, seeds, forms and desktop geometry
+  ---
+  duration_ms: 1971.771575
+  type: 'test'
+  ...
+# Subtest: firefox: D4 playlist form failure keeps fields, guards duplicates and does not retry uncertain creation
+ok 54 - firefox: D4 playlist form failure keeps fields, guards duplicates and does not retry uncertain creation
+  ---
+  duration_ms: 752.702618
+  type: 'test'
+  ...
+# Subtest: firefox: D4 add-items selects loaded rows, appends unchecked and retains partial failures without ambiguous retry
+ok 55 - firefox: D4 add-items selects loaded rows, appends unchecked and retains partial failures without ambiguous retry
+  ---
+  duration_ms: 614.281893
+  type: 'test'
+  ...
+# Subtest: firefox: D4 private playlist-item search keeps scope, literal input and continuation in POST only
+ok 56 - firefox: D4 private playlist-item search keeps scope, literal input and continuation in POST only
+  ---
+  duration_ms: 696.355504
+  type: 'test'
+  ...
+# Subtest: firefox: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order
+ok 57 - firefox: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order
+  ---
+  duration_ms: 579.379623
+  type: 'test'
+  ...
+# Subtest: firefox: D4 history merges adjacent date groups, keeps unknown metadata and removes explicitly
+ok 58 - firefox: D4 history merges adjacent date groups, keeps unknown metadata and removes explicitly
+  ---
+  duration_ms: 1958.372805
+  type: 'test'
+  ...
+# Subtest: firefox: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe
+ok 59 - firefox: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe
+  ---
+  duration_ms: 558.040692
+  type: 'test'
+  ...
+# Subtest: firefox: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh
+ok 60 - firefox: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh
+  ---
+  duration_ms: 1242.872606
+  type: 'test'
+  ...
+# Subtest: chromium: D4 cached-page interruption stops a batch and blocks the uncertain occurrence on return
+ok 61 - chromium: D4 cached-page interruption stops a batch and blocks the uncertain occurrence on return
+  ---
+  duration_ms: 249.148466
+  type: 'test'
+  ...
+# Subtest: chromium: D4 subscription controls verify actual membership after failures and only retry the read
+ok 62 - chromium: D4 subscription controls verify actual membership after failures and only retry the read
+  ---
+  duration_ms: 366.897605
+  type: 'test'
+  ...
+# Subtest: chromium: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition
+ok 63 - chromium: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition
+  ---
+  duration_ms: 585.471133
+  type: 'test'
+  ...
+# Subtest: chromium: D4 playlist forms keep no-JavaScript failed values and navigate after confirmed JSON saves
+ok 64 - chromium: D4 playlist forms keep no-JavaScript failed values and navigate after confirmed JSON saves
+  ---
+  duration_ms: 509.279065
+  type: 'test'
+  ...
+# Subtest: chromium: D4 grip scrolling uses the same pointer and canceled page lifetimes cannot apply a late order
+ok 65 - chromium: D4 grip scrolling uses the same pointer and canceled page lifetimes cannot apply a late order
+  ---
+  duration_ms: 461.645643
+  type: 'test'
+  ...
+# Subtest: firefox: D4 cached-page interruption stops a batch and blocks the uncertain occurrence on return
+ok 66 - firefox: D4 cached-page interruption stops a batch and blocks the uncertain occurrence on return
+  ---
+  duration_ms: 501.391146
+  type: 'test'
+  ...
+# Subtest: firefox: D4 subscription controls verify actual membership after failures and only retry the read
+ok 67 - firefox: D4 subscription controls verify actual membership after failures and only retry the read
+  ---
+  duration_ms: 552.923235
+  type: 'test'
+  ...
+# Subtest: firefox: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition
+ok 68 - firefox: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition
+  ---
+  duration_ms: 830.584624
+  type: 'test'
+  ...
+# Subtest: firefox: D4 playlist forms keep no-JavaScript failed values and navigate after confirmed JSON saves
+ok 69 - firefox: D4 playlist forms keep no-JavaScript failed values and navigate after confirmed JSON saves
+  ---
+  duration_ms: 2232.500659
+  type: 'test'
+  ...
+# Subtest: firefox: D4 grip scrolling uses the same pointer and canceled page lifetimes cannot apply a late order
+ok 70 - firefox: D4 grip scrolling uses the same pointer and canceled page lifetimes cannot apply a late order
+  ---
+  duration_ms: 683.044727
+  type: 'test'
+  ...
+# Subtest: chromium: D4 confirmed occurrence removal reconciles the count and every surviving ordinal
+ok 71 - chromium: D4 confirmed occurrence removal reconciles the count and every surviving ordinal
+  ---
+  duration_ms: 229.835882
+  type: 'test'
+  ...
+# Subtest: firefox: D4 confirmed occurrence removal reconciles the count and every surviving ordinal
+ok 72 - firefox: D4 confirmed occurrence removal reconciles the count and every surviving ordinal
+  ---
+  duration_ms: 456.131816
+  type: 'test'
+  ...
+# Subtest: chromium: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages
+ok 73 - chromium: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages
+  ---
+  duration_ms: 456.322537
+  type: 'test'
+  ...
+# Subtest: chromium: D4 inline failures retain manager rows and stale profiles disable the owner before reloading
+ok 74 - chromium: D4 inline failures retain manager rows and stale profiles disable the owner before reloading
+  ---
+  duration_ms: 322.719709
+  type: 'test'
+  ...
+# Subtest: firefox: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages
+ok 75 - firefox: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages
+  ---
+  duration_ms: 824.694547
+  type: 'test'
+  ...
+# Subtest: firefox: D4 inline failures retain manager rows and stale profiles disable the owner before reloading
+ok 76 - firefox: D4 inline failures retain manager rows and stale profiles disable the owner before reloading
+  ---
+  duration_ms: 551.153322
+  type: 'test'
+  ...
+# Subtest: chromium: D4 light/dark screen matrix fits desktop widths and retains real mix save forms
+ok 77 - chromium: D4 light/dark screen matrix fits desktop widths and retains real mix save forms
+  ---
+  duration_ms: 3545.840474
+  type: 'test'
+  ...
+# Subtest: firefox: D4 light/dark screen matrix fits desktop widths and retains real mix save forms
+ok 78 - firefox: D4 light/dark screen matrix fits desktop widths and retains real mix save forms
+  ---
+  duration_ms: 10490.90597
+  type: 'test'
+  ...
+# Subtest: chromium: D5 production layout and utility tabs preserve the same paused media
+ok 79 - chromium: D5 production layout and utility tabs preserve the same paused media
+  ---
+  duration_ms: 970.89316
+  type: 'test'
+  ...
+# Subtest: chromium: D5 player Settings delegates speed and captions and keeps docking off by default
+ok 80 - chromium: D5 player Settings delegates speed and captions and keeps docking off by default
+  ---
+  duration_ms: 824.841996
+  type: 'test'
+  ...
+# Subtest: firefox: D5 production layout and utility tabs preserve the same paused media
+ok 81 - firefox: D5 production layout and utility tabs preserve the same paused media
+  ---
+  duration_ms: 1616.266603
+  type: 'test'
+  ...
+# Subtest: firefox: D5 player Settings delegates speed and captions and keeps docking off by default
+ok 82 - firefox: D5 player Settings delegates speed and captions and keeps docking off by default
+  ---
+  duration_ms: 1374.965562
+  type: 'test'
+  ...
+# Subtest: chromium: D5 utility defaults and deliberate transcript loading keep replay outside media
+ok 83 - chromium: D5 utility defaults and deliberate transcript loading keep replay outside media
+  ---
+  duration_ms: 1585.638654
+  type: 'test'
+  ...
+# Subtest: chromium: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+ok 84 - chromium: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+  ---
+  duration_ms: 762.913146
+  type: 'test'
+  ...
+# Subtest: firefox: D5 utility defaults and deliberate transcript loading keep replay outside media
+ok 85 - firefox: D5 utility defaults and deliberate transcript loading keep replay outside media
+  ---
+  duration_ms: 4019.496325
+  type: 'test'
+  ...
+# Subtest: firefox: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+ok 86 - firefox: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions
+  ---
+  duration_ms: 1242.081131
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+ok 87 - chromium: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+  ---
+  duration_ms: 353.327299
+  type: 'test'
+  ...
+# Subtest: chromium: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+ok 88 - chromium: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+  ---
+  duration_ms: 414.758038
+  type: 'test'
+  ...
+# Subtest: chromium: D5 caption failures expose a retry that replaces the text track without replacing media
+ok 89 - chromium: D5 caption failures expose a retry that replaces the text track without replacing media
+  ---
+  duration_ms: 553.73586
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+ok 90 - firefox: D5 queue reconciles a removed earlier duplicate without losing the playing occurrence
+  ---
+  duration_ms: 643.407218
+  type: 'test'
+  ...
+# Subtest: firefox: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+ok 91 - firefox: D5 uncertain current removal only retries its canonical read and never jumps to another duplicate
+  ---
+  duration_ms: 667.632371
+  type: 'test'
+  ...
+# Subtest: firefox: D5 caption failures expose a retry that replaces the text track without replacing media
+ok 92 - firefox: D5 caption failures expose a retry that replaces the text track without replacing media
+  ---
+  duration_ms: 928.745039
+  type: 'test'
+  ...
+# Subtest: chromium: D5 progressive quality choices decode both sizes and retain pause, time and rate
+ok 93 - chromium: D5 progressive quality choices decode both sizes and retain pause, time and rate
+  ---
+  duration_ms: 538.030982
+  type: 'test'
+  ...
+# Subtest: chromium: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+ok 94 - chromium: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+  ---
+  duration_ms: 1038.652394
+  type: 'test'
+  ...
+# Subtest: firefox: D5 progressive quality choices decode both sizes and retain pause, time and rate
+ok 95 - firefox: D5 progressive quality choices decode both sizes and retain pause, time and rate
+  ---
+  duration_ms: 936.502744
+  type: 'test'
+  ...
+# Subtest: firefox: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+ok 96 - firefox: D5 decoded DASH uses the same Settings quality, Auto and distinct language/DRC callbacks
+  ---
+  duration_ms: 1499.13004
+  type: 'test'
+  ...
+# Subtest: chromium: D5 layout follows same-profile tabs and isolates a different signed-in account
+ok 97 - chromium: D5 layout follows same-profile tabs and isolates a different signed-in account
+  ---
+  duration_ms: 1244.105365
+  type: 'test'
+  ...
+# Subtest: chromium: D5 light/dark watch geometry and contained controls fit the desktop matrix
+ok 98 - chromium: D5 light/dark watch geometry and contained controls fit the desktop matrix
+  ---
+  duration_ms: 5172.539735
+  type: 'test'
+  ...
+# Subtest: firefox: D5 layout follows same-profile tabs and isolates a different signed-in account
+ok 99 - firefox: D5 layout follows same-profile tabs and isolates a different signed-in account
+  ---
+  duration_ms: 2893.474742
+  type: 'test'
+  ...
+# Subtest: firefox: D5 light/dark watch geometry and contained controls fit the desktop matrix
+ok 100 - firefox: D5 light/dark watch geometry and contained controls fit the desktop matrix
+  ---
+  duration_ms: 10718.232292
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+ok 101 - chromium: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+  ---
+  duration_ms: 469.262111
+  type: 'test'
+  ...
+# Subtest: chromium: D5 cached queue lifetimes reject old reads even when transport ignores abort
+ok 102 - chromium: D5 cached queue lifetimes reject old reads even when transport ignores abort
+  ---
+  duration_ms: 392.949058
+  type: 'test'
+  ...
+# Subtest: chromium: D5 queue advances to the surviving successor after the playing occurrence disappeared
+ok 103 - chromium: D5 queue advances to the surviving successor after the playing occurrence disappeared
+  ---
+  duration_ms: 517.908599
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+ok 104 - firefox: D5 queue rejects rounded identities and invalid canonical maps without enabling writes
+  ---
+  duration_ms: 744.213601
+  type: 'test'
+  ...
+# Subtest: firefox: D5 cached queue lifetimes reject old reads even when transport ignores abort
+ok 105 - firefox: D5 cached queue lifetimes reject old reads even when transport ignores abort
+  ---
+  duration_ms: 636.427513
+  type: 'test'
+  ...
+# Subtest: firefox: D5 queue advances to the surviving successor after the playing occurrence disappeared
+ok 106 - firefox: D5 queue advances to the surviving successor after the playing occurrence disappeared
+  ---
+  duration_ms: 923.322285
+  type: 'test'
+  ...
+# Subtest: chromium: D5 native picture-in-picture suspends docking where the browser exposes it
+ok 107 - chromium: D5 native picture-in-picture suspends docking where the browser exposes it
+  ---
+  duration_ms: 373.12585
+  type: 'test'
+  ...
+# Subtest: chromium: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+ok 108 - chromium: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+  ---
+  duration_ms: 588.803938
+  type: 'test'
+  ...
+# Subtest: firefox: D5 native picture-in-picture suspends docking where the browser exposes it
+ok 109 - firefox: D5 native picture-in-picture suspends docking where the browser exposes it
+  ---
+  duration_ms: 726.026424
+  type: 'test'
+  ...
+# Subtest: firefox: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+ok 110 - firefox: D5 enlarged RTL text and forced colors retain watch/player focus and geometry
+  ---
+  duration_ms: 766.662619
+  type: 'test'
+  ...
+# Subtest: chromium: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+ok 111 - chromium: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+  ---
+  duration_ms: 561.711728
+  type: 'test'
+  ...
+# Subtest: chromium: D5 a network-aborted caption load offers a bounded explicit retry
+ok 112 - chromium: D5 a network-aborted caption load offers a bounded explicit retry
+  ---
+  duration_ms: 8892.86071
+  type: 'test'
+  ...
+# Subtest: firefox: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+ok 113 - firefox: D5 Advanced diagnostics and refresh retain the media, captions and playback state
+  ---
+  duration_ms: 1592.400899
+  type: 'test'
+  ...
+# Subtest: firefox: D5 a network-aborted caption load offers a bounded explicit retry
+ok 114 - firefox: D5 a network-aborted caption load offers a bounded explicit retry
+  ---
+  duration_ms: 8947.507532
+  type: 'test'
+  ...
+# Subtest: chromium: D5 title cycles use one SVG control and reveal masked names only after a click
+ok 115 - chromium: D5 title cycles use one SVG control and reveal masked names only after a click
+  ---
+  duration_ms: 962.958321
+  type: 'test'
+  ...
+# Subtest: firefox: D5 title cycles use one SVG control and reveal masked names only after a click
+ok 116 - firefox: D5 title cycles use one SVG control and reveal masked names only after a click
+  ---
+  duration_ms: 1609.525057
+  type: 'test'
+  ...
+# Subtest: chromium: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+ok 117 - chromium: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+  ---
+  duration_ms: 793.461956
+  type: 'test'
+  ...
+# Subtest: firefox: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+ok 118 - firefox: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks
+  ---
+  duration_ms: 1389.506592
+  type: 'test'
+  ...
+# Subtest: chromium: D8 repeated player setup preserves one media, controls and keyboard owner across cached return and disposal
+ok 119 - chromium: D8 repeated player setup preserves one media, controls and keyboard owner across cached return and disposal
+  ---
+  duration_ms: 668.175378
+  type: 'test'
+  ...
+# Subtest: firefox: D8 repeated player setup preserves one media, controls and keyboard owner across cached return and disposal
+ok 120 - firefox: D8 repeated player setup preserves one media, controls and keyboard owner across cached return and disposal
+  ---
+  duration_ms: 1059.613662
+  type: 'test'
+  ...
+1..120
+# tests 120
+# suites 0
+# pass 120
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 158901.77587

@@ -1,42 +1,11 @@
-<% content_for "header" do %>
-<title><%= I18n.translate(locale, "Playlists") %> - Invidious</title>
-<% end %>
-
-<%= rendered "components/feed_menu" %>
-
-<div class="pure-g h-box">
-    <div class="pure-u-1-3">
-        <h3><%= I18n.translate(locale, "user_created_playlists", %(<span id="count">#{items_created.size}</span>)) %></h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:center">
-            <a href="/create_playlist?referer=<%= URI.encode_www_form("/feed/playlists") %>"><%= I18n.translate(locale, "Create playlist") %></a>
-        </h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:right">
-            <a href="/data_control?referer=<%= URI.encode_www_form("/feed/playlists") %>">
-                <%= I18n.translate(locale, "Import/export") %>
-            </a>
-        </h3>
-    </div>
-</div>
-
-<% Invidious::Frontend::ChannelAvatars.prepare(env, items_created + items_saved) %>
-<div class="pure-g media-grid playlist-library">
-<% items_created.each_with_index do |item, item_position| %>
-    <%= rendered "components/item" %>
-<% end %>
-</div>
-
-<div class="pure-g h-box">
-    <div class="pure-u-1">
-        <h3><%= I18n.translate(locale, "user_saved_playlists", %(<span id="count">#{items_saved.size}</span>)) %></h3>
-    </div>
-</div>
-
-<div class="pure-g media-grid playlist-library">
-<% items_saved.each_with_index do |item, item_position| %>
-    <%= rendered "components/item" %>
-<% end %>
-</div>
+<% content_for "header" do %><title><%= I18n.translate(locale, "Playlists") %> - Invidious</title><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, add_video_id ? "Add to playlist" : "Playlists") %></h1><% if add_video_id %><p><%= I18n.translate(locale, "overhaul_choose_playlist") %></p><% end %></header>
+<div class="toolbar"><a class="button button-primary" href="/create_playlist?referer=%2Ffeed%2Fplaylists"><%= Invidious::Frontend::Icons.render("plus") %><%= I18n.translate(locale, "Create playlist") %></a><a class="button" href="/data_control?referer=%2Ffeed%2Fplaylists"><%= Invidious::Frontend::Icons.render("download") %><%= I18n.translate(locale, "Import/export") %></a></div>
+<section class="playlist-library-section"><h2><%= I18n.translate(locale, "overhaul_owned_playlists") %> <span class="muted" id="created-count"><%= items_created.size %></span></h2>
+<% if items_created.empty? %><p class="status-panel"><%= I18n.translate(locale, "No playlists available") %></p><% end %><div class="media-grid playlist-library">
+<% items_created.each do |item| %><article class="playlist-library-card" data-library-playlist="<%= HTML.escape(item.id) %>"><a class="thumbnail playlist-cover" href="/playlist?list=<%= URI.encode_www_form(item.id) %>" tabindex="-1"><% cover = playlist_covers[item.id]? %><% if cover && !cover.empty? %><img src="/vi/<%= HTML.escape(cover) %>/mqdefault.jpg" width="320" height="180" alt="" loading="lazy"><% else %><span class="playlist-cover-placeholder"><%= Invidious::Frontend::Icons.render("list-video") %></span><% end %></a><div class="playlist-card-details"><h3 dir="auto"><a href="/playlist?list=<%= URI.encode_www_form(item.id) %>"><%= HTML.escape(item.title) %></a></h3><div class="media-meta"><span><%= I18n.translate_count(locale, "generic_videos_count", item.video_count) %></span><span class="badge"><%= Invidious::Frontend::Icons.render(item.privacy.private? ? "lock" : "globe") %><%= I18n.translate(locale, item.privacy.to_s) %></span></div>
+<div class="toolbar"><% if add_video_id %><form method="post" action="/playlist_ajax?action=add_video&video_id=<%= HTML.escape(add_video_id) %>&playlist_id=<%= URI.encode_www_form(item.id) %>&referer=<%= URI.encode_www_form("/playlist?list=#{item.id}") %>" data-playlist-form="add" data-playlist-id="<%= HTML.escape(item.id) %>"><input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button class="button"><%= Invidious::Frontend::Icons.render("plus") %><%= I18n.translate(locale, "Add to playlist") %></button><p data-playlist-form-status role="status" hidden></p><a class="button" data-check-playlist href="/playlist?list=<%= URI.encode_www_form(item.id) %>" hidden><%= I18n.translate(locale, "ux_check_playlist") %></a></form><% end %><details class="ui-menu" data-ui-menu><summary class="icon-button" aria-label="<%= I18n.translate(locale, "overhaul_more") %>"><%= Invidious::Frontend::Icons.render("ellipsis-vertical") %></summary><div class="menu-content"><a href="/edit_playlist?list=<%= URI.encode_www_form(item.id) %>"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "generic_button_edit") %></a><a href="/delete_playlist?list=<%= URI.encode_www_form(item.id) %>"><%= Invidious::Frontend::Icons.render("trash-2") %><%= I18n.translate(locale, "Delete playlist") %></a></div></details></div></div></article><% end %></div></section>
+<section class="playlist-library-section"><h2><%= I18n.translate(locale, "overhaul_saved_playlists") %> <span class="muted" id="saved-count"><%= items_saved.size %></span></h2><p class="muted"><%= I18n.translate(locale, "overhaul_saved_playlist_help") %></p>
+<% if items_saved.empty? %><p class="status-panel"><%= I18n.translate(locale, "overhaul_no_saved_playlists") %></p><% end %><div class="media-grid playlist-library">
+<% items_saved.each do |item| %><% source_id = item["playlistId"].as_s; is_mix = item["isMix"]?.try(&.as_bool?) || source_id.starts_with?("RD"); saved_url = is_mix ? "/mix?list=#{URI.encode_www_form(source_id)}" : "/playlist?list=#{URI.encode_www_form(source_id)}"; seed = item["seedVideoId"]?.try(&.as_s?); saved_url += "&continuation=#{URI.encode_www_form(seed)}" if is_mix && seed; saved_cover = Invidious::Frontend::Desktop.playlist_cover(item["playlistThumbnail"]?.try(&.as_s?)) %>
+<article class="playlist-library-card" data-saved-playlist="<%= HTML.escape(source_id) %>"><a class="thumbnail playlist-cover" href="<%= HTML.escape(saved_url) %>" tabindex="-1"><% if saved_cover %><img src="<%= HTML.escape(saved_cover) %>" width="320" height="180" alt="" loading="lazy"><% else %><span class="playlist-cover-placeholder"><%= Invidious::Frontend::Icons.render("list-video") %></span><% end %></a><div class="playlist-card-details"><h3 dir="auto"><a href="<%= HTML.escape(saved_url) %>"><%= HTML.escape(item["title"].as_s) %></a></h3><p class="muted" dir="auto"><%= HTML.escape(item["author"]?.try(&.as_s?) || "") %></p><div class="media-meta"><span class="badge"><%= I18n.translate(locale, is_mix ? "overhaul_mix" : "overhaul_saved_reference") %></span><% count = item["videoCount"]?.try(&.as_i64?) %><% if count && count >= 0 %><span><%= I18n.translate_count(locale, "generic_videos_count", count) %></span><% end %><% saved_privacy = PlaylistPrivacy.parse?(item["privacy"]?.try(&.as_s?) || "") %><% if saved_privacy %><span><%= I18n.translate(locale, saved_privacy.to_s) %></span><% end %></div><div class="toolbar"><a class="button" href="/delete_playlist?list=<%= URI.encode_www_form(source_id) %>"><%= Invidious::Frontend::Icons.render("bookmark") %><%= I18n.translate(locale, "overhaul_unsave_playlist") %></a></div></div></article><% end %></div></section>

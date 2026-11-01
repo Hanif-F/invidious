@@ -52,7 +52,7 @@ macro templated(_filename, template = "template", navbar_search = true)
   navbar_search = {{ navbar_search }}
 
   {{ filename = "src/invidious/views/" + _filename + ".ecr" }}
-  {{ layout = "src/invidious/views/" + template + ".ecr" }}
+  {{ layout = "src/invidious/views/" + (flag?(:api_only) && template == "template" ? "admin/standalone_shell" : template) + ".ecr" }}
 
   __content_filename__ = {{ filename }}
   render {{ filename }}, {{ layout }}

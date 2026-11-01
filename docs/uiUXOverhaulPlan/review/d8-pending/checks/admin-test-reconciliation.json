@@ -1,0 +1,12 @@
+{
+  "oldSource": "phases/before-admin-check-reconciliation/tests/frontend/required-login-admin.test.cjs",
+  "currentSource": "tests/frontend/required-login-admin.test.cjs",
+  "oldAssumption": "Administration was a section containing a link in the retired full Preferences form.",
+  "currentContract": "Both public/private admin categories omit instance fields, expose Admin through the native account menu and preserve the legacy bookmark link itself. Ordinary guest navigation has no admin entry. The finite hidden bookmark map remains available to all profiles, with destination authorization authoritative as accepted by D6.",
+  "backendEvidence": "resumed-2026-11-01-accounts-full.log verifies actual admin authorization, CSRF, ordinary personal-save isolation, confirmation, YAML persistence and required-login behavior.",
+  "fullSuitePhase": "resumed-2026-11-01-npm-full.log: 901/902; this is the sole failure. Final complete rerun remains required.",
+  "focusedPhases": [
+    "First migration retained both admin checks but incorrectly prohibited the hidden guest legacy bookmark; this contradicted the accepted D6 bookmark contract.",
+    "Corrected focused check retains the ordinary guest role boundary and inactive bridge without changing production behavior."
+  ]
+}

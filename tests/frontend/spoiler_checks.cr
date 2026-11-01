@@ -32,7 +32,9 @@ def check_spoiler_preferences(output)
   user.preferences = prefs
   update = preferences_post_env("save_player_pos=on")
   update.set "user", user
+  seed_saved_preferences(update, prefs)
   Invidious::Routes::PreferencesRoute.update(update)
+  user.preferences = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
   raise "Global preferences erased channel rules" unless user.preferences.channel_spoiler_settings[id].hide_title
   export_user = user
   export_user.email = "spoilers-export@example.test"
@@ -110,7 +112,8 @@ def check_spoiler_preferences(output)
   File.write("#{output}/queue-spoiler-indefinite.json", {playlistHtml: template_playlist(queue, false, spoiler_env: spoiler_env("/", days: nil)), index: 1, nextVideo: "00000000000"}.to_json)
   inactive = signed_in_env("/feed/popular")
   html = browse_fixture(inactive)
-  raise "Inactive masking assets or markup" if html.includes?("channel-spoiler-config") || html.includes?("data-spoiler-title") || html.includes?("/js/channel-spoilers.js")
+  raise "Inactive cached-page masking metadata missing" unless html.includes?("channel-spoiler-config") && html.includes?("data-spoiler-title") && html.includes?("/js/channel-spoilers.js")
+  raise "Inactive runtime rules fabricated" unless JSON.parse(Invidious::Frontend::ChannelSpoilers.config(inactive))["rules"].as_h.empty?
   File.write("#{output}/spoiler-cards-inactive.html", html)
 
   many = spoiler_env("/")
@@ -165,4 +168,43 @@ def check_spoiler_preparation
   end
   raise "Guest fallback did not batch missing dates" unless requests.last == ["cached", "missing", "unrelated"]
   puts "Channel masking date reads: zero for inactive/known dates; one filtered batch with memoized misses"
+end
+
+# Production handler failure views with literal drafts; metadata is already known.
+def write_masking_editor_fixtures(output)
+  path = Invidious::Routes::ChannelSpoilerPreferences::PATH
+  id = fixture_video.ucid
+  {"light", "dark"}.each do |mode|
+    {"invalid", "uncertain", "stale", "missing", "spaces"}.each do |kind|
+      env = spoiler_env(path)
+      prefs = env.get("preferences").as(Preferences)
+      prefs.dark_mode = mode
+      user = env.get("user").as(User)
+      user.preferences = prefs
+      env.set "user", user
+      env.set "preferences", prefs
+      env.set "sid", "fixture-session"
+      fields = {"channel" => id, "action" => "save", "hide_title" => "on", "reveal_after_days" => "days<draft>&", "csrf_token" => generate_response("fixture-session", {"POST:preferences/spoilers/channels"}, HMAC_KEY), "browser_profile" => Invidious::BrowserProfiles.render_scope(env)}
+      fields["browser_profile"] = "earlier-profile" if kind == "stale"
+      if kind == "spaces"
+        fields["reveal_after_days"] = " 7 "
+        fields["csrf_token"] = "expired"
+      end
+      if kind == "missing"
+        fields.delete("reveal_after_days")
+        fields["hide_thumbnail"] = "invalid"
+      end
+      post = HTTP::Server::Context.new(HTTP::Request.new("POST", path, HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}, URI::Params.encode(fields)), HTTP::Server::Response.new(IO::Memory.new))
+      %w(user preferences sid csrf_token).each { |key| post.set key, env.get(key) }
+      html = if kind == "uncertain"
+               post.set "mask_draft", URI::Params.encode(fields)
+               post.set "mask_error", I18n.translate(prefs.locale, "overhaul_channel_unconfirmed")
+               post.set "mask_uncertain", true
+               Invidious::Routes::ChannelSpoilerPreferences.show(post)
+             else
+               Invidious::Routes::ChannelSpoilerPreferences.update(post)
+             end
+      File.write("#{output}/d6-masking-#{kind}-#{mode}.html", html)
+    end
+  end
 end

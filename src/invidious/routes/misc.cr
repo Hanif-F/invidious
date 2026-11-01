@@ -30,12 +30,16 @@ module Invidious::Routes::Misc
 
   def self.privacy(env)
     locale = env.get("preferences").as(Preferences).locale
+    Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
     templated "privacy"
   end
 
   def self.licenses(env)
     locale = env.get("preferences").as(Preferences).locale
-    rendered "licenses"
+    Authentication.no_store(env)
+    env.response.headers["Referrer-Policy"] = "no-referrer"
+    templated "licenses"
   end
 
   def self.cross_instance_redirect(env)

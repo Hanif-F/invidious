@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: standalone browser challenge uses scoped action, retries outages and returns to video position
+ok 1 - standalone browser challenge uses scoped action, retries outages and returns to video position
+  ---
+  duration_ms: 245.642714
+  type: 'test'
+  ...
+# Subtest: native hosted challenge publishes credentials only through the documented event
+ok 2 - native hosted challenge publishes credentials only through the documented event
+  ---
+  duration_ms: 201.11484
+  type: 'test'
+  ...
+# Subtest: a denied media request preserves playback position when verification expires
+ok 3 - a denied media request preserves playback position when verification expires
+  ---
+  duration_ms: 127.139333
+  type: 'test'
+  ...
+# Subtest: media errors check local status and embedded recovery offers a direct link
+ok 4 - media errors check local status and embedded recovery offers a direct link
+  ---
+  duration_ms: 181.300664
+  type: 'test'
+  ...
+# Subtest: chromium: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry
+ok 5 - chromium: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry
+  ---
+  duration_ms: 2140.730423
+  type: 'test'
+  ...
+# Subtest: chromium: D7 recovery policy choices use ordinary forms with and without JavaScript
+ok 6 - chromium: D7 recovery policy choices use ordinary forms with and without JavaScript
+  ---
+  duration_ms: 321.470683
+  type: 'test'
+  ...
+# Subtest: chromium: D7 native challenge is idempotent and keeps issued credentials in the bridge only
+ok 7 - chromium: D7 native challenge is idempotent and keeps issued credentials in the bridge only
+  ---
+  duration_ms: 99.828508
+  type: 'test'
+  ...
+# Subtest: chromium: D7 failed verification is explicit and retries only a fresh challenge
+ok 8 - chromium: D7 failed verification is explicit and retries only a fresh challenge
+  ---
+  duration_ms: 146.868119
+  type: 'test'
+  ...
+# Subtest: chromium: D7 cached verification return rejects late passes and waits for deliberate Retry
+ok 9 - chromium: D7 cached verification return rejects late passes and waits for deliberate Retry
+  ---
+  duration_ms: 134.261233
+  type: 'test'
+  ...
+# Subtest: chromium: D7 disabled and unconfigured verification stay truthful and localized
+ok 10 - chromium: D7 disabled and unconfigured verification stay truthful and localized
+  ---
+  duration_ms: 181.156029
+  type: 'test'
+  ...
+# Subtest: firefox: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry
+ok 11 - firefox: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry
+  ---
+  duration_ms: 7082.936875
+  type: 'test'
+  ...
+# Subtest: firefox: D7 recovery policy choices use ordinary forms with and without JavaScript
+ok 12 - firefox: D7 recovery policy choices use ordinary forms with and without JavaScript
+  ---
+  duration_ms: 1395.579389
+  type: 'test'
+  ...
+# Subtest: firefox: D7 native challenge is idempotent and keeps issued credentials in the bridge only
+ok 13 - firefox: D7 native challenge is idempotent and keeps issued credentials in the bridge only
+  ---
+  duration_ms: 285.856686
+  type: 'test'
+  ...
+# Subtest: firefox: D7 failed verification is explicit and retries only a fresh challenge
+ok 14 - firefox: D7 failed verification is explicit and retries only a fresh challenge
+  ---
+  duration_ms: 306.713904
+  type: 'test'
+  ...
+# Subtest: firefox: D7 cached verification return rejects late passes and waits for deliberate Retry
+ok 15 - firefox: D7 cached verification return rejects late passes and waits for deliberate Retry
+  ---
+  duration_ms: 303.403247
+  type: 'test'
+  ...
+# Subtest: firefox: D7 disabled and unconfigured verification stay truthful and localized
+ok 16 - firefox: D7 disabled and unconfigured verification stay truthful and localized
+  ---
+  duration_ms: 679.371246
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13844.494249

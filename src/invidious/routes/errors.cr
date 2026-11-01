@@ -46,7 +46,6 @@ module Invidious::Routes::ErrorRoutes
       end
     end
 
-    env.response.headers["Location"] = "/"
-    haltf env, status_code: 302
+    error_template(404, "Page not found.")
   end
 end

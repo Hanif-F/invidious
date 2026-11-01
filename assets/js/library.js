@@ -1,199 +1,179 @@
 'use strict';
+// A collection owns its rendered controls, selections and requests. Writes are
+// explicit; an uncertain playlist addition cannot be repeated in this document.
 (function () {
-    var ui = InvidiousUI, root = document.getElementById('main-content');
-    if (!root || !ui.config.signedIn || document.body.dataset.page === 'watch') return;
-    var manager = location.pathname === '/subscription_manager';
-    var historyPage = location.pathname === '/feed/history';
-    var selecting = false, pending = false, ordering = false, toolbar;
-    var boxes = new WeakMap(), orderInitialized = new WeakSet();
-    var toggle, all, clear, count, operation, playlists, apply, status;
-    function rows() {
-        return Array.from(root.querySelectorAll(manager ? '.subscription-row' : '.media-item[data-video-id]')).filter(function (row) {
-            return !row.hidden && (manager || /^[\w-]{11}$/.test(row.dataset.videoId));
-        });
-    }
-    function selected() { return rows().filter(function (row) { return boxes.get(row) && boxes.get(row).checked; }); }
-    function ownerInfo(row) {
-        var button = row.querySelector('[data-onclick=remove_playlist_item]');
-        return button ? {entry: button.dataset.index, playlist: button.dataset.plid} : null;
-    }
-    function button(text, fn) {
-        var element = document.createElement('button'); element.type = 'button'; element.className = 'pure-button'; element.textContent = text; element.onclick = fn; return element;
-    }
-    function update() {
-        var chosen = selected();
-        toolbar.dataset.selecting = String(selecting);
-        count.textContent = ui.label('count', {count: chosen.length});
-        toggle.setAttribute('aria-pressed', String(selecting));
-        all.hidden = clear.hidden = count.hidden = operation.hidden = apply.hidden = !selecting;
-        playlists.hidden = !selecting || operation.value !== 'playlist';
-        apply.disabled = pending || !chosen.length || (operation.value === 'playlist' && !playlists.value);
-        rows().forEach(function (row) {
-            var box = boxes.get(row);
-            if (box) { box.closest('label').hidden = !selecting; row.dataset.selected = String(selecting && box.checked); }
-        });
-    }
-    function init() {
-        var entries = rows();
-        if (!entries.length) return;
-        if (!toolbar || !toolbar.isConnected) createToolbar(entries);
-        entries.forEach(function (row) {
-            if (!boxes.has(row)) {
-                var label = document.createElement('label'); label.className = 'library-checkbox';
-                var box = document.createElement('input'); box.type = 'checkbox'; box.onchange = update;
-                label.append(box, document.createTextNode(ui.label('selection_label'))); label.hidden = !selecting;
-                row.prepend(label); boxes.set(row, box);
+    var ui = window.InvidiousUI, owners = new Map(), page = new AbortController();
+    if (!ui || !ui.config.signedIn) return;
+    function start(root) {
+        if (owners.has(root)) return;
+        var lifetime = new AbortController(), active = new Set(), uncertain = new WeakMap(), seenButtons = new WeakSet(), unavailableButtons = new WeakSet();
+        var toolbar = root.querySelector('[data-collection-toolbar]');
+        if (!toolbar) return;
+        owners.set(root,lifetime);
+        var toggle = toolbar.querySelector('[data-select-toggle]'), actions = toolbar.querySelector('[data-selection-actions]');
+        var operation = toolbar.querySelector('[data-batch-operation]'), playlists = toolbar.querySelector('[data-batch-playlist]');
+        var apply = toolbar.querySelector('[data-batch-apply]'), status = root.querySelector('[data-collection-status]');
+        var selecting = false, pending = false, loading = false, loaded = false, orderPending = false, activePage = true, epoch = 0, feedbackEpoch = 0, currentAddition;
+        var manager = root.dataset.collectionKind === 'manager', history = root.dataset.collectionKind === 'history';
+        function alive() { return activePage && !lifetime.signal.aborted && root.isConnected && InvidiousStorage.isCurrent(); }
+        function on(target,type,callback) { target.addEventListener(type,callback,{signal:lifetime.signal}); }
+        function rows() { return Array.from(root.querySelectorAll(manager ? '.subscription-row[data-channel-id]' : '.media-item[data-video-id]')).filter(function (row) { return !row.hidden && row.querySelector('[data-select-item]') && (manager || /^[A-Za-z0-9_-]{11}$/.test(row.dataset.videoId)); }); }
+        function selected() { return rows().filter(function (row) { return row.querySelector('[data-select-item]').checked; }); }
+        function targetPlaylist() { return root.dataset.fixedPlaylist || (playlists && playlists.value) || ''; }
+        function isUncertain(row, id) { return (uncertain.get(row) || new Set()).has(id); }
+        function update() {
+            if (!root.isConnected || lifetime.signal.aborted) return;
+            var entries = rows(), chosen = selected(), blocked = pending || orderPending || !alive();
+            root.dataset.selecting = String(selecting); root.dataset.collectionBusy = String(blocked);
+            toolbar.hidden = !entries.length;
+            toggle.setAttribute('aria-pressed',String(selecting)); toggle.disabled = blocked;
+            actions.hidden = !selecting;
+            toolbar.querySelector('[data-selection-count]').textContent = ui.label('count',{count:chosen.length});
+            toolbar.querySelectorAll('button,select').forEach(function (control) { if (control !== toggle) control.disabled = blocked; });
+            if (playlists) { playlists.hidden = !selecting || operation.value !== 'playlist'; playlists.disabled = blocked || loading; }
+            apply.disabled = blocked || !chosen.length || (operation.value === 'playlist' && (!targetPlaylist() || chosen.some(function (row) { return isUncertain(row,targetPlaylist()); })));
+            entries.forEach(function (row) { var box = row.querySelector('[data-select-item]'); box.closest('.library-checkbox').hidden = !selecting; box.disabled = blocked; row.dataset.selected = String(selecting && box.checked); });
+            root.querySelectorAll('.playlist-grip').forEach(function (grip) { grip.disabled = selecting || blocked || !!grip.closest('[aria-invalid=true]'); });
+            root.querySelectorAll('[data-collection-action] button').forEach(function (button) { if (!seenButtons.has(button)) { seenButtons.add(button); if (button.disabled) unavailableButtons.add(button); } var form = button.closest('form'), row = button.closest('.media-item,.subscription-row'); button.disabled = blocked || unavailableButtons.has(button) || (form.dataset.collectionAction === 'playlist' && row && isUncertain(row,targetPlaylist())); });
+            var empty = root.querySelector('[data-collection-empty]');
+            if (empty) empty.hidden = entries.length > 0 || !root.dataset.hadItems;
+            if (entries.length) root.dataset.hadItems = 'true';
+        }
+        async function request(url, body) {
+            if (!alive()) throw new Error(ui.label('error'));
+            var controller = new AbortController(), generation = epoch; active.add(controller);
+            try {
+                var result = await ui.request(url,{signal:controller.signal,...(body ? {method:'POST',body:new URLSearchParams(Object.assign({csrf_token:ui.config.csrf},body))} : {})});
+                if (!alive() || generation !== epoch) { var canceled = new Error(ui.label('error')); canceled.stalePage = true; throw canceled; }
+                return result;
+            } finally { active.delete(controller); }
+        }
+        async function loadPlaylists() {
+            if (!playlists || loaded || loading || !alive()) return;
+            var generation = epoch, feedback = feedbackEpoch; loading = true; update();
+            try {
+                var data = await request('/video_actions');
+                if (!alive() || generation !== epoch) return;
+                if (!data || !Array.isArray(data.playlists) || data.playlists.some(function (item) { return typeof item.id !== 'string' || !/^IV[A-Za-z0-9_-]+$/.test(item.id) || typeof item.title !== 'string'; })) throw new Error(ui.label('error'));
+                playlists.replaceChildren();
+                data.playlists.forEach(function (item) { playlists.add(new Option(item.title,item.id)); });
+                if (data.playlists.some(function (item) { return item.id === data.defaultPlaylist; })) playlists.value = data.defaultPlaylist;
+                loaded = true; if (feedback === feedbackEpoch && selecting && operation.value === 'playlist' && !pending) ui.status(status,data.playlists.length ? '' : ui.label('no_playlists'));
+            } catch (_) { if (alive() && generation === epoch && feedback === feedbackEpoch && selecting && operation.value === 'playlist' && !pending) ui.status(status,ui.label('error'),loadPlaylists); }
+            finally { if (generation === epoch) { loading = false; if (alive()) update(); } }
+        }
+        function confirmBatch(count, label) {
+            var dialog = root.querySelector('[data-batch-confirm]');
+            if (!dialog) return Promise.resolve(false);
+            dialog.querySelector('[data-confirm-description]').textContent = ui.label('confirm_bulk',{count:count,action:label});
+            dialog.returnValue = 'cancel';
+            return new Promise(function (resolve) {
+                function complete() { lifetime.signal.removeEventListener('abort',abort); resolve(dialog.returnValue === 'confirm' && alive()); }
+                function abort() { dialog.close('cancel'); }
+                dialog.addEventListener('close',complete,{once:true}); lifetime.signal.addEventListener('abort',abort,{once:true});
+                dialog.showModal();
+            });
+        }
+        function markUncertain(row, id, error) {
+            if (error.status >= 400 && error.status < 500 && error.status !== 408) return;
+            var ids = uncertain.get(row) || new Set(); ids.add(id); uncertain.set(row,ids);
+        }
+        function checkLink(id) {
+            var link = document.createElement('a'); link.href = '/playlist?list=' + encodeURIComponent(id); link.className = 'button'; link.textContent = ui.label('check_playlist'); status.append(' ',link);
+        }
+        async function perform(row, action, playlist) {
+            var id = row.dataset.videoId, url;
+            if (action === 'playlist') url = '/playlist_ajax?action=add_video&redirect=false&video_id='+encodeURIComponent(id)+'&playlist_id='+encodeURIComponent(playlist);
+            else if (action === 'unsubscribe') url = '/subscription_ajax?action=remove_subscriptions&redirect=false&c='+encodeURIComponent(row.dataset.channelId);
+            else if (action === 'remove' && !history) url = '/playlist_ajax?action=remove_video&redirect=false&set_video_id='+encodeURIComponent(row.dataset.occurrence)+'&playlist_id='+encodeURIComponent(root.dataset.playlistId);
+            else url = '/watch_ajax?action=mark_'+(action === 'watched' ? 'watched' : 'unwatched')+'&redirect=false&id='+encodeURIComponent(id);
+            if (action === 'playlist') currentAddition = {row:row,id:playlist};
+            var result;
+            try { result = await request(url,action === 'playlist' || action === 'remove' && !history ? {include_positions:'1'} : {}); }
+            catch (error) { if (action === 'playlist') markUncertain(row,playlist,error); throw error; }
+            finally { if (currentAddition && currentAddition.row === row && currentAddition.id === playlist) currentAddition = null; }
+            if (!alive()) return false;
+            var list = root.querySelector('.media-rows[data-playlist-id]');
+            var reconciled = false;
+            if (list && (action === 'remove' && !history || action === 'playlist' && list.dataset.playlistId === playlist)) {
+                try { ui.playlistOrder(list,result,action === 'remove' ? row : null); reconciled = true; }
+                catch (error) {
+                    list.setAttribute('aria-invalid','true'); list.querySelectorAll('.playlist-grip').forEach(function (grip) { grip.disabled = true; });
+                    if (action === 'playlist') markUncertain(row,playlist,error);
+                    ui.notice(ui.label('check_playlist'),function () { location.reload(); }); throw error;
+                }
             }
-            var info = ownerInfo(row);
-            if (info && !orderInitialized.has(row)) addOrder(row, info);
+            if (action === 'watched' || action === 'unwatched' || (history && action === 'remove')) ui.watched(id,action === 'watched');
+            else if (!reconciled && (action === 'remove' || action === 'unsubscribe')) ui.removeRows([row]);
+            var box = row.querySelector('[data-select-item]'); if (box) box.checked = false;
+            if (action === 'unsubscribe') document.dispatchEvent(new Event('iv:subscriptions-change'));
+            return true;
+        }
+        async function run() {
+            if (pending || orderPending || !alive()) return;
+            var generation = epoch, chosen = selected(), action = operation.value, playlist = targetPlaylist();
+            if (!chosen.length || (action === 'playlist' && (!playlist || chosen.some(function (row) { return isUncertain(row,playlist); })))) return;
+            if (['remove','unsubscribe'].includes(action) && !await confirmBatch(chosen.length,operation.selectedOptions[0].textContent)) return;
+            if (!alive() || generation !== epoch || pending || orderPending) return;
+            feedbackEpoch++; pending = true; root.dispatchEvent(new Event('iv:collection-busy',{bubbles:true})); update(); var done = 0, completed = new Set();
+            var watched = ['watched','unwatched'].includes(action) || (history && action === 'remove');
+            try {
+                for (var row of chosen) {
+                    if (!alive() || generation !== epoch) break;
+                    if (watched && completed.has(row.dataset.videoId)) { done++; row.querySelector('[data-select-item]').checked = false; continue; }
+                    try { if (await perform(row,action,playlist)) { done++; if (watched) completed.add(row.dataset.videoId); } }
+                    catch (_) { /* Preserve the failed selection; never retry a write. */ }
+                    if (alive() && generation === epoch) ui.status(status,ui.label('progress',{done:done,total:chosen.length}));
+                }
+                if (alive() && generation === epoch) {
+                    document.dispatchEvent(new Event('iv:library-change'));
+                    ui.status(status,ui.label('partial',{done:done,failed:chosen.length-done}));
+                    if (action === 'playlist' && chosen.some(function (row) { return isUncertain(row,playlist); })) checkLink(playlist);
+                }
+            } finally {
+                if (generation !== epoch) return;
+                pending = false;
+                if (alive()) { update(); if (document.activeElement === document.body) (apply.disabled ? toggle : apply).focus({preventScroll:true}); }
+            }
+        }
+        on(toggle,'click',function () { if (pending || orderPending) return; feedbackEpoch++; ui.status(status,''); selecting = !selecting; if (!selecting) rows().forEach(function (row) { row.querySelector('[data-select-item]').checked = false; }); update(); if (selecting) root.dispatchEvent(new Event('iv:collection-busy',{bubbles:true})); if (selecting && operation.value === 'playlist') loadPlaylists(); });
+        on(toolbar.querySelector('[data-select-all]'),'click',function () { rows().forEach(function (row) { row.querySelector('[data-select-item]').checked = true; }); update(); });
+        on(toolbar.querySelector('[data-select-clear]'),'click',function () { rows().forEach(function (row) { row.querySelector('[data-select-item]').checked = false; }); update(); });
+        on(operation,'change',function () { feedbackEpoch++; ui.status(status,''); update(); if (operation.value === 'playlist') loadPlaylists(); });
+        if (playlists) on(playlists,'change',update);
+        on(apply,'click',run);
+        on(root,'change',function (event) { if (event.target.matches('[data-select-item]')) update(); });
+        on(root,'submit',async function (event) {
+            var form = event.target.closest('[data-collection-action]'); if (!form || !root.contains(form)) return;
+            event.preventDefault(); if (pending || orderPending || !alive()) return;
+            var row = form.closest('.media-item,.subscription-row'), action = form.dataset.collectionAction, playlist = targetPlaylist();
+            if (!row || (action === 'playlist' && isUncertain(row,playlist))) return;
+            var generation = epoch; feedbackEpoch++; pending = true; root.dispatchEvent(new Event('iv:collection-busy',{bubbles:true})); var submit = event.submitter; if (submit) submit.disabled = true; update();
+            try { await perform(row,action,playlist); if (alive() && generation === epoch) { ui.status(status,ui.label('saved')); document.dispatchEvent(new Event('iv:library-change')); } }
+            catch (_) { if (alive() && generation === epoch) { ui.status(status,ui.label('error')); if (action === 'playlist' && isUncertain(row,playlist)) checkLink(playlist); } }
+            finally { if (generation !== epoch) return; pending = false; if (alive()) { if (submit && submit.isConnected) submit.disabled = action === 'playlist' && isUncertain(row,playlist); update(); if (document.activeElement === document.body) document.getElementById('main-content').focus({preventScroll:true}); } }
         });
+        on(document,'iv:content-added',function (event) { if (!root.isConnected) { dispose(); return; } if (!event.detail || root.contains(event.detail)) update(); });
+        on(document,'iv:library-change',update);
+        on(document,'iv:watched-change',update);
+        on(document,'iv:order-pending',function (event) { if (root.contains(event.detail.list)) { orderPending = event.detail.pending; update(); } });
+        function cancelReads() { active.forEach(function (controller) { controller.abort(); }); }
+        function dispose() { cancelReads(); lifetime.abort(); owners.delete(root); }
+        lifetime.signal.addEventListener('abort',cancelReads,{once:true});
+        on(window,'browserprofilechange',function () { update(); dispose(); });
+        on(window,'pagehide',function (event) {
+            activePage = false; epoch++;
+            if (currentAddition) markUncertain(currentAddition.row,currentAddition.id,{});
+            if (pending) { ui.status(status,ui.label('error')); if (currentAddition) checkLink(currentAddition.id); }
+            pending = false; loading = false;
+            var dialog = root.querySelector('[data-batch-confirm]'); if (dialog && dialog.open) dialog.close('cancel');
+            cancelReads(); update(); if (!event.persisted) dispose();
+        });
+        on(window,'pageshow',function () { activePage = true; update(); if (selecting && operation.value === 'playlist' && !loaded) loadPlaylists(); });
         update();
     }
-    function createToolbar(entries) {
-        selecting = false;
-        toolbar = document.createElement('div'); toolbar.className = 'library-toolbar'; toolbar.setAttribute('role', 'group'); toolbar.setAttribute('aria-label', ui.label('select'));
-        toggle = button(ui.label('select'), function () { if (pending) return; selecting = !selecting; update(); });
-        all = button(ui.label('select_all'), function () { rows().forEach(function (row) { boxes.get(row).checked = true; }); update(); });
-        clear = button(ui.label('clear_selection'), function () { rows().forEach(function (row) { boxes.get(row).checked = false; }); update(); });
-        count = document.createElement('span'); count.setAttribute('role', 'status');
-        operation = document.createElement('select'); operation.setAttribute('aria-label', ui.label('operation'));
-        var choices = manager ? [['unsubscribe', 'unsubscribe']] : [['playlist', 'add_playlist'], ['watched', 'watched'], ['unwatched', 'unwatched']];
-        if (!manager && (historyPage || entries.some(ownerInfo))) choices.push(['remove', 'remove']);
-        choices.forEach(function (choice) { operation.add(new Option(ui.label(choice[1]), choice[0])); });
-        playlists = document.createElement('select'); playlists.setAttribute('aria-label', ui.label('add_playlist'));
-        playlists.add(new Option(ui.label('loading'), ''));
-        operation.onchange = function () { if (operation.value === 'playlist') loadPlaylists(); update(); };
-        toggle.addEventListener('click', function () { if (selecting && operation.value === 'playlist') loadPlaylists(); });
-        playlists.onchange = update;
-        apply = button(ui.label('apply'), run);
-        status = document.createElement('span'); status.setAttribute('role', 'status');
-        toolbar.append(toggle, count, all, clear, operation, playlists, apply, status);
-        var container = entries[0].closest('.history-groups') || entries[0].closest('.media-grid') || entries[0];
-        container.before(toolbar);
-    }
-    async function loadPlaylists() {
-        if (playlists.dataset.loaded || playlists.dataset.loading) return;
-        playlists.dataset.loading = 'true';
-        try {
-            var data = await ui.request('/video_actions');
-            playlists.replaceChildren();
-            data.playlists.forEach(function (playlist) { playlists.add(new Option(playlist.title, playlist.id)); });
-            if (data.playlists.some(function (playlist) { return playlist.id === data.defaultPlaylist; })) playlists.value = data.defaultPlaylist;
-            playlists.dataset.loaded = 'true';
-            ui.status(status, data.playlists.length ? '' : ui.label('no_playlists'));
-        } catch (_) { ui.status(status, ui.label('error'), loadPlaylists); }
-        finally { delete playlists.dataset.loading; update(); }
-    }
-    async function run() {
-        if (pending) return;
-        var chosen = selected(), action = operation.value, playlist = playlists.value;
-        if (!chosen.length || (action === 'playlist' && !playlist)) return;
-        if (['remove', 'unsubscribe'].includes(action) && !window.confirm(ui.label('confirm_bulk', {count: chosen.length, action: operation.selectedOptions[0].textContent}))) return;
-        var restoreFocus = toolbar.contains(document.activeElement);
-        pending = true;
-        var controls = Array.from(root.querySelectorAll('.library-toolbar button, .library-toolbar select, .library-checkbox input, .playlist-order button'));
-        controls.forEach(function (control) { control.disabled = true; });
-        var done = 0;
-        var watchedAction = action === 'watched' || action === 'unwatched' || (action === 'remove' && historyPage);
-        var completedVideos = new Set();
-        try {
-            for (var row of chosen) {
-                if (!InvidiousStorage.isCurrent()) break;
-                var id = row.dataset.videoId, url;
-                if (watchedAction && completedVideos.has(id)) { done++; boxes.get(row).checked = false; continue; }
-                if (action === 'playlist') url = '/playlist_ajax?action=add_video&redirect=false&video_id=' + encodeURIComponent(id) + '&playlist_id=' + encodeURIComponent(playlist);
-                else if (action === 'unsubscribe') url = '/subscription_ajax?action=remove_subscriptions&redirect=false&c=' + encodeURIComponent(row.querySelector('[data-ucid]').dataset.ucid);
-                else if (action === 'remove' && !historyPage) {
-                    var info = ownerInfo(row);
-                    url = '/playlist_ajax?action=remove_video&redirect=false&set_video_id=' + encodeURIComponent(info.entry) + '&playlist_id=' + encodeURIComponent(info.playlist);
-                } else url = '/watch_ajax?action=mark_' + (action === 'watched' ? 'watched' : 'unwatched') + '&redirect=false&id=' + encodeURIComponent(id);
-                try {
-                    await ui.post(url, {});
-                    done++; boxes.get(row).checked = false; row.dataset.selected = 'false';
-                    if (watchedAction) { completedVideos.add(id); ui.watched(id, action === 'watched'); }
-                    else if (action === 'remove' || action === 'unsubscribe') ui.removeRows([row]);
-                } catch (_) { /* Keep failed occurrences selected; never automatically retry. */ }
-                ui.status(status, ui.label('progress', {done: done, total: chosen.length}));
-            }
-            document.dispatchEvent(new Event('iv:library-change'));
-            ui.status(status, ui.label('partial', {done: done, failed: chosen.length - done}) +
-                (action === 'playlist' && done < chosen.length ? ' ' + ui.label('check_playlist') : ''));
-        } finally {
-            pending = false;
-            controls.forEach(function (control) { control.disabled = false; });
-            update(); refreshOrderButtons();
-            if (restoreFocus && document.activeElement === document.body) (apply.disabled ? toggle : apply).focus();
-        }
-    }
-    function addOrder(row) {
-        orderInitialized.add(row);
-        var controls = document.createElement('div'); controls.className = 'playlist-order';
-        // The grip is a pointer handle; adjacent buttons provide keyboard/touch
-        // operation without exposing an otherwise inert button to tab order.
-        var handle = document.createElement('span'); handle.textContent = '↕'; handle.className = 'pure-button playlist-drag'; handle.draggable = true;
-        handle.setAttribute('role', 'img'); handle.setAttribute('aria-label', ui.label('drag'));
-        controls.append(handle, button(ui.label('move_up'), function () { moveNeighbor(row, -1); }), button(ui.label('move_down'), function () { moveNeighbor(row, 1); }));
-        row.append(controls);
-        refreshOrderButtons();
-    }
-    function peers(row) { return Array.from(row.parentElement.children).filter(function (entry) { return entry.classList.contains('media-item') && ownerInfo(entry); }); }
-    function refreshOrderButtons() {
-        root.querySelectorAll('.playlist-order').forEach(function (controls) {
-            var row = controls.closest('.media-item'), list = peers(row), index = list.indexOf(row);
-            controls.children[0].draggable = !pending && !ordering;
-            controls.children[1].disabled = pending || ordering || index === 0;
-            controls.children[2].disabled = pending || ordering || index === list.length - 1;
-        });
-    }
-    function moveNeighbor(row, direction) {
-        var list = peers(row), anchor = list[list.indexOf(row) + direction];
-        if (anchor) move(row, anchor, direction < 0 ? 'before' : 'after');
-    }
-    async function move(row, anchor, placement) {
-        if (pending || ordering || row === anchor) return;
-        var sourceInfo = ownerInfo(row), anchorInfo = ownerInfo(anchor);
-        if (!sourceInfo || !anchorInfo || sourceInfo.playlist !== anchorInfo.playlist) return;
-        var focus = document.activeElement, restoreFocus = row.contains(focus);
-        ordering = true; refreshOrderButtons();
-        try {
-            await ui.post('/playlist_ajax?action=move_video_before&redirect=false&playlist_id=' + encodeURIComponent(sourceInfo.playlist),
-                {source: sourceInfo.entry, anchor: anchorInfo.entry, placement: placement});
-            if (placement === 'before') anchor.before(row); else anchor.after(row);
-            // Server-rendered watch links carry stable entry identities, so
-            // changing visual row order does not change what clicking opens.
-            var positions = peers(row);
-            var first = Math.min(...positions.map(function (entry) { return Number(entry.querySelector('.playlist-position').textContent); }));
-            positions.forEach(function (entry, index) { entry.querySelector('.playlist-position').textContent = first + index; });
-            ui.notice(ui.label('saved'));
-            document.dispatchEvent(new Event('iv:library-change'));
-        } catch (error) {
-            if (error.status === 409) location.reload();
-            else ui.notice(ui.label('error'));
-        } finally {
-            ordering = false; refreshOrderButtons();
-            if (restoreFocus && document.activeElement === document.body && row.isConnected) {
-                var target = focus.disabled ? row.querySelector('.playlist-order button:not([disabled])') : focus;
-                if (target) target.focus();
-            }
-        }
-    }
-    var dragged;
-    document.addEventListener('dragstart', function (event) {
-        var handle = event.target.closest('.playlist-drag');
-        if (!handle || pending || ordering) return;
-        dragged = handle.closest('.media-item'); dragged.classList.add('is-dragging');
-        event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', ownerInfo(dragged).entry);
-    });
-    document.addEventListener('dragover', function (event) { if (dragged && event.target.closest('.media-item')) event.preventDefault(); });
-    document.addEventListener('drop', function (event) {
-        var anchor = event.target.closest('.media-item');
-        if (!dragged || !anchor) return;
-        event.preventDefault();
-        var box = anchor.getBoundingClientRect();
-        move(dragged, anchor, event.clientY < box.top + box.height / 2 ? 'before' : 'after');
-    });
-    document.addEventListener('dragend', function () { if (dragged) dragged.classList.remove('is-dragging'); dragged = null; });
-    document.addEventListener('iv:content-added', init);
-    document.addEventListener('iv:library-change', function () { if (toolbar && toolbar.isConnected) { update(); refreshOrderButtons(); } });
-    init();
+    function scan() { document.querySelectorAll('[data-collection]').forEach(start); owners.forEach(function (lifetime,root) { if (!root.isConnected) { lifetime.abort(); owners.delete(root); } }); }
+    document.addEventListener('iv:content-added',scan,{signal:page.signal});
+    window.addEventListener('pagehide',function (event) { if (!event.persisted) page.abort(); },{signal:page.signal});
+    scan();
 })();

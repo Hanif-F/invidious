@@ -1,0 +1,142 @@
+TAP version 13
+# Subtest: chromium: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+ok 1 - chromium: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+  ---
+  duration_ms: 982.514209
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+ok 2 - chromium: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+  ---
+  duration_ms: 4706.491257
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+ok 3 - chromium: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+  ---
+  duration_ms: 498.163524
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+ok 4 - chromium: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+  ---
+  duration_ms: 723.965974
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+ok 5 - chromium: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+  ---
+  duration_ms: 778.062536
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+ok 6 - chromium: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+  ---
+  duration_ms: 360.155307
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+ok 7 - firefox: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+  ---
+  duration_ms: 1096.634771
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+ok 8 - firefox: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+  ---
+  duration_ms: 8442.287502
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+ok 9 - firefox: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+  ---
+  duration_ms: 775.3669
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+ok 10 - firefox: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+  ---
+  duration_ms: 1264.2308
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+ok 11 - firefox: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+  ---
+  duration_ms: 1396.130868
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+ok 12 - firefox: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+  ---
+  duration_ms: 630.025549
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+ok 13 - chromium: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+  ---
+  duration_ms: 499.295664
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+ok 14 - chromium: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+  ---
+  duration_ms: 1506.932163
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+ok 15 - chromium: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+  ---
+  duration_ms: 1320.686913
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+ok 16 - chromium: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+  ---
+  duration_ms: 348.486284
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+ok 17 - firefox: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+  ---
+  duration_ms: 812.788795
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+ok 18 - firefox: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+  ---
+  duration_ms: 2951.933611
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+ok 19 - firefox: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+  ---
+  duration_ms: 2365.458875
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+ok 20 - firefox: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+  ---
+  duration_ms: 580.709135
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 21 - chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 647.645413
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 22 - firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 915.331365
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 34420.323562

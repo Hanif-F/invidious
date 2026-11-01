@@ -1,0 +1,12 @@
+        <section class="queue-panel panel" id="playlist-panel">
+            <header class="queue-heading">
+                <h2><%= I18n.translate(locale, "ui_playing_playlist") %></h2>
+                <a id="queue-title" href="/<%= plid.starts_with?("RD") ? "mix" : "playlist" %>?list=<%= plid %>"><%= I18n.translate(locale, "ui_open_playlist") %></a>
+                <p class="queue-context"><span id="queue-count"></span><span id="queue-current" data-dearrow-row><%= I18n.translate(locale, "ui_now_playing") %>: <%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, custom: !!native_clip) %></span></p>
+            </header>
+            <div id="queue-navigation" class="queue-navigation" hidden></div>
+            <p id="queue-status" class="queue-status" role="status"></p>
+            <button id="queue-retry" class="button queue-retry" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button>
+            <button hidden id="queue-toggle" class="queue-toggle pure-button js-only" type="button" aria-expanded="false" aria-controls="playlist"><%= I18n.translate(locale, "ui_show_queue") %></button>
+            <div id="playlist" class="queue-list"></div>
+        </section>

@@ -1,0 +1,31 @@
+/* Replay is a utility panel. Media placement and fullscreen belong to the player. */
+.chat-panel{box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0;width:100%;height:min(640px,calc(100vh - 188px));min-height:240px;overflow:hidden;background:var(--surface);color:var(--text);font:inherit;font-size:calc(16px * var(--chat-font-scale,1));line-height:1.5}
+.chat-panel[hidden]{display:none!important}
+.chat-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:44px;padding-block-end:8px;border-block-end:1px solid var(--separator)}
+.chat-heading h2{font-size:16px;margin:0}
+.chat-scroll-area{position:relative;flex:1 1 auto;min-height:0}
+.chat-messages{box-sizing:border-box;height:100%;min-height:0;overflow:auto;overflow-anchor:none;overscroll-behavior:contain;padding:12px 4px;scrollbar-gutter:stable}
+.chat-messages:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.chat-message{display:grid;grid-template-columns:3.6em minmax(0,1fr);align-items:start;gap:8px;padding-block:6px;overflow-wrap:anywhere;line-height:1.5}
+.chat-panel.chat-hide-timestamps .chat-message{grid-template-columns:minmax(0,1fr)}
+.chat-panel.chat-hide-timestamps .chat-time,.chat-panel.chat-hide-user-ids .chat-author-id{display:none}
+.chat-time{font-size:.75em;font-variant-numeric:tabular-nums;min-height:32px;padding:4px 0;text-decoration:none}
+.chat-content{min-width:0}.chat-meta{display:flex;align-items:baseline;gap:0 8px;flex-wrap:wrap}
+.chat-author{min-width:0;color:var(--text);font-size:.875em;font-weight:600;overflow-wrap:anywhere;white-space:normal}
+.chat-author-id{color:var(--muted);font-size:.75em;overflow-wrap:anywhere;word-break:break-all}
+.chat-text{display:block;white-space:pre-wrap;overflow-wrap:anywhere}
+.chat-message[data-kind=paid] .chat-author,.chat-message[data-kind=paid_sticker] .chat-author{font-weight:700}
+.chat-amount{font-weight:600;font-size:.875em}
+.chat-sync{position:absolute;inset-inline-start:50%;bottom:12px;transform:translateX(-50%);z-index:1;box-shadow:0 2px 12px #0002}
+[dir=rtl] .chat-sync{transform:translateX(50%)}
+.chat-footer{display:flex;flex:none;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding-block-start:8px;border-block-start:1px solid var(--separator)}
+.chat-footer p{margin:0;color:var(--muted);font-size:14px;overflow-wrap:anywhere}.chat-footer button{flex:none}
+.chat-settings-dialog{box-sizing:border-box;width:min(640px,calc(100vw - 48px));max-height:calc(100vh - 48px);padding:0;overflow:hidden}
+.chat-settings-dialog[open]{display:flex;flex-direction:column}
+.chat-settings-dialog>.dialog-heading{flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0;padding:16px 24px;border-block-end:1px solid var(--separator);background:var(--raised)}
+.chat-settings-dialog>.dialog-heading h2{margin:0;font-size:20px}
+.chat-settings-content{box-sizing:border-box;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 24px 24px}
+.chat-video-timing{margin-block:24px;padding-block-start:20px;border-block-start:1px solid var(--separator)}
+.chat-video-timing h3{font-size:16px}.chat-video-timing label,.chat-video-timing p,.chat-video-timing [role=status]{font-size:14px}
+.chat-video-timing input{display:block;max-width:12em;margin-block:8px}.chat-video-timing .settings-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media(forced-colors:active){.chat-panel .chat-time{color:LinkText}.chat-messages:focus-visible{outline-color:Highlight}}

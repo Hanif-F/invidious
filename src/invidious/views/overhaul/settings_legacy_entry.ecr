@@ -1,0 +1,5 @@
+<div class="settings-legacy-entry" data-settings-legacy-entry>
+<% Invidious::Frontend::Settings.legacy_destinations.each do |anchor, destination| %>
+<a class="button" id="<%= HTML.escape(anchor) %>" href="<%= HTML.escape(destination) %>"><%= Invidious::Frontend::Icons.render("settings") %><%= HTML.escape(I18n.translate(locale, "overhaul_settings_moved").sub("{category}", Invidious::Frontend::Settings.legacy_label(locale, destination))) %></a>
+<% end %>
+</div>

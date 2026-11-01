@@ -1,3 +1,11 @@
+# Guarded database verification
+
+These harnesses mutate only their exactly named disposable databases. Read each
+guard before running; never use production data or a useful database. The
+[D8 acceptance](../../docs/uiUXOverhaulPlan/d8-acceptance.md) records the complete
+account harness, exact final empty-state guard and task-container cleanup. Focused
+modes below are useful for development but do not replace that complete run.
+
 Playlist ordering checks run with the production account harness against an
 **empty disposable** database named `invidious_accounts_test`:
 
@@ -6,7 +14,7 @@ ACCOUNT_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_accounts_test 
 ```
 
 They cover owner/CSRF enforcement, stable 64-bit occurrence IDs, duplicate videos,
-unloaded entries, stale anchors and concurrent reorders/additions. The normal
+unloaded entries, stale anchors and concurrent reorders/additions. The same `--qol-only` run now covers library add/remove/delete rollback, canonical order/count responses, length and owned-playlist quota races, UTF-8 title bounds, failed HTML/JSON drafts, privacy/empty pages, reference isolation, atomic history/position clearing, cached manager sorting, subscription-feed/import regressions and existing private page/API/embed/security checks. The normal
 account harness and its frontend CI database job include these checks too.
 
 Original-title cache tests require an **empty** database named
@@ -118,7 +126,7 @@ read-only channel/history cache queries, distinct viewing counts, account timezo
 and 90-day decay, unwatched-upload freshness at seven days, future/premiere/member
 filtering, account isolation, browser sort persistence, OPML export and unsubscribe.
 Ranking and malformed-cookie cases also have focused Crystal specs; the frontend
-harness checks the production manager at mobile widths and in RTL.
+harness checks the production manager at desktop widths, enlarged text and in RTL.
 
 The same account harness exercises optional native `include_stats=true` responses
 through production auth middleware: ordinary response compatibility, existing
@@ -193,3 +201,30 @@ cd tests/frontend && node turnstile-provider-smoke.cjs
 This checks that the real widget loads under the verification-page CSP and emits
 the native completion event. It does not replace a production hostname/key and
 playback smoke before activation.
+
+## Desktop Settings transaction checks
+
+The account harness supports `--settings-only` against an **empty disposable** `invidious_accounts_test` database. It applies all migrations, then checks category and legacy HTTP/JSON/HTML behavior, CSRF/profile/role failures, raw/native/unknown preservation, guest cookie read-back/limits, independent playback cleanup, row-lock and compare-and-set races, and native/web round trips.
+
+It also runs the actual administrator handlers through authentication/content gates against a temporary YAML file: declared-key preservation, confirmation, stale revisions, external YAML edits, environment-managed fields, symlinks, permissions and failed drafts. It never writes the operator/repository configuration. The full required-login regression includes this admin check too. Browser component/visual evidence remains separate in the [overhaul progress log](../../docs/uiUXOverhaulPlan/progress.md); final full application/native/deployed verification is not implied by this harness.
+
+The same `--settings-only` run checks the dedicated DeArrow identity editor's
+private metadata, CSRF/profile/revision/confirmation, conditional concurrent imports,
+native interoperability, uncertain storage and ordinary forms. Contribution checks
+exercise production reads and bounded web forms, exact upstream proposal resolution,
+role/profile/CSRF rejection, private identity isolation and a synthetic 502 that
+must make exactly one transport attempt. The injected transport never sends real
+upstream votes. Readiness/identity tests do not change ordinary preference data.
+
+The D7 account-surface subset also requires the same empty disposable database:
+
+```sh
+ACCOUNT_TEST_DATABASE_URL=postgres://postgres@localhost/invidious_accounts_test crystal run tests/database/accounts.cr -- --account-surfaces-only
+```
+
+It runs migrated production browser account/authorization/session/deletion routes,
+failed literal drafts and password confidentiality, callback/scopes preservation,
+revocation isolation/legacy fields, CSRF and session rotation, seven legacy import fields, CSRF-before-file enforcement, supported preference import and unchanged JSON/OPML download formats, followed by the
+existing native account/security/private-playlist and TV HTTP checks. Native
+JSON/scopes and custom callback protocols remain covered. This subset does not
+replace the final full account/migration and repository regression run.

@@ -99,8 +99,8 @@ module Invidious::Routes::Channels
       return error_template(500, ex)
     end
 
-    env.set "channel_search_query", query.text
-    env.set "search", "channel:#{channel.ucid} #{query.text}"
+    env.set "channel_search_query", query.input
+    env.set "search", "channel:#{channel.ucid} #{query.input}"
     selected_tab = Frontend::ChannelPage::TabsAvailable::Search
     sort_by = ""
     sort_options = [] of String
@@ -278,12 +278,11 @@ module Invidious::Routes::Channels
 
     preferences = env.get("preferences").as(Preferences)
 
-    thin_mode = env.params.query["thin_mode"]?
-    thin_mode = (thin_mode == "true") || preferences.thin_mode
+    thin_mode = false
 
     continuation = env.params.query["continuation"]?
 
-    if !channel.tabs.includes? "community" && "posts"
+    if !channel.tabs.includes?("community") && !channel.tabs.includes?("posts")
       return env.redirect "/channel/#{channel.ucid}"
     end
 
@@ -315,8 +314,7 @@ module Invidious::Routes::Channels
 
     locale = preferences.locale
 
-    thin_mode = env.params.query["thin_mode"]? || preferences.thin_mode
-    thin_mode = thin_mode == "true"
+    thin_mode = false
 
     nojs = env.params.query["nojs"]?
 
@@ -338,7 +336,8 @@ module Invidious::Routes::Channels
     post_response = JSON.parse(post_response)
 
     if nojs
-      comments = Comments.fetch_community_post_comments(ucid, id)
+      token = env.params.query["continuation"]?
+      comments = token && !token.empty? ? YoutubeAPI.browse(continuation: token) : Comments.fetch_community_post_comments(ucid, id)
       comment_html = JSON.parse(Comments.parse_youtube(id, comments, "html", locale, thin_mode, is_post: true))["contentHtml"]
     end
     templated "post"

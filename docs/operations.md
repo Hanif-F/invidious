@@ -4,6 +4,8 @@
 
 The application needs a working-directory installation with its binary, runtime assets/locales/config SQL, PostgreSQL, protected configuration and a separate Invidious Companion for playback. [Getting started](getting-started.md) covers local initialization; this guide covers maintaining the service.
 
+For this interface revision, the [user handoff](uiUXOverhaulPlan/user-handoff.md) adds matching binary/asset builds, cache refresh, compatibility and rollback notes. Local acceptance does not activate a deployment.
+
 ## Deployment forms
 
 The [Dockerfile](../docker/Dockerfile) uses multi-stage builds, pinned Crystal/OpenSSL build inputs, a nonroot runtime user and tini. It compiles tests/binary and copies runtime assets/config/locales. The checked-in [compose file](../docker-compose.yml) is for local development, has development database credentials, no companion service and mandatory secret placeholders. Record the actual image/digest and configuration used for a real deployment; a source Dockerfile does not describe a running remote host automatically.
@@ -32,7 +34,7 @@ All jobs live in the application process as fibers and stop when it stops. Regis
 | SubscribeToFeeds | Positive/enabled `use_pubsub_feeds` | Checks push subscriptions around once per minute; renews old/missing subscriptions |
 | PullPopularVideos | `popular_enabled` | Updates process-local popular snapshot every minute |
 | Notification | Always registered | PostgreSQL notification bridge and client connection coordination; retries after connection errors |
-| ClearExpiredItems | Always registered | Deletes expired videos/nonces/positions/TV grants hourly, retries DB errors after ten minutes |
+| ClearExpiredItems | Always registered | Deletes expired videos/original titles/nonces/positions/TV grants hourly, retries DB errors after ten minutes |
 | InstanceListRefresh | Always registered | Alternative instance refresh every 30 minutes |
 | AiSListRefresh | Always registered | Restores/refreshes classifications, repeats every six hours and prunes long-expired handles |
 
@@ -61,7 +63,7 @@ All jobs live in the application process as fibers and stop when it stops. Regis
 
 `IV_DATABASE_URL` and `IV_STAGING_DATABASE_URL` above are operator-supplied variables for these examples. The application override is `INVIDIOUS_DATABASE_URL`. Do not paste a production URL into a disposable test harness.
 
-There are 23 current migrations. The account migration has an additional detailed procedure in [ACCOUNT_SECURITY.md](../ACCOUNT_SECURITY.md). `check_tables` does not supersede that process. Mixed old/new versions can alter shared schemas incorrectly and are not a supported upgrade shortcut.
+The [migration inventory](reference/migrations.md) lists every registered migration, including original-title cache (24) and bot policy (25). The account migration has an additional detailed procedure in [ACCOUNT_SECURITY.md](../ACCOUNT_SECURITY.md). `check_tables` does not supersede that process. Mixed old/new versions can alter shared schemas incorrectly and are not a supported upgrade shortcut.
 
 ## Restore and rollback
 

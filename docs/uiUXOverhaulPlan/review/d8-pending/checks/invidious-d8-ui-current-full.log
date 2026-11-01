@@ -1,0 +1,1736 @@
+TAP version 13
+# Subtest: chromium: view counts stay visible across cards, history, clips and dynamic queues
+ok 1 - chromium: view counts stay visible across cards, history, clips and dynamic queues
+  ---
+  duration_ms: 1394.974394
+  type: 'test'
+  ...
+# Subtest: firefox: view counts stay visible across cards, history, clips and dynamic queues
+ok 2 - firefox: view counts stay visible across cards, history, clips and dynamic queues
+  ---
+  duration_ms: 2682.697586
+  type: 'test'
+  ...
+# Subtest: chromium: original titles remain literal in watch, embed and custom clips
+ok 3 - chromium: original titles remain literal in watch, embed and custom clips
+  ---
+  duration_ms: 363.913252
+  type: 'test'
+  ...
+# Subtest: chromium: original-title setting defaults on and submits explicit on and off
+ok 4 - chromium: original-title setting defaults on and submits explicit on and off
+  ---
+  duration_ms: 436.977953
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow can replace an original title and reveal it again
+ok 5 - chromium: DeArrow can replace an original title and reveal it again
+  ---
+  duration_ms: 283.605501
+  type: 'test'
+  ...
+# Subtest: chromium: subscription sorting details, GET forms and desktop layouts work without JavaScript
+ok 6 - chromium: subscription sorting details, GET forms and desktop layouts work without JavaScript
+  ---
+  duration_ms: 828.585847
+  type: 'test'
+  ...
+# Subtest: chromium: sorting keeps subscription removal working
+ok 7 - chromium: sorting keeps subscription removal working
+  ---
+  duration_ms: 137.967938
+  type: 'test'
+  ...
+# Subtest: firefox: original titles remain literal in watch, embed and custom clips
+ok 8 - firefox: original titles remain literal in watch, embed and custom clips
+  ---
+  duration_ms: 1809.958289
+  type: 'test'
+  ...
+# Subtest: firefox: original-title setting defaults on and submits explicit on and off
+ok 9 - firefox: original-title setting defaults on and submits explicit on and off
+  ---
+  duration_ms: 820.301119
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow can replace an original title and reveal it again
+ok 10 - firefox: DeArrow can replace an original title and reveal it again
+  ---
+  duration_ms: 563.27868
+  type: 'test'
+  ...
+# Subtest: firefox: subscription sorting details, GET forms and desktop layouts work without JavaScript
+ok 11 - firefox: subscription sorting details, GET forms and desktop layouts work without JavaScript
+  ---
+  duration_ms: 2002.509789
+  type: 'test'
+  ...
+# Subtest: firefox: sorting keeps subscription removal working
+ok 12 - firefox: sorting keeps subscription removal working
+  ---
+  duration_ms: 413.262631
+  type: 'test'
+  ...
+# Subtest: chromium: native clip cards, tab, attribution and no-JavaScript library
+ok 13 - chromium: native clip cards, tab, attribution and no-JavaScript library
+  ---
+  duration_ms: 321.154358
+  type: 'test'
+  ...
+# Subtest: chromium: native clip boundaries, loop toggle, canonical sharing and resume isolation
+ok 14 - chromium: native clip boundaries, loop toggle, canonical sharing and resume isolation
+  ---
+  duration_ms: 1084.107731
+  type: 'test'
+  ...
+# Subtest: chromium: native clip SponsorBlock, audio settings and source refresh retain saved bounds
+ok 15 - chromium: native clip SponsorBlock, audio settings and source refresh retain saved bounds
+  ---
+  duration_ms: 813.235535
+  type: 'test'
+  ...
+# Subtest: firefox: native clip cards, tab, attribution and no-JavaScript library
+ok 16 - firefox: native clip cards, tab, attribution and no-JavaScript library
+  ---
+  duration_ms: 1815.770343
+  type: 'test'
+  ...
+# Subtest: firefox: native clip boundaries, loop toggle, canonical sharing and resume isolation
+ok 17 - firefox: native clip boundaries, loop toggle, canonical sharing and resume isolation
+  ---
+  duration_ms: 1489.794113
+  type: 'test'
+  ...
+# Subtest: firefox: native clip SponsorBlock, audio settings and source refresh retain saved bounds
+ok 18 - firefox: native clip SponsorBlock, audio settings and source refresh retain saved bounds
+  ---
+  duration_ms: 1164.286587
+  type: 'test'
+  ...
+# Subtest: chromium: chat replay keeps fetched messages across pause and seeks
+ok 19 - chromium: chat replay keeps fetched messages across pause and seeks
+  ---
+  duration_ms: 2834.909554
+  type: 'test'
+  ...
+# Subtest: chromium: cached ranges are reused and distant seeks fetch near the playhead
+ok 20 - chromium: cached ranges are reused and distant seeks fetch near the playhead
+  ---
+  duration_ms: 1376.258071
+  type: 'test'
+  ...
+# Subtest: chromium: stale chat responses cannot replace a later seek
+ok 21 - chromium: stale chat responses cannot replace a later seek
+  ---
+  duration_ms: 737.733938
+  type: 'test'
+  ...
+# Subtest: chromium: removals and timing changes reuse cached replay
+ok 22 - chromium: removals and timing changes reuse cached replay
+  ---
+  duration_ms: 1316.487135
+  type: 'test'
+  ...
+# Subtest: chromium: scrolling up exposes earlier cached chat without another request
+ok 23 - chromium: scrolling up exposes earlier cached chat without another request
+  ---
+  duration_ms: 341.723753
+  type: 'test'
+  ...
+# Subtest: chromium: chat cache evicts beyond 5000 messages and refetches evicted time
+ok 24 - chromium: chat cache evicts beyond 5000 messages and refetches evicted time
+  ---
+  duration_ms: 395.538383
+  type: 'test'
+  ...
+# Subtest: chromium: ordinary VOD does not load chat replay
+ok 25 - chromium: ordinary VOD does not load chat replay
+  ---
+  duration_ms: 193.724968
+  type: 'test'
+  ...
+# Subtest: chromium: chat keeps 120 messages and lets readers resync scrolling
+ok 26 - chromium: chat keeps 120 messages and lets readers resync scrolling
+  ---
+  duration_ms: 4052.641723
+  type: 'test'
+  ...
+# Subtest: chromium: chat replay errors can be retried
+ok 27 - chromium: chat replay errors can be retried
+  ---
+  duration_ms: 303.391766
+  type: 'test'
+  ...
+# Subtest: chromium: unavailable chat replay has a clear state
+ok 28 - chromium: unavailable chat replay has a clear state
+  ---
+  duration_ms: 269.804016
+  type: 'test'
+  ...
+# Subtest: chromium: chat settings filter messages and persist for guests
+ok 29 - chromium: chat settings filter messages and persist for guests
+  ---
+  duration_ms: 757.974543
+  type: 'test'
+  ...
+# Subtest: chromium: signed-in chat display settings are independent by browser
+ok 30 - chromium: signed-in chat display settings are independent by browser
+  ---
+  duration_ms: 882.418921
+  type: 'test'
+  ...
+# Subtest: chromium: custom chat timing shifts messages and account changes are saved
+ok 31 - chromium: custom chat timing shifts messages and account changes are saved
+  ---
+  duration_ms: 1215.937166
+  type: 'test'
+  ...
+# Subtest: chromium: AI channel filter controls, status and empty results work without JavaScript
+ok 32 - chromium: AI channel filter controls, status and empty results work without JavaScript
+  ---
+  duration_ms: 1856.482208
+  type: 'test'
+  ...
+# Subtest: chromium: AI channel filter global Off restores cards, recommendations and queue thumbnails
+ok 33 - chromium: AI channel filter global Off restores cards, recommendations and queue thumbnails
+  ---
+  duration_ms: 982.505033
+  type: 'test'
+  ...
+# Subtest: chromium: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral
+ok 34 - chromium: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral
+  ---
+  duration_ms: 893.090139
+  type: 'test'
+  ...
+# Subtest: chromium: AI channel filter other pages only replace thumbnails and retain every card
+ok 35 - chromium: AI channel filter other pages only replace thumbnails and retain every card
+  ---
+  duration_ms: 883.18544
+  type: 'test'
+  ...
+# Subtest: chromium: AI channel filter watch queues preserve duplicate occurrences and advancement
+ok 36 - chromium: AI channel filter watch queues preserve duplicate occurrences and advancement
+  ---
+  duration_ms: 652.323804
+  type: 'test'
+  ...
+# Subtest: chromium: one shared design and the color category submit without retired theme fields
+ok 37 - chromium: one shared design and the color category submit without retired theme fields
+  ---
+  duration_ms: 285.849182
+  type: 'test'
+  ...
+# Subtest: chromium: Light, Dark and System palettes follow explicit modes and keyboard color selection
+ok 38 - chromium: Light, Dark and System palettes follow explicit modes and keyboard color selection
+  ---
+  duration_ms: 925.663643
+  type: 'test'
+  ...
+# Subtest: chromium: shared player preserves actual playback, pause and rate on pointer and touch desktops
+ok 39 - chromium: shared player preserves actual playback, pause and rate on pointer and touch desktops
+  ---
+  duration_ms: 758.893049
+  type: 'test'
+  ...
+# Subtest: chromium: actual Video.js player retains playback, seeking and controls
+ok 40 - chromium: actual Video.js player retains playback, seeking and controls
+  ---
+  duration_ms: 2244.626256
+  type: 'test'
+  ...
+# Subtest: chromium: buffer refresh reloads the selected source and restores playback
+ok 41 - chromium: buffer refresh reloads the selected source and restores playback
+  ---
+  duration_ms: 1083.985249
+  type: 'test'
+  ...
+# Subtest: chromium: mobile refresh is in settings on watch and embed players
+ok 42 - chromium: mobile refresh is in settings on watch and embed players
+  ---
+  duration_ms: 1188.202789
+  type: 'test'
+  ...
+# Subtest: chromium: refresh can retry a player error and then refresh again
+ok 43 - chromium: refresh can retry a player error and then refresh again
+  ---
+  duration_ms: 695.153652
+  type: 'test'
+  ...
+# Subtest: chromium: refresh restores DASH quality and audio after tracks are recreated
+ok 44 - chromium: refresh restores DASH quality and audio after tracks are recreated
+  ---
+  duration_ms: 413.331982
+  type: 'test'
+  ...
+# Subtest: chromium: theater control preserves paused idle state and keyboard access
+ok 45 - chromium: theater control preserves paused idle state and keyboard access
+  ---
+  duration_ms: 3211.681158
+  type: 'test'
+  ...
+# Subtest: chromium: hierarchical player Settings keeps explicit speed choices and returns keyboard focus
+ok 46 - chromium: hierarchical player Settings keeps explicit speed choices and returns keyboard focus
+  ---
+  duration_ms: 663.395249
+  type: 'test'
+  ...
+# Subtest: chromium: history search by title or channel
+ok 47 - chromium: history search by title or channel
+  ---
+  duration_ms: 240.799908
+  type: 'test'
+  ...
+# Subtest: chromium: cached history titles and compact desktop playlist library
+ok 48 - chromium: cached history titles and compact desktop playlist library
+  ---
+  duration_ms: 594.044727
+  type: 'test'
+  ...
+# Subtest: chromium: mobile paused controls hide, wake on tap, and keep menus usable
+ok 49 - chromium: mobile paused controls hide, wake on tap, and keep menus usable
+  ---
+  duration_ms: 3259.110569
+  type: 'test'
+  ...
+# Subtest: chromium: mobile video taps toggle all controls while playing
+ok 50 - chromium: mobile video taps toggle all controls while playing
+  ---
+  duration_ms: 3348.135365
+  type: 'test'
+  ...
+# Subtest: chromium: queue selects a repeated occurrence, and keeps recommendations separate
+ok 51 - chromium: queue selects a repeated occurrence, and keeps recommendations separate
+  ---
+  duration_ms: 440.202708
+  type: 'test'
+  ...
+# Subtest: chromium: queue failure is retryable and does not enable recommendation autoplay
+ok 52 - chromium: queue failure is retryable and does not enable recommendation autoplay
+  ---
+  duration_ms: 625.806948
+  type: 'test'
+  ...
+# Subtest: chromium: missing, empty and ended queues never fall back to recommendation autoplay
+ok 53 - chromium: missing, empty and ended queues never fall back to recommendation autoplay
+  ---
+  duration_ms: 737.967861
+  type: 'test'
+  ...
+# Subtest: chromium: transcript loads on demand, searches safely, seeks, caches, and retries
+ok 54 - chromium: transcript loads on demand, searches safely, seeks, caches, and retries
+  ---
+  duration_ms: 446.810978
+  type: 'test'
+  ...
+# Subtest: chromium: desktop queue remains visible, scrollable and keyboard operable after viewport changes
+ok 55 - chromium: desktop queue remains visible, scrollable and keyboard operable after viewport changes
+  ---
+  duration_ms: 205.141755
+  type: 'test'
+  ...
+# Subtest: chromium: System follows live appearance changes and color modes synchronize across tabs
+ok 56 - chromium: System follows live appearance changes and color modes synchronize across tabs
+  ---
+  duration_ms: 494.685259
+  type: 'test'
+  ...
+# Subtest: chromium: signed-in color-mode controls submit CSRF by POST with and without JavaScript
+ok 57 - chromium: signed-in color-mode controls submit CSRF by POST with and without JavaScript
+  ---
+  duration_ms: 371.560665
+  type: 'test'
+  ...
+# Subtest: chromium: no-JavaScript watch retains ordinary navigation and retired thin preferences use unified browser imagery
+ok 58 - chromium: no-JavaScript watch retains ordinary navigation and retired thin preferences use unified browser imagery
+  ---
+  duration_ms: 270.234621
+  type: 'test'
+  ...
+# Subtest: firefox: chat replay keeps fetched messages across pause and seeks
+ok 59 - firefox: chat replay keeps fetched messages across pause and seeks
+  ---
+  duration_ms: 3543.420351
+  type: 'test'
+  ...
+# Subtest: firefox: cached ranges are reused and distant seeks fetch near the playhead
+ok 60 - firefox: cached ranges are reused and distant seeks fetch near the playhead
+  ---
+  duration_ms: 1766.191761
+  type: 'test'
+  ...
+# Subtest: firefox: stale chat responses cannot replace a later seek
+ok 61 - firefox: stale chat responses cannot replace a later seek
+  ---
+  duration_ms: 1038.733914
+  type: 'test'
+  ...
+# Subtest: firefox: removals and timing changes reuse cached replay
+ok 62 - firefox: removals and timing changes reuse cached replay
+  ---
+  duration_ms: 1707.542454
+  type: 'test'
+  ...
+# Subtest: firefox: scrolling up exposes earlier cached chat without another request
+ok 63 - firefox: scrolling up exposes earlier cached chat without another request
+  ---
+  duration_ms: 1396.40099
+  type: 'test'
+  ...
+# Subtest: firefox: chat cache evicts beyond 5000 messages and refetches evicted time
+ok 64 - firefox: chat cache evicts beyond 5000 messages and refetches evicted time
+  ---
+  duration_ms: 674.437469
+  type: 'test'
+  ...
+# Subtest: firefox: ordinary VOD does not load chat replay
+ok 65 - firefox: ordinary VOD does not load chat replay
+  ---
+  duration_ms: 358.539856
+  type: 'test'
+  ...
+# Subtest: firefox: chat keeps 120 messages and lets readers resync scrolling
+ok 66 - firefox: chat keeps 120 messages and lets readers resync scrolling
+  ---
+  duration_ms: 4335.137115
+  type: 'test'
+  ...
+# Subtest: firefox: chat replay errors can be retried
+ok 67 - firefox: chat replay errors can be retried
+  ---
+  duration_ms: 594.705706
+  type: 'test'
+  ...
+# Subtest: firefox: unavailable chat replay has a clear state
+ok 68 - firefox: unavailable chat replay has a clear state
+  ---
+  duration_ms: 504.848538
+  type: 'test'
+  ...
+# Subtest: firefox: chat settings filter messages and persist for guests
+ok 69 - firefox: chat settings filter messages and persist for guests
+  ---
+  duration_ms: 1421.338302
+  type: 'test'
+  ...
+# Subtest: firefox: signed-in chat display settings are independent by browser
+ok 70 - firefox: signed-in chat display settings are independent by browser
+  ---
+  duration_ms: 1669.696726
+  type: 'test'
+  ...
+# Subtest: firefox: custom chat timing shifts messages and account changes are saved
+ok 71 - firefox: custom chat timing shifts messages and account changes are saved
+  ---
+  duration_ms: 1634.939155
+  type: 'test'
+  ...
+# Subtest: firefox: AI channel filter controls, status and empty results work without JavaScript
+ok 72 - firefox: AI channel filter controls, status and empty results work without JavaScript
+  ---
+  duration_ms: 5179.561298
+  type: 'test'
+  ...
+# Subtest: firefox: AI channel filter global Off restores cards, recommendations and queue thumbnails
+ok 73 - firefox: AI channel filter global Off restores cards, recommendations and queue thumbnails
+  ---
+  duration_ms: 3931.636996
+  type: 'test'
+  ...
+# Subtest: firefox: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral
+ok 74 - firefox: AI channel filter replacement is quiet, keeps Discovery results while legacy thin preferences stay presentation-neutral
+  ---
+  duration_ms: 3999.526446
+  type: 'test'
+  ...
+# Subtest: firefox: AI channel filter other pages only replace thumbnails and retain every card
+ok 75 - firefox: AI channel filter other pages only replace thumbnails and retain every card
+  ---
+  duration_ms: 4320.697996
+  type: 'test'
+  ...
+# Subtest: firefox: AI channel filter watch queues preserve duplicate occurrences and advancement
+ok 76 - firefox: AI channel filter watch queues preserve duplicate occurrences and advancement
+  ---
+  duration_ms: 1748.797696
+  type: 'test'
+  ...
+# Subtest: firefox: one shared design and the color category submit without retired theme fields
+ok 77 - firefox: one shared design and the color category submit without retired theme fields
+  ---
+  duration_ms: 2076.520138
+  type: 'test'
+  ...
+# Subtest: firefox: Light, Dark and System palettes follow explicit modes and keyboard color selection
+ok 78 - firefox: Light, Dark and System palettes follow explicit modes and keyboard color selection
+  ---
+  duration_ms: 2161.221663
+  type: 'test'
+  ...
+# Subtest: firefox: shared player preserves actual playback, pause and rate on pointer and touch desktops
+ok 79 - firefox: shared player preserves actual playback, pause and rate on pointer and touch desktops
+  ---
+  duration_ms: 1368.380372
+  type: 'test'
+  ...
+# Subtest: firefox: actual Video.js player retains playback, seeking and controls
+ok 80 - firefox: actual Video.js player retains playback, seeking and controls
+  ---
+  duration_ms: 5154.653893
+  type: 'test'
+  ...
+# Subtest: firefox: buffer refresh reloads the selected source and restores playback
+ok 81 - firefox: buffer refresh reloads the selected source and restores playback
+  ---
+  duration_ms: 1853.539336
+  type: 'test'
+  ...
+# Subtest: firefox: mobile refresh is in settings on watch and embed players
+ok 82 - firefox: mobile refresh is in settings on watch and embed players
+  ---
+  duration_ms: 1750.003525
+  type: 'test'
+  ...
+# Subtest: firefox: refresh can retry a player error and then refresh again
+ok 83 - firefox: refresh can retry a player error and then refresh again
+  ---
+  duration_ms: 1110.175138
+  type: 'test'
+  ...
+# Subtest: firefox: refresh restores DASH quality and audio after tracks are recreated
+ok 84 - firefox: refresh restores DASH quality and audio after tracks are recreated
+  ---
+  duration_ms: 711.432969
+  type: 'test'
+  ...
+# Subtest: firefox: theater control preserves paused idle state and keyboard access
+ok 85 - firefox: theater control preserves paused idle state and keyboard access
+  ---
+  duration_ms: 3745.755141
+  type: 'test'
+  ...
+# Subtest: firefox: hierarchical player Settings keeps explicit speed choices and returns keyboard focus
+ok 86 - firefox: hierarchical player Settings keeps explicit speed choices and returns keyboard focus
+  ---
+  duration_ms: 2039.032406
+  type: 'test'
+  ...
+# Subtest: firefox: history search by title or channel
+ok 87 - firefox: history search by title or channel
+  ---
+  duration_ms: 728.677151
+  type: 'test'
+  ...
+# Subtest: firefox: cached history titles and compact desktop playlist library
+ok 88 - firefox: cached history titles and compact desktop playlist library
+  ---
+  duration_ms: 1421.704835
+  type: 'test'
+  ...
+# Subtest: firefox: mobile paused controls hide, wake on tap, and keep menus usable
+ok 89 - firefox: mobile paused controls hide, wake on tap, and keep menus usable
+  ---
+  duration_ms: 3492.716041
+  type: 'test'
+  ...
+# Subtest: firefox: mobile video taps toggle all controls while playing
+ok 90 - firefox: mobile video taps toggle all controls while playing
+  ---
+  duration_ms: 3587.169426
+  type: 'test'
+  ...
+# Subtest: firefox: queue selects a repeated occurrence, and keeps recommendations separate
+ok 91 - firefox: queue selects a repeated occurrence, and keeps recommendations separate
+  ---
+  duration_ms: 845.820711
+  type: 'test'
+  ...
+# Subtest: firefox: queue failure is retryable and does not enable recommendation autoplay
+ok 92 - firefox: queue failure is retryable and does not enable recommendation autoplay
+  ---
+  duration_ms: 2039.968606
+  type: 'test'
+  ...
+# Subtest: firefox: missing, empty and ended queues never fall back to recommendation autoplay
+ok 93 - firefox: missing, empty and ended queues never fall back to recommendation autoplay
+  ---
+  duration_ms: 1315.748649
+  type: 'test'
+  ...
+# Subtest: firefox: transcript loads on demand, searches safely, seeks, caches, and retries
+ok 94 - firefox: transcript loads on demand, searches safely, seeks, caches, and retries
+  ---
+  duration_ms: 797.989801
+  type: 'test'
+  ...
+# Subtest: firefox: desktop queue remains visible, scrollable and keyboard operable after viewport changes
+ok 95 - firefox: desktop queue remains visible, scrollable and keyboard operable after viewport changes
+  ---
+  duration_ms: 489.801068
+  type: 'test'
+  ...
+# Subtest: firefox: System follows live appearance changes and color modes synchronize across tabs
+ok 96 - firefox: System follows live appearance changes and color modes synchronize across tabs
+  ---
+  duration_ms: 1018.947058
+  type: 'test'
+  ...
+# Subtest: firefox: signed-in color-mode controls submit CSRF by POST with and without JavaScript
+ok 97 - firefox: signed-in color-mode controls submit CSRF by POST with and without JavaScript
+  ---
+  duration_ms: 936.661158
+  type: 'test'
+  ...
+# Overhaul comparable assets: {"before":{"files":69,"bytes":1007903,"gzipBytes":285854},"after":{"files":66,"bytes":726974,"gzipBytes":199050},"delta":{"bytes":-280929,"gzipBytes":-86804},"iconsAndFonts":{"files":4,"bytes":15833,"gzipBytes":6160},"vendorPlayer":{"files":27,"bytes":3609882,"gzipBytes":789725}}
+# Subtest: firefox: no-JavaScript watch retains ordinary navigation and retired thin preferences use unified browser imagery
+ok 98 - firefox: no-JavaScript watch retains ordinary navigation and retired thin preferences use unified browser imagery
+  ---
+  duration_ms: 860.94204
+  type: 'test'
+  ...
+# Subtest: library navigation survives custom feed settings without channel management links
+ok 99 - library navigation survives custom feed settings without channel management links
+  ---
+  duration_ms: 0.477582
+  type: 'test'
+  ...
+# Subtest: UI asset inventory compares the overhaul baseline and separately reports icons, fonts and vendor player assets
+ok 100 - UI asset inventory compares the overhaul baseline and separately reports icons, fonts and vendor player assets
+  ---
+  duration_ms: 102.062827
+  type: 'test'
+  ...
+# Subtest: chromium: video menus support keyboard dismissal and signed-out sign-in links
+ok 101 - chromium: video menus support keyboard dismissal and signed-out sign-in links
+  ---
+  duration_ms: 131.369697
+  type: 'test'
+  ...
+# Subtest: chromium: block removes discovery cards only after success and Undo restores them
+ok 102 - chromium: block removes discovery cards only after success and Undo restores them
+  ---
+  duration_ms: 360.471507
+  type: 'test'
+  ...
+# Subtest: chromium: block notice disappears after five seconds and a new status resets the timer
+ok 103 - chromium: block notice disappears after five seconds and a new status resets the timer
+  ---
+  duration_ms: 563.711758
+  type: 'test'
+  ...
+# Subtest: chromium: playlist creation retains the created playlist when adding fails
+ok 104 - chromium: playlist creation retains the created playlist when adding fails
+  ---
+  duration_ms: 743.994801
+  type: 'test'
+  ...
+# Subtest: chromium: search Filters owns the override and filtered-empty pages retain pagination
+ok 105 - chromium: search Filters owns the override and filtered-empty pages retain pagination
+  ---
+  duration_ms: 258.374524
+  type: 'test'
+  ...
+# Subtest: chromium: members-only search controls work without JavaScript and retain pagination
+ok 106 - chromium: members-only search controls work without JavaScript and retain pagination
+  ---
+  duration_ms: 714.070765
+  type: 'test'
+  ...
+# Subtest: chromium: blocking the next recommendation updates autoplay and Undo restores it
+ok 107 - chromium: blocking the next recommendation updates autoplay and Undo restores it
+  ---
+  duration_ms: 445.218557
+  type: 'test'
+  ...
+# Subtest: firefox: video menus support keyboard dismissal and signed-out sign-in links
+ok 108 - firefox: video menus support keyboard dismissal and signed-out sign-in links
+  ---
+  duration_ms: 1684.194397
+  type: 'test'
+  ...
+# Subtest: firefox: block removes discovery cards only after success and Undo restores them
+ok 109 - firefox: block removes discovery cards only after success and Undo restores them
+  ---
+  duration_ms: 633.339625
+  type: 'test'
+  ...
+# Subtest: firefox: block notice disappears after five seconds and a new status resets the timer
+ok 110 - firefox: block notice disappears after five seconds and a new status resets the timer
+  ---
+  duration_ms: 1020.547683
+  type: 'test'
+  ...
+# Subtest: firefox: playlist creation retains the created playlist when adding fails
+ok 111 - firefox: playlist creation retains the created playlist when adding fails
+  ---
+  duration_ms: 1412.388958
+  type: 'test'
+  ...
+# Subtest: firefox: search Filters owns the override and filtered-empty pages retain pagination
+ok 112 - firefox: search Filters owns the override and filtered-empty pages retain pagination
+  ---
+  duration_ms: 737.796216
+  type: 'test'
+  ...
+# Subtest: firefox: members-only search controls work without JavaScript and retain pagination
+ok 113 - firefox: members-only search controls work without JavaScript and retain pagination
+  ---
+  duration_ms: 3230.522959
+  type: 'test'
+  ...
+# Subtest: firefox: blocking the next recommendation updates autoplay and Undo restores it
+ok 114 - firefox: blocking the next recommendation updates autoplay and Undo restores it
+  ---
+  duration_ms: 727.560521
+  type: 'test'
+  ...
+# Subtest: chromium: blocking leaves subscribed and explicitly included search results visible
+ok 115 - chromium: blocking leaves subscribed and explicitly included search results visible
+  ---
+  duration_ms: 721.488123
+  type: 'test'
+  ...
+# Subtest: chromium: blocking the only remaining recommendation disables autoplay
+ok 116 - chromium: blocking the only remaining recommendation disables autoplay
+  ---
+  duration_ms: 328.323687
+  type: 'test'
+  ...
+# Subtest: chromium: video menus stay within desktop and enlarged viewports
+ok 117 - chromium: video menus stay within desktop and enlarged viewports
+  ---
+  duration_ms: 505.642989
+  type: 'test'
+  ...
+# Subtest: chromium: control-bar transparency preserves opaque controls on bright and dark video
+ok 118 - chromium: control-bar transparency preserves opaque controls on bright and dark video
+  ---
+  duration_ms: 436.745694
+  type: 'test'
+  ...
+# Subtest: firefox: blocking leaves subscribed and explicitly included search results visible
+ok 119 - firefox: blocking leaves subscribed and explicitly included search results visible
+  ---
+  duration_ms: 1453.338883
+  type: 'test'
+  ...
+# Subtest: firefox: blocking the only remaining recommendation disables autoplay
+ok 120 - firefox: blocking the only remaining recommendation disables autoplay
+  ---
+  duration_ms: 631.647977
+  type: 'test'
+  ...
+# Subtest: firefox: video menus stay within desktop and enlarged viewports
+ok 121 - firefox: video menus stay within desktop and enlarged viewports
+  ---
+  duration_ms: 1000.928903
+  type: 'test'
+  ...
+# Subtest: firefox: control-bar transparency preserves opaque controls on bright and dark video
+ok 122 - firefox: control-bar transparency preserves opaque controls on bright and dark video
+  ---
+  duration_ms: 656.263551
+  type: 'test'
+  ...
+# Subtest: chromium: owned queue removes a specific occurrence and keeps playback running
+ok 123 - chromium: owned queue removes a specific occurrence and keeps playback running
+  ---
+  duration_ms: 1070.715339
+  type: 'test'
+  ...
+# Subtest: chromium: mobile center play and control bars share visibility through play, pause, idle and seeking
+ok 124 - chromium: mobile center play and control bars share visibility through play, pause, idle and seeking
+  ---
+  duration_ms: 3950.266375
+  type: 'test'
+  ...
+# Subtest: firefox: owned queue removes a specific occurrence and keeps playback running
+ok 125 - firefox: owned queue removes a specific occurrence and keeps playback running
+  ---
+  duration_ms: 3225.516637
+  type: 'test'
+  ...
+# Subtest: firefox: mobile center play and control bars share visibility through play, pause, idle and seeking
+ok 126 - firefox: mobile center play and control bars share visibility through play, pause, idle and seeking
+  ---
+  duration_ms: 4197.78399
+  type: 'test'
+  ...
+# Subtest: chromium: playback shortcuts work from page content and respect interactive controls
+ok 127 - chromium: playback shortcuts work from page content and respect interactive controls
+  ---
+  duration_ms: 347.738221
+  type: 'test'
+  ...
+# Subtest: firefox: playback shortcuts work from page content and respect interactive controls
+ok 128 - firefox: playback shortcuts work from page content and respect interactive controls
+  ---
+  duration_ms: 666.002406
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+ok 129 - chromium: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+  ---
+  duration_ms: 907.743915
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow icon stays fixed with wrapping, RTL and touch
+ok 130 - chromium: DeArrow icon stays fixed with wrapping, RTL and touch
+  ---
+  duration_ms: 474.639763
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow targets stay fixed across title lengths and page layouts
+ok 131 - chromium: DeArrow targets stay fixed across title lengths and page layouts
+  ---
+  duration_ms: 2404.062258
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow keeps replacements on hover when original display is disabled
+ok 132 - chromium: DeArrow keeps replacements on hover when original display is disabled
+  ---
+  duration_ms: 193.462692
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+ok 133 - chromium: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+  ---
+  duration_ms: 2603.927271
+  type: 'test'
+  ...
+# Subtest: chromium: DeArrow preference controls submit without JavaScript
+ok 134 - chromium: DeArrow preference controls submit without JavaScript
+  ---
+  duration_ms: 175.051805
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+ok 135 - firefox: DeArrow replaces titles safely, deduplicates queues, and exposes originals
+  ---
+  duration_ms: 1247.348854
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow icon stays fixed with wrapping, RTL and touch
+ok 136 - firefox: DeArrow icon stays fixed with wrapping, RTL and touch
+  ---
+  duration_ms: 707.351836
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow targets stay fixed across title lengths and page layouts
+ok 137 - firefox: DeArrow targets stay fixed across title lengths and page layouts
+  ---
+  duration_ms: 4005.618179
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow keeps replacements on hover when original display is disabled
+ok 138 - firefox: DeArrow keeps replacements on hover when original display is disabled
+  ---
+  duration_ms: 1672.044724
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+ok 139 - firefox: DeArrow disabled, missing, failed and no-JavaScript modes retain originals
+  ---
+  duration_ms: 3477.460709
+  type: 'test'
+  ...
+# Subtest: firefox: DeArrow preference controls submit without JavaScript
+ok 140 - firefox: DeArrow preference controls submit without JavaScript
+  ---
+  duration_ms: 437.268111
+  type: 'test'
+  ...
+# Subtest: chromium: synced playback restores progress after seeking back from completion
+ok 141 - chromium: synced playback restores progress after seeking back from completion
+  ---
+  duration_ms: 278.223659
+  type: 'test'
+  ...
+# Subtest: chromium: rejected progress beacon falls back to a keepalive request
+ok 142 - chromium: rejected progress beacon falls back to a keepalive request
+  ---
+  duration_ms: 270.481346
+  type: 'test'
+  ...
+# Subtest: firefox: synced playback restores progress after seeking back from completion
+ok 143 - firefox: synced playback restores progress after seeking back from completion
+  ---
+  duration_ms: 538.547368
+  type: 'test'
+  ...
+# Subtest: firefox: rejected progress beacon falls back to a keepalive request
+ok 144 - firefox: rejected progress beacon falls back to a keepalive request
+  ---
+  duration_ms: 512.653198
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock modes, overlay, keyboard, ranges and replay
+ok 145 - chromium: SponsorBlock modes, overlay, keyboard, ranges and replay
+  ---
+  duration_ms: 3968.780848
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock auto skips once per segment and resets on reload or another tab
+ok 146 - chromium: SponsorBlock auto skips once per segment and resets on reload or another tab
+  ---
+  duration_ms: 929.191381
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock disabled avoids requests
+ok 147 - chromium: SponsorBlock disabled avoids requests
+  ---
+  duration_ms: 234.045773
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock modes, overlay, keyboard, ranges and replay
+ok 148 - firefox: SponsorBlock modes, overlay, keyboard, ranges and replay
+  ---
+  duration_ms: 4380.803114
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock auto skips once per segment and resets on reload or another tab
+ok 149 - firefox: SponsorBlock auto skips once per segment and resets on reload or another tab
+  ---
+  duration_ms: 1761.784842
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock disabled avoids requests
+ok 150 - firefox: SponsorBlock disabled avoids requests
+  ---
+  duration_ms: 1675.583382
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock overlap, end boundary and upstream failure
+ok 151 - chromium: SponsorBlock overlap, end boundary and upstream failure
+  ---
+  duration_ms: 1127.727
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock overlap, end boundary and upstream failure
+ok 152 - firefox: SponsorBlock overlap, end boundary and upstream failure
+  ---
+  duration_ms: 1961.47287
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock respects clip end and loop in audio mode
+ok 153 - chromium: SponsorBlock respects clip end and loop in audio mode
+  ---
+  duration_ms: 511.210431
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock respects clip end and loop in audio mode
+ok 154 - firefox: SponsorBlock respects clip end and loop in audio mode
+  ---
+  duration_ms: 823.28559
+  type: 'test'
+  ...
+# Subtest: chromium: mobile accumulated seeking commits once and restores playback
+ok 155 - chromium: mobile accumulated seeking commits once and restores playback
+  ---
+  duration_ms: 2802.604028
+  type: 'test'
+  ...
+# Subtest: firefox: mobile accumulated seeking commits once and restores playback
+ok 156 - firefox: mobile accumulated seeking commits once and restores playback
+  ---
+  duration_ms: 3011.40046
+  type: 'test'
+  ...
+# Subtest: chromium: mobile settings preserve playing, captions, sharing and SponsorBlock
+ok 157 - chromium: mobile settings preserve playing, captions, sharing and SponsorBlock
+  ---
+  duration_ms: 727.756982
+  type: 'test'
+  ...
+# Subtest: chromium: embed mobile settings fill viewport and fullscreen
+ok 158 - chromium: embed mobile settings fill viewport and fullscreen
+  ---
+  duration_ms: 607.007757
+  type: 'test'
+  ...
+# Subtest: firefox: mobile settings preserve playing, captions, sharing and SponsorBlock
+ok 159 - firefox: mobile settings preserve playing, captions, sharing and SponsorBlock
+  ---
+  duration_ms: 962.283454
+  type: 'test'
+  ...
+# Subtest: firefox: embed mobile settings fill viewport and fullscreen
+ok 160 - firefox: embed mobile settings fill viewport and fullscreen
+  ---
+  duration_ms: 767.58147
+  type: 'test'
+  ...
+# Subtest: chromium: mobile quality and track settings follow available options
+ok 161 - chromium: mobile quality and track settings follow available options
+  ---
+  duration_ms: 1100.168525
+  type: 'test'
+  ...
+# Subtest: firefox: mobile quality and track settings follow available options
+ok 162 - firefox: mobile quality and track settings follow available options
+  ---
+  duration_ms: 1206.735385
+  type: 'test'
+  ...
+# Subtest: DASH player source keeps the complete rendition manifest
+ok 163 - DASH player source keeps the complete rendition manifest
+  ---
+  duration_ms: 0.422358
+  type: 'test'
+  ...
+# Subtest: chromium: preferred video codec shares the playback category and saves without JavaScript
+ok 164 - chromium: preferred video codec shares the playback category and saves without JavaScript
+  ---
+  duration_ms: 240.754524
+  type: 'test'
+  ...
+# Subtest: chromium: preferred codec reaches the initial DASH rendition selector on watch and embed
+ok 165 - chromium: preferred codec reaches the initial DASH rendition selector on watch and embed
+  ---
+  duration_ms: 1045.763951
+  type: 'test'
+  ...
+# Subtest: chromium: preferred codec Auto and manual selections survive buffer refresh on mobile
+ok 166 - chromium: preferred codec Auto and manual selections survive buffer refresh on mobile
+  ---
+  duration_ms: 631.783523
+  type: 'test'
+  ...
+# Subtest: firefox: preferred video codec shares the playback category and saves without JavaScript
+ok 167 - firefox: preferred video codec shares the playback category and saves without JavaScript
+  ---
+  duration_ms: 435.962063
+  type: 'test'
+  ...
+# Subtest: firefox: preferred codec reaches the initial DASH rendition selector on watch and embed
+ok 168 - firefox: preferred codec reaches the initial DASH rendition selector on watch and embed
+  ---
+  duration_ms: 3201.545031
+  type: 'test'
+  ...
+# Subtest: firefox: preferred codec Auto and manual selections survive buffer refresh on mobile
+ok 169 - firefox: preferred codec Auto and manual selections survive buffer refresh on mobile
+  ---
+  duration_ms: 950.973088
+  type: 'test'
+  ...
+# Subtest: chromium: rich stream menus rank video and audio variants consistently
+ok 170 - chromium: rich stream menus rank video and audio variants consistently
+  ---
+  duration_ms: 1753.93182
+  type: 'test'
+  ...
+# Subtest: firefox: rich stream menus rank video and audio variants consistently
+ok 171 - firefox: rich stream menus rank video and audio variants consistently
+  ---
+  duration_ms: 2822.013512
+  type: 'test'
+  ...
+# Subtest: chromium: diagnostics are local, accessible and sanitize snapshots
+ok 172 - chromium: diagnostics are local, accessible and sanitize snapshots
+  ---
+  duration_ms: 3244.558476
+  type: 'test'
+  ...
+# Subtest: chromium: mobile and embed diagnostics fit and return to compact view
+ok 173 - chromium: mobile and embed diagnostics fit and return to compact view
+  ---
+  duration_ms: 991.816932
+  type: 'test'
+  ...
+# Subtest: firefox: diagnostics are local, accessible and sanitize snapshots
+ok 174 - firefox: diagnostics are local, accessible and sanitize snapshots
+  ---
+  duration_ms: 3593.590582
+  type: 'test'
+  ...
+# Subtest: firefox: mobile and embed diagnostics fit and return to compact view
+ok 175 - firefox: mobile and embed diagnostics fit and return to compact view
+  ---
+  duration_ms: 2816.228789
+  type: 'test'
+  ...
+# Subtest: chromium: browser volume is local, ignores legacy values and preserves speed
+ok 176 - chromium: browser volume is local, ignores legacy values and preserves speed
+  ---
+  duration_ms: 1617.831031
+  type: 'test'
+  ...
+# Subtest: chromium: mobile volume stays device controlled with neutral translucent controls
+ok 177 - chromium: mobile volume stays device controlled with neutral translucent controls
+  ---
+  duration_ms: 3092.048183
+  type: 'test'
+  ...
+# Subtest: chromium: channel playlists and Library covers keep shared desktop aspect ratios and destinations
+ok 178 - chromium: channel playlists and Library covers keep shared desktop aspect ratios and destinations
+  ---
+  duration_ms: 342.29288
+  type: 'test'
+  ...
+# Subtest: firefox: browser volume is local, ignores legacy values and preserves speed
+ok 179 - firefox: browser volume is local, ignores legacy values and preserves speed
+  ---
+  duration_ms: 2920.814553
+  type: 'test'
+  ...
+# Subtest: firefox: mobile volume stays device controlled with neutral translucent controls
+ok 180 - firefox: mobile volume stays device controlled with neutral translucent controls
+  ---
+  duration_ms: 4570.482917
+  type: 'test'
+  ...
+# Subtest: firefox: channel playlists and Library covers keep shared desktop aspect ratios and destinations
+ok 181 - firefox: channel playlists and Library covers keep shared desktop aspect ratios and destinations
+  ---
+  duration_ms: 1018.72569
+  type: 'test'
+  ...
+# Subtest: chromium: channel search preserves scope, query, and numeric pagination
+not ok 182 - chromium: channel search preserves scope, query, and numeric pagination
+  ---
+  duration_ms: 128.95347
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:3235:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    page.screenshot: Protocol error (Page.captureScreenshot): Unable to capture screenshot
+    Call log:
+    [2m  - taking page screenshot[22m
+    [2m  - waiting for fonts to load...[22m
+    [2m  - fonts loaded[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:3257:24)
+  ...
+# Subtest: chromium: channel search privacy and empty results work without JavaScript
+ok 183 - chromium: channel search privacy and empty results work without JavaScript
+  ---
+  duration_ms: 202.605342
+  type: 'test'
+  ...
+# Subtest: firefox: channel search preserves scope, query, and numeric pagination
+ok 184 - firefox: channel search preserves scope, query, and numeric pagination
+  ---
+  duration_ms: 4554.91267
+  type: 'test'
+  ...
+# Subtest: firefox: channel search privacy and empty results work without JavaScript
+ok 185 - firefox: channel search privacy and empty results work without JavaScript
+  ---
+  duration_ms: 692.562164
+  type: 'test'
+  ...
+# Subtest: chromium: channel SponsorBlock editor supports desktop ordinary no-JavaScript forms
+ok 186 - chromium: channel SponsorBlock editor supports desktop ordinary no-JavaScript forms
+  ---
+  duration_ms: 401.121735
+  type: 'test'
+  ...
+# Subtest: firefox: channel SponsorBlock editor supports desktop ordinary no-JavaScript forms
+ok 187 - firefox: channel SponsorBlock editor supports desktop ordinary no-JavaScript forms
+  ---
+  duration_ms: 797.650439
+  type: 'test'
+  ...
+# Subtest: chromium: browser profiles restore guest and two accounts independently on watch and embed
+ok 188 - chromium: browser profiles restore guest and two accounts independently on watch and embed
+  ---
+  duration_ms: 1763.721673
+  type: 'test'
+  ...
+# Subtest: chromium: stale browser tabs reload and delayed authenticated saves never write another profile
+ok 189 - chromium: stale browser tabs reload and delayed authenticated saves never write another profile
+  ---
+  duration_ms: 742.316609
+  type: 'test'
+  ...
+# Subtest: chromium: failed account speed saves preserve guest preferences and denied browser saves report failure
+ok 190 - chromium: failed account speed saves preserve guest preferences and denied browser saves report failure
+  ---
+  duration_ms: 743.119778
+  type: 'test'
+  ...
+# Subtest: chromium: authenticated response headers invalidate stale saves when browser storage and cookie access are denied
+ok 191 - chromium: authenticated response headers invalidate stale saves when browser storage and cookie access are denied
+  ---
+  duration_ms: 465.260758
+  type: 'test'
+  ...
+# Subtest: chromium: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests
+ok 192 - chromium: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests
+  ---
+  duration_ms: 1191.461939
+  type: 'test'
+  ...
+# Subtest: firefox: browser profiles restore guest and two accounts independently on watch and embed
+ok 193 - firefox: browser profiles restore guest and two accounts independently on watch and embed
+  ---
+  duration_ms: 2891.998662
+  type: 'test'
+  ...
+# Subtest: firefox: stale browser tabs reload and delayed authenticated saves never write another profile
+ok 194 - firefox: stale browser tabs reload and delayed authenticated saves never write another profile
+  ---
+  duration_ms: 2707.781113
+  type: 'test'
+  ...
+# Subtest: firefox: failed account speed saves preserve guest preferences and denied browser saves report failure
+ok 195 - firefox: failed account speed saves preserve guest preferences and denied browser saves report failure
+  ---
+  duration_ms: 1404.272959
+  type: 'test'
+  ...
+# Subtest: firefox: authenticated response headers invalidate stale saves when browser storage and cookie access are denied
+ok 196 - firefox: authenticated response headers invalidate stale saves when browser storage and cookie access are denied
+  ---
+  duration_ms: 716.164232
+  type: 'test'
+  ...
+# Subtest: firefox: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests
+ok 197 - firefox: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests
+  ---
+  duration_ms: 2155.894384
+  type: 'test'
+  ...
+# Subtest: chromium: account thumbnail bars ignore local progress and update dynamic queues at 390px
+ok 198 - chromium: account thumbnail bars ignore local progress and update dynamic queues at 390px
+  ---
+  duration_ms: 83.926901
+  type: 'test'
+  ...
+# Subtest: chromium: account thumbnail bars ignore local progress and update dynamic queues at 1440px
+ok 199 - chromium: account thumbnail bars ignore local progress and update dynamic queues at 1440px
+  ---
+  duration_ms: 83.361913
+  type: 'test'
+  ...
+# Subtest: firefox: account thumbnail bars ignore local progress and update dynamic queues at 390px
+ok 200 - firefox: account thumbnail bars ignore local progress and update dynamic queues at 390px
+  ---
+  duration_ms: 286.937228
+  type: 'test'
+  ...
+# Subtest: firefox: account thumbnail bars ignore local progress and update dynamic queues at 1440px
+ok 201 - firefox: account thumbnail bars ignore local progress and update dynamic queues at 1440px
+  ---
+  duration_ms: 270.663842
+  type: 'test'
+  ...
+# Subtest: chromium: current chapter beside duration follows playback and seeking
+ok 202 - chromium: current chapter beside duration follows playback and seeking
+  ---
+  duration_ms: 579.373338
+  type: 'test'
+  ...
+# Subtest: chromium: chapter title fits unified touch desktop and mobile embed controls
+ok 203 - chromium: chapter title fits unified touch desktop and mobile embed controls
+  ---
+  duration_ms: 1432.373098
+  type: 'test'
+  ...
+# Subtest: chromium: manual chapter markers and SponsorBlock hover priority
+ok 204 - chromium: manual chapter markers and SponsorBlock hover priority
+  ---
+  duration_ms: 385.104513
+  type: 'test'
+  ...
+# Subtest: chromium: manual chapters survive disabled and failed SponsorBlock
+ok 205 - chromium: manual chapters survive disabled and failed SponsorBlock
+  ---
+  duration_ms: 628.061118
+  type: 'test'
+  ...
+# Subtest: firefox: current chapter beside duration follows playback and seeking
+ok 206 - firefox: current chapter beside duration follows playback and seeking
+  ---
+  duration_ms: 1181.572368
+  type: 'test'
+  ...
+# Subtest: firefox: chapter title fits unified touch desktop and mobile embed controls
+ok 207 - firefox: chapter title fits unified touch desktop and mobile embed controls
+  ---
+  duration_ms: 3999.973211
+  type: 'test'
+  ...
+# Subtest: firefox: manual chapter markers and SponsorBlock hover priority
+ok 208 - firefox: manual chapter markers and SponsorBlock hover priority
+  ---
+  duration_ms: 729.048422
+  type: 'test'
+  ...
+# Subtest: firefox: manual chapters survive disabled and failed SponsorBlock
+ok 209 - firefox: manual chapters survive disabled and failed SponsorBlock
+  ---
+  duration_ms: 1176.895187
+  type: 'test'
+  ...
+# Subtest: chromium: manual chapters in embeds, player styles and thumbnail previews
+ok 210 - chromium: manual chapters in embeds, player styles and thumbnail previews
+  ---
+  duration_ms: 910.42331
+  type: 'test'
+  ...
+# Subtest: firefox: manual chapters in embeds, player styles and thumbnail previews
+ok 211 - firefox: manual chapters in embeds, player styles and thumbnail previews
+  ---
+  duration_ms: 1501.90937
+  type: 'test'
+  ...
+# Subtest: manual chapter template serializes titles safely for watch and embed
+ok 212 - manual chapter template serializes titles safely for watch and embed
+  ---
+  duration_ms: 0.912024
+  type: 'test'
+  ...
+# Subtest: chromium: production thumbnail progress spans history, all card types and legacy thin preferences at 1280px
+ok 213 - chromium: production thumbnail progress spans history, all card types and legacy thin preferences at 1280px
+  ---
+  duration_ms: 654.740973
+  type: 'test'
+  ...
+# Subtest: chromium: production queue and recommendation progress survives legacy thin preferences and refresh at 1280px
+ok 214 - chromium: production queue and recommendation progress survives legacy thin preferences and refresh at 1280px
+  ---
+  duration_ms: 546.382917
+  type: 'test'
+  ...
+# Subtest: chromium: production thumbnail progress spans history, all card types and legacy thin preferences at 1440px
+ok 215 - chromium: production thumbnail progress spans history, all card types and legacy thin preferences at 1440px
+  ---
+  duration_ms: 629.011784
+  type: 'test'
+  ...
+# Subtest: chromium: production queue and recommendation progress survives legacy thin preferences and refresh at 1440px
+ok 216 - chromium: production queue and recommendation progress survives legacy thin preferences and refresh at 1440px
+  ---
+  duration_ms: 516.656014
+  type: 'test'
+  ...
+# Subtest: chromium: history search and browser-local progress use existing saved positions
+ok 217 - chromium: history search and browser-local progress use existing saved positions
+  ---
+  duration_ms: 226.157234
+  type: 'test'
+  ...
+# Subtest: firefox: production thumbnail progress spans history, all card types and legacy thin preferences at 1280px
+ok 218 - firefox: production thumbnail progress spans history, all card types and legacy thin preferences at 1280px
+  ---
+  duration_ms: 3153.699514
+  type: 'test'
+  ...
+# Subtest: firefox: production queue and recommendation progress survives legacy thin preferences and refresh at 1280px
+ok 219 - firefox: production queue and recommendation progress survives legacy thin preferences and refresh at 1280px
+  ---
+  duration_ms: 1128.61079
+  type: 'test'
+  ...
+# Subtest: firefox: production thumbnail progress spans history, all card types and legacy thin preferences at 1440px
+ok 220 - firefox: production thumbnail progress spans history, all card types and legacy thin preferences at 1440px
+  ---
+  duration_ms: 1692.64582
+  type: 'test'
+  ...
+# Subtest: firefox: production queue and recommendation progress survives legacy thin preferences and refresh at 1440px
+ok 221 - firefox: production queue and recommendation progress survives legacy thin preferences and refresh at 1440px
+  ---
+  duration_ms: 2745.447242
+  type: 'test'
+  ...
+# Subtest: firefox: history search and browser-local progress use existing saved positions
+ok 222 - firefox: history search and browser-local progress use existing saved positions
+  ---
+  duration_ms: 718.460452
+  type: 'test'
+  ...
+# Subtest: chromium: account forms are accessible and responsive
+ok 223 - chromium: account forms are accessible and responsive
+  ---
+  duration_ms: 912.09586
+  type: 'test'
+  ...
+# Subtest: firefox: account forms are accessible and responsive
+ok 224 - firefox: account forms are accessible and responsive
+  ---
+  duration_ms: 2008.59009
+  type: 'test'
+  ...
+# Subtest: chromium: Popular avatars learned during channel refreshes render without metadata lookups
+ok 225 - chromium: Popular avatars learned during channel refreshes render without metadata lookups
+  ---
+  duration_ms: 282.069007
+  type: 'test'
+  ...
+# Subtest: chromium: channel avatars learned from comments and community posts render on another page without metadata lookups
+ok 226 - chromium: channel avatars learned from comments and community posts render on another page without metadata lookups
+  ---
+  duration_ms: 200.52515
+  type: 'test'
+  ...
+# Subtest: chromium: comment avatar cache learning preserves modern and legacy comment rendering and thin mode
+ok 227 - chromium: comment avatar cache learning preserves modern and legacy comment rendering and thin mode
+  ---
+  duration_ms: 791.515514
+  type: 'test'
+  ...
+# Subtest: chromium: channel avatars learned from recommendations render on another page without metadata lookups
+ok 228 - chromium: channel avatars learned from recommendations render on another page without metadata lookups
+  ---
+  duration_ms: 116.62528
+  type: 'test'
+  ...
+# Subtest: chromium: real modern recommendations preserve creator links, duration and collaboration labels
+ok 229 - chromium: real modern recommendations preserve creator links, duration and collaboration labels
+  ---
+  duration_ms: 150.205627
+  type: 'test'
+  ...
+# Subtest: chromium: channel avatars recovered from a real playlist response render without metadata lookups
+ok 230 - chromium: channel avatars recovered from a real playlist response render without metadata lookups
+  ---
+  duration_ms: 103.98461
+  type: 'test'
+  ...
+# Subtest: chromium: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles
+ok 231 - chromium: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles
+  ---
+  duration_ms: 515.867052
+  type: 'test'
+  ...
+# Subtest: chromium: channel avatars fit compact rows, history and subscription manager without JavaScript
+ok 232 - chromium: channel avatars fit compact rows, history and subscription manager without JavaScript
+  ---
+  duration_ms: 426.203529
+  type: 'test'
+  ...
+# Subtest: chromium: channel avatars preserve browser imagery with legacy thin preferences, channel ownership and RTL layout
+ok 233 - chromium: channel avatars preserve browser imagery with legacy thin preferences, channel ownership and RTL layout
+  ---
+  duration_ms: 376.06043
+  type: 'test'
+  ...
+# Subtest: chromium: channel avatar initials preserve Unicode, stable colors and readable contrast
+ok 234 - chromium: channel avatar initials preserve Unicode, stable colors and readable contrast
+  ---
+  duration_ms: 419.964718
+  type: 'test'
+  ...
+# Subtest: chromium: failed avatar images keep placeholders and never retry metadata
+ok 235 - chromium: failed avatar images keep placeholders and never retry metadata
+  ---
+  duration_ms: 205.812473
+  type: 'test'
+  ...
+# Subtest: firefox: Popular avatars learned during channel refreshes render without metadata lookups
+ok 236 - firefox: Popular avatars learned during channel refreshes render without metadata lookups
+  ---
+  duration_ms: 2572.639908
+  type: 'test'
+  ...
+# Subtest: firefox: channel avatars learned from comments and community posts render on another page without metadata lookups
+ok 237 - firefox: channel avatars learned from comments and community posts render on another page without metadata lookups
+  ---
+  duration_ms: 623.463569
+  type: 'test'
+  ...
+# Subtest: firefox: comment avatar cache learning preserves modern and legacy comment rendering and thin mode
+ok 238 - firefox: comment avatar cache learning preserves modern and legacy comment rendering and thin mode
+  ---
+  duration_ms: 1746.595113
+  type: 'test'
+  ...
+# Subtest: firefox: channel avatars learned from recommendations render on another page without metadata lookups
+ok 239 - firefox: channel avatars learned from recommendations render on another page without metadata lookups
+  ---
+  duration_ms: 343.445498
+  type: 'test'
+  ...
+# Subtest: firefox: real modern recommendations preserve creator links, duration and collaboration labels
+ok 240 - firefox: real modern recommendations preserve creator links, duration and collaboration labels
+  ---
+  duration_ms: 427.281687
+  type: 'test'
+  ...
+# Subtest: firefox: channel avatars recovered from a real playlist response render without metadata lookups
+ok 241 - firefox: channel avatars recovered from a real playlist response render without metadata lookups
+  ---
+  duration_ms: 1882.826599
+  type: 'test'
+  ...
+# Subtest: firefox: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles
+ok 242 - firefox: channel avatars use response URLs, cache URLs and local placeholders beside creator names below full-width titles
+  ---
+  duration_ms: 1302.428454
+  type: 'test'
+  ...
+# Subtest: firefox: channel avatars fit compact rows, history and subscription manager without JavaScript
+ok 243 - firefox: channel avatars fit compact rows, history and subscription manager without JavaScript
+  ---
+  duration_ms: 1327.746935
+  type: 'test'
+  ...
+# Subtest: firefox: channel avatars preserve browser imagery with legacy thin preferences, channel ownership and RTL layout
+ok 244 - firefox: channel avatars preserve browser imagery with legacy thin preferences, channel ownership and RTL layout
+  ---
+  duration_ms: 2841.006377
+  type: 'test'
+  ...
+# Subtest: firefox: channel avatar initials preserve Unicode, stable colors and readable contrast
+ok 245 - firefox: channel avatar initials preserve Unicode, stable colors and readable contrast
+  ---
+  duration_ms: 925.780083
+  type: 'test'
+  ...
+# Subtest: firefox: failed avatar images keep placeholders and never retry metadata
+ok 246 - firefox: failed avatar images keep placeholders and never retry metadata
+  ---
+  duration_ms: 473.996227
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+ok 247 - chromium: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+  ---
+  duration_ms: 380.798515
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+not ok 248 - chromium: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+  ---
+  duration_ms: 10708.320815
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4184:5'
+  failureType: 'testCodeFailure'
+  error: 'page.waitForRequest: Timeout 10000ms exceeded while waiting for event "request"'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    waitForDeArrowRequest (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:402:50)
+    finishDeArrowPrefetch (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:406:11)
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4192:19)
+  ...
+# Subtest: chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+ok 249 - chromium: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+  ---
+  duration_ms: 248.714738
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers prefetch hidden cards only within the viewport margin
+ok 250 - chromium: channel spoilers prefetch hidden cards only within the viewport margin
+  ---
+  duration_ms: 167.865303
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers preserve no-JavaScript masking and account settings
+ok 251 - chromium: channel spoilers preserve no-JavaScript masking and account settings
+  ---
+  duration_ms: 138.181942
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers save guest rules and apply before initial rendering
+ok 252 - chromium: channel spoilers save guest rules and apply before initial rendering
+  ---
+  duration_ms: 315.151202
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+ok 253 - chromium: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+  ---
+  duration_ms: 601.385962
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+ok 254 - firefox: channel spoilers hide recent and unknown uploads and reveal thumbnails without navigation
+  ---
+  duration_ms: 692.416508
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+ok 255 - firefox: channel spoilers prefetch without revealing and cycle through cached or unavailable titles
+  ---
+  duration_ms: 1643.705794
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+ok 256 - firefox: channel spoilers share a pending prefetch with clicks and dynamic duplicate titles
+  ---
+  duration_ms: 565.920654
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers prefetch hidden cards only within the viewport margin
+ok 257 - firefox: channel spoilers prefetch hidden cards only within the viewport margin
+  ---
+  duration_ms: 1791.446382
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers preserve no-JavaScript masking and account settings
+ok 258 - firefox: channel spoilers preserve no-JavaScript masking and account settings
+  ---
+  duration_ms: 581.433662
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers save guest rules and apply before initial rendering
+ok 259 - firefox: channel spoilers save guest rules and apply before initial rendering
+  ---
+  duration_ms: 710.889933
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+ok 260 - firefox: channel spoilers mask watch posters, browser titles and dynamic queue occurrences
+  ---
+  duration_ms: 978.846017
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+ok 261 - chromium: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+  ---
+  duration_ms: 348.651217
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers mask a guest watch title and poster before player setup
+ok 262 - chromium: channel spoilers mask a guest watch title and poster before player setup
+  ---
+  duration_ms: 306.842308
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+ok 263 - firefox: channel spoilers keep embed overlays hidden until the DeArrow button is activated
+  ---
+  duration_ms: 618.269642
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers mask a guest watch title and poster before player setup
+ok 264 - firefox: channel spoilers mask a guest watch title and poster before player setup
+  ---
+  duration_ms: 580.152311
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary
+ok 265 - chromium: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary
+  ---
+  duration_ms: 1696.971686
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+ok 266 - chromium: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+  ---
+  duration_ms: 809.581469
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers skip inactive work and batch large subtree insertions
+ok 267 - chromium: channel spoilers skip inactive work and batch large subtree insertions
+  ---
+  duration_ms: 246.015937
+  type: 'test'
+  ...
+# Subtest: chromium: channel spoilers activate blank-delay guest rules in an already open inactive tab
+ok 268 - chromium: channel spoilers activate blank-delay guest rules in an already open inactive tab
+  ---
+  duration_ms: 208.101348
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary
+ok 269 - firefox: channel spoilers reveal indefinite rules with explicit or omitted delays in Diary
+  ---
+  duration_ms: 5017.327347
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+ok 270 - firefox: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional
+  ---
+  duration_ms: 1641.617367
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers skip inactive work and batch large subtree insertions
+ok 271 - firefox: channel spoilers skip inactive work and batch large subtree insertions
+  ---
+  duration_ms: 677.711416
+  type: 'test'
+  ...
+# Subtest: firefox: channel spoilers activate blank-delay guest rules in an already open inactive tab
+ok 272 - firefox: channel spoilers activate blank-delay guest rules in an already open inactive tab
+  ---
+  duration_ms: 664.913649
+  type: 'test'
+  ...
+# Subtest: chromium: preferred audio settings save without JavaScript and include regional choices
+ok 273 - chromium: preferred audio settings save without JavaScript and include regional choices
+  ---
+  duration_ms: 248.298972
+  type: 'test'
+  ...
+# Subtest: chromium: preferred audio selects late DASH tracks and preserves manual choices on watch and embed
+ok 274 - chromium: preferred audio selects late DASH tracks and preserves manual choices on watch and embed
+  ---
+  duration_ms: 507.889755
+  type: 'test'
+  ...
+# Subtest: chromium: preferred audio-only sources keep track identity when switching quality
+ok 275 - chromium: preferred audio-only sources keep track identity when switching quality
+  ---
+  duration_ms: 535.660903
+  type: 'test'
+  ...
+# Subtest: firefox: preferred audio settings save without JavaScript and include regional choices
+ok 276 - firefox: preferred audio settings save without JavaScript and include regional choices
+  ---
+  duration_ms: 478.535015
+  type: 'test'
+  ...
+# Subtest: firefox: preferred audio selects late DASH tracks and preserves manual choices on watch and embed
+ok 277 - firefox: preferred audio selects late DASH tracks and preserves manual choices on watch and embed
+  ---
+  duration_ms: 1109.701913
+  type: 'test'
+  ...
+# Subtest: firefox: preferred audio-only sources keep track identity when switching quality
+ok 278 - firefox: preferred audio-only sources keep track identity when switching quality
+  ---
+  duration_ms: 2719.902362
+  type: 'test'
+  ...
+# Subtest: chromium: seek interval settings submit all choices without JavaScript
+ok 279 - chromium: seek interval settings submit all choices without JavaScript
+  ---
+  duration_ms: 230.572479
+  type: 'test'
+  ...
+# Subtest: chromium: seek intervals use video seconds for keyboard media keys and mobile taps
+ok 280 - chromium: seek intervals use video seconds for keyboard media keys and mobile taps
+  ---
+  duration_ms: 5959.629987
+  type: 'test'
+  ...
+# Subtest: firefox: seek interval settings submit all choices without JavaScript
+ok 281 - firefox: seek interval settings submit all choices without JavaScript
+  ---
+  duration_ms: 464.909584
+  type: 'test'
+  ...
+# Subtest: firefox: seek intervals use video seconds for keyboard media keys and mobile taps
+ok 282 - firefox: seek intervals use video seconds for keyboard media keys and mobile taps
+  ---
+  duration_ms: 6723.626612
+  type: 'test'
+  ...
+# Subtest: chromium: D8 contextual actions keep one delegated owner after repeated script setup
+ok 283 - chromium: D8 contextual actions keep one delegated owner after repeated script setup
+  ---
+  duration_ms: 312.111437
+  type: 'test'
+  ...
+# Subtest: firefox: D8 contextual actions keep one delegated owner after repeated script setup
+ok 284 - firefox: D8 contextual actions keep one delegated owner after repeated script setup
+  ---
+  duration_ms: 509.743399
+  type: 'test'
+  ...
+1..284
+# tests 284
+# suites 0
+# pass 282
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 376642.940346

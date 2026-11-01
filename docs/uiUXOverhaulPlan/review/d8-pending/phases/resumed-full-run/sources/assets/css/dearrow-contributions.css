@@ -1,0 +1,15 @@
+/* Loaded only after the explicit watch-menu action. Shared foundation owns controls. */
+#dearrow-dialog{width:680px;max-width:calc(100vw - 48px);max-height:calc(100dvh - 48px);padding:0;overflow:hidden}
+#dearrow-dialog[open]{display:flex;flex-direction:column}
+.dearrow-header{display:flex;flex:none;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;border-block-end:1px solid var(--separator);background:var(--raised)}
+#dearrow-heading{margin:0;font-size:20px}.dearrow-content{overflow:auto;overscroll-behavior:contain;padding:16px 24px 24px;min-height:0}
+#dearrow-status{overflow-wrap:anywhere}#dearrow-status[role=alert],.dearrow-warning{color:var(--danger)}
+.dearrow-row{display:flex;align-items:start;justify-content:space-between;gap:16px;padding-block:16px;border-block-end:1px solid var(--separator)}
+.dearrow-row-text{flex:1;min-width:0;overflow-wrap:anywhere}.dearrow-row-text>span,.dearrow-row-text>small{display:block}.dearrow-row-text>small{color:var(--muted);font-size:12px;margin-block-start:4px}
+.dearrow-votes{display:flex;flex:none;gap:8px;flex-wrap:wrap;max-width:240px}.dearrow-votes .button{min-height:40px;white-space:normal}.dearrow-votes [data-dearrow-vote=downvote] .ui-icon{transform:rotate(180deg)}
+#dearrow-draft-form{margin-block:24px}#dearrow-draft-form>label{display:block}#dearrow-draft{width:100%;margin-block:8px 12px;font:inherit}
+#dearrow-preview{overflow-wrap:anywhere;font-size:20px}
+.dearrow-ack{display:flex;align-items:start;gap:12px;margin-block:20px;cursor:pointer}.dearrow-ack input{flex:none;margin-block-start:4px}.dearrow-ack small{display:block;color:var(--muted);font-size:14px;margin-block-start:4px}
+.dearrow-confirm-actions{display:flex;flex-wrap:wrap;gap:8px}#dearrow-refresh{margin-block-start:16px}
+#dearrow-dialog :is(input,button,a),#dearrow-status{scroll-margin-block:16px}
+@media(forced-colors:active){#dearrow-dialog .button{border:1px solid ButtonText}}

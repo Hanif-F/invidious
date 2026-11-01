@@ -23,7 +23,7 @@ module Invidious::Routes::Embed
         return error_template(500, ex)
       end
 
-      url = "/embed/#{first_playlist_video.id}?#{env.params.query}"
+      url = "/embed/#{first_playlist_video.id}"
 
       if env.params.query.size > 0
         url += "?#{env.params.query}"
@@ -41,7 +41,7 @@ module Invidious::Routes::Embed
     id = env.params.url["id"]
 
     plid = env.params.query["list"]?.try &.gsub(/[^a-zA-Z0-9_-]/, "")
-    continuation = process_continuation(env.params.query, plid, id)
+    continuation = Invidious::Frontend::WatchPage.playlist_cursor(env, plid, id)
 
     if md = env.params.query["playlist"]?
          .try &.match(/[a-zA-Z0-9_-]{11}(,[a-zA-Z0-9_-]{11})*/)
@@ -49,13 +49,13 @@ module Invidious::Routes::Embed
       env.params.query.delete("playlist")
     end
 
-    if id.includes?("%20") || id.includes?("+") || env.params.query.to_s.includes?("%20") || env.params.query.to_s.includes?("+")
+    if id.includes?("%20") || id.includes?("+")
       id = env.params.url["id"].gsub("%20", "").delete("+")
 
       url = "/embed/#{id}"
 
       if env.params.query.size > 0
-        url += "?#{env.params.query.to_s.gsub("%20", "").delete("+")}"
+        url += "?#{env.params.query}"
       end
 
       return env.redirect url

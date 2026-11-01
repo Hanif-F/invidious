@@ -6,13 +6,15 @@ thumbnail reveal and DeArrow title cycling. See [channel titles and thumbnails](
 
 [Documentation index](README.md)
 
-Open `/preferences` and save the form to apply settings. Guests store serialized preferences in the `PREFS` cookie, normally expiring after two years. Signed-in users store JSON in `users.preferences`. Defaults come from `default_user_preferences`, with converters and compatibility rules in [preferences.cr](../src/invidious/user/preferences.cr).
+`/preferences` opens Appearance in the category interface; `/preferences?section=<category>` opens a specific category. Search finds the owning category or dedicated editor. Category saves merge only their declared fields into the latest persisted preferences; cached legacy full-form POSTs remain compatible. Administrators use `/admin/settings` for instance configuration. Personal saves never change instance settings. Guests store serialized preferences in the `PREFS` cookie, normally expiring after two years. Signed-in users store JSON in `users.preferences`. Defaults come from `default_user_preferences`, with converters and compatibility rules in [preferences.cr](../src/invidious/user/preferences.cr).
+
+Recognized old `/preferences#...` bookmarks open their current category and focus the field where possible. This includes array positions, SponsorBlock category controls, AI filtering, channel masking and the dedicated DeArrow identity editor. When scripting is absent or its navigation asset fails, the old anchor exposes an ordinary link naming the current destination. Unknown/malformed anchors leave Appearance usable. An explicit `section` takes precedence, and browser Back does not acquire an extra redirect entry. Old compact/reduced-image/player-style bookmarks explain their retirement without changing saved compatibility values.
 
 The [field inventory](reference/preferences.md) lists every model field, and [configuration defaults](reference/configuration.md) lists instance defaults. This guide explains behavior and scope rather than duplicating those tables.
 
 ## Persistence and precedence
 
-Saved account fields or guest cookie values are parsed over instance defaults. A request may then override rendering through `hl`, `dark_mode`, `thin_mode` or [video query parameters](playback.md#watch-and-embed-query-options). Browser-local settings such as volume, search choices, temporary player changes and guest enhancements use isolated browser profiles; not every UI action rewrites account preferences.
+Saved account fields or guest cookie values are parsed over instance defaults. A request may then override rendering through `hl`, `dark_mode` or [video query parameters](playback.md#watch-and-embed-query-options). `thin_mode` remains supported by ordinary API HTML and native/legacy callers; desktop pages and `ui=desktop` fragments use the shared imagery/layout. Browser-local settings such as volume, search choices, temporary player changes and guest enhancements use isolated browser profiles; not every UI action rewrites account preferences.
 
 Browser/account state must go through `InvidiousStorage`, not raw unscoped storage keys. Profile IDs are HMAC-derived ownership markers, not authentication tokens. Sign-in, signout, expiry and account switching change the active profile; stale tabs detect a mismatch and stop/reload instead of saving to the wrong account. See [frontend](frontend.md).
 
@@ -21,14 +23,14 @@ Browser/account state must go through `InvidiousStorage`, not raw unscoped stora
 | Fields | Behavior |
 | --- | --- |
 | `locale`, `region`, `timezone` | Translation, supported regional requests, and history/calendar grouping; invalid timezone resolves to unset/UTC behavior |
-| `dark_mode` | Empty/system, `light` or `dark` within Diary |
-| `ui_density` | `balanced` or `compact`; invalid values normalize to balanced |
-| `thin_mode` | Reduced-image presentation; underlying content links/actions remain |
+| `dark_mode` | System (empty), `light` or `dark` in the shared desktop design |
+| `ui_density` | Retained for native/legacy round trips; the desktop interface uses one layout |
+| `thin_mode` | Retained for native/legacy round trips; migrated desktop pages retain their images |
 | `default_home`, `feed_menu` | Home destination and feed navigation entries |
 | `show_nick` | Display username in supported navigation |
 | `automatic_instance_redirect` | Automatic fallback-instance behavior where supported |
 
-Diary is the only site design. Its CSS, fonts and artwork live in `assets/themes/diary/`; [theming](theming.md) explains maintenance. Legacy `theme`, `theme_random`, `theme_random_interval_hours`, and `theme_random_next_at` fields are ignored in old preferences and configuration, omitted from new serialized output, and removed on subsequent saves. No database migration is required.
+Desktop pages use shared neutral Light/Dark/System styles. Diary assets and the alternate browser layouts were retired after all page families migrated. Legacy `theme`, `theme_random`, `theme_random_interval_hours`, and `theme_random_next_at` fields are ignored in old preferences and configuration, omitted from new serialized output, and removed on subsequent saves. This explicit cleanup preserves other unknown fields. No database migration is required for the interface change.
 
 ## Playback and content
 
@@ -83,7 +85,11 @@ AI filtering uses a master plus eight page/list action strings. Discovery groups
 
 Archived-chat settings include timestamps, font scale, panel width, overlay enablement/opacity/geometry, user blacklist and word blacklist. Account API defaults are timestamps true, font scale 100, width 440 px, overlay false, opacity 75, and normalized geometry x=560/y=50/width=400/height=750 on a 0–1000 coordinate plane.
 
-`PATCH /api/v1/auth/chat_preferences` validates known fields only: font 75–150, width 280–640, opacity 0–100, geometry within the normalized area, and each blacklist at most 1024 bytes. Concurrent conflicting updates can return 409. Guest browser controls can use a broader local UI range; do not assume they are all accepted by account API validation. Timing offsets are stored separately per account/video and range from -3,600,000 to +3,600,000 milliseconds.
+`PATCH /api/v1/auth/chat_preferences` validates known fields only: font 75–150, width 280–640, opacity 0–100, geometry within the normalized area, and each blacklist at most 1024 bytes. Concurrent conflicting updates can return 409. The browser is panel-only and exposes no overlay editor. Its font scale (75–150%), panel width (280–640 px) and hide-user-ID choice are profile-local, including for signed-in users. Account saves patch timestamps and the two blacklists only, preserving native font/width/overlay values. Guest choices remain in the guest profile. Timing offsets are stored separately per account/video and range from -3,600,000 to +3,600,000 milliseconds.
+
+## Browser drafts and save verification
+
+The category interface searches public field/category descriptions and option metadata locally and retains category drafts in page memory. It excludes private playlist names from the search index. Save/Discard affects the active category. `redirect=false` retains canonical preferences/fingerprint and adds owning category values/profile; an independent GET verifies those values before reporting Saved. Failed or unconfirmed saves retain the draft and offer reload. Language changes apply on subsequent pages. Ordinary HTML POST redirects and no-JavaScript category forms remain supported. Cached legacy full-form POSTs and their receipts remain server-compatible; the full-form template and browser controller have been retired. Dedicated chat, identity, block and channel-rule endpoints remain separate. See the [category ownership contract](uiUXOverhaulPlan/settings-ownership.md) for exact fields and compatibility behavior.
 
 ## API update choices
 

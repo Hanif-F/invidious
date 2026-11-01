@@ -27,10 +27,15 @@ struct Invidious::User
     # Preferences (PREFS) cookie
     # Parameter "domain" comes from the global config
     def prefs(domain : String?, preferences : Preferences) : HTTP::Cookie
+      prefs_json(domain, preferences.to_json)
+    end
+
+    # Category saves retain the raw document's unrelated/unknown fields.
+    def prefs_json(domain : String?, raw : String) : HTTP::Cookie
       return HTTP::Cookie.new(
         name: "PREFS",
         domain: domain,
-        value: URI.encode_www_form(preferences.to_json),
+        value: URI.encode_www_form(raw),
         expires: Time.utc + 2.years,
         secure: secure?(domain),
         path: "/",

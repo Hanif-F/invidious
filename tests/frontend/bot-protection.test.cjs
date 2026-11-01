@@ -3,12 +3,12 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require('playwright');
+const playwright = require('playwright');
 const root = path.resolve(__dirname, '../..');
 const generated = process.env.FRONTEND_FIXTURES || path.join(__dirname, '.generated');
 
-async function browserTest(run) {
-    const browser = await chromium.launch({ headless: true });
+async function browserTest(run, engine = 'chromium') {
+    const browser = await playwright[engine].launch({ headless: true });
     try { await run(await browser.newPage()); } finally { await browser.close(); }
 }
 async function serve(page, native, completions) {
@@ -97,3 +97,41 @@ test('media errors check local status and embedded recovery offers a direct link
     assert.match(await link.getAttribute('href'), /^\/verify\?return=/);
     assert.equal(page.url(), 'https://outside.test/');
 }));
+
+
+for (const engine of (process.env.FRONTEND_BROWSERS || 'chromium,firefox').split(',')) test(`${engine}: embedded verification retires zero-position playback and duplicate setup keeps one owner`, async () => browserTest(async page => {
+    let statusReads=0;
+    await page.route('https://invidious.test/**',route=>{
+        const url=new URL(route.request().url());
+        if(url.pathname==='/js/bot-protection.js')return route.fulfill({path:path.join(root,'assets/js/bot-protection.js')});
+        if(url.pathname==='/api/v1/verification'){statusReads++;return route.fulfill({json:{required:true}});}
+        return route.fulfill({contentType:'text/html',body:'<title>Private video title</title><meta name="thumbnail" content="/private.jpg"><meta property="og:title" content="Private video title"><script id="verification-access" type="application/json">1</script><script src="/js/bot-protection.js"></script><video></video>'});
+    });
+    await page.route('https://outside.test/**',route=>route.fulfill({contentType:'text/html',body:'<iframe src="https://invidious.test/embed/test"></iframe>'}));
+    await page.goto('https://outside.test/');const frame=page.frames().find(f=>f.url().includes('/embed/'));await frame.waitForFunction(()=>window.InvidiousVerification);
+    await frame.addScriptTag({url:'https://invidious.test/js/bot-protection.js'});
+    await frame.evaluate(()=>{window.pauses=0;window.disposals=0;window.featureDisposals=0;window.InvidiousDeArrow={dispose:()=>{featureDisposals++;window.disposedFeaturesBeforePlayer=disposals===0;document.title='stale original';}};window.player={currentTime:()=>0,pause:()=>pauses++,dispose:()=>disposals++};document.querySelector('video').dispatchEvent(new Event('error'));});
+    await frame.locator('main a[target="_blank"]').waitFor();assert.equal(await frame.evaluate(()=>pauses),1);assert.equal(await frame.evaluate(()=>disposals),1);assert.equal(statusReads,1);assert.equal(await frame.locator('video').count(),0);assert.equal(await frame.evaluate(()=>featureDisposals),1);assert.equal(await frame.evaluate(()=>disposedFeaturesBeforePlayer),true);assert.equal(await frame.title(),'Verification required - Invidious');assert.equal(await frame.locator('meta[name=thumbnail],meta[property="og:title"]').count(),0);assert.equal(page.url(),'https://outside.test/');
+}, engine));
+
+for (const engine of (process.env.FRONTEND_BROWSERS || 'chromium,firefox').split(',')) test(`${engine}: cached iframe ignores old fetch and XHR gate denials but handles a current denial`, async () => browserTest(async page => {
+    const held=[];let readsReady;const ready=new Promise(resolve=>readsReady=resolve);
+    await page.route('https://invidious.test/**',route=>{
+        const url=new URL(route.request().url());
+        if(url.pathname==='/js/bot-protection.js')return route.fulfill({path:path.join(root,'assets/js/bot-protection.js')});
+        if(url.pathname==='/old-read'){held.push(route);if(held.length===2)readsReady();return;}
+        if(url.pathname==='/current-read')return route.fulfill({status:401,headers:{'X-Invidious-Login-Required':'1'},json:{error:'login_required'}});
+        return route.fulfill({contentType:'text/html',body:'<script id="verification-access" type="application/json" data-login-required="true">0</script><script src="/js/bot-protection.js"></script><video></video>'});
+    });
+    await page.route('https://outside.test/**',route=>route.fulfill({contentType:'text/html',body:'<iframe src="https://invidious.test/embed/abcdefghijk?list=PLfixture"></iframe>'}));
+    await page.goto('https://outside.test/');const frame=page.frames().find(f=>f.url().includes('/embed/'));await frame.waitForFunction(()=>window.InvidiousVerification);
+    await frame.evaluate(()=>{
+        window.disposals=0;window.player={currentTime:()=>12.8,pause(){},dispose(){disposals++;}};
+        window.oldFetch=fetch('/old-read');window.oldXHR=new Promise(resolve=>{const xhr=new XMLHttpRequest();xhr.onload=resolve;xhr.open('GET','/old-read');xhr.send();});
+    });
+    await ready;await frame.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});
+    await Promise.all(held.map(route=>route.fulfill({status:401,headers:{'X-Invidious-Login-Required':'1'},json:{error:'login_required'}})));
+    await frame.evaluate(()=>Promise.all([oldFetch,oldXHR]));assert.equal(await frame.evaluate(()=>disposals),0);assert.equal(await frame.locator('main a[href^="/login"]').count(),0);
+    await frame.evaluate(()=>fetch('/current-read'));await frame.locator('main a[href^="/login"]').waitFor();assert.equal(await frame.evaluate(()=>disposals),1);
+    const login=new URL(await frame.locator('main a').getAttribute('href'),'https://invidious.test');assert.equal(login.searchParams.get('referer'),'/watch?list=PLfixture&t=12&v=abcdefghijk');
+},engine));

@@ -3,72 +3,132 @@
 module Invidious::Routes::ChannelSpoilerPreferences
   PATH = "/preferences/spoilers/channels"
 
+  private def self.json?(env)
+    env.params.query["format"]? == "json"
+  end
+
+  private def self.saved(env, raw : String? = nil)
+    user = env.get?("user").try(&.as(User))
+    raw ||= Invidious::Database::Users.preference_json(user.email) if user
+    return {} of String => Invidious::ChannelSpoilers::Rule unless raw
+    Invidious::ChannelSpoilers::Rules.normalize(JSON.parse(raw)["channel_spoiler_settings"]? || JSON::Any.new(nil))
+  end
+
+  private def self.state(env, raw : String? = nil)
+    user = env.get?("user").try(&.as(User))
+    token = user ? generate_response(env.get("sid").as(String), {"POST:preferences/spoilers/channels"}, HMAC_KEY) : ""
+    {rules: saved(env, raw), profile: Invidious::BrowserProfiles.render_scope(env), csrf: token}.to_json
+  end
+
+  private def self.failure(env, code, message, uncertain = false, stale = false)
+    env.response.status_code = code
+    if json?(env)
+      env.response.content_type = "application/json"
+      return {error: message, profile: Invidious::BrowserProfiles.render_scope(env)}.to_json
+    end
+    env.set "mask_error", message
+    env.set "mask_uncertain", uncertain
+    env.set "mask_stale", stale
+    env.set "mask_draft", env.params.body.to_s
+    show(env)
+  end
+
   def self.show(env)
+    Authentication.no_store(env)
     preferences = env.get("preferences").as(Preferences)
     locale = preferences.locale
     user = env.get?("user").try(&.as(User))
+    if json?(env)
+      env.response.content_type = "application/json"
+      begin
+        return state(env)
+      rescue
+        env.response.status_code = 503
+        return {error: I18n.translate(locale, "overhaul_channel_load_failed")}.to_json
+      end
+    end
     channel_id = nil.as(String?)
     entry = Invidious::ChannelSpoilers::Rule.new
     csrf_token = user ? generate_response(env.get("sid").as(String), {"POST:preferences/spoilers/channels"}, HMAC_KEY) : ""
-    if input = env.params.query["channel"]?
+    values = env.request.method == "POST" ? env.params.body : env.params.query
+    if input = values["channel"]?
       channel_id = Invidious::SponsorBlock.channel_id(input)
-      return error_template(400, I18n.translate(locale, "sb_channel_invalid")) unless channel_id
-      if saved = preferences.channel_spoiler_settings[channel_id]?
-        entry = saved
-      else
-        begin
-          entry.name = get_channel(channel_id).author
-        rescue
-          return error_template(502, I18n.translate(locale, "sb_channel_lookup_failed"))
+      if channel_id
+        if user && (existing = preferences.channel_spoiler_settings[channel_id]?)
+          entry = existing
+        else
+          entry = Invidious::ChannelSpoilers::Rule.new(channel_id, false, false)
+          begin
+            entry.name = get_channel(channel_id).author
+          rescue
+            env.response.status_code = 502 if env.response.status_code < 400
+            env.set "mask_error", I18n.translate(locale, "sb_channel_lookup_failed") unless env.get?("mask_error")
+          end
         end
+      else
+        env.response.status_code = 400 if env.response.status_code < 400
+        env.set "mask_error", I18n.translate(locale, "sb_channel_invalid") unless env.get?("mask_error")
       end
     end
     templated "user/channel_spoilers"
   end
 
   def self.update(env)
+    Authentication.no_store(env)
+    locale = env.get("preferences").as(Preferences).locale
     user = env.get?("user").try(&.as(User))
-    return error_template(403, "Sign in to manage channel settings") unless user
-    locale = user.preferences.locale
+    return failure(env, 403, I18n.translate(locale, "Sign In"), stale: true) unless user
+    if profile = env.params.body["browser_profile"]?
+      return failure(env, 409, I18n.translate(locale, "overhaul_channel_profile_changed"), stale: true) unless profile == Invidious::BrowserProfiles.render_scope(env)
+    end
     begin
       validate_request(env.params.body["csrf_token"]?, env.get("sid").as(String), env.request, HMAC_KEY, locale)
     rescue
-      return error_template(403, "Invalid CSRF token")
+      return failure(env, 403, I18n.translate(locale, "overhaul_channel_session"))
     end
     id = Invidious::SponsorBlock.channel_id(env.params.body["channel"]? || "")
-    return error_template(400, I18n.translate(locale, "sb_channel_invalid")) unless id
-    action = env.params.body["action"]?
-    return error_template(400, "Invalid action") unless {"save", "reset"}.includes?(action)
-    title = env.params.body["hide_title"]? == "on"
-    thumbnail = env.params.body["hide_thumbnail"]? == "on"
-    text = (env.params.body["reveal_after_days"]? || "").strip
-    days = text.empty? ? nil : text.to_i32?
-    if action == "save" && !text.empty? && (days.nil? || days < 1 || !text.matches?(/\A\d+\z/))
-      return error_template(400, I18n.translate(locale, "spoilers_invalid_days"))
-    end
-    name = user.preferences.channel_spoiler_settings[id]?.try(&.name)
-    if action == "save" && (title || thumbnail) && !name
-      begin
-        name = get_channel(id).author
-      rescue
-        return error_template(502, I18n.translate(locale, "sb_channel_lookup_failed"))
+    return failure(env, 400, I18n.translate(locale, "sb_channel_invalid")) unless id
+    action = env.params.body["action"]? || ""
+    return failure(env, 400, I18n.translate(locale, "Invalid request")) unless {"save", "reset"}.includes?(action)
+    rule = nil.as(Invidious::ChannelSpoilers::Rule?)
+    if action == "save"
+      %w(hide_title hide_thumbnail).each do |field|
+        value = env.params.body[field]?
+        return failure(env, 400, I18n.translate(locale, "Invalid request")) if value && !{"on", "off"}.includes?(value)
       end
-    end
-    # Read under the lock: editing one channel must preserve concurrent changes
-    # to other channels and unrelated account preferences.
-    PG_DB.transaction do |tx|
-      conn = tx.connection
-      raw = JSON.parse(conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", user.email, as: String)).as_h
-      saved = Invidious::ChannelSpoilers::Rules.normalize(raw["channel_spoiler_settings"]? || JSON::Any.new(nil))
-      if action == "reset" || !(title || thumbnail)
-        saved.delete(id)
-      else
-        saved[id] = Invidious::ChannelSpoilers::Rule.new(name || id, title, thumbnail, days)
+      title = env.params.body["hide_title"]? == "on"
+      thumbnail = env.params.body["hide_thumbnail"]? == "on"
+      text = (env.params.body["reveal_after_days"]? || "").strip
+      days = text.empty? ? nil : text.to_i32?
+      if !text.empty? && (!text.matches?(/\A\d+\z/) || days.nil? || days < 1)
+        return failure(env, 400, I18n.translate(locale, "spoilers_invalid_days"))
       end
-      raw["channel_spoiler_settings"] = JSON.parse(saved.to_json)
-      Preferences.remove_retired_theme_fields(raw)
-      conn.exec("UPDATE users SET preferences = $1 WHERE email = $2", raw.to_json, user.email)
+      name = user.preferences.channel_spoiler_settings[id]?.try(&.name)
+      if !name && (title || thumbnail)
+        begin
+          name = get_channel(id).author
+        rescue
+          return failure(env, 502, I18n.translate(locale, "sb_channel_lookup_failed"))
+        end
+      end
+      rule = Invidious::ChannelSpoilers::Rule.new(name || id, title, thumbnail, days)
     end
-    env.redirect PATH
+    begin
+      raw = Invidious::ChannelSpoilers.save_web_rule(user.email, id, rule)
+      current = user.preferences
+      current.channel_spoiler_settings = saved(env, raw)
+      user.preferences = current
+      env.set "user", user
+      env.set "preferences", current
+      if json?(env)
+        env.response.content_type = "application/json"
+        return state(env, raw)
+      end
+    rescue ex : ArgumentError
+      return failure(env, 400, I18n.translate(locale, "overhaul_rule_invalid"))
+    rescue
+      return failure(env, 503, I18n.translate(locale, "overhaul_channel_unconfirmed"), uncertain: true)
+    end
+    env.redirect(action == "save" ? "#{PATH}?channel=#{id}&saved=1" : "#{PATH}?saved=1")
   end
 end

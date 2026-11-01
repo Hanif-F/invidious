@@ -21,7 +21,7 @@ Start with the exact HTTP status and an application log excerpt with credentials
 | New native feature denied | Existing tokens keep old scopes; sign out/in to receive the current native grant set |
 | Repeated auth 429 behind proxy | Correct narrow `auth_trusted_proxies`, sanitized forwarding headers and Retry-After; without trust, all users can share the proxy limit |
 | Multipart import CSRF failure | CSRF must be first part or supplied in header before files; fetch a fresh session token |
-| Import returns 204 but data missing | Legacy API catches exceptions/partial failures; compare resulting collections, validate format, inspect upstream skips and retain export |
+| Import incomplete or fails | The API returns 204 on completion, 400 for invalid watched IDs and 500 for other exceptions. Some records can be skipped, and earlier sections can persist before a later failure; compare resulting collections and retain the export before retrying |
 | Private playlist returns 404 | Authenticate as owner; public path possession does not override privacy; bearer clients should use authenticated API/feed variants |
 | Theme toggle or playlist subscription GET fails | These mutations are POST with appropriate CSRF |
 | Subscription feed stale/empty | Channel/feed jobs enabled, job backoff, materialized views and upstream upload metadata; direct channel tab results use a different fetch path |
@@ -40,11 +40,11 @@ Start with the exact HTTP status and an application log excerpt with credentials
 | Account switch leaves stale UI | Profile markers/storage guard should stop/reload stale tabs; inspect storage-denial warnings and avoid unscoped custom scripts |
 | Browser setting does not survive reload | Storage denied/full, cookie limits, current profile or intentionally page-only temporary state; UI should report persistence failure |
 | Avatar missing | Missing cached/observed URL intentionally renders placeholder; no extra avatar-only metadata request is made |
-| Old JS/CSS after deploy | Correct asset commit/build, process restart and deployment cache identity; static assets have long cache lifetime |
+| Old JS/CSS after deploy | Ship matching binary/assets from a committed revision, restart, and refresh the cache; static assets have a 2,629,800-second lifetime. See the [handoff](uiUXOverhaulPlan/user-handoff.md#assets-and-browser-caches) |
 | `--migrate` cannot find SQL | Working directory/config SQL runtime files; binary alone is not a complete installation |
 | Unix socket fails | Parent directory exists, service user permissions and quoted octal mode; configured path must not be a directory |
 | Builds fail fetching player dependencies | Network/package availability or prefetch pinned assets and use skip flag; skip alone does not supply missing runtime assets |
 | Specs fail on missing mocks | Initialize the `mocks` Git submodule |
-| Browser tests cannot load fixture media | Render fixtures, generate both synthetic FFmpeg media files and install selected Playwright engines |
+| Browser tests cannot load fixture media | Render normal/API-only recovery fixtures, generate both WebM files plus `generate_watch_media.cjs` progressive/DASH/HLS media, and install selected Playwright engines |
 
 Use [development](development.md) to select focused checks and [operations](operations.md) for backup/restore. Avoid clearing all user data or changing persistent secrets as a generic troubleshooting step; those actions can destroy recoverable state without fixing the underlying upstream/proxy problem.

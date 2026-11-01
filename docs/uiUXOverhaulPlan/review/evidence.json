@@ -1,0 +1,237 @@
+{
+  "date": "2026-10-26",
+  "head": "0f8703fd66e58be7c2001cabe55eddc091aabd04",
+  "workingTree": true,
+  "scope": "D1 candidate production-template screenshots; synthetic media and intercepted service responses; visual direction explicitly approved by the user on 26 October 2026.",
+  "screenshots": {
+    "browse": {
+      "light": {
+        "path": "browse-light-1440.png",
+        "sha256": "68616b9a935b3a11c2e75cd5a491e8bebc68a924be22540e6def3faeb4a3fc8c"
+      },
+      "dark": {
+        "path": "browse-dark-1440.png",
+        "sha256": "e00f9910b86699b3da3c7475fa2c11e27a0dd4821224c2a9cdd014128647f74b"
+      }
+    },
+    "watch": {
+      "light": {
+        "path": "watch-light-1440.png",
+        "sha256": "9a4fc9efffbead2a7bfd2d846be0f342e092c1461a244e28b838611aa3a3ca35"
+      },
+      "dark": {
+        "path": "watch-dark-1440.png",
+        "sha256": "0a0c95f1cc06fe938832cf468a1cf0b1bd50db8920ed34a9cdc83d650d6013ae"
+      }
+    },
+    "playlist": {
+      "light": {
+        "path": "playlist-light-1440.png",
+        "sha256": "327adf500bd769dda42aaa099a4fc3f8aebf170de3f69b12ec6b7bd267bad447"
+      },
+      "dark": {
+        "path": "playlist-dark-1440.png",
+        "sha256": "e57462ce1855169941a0d71f68bd69faecb784bca418d01bf0e417103828bffd"
+      }
+    },
+    "settings": {
+      "light": {
+        "path": "settings-light-1440.png",
+        "sha256": "65abe865d337eb1aa9b45a14df783fc8bc994e9bba4a8596f7a13db1d96b8fcd"
+      },
+      "dark": {
+        "path": "settings-dark-1440.png",
+        "sha256": "68ac507bb1d668a85949b24ff09b35c415a8909a9b8e3bbdcb933ac25a4cabab"
+      }
+    }
+  },
+  "tests": {
+    "command": "node --test tests/frontend/overhaul.test.cjs",
+    "passed": 12,
+    "failed": 0,
+    "browsers": [
+      "Chromium",
+      "Firefox"
+    ],
+    "viewports": [
+      "1280x720",
+      "1440x900",
+      "1920x1080"
+    ],
+    "states": [
+      "Light",
+      "Dark",
+      "live System",
+      "RTL with enlarged desktop text",
+      "forced colors",
+      "reduced motion"
+    ]
+  },
+  "assets": {
+    "assets/css/foundation.css": {
+      "bytes": 15167,
+      "gzipBytes": 3997
+    },
+    "assets/js/overhaul.js": {
+      "bytes": 15852,
+      "gzipBytes": 3981
+    },
+    "assets/icons/lucide.svg": {
+      "bytes": 8441,
+      "gzipBytes": 2220
+    }
+  },
+  "syntheticRequests": {
+    "scope": "Synthetic D1 fixture requests, including intercepted metadata/media; not deployed-server measurements.",
+    "observations": [
+      {
+        "engine": "chromium",
+        "screen": "browse",
+        "mode": "light",
+        "requests": 25,
+        "styles": 3,
+        "scripts": 7,
+        "sprites": 1
+      },
+      {
+        "engine": "chromium",
+        "screen": "browse",
+        "mode": "dark",
+        "requests": 25,
+        "styles": 3,
+        "scripts": 7,
+        "sprites": 1
+      },
+      {
+        "engine": "chromium",
+        "screen": "watch",
+        "mode": "light",
+        "requests": 46,
+        "styles": 11,
+        "scripts": 24,
+        "sprites": 1
+      },
+      {
+        "engine": "chromium",
+        "screen": "watch",
+        "mode": "dark",
+        "requests": 46,
+        "styles": 11,
+        "scripts": 24,
+        "sprites": 1
+      },
+      {
+        "engine": "chromium",
+        "screen": "playlist",
+        "mode": "light",
+        "requests": 16,
+        "styles": 1,
+        "scripts": 6,
+        "sprites": 1
+      },
+      {
+        "engine": "chromium",
+        "screen": "playlist",
+        "mode": "dark",
+        "requests": 16,
+        "styles": 1,
+        "scripts": 6,
+        "sprites": 1
+      },
+      {
+        "engine": "chromium",
+        "screen": "settings",
+        "mode": "light",
+        "requests": 13,
+        "styles": 3,
+        "scripts": 7,
+        "sprites": 1
+      },
+      {
+        "engine": "chromium",
+        "screen": "settings",
+        "mode": "dark",
+        "requests": 13,
+        "styles": 3,
+        "scripts": 7,
+        "sprites": 1
+      },
+      {
+        "engine": "firefox",
+        "screen": "browse",
+        "mode": "light",
+        "requests": 26,
+        "styles": 3,
+        "scripts": 7,
+        "sprites": 1
+      },
+      {
+        "engine": "firefox",
+        "screen": "browse",
+        "mode": "dark",
+        "requests": 26,
+        "styles": 3,
+        "scripts": 7,
+        "sprites": 1
+      },
+      {
+        "engine": "firefox",
+        "screen": "watch",
+        "mode": "light",
+        "requests": 47,
+        "styles": 11,
+        "scripts": 24,
+        "sprites": 1
+      },
+      {
+        "engine": "firefox",
+        "screen": "watch",
+        "mode": "dark",
+        "requests": 47,
+        "styles": 11,
+        "scripts": 24,
+        "sprites": 1
+      },
+      {
+        "engine": "firefox",
+        "screen": "playlist",
+        "mode": "light",
+        "requests": 17,
+        "styles": 1,
+        "scripts": 6,
+        "sprites": 1
+      },
+      {
+        "engine": "firefox",
+        "screen": "playlist",
+        "mode": "dark",
+        "requests": 17,
+        "styles": 1,
+        "scripts": 6,
+        "sprites": 1
+      },
+      {
+        "engine": "firefox",
+        "screen": "settings",
+        "mode": "light",
+        "requests": 14,
+        "styles": 3,
+        "scripts": 7,
+        "sprites": 1
+      },
+      {
+        "engine": "firefox",
+        "screen": "settings",
+        "mode": "dark",
+        "requests": 14,
+        "styles": 3,
+        "scripts": 7,
+        "sprites": 1
+      }
+    ]
+  },
+  "approval": {
+    "date": "2026-10-26",
+    "response": "Approve this visual direction"
+  }
+}

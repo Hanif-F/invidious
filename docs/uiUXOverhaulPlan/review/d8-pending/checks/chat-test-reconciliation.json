@@ -1,0 +1,227 @@
+[
+  {
+    "oldCaseFamily": "player chat control hides and restores replay",
+    "registeredCases": [
+      "chromium: player chat control hides and restores replay",
+      "firefox: player chat control hides and restores replay"
+    ],
+    "oldCallbackSha256": "7ab9421d55659dafdb57c3cd6f676b63f436086294d7ee4a3ccb4af226cd2770",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay tab, cached-page and profile owners reject ignored aborts"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay settings, filters, timing and timestamp seeks retain the same real media"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "mobile player settings can hide and show chat",
+    "registeredCases": [
+      "chromium: mobile player settings can hide and show chat",
+      "firefox: mobile player settings can hide and show chat"
+    ],
+    "oldCallbackSha256": "d5e4d3f2b7f8487a82e83706634c6c950dc81742f7d7bd9b3d4d824c5bc6134e",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay tab, cached-page and profile owners reject ignored aborts"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay suspends outside native fullscreen and returns to its cached panel"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "chat is beside the video in normal, wide, and fullscreen modes",
+    "registeredCases": [
+      "chromium: chat is beside the video in normal, wide, and fullscreen modes",
+      "firefox: chat is beside the video in normal, wide, and fullscreen modes"
+    ],
+    "oldCallbackSha256": "4737fee3ae779980666cb2dcb3f439090ce065b5134d0529c3369f36baab41b8",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay panel and dialog fit desktop light, dark, enlarged RTL and forced colors"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay suspends outside native fullscreen and returns to its cached panel"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "mobile play/pause stays over the video with docked chat",
+    "registeredCases": [
+      "chromium: mobile play/pause stays over the video with docked chat",
+      "firefox: mobile play/pause stays over the video with docked chat"
+    ],
+    "oldCallbackSha256": "c02de113f5124d00d64d71580ea7c9536b3156771fd5e5cb1c06ee3abb00b1fe",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay suspends outside native fullscreen and returns to its cached panel"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay settings, filters, timing and timestamp seeks retain the same real media"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "mobile docked chat follows orientation in and out of fullscreen",
+    "registeredCases": [
+      "chromium: mobile docked chat follows orientation in and out of fullscreen",
+      "firefox: mobile docked chat follows orientation in and out of fullscreen"
+    ],
+    "oldCallbackSha256": "47c1e2097373b5614084b734455bd10ee2f14e7e2b64b5723268516d12586a2b",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay suspends outside native fullscreen and returns to its cached panel"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay panel and dialog fit desktop light, dark, enlarged RTL and forced colors"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "chat overlay can be edited, saved, and restored",
+    "registeredCases": [
+      "chromium: chat overlay can be edited, saved, and restored",
+      "firefox: chat overlay can be edited, saved, and restored"
+    ],
+    "oldCallbackSha256": "cf6b9bc436d9c04058d5963673ec43b0d2ffd5814ac86628e62006cc9952fafa",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 chat editor saves explicit guest deltas, retains native overlay values and shares Settings search"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay settings, filters, timing and timestamp seeks retain the same real media"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "chat overlay stays within mobile and fullscreen video",
+    "registeredCases": [
+      "chromium: chat overlay stays within mobile and fullscreen video",
+      "firefox: chat overlay stays within mobile and fullscreen video"
+    ],
+    "oldCallbackSha256": "c93c118ffc190cd9e04a2b73e1732509824d0b41bef069cedd01a03af67aeed0",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 chat editor saves explicit guest deltas, retains native overlay values and shares Settings search"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay suspends outside native fullscreen and returns to its cached panel"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "Diary chat overlay has no frame or reserved heading band",
+    "registeredCases": [
+      "chromium: Diary chat overlay has no frame or reserved heading band",
+      "firefox: Diary chat overlay has no frame or reserved heading band"
+    ],
+    "oldCallbackSha256": "dab50267de73643f41b8c9a3bb1cfa498ed64567031dedbfea4857570e97f02f",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 replay panel and dialog fit desktop light, dark, enlarged RTL and forced colors"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 chat editor saves explicit guest deltas, retains native overlay values and shares Settings search"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "typed chat sizes extend the sliders and persist locally",
+    "registeredCases": [
+      "chromium: typed chat sizes extend the sliders and persist locally",
+      "firefox: typed chat sizes extend the sliders and persist locally"
+    ],
+    "oldCallbackSha256": "a4a7bf4eb56f0199c0bfb2a3b555c079bdbe476bacf66ef9d507e25d59825eec",
+    "disposition": "Master plan retires browser chat overlay/docked-media geometry and explicitly matches browser validation to server acceptance (75\u2013150 percent, 280\u2013640 px). Current replay stays in its utility panel and suspends in native fullscreen; old raw native/overlay values remain preserved. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 chat editor saves explicit guest deltas, retains native overlay values and shares Settings search"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 chat editor reports denied persistence and restores the literal unsaved draft"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/database/settings_checks.cr",
+      "spec/chat_preferences_spec.cr",
+      "tests/frontend/browser-storage.test.cjs"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  }
+]

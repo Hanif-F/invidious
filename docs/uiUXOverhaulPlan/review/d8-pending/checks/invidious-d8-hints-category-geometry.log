@@ -1,0 +1,154 @@
+TAP version 13
+# Subtest: chromium: D2 category drafts, local search, Discard and guarded departure
+ok 1 - chromium: D2 category drafts, local search, Discard and guarded departure
+  ---
+  duration_ms: 2002.858343
+  type: 'test'
+  ...
+# Subtest: chromium: D2 canonical category read-back, unchecked values and duplicate submit guard
+ok 2 - chromium: D2 canonical category read-back, unchecked values and duplicate submit guard
+  ---
+  duration_ms: 211.444039
+  type: 'test'
+  ...
+# Subtest: chromium: D2 failed and unconfirmed saves retain drafts without write retries
+ok 3 - chromium: D2 failed and unconfirmed saves retain drafts without write retries
+  ---
+  duration_ms: 835.385025
+  type: 'test'
+  ...
+# Subtest: chromium: D2 all nine category forms and normal HTML fallback without JavaScript
+ok 4 - chromium: D2 all nine category forms and normal HTML fallback without JavaScript
+  ---
+  duration_ms: 1383.657971
+  type: 'test'
+  ...
+# Subtest: chromium: D2 appended shared primitives initialize once and dispose on departure
+ok 5 - chromium: D2 appended shared primitives initialize once and dispose on departure
+  ---
+  duration_ms: 482.439524
+  type: 'test'
+  ...
+# Subtest: firefox: D2 category drafts, local search, Discard and guarded departure
+ok 6 - firefox: D2 category drafts, local search, Discard and guarded departure
+  ---
+  duration_ms: 3463.199233
+  type: 'test'
+  ...
+# Subtest: firefox: D2 canonical category read-back, unchecked values and duplicate submit guard
+ok 7 - firefox: D2 canonical category read-back, unchecked values and duplicate submit guard
+  ---
+  duration_ms: 452.077007
+  type: 'test'
+  ...
+# Subtest: firefox: D2 failed and unconfirmed saves retain drafts without write retries
+ok 8 - firefox: D2 failed and unconfirmed saves retain drafts without write retries
+  ---
+  duration_ms: 1939.839657
+  type: 'test'
+  ...
+# Subtest: firefox: D2 all nine category forms and normal HTML fallback without JavaScript
+ok 9 - firefox: D2 all nine category forms and normal HTML fallback without JavaScript
+  ---
+  duration_ms: 1496.768002
+  type: 'test'
+  ...
+# Subtest: firefox: D2 appended shared primitives initialize once and dispose on departure
+ok 10 - firefox: D2 appended shared primitives initialize once and dispose on departure
+  ---
+  duration_ms: 829.486262
+  type: 'test'
+  ...
+# Subtest: chromium: D2 component departure aborts pending category reads and suppresses late output
+ok 11 - chromium: D2 component departure aborts pending category reads and suppresses late output
+  ---
+  duration_ms: 177.02011
+  type: 'test'
+  ...
+# Subtest: firefox: D2 component departure aborts pending category reads and suppresses late output
+ok 12 - firefox: D2 component departure aborts pending category reads and suppresses late output
+  ---
+  duration_ms: 1140.710141
+  type: 'test'
+  ...
+# Subtest: chromium: D6 Settings default entry is the real category for guests and accounts without retired or private controls
+ok 13 - chromium: D6 Settings default entry is the real category for guests and accounts without retired or private controls
+  ---
+  duration_ms: 421.796195
+  type: 'test'
+  ...
+# Subtest: chromium: D6 every historical Settings control has one safe bookmark destination
+ok 14 - chromium: D6 every historical Settings control has one safe bookmark destination
+  ---
+  duration_ms: 90.600769
+  type: 'test'
+  ...
+# Subtest: firefox: D6 Settings default entry is the real category for guests and accounts without retired or private controls
+ok 15 - firefox: D6 Settings default entry is the real category for guests and accounts without retired or private controls
+  ---
+  duration_ms: 1220.557386
+  type: 'test'
+  ...
+# Subtest: firefox: D6 every historical Settings control has one safe bookmark destination
+ok 16 - firefox: D6 every historical Settings control has one safe bookmark destination
+  ---
+  duration_ms: 244.799429
+  type: 'test'
+  ...
+# Subtest: chromium: D8 category canonical arrays, maps, nulls and future selections become the saved Discard baseline
+ok 17 - chromium: D8 category canonical arrays, maps, nulls and future selections become the saved Discard baseline
+  ---
+  duration_ms: 903.711788
+  type: 'test'
+  ...
+# Subtest: chromium: D8 category malformed receipts and matching malformed read-backs retain the draft and never claim Saved
+ok 18 - chromium: D8 category malformed receipts and matching malformed read-backs retain the draft and never claim Saved
+  ---
+  duration_ms: 1982.533819
+  type: 'test'
+  ...
+# Subtest: firefox: D8 category canonical arrays, maps, nulls and future selections become the saved Discard baseline
+ok 19 - firefox: D8 category canonical arrays, maps, nulls and future selections become the saved Discard baseline
+  ---
+  duration_ms: 2122.171212
+  type: 'test'
+  ...
+# Subtest: firefox: D8 category malformed receipts and matching malformed read-backs retain the draft and never claim Saved
+ok 20 - firefox: D8 category malformed receipts and matching malformed read-backs retain the draft and never claim Saved
+  ---
+  duration_ms: 6565.740293
+  type: 'test'
+  ...
+# Subtest: chromium: D8 category malformed canonical maps and array members cannot erase the current draft
+ok 21 - chromium: D8 category malformed canonical maps and array members cannot erase the current draft
+  ---
+  duration_ms: 742.463672
+  type: 'test'
+  ...
+# Subtest: firefox: D8 category malformed canonical maps and array members cannot erase the current draft
+ok 22 - firefox: D8 category malformed canonical maps and array members cannot erase the current draft
+  ---
+  duration_ms: 1660.222206
+  type: 'test'
+  ...
+# Subtest: chromium: D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript
+ok 23 - chromium: D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript
+  ---
+  duration_ms: 743.979897
+  type: 'test'
+  ...
+# Subtest: firefox: D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript
+ok 24 - firefox: D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript
+  ---
+  duration_ms: 2050.086078
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 33944.408485

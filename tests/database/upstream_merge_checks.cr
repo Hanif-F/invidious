@@ -65,5 +65,12 @@ def check_upstream_history_imports_and_feeds
   second, _ = get_subscription_feed(user, 1, 2)
   check(first.map(&.id) == [ids[1]] && second.map(&.id) == [ids[2]], "Subscription pagination bindings changed")
   check(Invidious::Database::Users.select!(email: email).watched == before, "Subscription filtering wrote history")
+  view = Invidious::Frontend::SubscriptionFeed.preferences(user.preferences, URI::Params{"notifications_only" => "1"}, true)
+  empty, notices = get_subscription_feed(user, 20, 1, view)
+  check(empty.empty? && notices.empty?, "Empty notifications-only view fell through to ordinary uploads")
+  stored = PG_DB.query_one("SELECT preferences FROM users WHERE email=$1", email, as: String)
+  page = security_request("GET", "/feed/subscriptions?latest_only=1&unseen_only=0&notifications_only=0&sort=alphabetically", sid)
+  check(page.response.status_code == 200, "Explicit feed view failed")
+  check(PG_DB.query_one("SELECT preferences FROM users WHERE email=$1", email, as: String) == stored, "Feed view choices rewrote account defaults")
   puts "Upstream import ID validation/error statuses, fork import preservation and parameterized subscription filters passed"
 end

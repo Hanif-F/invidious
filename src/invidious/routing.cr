@@ -22,6 +22,8 @@ module Invidious::Routing
     post "/api/v1/verification/complete", Routes::Verification, :complete
     get "/admin/bot-protection", Routes::Verification, :admin
     post "/admin/bot-protection", Routes::Verification, :admin
+    get "/admin/settings", Routes::AdminSettings
+    post "/admin/settings", Routes::AdminSettings
     {% if flag?(:api_only) %}
       get "/login", Routes::Login, :login_page
       post "/login", Routes::Login, :login
@@ -85,6 +87,7 @@ module Invidious::Routing
     post "/blocked_channels", Routes::BlockedChannels, :update
     post "/dearrow_submit", Routes::DeArrowContributions, :submit
     post "/dearrow_identity", Routes::DeArrowContributions, :identity
+    get "/preferences/dearrow/identity", Routes::DeArrowContributions, :identity_page
     get "/video_actions", Routes::BlockedChannels, :video_actions
 
     get "/preferences/sponsorblock/channels", Routes::SponsorBlockPreferences, :show
@@ -124,6 +127,7 @@ module Invidious::Routing
     get "/edit_playlist", Routes::Playlists, :edit
     post "/edit_playlist", Routes::Playlists, :update
     get "/add_playlist_items", Routes::Playlists, :add_playlist_items_page
+    post "/add_playlist_items", Routes::Playlists, :add_playlist_items_page
     post "/playlist_ajax", Routes::Playlists, :playlist_ajax
   end
 

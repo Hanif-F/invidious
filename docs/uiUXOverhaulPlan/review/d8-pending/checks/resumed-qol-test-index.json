@@ -1,0 +1,127 @@
+{
+  "file": "/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/qol.test.cjs",
+  "families": [
+    {
+      "name": "firefox: QoL appends duplicate occurrences, retries, and initializes new menus",
+      "start": 6816,
+      "end": 8431,
+      "bodyStart": 6905,
+      "bodyEnd": 8429,
+      "names": [
+        "chromium: QoL appends duplicate occurrences, retries, and initializes new menus",
+        "firefox: QoL appends duplicate occurrences, retries, and initializes new menus"
+      ]
+    },
+    {
+      "name": "firefox: QoL Back reconstructs loaded GET pages and scroll",
+      "start": 8436,
+      "end": 9177,
+      "bodyStart": 8505,
+      "bodyEnd": 9175,
+      "names": [
+        "chromium: QoL Back reconstructs loaded GET pages and scroll",
+        "firefox: QoL Back reconstructs loaded GET pages and scroll"
+      ]
+    },
+    {
+      "name": "firefox: QoL serializes opaque continuation tokens without inventing page offsets",
+      "start": 9182,
+      "end": 10331,
+      "bodyStart": 9274,
+      "bodyEnd": 10329,
+      "names": [
+        "chromium: QoL serializes opaque continuation tokens without inventing page offsets",
+        "firefox: QoL serializes opaque continuation tokens without inventing page offsets"
+      ]
+    },
+    {
+      "name": "firefox: QoL private search paginates filtered-empty batches by POST without stored queries",
+      "start": 10336,
+      "end": 11804,
+      "bodyStart": 10438,
+      "bodyEnd": 11802,
+      "names": [
+        "chromium: QoL private search paginates filtered-empty batches by POST without stored queries",
+        "firefox: QoL private search paginates filtered-empty batches by POST without stored queries"
+      ]
+    },
+    {
+      "name": "firefox: QoL Apply filters navigates normally and keeps typing local",
+      "start": 11809,
+      "end": 12743,
+      "bodyStart": 11888,
+      "bodyEnd": 12741,
+      "names": [
+        "chromium: QoL Apply filters navigates normally and keeps typing local",
+        "firefox: QoL Apply filters navigates normally and keeps typing local"
+      ]
+    },
+    {
+      "name": "firefox: QoL Settings search keeps invalid category fields visible and focuses them without a write",
+      "start": 12748,
+      "end": 13822,
+      "bodyStart": 12858,
+      "bodyEnd": 13820,
+      "names": [
+        "chromium: QoL Settings search keeps invalid category fields visible and focuses them without a write",
+        "firefox: QoL Settings search keeps invalid category fields visible and focuses them without a write"
+      ]
+    },
+    {
+      "name": "firefox: QoL real player docks without replacement or state loss",
+      "start": 13827,
+      "end": 17118,
+      "bodyStart": 13902,
+      "bodyEnd": 17116,
+      "names": [
+        "chromium: QoL real player docks without replacement or state loss",
+        "firefox: QoL real player docks without replacement or state loss"
+      ]
+    },
+    {
+      "name": "firefox: QoL transcript highlights playback and manual search disables following",
+      "start": 17123,
+      "end": 17883,
+      "bodyStart": 17214,
+      "bodyEnd": 17881,
+      "names": [
+        "chromium: QoL transcript highlights playback and manual search disables following",
+        "firefox: QoL transcript highlights playback and manual search disables following"
+      ]
+    },
+    {
+      "name": "firefox: QoL failed replies preserve their controls and retry successfully",
+      "start": 17888,
+      "end": 18936,
+      "bodyStart": 17973,
+      "bodyEnd": 18934,
+      "names": [
+        "chromium: QoL failed replies preserve their controls and retry successfully",
+        "firefox: QoL failed replies preserve their controls and retry successfully"
+      ]
+    },
+    {
+      "name": "firefox: QoL docking preserves native clip boundaries",
+      "start": 18941,
+      "end": 20165,
+      "bodyStart": 19005,
+      "bodyEnd": 20163,
+      "names": [
+        "chromium: QoL docking preserves native clip boundaries",
+        "firefox: QoL docking preserves native clip boundaries"
+      ]
+    },
+    {
+      "name": "firefox: QoL header navigation, shortcuts and desktop widths remain accessible",
+      "start": 20170,
+      "end": 21066,
+      "bodyStart": 20259,
+      "bodyEnd": 21064,
+      "names": [
+        "chromium: QoL header navigation, shortcuts and desktop widths remain accessible",
+        "firefox: QoL header navigation, shortcuts and desktop widths remain accessible"
+      ]
+    }
+  ],
+  "registeredCases": 22
+}

@@ -1,24 +1,6 @@
-<% content_for "header" do %>
-<title><%= HTML.escape(mix.title) %> - Invidious</title>
-<% end %>
-
-<div class="pure-g h-box">
-    <div class="pure-u-2-3">
-        <h3><%= HTML.escape(mix.title) %></h3>
-    </div>
-    <div class="pure-u-1-3">
-        <h3 style="text-align:right">
-            <a href="/feed/playlist/<%= mix.id %>?continuation=<%= continuation %>"><i class="icon ion-logo-rss"></i></a>
-        </h3>
-    </div>
-</div>
-
-<% Invidious::Frontend::AiChannels.prepare(env, mix.videos) %>
-<% Invidious::Frontend::ChannelAvatars.prepare(env, mix.videos) %>
-<% Invidious::Frontend::ViewCounts.prepare(env, mix.videos) %>
-<div class="pure-g media-grid">
-<% Invidious::Frontend::ChannelSpoilers.prepare(env, mix.videos) %>
-<% mix.videos.each_with_index do |item, item_position| %>
-    <%= rendered "components/item" %>
-<% end %>
-</div>
+<% mix_user = env.get?("user").try(&.as(User)); env.set "collection_kind", "mix" if mix_user %>
+<% content_for "header" do %><title><%= HTML.escape(mix.title) %> - Invidious</title><% end %>
+<header class="page-heading"><h1 dir="auto"><%= HTML.escape(mix.title) %></h1><p><%= I18n.translate(locale, "overhaul_mix") %></p></header>
+<div class="toolbar playlist-toolbar"><% unless mix.videos.empty? %><a class="button button-primary" href="/watch?v=<%= HTML.escape(mix.videos.first.id) %>&list=<%= URI.encode_www_form(mix.id) %>"><%= Invidious::Frontend::Icons.render("play") %><%= I18n.translate(locale, "overhaul_play_all") %></a><% end %><% reference_id = mix.id; reference_seed = continuation.as(String?) %><%= rendered "overhaul/playlist_reference_actions" %><a class="button" href="/feed/playlist/<%= URI.encode_www_form(mix.id) %>?continuation=<%= URI.encode_www_form(continuation) %>"><%= Invidious::Frontend::Icons.render("rss") %><%= I18n.translate(locale, "generic_button_rss") %></a></div>
+<% Invidious::Frontend::ChannelSpoilers.prepare(env, mix.videos); Invidious::Frontend::AiChannels.prepare(env, mix.videos); Invidious::Frontend::ChannelAvatars.prepare(env, mix.videos); Invidious::Frontend::ViewCounts.prepare(env, mix.videos) %>
+<section <%= %(data-collection data-collection-kind="mix") if mix_user %>><% if mix_user %><% collection_kind = "mix" %><%= rendered "overhaul/collection_toolbar" %><% end %><div class="media-rows" data-browse-items><% mix.videos.each_with_index do |item, item_position| %><%= rendered "components/item" %><% end %></div></section>

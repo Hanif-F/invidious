@@ -1,24 +1,6 @@
-<% content_for "header" do %>
-<title><%= I18n.translate(locale, "Delete playlist") %> - Invidious</title>
-<% end %>
-
-<div class="h-box">
-    <form class="pure-form pure-form-aligned" action="/delete_playlist?list=<%= plid %>&referer=<%= URI.encode_www_form(referer) %>" method="post">
-        <legend><%= I18n.translate(locale, "Delete playlist `x`?", %|"#{HTML.escape(playlist.title)}"|) %></legend>
-
-        <div class="pure-g">
-            <div class="pure-u-1-2">
-                <button type="submit" name="submit" value="delete_playlist" class="pure-button pure-button-primary">
-                    <%= I18n.translate(locale, "Yes") %>
-                </button>
-            </div>
-            <div class="pure-u-1-2">
-                <a class="pure-button" href="/playlist?list=<%= plid %>">
-                    <%= I18n.translate(locale, "No") %>
-                </a>
-            </div>
-        </div>
-
-        <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-    </form>
-</div>
+<% unsave = subscribed || !plid.starts_with?("IV"); action_label = I18n.translate(locale, unsave ? "overhaul_unsave_playlist" : "Delete playlist") %>
+<% content_for "header" do %><title><%= action_label %> - Invidious</title><% end %>
+<section class="reading-page"><header class="page-heading"><h1><%= action_label %></h1><p dir="auto"><%= HTML.escape(playlist.title) %></p></header>
+<p><%= I18n.translate(locale, unsave ? "overhaul_unsave_consequence" : "overhaul_delete_playlist_consequence") %></p>
+<form action="/delete_playlist?list=<%= URI.encode_www_form(plid) %>" method="post" class="toolbar"><input type="hidden" name="operation" value="<%= unsave ? "unsave" : "delete" %>"><input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
+<a class="button" href="/feed/playlists" autofocus><%= I18n.translate(locale, "generic_button_cancel") %></a><button type="submit" class="button button-danger"><%= Invidious::Frontend::Icons.render("trash-2") %><%= action_label %></button></form></section>

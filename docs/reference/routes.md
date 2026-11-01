@@ -4,7 +4,7 @@
 
 Generated from [src/invidious/routing.cr](../../src/invidious/routing.cr) by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-All **253 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
+All **255 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
 
 GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media proxies and configured companion routes remain. `/companion/*` requires a nonempty companion configuration. Notification registrations require `enable_user_notifications`. Public routes can still enforce resource privacy; `/api/v1/auth/*` always passes authentication. See [API conventions](../api.md), [security](../security.md), and [playback](../playback.md) for contracts.
 
@@ -50,6 +50,7 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | POST | `/blocked_channels` | `Routes::BlockedChannels.update` | [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr) |
 | POST | `/dearrow_submit` | `Routes::DeArrowContributions.submit` | [src/invidious/routes/dearrow_contributions.cr](../../src/invidious/routes/dearrow_contributions.cr) |
 | POST | `/dearrow_identity` | `Routes::DeArrowContributions.identity` | [src/invidious/routes/dearrow_contributions.cr](../../src/invidious/routes/dearrow_contributions.cr) |
+| GET | `/preferences/dearrow/identity` | `Routes::DeArrowContributions.identity_page` | [src/invidious/routes/dearrow_contributions.cr](../../src/invidious/routes/dearrow_contributions.cr) |
 | GET | `/video_actions` | `Routes::BlockedChannels.video_actions` | [src/invidious/routes/blocked_channels.cr](../../src/invidious/routes/blocked_channels.cr) |
 | GET | `/preferences/sponsorblock/channels` | `Routes::SponsorBlockPreferences.show` | [src/invidious/routes/sponsorblock_preferences.cr](../../src/invidious/routes/sponsorblock_preferences.cr) |
 | POST | `/preferences/sponsorblock/channels` | `Routes::SponsorBlockPreferences.update` | [src/invidious/routes/sponsorblock_preferences.cr](../../src/invidious/routes/sponsorblock_preferences.cr) |
@@ -86,6 +87,7 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | GET | `/edit_playlist` | `Routes::Playlists.edit` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
 | POST | `/edit_playlist` | `Routes::Playlists.update` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
 | GET | `/add_playlist_items` | `Routes::Playlists.add_playlist_items_page` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
+| POST | `/add_playlist_items` | `Routes::Playlists.add_playlist_items_page` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
 | POST | `/playlist_ajax` | `Routes::Playlists.playlist_ajax` | [src/invidious/routes/playlists.cr](../../src/invidious/routes/playlists.cr) |
 
 ## Feed routes

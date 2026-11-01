@@ -1,30 +1,10 @@
 'use strict';
 
-function toggle_parent(target) {
-    var body = target.parentNode.parentNode.children[1];
-    if (body.style.display === 'none') {
-        target.textContent = '[ − ]';
-        body.style.display = '';
-    } else {
-        target.textContent = '[ + ]';
-        body.style.display = 'none';
-    }
-}
-
-function swap_comments(event) {
-    var source = event.target.getAttribute('data-comments');
-
-    if (source === 'youtube') {
-        get_youtube_comments();
-    } else if (source === 'reddit') {
-        get_reddit_comments();
-    }
-}
-
 var watch_ui = JSON.parse(document.getElementById('watch_ui_data').textContent);
 var playlist_ended_handler;
 var playlist_request = 0;
 var playlist_mutating = false;
+var watchOwnerPending = false, queueOwnerPending = false, watchManaged = false, deferredQueueRead = false;
 
 // Keep ordinary navigation and playlist advancement on the existing playback settings.
 function playback_url(url, advancing) {
@@ -39,7 +19,7 @@ function playback_url(url, advancing) {
 }
 
 function next_video() {
-    if (video_data.clip || video_data.plid || !video_data.next_video) return;
+    if (!watchCurrent() || watchOwnerPending || document.body.dataset.clipEditing === 'true' || video_data.clip || video_data.plid || !video_data.next_video) return;
     location.assign(playback_url('/watch?v=' + encodeURIComponent(video_data.next_video) + '&continue=1', true));
 }
 
@@ -59,252 +39,195 @@ function reveal_current_queue_item() {
     }
 }
 
-function get_playlist(plid, removedNotice, focusIndex) {
-    var playlist = document.getElementById('playlist');
-    if (!playlist) return;
-    var request = ++playlist_request;
-    var status = document.getElementById('queue-status');
-    var retry = document.getElementById('queue-retry');
-    var navigation = document.getElementById('queue-navigation');
-    if (playlist_ended_handler) player.off('ended', playlist_ended_handler);
-    playlist_ended_handler = null;
-    playlist.textContent = '';
-    playlist.setAttribute('aria-busy', 'true');
-    status.textContent = watch_ui.loading;
-    retry.hidden = true;
-    navigation.hidden = true;
-    navigation.textContent = '';
-    var mix = plid.startsWith('RD');
-    var url = new URL('/api/v1/' + (mix ? 'mixes/' : 'playlists/') + encodeURIComponent(plid), location.origin);
-    if (video_data.playlist_current_removed) url.searchParams.set('current_removed', '1');
-    else url.searchParams.set('continuation', video_data.id);
-    if (!mix && video_data.index !== null && video_data.index !== undefined)
-        url.searchParams.set('index', video_data.index);
-    url.searchParams.set('format', 'html');
-    url.searchParams.set('hl', video_data.preferences.locale);
-    if (video_data.params.listen) url.searchParams.set('listen', '1');
-
-    function failed() {
-        if (request !== playlist_request) return;
-        playlist.setAttribute('aria-busy', 'false');
-        status.textContent = watch_ui.queue_error;
-        retry.hidden = false;
-    }
-    retry.onclick = function () { get_playlist(plid); };
-    helpers.xhr('GET', url.pathname + url.search, {retries: 3, entity_name: 'playlist'}, {
-        on200: function (response) {
-            if (request !== playlist_request) return;
-            if (!response || typeof response.playlistHtml !== 'string') { failed(); return; }
-            playlist.innerHTML = response.playlistHtml;
-            playlist.setAttribute('aria-busy', 'false');
-            var notice = removedNotice ? watch_ui.queue_removed + ' ' : '';
-            status.textContent = notice;
-            var metadata = playlist.querySelector('.queue-metadata');
-            if (metadata) {
-                document.getElementById('queue-title').textContent = metadata.dataset.title;
-                var count = metadata.dataset.count;
-                document.getElementById('queue-count').textContent = count ? count + ' · ' : '';
-            }
-            var rows = Array.from(playlist.querySelectorAll('.queue-row'));
-            var sameVideo = rows.filter(function (row) { return row.dataset.videoId === video_data.id; });
-            var currentIndex = response.currentIndex === undefined ? video_data.index : response.currentIndex;
-            var current = video_data.playlist_current_removed ? null : sameVideo.find(function (row) { return row.dataset.index === String(currentIndex); });
-            if (!video_data.playlist_current_removed && !current && sameVideo.length === 1) current = sameVideo[0];
-            if (current) video_data.index = Number(current.dataset.index);
-            rows.forEach(function (row) {
-                var link = row.querySelector('a');
-                link.href = playback_url(link.getAttribute('href'), false);
-                if (row.dataset.removeIndex && video_data.csrf_token) {
-                    var remove = document.createElement('button');
-                    remove.type = 'button';
-                    remove.className = 'queue-remove';
-                    remove.title = watch_ui.queue_remove;
-                    remove.setAttribute('aria-label', watch_ui.queue_remove + ': ' + row.querySelector('.queue-title').textContent);
-                    var icon = document.createElement('i');
-                    icon.className = 'icon ion-md-trash';
-                    icon.setAttribute('aria-hidden', 'true');
-                    remove.appendChild(icon);
-                    remove.onclick = function () { remove_queue_item(row, plid); };
-                    row.appendChild(remove);
-                }
-            });
-            if (current) {
-                current.querySelector('a').setAttribute('aria-current', 'true');
-                var marker = document.createElement('span');
-                marker.className = 'queue-playing';
-                marker.textContent = watch_ui.now_playing;
-                current.querySelector('.queue-title').appendChild(marker);
-                reveal_current_queue_item();
-            }
-            function add_navigation(href, label, kind) {
-                var link = document.createElement('a');
-                link.className = 'pure-button';
-                link.dataset.direction = kind;
-                link.href = href;
-                link.textContent = label;
-                navigation.appendChild(link);
-                navigation.hidden = false;
-            }
-            if (current || video_data.playlist_current_removed) {
-                var previous = rows.filter(function (row) {
-                    return Number(row.dataset.index) < Number(video_data.index) && row.dataset.unavailable !== 'true';
-                }).pop();
-                if (previous) add_navigation(previous.querySelector('a').href, watch_ui.previous, 'previous');
-            }
-            if (focusIndex !== undefined) {
-                var focusRow = rows.find(function (row) { return Number(row.dataset.index) >= focusIndex; }) || rows[rows.length - 1];
-                if (focusRow) (focusRow.querySelector('.queue-remove') || focusRow.querySelector('a')).focus({ preventScroll: true });
-                else document.getElementById('queue-title').focus({ preventScroll: true });
-            }
-            if (!rows.length) status.textContent = notice + watch_ui.queue_empty;
-            else if (!response.nextVideo) status.textContent = notice + watch_ui.queue_end;
-            if (!response.nextVideo) return;
-            var next = new URL('/watch', location.origin);
-            next.searchParams.set('v', response.nextVideo);
-            next.searchParams.set('list', plid);
-            if (!mix && response.index !== null && response.index !== undefined)
-                next.searchParams.set('index', response.index);
-            add_navigation(playback_url(next.href, false), watch_ui.next, 'next');
-            playlist_ended_handler = function () { location.assign(playback_url(next.href, true)); };
-            player.on('ended', playlist_ended_handler);
-            if (removedNotice && player.ended && player.ended()) playlist_ended_handler();
-        },
-        onNon200: failed,
-        onTotalFail: failed
+var queueLife = new AbortController(), watchActive = true, watchEpoch = 0, queueRead = null, queueWrite = null, queueLoading = false, queueUnavailable = true, queueEnded = false;
+var playingOccurrence = video_data.playlist_occurrence || null, pendingOccurrence = null, uncertainRemovals = new Set();
+function watchCurrent() { return watchActive && !queueLife.signal.aborted && InvidiousStorage.isCurrent(); }
+function stopQueueAdvancement() { if (playlist_ended_handler) player.off('ended',playlist_ended_handler); playlist_ended_handler = null; }
+function queuePositions(response) {
+    if (!response || response.positions === undefined) return null;
+    var positions = response.positions, total = response.total;
+    if (!positions || typeof positions !== 'object' || Array.isArray(positions) || !Number.isSafeInteger(total) || total < 0 || Object.keys(positions).length !== total ||
+        Object.keys(positions).some(function (id) { return !/^[0-9]{1,19}$/.test(id) || !Number.isSafeInteger(positions[id]) || positions[id] < 1 || positions[id] > total; }) || new Set(Object.values(positions)).size !== total) throw new Error('Invalid playlist positions');
+    return positions;
+}
+function queueURL() {
+    var url = new URL(location.href);
+    if (Number.isSafeInteger(video_data.index)) url.searchParams.set('index',String(video_data.index));
+    if (playingOccurrence) url.searchParams.set('occurrence',playingOccurrence);
+    if (video_data.playlist_current_removed) url.searchParams.set('playlist_current_removed','1'); else url.searchParams.delete('playlist_current_removed');
+    history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+}
+function queueButtons() {
+    document.querySelectorAll('#playlist .queue-remove').forEach(function (button) {
+        button.disabled = !watchCurrent() || queueOwnerPending || queueLoading || queueUnavailable || playlist_mutating || uncertainRemovals.size > 0;
     });
 }
-
-// Remove the stable occurrence ID, never the video ID or its displayed position.
-// The current video keeps playing even when its own occurrence is removed.
-function remove_queue_item(row, plid) {
-    if (playlist_mutating || !row.dataset.removeIndex) return;
-    playlist_mutating = true;
-    var list = document.getElementById('playlist');
-    var status = document.getElementById('queue-status');
-    var buttons = list.querySelectorAll('.queue-remove');
-    buttons.forEach(function (button) { button.disabled = true; });
-    var oldHandler = playlist_ended_handler;
-    if (oldHandler) player.off('ended', oldHandler);
-    var removedIndex = Number(row.dataset.index);
-    var url = '/playlist_ajax?action=remove_video&redirect=false&playlist_id=' + encodeURIComponent(plid) +
-        '&set_video_id=' + encodeURIComponent(row.dataset.removeIndex);
-    function failed() {
-        playlist_mutating = false;
-        buttons.forEach(function (button) { button.disabled = false; });
-        status.textContent = watch_ui.queue_remove_error;
-        if (oldHandler) {
-            player.on('ended', oldHandler);
-            if (player.ended && player.ended()) oldHandler();
+async function readQueue(url, signal) {
+    for (var attempt = 0; attempt < 3; attempt++) {
+        try { return await InvidiousUI.request(url,{signal:signal}); }
+        catch (error) { if (signal.aborted || !watchCurrent() || attempt === 2 || error.status >= 400 && error.status < 500) throw error; }
+    }
+}
+async function get_playlist(plid, removedNotice, focusIndex) {
+    var playlist = document.getElementById('playlist');
+    if (!playlist || !watchCurrent()) return;
+    if (queueOwnerPending) { deferredQueueRead = true; return; }
+    deferredQueueRead = false;
+    if (queueRead) queueRead.abort();
+    var controller = new AbortController(); queueRead = controller;
+    var request = ++playlist_request, epoch = watchEpoch;
+    var status = document.getElementById('queue-status'), retry = document.getElementById('queue-retry'), navigation = document.getElementById('queue-navigation');
+    stopQueueAdvancement(); queueLoading = true; queueButtons(); playlist.setAttribute('aria-busy','true'); status.textContent = watch_ui.loading;
+    retry.hidden = true; retry.textContent = watch_ui.retry; retry.onclick = function () { get_playlist(plid); }; navigation.hidden = true; navigation.replaceChildren();
+    var mix = plid.startsWith('RD'), url = new URL('/api/v1/'+(mix ? 'mixes/' : 'playlists/')+encodeURIComponent(plid),location.origin);
+    url.searchParams.set('format','html'); url.searchParams.set('ui','desktop'); url.searchParams.set('hl',video_data.preferences.locale);
+    if (video_data.playlist_current_removed) url.searchParams.set('current_removed','1'); else url.searchParams.set('continuation',video_data.id);
+    if (!mix && Number.isSafeInteger(video_data.index)) url.searchParams.set('index',String(video_data.index));
+    if (!mix && playingOccurrence) url.searchParams.set('occurrence',playingOccurrence);
+    if (video_data.params.listen) url.searchParams.set('listen','1');
+    function current() { return watchCurrent() && epoch === watchEpoch && request === playlist_request && playlist.isConnected; }
+    try {
+        var response = await readQueue(url.pathname+url.search,controller.signal);
+        if (!current()) return;
+        if (!response || typeof response.playlistHtml !== 'string') throw new Error('Invalid queue');
+        var positions = queuePositions(response);
+        if (response.currentOccurrence !== undefined && response.currentOccurrence !== null && (typeof response.currentOccurrence !== 'string' || !/^[0-9]{1,19}$/.test(response.currentOccurrence))) throw new Error('Invalid current occurrence');
+        if (response.currentRemoved !== undefined && typeof response.currentRemoved !== 'boolean') throw new Error('Invalid removed state');
+        if (response.nextVideo && (typeof response.nextVideo !== 'string' || !/^[A-Za-z0-9_-]{11}$/.test(response.nextVideo))) throw new Error('Invalid next video');
+        if (response.currentOccurrence) playingOccurrence = response.currentOccurrence;
+        if (response.currentRemoved !== undefined) video_data.playlist_current_removed = response.currentRemoved === true;
+        if (positions) {
+            uncertainRemovals.forEach(function (id) { if (!Object.prototype.hasOwnProperty.call(positions,id)) uncertainRemovals.delete(id); });
+            if (playingOccurrence && Object.prototype.hasOwnProperty.call(positions,playingOccurrence)) {
+                video_data.index = positions[playingOccurrence]-1; video_data.playlist_current_removed = false;
+            } else if (playingOccurrence) video_data.playlist_current_removed = true;
+        } else if (Number.isSafeInteger(response.currentIndex)) video_data.index = response.currentIndex;
+        playlist.innerHTML = response.playlistHtml; queueUnavailable = false;
+        var metadata = playlist.querySelector('.queue-metadata');
+        if (metadata) {
+            document.getElementById('queue-title').textContent = metadata.dataset.title;
+            document.getElementById('queue-count').textContent = metadata.dataset.count ? metadata.dataset.count+' · ' : '';
+        }
+        var rows = Array.from(playlist.querySelectorAll('.queue-row')), sameVideo = rows.filter(function (row) { return row.dataset.videoId === video_data.id; });
+        var currentRow = !video_data.playlist_current_removed && (playingOccurrence ? sameVideo.find(function (row) { return row.dataset.occurrence === playingOccurrence; }) : sameVideo.find(function (row) { return row.dataset.index === String(video_data.index); }));
+        if (!playingOccurrence && !video_data.playlist_current_removed && !currentRow && sameVideo.length === 1) currentRow = sameVideo[0];
+        if (currentRow) {
+            video_data.index = Number(currentRow.dataset.index);
+            if (currentRow.dataset.occurrence) playingOccurrence = currentRow.dataset.occurrence;
+            currentRow.querySelector('a').setAttribute('aria-current','true');
+            var marker = document.createElement('span'); marker.className = 'queue-playing'; marker.textContent = watch_ui.now_playing; currentRow.querySelector('.queue-title').append(marker);
+        }
+        rows.forEach(function (row) {
+            var link = row.querySelector('a'); link.href = playback_url(link.getAttribute('href'),false);
+            if (row.dataset.removeIndex && video_data.csrf_token) {
+                var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'queue-remove icon-button';
+                remove.title = watch_ui.queue_remove; remove.setAttribute('aria-label',watch_ui.queue_remove);
+                if (window.InvidiousPlayerInterface) remove.append(InvidiousPlayerInterface.icon('trash-2')); else remove.textContent = watch_ui.queue_remove;
+                remove.onclick = function () { remove_queue_item(row,plid); }; row.append(remove);
+            }
+        });
+        queueURL(); InvidiousUI.changed(playlist);
+        var notice = removedNotice || video_data.playlist_current_removed ? watch_ui.queue_removed+' ' : '';
+        status.textContent = notice;
+        function navigationLink(href,label,kind) { var link = document.createElement('a'); link.className = 'button'; link.dataset.direction = kind; link.href = href; link.textContent = label; navigation.append(link); navigation.hidden = false; }
+        if (currentRow || video_data.playlist_current_removed) {
+            var previous = rows.filter(function (row) { return Number(row.dataset.index) < Number(video_data.index) && row.dataset.unavailable !== 'true'; }).pop();
+            if (previous) navigationLink(previous.querySelector('a').href,watch_ui.previous,'previous');
+        }
+        if (!rows.length) status.textContent = notice+(metadata && Number(metadata.dataset.count) > 0 ? watch_ui.queue_filtered_empty || watch_ui.queue_empty : watch_ui.queue_empty);
+        else if (!response.nextVideo) status.textContent = notice+watch_ui.queue_end;
+        if (uncertainRemovals.size) { status.textContent = watch_ui.queue_uncertain || watch_ui.queue_remove_error; retry.textContent = watch_ui.queue_refresh || watch_ui.retry; retry.hidden = false; }
+        if (focusIndex !== undefined) {
+            var focusRow = rows.find(function (row) { return Number(row.dataset.index) >= focusIndex; }) || rows[rows.length-1];
+            if (focusRow) focusRow.querySelector('a').focus({preventScroll:true}); else document.getElementById('queue-title').focus({preventScroll:true});
+        }
+        if (currentRow) reveal_current_queue_item();
+        if (response.nextVideo) {
+            if (!/^[A-Za-z0-9_-]{11}$/.test(response.nextVideo)) throw new Error('Invalid next video');
+            var next = new URL('/watch',location.origin); next.searchParams.set('v',response.nextVideo); next.searchParams.set('list',plid);
+            if (!mix && Number.isSafeInteger(response.index)) next.searchParams.set('index',String(response.index));
+            if (positions && Number.isSafeInteger(response.index)) {
+                var nextOccurrence = Object.keys(positions).find(function (id) { return positions[id] === response.index+1; });
+                if (nextOccurrence) next.searchParams.set('occurrence',nextOccurrence);
+            }
+            navigationLink(playback_url(next.href,false),watch_ui.next,'next');
+            if (!uncertainRemovals.size) {
+                playlist_ended_handler = function () { if (watchCurrent() && !queueOwnerPending && document.body.dataset.clipEditing !== 'true' && epoch === watchEpoch && !queueLoading && !playlist_mutating) location.assign(playback_url(next.href,true)); };
+                player.on('ended',playlist_ended_handler);
+            }
+        }
+    } catch (error) {
+        if (!current()) return;
+        queueUnavailable = true; stopQueueAdvancement(); status.textContent = watch_ui.queue_error; retry.hidden = false;
+    } finally {
+        if (current()) {
+            queueLoading = false; queueRead = null; playlist.setAttribute('aria-busy','false'); queueButtons();
+            if ((removedNotice || queueEnded) && !queueUnavailable && !uncertainRemovals.size && playlist_ended_handler && player.ended && player.ended()) { queueEnded = false; playlist_ended_handler(); }
         }
     }
-    helpers.xhr('POST', url, { payload: new URLSearchParams({ csrf_token: video_data.csrf_token }).toString() }, {
-        on200: function () {
-            var currentIndex = Number(video_data.index);
-            if (removedIndex < currentIndex) currentIndex--;
-            else if (removedIndex === currentIndex) video_data.playlist_current_removed = true;
-            video_data.index = Math.max(0, currentIndex);
-            var currentUrl = new URL(location.href);
-            currentUrl.searchParams.set('index', String(video_data.index));
-            if (video_data.playlist_current_removed) currentUrl.searchParams.set('playlist_current_removed', '1');
-            history.replaceState(null, '', currentUrl.pathname + currentUrl.search + currentUrl.hash);
-            playlist_mutating = false;
-            get_playlist(plid, true, removedIndex);
-        },
-        onNon200: failed,
-        onError: failed,
-        onTimeout: failed
-    });
 }
-
-var queue_toggle = document.getElementById('queue-toggle');
-if (queue_toggle) {
-    queue_toggle.onclick = function () {
-        var panel = document.getElementById('playlist-panel');
-        var expanded = panel.dataset.expanded !== 'true';
-        panel.dataset.expanded = expanded;
-        queue_toggle.setAttribute('aria-expanded', expanded);
-        queue_toggle.textContent = expanded ? watch_ui.hide_queue : watch_ui.show_queue;
-        if (expanded) reveal_current_queue_item();
-    };
-    var queue_viewport_width = window.innerWidth;
-    window.addEventListener('resize', function () {
-        // Mobile browser chrome changes height during scrolling; preserve the user's place.
-        if (window.innerWidth === queue_viewport_width) return;
-        queue_viewport_width = window.innerWidth;
-        reveal_current_queue_item();
-    });
+async function remove_queue_item(row,plid) {
+    if (!watchCurrent() || queueOwnerPending || playlist_mutating || queueLoading || queueUnavailable || uncertainRemovals.size || !row.dataset.removeIndex) return;
+    var epoch = watchEpoch, occurrence = row.dataset.removeIndex, removedIndex = Number(row.dataset.index), status = document.getElementById('queue-status');
+    playlist_mutating = true; pendingOccurrence = occurrence; stopQueueAdvancement(); queueButtons();
+    var controller = new AbortController(); queueWrite = controller;
+    try {
+        var response = await InvidiousUI.request('/playlist_ajax?action=remove_video&redirect=false&playlist_id='+encodeURIComponent(plid)+'&set_video_id='+encodeURIComponent(occurrence),{method:'POST',body:new URLSearchParams({csrf_token:video_data.csrf_token,include_positions:'1'}),signal:controller.signal});
+        if (!watchCurrent() || epoch !== watchEpoch) return;
+        var positions = queuePositions(response), index = Number(video_data.index);
+        if (positions && playingOccurrence && positions[playingOccurrence]) index = positions[playingOccurrence]-1;
+        else if (playingOccurrence === occurrence || removedIndex === index) video_data.playlist_current_removed = true;
+        else if (removedIndex < index) index--;
+        video_data.index = Math.max(0,index); queueURL();
+        playlist_mutating = false; pendingOccurrence = null; queueWrite = null;
+        await get_playlist(plid,true,removedIndex);
+    } catch (error) {
+        if (!watchCurrent() || epoch !== watchEpoch) return;
+        uncertainRemovals.add(occurrence); status.textContent = watch_ui.queue_uncertain || watch_ui.queue_remove_error;
+        var retry = document.getElementById('queue-retry'); retry.textContent = watch_ui.queue_refresh || watch_ui.retry; retry.hidden = false; retry.onclick = function () { get_playlist(plid); };
+    } finally {
+        if (watchCurrent() && epoch === watchEpoch) { playlist_mutating = false; pendingOccurrence = null; queueWrite = null; queueButtons(); }
+    }
 }
-
-function get_reddit_comments() {
-    var comments = document.getElementById('comments');
-
-    var fallback = Array.from(comments.childNodes);
-    comments.innerHTML = spinnerHTML;
-
-    var url = '/api/v1/comments/' + video_data.id +
-        '?source=reddit&format=html' +
-        '&hl=' + video_data.preferences.locale;
-
-    var onNon200 = function () { comments_failure(comments, fallback, get_reddit_comments); };
-
-    helpers.xhr('GET', url, {}, {
-        on200: function (response) {
-            comments.innerHTML = ' \
-            <div> \
-                <h3> \
-                    <a href="javascript:void(0)">[ − ]</a> \
-                    {title} \
-                </h3> \
-                <p> \
-                    <b> \
-                        <a href="javascript:void(0)" data-comments="youtube"> \
-                            {youtubeCommentsText} \
-                        </a> \
-                    </b> \
-                </p> \
-                <b> \
-                    <a rel="noopener noreferrer" target="_blank" href="https://reddit.com{permalink}">{redditPermalinkText}</a> \
-                </b> \
-            </div> \
-            <div>{contentHtml}</div> \
-            <hr>'.supplant({
-                title: response.title,
-                youtubeCommentsText: video_data.youtube_comments_text,
-                redditPermalinkText: video_data.reddit_permalink_text,
-                permalink: response.permalink,
-                contentHtml: response.contentHtml
-            });
-
-            comments.children[0].children[0].children[0].onclick = toggle_comments;
-            comments.children[0].children[1].children[0].onclick = swap_comments;
-        },
-        onNon200: onNon200, onError: onNon200, onTimeout: onNon200
-    });
+function suspendWatch(event) {
+    if (playlist_mutating && pendingOccurrence) uncertainRemovals.add(pendingOccurrence);
+    watchActive = false; watchEpoch++; playlist_request++; if (queueRead) queueRead.abort(); if (queueWrite) queueWrite.abort();
+    queueRead = queueWrite = null; queueLoading = false; queueUnavailable = true; playlist_mutating = false; pendingOccurrence = null; stopQueueAdvancement(); queueButtons();
+    if (!event || !event.persisted) queueLife.abort();
 }
+window.addEventListener('pagehide',suspendWatch,{signal:queueLife.signal});
+window.addEventListener('browserprofilechange',function () { suspendWatch(); },{signal:queueLife.signal});
+window.addEventListener('pageshow',function (event) {
+    watchActive = !queueLife.signal.aborted;
+    if (event.persisted && watchCurrent() && video_data.plid) {
+        if (watchManaged) { deferredQueueRead = true; watchOwnerPending = queueOwnerPending = true; }
+        else get_playlist(video_data.plid);
+    }
+},{signal:queueLife.signal});
+player.on('ended',function () { if (document.body.dataset.clipEditing !== 'true' && video_data.plid && (queueLoading || playlist_mutating || uncertainRemovals.size)) queueEnded = true; });
+player.on('dispose',function () { suspendWatch(); });
+window.addEventListener('resize',function () { if (watchCurrent()) reveal_current_queue_item(); },{signal:queueLife.signal});
 
 if (!video_data.clip && video_data.play_next && !video_data.plid) player.on('ended', next_video);
 
-addEventListener('load', function (e) {
-    if (video_data.plid)
-        get_playlist(video_data.plid);
-
-    if (!video_data.comments_enabled && video_data.params.comments.includes("youtube")) {
-        return;
+window.InvidiousWatch = {
+    setManaged:function () { watchManaged = true; },
+    setOwnerPending:function (value,ownerKnown) {
+        watchOwnerPending = value;
+        queueOwnerPending = ownerKnown === false;
+        if (queueOwnerPending && queueRead) {
+            queueRead.abort(); queueRead = null; playlist_request++; queueLoading = false; queueUnavailable = true; deferredQueueRead = true;
+            var list = document.getElementById('playlist'); if (list) list.setAttribute('aria-busy','false');
+        }
+        queueButtons();
+        if (watchCurrent()) {
+            if (!value && continue_button) continue_autoplay({target:continue_button});
+            if (!queueOwnerPending && deferredQueueRead && video_data.plid && !playlist_mutating) get_playlist(video_data.plid);
+        }
     }
+};
 
-    if (video_data.params.comments[0] === 'youtube') {
-        get_youtube_comments();
-    } else if (video_data.params.comments[0] === 'reddit') {
-        get_reddit_comments();
-    } else if (video_data.params.comments[1] === 'youtube') {
-        get_youtube_comments();
-    } else if (video_data.params.comments[1] === 'reddit') {
-        get_reddit_comments();
-    }
-});
-
-var reddit_link = document.getElementById('try-reddit-comments-link');
-if (reddit_link) reddit_link.onclick = swap_comments;
+addEventListener('load', function () { if (video_data.plid) get_playlist(video_data.plid); });
 
 document.getElementById('share-video').onclick = function () {
     var url = new URL(video_data.clip && video_data.clip.url ? video_data.clip.url : location.href, location.origin);
@@ -324,32 +247,82 @@ document.getElementById('share-video').onclick = function () {
     } else fallback();
 };
 
-// Load the transcript implementation only after it is opened.
+// The watch owner restores the utility/layout only after preview restoration.
+(function () {
+    var panel = document.getElementById('tool-clip-editor'), root = panel && panel.closest('[data-ui-tabs]'), layout = document.getElementById('watch-layout'), trigger = document.getElementById('create-clip'), saved = null;
+    if (!panel || !root || !layout || !trigger) return;
+    function open() {
+        if (saved || !watchCurrent() || !root.invidiousTabs) return false;
+        var state = {hidden:root.hidden,noTools:layout.classList.contains('watch-no-tools')};
+        if (!root.invidiousTabs.beginTemporary(panel)) return false;
+        state.width = layout.style.getPropertyValue('--utility-width'); saved = state;
+        layout.style.setProperty('--utility-width','440px'); root.hidden = false; layout.classList.remove('watch-no-tools');
+        trigger.setAttribute('aria-controls',panel.id); trigger.setAttribute('aria-expanded','true'); player.trigger('playerresize'); return true;
+    }
+    function close(focus) {
+        if (!saved) return;
+        var previous = saved; saved = null;
+        if (layout.style.getPropertyValue('--utility-width') === '440px') {
+            if (previous.width) layout.style.setProperty('--utility-width',previous.width); else layout.style.removeProperty('--utility-width');
+        }
+        root.hidden = previous.hidden; layout.classList.toggle('watch-no-tools',previous.noTools);
+        if (root.invidiousTabs) root.invidiousTabs.endTemporary(panel); panel.hidden = true;
+        trigger.setAttribute('aria-expanded','false');
+        if (!(player.isDisposed && player.isDisposed())) player.trigger('playerresize');
+        if (focus !== false && watchCurrent()) trigger.focus({preventScroll:true});
+    }
+    window.InvidiousWatchClipPanel = {open:open,close:close};
+})();
+
+// Load utility readers deliberately; loading/cached-page lifetimes stay local.
 var transcript_panel = document.getElementById('transcript-panel');
 if (transcript_panel) {
-    var transcript_loading = false;
-    var transcript_initialized = false;
-    function load_transcript_script() {
-        if (!transcript_panel.open || transcript_loading || transcript_initialized) return;
-        transcript_loading = true;
-        var script = document.createElement('script');
-        script.src = watch_ui.transcript_script;
-        script.onload = function () {
-            transcript_loading = false;
-            transcript_initialized = true;
-            window.InvidiousTranscript(transcript_panel, video_data, watch_ui);
-        };
-        script.onerror = function () {
-            transcript_loading = false;
-            script.remove();
+    (function () {
+        var life = new AbortController(), owner = null, script = null, loading = false, token = 0;
+        function visible() {
+            var tab = transcript_panel.closest('[role=tabpanel]');
+            return watchCurrent() && transcript_panel.isConnected && !transcript_panel.hidden && (!tab || !tab.hidden) && transcript_panel.getClientRects().length > 0;
+        }
+        function failed() {
             document.getElementById('transcript-status').textContent = watch_ui.transcript_error;
-            var retry = document.getElementById('transcript-retry');
-            retry.hidden = false;
-            retry.onclick = load_transcript_script;
-        };
-        document.head.appendChild(script);
-    }
-    transcript_panel.addEventListener('toggle', load_transcript_script);
+            var retry = document.getElementById('transcript-retry'); retry.hidden = false; retry.onclick = start;
+        }
+        function start() {
+            if (!visible() || loading || life.signal.aborted) return;
+            if (owner) { owner.setVisible(true); return; }
+            if (typeof window.InvidiousTranscript === 'function') {
+                document.getElementById('transcript-retry').onclick = null;
+                owner = window.InvidiousTranscript(transcript_panel,video_data,watch_ui); return;
+            }
+            loading = true; var issued = ++token, epoch = watchEpoch;
+            document.getElementById('transcript-status').textContent = watch_ui.loading;
+            document.getElementById('transcript-retry').hidden = true;
+            script = document.createElement('script'); script.src = watch_ui.transcript_script;
+            script.onload = function () {
+                if (issued !== token || life.signal.aborted || !watchCurrent() || epoch !== watchEpoch) return;
+                loading = false; script.remove(); script = null;
+                if (typeof window.InvidiousTranscript !== 'function') { if (visible()) failed(); return; }
+                if (visible()) start();
+            };
+            script.onerror = function () {
+                if (issued !== token || life.signal.aborted || !watchCurrent() || epoch !== watchEpoch) return;
+                loading = false; script.remove(); script = null; if (visible()) failed();
+            };
+            document.head.append(script);
+        }
+        document.addEventListener('iv:utility-tab-change',function (event) {
+            if (!event.target.contains(transcript_panel)) return;
+            if (visible()) start(); else if (owner) owner.setVisible(false);
+        },{signal:life.signal});
+        window.addEventListener('pagehide',function (event) {
+            token++; loading = false;
+            if (script) { script.onload = script.onerror = null; script.remove(); script = null; }
+            if (!event.persisted) { life.abort(); if (owner) owner.dispose(); }
+        },{signal:life.signal});
+        window.addEventListener('pageshow',function () { if (visible()) start(); },{signal:life.signal});
+        window.addEventListener('browserprofilechange',function () { token++; life.abort(); if (script) script.remove(); if (owner) owner.dispose(); },{signal:life.signal});
+        if (visible()) start();
+    })();
 }
 
 // Use only a consecutive, increasing series of description timestamps.

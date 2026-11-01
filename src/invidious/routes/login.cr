@@ -16,6 +16,9 @@ module Invidious::Routes::Login
     return error_template(403, "Registration has been disabled by administrator.") if signup && !CONFIG.registration_enabled
     csrf_token = Authentication.form_token(env, signup ? "signup" : "login")
     captcha = signup && CONFIG.captcha_enabled ? User::Captcha.generate_image(HMAC_KEY) : nil
+    {% if flag?(:api_only) %}
+      env.set "standalone_account", true
+    {% end %}
     templated "user/login"
   end
 

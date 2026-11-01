@@ -4,6 +4,19 @@ def assert_retired_theme_fields_absent(raw : String)
   raise "Retired theme fields serialized" if Preferences::RETIRED_THEME_FIELDS.any? { |key| fields.has_key?(key) }
 end
 
+# Model real persisted state when testing sparse/legacy writes. A render-only
+# preference override must not become authoritative for an unrelated save.
+def seed_saved_preferences(env, preferences : Preferences)
+  env.set "preferences", preferences
+  if user = env.get?("user").try(&.as(User))
+    user.preferences = preferences
+    env.set "user", user
+    PG_DB.exec("UPDATE users SET preferences = ? WHERE email = ?", preferences.to_json, user.email)
+  else
+    env.request.cookies["PREFS"] = Invidious::User::Cookies.prefs(nil, preferences)
+  end
+end
+
 def check_appearance_preferences
   legacy = JSON.parse(%({"theme":"modern-neon","theme_random":true,"theme_random_interval_hours":6,"theme_random_next_at":1800000000})).as_h
   {"modern-neon", "diary", "random", "unknown", "../../css/default.css"}.each do |id|
@@ -40,6 +53,9 @@ def check_appearance_preferences
   saved = PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)
   assert_retired_theme_fields_absent(saved)
   raise "Account form color mode lost" unless Preferences.from_json(saved).dark_mode == "dark"
+  raw_chat = JSON.parse(saved).as_h
+  raw_chat["future_chat_native"] = JSON.parse(%({"keep":[1,true,"literal"]}))
+  PG_DB.exec("UPDATE users SET preferences = ? WHERE email = ?", raw_chat.to_json, user.email)
   chat_env = HTTP::Server::Context.new(HTTP::Request.new("PATCH", "/api/v1/auth/chat_preferences",
     HTTP::Headers{"Content-Type" => "application/json"},
     {chat_show_timestamps: false, chat_font_scale: 125, chat_width_px: 520,
@@ -62,6 +78,8 @@ def check_appearance_preferences
   chat_prefs = Preferences.from_json(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String))
   raise "Partial chat settings erased existing values" unless chat_prefs.chat_show_timestamps && chat_prefs.chat_width_px == 520 && chat_prefs.chat_word_blacklist == "/spam/" &&
                                                               chat_prefs.chat_overlay_mode && chat_prefs.chat_overlay_opacity == 0 && chat_prefs.chat_overlay_x == 500
+  raw_chat_saved = JSON.parse(PG_DB.query_one("SELECT preferences FROM users WHERE email = ?", user.email, as: String)).as_h
+  raise "Chat PATCH discarded unknown raw values" unless raw_chat_saved["future_chat_native"] == raw_chat["future_chat_native"]
   invalid_overlay_env = HTTP::Server::Context.new(HTTP::Request.new("PATCH", "/api/v1/auth/chat_preferences",
     HTTP::Headers{"Content-Type" => "application/json"}, {chat_overlay_x: 800}.to_json), HTTP::Server::Response.new(IO::Memory.new))
   invalid_overlay_env.set "user", user
@@ -154,6 +172,8 @@ def check_color_modes
     current = prefs
     current.dark_mode = mode
     env.set "preferences", current
+    # A sparse header write reads the persisted cookie, not render overrides.
+    env.request.cookies["PREFS"] = HTTP::Cookie.new("PREFS", URI.encode_www_form({dark_mode: mode}.to_json))
     env.set "header_x-forwarded-host", "invidious.test"
     Invidious::Routes::PreferencesRoute.toggle_theme(env)
     saved = Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))

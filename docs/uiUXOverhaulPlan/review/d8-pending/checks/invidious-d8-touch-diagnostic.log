@@ -1,0 +1,23 @@
+TAP version 13
+# Subtest: chromium: seek intervals use video seconds for keyboard media keys and mobile taps
+not ok 1 - chromium: seek intervals use video seconds for keyboard media keys and mobile taps
+  ---
+  duration_ms: 2106.559366
+  type: 'test'
+  location: '/tmp/invidious-d8-touch-diagnostic.test.cjs:5645:5'
+  failureType: 'testCodeFailure'
+  error: 'page.waitForFunction: Timeout 1500ms exceeded.; diagnostic={"point":"<div class=\\"watch-grid \\" id=\\"watch-layout\\">\\n<div class=\\"watch-player\\" style=\\"--video-aspect: 16 / 9; --video-ratio: 1.7777777777777777;\\"><div id=\\"player-container\\">\\n\\n\\n\\n\\n<div preload=\\"none\\" class=\\"on-video_player video-js player-style-unified vjs-paused vjs-fluid player-dimensions vjs-controls-enabled vjs-touch-enabled vjs-workinghover vjs-v7 vjs-user-active vjs-buffer-refreshable vjs-mobile-ui vjs-vtt-thumbnails vjs-share vjs-videojs-share invidious-mobile vjs-has-started\\" id=\\"player\\" poster=\\"/v","events":[{"type":"pointerdown","target":"<div class=\\"watch-grid \\" id=\\"watch-layout\\">\\n<div class=\\"watch-player\\" style=\\"--video-aspect: 16 / 9; --video-ratio: 1.7777777777777777;\\"><div id=\\"player-container\\">\\n\\n\\n\\n\\n<div preload=\\"none\\" class=\\"on-video_player video-js","time":393.5},{"type":"touchstart","target":"<div class=\\"watch-grid \\" id=\\"watch-layout\\">\\n<div class=\\"watch-player\\" style=\\"--video-aspect: 16 / 9; --video-ratio: 1.7777777777777777;\\"><div id=\\"player-container\\">\\n\\n\\n\\n\\n<div preload=\\"none\\" class=\\"on-video_player video-js","time":394.29999999981374},{"type":"touchend","target":"<div class=\\"watch-grid \\" id=\\"watch-layout\\">\\n<div class=\\"watch-player\\" style=\\"--video-aspect: 16 / 9; --video-ratio: 1.7777777777777777;\\"><div id=\\"player-container\\">\\n\\n\\n\\n\\n<div preload=\\"none\\" class=\\"on-video_player video-js","time":395.09999999962747},{"type":"pointerdown","target":"<div class=\\"watch-grid \\" id=\\"watch-layout\\">\\n<div class=\\"watch-player\\" style=\\"--video-aspect: 16 / 9; --video-ratio: 1.7777777777777777;\\"><div id=\\"player-container\\">\\n\\n\\n\\n\\n<div preload=\\"none\\" class=\\"on-video_player video-js","time":409.6999999997206},{"type":"touchstart","target":"<div class=\\"watch-grid \\" id=\\"watch-layout\\">\\n<div class=\\"watch-player\\" style=\\"--video-aspect: 16 / 9; --video-ratio: 1.7777777777777777;\\"><div id=\\"player-container\\">\\n\\n\\n\\n\\n<div preload=\\"none\\" class=\\"on-video_player video-js","time":410.1999999997206},{"type":"touchend","target":"<div class=\\"watch-grid \\" id=\\"watch-layout\\">\\n<div class=\\"watch-player\\" style=\\"--video-aspect: 16 / 9; --video-ratio: 1.7777777777777777;\\"><div id=\\"player-container\\">\\n\\n\\n\\n\\n<div preload=\\"none\\" class=\\"on-video_player video-js","time":410.89999999990687}],"box":{"x":88,"y":96,"width":0,"height":0},"feedback":"","root":"on-video_player video-js player-style-unified vjs-paused vjs-fluid player-dimensions vjs-controls-enabled vjs-touch-enabled vjs-workinghover vjs-v7 vjs-user-active vjs-buffer-refreshable vjs-mobile-ui vjs-vtt-thumbnails vjs-share vjs-videojs-share invidious-mobile vjs-has-started","position":100,"step":5}'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/tmp/invidious-d8-touch-diagnostic.test.cjs:5677:28)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2745.226969

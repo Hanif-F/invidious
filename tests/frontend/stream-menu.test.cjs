@@ -11,7 +11,7 @@ function menusFor(formats, labels = {}) {
     // the production script. Browser tests exercise the actual Video.js UI.
     const videojs = {getComponent: () => function () {}, extend: () => function () {}, registerComponent: () => {}};
     const window = {videojs};
-    vm.runInNewContext(source, {window, videojs, document: {getElementById: () => ({
+    vm.runInNewContext(source, {window, videojs, URL, document: {getElementById: () => ({
         textContent: JSON.stringify({stats_formats: formats, stream_labels: labels})
     })}});
     return window.InvidiousStreamMenus;
@@ -378,4 +378,18 @@ test('a reused legacy audio ID cannot restore a different language over original
         {id:'main',label:'Original',language:'en',kind:'main',enabled:false}];
     menus.applyAudioPreference(player,{preferred_audio:'id'});
     assert.equal(tracks[1].enabled,true);
+});
+
+test('progressive source descriptions use exact metadata and preserve duplicate audio identities',()=>{
+    const menus=menusFor([
+        {itag:43,height:180,fps:12,bitrate:120000,mimeType:'video/webm; codecs="vp8"'},
+        {itag:140,bitrate:128000,mimeType:'audio/mp4; codecs="mp4a.40.2"',audioTrack:{id:'en.4',displayName:'English',audioIsDefault:true}},
+        {itag:140,bitrate:96000,mimeType:'audio/mp4; codecs="mp4a.40.2"',audioTrack:{id:'id.3',displayName:'Indonesian'}},
+        {itag:140,bitrate:120000,mimeType:'audio/mp4; codecs="mp4a.40.2"',isDrc:true,audioTrack:{id:'en.4',displayName:'English',audioIsDefault:true}}
+    ]);
+    assert.equal(menus.sourceDescription({src:'/latest_version?itag=43',label:'medium'}).primary,'180p12 · VP8');
+    assert.equal(menus.sourceDescription({src:'/latest_version?itag=43',label:'medium'}).secondary,'120 kbps');
+    assert.equal(menus.sourceDescription({src:'/latest_version?itag=140&audio_track=id.3&is_drc=false',label:'96k'}).primary,'Indonesian · AAC');
+    assert.equal(menus.sourceDescription({src:'/latest_version?itag=140&audio_track=en.4&is_drc=true',label:'120k'}).primary,'English · Original Audio · Stable Volume · AAC');
+    assert.equal(menus.sourceDescription({src:'/latest_version?itag=140',label:'Unknown audio'}).primary,'Unknown audio','ambiguous itags do not guess language or DRC');
 });

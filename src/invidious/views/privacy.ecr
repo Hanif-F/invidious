@@ -1,54 +1,39 @@
-<% content_for "header" do %>
-<title>Privacy Policy - Invidious</title>
-<% end %>
+<% content_for "header" do %><title><%= I18n.translate(locale, "Privacy") %> - Invidious</title><% end %>
+<article class="reading-page legal-page" lang="en-US" dir="ltr" aria-labelledby="privacy-heading">
+<header class="page-heading"><h1 id="privacy-heading">Privacy</h1></header>
+<p>This page describes data handled by this version of Invidious. Your account belongs to this instance. Its operator controls the server, configuration, access to stored data, backups and external proxy logs. This page does not promise how long an operator keeps backups or historical logs.</p>
+<nav class="reading-index" aria-label="On this page"><a href="#account-data">Account data</a><a href="#browser-data">Browser data</a><a href="#request-data">Requests and verification</a><a href="#external-services">External services</a><a href="#remove-data">Export and removal</a></nav>
 
-<div class="h-box">
-    <h2>Privacy</h2>
-    <p>This document concerns what data you provide to this website, the purpose of the data, how the data is stored, and how the data can be removed.</p>
+<section id="account-data" aria-labelledby="account-data-heading"><h2 id="account-data-heading">Account data stored by this instance</h2>
+<p>Registration uses a username and password, without a contact email or email recovery. New accounts have an independent, random owner ID. Legacy owner IDs may differ. Passwords are stored as hashes; they are not stored as readable passwords.</p>
+<ul>
+<li><strong>Access:</strong> username, owner ID, password hash and credential version; browser/API sessions with issuance and expiry; a private subscription-feed token; temporary authentication nonces and TV-pairing approval records.</li>
+<li><strong>Preferences and subscriptions:</strong> account preferences, channel subscriptions, notification video IDs and feed-refresh state. Preferences can include channel-specific SponsorBlock and title/thumbnail masking rules, playback choices, filters and chat options.</li>
+<li><strong>Library:</strong> owned playlists and their ordered video occurrences, saved playlist/mix references, playlist privacy and retained descriptive metadata. Public playlists are visible to others; unlisted playlists are accessible through their link; private playlists require the owner.</li>
+<li><strong>Viewing:</strong> watched video IDs, saved titles and channel metadata, release and watch dates, archived watch dates and known durations. History recording and saved playback-position synchronization have separate settings. When enabled, account position storage holds up to 1,000 videos, with entries older than 365 days expiring.</li>
+<li><strong>Other account features:</strong> manual channel blocks, per-video chat timing offsets and owned clips. Native clips store a title, public creator attribution, source metadata and an immutable time range; they do not store a copy of the video. Anyone with a clip link can view it while its source remains available.</li>
+<li><strong>Optional DeArrow contributions:</strong> a private contribution identity is stored encrypted using a separate server key. An operator with both the database and that key can decrypt it. Ordinary preferences and portable exports do not contain this private identity.</li>
+</ul>
+<p>Video/channel metadata, avatars, original titles, community lists and other shared caches can also exist independently of an account. Display masking or blocking changes what supported screens show; it does not delete source metadata from shared caches.</p></section>
 
-    <h3>Data you directly provide</h3>
-    <p>Data that you provide to the website for the purpose of the site's operation (for example: an account name, account password, or channel subscription) will be stored in the website's database until the user decides to remove it. This data will not be intentionally shared with anyone or anything.</p>
-    <p>Information stored about a registered user is limited to:</p>
-    <ul>
-        <li>a list of session tokens for remaining logged in across devices</li>
-        <li>the last time an account was updated (to provide accurate notifications)</li>
-        <li>a list of video IDs identifying notifications from a user's subscriptions</li>
-        <li>a list of channel UCIDs the user is subscribed to</li>
-        <li>a user ID (for persistent storage of subscriptions and preferences)</li>
-        <li>a json object containing user preferences</li>
-        <li>a hashed password</li>
-        <li>a randomly generated token for providing an RSS feed of a user's subscriptions</li>
-        <li>watched video IDs, saved titles, channel names and IDs, release dates, and current and archived watch dates</li>
-        <li>for users who enable saving playback positions, the last playback position and update time for up to 1,000 videos, retained for up to one year</li>
-    </ul>
-    <p>Users can clear their watch history and saved playback positions using the <a href="/clear_watch_history">clear watch history</a> page. Disabling saved playback positions also removes all positions stored for the account.</p>
+<section id="browser-data" aria-labelledby="browser-data-heading"><h2 id="browser-data-heading">Data stored in your browser</h2>
+<p>Cookies keep you signed in and bind security forms. Browser-profile markers select locally scoped state; they are not account credentials. When instance verification is enabled, a separate verification cookie can grant temporary content access without signing you in.</p>
+<p>Cookies, local storage and session storage can hold guest preferences, playback positions and player choices, sidebar and theater/docking choices, subscription views and notification ownership, enhancement caches and browsing restoration state. Supported ordinary GET pages can retain route/continuation and scroll descriptors for Back navigation. Private POST searches are not saved for query restoration. Browser-only state is not a cross-device backup and can be unavailable when storage is denied or full.</p>
+<p>Guest and account profiles are isolated. Signing in does not import guest preferences into the account. <strong>Logging out changes the active profile but preserves locally stored profiles.</strong> To remove site data from this device, use your browser's site-data controls for cookies, local storage and session storage. Account deletion asks the next document to purge that account's scoped browser state; it does not clear other profiles or other devices.</p></section>
 
-    <h3>Data you passively provide</h3>
-    <p>When you request any resource from this website (for example: a page, a font, an image, or an API endpoint) information about the request may be logged.</p>
-    <p>Information about a request is limited to:</p>
-    <ul>
-        <li>the time the request was made</li>
-        <li>the status code of the response</li>
-        <li>the method of the request</li>
-        <li>the requested URL</li>
-        <li>how long it took to complete the request.</li>
-    </ul>
-    <p>No identifying information is logged, such as the visitor's cookie, user-agent, or IP address. Here are a couple lines to serve as an example:</p>
-    <pre><code>2019-01-19 16:37:47 +00:00 200 GET /api/v1/comments/xrlETJYzH-c?format=html&hl=en-US 1345.88ms
-2019-01-19 16:37:53 +00:00 200 GET /vi/r5P-f5arPXE/maxres.jpg 1085.41ms
-2019-01-19 16:37:54 +00:00 200 GET /watch 7.04ms</code></pre>
-    <p>This website does not store the visitor's user-agent or IP address and does not use fingerprinting, advertisements, or tracking of any form.</p>
-    <p>This website provides links to googlevideo.com to provide audio and video playback. googlevideo.com is owned by Google and is subject to their <a href="https://policies.google.com/privacy">privacy policy</a>.</p>
+<section id="request-data" aria-labelledby="request-data-heading"><h2 id="request-data-heading">Requests, logs and access verification</h2>
+<p>Serving a request exposes its network address and request data to the server and any configured reverse proxy. Authentication throttling derives keyed hashes from usernames and client IP addresses and stores attempt counts and expiry windows in PostgreSQL. The recognized address depends on the operator's trusted-proxy configuration. This is not a permanent account lockout.</p>
+<p>The application's standard request log records time, response status, method, a path and elapsed time. It omits query strings and redacts credential-bearing webhook paths. Error or diagnostic logging and any reverse-proxy, hosting or CDN logging are separate; the operator must protect and configure them. Do not put passwords, API tokens or private feed links into reports.</p>
+<p>If the operator enables Cloudflare Turnstile, the verification page loads Cloudflare's widget and sends its challenge response to this instance for provider verification. A verification pass is a reusable access credential until expiry or a policy change. Verification is separate from account login. Native clients receive the existing completion event and manage their own credential storage. Cloudflare handles its widget data under its <a href="https://www.cloudflare.com/privacypolicy/" rel="noreferrer noopener">privacy policy</a>.</p></section>
 
-    <h3>Data stored in your browser</h3>
-    <p>This website uses browser cookies to authenticate registered users. This data consists of:</p>
-    <ul>
-        <li>An account token to keep you logged into the website between visits, which is sent when any page is loaded while you are logged in</li>
-    </ul>
-    <p>This website also provides options to store site preferences and playback positions without an account. This information remains in browser storage and is not synchronized between devices.</p>
-    <p>You can remove this data from your browser by logging out of this website, or by using your browser's cookie-related controls to delete the data.</p>
+<section id="external-services" aria-labelledby="external-services-heading"><h2 id="external-services-heading">External services and public contributions</h2>
+<p>The server contacts YouTube and the configured Companion for content and playback information. Depending on proxy and Companion settings, your browser can request media directly from Google or the configured public Companion, exposing its network address to that service. Google describes its handling in its <a href="https://policies.google.com/privacy" rel="noreferrer noopener">privacy policy</a>. Following an external link also sends a request to that destination.</p>
+<p>Optional features contact their providers: Reddit comments, archived annotations, SponsorBlock/DeArrow data and AiSList community lists. SponsorBlock and DeArrow lookups use a four-character video-hash prefix through the server. AiSList downloads community lists without sending account identifiers or history to the list host.</p>
+<p>Submitting a DeArrow title or vote is an explicit upstream contribution using your contribution identity. Contributions can be public and are not removed by deleting an Invidious account or its local identity. Browser notifications require permission; subscribed-upload events are delivered by this instance. Imports are sent to this instance for parsing and can apply in parts; portable exports contain private account data and should be stored carefully.</p></section>
 
-    <h3>Removal of data</h3>
-    <p>To remove data stored in your browser, you can log out of the website, or you can use your browser's cookie-related controls to delete the data.</p>
-    <p>To remove data that has been stored in the website's database, you can use the <a href="/delete_account">delete my account</a> page.</p>
-</div>
+<section id="remove-data" aria-labelledby="remove-data-heading"><h2 id="remove-data-heading">Export, controls and removal</h2>
+<p>Use Data and exports for the available JSON account export and subscription OPML formats. These are partial portable formats, not complete backups: they omit features such as clips, session credentials, private DeArrow identity and browser-only state. Importing is not one account-wide transaction.</p>
+<p>Account controls let you revoke sessions and change credentials. Revoked credentials stop granting access; this does not erase copies already stored on other devices. Clearing watch history also clears saved account positions; disabling position synchronization removes saved account positions. Disabling history recording preserves existing history until you remove it.</p>
+<p>Deleting an account requires its current password and removes its owned data, including owned playlists, sessions, history, saved references, clips, blocks, chat offsets and encrypted contribution identity. TV records can retain their expired/state information without account ownership. Deletion does not remove shared caches, previously accepted upstream contributions or copies in operator-managed backups and historical logs. Backup and log retention depends on the operator.</p>
+<div class="toolbar"><a class="button" href="/data_control">Data and exports</a><a class="button" href="/preferences">Settings</a><a class="button" href="/account">Account</a><a class="button" href="/clear_watch_history">Clear watch history</a><a class="button button-danger" href="/delete_account">Delete account</a></div></section>
+</article>

@@ -1,59 +1,58 @@
-<% content_for "header" do %>
-<title><%= I18n.translate(locale, "sb_channels") %> - Invidious</title>
-<% unless user %><script src="/js/sponsorblock-preferences.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
-<% end %>
-<div class="h-box" id="sponsorblock-channels" data-guest="<%= !user %>">
-    <h1><%= I18n.translate(locale, "sb_channels") %></h1>
-    <p><a href="/preferences#preferences-sponsorblock"><%= I18n.translate(locale, "sb_global_settings") %></a></p>
-    <% if !user %>
-        <p><%= I18n.translate(locale, "sb_channels_guest") %></p>
-        <noscript><p><%= I18n.translate(locale, "sb_channels_guest_js") %></p></noscript>
-    <% end %>
+<%
+  section = "sponsorblock-channels"
+  draft = env.get?("sb_draft").try { |value| URI::Params.parse(value.as(String)) }
+  error = env.get?("sb_error").try(&.as(String))
+  uncertain = env.get?("sb_uncertain") == true
+  stale = env.get?("sb_stale") == true
+  channel_input = draft.try(&.["channel"]?) || env.params.query["channel"]? || channel_id || ""
+  profile = Invidious::BrowserProfiles.render_scope(env)
+  form_profile = draft.try(&.["browser_profile"]?) || profile
+  selected_enabled = draft ? (draft["enabled"]? || "") : (entry.enabled.nil? ? "inherit" : entry.enabled.to_s)
+%>
+<% content_for "header" do %><title><%= I18n.translate(locale, "sb_channels") %> - Invidious</title><script src="/js/sponsorblock-preferences.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_settings") %></h1></header>
+<div class="settings-layout"><%= rendered "overhaul/settings_navigation" %>
+<section class="settings-category" id="sponsorblock-channels" data-guest="<%= !user %>" aria-labelledby="sb-channels-heading">
+    <h2 id="sb-channels-heading"><%= I18n.translate(locale, "sb_channels") %></h2>
+    <p><%= I18n.translate(locale, user ? "overhaul_channel_account_scope" : "sb_channels_guest") %></p>
+    <% unless user %><p data-sb-browser-required><%= I18n.translate(locale, "sb_channels_guest_js") %></p><% end %>
+    <div class="toolbar"><a class="button" href="/preferences?section=sponsorblock"><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "sb_global_settings") %></a></div>
+    <form class="channel-lookup" method="get" action="/preferences/sponsorblock/channels">
+        <label for="channel"><%= I18n.translate(locale, "sb_channel_input") %></label><div class="toolbar"><input id="channel" name="channel" type="text" required maxlength="2048" dir="ltr" value="<%= HTML.escape(channel_input) %>"><button class="button" type="submit"><%= I18n.translate(locale, "sb_channel_edit") %></button></div>
+    </form>
+    <p id="sponsorblock-save-status" role="<%= error ? "alert" : "status" %>" tabindex="-1"><% if error %><%= HTML.escape(error) %><% elsif env.params.query["saved"]? == "1" %><%= I18n.translate(locale, "settings_saved") %><% end %></p>
     <div id="sponsorblock-controls" <%= "hidden" unless user %>>
-        <p id="sponsorblock-save-status" role="status"></p>
-        <p><%= I18n.translate(locale, "sb_channels_hint") %></p>
-        <form class="pure-form pure-form-stacked" method="get" action="/preferences/sponsorblock/channels">
-            <label for="channel"><%= I18n.translate(locale, "sb_channel_input") %></label>
-            <input id="channel" name="channel" type="text" required>
-            <button class="pure-button" type="submit"><%= I18n.translate(locale, "sb_channel_edit") %></button>
-        </form>
+        <p class="muted"><%= I18n.translate(locale, "sb_channels_hint") %></p>
         <% if channel_id %>
-            <h2><a href="/channel/<%= channel_id %>" dir="auto"><%= HTML.escape(entry.name) %></a></h2>
-            <form class="pure-form pure-form-stacked sponsorblock-channel-form" data-name="<%= HTML.escape(entry.name) %>" method="post" action="/preferences/sponsorblock/channels">
-                <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-                <input type="hidden" name="channel" value="<%= channel_id %>">
-                <label for="enabled"><%= I18n.translate(locale, "sb_enable") %></label>
-                <select id="enabled" name="enabled">
-                    <option value="inherit" <% if entry.enabled.nil? %>selected<% end %>><%= I18n.translate(locale, "sb_use_global") %> (<%= I18n.translate(locale, preferences.sponsorblock_enabled ? "sb_enabled" : "sb_mode_disabled") %>)</option>
-                    <option value="true" <% if entry.enabled == true %>selected<% end %>><%= I18n.translate(locale, "sb_enabled") %></option>
-                    <option value="false" <% if entry.enabled == false %>selected<% end %>><%= I18n.translate(locale, "sb_mode_disabled") %></option>
-                </select>
-                <% Invidious::SponsorBlock::CATEGORIES.each_key do |category| %>
-                    <label for="mode_<%= category %>"><%= I18n.translate(locale, "sb_category_#{category}") %></label>
-                    <select id="mode_<%= category %>" name="mode_<%= category %>">
-                        <option value="inherit" <% unless entry.modes.has_key?(category) %>selected<% end %>><%= I18n.translate(locale, "sb_use_global") %> (<%= I18n.translate(locale, "sb_mode_#{preferences.sponsorblock_modes[category]}") %>)</option>
-                        <% {"auto", "manual", "marker", "disabled"}.each do |mode| %>
-                            <option value="<%= mode %>" <% if entry.modes[category]? == mode %>selected<% end %>><%= I18n.translate(locale, "sb_mode_#{mode}") %></option>
-                        <% end %>
-                    </select>
-                <% end %>
-                <button class="pure-button pure-button-primary" type="submit" name="action" value="save"><%= I18n.translate(locale, "Save preferences") %></button>
-                <button class="pure-button" type="submit" name="action" value="reset"><%= I18n.translate(locale, "sb_channel_reset") %></button>
+            <h3><a href="/channel/<%= channel_id %>" dir="auto"><%= HTML.escape(entry.name) %></a></h3>
+            <form class="sponsorblock-channel-form" data-name="<%= HTML.escape(entry.name) %>" method="post" action="/preferences/sponsorblock/channels">
+                <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>"><input type="hidden" name="browser_profile" value="<%= HTML.escape(form_profile) %>"><input type="hidden" name="channel" value="<%= channel_id %>">
+                <fieldset <%= "disabled" if !user || stale %>><legend class="sr-only"><%= I18n.translate(locale, "sb_channel_edit") %></legend>
+                <div class="field-row"><label for="enabled"><%= I18n.translate(locale, "sb_enable") %></label><select required id="enabled" name="enabled" aria-describedby="sponsorblock-save-status">
+                    <% unless {"inherit", "true", "false"}.includes?(selected_enabled) %><option value="<%= HTML.escape(selected_enabled) %>" selected><%= selected_enabled.empty? ? I18n.translate(locale, "overhaul_channel_choose") : HTML.escape(selected_enabled) %></option><% end %>
+                    <option value="inherit" <%= "selected" if selected_enabled == "inherit" %>><%= I18n.translate(locale, "sb_use_global") %> (<%= I18n.translate(locale, preferences.sponsorblock_enabled ? "sb_enabled" : "sb_mode_disabled") %>)</option>
+                    <option value="true" <%= "selected" if selected_enabled == "true" %>><%= I18n.translate(locale, "sb_enabled") %></option><option value="false" <%= "selected" if selected_enabled == "false" %>><%= I18n.translate(locale, "sb_mode_disabled") %></option>
+                </select></div>
+                <% Invidious::SponsorBlock::CATEGORIES.each_key do |category| %><% selected_mode = draft ? (draft["mode_#{category}"]? || "inherit") : (entry.modes[category]? || "inherit") %>
+                    <div class="field-row"><label for="mode_<%= category %>"><span class="segment-color" style="--segment-color:<%= preferences.sponsorblock_colors[category] %>" aria-hidden="true"></span><%= I18n.translate(locale, "sb_category_#{category}") %></label><select id="mode_<%= category %>" name="mode_<%= category %>" aria-describedby="sponsorblock-save-status">
+                        <% unless {"inherit", "auto", "manual", "marker", "disabled"}.includes?(selected_mode) %><option value="<%= HTML.escape(selected_mode) %>" selected><%= HTML.escape(selected_mode) %></option><% end %>
+                        <option value="inherit" <%= "selected" if selected_mode == "inherit" %>><%= I18n.translate(locale, "sb_use_global") %> (<%= I18n.translate(locale, "sb_mode_#{preferences.sponsorblock_modes[category]}") %>)</option>
+                        <% {"auto", "manual", "marker", "disabled"}.each do |mode| %><option value="<%= mode %>" <%= "selected" if selected_mode == mode %>><%= I18n.translate(locale, "sb_mode_#{mode}") %></option><% end %>
+                    </select></div>
+                <% end %></fieldset>
+                <div class="settings-actions"><button class="button button-primary" type="submit" name="action" value="save" <%= "disabled" if !user || uncertain || stale %>><%= I18n.translate(locale, "Save preferences") %></button><button class="button js-only" type="reset" hidden><%= I18n.translate(locale, "ux_discard") %></button><noscript><a class="button" href="/preferences/sponsorblock/channels?channel=<%= channel_id %>"><%= I18n.translate(locale, "ux_discard") %></a></noscript><button class="button" type="submit" name="action" value="reset" formnovalidate <%= "disabled" if !user || uncertain || stale %>><%= I18n.translate(locale, "sb_channel_reset") %></button></div>
             </form>
         <% end %>
-        <h2><%= I18n.translate(locale, "sb_configured_channels") %></h2>
+        <div class="toolbar channel-readback"><button class="button js-only" type="button" data-sb-readback hidden><%= I18n.translate(locale, "overhaul_channel_check") %></button><a class="button" href="/preferences/sponsorblock/channels<%= channel_id ? "?channel=#{channel_id}" : "" %>"><%= I18n.translate(locale, "settings_reload") %></a></div>
+        <h3><%= I18n.translate(locale, "sb_configured_channels") %></h3>
+        <label class="js-only" hidden for="sponsorblock-search"><%= I18n.translate(locale, "overhaul_channel_search") %></label><input class="js-only" hidden id="sponsorblock-search" type="search" autocomplete="off" aria-controls="sponsorblock-saved-channels">
         <div id="sponsorblock-saved-channels" data-edit="<%= I18n.translate(locale, "sb_channel_edit") %>" data-reset="<%= I18n.translate(locale, "sb_channel_reset") %>" data-empty="<%= I18n.translate(locale, "sb_channels_empty") %>">
-        <% if preferences.sponsorblock_channel_overrides.empty? %><p><%= I18n.translate(locale, "sb_channels_empty") %></p><% end %>
-        <% preferences.sponsorblock_channel_overrides.to_a.sort_by { |id, saved| saved.name.downcase }.each do |id, saved| %>
-            <div class="h-box">
-                <p><a href="/channel/<%= id %>" dir="auto"><%= HTML.escape(saved.name) %></a> · <a href="/preferences/sponsorblock/channels?channel=<%= id %>"><%= I18n.translate(locale, "sb_channel_edit") %></a></p>
-                <form method="post" action="/preferences/sponsorblock/channels">
-                    <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>">
-                    <input type="hidden" name="channel" value="<%= id %>">
-                    <button class="pure-button" type="submit" name="action" value="reset"><%= I18n.translate(locale, "sb_channel_reset") %></button>
-                </form>
-            </div>
-        <% end %>
+        <% if user && preferences.sponsorblock_channel_overrides.empty? %><p><%= I18n.translate(locale, "sb_channels_empty") %></p><% end %>
+        <% if user %><% preferences.sponsorblock_channel_overrides.to_a.sort_by { |id, saved| saved.name.downcase }.each do |id, saved| %><div class="channel-rule-row" data-channel="<%= id %>"><a href="/channel/<%= id %>" dir="auto"><%= HTML.escape(saved.name) %></a><div class="toolbar"><a class="button" href="/preferences/sponsorblock/channels?channel=<%= id %>"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "sb_channel_edit") %></a><form method="post" action="/preferences/sponsorblock/channels" data-sb-reset>
+            <input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>"><input type="hidden" name="browser_profile" value="<%= profile %>"><input type="hidden" name="channel" value="<%= id %>"><button class="button" type="submit" name="action" value="reset" <%= "disabled" if uncertain || stale %>><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "sb_channel_reset") %></button>
+        </form></div></div><% end %><% end %>
         </div>
     </div>
-</div>
+</section></div>
+<template id="sponsorblock-row"><div class="channel-rule-row"><a data-sb-channel dir="auto"></a><div class="toolbar"><a class="button" data-sb-edit><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "sb_channel_edit") %></a><form method="post" action="/preferences/sponsorblock/channels" data-sb-reset><input type="hidden" name="csrf_token"><input type="hidden" name="browser_profile"><input type="hidden" name="channel"><button class="button" type="submit" name="action" value="reset"><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "sb_channel_reset") %></button></form></div></div></template>
+<script id="sponsorblock-editor-config" type="application/json"><%= {account: !!user, profile: profile, uncertain: uncertain, stale: stale, failed: !!draft, overrides: user ? preferences.sponsorblock_channel_overrides : {} of String => Invidious::SponsorBlock::ChannelOverride, words: {limit: I18n.translate(locale, "overhaul_channel_limit"), saved: I18n.translate(locale, "settings_saved"), unsaved: I18n.translate(locale, "settings_unsaved"), saving: I18n.translate(locale, "settings_saving"), error: I18n.translate(locale, "settings_save_error"), load: I18n.translate(locale, "settings_load_error"), invalid: I18n.translate(locale, "overhaul_channel_invalid"), unconfirmed: I18n.translate(locale, "overhaul_channel_unconfirmed"), changed: I18n.translate(locale, "overhaul_channel_changed"), profile: I18n.translate(locale, "overhaul_channel_profile_changed"), local: I18n.translate(locale, "overhaul_channel_storage_failed"), empty: I18n.translate(locale, "sb_channels_empty"), no_matches: I18n.translate(locale, "overhaul_channel_no_matches")}}.to_json.gsub("<", "\\u003c") %></script>

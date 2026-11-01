@@ -65,7 +65,7 @@ Each `invidious_companion` entry has `private_url` and optional `public_url`. `p
 
 ### Private instances and whitelist access
 
-In **Preferences → Administration → Instance access**, enable **Require login**
+In **account menu → Instance settings → Instance access**, enable **Require login**
 (`login_required: true`, default false) to require an account for dynamic content,
 including pages, embeds, APIs, images, downloads, manifests and the built-in
 Companion proxy. YAML and `INVIDIOUS_LOGIN_REQUIRED` can also set it. Login remains
@@ -79,12 +79,20 @@ Required login and signup are independent: visitors can still register when
 registration is enabled.
 
 Login/signup, mobile sign-in/registration discovery, TV pairing bootstrap/polling,
-bot verification and actual local static files remain reachable. Private RSS feeds
+bot verification, GET/HEAD Privacy and JavaScript licenses, and actual local static
+files remain reachable. The legal-page exemption permits reading only. Private RSS feeds
 and subscription webhooks retain their existing token/signature checks. Other
 anonymous page requests redirect to login with a local return destination;
 API/media requests return HTTP 401 with `{"error":"login_required","loginUrl":"/login?referer=..."}`.
 API clients can use their existing bearer tokens, and CORS preflights remain
 content-free. Authenticated account APIs retain their scope and CSRF requirements.
+
+Denied framed GETs show a script-free 401 page with a new-window sign-in action.
+API/media 401 responses also expose `X-Invidious-Login-Required: 1`; their existing
+JSON schema remains unchanged. Private watch/embed players use a HEAD request to
+the existing local `/api/v1/stats` route when checking lost access, without a new
+endpoint, provider lookup or background write. This health route is exempt from
+bot verification, but still requires instance login when `login_required` is on.
 
 The gate covers requests to Invidious. Use the built-in proxy and keep Companion's
 own listener private; a separately public Companion is outside this access check.
@@ -95,7 +103,7 @@ existing config-file persistence and environment-override behavior.
 
 ## Presentation and defaults
 
-`default_user_preferences` seeds preference parsing; it does not overwrite every saved account field. `default_playlist` is YAML-ignored in that defaults structure; runtime timezone initializes unset rather than copying the similarly named default field. [Preferences](preferences.md) and its field inventory explain exact runtime initialization and legacy AI conversion. `banner` displays an announcement; `modified_source_code_url` adds a footer link to the deployed fork's source; `admins` identifies accounts allowed to change supported instance settings in the preferences form.
+`default_user_preferences` seeds preference parsing; it does not overwrite every saved account field. `default_playlist` is YAML-ignored in that defaults structure; runtime timezone initializes unset rather than copying the similarly named default field. [Preferences](preferences.md) and its field inventory explain exact runtime initialization and legacy AI conversion. `banner` displays an announcement; `modified_source_code_url` adds a footer link to the deployed fork's source; `admins` identifies accounts allowed to use `/admin/settings`. That separate form owns only its declared instance/access/default-feed keys and merges them into the configured YAML; it does not serialize runtime credentials. Environment-managed fields are read-only. Personal preference saves do not change instance configuration. See the [Settings ownership contract](uiUXOverhaulPlan/settings-ownership.md#instance-administration).
 
 `output` chooses `STDOUT` or an append-only log path; its parent directory is created when needed. `log_level` accepts the levels in [logger.cr](../src/invidious/helpers/logger.cr). `colorize_logs` toggles terminal colors. Avoid credentials in banners and maintain independent redaction at the reverse proxy.
 

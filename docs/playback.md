@@ -16,13 +16,32 @@ The Preferred audio track setting selects Original Audio, Original Audio (Stable
 
 Desktop volume persists per browser profile, independently from account preference JSON. It defaults to 100%; mute does not persist. Coarse-pointer mobile players use website volume 100% and device volume controls. Guest speed changes update guest preferences; account speed uses a CSRF-protected sparse PATCH. Volume query parameters and old volume preference fields do not control current persistence.
 
+The desktop player has one Settings hierarchy for quality/codec, audio, captions,
+playback speed, enhancement destinations and advanced actions. Advanced contains
+buffer refresh, diagnostics and the Automatic mini player preference. Existing
+selection callbacks still own source changes; opening Settings, changing utility
+tabs or changing layouts keeps the same media element. Caption appearance uses
+the existing Video.js settings and profile storage. Failed, empty or unresolved
+caption loads offer an explicit retry; an unresolved load is reported after eight
+seconds and does not automatically refetch.
+
+The watch page places creator/actions and details below the player and one utility
+panel beside it. Queue takes priority over replay chat, then Up next. A Transcript
+tab loads only when selected, including when it is the only available tool.
+Standard/Theater mode persists in this browser profile across videos and sessions.
+Automatic docking defaults off. When enabled, a started player docks after its
+original space scrolls out of view; that space stays reserved. Its controls offer
+play/pause, mute, return and dismissal for the current video. Fullscreen, native
+picture-in-picture, audio-only playback and clip preview suspend docking.
+
 ## Watch and embed query options
 
 [video_preferences.cr](../src/invidious/videos/video_preferences.cr) resolves query values, saved preferences and instance defaults. Boolean video options normally accept `true` or `1`; explicit `false`/`0` disables where parsed. Site rendering overrides use their own rules.
 
 | Query | Meaning |
 | --- | --- |
-| `v`, `list`, `index` | Watch video and optional playlist/occurrence context |
+| `v`, `list`, `index` | Watch video, optional playlist and zero-based ordinal context |
+| `occurrence` | Optional decimal 64-bit owned-playlist entry identity, resolved with visibility and video checks; duplicate entries retain separate identities |
 | `t`, `time_continue`, `start` | Start time, in that precedence; accepts the time forms supported by `decode_time` |
 | `end` | End boundary; default is unrestricted |
 | `autoplay`, `preload`, `loop` | Start/loading/repeat behavior |
@@ -34,16 +53,40 @@ Desktop volume persists per browser profile, independently from account preferen
 | `subtitles` | Comma-separated preferred caption languages |
 | `comments` | Comma-separated comment-source priority |
 | `related_videos`, `extend_desc`, `vr_mode`, `save_player_pos` | Page/player feature overrides |
-| `player_style` | Player presentation style |
+| `player_style` | Legacy/native-compatible value; the browser uses the unified player design |
 | `iv_load_policy` | Annotation policy; enabled value is 1 in this parser |
 | `controls` | Numeric player control switch, enabled at values >=1 |
 | `raw` | Numeric raw mode switch, enabled at 1 |
 | `region` | Optional fetch region; not automatically inherited from every page preference |
-| `hl`, `dark_mode`, `thin_mode` | Shared rendering overrides |
+| `hl`, `dark_mode`, `thin_mode` | Locale/color overrides; thin mode remains for ordinary API HTML, without changing desktop imagery |
 
 Server restrictions override requests: disabled DASH falls back to the alternate configured quality path, and disabled local proxy cannot be enabled by the query. Do not use URL overrides as authorization or durable account updates.
 
 `/watch/:id`, `/shorts/:id`, `/live/:id`, `/w/:id`, `/v/:id`, `/e/:id` normalize compatible links. `/clip/:clip` distinguishes native/YouTube clips. `/embed/:id` renders the embeddable player, with `/embed/` handling compatible redirects/series. Private playlist access is owner-checked, including embed redirects and indexes. Native clip embeds are not implemented.
+
+Embeds use a full-size media surface and the shared player Settings without site
+navigation. Open on Invidious is an ordinary new-window link that preserves
+playlist/occurrence context, the known playhead and current speed/listening/proxy
+choices; clip previews retain their bounds. The original video element remains
+in place across Settings, media selection, masking and buffer refresh. Hidden
+thumbnails have a bounded Reveal control above the control bar.
+
+Playlist/mix embeds own one cancelable next-item read and one ended handler.
+Failed continuation offers an explicit Retry; it does not automatically repeat
+the read. Decimal occurrence-sized cursors retain their exact values and explicit
+video series retain duplicates. Looping and bounded previews do not advance the
+queue. Cached-page return waits for canonical profile state before rearming;
+departure, a profile change or player disposal retires pending work. The shared
+player also cancels delayed reloads and speed writes on departure while retaining
+its permitted final progress delivery.
+
+On a private instance, an embed denied at entry shows a script-free sign-in
+action in a new window. If access expires during playback, the page checks the
+existing local health route with HEAD and offers sign-in or verification as
+appropriate. It pauses and disposes framed playback before showing recovery,
+retaining the last known position in page memory. Recovery never repeats a write
+or fetches video metadata. Outages and unrelated authorization failures do not
+prove that instance login has expired.
 
 ## Keyboard and mobile input
 
@@ -109,7 +152,7 @@ Without account sync, existing profile-local fallback is available. Local state 
 
 Replay is read-only and offered when `liveChatReplay` is true and the video is neither live nor upcoming. The public replay API returns messages, removals and an opaque continuation, with an offset in milliseconds. Initial requests obtain a replay continuation; subsequent requests reuse it. Invalid IDs, negative offsets, oversized continuations or offsets beyond duration are rejected. No replay returns 404; upstream failures return 503 without requiring playback to stop.
 
-The browser synchronizes chat with playback and supports timestamps, font/panel sizing, user/word filters and a movable/resizable translucent overlay. Account preferences and per-video offsets use separate authenticated APIs; guests store supported choices locally. Positive offsets delay chat relative to video. Zero clears the stored offset. Native filters have their own RE2/J restrictions and should not be assumed identical to browser regular expressions; see [native chat contract](mobile-api.md#archive-chat-replay).
+The browser synchronizes chat in the utility panel with timestamps, font/panel sizing and user/word filters. Settings → Chat replay and the panel's contextual control open the explicit editor. Font/width/hide-user-ID choices stay in the current browser profile; account timestamp/blacklist saves and per-video offsets use their existing authenticated APIs. Guests store supported choices in their profile. Browser overlay controls/code are retired; native overlay fields remain readable and are preserved by web saves. Positive offsets delay chat relative to video. Zero clears the stored offset. Native filters have their own RE2/J restrictions and should not be assumed identical to browser regular expressions; see [native chat contract](mobile-api.md#archive-chat-replay).
 
 ## Downloads and delivery
 
@@ -119,6 +162,15 @@ Media URLs can pass through `/videoplayback`, manifest rewrite routes or `/compa
 
 Downloads do not server-side mux/transcode separate tracks into a new file. Native app offline playback/export workflows described in the existing mobile guide belong to that external client, not this Crystal server.
 
+## Desktop layout and docking
+
+The Theater mode control retains its choice across videos and sessions in the
+current browser profile. Automatic mini player is an optional Advanced player
+setting, disabled by default. Its geometry, controls and playback exclusions are
+described above; it never moves replay chat or other utility-panel content.
+
+Transcript follows inside its own scrolling region. Manual interaction/search disables following until explicitly re-enabled.
+
 ## Diagnostics
 
-Stats for nerds is opt-in from desktop controls or mobile settings. It shows available timing, buffering, rendition, codec/frame and network/player measurements, with unavailable values left unknown. Copy diagnostics creates an allowlisted local JSON snapshot; the panel performs no diagnostics upload. Disable stops observation. Native fullscreen/PiP cannot display the HTML overlay; return to inline playback to inspect it.
+Stats for nerds is opt-in from desktop Settings → Advanced or mobile settings. It shows available timing, buffering, rendition, codec/frame and network/player measurements, with unavailable values left unknown. Copy diagnostics creates an allowlisted local JSON snapshot; the panel performs no diagnostics upload. Disable stops observation. Native fullscreen/PiP cannot display the HTML overlay; return to inline playback to inspect it.

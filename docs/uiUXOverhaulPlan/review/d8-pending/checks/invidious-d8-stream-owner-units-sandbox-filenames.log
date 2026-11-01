@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: clip-session.test.cjs
+ok 1 - clip-session.test.cjs
+  ---
+  duration_ms: 163.992104
+  type: 'test'
+  ...
+# Subtest: stream-menu.test.cjs
+ok 2 - stream-menu.test.cjs
+  ---
+  duration_ms: 212.462191
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 234.775283

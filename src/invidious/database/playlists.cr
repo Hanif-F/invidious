@@ -10,7 +10,7 @@ module Invidious::Database::Playlists
   #  Insert / delete
   # -------------------
 
-  def insert(playlist : InvidiousPlaylist)
+  def insert(playlist : InvidiousPlaylist, conn = PG_DB)
     playlist_array = playlist.to_a
 
     request = <<-SQL
@@ -18,18 +18,85 @@ module Invidious::Database::Playlists
       VALUES (#{arg_array(playlist_array)})
       SQL
 
-    PG_DB.exec(request, args: playlist_array)
+    conn.exec(request, args: playlist_array)
+  end
+
+  def insert_owned(playlist : InvidiousPlaylist)
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      conn.query_one("SELECT email FROM users WHERE email = $1 FOR UPDATE", playlist.author, as: String)
+      count = conn.query_one("SELECT count(*) FROM playlists WHERE author = $1 AND left(id, 2) = 'IV'", playlist.author, as: Int64)
+      raise InfoException.new("User cannot have more than 100 playlists.") if count >= 100
+      insert(playlist, conn)
+    end
   end
 
   # deletes the given playlist and connected playlist videos
   def delete(id : String)
-    PlaylistVideos.delete_by_playlist(id)
-    request = <<-SQL
-      DELETE FROM playlists *
-      WHERE id = $1
-      SQL
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      conn.query_one?("SELECT id FROM playlists WHERE id = $1 FOR UPDATE", id, as: String)
+      conn.exec("DELETE FROM playlist_videos WHERE plid = $1", id)
+      conn.exec("DELETE FROM playlists WHERE id = $1", id)
+    end
+  end
 
-    PG_DB.exec(request, id)
+  # A whole occurrence change is one transaction. The lock is shared with move,
+  # so limits and the ordered index cannot race with another add/remove/reorder.
+  def append_video(id : String, owner : String, video : PlaylistVideo, snapshot : Array(Int64)? = nil) : {Symbol, Int32}
+    result = {:missing, 0}
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      if row = conn.query_one?("SELECT author, index FROM playlists WHERE id = $1 FOR UPDATE", id, as: {String, Array(Int64)})
+        author, order = row
+        if author != owner
+          result = {:forbidden, 0}
+        elsif order.size >= CONFIG.playlist_length_limit
+          result = {:full, order.size}
+        else
+          position = order.size
+          PlaylistVideos.insert(video, conn)
+          order << video.index
+          conn.exec("UPDATE playlists SET index = $1, video_count = $2, updated = now() WHERE id = $3", order, order.size, id)
+          snapshot.try &.concat(order)
+          result = {:ok, position}
+        end
+      end
+    end
+    result
+  end
+
+  def remove_video(id : String, owner : String, entry : Int64, snapshot : Array(Int64)? = nil) : Symbol
+    result = :missing
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      if row = conn.query_one?("SELECT author, index FROM playlists WHERE id = $1 FOR UPDATE", id, as: {String, Array(Int64)})
+        author, order = row
+        if author != owner
+          result = :forbidden
+        elsif !order.includes?(entry)
+          result = :conflict
+        else
+          conn.exec("DELETE FROM playlist_videos WHERE plid = $1 AND index = $2", id, entry)
+          order.delete(entry)
+          conn.exec("UPDATE playlists SET index = $1, video_count = $2, updated = now() WHERE id = $3", order, order.size, id)
+          snapshot.try &.concat(order)
+          result = :ok
+        end
+      end
+    end
+    result
+  end
+
+  def cover_ids(owner : String) : Hash(String, String)
+    PG_DB.query_all(<<-SQL, owner, as: {String, String?}).to_h.transform_values { |id| id || "" }
+      SELECT p.id, v.id FROM playlists p
+      LEFT JOIN LATERAL (
+        SELECT id FROM playlist_videos WHERE plid = p.id AND index = ANY(p.index)
+        ORDER BY array_position(p.index, index) LIMIT 1
+      ) v ON true
+      WHERE p.author = $1 AND left(p.id, 2) = 'IV'
+      SQL
   end
 
   # -------------------
@@ -92,7 +159,7 @@ module Invidious::Database::Playlists
 
   # Stable occurrence IDs, rather than video IDs or visible positions, preserve
   # duplicate videos and entries on pages the browser has not loaded.
-  def move_video(id : String, owner : String, source : Int64, anchor : Int64, after : Bool) : Symbol
+  def move_video(id : String, owner : String, source : Int64, anchor : Int64, after : Bool, snapshot : Array(Int64)? = nil) : Symbol
     result = :missing
     PG_DB.transaction do |tx|
       conn = tx.connection
@@ -110,6 +177,7 @@ module Invidious::Database::Playlists
             order.insert(after ? position + 1 : position, source)
             conn.exec("UPDATE playlists SET index = $1, updated = now() WHERE id = $2", order, id)
           end
+          snapshot.try &.concat(order)
           result = :ok
         end
       end
@@ -128,6 +196,21 @@ module Invidious::Database::Playlists
       SQL
 
     return PG_DB.query_one?(request, id, as: InvidiousPlaylist)
+  end
+
+  # Resolve a stable occurrence against one authorized, consistent snapshot.
+  # Public API `index` remains an ordinal; private order is never exposed here.
+  def occurrence_offset(plid : String, occurrence : Int64, video_id : String, viewer : String?) : Int32?
+    PG_DB.query_one?(<<-SQL, plid, occurrence, video_id, viewer, PlaylistPrivacy::Private.to_s, as: Int32)
+      SELECT array_position(p.index, $2) - 1
+      FROM playlists p
+      WHERE p.id = $1 AND $2 = ANY(p.index)
+        AND (p.privacy <> $5 OR p.author = $4)
+        AND EXISTS (
+          SELECT 1 FROM playlist_videos v
+          WHERE v.plid = p.id AND v.index = $2 AND v.id = $3
+        )
+      SQL
   end
 
   def select_all(*, author : String) : Array(InvidiousPlaylist)
@@ -210,7 +293,7 @@ module Invidious::Database::PlaylistVideos
   #  Insert / Delete
   # -------------------
 
-  def insert(video : PlaylistVideo)
+  def insert(video : PlaylistVideo, conn = PG_DB)
     video_array = video.to_a
 
     request = <<-SQL
@@ -218,7 +301,7 @@ module Invidious::Database::PlaylistVideos
       VALUES (#{arg_array(video_array)})
       SQL
 
-    PG_DB.exec(request, args: video_array)
+    conn.exec(request, args: video_array)
   end
 
   def delete(index, plid : String)

@@ -1,14 +1,32 @@
-<% content_for "header" do %><title><%= I18n.translate(locale, "Blocked channels") %> - Invidious</title><% end %>
-<h1><%= I18n.translate(locale, "Blocked channels") %></h1>
-<% if channels.empty? %><p><%= I18n.translate(locale, "No blocked channels") %></p><% end %>
-<% channels.each do |ucid, name| %>
-<div class="h-box">
-    <a href="/channel/<%= ucid %>"><%= HTML.escape(name) %></a>
-    <form action="/blocked_channels" method="post">
-        <input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get("csrf_token").as(String)) %>">
-        <input type="hidden" name="ucid" value="<%= ucid %>">
-        <input type="hidden" name="action" value="unblock">
-        <button class="pure-button" type="submit"><%= I18n.translate(locale, "Unblock channel") %></button>
-    </form>
+<%
+  section = "blocked-channels"
+  error = env.get?("blocked_error").try(&.as(String))
+  uncertain = env.get?("blocked_uncertain") == true
+  stale = env.get?("blocked_stale") == true
+  unavailable = env.get?("blocked_unavailable") == true
+  draft = env.get?("blocked_draft").try { |value| URI::Params.parse(value.as(String)) }
+  pending_id = draft.try(&.["ucid"]?) || ""
+  pending_action = draft.try(&.["action"]?) || ""
+  pending_name = draft.try(&.["name"]?) || pending_id
+  profile = Invidious::BrowserProfiles.render_scope(env)
+%>
+<% content_for "header" do %><title><%= I18n.translate(locale, "Blocked channels") %> - Invidious</title><script src="/js/blocked-channels.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_settings") %></h1></header>
+<div class="settings-layout"><%= rendered "overhaul/settings_navigation" %>
+<section class="settings-category" id="blocked-channel-manager" aria-labelledby="blocked-heading">
+<h2 id="blocked-heading"><%= I18n.translate(locale, "Blocked channels") %></h2>
+<p><%= I18n.translate(locale, "overhaul_blocks_scope") %></p>
+<p id="blocked-status" role="<%= error ? "alert" : "status" %>" tabindex="-1"><% if error %><%= HTML.escape(error) %><% elsif env.params.query["saved"]? == "1" %><%= I18n.translate(locale, "settings_saved") %><% end %></p>
+<% if draft %><p data-block-pending class="muted"><%= I18n.translate(locale, "overhaul_blocks_pending") %> <strong dir="auto"><%= HTML.escape(pending_name.empty? ? pending_id : pending_name) %></strong> · <code dir="ltr"><%= HTML.escape(pending_id) %></code> · <%= {"block", "unblock"}.includes?(pending_action) ? I18n.translate(locale, pending_action == "block" ? "Block channel" : "Unblock channel") : HTML.escape(pending_action) %></p><% end %>
+<div class="toolbar channel-readback"><button class="button js-only" data-block-check type="button" hidden><%= I18n.translate(locale, "overhaul_blocks_check") %></button><a class="button" href="/blocked_channels"><%= I18n.translate(locale, "settings_reload") %></a></div>
+<div class="js-only channel-list-search" hidden><label for="blocked-search"><%= I18n.translate(locale, "overhaul_blocks_search") %></label><input type="search" id="blocked-search" autocomplete="off" aria-controls="blocked-channel-list"></div>
+<div id="blocked-channel-list" role="list" aria-label="<%= I18n.translate(locale, "Blocked channels") %>">
+<% channels.each do |ucid, name| %><div class="channel-rule-row" role="listitem" data-block-channel="<%= HTML.escape(ucid) %>"><div class="channel-rule-identity"><a href="/channel/<%= URI.encode_www_form(ucid) %>" dir="auto"><%= HTML.escape(name.empty? ? ucid : name) %></a><code class="muted" dir="ltr"><%= HTML.escape(ucid) %></code></div><form action="/blocked_channels" method="post" data-block-unblock>
+<input type="hidden" name="csrf_token" value="<%= HTML.escape(csrf_token) %>"><input type="hidden" name="browser_profile" value="<%= profile %>"><input type="hidden" name="ucid" value="<%= HTML.escape(ucid) %>"><input type="hidden" name="name" value="<%= HTML.escape(name) %>"><input type="hidden" name="action" value="unblock">
+<button class="button" type="submit" <%= "disabled" if uncertain || stale || unavailable %>><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "Unblock channel") %></button>
+</form></div><% end %>
 </div>
-<% end %>
+<p id="blocked-empty" role="status" <%= "hidden" unless channels.empty? && !unavailable %>><%= I18n.translate(locale, "No blocked channels") %></p>
+</section></div>
+<template id="blocked-row"><div class="channel-rule-row" role="listitem"><div class="channel-rule-identity"><a data-block-channel-link dir="auto"></a><code class="muted" dir="ltr"></code></div><form action="/blocked_channels" method="post" data-block-unblock><input type="hidden" name="csrf_token"><input type="hidden" name="browser_profile"><input type="hidden" name="ucid"><input type="hidden" name="name"><input type="hidden" name="action" value="unblock"><button class="button" type="submit"><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "Unblock channel") %></button></form></div></template>
+<script id="blocked-manager-config" type="application/json"><%= {profile: profile, csrf: csrf_token, channels: channels.map { |id, name| {authorId: id, author: name} }, uncertain: uncertain, stale: stale, unavailable: unavailable, pending: {id: pending_id, action: pending_action}, words: {unblocked: I18n.translate(locale, "Channel unblocked"), refreshed: I18n.translate(locale, "overhaul_blocks_refreshed"), load: I18n.translate(locale, "overhaul_blocks_load_error"), error: I18n.translate(locale, "settings_save_error"), saving: I18n.translate(locale, "settings_saving"), unconfirmed: I18n.translate(locale, "overhaul_blocks_unconfirmed"), changed: I18n.translate(locale, "overhaul_blocks_changed"), profile: I18n.translate(locale, "overhaul_channel_profile_changed"), empty: I18n.translate(locale, "No blocked channels"), no_matches: I18n.translate(locale, "overhaul_channel_no_matches")}}.to_json.gsub("<", "\\u003c") %></script>

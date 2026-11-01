@@ -5,7 +5,7 @@ module Invidious::Frontend::Pagination
 
   private def link_start(str : String::Builder, url : String, post : Bool)
     unless post
-      str << %(<a href=") << HTML.escape(url) << %(" class="pure-button pure-button-secondary">)
+      str << %(<a href=") << HTML.escape(url) << %(" class="button">)
       return
     end
     uri = URI.parse(url)
@@ -13,20 +13,20 @@ module Invidious::Frontend::Pagination
     uri.query_params.each do |key, value|
       str << %(<input type="hidden" name=") << HTML.escape(key) << %(" value=") << HTML.escape(value) << %(">)
     end
-    str << %(<button type="submit" class="pure-button pure-button-secondary">)
+    str << %(<button type="submit" class="button">)
   end
 
   private def first_page(str : String::Builder, locale : String?, url : String)
-    str << %(<a href=") << url << %(" class="pure-button pure-button-secondary">)
+    str << %(<a href=") << HTML.escape(url) << %(" class="button">)
 
     if I18n.locale_is_rtl?(locale)
       # Inverted arrow ("first" points to the right)
       str << I18n.translate(locale, "First page")
       str << "&nbsp;&nbsp;"
-      str << %(<i class="icon ion-ios-arrow-forward"></i>)
+      str << %(<span class="pagination-direction">#{Icons.render("arrow-left")}</span>)
     else
       # Regular arrow ("first" points to the left)
-      str << %(<i class="icon ion-ios-arrow-back"></i>)
+      str << %(<span class="pagination-direction">#{Icons.render("arrow-left")}</span>)
       str << "&nbsp;&nbsp;"
       str << I18n.translate(locale, "First page")
     end
@@ -42,10 +42,10 @@ module Invidious::Frontend::Pagination
       # Inverted arrow ("previous" points to the right)
       str << I18n.translate(locale, "Previous page")
       str << "&nbsp;&nbsp;"
-      str << %(<i class="icon ion-ios-arrow-forward"></i>)
+      str << %(<span class="pagination-direction">#{Icons.render("arrow-left")}</span>)
     else
       # Regular arrow ("previous" points to the left)
-      str << %(<i class="icon ion-ios-arrow-back"></i>)
+      str << %(<span class="pagination-direction">#{Icons.render("arrow-left")}</span>)
       str << "&nbsp;&nbsp;"
       str << I18n.translate(locale, "Previous page")
     end
@@ -59,14 +59,14 @@ module Invidious::Frontend::Pagination
 
     if I18n.locale_is_rtl?(locale)
       # Inverted arrow ("next" points to the left)
-      str << %(<i class="icon ion-ios-arrow-back"></i>)
+      str << %(<span class="pagination-direction">#{Icons.render("chevron-right")}</span>)
       str << "&nbsp;&nbsp;"
       str << I18n.translate(locale, "Next page")
     else
       # Regular arrow ("next" points to the right)
       str << I18n.translate(locale, "Next page")
       str << "&nbsp;&nbsp;"
-      str << %(<i class="icon ion-ios-arrow-forward"></i>)
+      str << %(<span class="pagination-direction">#{Icons.render("chevron-right")}</span>)
     end
 
     str << (post ? "</button></form>" : "</a>")
@@ -110,6 +110,12 @@ module Invidious::Frontend::Pagination
   end
 
   def nav_ctoken(locale : String?, *, base_url : String | URI, ctoken : String?, first_page : Bool, params : URI::Params)
+    clean = URI.parse(base_url.to_s)
+    query = URI::Params.parse(params.to_s)
+    query.delete_all("continuation")
+    clean_params = clean.query_params
+    clean_params.delete_all("continuation")
+    clean.query = clean_params.to_s
     return String.build do |str|
       str << %(<div class="h-box">\n)
       str << %(<div class="page-nav-container flexible">\n)
@@ -117,7 +123,7 @@ module Invidious::Frontend::Pagination
       str << %(<div class="page-prev-container flex-left">)
 
       if !first_page
-        self.first_page(str, locale, base_url.to_s)
+        self.first_page(str, locale, HttpServer::Utils.add_params_to_url(clean, query).to_s)
       end
 
       str << %(</div>\n)
@@ -125,8 +131,8 @@ module Invidious::Frontend::Pagination
       str << %(<div class="page-next-container flex-right">)
 
       if !ctoken.nil?
-        params["continuation"] = ctoken
-        url_next = HttpServer::Utils.add_params_to_url(base_url, params)
+        query["continuation"] = ctoken
+        url_next = HttpServer::Utils.add_params_to_url(clean, query)
 
         self.next_page(str, locale, url_next.to_s)
       end

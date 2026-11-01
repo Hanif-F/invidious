@@ -1,0 +1,22 @@
+[
+  {
+    "path": "src/invidious/views/user/preferences.ecr",
+    "bytes": 34599,
+    "sha256": "6903f117cf813c5e523e14c157b2e85841520e7eba407c1f3a6eba9670914f80"
+  },
+  {
+    "path": "src/invidious/views/components/ai-filter-preferences.ecr",
+    "bytes": 2643,
+    "sha256": "a30b6f70421add23fd02738647470049fe7dce71c2882a3834c34ab3bac94e1a"
+  },
+  {
+    "path": "assets/js/preferences.js",
+    "bytes": 7292,
+    "sha256": "c1d3171df3e9d62601510b1520c297cbba32153a07e1dc36e5322ea3d63c6b0d"
+  },
+  {
+    "path": "assets/js/interface.js",
+    "bytes": 3393,
+    "sha256": "1500cd8ea0bf5143b012ee78d526dd329f356c331f9a6c442812307ab2288602"
+  }
+]

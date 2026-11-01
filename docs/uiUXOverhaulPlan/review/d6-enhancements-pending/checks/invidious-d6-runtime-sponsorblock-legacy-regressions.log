@@ -1,0 +1,294 @@
+TAP version 13
+# Subtest: chromium: native clip SponsorBlock, audio settings and source refresh retain saved bounds
+ok 1 - chromium: native clip SponsorBlock, audio settings and source refresh retain saved bounds
+  ---
+  duration_ms: 1371.426572
+  type: 'test'
+  ...
+# Subtest: firefox: native clip SponsorBlock, audio settings and source refresh retain saved bounds
+ok 2 - firefox: native clip SponsorBlock, audio settings and source refresh retain saved bounds
+  ---
+  duration_ms: 1605.268509
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock modes, overlay, keyboard, ranges and replay
+ok 3 - chromium: SponsorBlock modes, overlay, keyboard, ranges and replay
+  ---
+  duration_ms: 4039.847249
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock auto skips once per segment and resets on reload or another tab
+ok 4 - chromium: SponsorBlock auto skips once per segment and resets on reload or another tab
+  ---
+  duration_ms: 890.797336
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock disabled avoids requests
+ok 5 - chromium: SponsorBlock disabled avoids requests
+  ---
+  duration_ms: 216.783479
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock modes, overlay, keyboard, ranges and replay
+ok 6 - firefox: SponsorBlock modes, overlay, keyboard, ranges and replay
+  ---
+  duration_ms: 4301.753549
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock auto skips once per segment and resets on reload or another tab
+ok 7 - firefox: SponsorBlock auto skips once per segment and resets on reload or another tab
+  ---
+  duration_ms: 1657.54662
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock disabled avoids requests
+ok 8 - firefox: SponsorBlock disabled avoids requests
+  ---
+  duration_ms: 501.8153
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock overlap, end boundary and upstream failure
+ok 9 - chromium: SponsorBlock overlap, end boundary and upstream failure
+  ---
+  duration_ms: 1144.871735
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock overlap, end boundary and upstream failure
+ok 10 - firefox: SponsorBlock overlap, end boundary and upstream failure
+  ---
+  duration_ms: 1999.881324
+  type: 'test'
+  ...
+# Subtest: chromium: SponsorBlock respects clip end and loop in audio mode
+ok 11 - chromium: SponsorBlock respects clip end and loop in audio mode
+  ---
+  duration_ms: 504.434432
+  type: 'test'
+  ...
+# Subtest: firefox: SponsorBlock respects clip end and loop in audio mode
+ok 12 - firefox: SponsorBlock respects clip end and loop in audio mode
+  ---
+  duration_ms: 789.136419
+  type: 'test'
+  ...
+# Subtest: chromium: mobile settings preserve playing, captions, sharing and SponsorBlock
+not ok 13 - chromium: mobile settings preserve playing, captions, sharing and SponsorBlock
+  ---
+  duration_ms: 30404.771878
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:3477:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.tap: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.vjs-mobile-settings')[22m
+    [2m    - locator resolved to <button type="button" title="Settings" aria-disabled="false" aria-haspopup="dialog" class="vjs-control vjs-button vjs-mobile-settings">…</button>[22m
+    [2m  - attempting tap action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <main tabindex="-1" class="app-main" id="main-content" data-browse-region="">…</main> intercepts pointer events[22m
+    [2m    - retrying tap action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <main tabindex="-1" class="app-main" id="main-content" data-browse-region="">…</main> intercepts pointer events[22m
+    [2m    - retrying tap action[22m
+    [2m      - waiting 100ms[22m
+    [2m    4 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <main tabindex="-1" class="app-main" id="main-content" data-browse-region="">…</main> intercepts pointer events[22m
+    [2m    - retrying tap action[22m
+    [2m      - waiting 500ms[22m
+    [2m    52 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying tap action[22m
+    [2m       - waiting 500ms[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:3488:52)
+  ...
+# Subtest: firefox: mobile settings preserve playing, captions, sharing and SponsorBlock
+not ok 14 - firefox: mobile settings preserve playing, captions, sharing and SponsorBlock
+  ---
+  duration_ms: 30734.298982
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:3477:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.tap: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.vjs-mobile-settings')[22m
+    [2m    - locator resolved to <button type="button" title="Settings" aria-disabled="false" aria-haspopup="dialog" class="vjs-control vjs-button vjs-mobile-settings">…</button>[22m
+    [2m  - attempting tap action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <main tabindex="-1" class="app-main" id="main-content" data-browse-region="">…</main> intercepts pointer events[22m
+    [2m    - retrying tap action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <main tabindex="-1" class="app-main" id="main-content" data-browse-region="">…</main> intercepts pointer events[22m
+    [2m    - retrying tap action[22m
+    [2m      - waiting 100ms[22m
+    [2m    4 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <main tabindex="-1" class="app-main" id="main-content" data-browse-region="">…</main> intercepts pointer events[22m
+    [2m    - retrying tap action[22m
+    [2m      - waiting 500ms[22m
+    [2m    52 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying tap action[22m
+    [2m       - waiting 500ms[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:3488:52)
+  ...
+# Subtest: chromium: channel SponsorBlock editor supports mobile and no-JavaScript forms
+not ok 15 - chromium: channel SponsorBlock editor supports mobile and no-JavaScript forms
+  ---
+  duration_ms: 212.790859
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4303:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4315:20)
+    runNextTicks (node:internal/process/task_queues:64:5)
+    process.processImmediate (node:internal/timers:452:9)
+    process.callbackTrampoline (node:internal/async_hooks:130:17)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: firefox: channel SponsorBlock editor supports mobile and no-JavaScript forms
+ok 16 - firefox: channel SponsorBlock editor supports mobile and no-JavaScript forms
+  ---
+  duration_ms: 1240.010657
+  type: 'test'
+  ...
+# Subtest: chromium: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests
+not ok 17 - chromium: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests
+  ---
+  duration_ms: 31132.046444
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4452:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.textContent: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('noscript')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4499:58)
+  ...
+# Subtest: firefox: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests
+not ok 18 - firefox: guest channel SponsorBlock saves inherit, reload, apply to watch and embed, and reset without account requests
+  ---
+  duration_ms: 32072.379549
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4452:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.textContent: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('noscript')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4499:58)
+  ...
+# Subtest: chromium: manual chapter markers and SponsorBlock hover priority
+ok 19 - chromium: manual chapter markers and SponsorBlock hover priority
+  ---
+  duration_ms: 362.786234
+  type: 'test'
+  ...
+# Subtest: chromium: manual chapters survive disabled and failed SponsorBlock
+not ok 20 - chromium: manual chapters survive disabled and failed SponsorBlock
+  ---
+  duration_ms: 289.379645
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4677:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(tip.x >= playerBox.x && tip.x + tip.width <= playerBox.x + playerBox.width)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4694:20)
+    runNextTicks (node:internal/process/task_queues:64:5)
+    process.processImmediate (node:internal/timers:452:9)
+    process.callbackTrampoline (node:internal/async_hooks:130:17)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: firefox: manual chapter markers and SponsorBlock hover priority
+ok 21 - firefox: manual chapter markers and SponsorBlock hover priority
+  ---
+  duration_ms: 714.239474
+  type: 'test'
+  ...
+# Subtest: firefox: manual chapters survive disabled and failed SponsorBlock
+not ok 22 - firefox: manual chapters survive disabled and failed SponsorBlock
+  ---
+  duration_ms: 577.79601
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4677:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(tip.x >= playerBox.x && tip.x + tip.width <= playerBox.x + playerBox.width)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/ui.test.cjs:4694:20)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 15
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 147516.471764

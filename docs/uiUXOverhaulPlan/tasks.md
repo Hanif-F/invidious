@@ -2,7 +2,7 @@
 
 [Master plan](README.md) · [Coverage](coverage.md) · [Design](design-system.md) · [Verification](verification.md) · [Progress](progress.md)
 
-**Planning only: none of D0–D9 is authorized to execute yet. Start only after the user explicitly requests implementation.**
+**Implementation authorized on 26 October 2026 by the user’s explicit overhaul request. Follow D0–D9 in dependency order and retain the D1 user visual checkpoint.**
 
 All tasks are repository-local. The user deploys/activates on the remote host. Do not run deployment commands, change remote configuration or treat local synthetic playback as a deployed-server pass. Each task updates its current guide, matrix status and evidence as it changes behavior. The final cleanup is additional to these incremental updates.
 
@@ -42,13 +42,19 @@ All tasks are repository-local. The user deploys/activates on the remote host. D
 
 **Acceptance:** one media element across tabs/layout/docking/settings; no restart/position loss or accidental title leak; actual Video.js synthetic media checks; all controls/shortcuts/stream identity/quality/audio/captions/VR/annotations/storyboards/chapters/resume/diagnostics semantics preserved. Test fullscreen/PiP handoff to the extent browser automation permits and document limits.
 
+**Completed:** [D5 acceptance and reviewed images](d5-acceptance.md), [source/check evidence](review/d5-evidence.json). Utility/editor/enhancement work is accepted in [D6](d6-acceptance.md).
+
 ## D6 — Transcripts, comments, replay chat, clip editor and enhancements
 
 **Dependencies:** D2/D5 and shared thread/list components. **Implementation:** transcript follow/manual navigation, compact comment/reply sources, synchronized panel-only chat, removal of browser overlay controls/code without native-field resets, same-player side clip editor and standalone fallback. Apply dedicated settings categories and contextual shortcuts for SponsorBlock/DeArrow/AI/blocks/channel masking. Preserve contribution/identity isolation and no ambiguous write retries.
 
 **Acceptance:** independent loading/unavailable/failure/retry states; chat seek/offset/filter/range handling; no overlay web UI; clip preview restores playhead/bounds/state and never pollutes full-video progress; immutable publication/range constraints and draft failures; enhancement coexistence/filter precedence/disabled lookups; hidden title/thumbnail states do not leak through auxiliary labels or notifications. Existing APIs/scopes remain compatible.
 
+**Checkpoint:** transcript/comments and replay/chat Settings are accepted in the [utility](d6-utilities-checkpoint.md) and [chat](d6-chat-checkpoint.md) records. Same-player clips are accepted in the [clip checkpoint](d6-clips-checkpoint.md). The [SponsorBlock editor checkpoint](d6-sponsorblock-editor-checkpoint.md) verifies global/channel editing. The [masking editor checkpoint](d6-masking-editor-checkpoint.md) verifies title/thumbnail rule editing. The [block-manager checkpoint](d6-blocks-checkpoint.md) verifies structured channel management and contextual write/Undo safety. The [identity editor checkpoint](d6-identity-editor-checkpoint.md) verifies private imports and native/account isolation. The [contribution dialog checkpoint](d6-contributions-checkpoint.md) verifies explicit votes/review, uncertain-write protection and lazy asset lifetimes. The [Settings entry checkpoint](d6-settings-entry-checkpoint.md) verifies the default category, recognized old anchors and retained receipt compatibility. Full runtime coexistence is accepted in the [D6 acceptance record](d6-acceptance.md) and [evidence](review/d6-enhancements-evidence.json), including 408 cumulative desktop cases and six final focused filename checks. D7–D9 completion is reconciled in the [final audit](d9-requirement-audit.md).
+
 ## D7 — Account, data, administrative, standalone and embed pages
+
+**Complete:** [D7 acceptance](d7-acceptance.md), including account/data, verification/recovery, reading/errors and minimal embedded-player checkpoints. Final integration, focused recovery/visual checks and production backend evidence retain explicit phase boundaries. D8–D9 completion is reconciled in the [final audit](d9-requirement-audit.md).
 
 **Dependencies:** D1/D2 and shared forms/dialogs. **Implementation:** migrate every account/security/deletion/token/authorization/TV form; source-select import and grouped export; admin and verification/recovery shells; legal/privacy/licenses/errors/messages/unavailable clips; embed controls shared with watch but without navigation.
 
@@ -60,11 +66,15 @@ All tasks are repository-local. The user deploys/activates on the remote host. D
 
 **Acceptance:** searches show no accidental runtime legacy references, all listed components use the shared design, relevant specs/browser tests and normal/API-only builds pass, DB checks use disposable guarded databases, no duplicate handlers/per-item calls/player recreation. No narrow green subset used as a full completion claim.
 
+**Complete:** [D8 acceptance](d8-acceptance.md), [V01–V36 audit](d8-verification.md) and [evidence](review/d8-evidence.json). The complete frontend run is 902/902; full specs, normal/API builds and guarded backend checks pass. D9 completion is recorded in [its acceptance](d9-acceptance.md).
+
 ## D9 — Final documentation reconciliation and user handoff
 
 **Dependencies:** D8. **Implementation:** perform the second semantic handbook pass, replace Diary authoring guidance, update active screenshots/destinations/contracts/state scopes/references/test instructions and compatibility notes, remove transitional or abandoned instructions. Add documentation CI checks. Reconcile every coverage row and acceptance item against actual evidence, not task intent.
 
 **Acceptance:** complete requirements-to-evidence audit, clean generated/link/whitespace checks, accurate local versus remote/upstream limitations, cache-refresh/build/deployment/rollback notes for the user, no remote action performed. Mark the overall goal complete only when all required repository work and requested visual review are satisfied.
+
+**Complete:** [D9 acceptance](d9-acceptance.md), [semantic reconciliation](d9-semantic-audit.md), [final requirements audit](d9-requirement-audit.md) and [user handoff](user-handoff.md). All D0–D9 repository stages are accepted; remote deployment remains the user’s separate action.
 
 ## Task execution rules
 

@@ -8,7 +8,7 @@ The following inventory covers the user-visible capabilities implemented in this
 
 | Feature | Behavior and entry point | Details |
 | --- | --- | --- |
-| Configurable home/navigation | `/` selects a configured home; feed menu entries follow preferences | [Preferences](preferences.md) |
+| Configurable home/navigation | `/` respects the saved home; the sidebar exposes role-appropriate destinations | [Preferences](preferences.md) |
 | Popular | `/feed/popular` uses locally collected channel-video data; can be disabled | [Discovery](search-and-feeds.md) |
 | Trending | `/feed/trending` requests upstream trending content with region/category choices | [Discovery](search-and-feeds.md) |
 | Search | `/search` and `/results` support content type, date, duration, features and relevance/views sorting | [Discovery](search-and-feeds.md) |
@@ -35,7 +35,7 @@ The following inventory covers the user-visible capabilities implemented in this
 | Legacy annotations | Optional archived annotations, including subscribed-channel preference and caching | [Playback](playback.md) |
 | VR | Projection-aware VR support for supported streams/browsers | [Playback](playback.md) |
 | Comments | YouTube/Reddit source preferences, continuation/replies and sorting | [Playback](playback.md) |
-| Replay chat | Archived livestream chat synchronized to video, filters, overlays and timing offsets | [Playback](playback.md) |
+| Replay chat | Archived livestream chat in a synchronized browser panel, with filters and timing offsets; native overlay fields remain compatible | [Playback](playback.md) |
 | Queue and next video | Playlist/mix queues, occurrence-aware current item, owner removal, loop/autoplay/continue controls | [Playback](playback.md) |
 | Watch indicators | Watched state and saved progress displayed on supported cards | [Accounts and library](accounts-and-library.md) |
 | Position sync | Optional account-backed resume with browser fallback and profile isolation | [Playback](playback.md) |
@@ -64,9 +64,9 @@ The following inventory covers the user-visible capabilities implemented in this
 | Feature | Behavior | Details |
 | --- | --- | --- |
 | Preferences | Account JSON or guest cookie; playback, navigation, privacy, feed and interface settings | [Preferences](preferences.md) |
-| Appearance | Diary design with Light, Dark and System color modes | [Preferences](preferences.md), [theming](theming.md) |
+| Appearance | Shared desktop design with Light, Dark and System color modes | [Preferences](preferences.md), [theming](theming.md) |
 | Localization | Locale JSON, Accept-Language selection, per-request override and English fallback, RTL support | [Frontend](frontend.md) |
-| Thin/compact layouts | Thin mode reduces imagery; UI density selects balanced/compact layouts | [Preferences](preferences.md) |
+| Layout compatibility | Desktop uses one layout; native/legacy density and thin-mode values remain readable and ordinary API HTML honors thin mode | [Preferences](preferences.md) |
 | Manual channel blocks | Per-account blocks applied on supported personalized browser/native surfaces; direct access remains possible | [Accounts](accounts-and-library.md) |
 | Member-video visibility | Opt-in display of members-only results; does not grant membership or unlock playback | [Discovery](search-and-feeds.md) |
 | SponsorBlock | Eight segment categories, modes/colors, per-channel overrides and local browser changes | [SponsorBlock](sponsorblock.md) |

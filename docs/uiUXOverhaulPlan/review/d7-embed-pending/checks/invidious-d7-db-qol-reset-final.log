@@ -1,0 +1,37 @@
+NOTICE:  drop cascades to 33 other objects
+DETAIL:  drop cascades to table invidious_migrations
+drop cascades to table channels
+drop cascades to table videos
+drop cascades to table channel_videos
+drop cascades to table users
+drop cascades to table session_ids
+drop cascades to table nonces
+drop cascades to table annotations
+drop cascades to type privacy
+drop cascades to table playlists
+drop cascades to table playlist_videos
+drop cascades to table playback_positions
+drop cascades to table blocked_channels
+drop cascades to table dearrow_identities
+drop cascades to table watch_history
+drop cascades to table auth_rate_limits
+drop cascades to table chat_timing_offsets
+drop cascades to table clips
+drop cascades to table saved_playlists
+drop cascades to table channel_avatars
+drop cascades to table ai_slist_snapshots
+drop cascades to table channel_handles
+drop cascades to table tv_pairings
+drop cascades to table original_video_titles
+drop cascades to table bot_protection_settings
+drop cascades to materialized view subscriptions_45ee3cb4cb582447c758c9bc3b7b5f8348b98ba4cb530f1c3
+drop cascades to materialized view subscriptions_cee891737be69efd5ec7d8aaf5120c74fa3928ce0889462f5
+drop cascades to materialized view subscriptions_60fb82cfd524217bbd160e8381899ebc0f11cb4d192dae311
+drop cascades to materialized view subscriptions_d7f1c63d1a53d5bc213ce732887e7a9c6587d3e6ced311311
+drop cascades to materialized view subscriptions_6e2f945bd5213d8fe385a669cf2299a0be18ba65671e36323
+drop cascades to materialized view subscriptions_31637f650680ae50fc5e11d5cc27c409984754ab2a592bbb9
+drop cascades to materialized view subscriptions_f59379c128abce80b73717b7f44203e0222afdf3edec9c4c1
+drop cascades to materialized view subscriptions_598273c81ee94a7d499236f5f581d936fa7df5f7ae75145c5
+Owned loopback container: 5cdee0a1d42edad25fc8f34c9aee32b6664933104b199708e041a2c57a5e67e8 account schema/other clients: invidious_accounts_test|24|0
+CREATE SCHEMA
+Owned schema reset to zero tables.

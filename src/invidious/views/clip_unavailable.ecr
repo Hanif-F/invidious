@@ -1,5 +1,5 @@
-<% content_for "header" do %><title><%= HTML.escape(clip.title) %> - Invidious</title><% end %>
-<h1 dir="auto"><%= HTML.escape(clip.title) %></h1>
-<p><%= I18n.translate(locale, "clips_unavailable") %></p>
-<p><a href="<%= clip.permalink %>"><%= I18n.translate(locale, "ui_retry") %></a> · <a href="/watch?v=<%= clip.video_id %>"><%= I18n.translate(locale, "clips_full_video") %></a></p>
-<% if user && user.email == clip.owner %><p><a href="/delete_clip?id=<%= clip.id %>"><%= I18n.translate(locale, "clips_delete") %></a></p><% end %>
+<% content_for "header" do %><title><%= I18n.translate(locale, "overhaul_clip_unavailable_title") %> - Invidious</title><link rel="stylesheet" href="/css/clips.css?v=<%= ASSET_COMMIT %>"><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_clip_unavailable_title") %></h1></header>
+<section class="clip-confirmation"><h2 dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, clip.video_id, clip.ucid, clip.title, nil, false, false, custom: true) %></h2>
+<p><%= I18n.translate(locale, "clips_unavailable") %></p><p class="muted"><%= Invidious::Clips::Validation.timestamp(clip.start_time) %> – <%= Invidious::Clips::Validation.timestamp(clip.end_time) %> · <%= I18n.translate(locale, "clips_by") %> <span dir="auto"><%= HTML.escape(clip.creator) %></span></p>
+<div class="toolbar"><a class="button button-primary" href="<%= HTML.escape(clip.permalink) %>"><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "ui_retry") %></a><a class="button" href="/watch?v=<%= URI.encode_www_form(clip.video_id) %>"><%= I18n.translate(locale, "clips_full_video") %></a><% if user && user.email == clip.owner %><a class="button button-danger" href="/delete_clip?id=<%= URI.encode_www_form(clip.id) %>"><%= Invidious::Frontend::Icons.render("trash-2") %><%= I18n.translate(locale, "clips_delete") %></a><% end %></div></section>

@@ -1,0 +1,552 @@
+TAP version 13
+# Subtest: chromium: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+ok 1 - chromium: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+  ---
+  duration_ms: 1290.868947
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+ok 2 - firefox: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+  ---
+  duration_ms: 1566.102358
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime automatic watch/listing owners handle hints and cached returns without manual script injection
+ok 3 - chromium: D6 runtime automatic watch/listing owners handle hints and cached returns without manual script injection
+  ---
+  duration_ms: 617.504041
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch content updates filters, original titles and advancement on the same media
+ok 4 - chromium: D6 watch content updates filters, original titles and advancement on the same media
+  ---
+  duration_ms: 618.774873
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch content activates an initially empty Up next without rebuilding playback
+ok 5 - chromium: D6 watch content activates an initially empty Up next without rebuilding playback
+  ---
+  duration_ms: 497.495248
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation
+ok 6 - chromium: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation
+  ---
+  duration_ms: 552.807056
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch content failure keeps Queue usable and Retry reachable outside inactive tabs
+ok 7 - chromium: D6 watch content failure keeps Queue usable and Retry reachable outside inactive tabs
+  ---
+  duration_ms: 467.663377
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads
+ok 8 - chromium: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads
+  ---
+  duration_ms: 474.528091
+  type: 'test'
+  ...
+# Subtest: chromium: D6 watch content rejects late reads after owner changes, cached returns and profile disposal
+ok 9 - chromium: D6 watch content rejects late reads after owner changes, cached returns and profile disposal
+  ---
+  duration_ms: 1219.732882
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime automatic watch/listing owners handle hints and cached returns without manual script injection
+ok 10 - firefox: D6 runtime automatic watch/listing owners handle hints and cached returns without manual script injection
+  ---
+  duration_ms: 1066.415287
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content updates filters, original titles and advancement on the same media
+ok 11 - firefox: D6 watch content updates filters, original titles and advancement on the same media
+  ---
+  duration_ms: 914.901091
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content activates an initially empty Up next without rebuilding playback
+ok 12 - firefox: D6 watch content activates an initially empty Up next without rebuilding playback
+  ---
+  duration_ms: 890.08556
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation
+ok 13 - firefox: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation
+  ---
+  duration_ms: 848.884642
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content failure keeps Queue usable and Retry reachable outside inactive tabs
+ok 14 - firefox: D6 watch content failure keeps Queue usable and Retry reachable outside inactive tabs
+  ---
+  duration_ms: 768.371956
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads
+ok 15 - firefox: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads
+  ---
+  duration_ms: 756.298728
+  type: 'test'
+  ...
+# Subtest: firefox: D6 watch content rejects late reads after owner changes, cached returns and profile disposal
+ok 16 - firefox: D6 watch content rejects late reads after owner changes, cached returns and profile disposal
+  ---
+  duration_ms: 2637.227141
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+ok 17 - chromium: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+  ---
+  duration_ms: 618.204392
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes
+ok 18 - chromium: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes
+  ---
+  duration_ms: 1252.520937
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry
+ok 19 - chromium: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry
+  ---
+  duration_ms: 1681.953027
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID
+ok 20 - chromium: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID
+  ---
+  duration_ms: 266.145094
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+ok 21 - firefox: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place
+  ---
+  duration_ms: 930.354074
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes
+ok 22 - firefox: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes
+  ---
+  duration_ms: 1992.719594
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry
+ok 23 - firefox: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry
+  ---
+  duration_ms: 2614.090082
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID
+ok 24 - firefox: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID
+  ---
+  duration_ms: 491.620804
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+ok 25 - chromium: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+  ---
+  duration_ms: 623.557811
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+ok 26 - chromium: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+  ---
+  duration_ms: 419.880238
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads
+ok 27 - chromium: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads
+  ---
+  duration_ms: 600.448785
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order
+ok 28 - chromium: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order
+  ---
+  duration_ms: 419.984445
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking rejects pending title reveals after rule and profile changes
+ok 29 - chromium: D6 runtime masking rejects pending title reveals after rule and profile changes
+  ---
+  duration_ms: 866.878357
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read
+ok 30 - chromium: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read
+  ---
+  duration_ms: 462.251087
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+ok 31 - firefox: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media
+  ---
+  duration_ms: 1304.154934
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+ok 32 - firefox: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback
+  ---
+  duration_ms: 755.799422
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads
+ok 33 - firefox: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads
+  ---
+  duration_ms: 1067.816753
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order
+ok 34 - firefox: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order
+  ---
+  duration_ms: 735.937224
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking rejects pending title reveals after rule and profile changes
+ok 35 - firefox: D6 runtime masking rejects pending title reveals after rule and profile changes
+  ---
+  duration_ms: 1498.300782
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read
+ok 36 - firefox: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read
+  ---
+  duration_ms: 750.383908
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime browse unchanged owner checks retain appended pages, Back scroll and reusable descriptors
+ok 37 - chromium: D6 runtime browse unchanged owner checks retain appended pages, Back scroll and reusable descriptors
+  ---
+  duration_ms: 297.536573
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime browse changed Back owner state retires old continuations and refreshes through ordinary navigation
+ok 38 - chromium: D6 runtime browse changed Back owner state retires old continuations and refreshes through ordinary navigation
+  ---
+  duration_ms: 335.495824
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime browse failed owner checks and late aborted pages cannot unlock or duplicate a later continuation
+ok 39 - chromium: D6 runtime browse failed owner checks and late aborted pages cannot unlock or duplicate a later continuation
+  ---
+  duration_ms: 365.589981
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime browse uses the history owner key and keeps private POST state out of durable previews
+ok 40 - chromium: D6 runtime browse uses the history owner key and keeps private POST state out of durable previews
+  ---
+  duration_ms: 331.406916
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime browse unchanged owner checks retain appended pages, Back scroll and reusable descriptors
+ok 41 - firefox: D6 runtime browse unchanged owner checks retain appended pages, Back scroll and reusable descriptors
+  ---
+  duration_ms: 539.568224
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime browse changed Back owner state retires old continuations and refreshes through ordinary navigation
+ok 42 - firefox: D6 runtime browse changed Back owner state retires old continuations and refreshes through ordinary navigation
+  ---
+  duration_ms: 737.505838
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime browse failed owner checks and late aborted pages cannot unlock or duplicate a later continuation
+ok 43 - firefox: D6 runtime browse failed owner checks and late aborted pages cannot unlock or duplicate a later continuation
+  ---
+  duration_ms: 724.29481
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime browse uses the history owner key and keeps private POST state out of durable previews
+ok 44 - firefox: D6 runtime browse uses the history owner key and keeps private POST state out of durable previews
+  ---
+  duration_ms: 1502.102287
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime auxiliary contribution masking tracks pending/rule changes and offers a read-only Retry inside the dialog
+ok 45 - chromium: D6 runtime auxiliary contribution masking tracks pending/rule changes and offers a read-only Retry inside the dialog
+  ---
+  duration_ms: 890.602435
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime auxiliary browser notifications hide titles during checks and follow accepted rules without reordering subscriptions
+ok 46 - chromium: D6 runtime auxiliary browser notifications hide titles during checks and follow accepted rules without reordering subscriptions
+  ---
+  duration_ms: 245.159331
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner foreground checks refresh without a change channel or media replacement
+ok 47 - chromium: D6 runtime owner foreground checks refresh without a change channel or media replacement
+  ---
+  duration_ms: 394.267501
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime auxiliary contribution masking tracks pending/rule changes and offers a read-only Retry inside the dialog
+ok 48 - firefox: D6 runtime auxiliary contribution masking tracks pending/rule changes and offers a read-only Retry inside the dialog
+  ---
+  duration_ms: 1277.016813
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime auxiliary browser notifications hide titles during checks and follow accepted rules without reordering subscriptions
+ok 49 - firefox: D6 runtime auxiliary browser notifications hide titles during checks and follow accepted rules without reordering subscriptions
+  ---
+  duration_ms: 1101.475708
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner foreground checks refresh without a change channel or media replacement
+ok 50 - firefox: D6 runtime owner foreground checks refresh without a change channel or media replacement
+  ---
+  duration_ms: 663.470594
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+ok 51 - chromium: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+  ---
+  duration_ms: 391.403057
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+ok 52 - chromium: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+  ---
+  duration_ms: 5204.837666
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+ok 53 - chromium: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+  ---
+  duration_ms: 561.595935
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+ok 54 - chromium: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+  ---
+  duration_ms: 699.100443
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+ok 55 - chromium: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+  ---
+  duration_ms: 874.220033
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+ok 56 - chromium: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+  ---
+  duration_ms: 373.521962
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+ok 57 - firefox: D6 runtime owner reads coalesce hints, validate projections and retain the current media
+  ---
+  duration_ms: 674.6486
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+ok 58 - firefox: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry
+  ---
+  duration_ms: 8283.870481
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+ok 59 - firefox: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds
+  ---
+  duration_ms: 782.353669
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+ok 60 - firefox: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules
+  ---
+  duration_ms: 1199.713183
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+ok 61 - firefox: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry
+  ---
+  duration_ms: 2104.402491
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+ok 62 - firefox: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice
+  ---
+  duration_ms: 630.379524
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+ok 63 - chromium: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+  ---
+  duration_ms: 489.928376
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+ok 64 - chromium: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+  ---
+  duration_ms: 1458.556196
+  type: 'test'
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+not ok 65 - chromium: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+  ---
+  duration_ms: 339.91693
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:2872:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'disabled'
+    - 'suspended'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'suspended'
+  actual: 'disabled'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:2892:24)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: chromium: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+ok 66 - chromium: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+  ---
+  duration_ms: 312.703508
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+ok 67 - firefox: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media
+  ---
+  duration_ms: 776.956247
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+ok 68 - firefox: D6 runtime SponsorBlock failed reads require an explicit Settings retry
+  ---
+  duration_ms: 2379.553345
+  type: 'test'
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+not ok 69 - firefox: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal
+  ---
+  duration_ms: 588.448294
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:2872:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'disabled'
+    - 'suspended'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'suspended'
+  actual: 'disabled'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:2892:24)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: firefox: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+ok 70 - firefox: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged
+  ---
+  duration_ms: 582.955143
+  type: 'test'
+  ...
+# Subtest: chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 71 - chromium: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 678.774938
+  type: 'test'
+  ...
+# Subtest: firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+ok 72 - firefox: D6 clip editing suspends SponsorBlock skips and optional docking on the same media
+  ---
+  duration_ms: 982.970687
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+not ok 73 - chromium: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+  ---
+  duration_ms: 10351.535086
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:3359:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('#video-actions-undo')[22m
+    [2m    - locator resolved to <button hidden="" type="button" class="button" id="video-actions-undo">Undo</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    19 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:3361:1291)
+  ...
+# Subtest: chromium: D6 uncertain contextual block responses retain visible content until an explicit canonical reload
+ok 74 - chromium: D6 uncertain contextual block responses retain visible content until an explicit canonical reload
+  ---
+  duration_ms: 811.361227
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+not ok 75 - firefox: D6 contextual blocking preserves retry/Undo and keeps personal library rows in place
+  ---
+  duration_ms: 10638.794976
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:3359:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('#video-actions-undo')[22m
+    [2m    - locator resolved to <button hidden="" type="button" class="button" id="video-actions-undo">Undo</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    19 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is not visible[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/overhaul.test.cjs:3361:1291)
+  ...
+# Subtest: firefox: D6 uncertain contextual block responses retain visible content until an explicit canonical reload
+ok 76 - firefox: D6 uncertain contextual block responses retain visible content until an explicit canonical reload
+  ---
+  duration_ms: 1814.080865
+  type: 'test'
+  ...
+1..76
+# tests 76
+# suites 0
+# pass 72
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 98664.298782

@@ -7,14 +7,18 @@ module Invidious::DeArrow::AccountContributions
     end
   end
 
-  def import_identity(email : String, private_id : String)
+  def import_identity(email : String, private_id : String, revision : String? = nil, revision_key : String? = nil)
     require_storage
     id = private_id.strip
     return if id.empty?
     unless DeArrow::IdentityCipher.valid_id?(id)
       raise DeArrow::ContributionError.new(400, "Enter a private user ID of 30–256 letters, numbers, underscores or hyphens; not a public ID or license key.")
     end
-    Database::DeArrowIdentities.import(email, id, CONFIG.dearrow_identity_key)
+    if revision && revision_key
+      Database::DeArrowIdentities.import_if_current(email, id, CONFIG.dearrow_identity_key, revision, revision_key)
+    else
+      Database::DeArrowIdentities.import(email, id, CONFIG.dearrow_identity_key)
+    end
   end
 
   def submit(email : String, id : String, action : String, title : String = "", confirmed : Bool = false,

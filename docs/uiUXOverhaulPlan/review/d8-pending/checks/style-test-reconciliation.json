@@ -1,0 +1,308 @@
+[
+  {
+    "oldCaseFamily": "Diary local lettering loads and decorations stay noninteractive",
+    "registeredCases": [
+      "chromium: Diary local lettering loads and decorations stay noninteractive",
+      "firefox: Diary local lettering loads and decorations stay noninteractive"
+    ],
+    "oldCallbackSha256": "9596959b69b24f0c7f2ff23b579156bea30b41df3d4c6a70f33d72f6525f7ee1",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 representative light/dark desktop matrix"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 RTL, enlarged desktop text, forced colors and contrast"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "Diary responsive paper layouts",
+    "registeredCases": [
+      "chromium: Diary responsive paper layouts",
+      "firefox: Diary responsive paper layouts"
+    ],
+    "oldCallbackSha256": "569541364a7acfa2cffe849b7f35721b6cb98bd2a024689619d8e8bf084a520a",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 representative light/dark desktop matrix"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 RTL, enlarged desktop text, forced colors and contrast"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D4 light/dark screen matrix fits desktop widths and retains real mix save forms"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D5 light/dark watch geometry and contained controls fit the desktop matrix"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 clip editor light, dark, enlarged RTL and forced-color states fit the desktop panel"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "preferences sections, labels, and form fields",
+    "registeredCases": [
+      "chromium: preferences sections, labels, and form fields",
+      "firefox: preferences sections, labels, and form fields"
+    ],
+    "oldCallbackSha256": "d3dcfb6a1d2d5543ce461d7508a734cefa189659aed5ea8885596b6ac45a1a23",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 all nine category forms and normal HTML fallback without JavaScript"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 Settings default entry is the real category for guests and accounts without retired or private controls"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "header is horizontal and Library navigation is always available",
+    "registeredCases": [
+      "chromium: header is horizontal and Library navigation is always available",
+      "firefox: header is horizontal and Library navigation is always available"
+    ],
+    "oldCallbackSha256": "107791b2b793c68c4874e4307b1c614030fbf1210e68662144bf5cd2d44246c8",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 shell menus, collapse, watch drawer and focus"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D4 owned/saved library, seeds, forms and desktop geometry"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "account link lives in Preferences and the mobile header stays visible",
+    "registeredCases": [
+      "chromium: account link lives in Preferences and the mobile header stays visible",
+      "firefox: account link lives in Preferences and the mobile header stays visible"
+    ],
+    "oldCallbackSha256": "4c86811aca63241a9b9e42f57a021fb35a580f4f0de911d230f7a99c2fd72a61",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 shell menus, collapse, watch drawer and focus"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D6 Settings default entry is the real category for guests and accounts without retired or private controls"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "header stays visible on tablet and desktop pages",
+    "registeredCases": [
+      "chromium: header stays visible on tablet and desktop pages",
+      "firefox: header stays visible on tablet and desktop pages"
+    ],
+    "oldCallbackSha256": "1a810c01a1087203923abba2d19bd0c00f942c0d2b529573dde60cf298adba43",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 category drafts, local search, Discard and guarded departure"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "sticky header covers thumbnails while video menus can overlap it",
+    "registeredCases": [
+      "chromium: sticky header covers thumbnails while video menus can overlap it",
+      "firefox: sticky header covers thumbnails while video menus can overlap it"
+    ],
+    "oldCallbackSha256": "bd703ecd5b8578ba5f942d3ffa0c7c55ae86ce184a65dfe03eacef117771a728",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 shell menus, collapse, watch drawer and focus"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "color-mode switching preserves density and page layout",
+    "registeredCases": [
+      "chromium: color-mode switching preserves density and page layout",
+      "firefox: color-mode switching preserves density and page layout"
+    ],
+    "oldCallbackSha256": "4dd4904695d3da54d18f2f983b48c67cf05ea08b8a61b77ea1af978f47231172",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 appearance preview/Discard and live System mode"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 canonical category read-back, unchecked values and duplicate submit guard"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "responsive layouts and representative visual snapshots",
+    "registeredCases": [
+      "chromium: responsive layouts and representative visual snapshots",
+      "firefox: responsive layouts and representative visual snapshots"
+    ],
+    "oldCallbackSha256": "04f6fa9b288232de0e276e5de741a68ac7836b7387064f0dba81f1016359da35",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 representative light/dark desktop matrix"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 RTL, enlarged desktop text, forced colors and contrast"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D4 light/dark screen matrix fits desktop widths and retains real mix save forms"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D5 enlarged RTL text and forced colors retain watch/player focus and geometry"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "enlarged text and phone landscape keep navigation usable",
+    "registeredCases": [
+      "chromium: enlarged text and phone landscape keep navigation usable",
+      "firefox: enlarged text and phone landscape keep navigation usable"
+    ],
+    "oldCallbackSha256": "be04ccb20f6c80c7dc0dd9981b9cc8fc4e6ddb4a188f629a9d8f98627e4f4b06",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D1 RTL, enlarged desktop text, forced colors and contrast"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D8 sticky header, sidebar and focused skip link remain above scrolled media with and without JavaScript"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  },
+  {
+    "oldCaseFamily": "preference Save remains visible throughout Diary preferences",
+    "registeredCases": [
+      "chromium: preference Save remains visible throughout Diary preferences",
+      "firefox: preference Save remains visible throughout Diary preferences"
+    ],
+    "oldCallbackSha256": "e871341894bfa3d11129b5b172be844f9d63274628d5f81fe042d92d125ccc3f",
+    "disposition": "Retired Diary/full-form/old-navigation presentation; the approved shell and current categories replace it. Mobile website geometry is deferred. Shared media/native behavior remains in retained cases. Verified in the complete 902/902 final npm run.",
+    "replacementTests": [
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 all nine category forms and normal HTML fallback without JavaScript"
+      },
+      {
+        "file": "tests/frontend/overhaul.test.cjs",
+        "title": "D2 category drafts, local search, Discard and guarded departure"
+      }
+    ],
+    "additionalCoverage": [
+      "tests/frontend/account-surfaces.test.cjs",
+      "tests/frontend/status-surfaces.test.cjs",
+      "tests/frontend/verification-surfaces.test.cjs",
+      "tests/database/settings_checks.cr"
+    ],
+    "finalEvidence": "resumed-2026-11-01-npm-current.log"
+  }
+]

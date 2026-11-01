@@ -21,7 +21,7 @@ def check_seek_preferences
     cookie = Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value))
     raise "Guest seek save" unless cookie.seek_seconds == seconds
     env = preferences_post_env("")
-    env.set "preferences", cookie
+    seed_saved_preferences(env, cookie)
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Older form erased seek interval" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).seek_seconds == seconds
 

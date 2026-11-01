@@ -137,7 +137,7 @@ def check_dearrow_contributions(output)
   env.set "preferences", prefs
   File.write("#{output}/watch-dearrow-contributions-light.html", watch_fixture(env, account: true))
   env = signed_in_env("/preferences")
-  page = preferences_fixture(env)
+  page = preferences_fixture(env, "dearrow")
   raise "Private ID in preferences HTML" if page.includes?("c" * 64)
   raise "Private ID in preferences JSON" if env.get("user").as(User).preferences.to_json.includes?("c" * 64)
   File.write("#{output}/preferences-dearrow-contributions.html", page)

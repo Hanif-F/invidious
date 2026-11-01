@@ -9,16 +9,22 @@
 </title>
 <% end %>
 
-<%= rendered "components/feed_menu" %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "Popular") %></h1></header>
 
 <% avatar_items = Invidious::Frontend::BlockedChannels.filter(popular_videos, Invidious::Frontend::BlockedChannels.ids(env)) %>
 <% avatar_items = Invidious::Frontend::AiChannels.filter(avatar_items, env, :feeds) %>
-<% if avatar_items.empty? && env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% end %>
+<% avatar_items = Invidious::Frontend::MemberVideos.filter(avatar_items, Invidious::Frontend::MemberVideos.show?(env)) %>
+<% if avatar_items.empty? %><% if env.get?("ai_filtered_results") == true %><%= rendered "components/ai-filter-empty" %><% else %><p class="status-panel" role="status"><%= I18n.translate(locale, "search_message_no_results") %></p><% end %><% end %>
 <% Invidious::Frontend::ChannelAvatars.prepare(env, avatar_items) %>
 <% Invidious::Frontend::ViewCounts.prepare(env, avatar_items) %>
-<div class="pure-g media-grid">
+<% wrap_collection = !!env.get?("user") && !env.get?("collection_kind") %>
+<% if wrap_collection %><% collection_kind = env.get?("remove_playlist_items") ? "playlist" : "listing"; env.set "collection_kind", collection_kind %>
+<section data-collection data-collection-kind="<%= collection_kind %>" <%= %(data-playlist-id="#{HTML.escape(env.get("remove_playlist_items").as(String))}") if env.get?("remove_playlist_items") %>><%= rendered "overhaul/collection_toolbar" %><% end %>
+<div class="media-grid">
 <% Invidious::Frontend::ChannelSpoilers.prepare(env, avatar_items) %>
 <% avatar_items.each_with_index do |item, item_position| %>
     <%= rendered "components/item" %>
 <% end %>
 </div>
+
+<% if wrap_collection %></section><% env.set "collection_kind", false %><% end %>

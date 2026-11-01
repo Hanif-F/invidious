@@ -1,0 +1,16 @@
+<% verification_preferences = env.get?("preferences").try(&.as(Preferences)) || Preferences.from_json("{}"); locale = verification_preferences.locale %>
+<!doctype html>
+<html lang="<%= HTML.escape(locale) %>" dir="<%= I18n.locale_is_rtl?(locale) ? "rtl" : "ltr" %>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><%= I18n.translate(locale, "verify_heading") %> - Invidious</title>
+<link rel="stylesheet" href="/css/foundation.css?v=<%= ASSET_COMMIT %>"><link rel="stylesheet" href="/css/verification.css?v=<%= ASSET_COMMIT %>">
+<script id="verification-config" type="application/json"><%= {siteKey: CONFIG.turnstile_site_key, native: native, returnUrl: destination, enabled: policy.enabled, ready: ready, words: %w(checking failed unavailable verified disabled_return load_error expired timeout complete paused).to_h { |key| {key, I18n.translate(locale, "verify_#{key}")} }}.to_json.gsub("<", "\\u003c") %></script>
+<script src="/js/verification.js?v=<%= ASSET_COMMIT %>" defer></script>
+<% if policy.enabled && ready %><script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=invidiousTurnstileReady&amp;render=explicit" defer></script><% end %>
+</head><body class="<%= verification_preferences.dark_mode == "dark" ? "dark" : verification_preferences.dark_mode == "light" ? "light" : "no" %>-theme"><main class="verification-panel" id="main-content">
+<header><span class="brand">Invidious</span><h1 dir="auto"><%= I18n.translate(locale, "verify_heading") %></h1></header>
+<p dir="auto"><%= I18n.translate(locale, !policy.enabled ? "verify_disabled_explanation" : CONFIG.login_required ? "verify_explanation_login" : "verify_explanation") %></p>
+<div id="turnstile-widget"></div>
+<p dir="auto" id="verification-status" class="form-feedback" role="status" aria-live="polite"><%= I18n.translate(locale, !policy.enabled ? "verify_disabled" : (ready ? "verify_loading" : "verify_not_configured")) %></p>
+<div class="toolbar"><button class="button button-primary" id="verification-retry" type="button" hidden><%= I18n.translate(locale, "verify_retry") %></button></div>
+<noscript><%= I18n.translate(locale, "verify_javascript") %></noscript>
+<nav class="toolbar verification-links" aria-label="<%= I18n.translate(locale, "verify_recovery") %>"><a class="button" href="/login?referer=%2Fadmin%2Fbot-protection"><%= I18n.translate(locale, "verify_admin_login") %></a><a class="button" href="/admin/bot-protection"><%= I18n.translate(locale, "verify_settings") %></a><% unless Invidious::Frontend::Desktop.api_only? %><a class="button" href="/privacy"><%= I18n.translate(locale, "Privacy") %></a><% end %></nav>
+</main></body></html>

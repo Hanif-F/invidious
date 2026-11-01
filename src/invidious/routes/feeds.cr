@@ -15,14 +15,11 @@ module Invidious::Routes::Feeds
 
     user = user.as(User)
 
-    # TODO: make a single DB call and separate the items here?
     items_created = Invidious::Database::Playlists.select_like_iv(user.email)
-    items_created.map! do |item|
-      item.author = ""
-      item
-    end
-
-    items_saved = Invidious::NativePlaylists.items(user.email)
+    items_saved = Invidious::Database::SavedPlaylists.list(user.email)
+    playlist_covers = Invidious::Database::Playlists.cover_ids(user.email)
+    add_video_id = env.params.query["video_id"]?
+    add_video_id = nil unless add_video_id.try(&.matches?(/\A[A-Za-z0-9_-]{11}\z/))
 
     templated "feeds/playlists"
   end
@@ -33,6 +30,7 @@ module Invidious::Routes::Feeds
     if CONFIG.popular_enabled
       templated "feeds/popular"
     else
+      env.set "message_page", true
       message = I18n.translate(locale, "The Popular feed has been disabled by the administrator.")
       templated "message"
     end
@@ -74,7 +72,10 @@ module Invidious::Routes::Feeds
     sid = sid.as(String)
     token = user.token
 
-    if user.preferences.unseen_only
+    feed_preferences = Frontend::SubscriptionFeed.preferences(user.preferences, env.params.query, CONFIG.enable_user_notifications)
+    env.set "subscription_view_preferences", feed_preferences
+
+    if feed_preferences.unseen_only
       env.set "show_watched", true
     end
 
@@ -89,7 +90,8 @@ module Invidious::Routes::Feeds
     page = env.params.query["page"]?.try &.to_i?
     page ||= 1
 
-    videos, notifications = get_subscription_feed(user, max_results, page)
+    page = page.clamp(1, Int32::MAX)
+    videos, notifications = get_subscription_feed(user, max_results, page, feed_preferences)
 
     if CONFIG.enable_user_notifications
       # "updated" here is used for delivering new notifications, so if
@@ -102,8 +104,7 @@ module Invidious::Routes::Feeds
     env.set "user", user
 
     # Used for pagination links
-    base_url = "/feed/subscriptions"
-    base_url += "?max_results=#{max_results}" if env.params.query.has_key?("max_results")
+    base_url = "/feed/subscriptions?#{Frontend::SubscriptionFeed.params(feed_preferences, max_results)}"
 
     templated "feeds/subscriptions"
   end

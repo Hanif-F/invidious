@@ -141,6 +141,13 @@ def cached_clip_video
   Video.new({id: "2isYuQZMbdU", info: info, updated: Time.utc})
 end
 
+# Explicit source failures are deterministic and cannot fall through to YouTube.
+def get_video(id : String)
+  raise NotFoundException.new("Source unavailable.") if id == "failvideo01"
+  raise "Source lookup failed" if id == "failvideo02"
+  get_video(id, true)
+end
+
 def clip_account(email, username)
   preferences = Preferences.from_json(%({"watch_history":false,"save_player_pos":true,"comments":["",""]}))
   user = User.new({updated: Time.utc, notifications: [] of String, subscriptions: [] of String,
@@ -242,6 +249,41 @@ begin
     body: URI::Params.encode({"csrf_token" => form_token, "videoId" => video.id, "title" => "Keep my draft", "startTime" => "01:99", "endTime" => "00:15"}),
     content_type: "application/x-www-form-urlencoded")
   check(failed_form.response.status_code == 400 && result(failed_form).includes?("value=\"01:99\"") && result(failed_form).includes?("Keep my draft"), "Failed form lost its raw draft")
+  expired_form = clip_request("POST", "/create_clip", "alice-session",
+    body: URI::Params.encode({"csrf_token" => "expired", "videoId" => video.id, "title" => "  Kept expired draft  ", "startTime" => "00:10", "endTime" => "00:15"}),
+    content_type: "application/x-www-form-urlencoded")
+  expired_doc = XML.parse_html(result(expired_form))
+  check(expired_form.response.status_code == 403 && expired_doc.xpath_string("string(//input[@name='title']/@value)") == "  Kept expired draft  " &&
+        !expired_doc.xpath_string("string(//form[@id='clip-editor']/input[@name='csrf_token']/@value)").empty?, "Expired CSRF lost the draft or its replacement token")
+  {"failvideo01" => 404, "failvideo02" => 500}.each do |id, status|
+    check(clip_request("GET", "/create_clip?videoId=#{id}", "alice-session").response.status_code == status, "Source failure changed the standalone GET status")
+    failed_source = clip_request("POST", "/create_clip", "alice-session",
+      body: URI::Params.encode({"csrf_token" => form_token, "videoId" => id, "title" => "  Kept <draft> 🎵  ", "startTime" => "001", "endTime" => "00:16"}),
+      content_type: "application/x-www-form-urlencoded")
+    draft = XML.parse_html(result(failed_source))
+    check(failed_source.response.status_code == status, "Source #{id} expected #{status}, got #{failed_source.response.status_code}")
+    check(draft.xpath_string("string(//input[@name='title']/@value)") == "  Kept <draft> 🎵  " &&
+          draft.xpath_string("string(//input[@name='startTime']/@value)") == "001" &&
+          draft.xpath_string("string(//input[@name='endTime']/@value)") == "00:16", "Missing source metadata lost literal POST fields")
+    check(draft.xpath_string("string(//form[@id='clip-editor']/@data-source-available)") == "false", "Failed source offered preview")
+    check(draft.xpath_string("string(//form[@id='clip-editor']/@data-unconfirmed)") == (status == 500).to_s, "Unknown POST incorrectly permitted immediate retry")
+  end
+  # A database exception during publication must render an uncertain form even
+  # when metadata remains available, rather than dropping the submitted draft.
+  PG_DB.exec("CREATE FUNCTION clip_test_insert_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'synthetic insert failure'; END $$")
+  PG_DB.exec("CREATE TRIGGER clip_test_insert_failure BEFORE INSERT ON clips FOR EACH ROW EXECUTE FUNCTION clip_test_insert_failure()")
+  begin
+    unknown = clip_request("POST", "/create_clip", "alice-session",
+      body: URI::Params.encode({"csrf_token" => form_token, "videoId" => video.id, "title" => "  Unknown <publication>  ", "startTime" => "00:10", "endTime" => "00:15"}),
+      content_type: "application/x-www-form-urlencoded")
+    draft = XML.parse_html(result(unknown))
+    check(unknown.response.status_code == 500 && draft.xpath_string("string(//input[@name='title']/@value)") == "  Unknown <publication>  ", "Ambiguous POST lost its literal draft")
+    check(!draft.xpath_nodes("//button[@id='clip-publish'][@disabled]").empty? &&
+          draft.xpath_nodes("//p[@id='clip-unconfirmed'][not(@hidden)]/a[@href='/feed/clips']").size == 1, "Ambiguous POST enabled a duplicate or lost reconciliation")
+  ensure
+    PG_DB.exec("DROP TRIGGER clip_test_insert_failure ON clips")
+    PG_DB.exec("DROP FUNCTION clip_test_insert_failure()")
+  end
   legacy_form = clip_request("POST", "/create_clip", "alice-session",
     body: URI::Params.encode({"csrf_token" => form_token, "videoId" => video.id, "title" => "Legacy form clip", "startTime" => "10.25", "endTime" => "15.25"}),
     content_type: "application/x-www-form-urlencoded")

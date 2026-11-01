@@ -1,0 +1,19 @@
+    <details class="ai-filter-details">
+        <summary><%= I18n.translate(locale, "ai_filter_details") %></summary>
+        <p class="preference-description"><%= I18n.translate(locale, "ai_filter_lookup_hint") %></p>
+        <% ai_lists = Invidious::AiSList.runtime.lists %>
+        <% {"blocklist", "warnlist"}.each do |kind| %>
+        <h3><%= I18n.translate(locale, "ai_filter_#{kind}") %></h3>
+        <% if snapshot = ai_lists.snapshot(kind) %>
+        <p class="preference-description ai-list-status">
+            <%= I18n.translate_count(locale, "ai_filter_channels", snapshot.entries.size) %> ·
+            <%= I18n.translate(locale, "ai_filter_updated") %>
+            <time datetime="<%= snapshot.updated_at.to_rfc3339 %>"><%= snapshot.updated_at.to_s("%F %T UTC") %></time>
+            <% if ai_lists.stale?(kind) %> · <%= I18n.translate(locale, "ai_filter_stale") %><% end %>
+        </p>
+        <% else %>
+        <p class="preference-description ai-list-status"><%= I18n.translate(locale, "ai_filter_unavailable") %></p>
+        <% end %>
+        <% end %>
+        <p class="preference-description"><%= I18n.translate(locale, "ai_filter_attribution") %> <a href="https://aisloplist.com/" rel="noopener noreferrer">AiSList</a> (<a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener noreferrer">CC BY-NC 4.0</a>). <a href="https://github.com/Override92/AiSList" rel="noopener noreferrer"><%= I18n.translate(locale, "ai_filter_source") %></a></p>
+    </details>

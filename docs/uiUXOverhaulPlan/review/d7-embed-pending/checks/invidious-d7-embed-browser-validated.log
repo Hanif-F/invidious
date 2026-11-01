@@ -1,0 +1,146 @@
+TAP version 13
+# Subtest: chromium: D7 embeds use one full-size media surface in Light Dark RTL with ordinary no-JavaScript controls
+ok 1 - chromium: D7 embeds use one full-size media surface in Light Dark RTL with ordinary no-JavaScript controls
+  ---
+  duration_ms: 2639.172035
+  type: 'test'
+  ...
+# Subtest: chromium: D7 embedded Settings controls preserve real media, captions, speed and explicit watch access
+ok 2 - chromium: D7 embedded Settings controls preserve real media, captions, speed and explicit watch access
+  ---
+  duration_ms: 639.310216
+  type: 'test'
+  ...
+# Subtest: chromium: D7 enhanced embed geometry, masking and keyboard Settings fit desktop and iframe sizes
+ok 3 - chromium: D7 enhanced embed geometry, masking and keyboard Settings fit desktop and iframe sizes
+  ---
+  duration_ms: 4676.667281
+  type: 'test'
+  ...
+# Subtest: chromium: D7 embedded DASH and audio choices retain the player and decoded source
+ok 4 - chromium: D7 embedded DASH and audio choices retain the player and decoded source
+  ---
+  duration_ms: 1073.133473
+  type: 'test'
+  ...
+# Subtest: chromium: D7 embedded preview bounds and disabled controls keep their existing media contract
+ok 5 - chromium: D7 embedded preview bounds and disabled controls keep their existing media contract
+  ---
+  duration_ms: 526.726382
+  type: 'test'
+  ...
+# Subtest: chromium: D7 embedded HLS decodes while preserving opaque manifest and segment query fields
+ok 6 - chromium: D7 embedded HLS decodes while preserving opaque manifest and segment query fields
+  ---
+  duration_ms: 441.64408
+  type: 'test'
+  ...
+# Subtest: chromium: D7 embedded cached return reads one canonical owner without replacing media
+ok 7 - chromium: D7 embedded cached return reads one canonical owner without replacing media
+  ---
+  duration_ms: 275.15255
+  type: 'test'
+  ...
+# Subtest: chromium: D7 disposed real embedded player cannot issue a delayed speed write or react to keyboard/return
+ok 8 - chromium: D7 disposed real embedded player cannot issue a delayed speed write or react to keyboard/return
+  ---
+  duration_ms: 224.992468
+  type: 'test'
+  ...
+# Subtest: chromium: D7 private iframe expiry uses a local HEAD gate check and explicit login without a bot pass
+ok 9 - chromium: D7 private iframe expiry uses a local HEAD gate check and explicit login without a bot pass
+  ---
+  duration_ms: 359.839965
+  type: 'test'
+  ...
+# Subtest: chromium: D7 cached private iframe ignores late login probes and unrelated API authorization failures
+ok 10 - chromium: D7 cached private iframe ignores late login probes and unrelated API authorization failures
+  ---
+  duration_ms: 289.241411
+  type: 'test'
+  ...
+# Subtest: firefox: D7 embeds use one full-size media surface in Light Dark RTL with ordinary no-JavaScript controls
+ok 11 - firefox: D7 embeds use one full-size media surface in Light Dark RTL with ordinary no-JavaScript controls
+  ---
+  duration_ms: 11421.390635
+  type: 'test'
+  ...
+# Subtest: firefox: D7 embedded Settings controls preserve real media, captions, speed and explicit watch access
+ok 12 - firefox: D7 embedded Settings controls preserve real media, captions, speed and explicit watch access
+  ---
+  duration_ms: 990.581395
+  type: 'test'
+  ...
+# Subtest: firefox: D7 enhanced embed geometry, masking and keyboard Settings fit desktop and iframe sizes
+ok 13 - firefox: D7 enhanced embed geometry, masking and keyboard Settings fit desktop and iframe sizes
+  ---
+  duration_ms: 9115.994406
+  type: 'test'
+  ...
+# Subtest: firefox: D7 embedded DASH and audio choices retain the player and decoded source
+ok 14 - firefox: D7 embedded DASH and audio choices retain the player and decoded source
+  ---
+  duration_ms: 1470.33598
+  type: 'test'
+  ...
+# Subtest: firefox: D7 embedded preview bounds and disabled controls keep their existing media contract
+ok 15 - firefox: D7 embedded preview bounds and disabled controls keep their existing media contract
+  ---
+  duration_ms: 1662.948544
+  type: 'test'
+  ...
+# Subtest: firefox: D7 embedded HLS decodes while preserving opaque manifest and segment query fields
+ok 16 - firefox: D7 embedded HLS decodes while preserving opaque manifest and segment query fields
+  ---
+  duration_ms: 597.086796
+  type: 'test'
+  ...
+# Subtest: firefox: D7 embedded cached return reads one canonical owner without replacing media
+ok 17 - firefox: D7 embedded cached return reads one canonical owner without replacing media
+  ---
+  duration_ms: 458.617403
+  type: 'test'
+  ...
+# Subtest: firefox: D7 disposed real embedded player cannot issue a delayed speed write or react to keyboard/return
+ok 18 - firefox: D7 disposed real embedded player cannot issue a delayed speed write or react to keyboard/return
+  ---
+  duration_ms: 407.151262
+  type: 'test'
+  ...
+# Subtest: firefox: D7 private iframe expiry uses a local HEAD gate check and explicit login without a bot pass
+not ok 19 - firefox: D7 private iframe expiry uses a local HEAD gate check and explicit login without a bot pass
+  ---
+  duration_ms: 477.21709
+  type: 'test'
+  location: '/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/embed-surfaces.test.cjs:135:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    null !== '2'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '2'
+  actual: ~
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/haha.m.lady/Documents/ProgrammingProjects/invidious/tests/frontend/embed-surfaces.test.cjs:140:404)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: firefox: D7 cached private iframe ignores late login probes and unrelated API authorization failures
+ok 20 - firefox: D7 cached private iframe ignores late login probes and unrelated API authorization failures
+  ---
+  duration_ms: 480.840548
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 19
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 38976.033623

@@ -2,7 +2,8 @@
 
 // Read-only diagnostics: never fetch metadata or modify playback configuration.
 (function () {
-    if (!window.player || typeof player.ready !== 'function') return;
+    if (!window.player || typeof player.ready !== 'function' || player.invidiousStatsStarted) return;
+    player.invidiousStatsStarted = true;
     player.ready(function () {
         var root = player.el(), labels = player_data.stats_labels;
         if (!labels) return;

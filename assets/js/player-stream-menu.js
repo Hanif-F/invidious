@@ -2,13 +2,46 @@
 
 // Shared DASH stream descriptions and Video.js controls for desktop and mobile.
 (function () {
-    if (!window.videojs) return;
+    if (!window.videojs || window.InvidiousStreamMenus) return;
 
     var data = JSON.parse(document.getElementById('player_data').textContent);
     var labels = data.stream_labels || {};
     var formats = data.stats_formats || [];
     var qualityStates = new WeakMap();
     var audioStates = new WeakMap();
+    var fallbackSelections = new WeakMap();
+
+    function selectFallbackSource(player,item) {
+        if (item.source.src === player.currentSource().src) return;
+        var previous = fallbackSelections.get(player); if (previous) previous();
+        var position = player.currentTime(), rate = player.playbackRate(), paused = player.paused(), started = player.hasStarted();
+        var volume = player.volume(), muted = player.muted(), timer;
+        function cleanup() {
+            clearTimeout(timer); player.off('loadedmetadata',metadata); player.off('canplay',ready); player.off('error',cleanup); player.off('dispose',cleanup);
+            if (window.removeEventListener) { window.removeEventListener('pagehide',cleanup); window.removeEventListener('browserprofilechange',cleanup); }
+            if (fallbackSelections.get(player) === cleanup) fallbackSelections.delete(player);
+        }
+        function current() { return fallbackSelections.get(player) === cleanup && !player.isDisposed() && (!window.InvidiousStorage || window.InvidiousStorage.isCurrent()); }
+        function restore() {
+            if (!current()) return;
+            if (started) player.hasStarted(true);
+            if (Number.isFinite(position)) player.currentTime(Math.min(position,Number.isFinite(player.duration()) ? Math.max(0,player.duration()-.05) : position));
+            player.playbackRate(rate); player.volume(volume); player.muted(muted);
+            if (paused) player.pause();
+        }
+        function metadata() { restore(); }
+        function ready() { restore(); cleanup(); }
+        fallbackSelections.set(player,cleanup);
+        player.on('loadedmetadata',metadata); player.on('canplay',ready); player.on('error',cleanup); player.on('dispose',cleanup);
+        if (window.addEventListener) { window.addEventListener('pagehide',cleanup,{once:true}); window.addEventListener('browserprofilechange',cleanup,{once:true}); }
+        timer = setTimeout(cleanup,15000);
+        try {
+            item.handleClick();
+            // preload=none needs an explicit load while paused, particularly in
+            // Firefox. Restore after metadata/canplay, after native rate resets.
+            if (paused) player.ready(function () { if (current()) player.load(); });
+        } catch (error) { cleanup(); throw error; }
+    }
 
     function number(value) {
         value = Number(value);
@@ -48,6 +81,28 @@
         if (size) parts.push(size);
         if (bitrate) parts.push(bitrate);
         return parts.join(' · ');
+    }
+
+    // Progressive and listen-only choices keep the vendor's source callback,
+    // but describe the exact source with the same metadata as DASH choices.
+    function sourceDescription(source) {
+        var params;
+        try { params = new URL(source.src,'https://invidious.invalid').searchParams; } catch (_) { return {primary:source.label || '',secondary:''}; }
+        var candidates = formats.filter(function (format) { return String(format.itag) === params.get('itag'); });
+        if (params.has('audio_track')) candidates = candidates.filter(function (format) { return String(format.audioTrack && format.audioTrack.id || 'default') === params.get('audio_track'); });
+        if (params.has('is_drc')) candidates = candidates.filter(function (format) { return formatIsStable(format) === (params.get('is_drc') === 'true'); });
+        // Ambiguous duplicate itags must never borrow another language's label.
+        if (candidates.length !== 1) return {primary:source.label || '',secondary:''};
+        var format = candidates[0], primary;
+        if (/^audio\//.test(format.mimeType || '')) {
+            var track = format.audioTrack || {}, stable = formatIsStable(format);
+            primary = audioPrimary({name:track.displayName || '',original:track.audioIsDefault === true},stable,'');
+            var codec = /\b(?:mp4a|aac)/i.test(format.mimeType) ? 'AAC' : /\bopus\b/i.test(format.mimeType) ? 'Opus' : /\bvorbis\b/i.test(format.mimeType) ? 'Vorbis' : '';
+            primary = [primary,codec].filter(Boolean).join(' · ') || source.label;
+        } else {
+            primary = [format.height ? format.height+'p'+(format.fps ? Math.round(format.fps) : '') : source.label,formatCodec(format) || labels.unknown_codec || 'Unknown codec'].filter(Boolean).join(' · ');
+        }
+        return {primary:primary,secondary:secondary(format)};
     }
 
     function videoRepresentations(player) {
@@ -690,63 +745,6 @@
         return selected ? selected.primary : '';
     }
 
-    var MenuItem = videojs.getComponent('MenuItem');
-    var RichStreamMenuItem = videojs.extend(MenuItem, {
-        constructor: function (player, options) {
-            options.selectable = !options.divider;
-            options.multiSelectable = false;
-            options.label = options.primary;
-            MenuItem.call(this, player, options);
-            if (options.divider) this.disable();
-        },
-        createEl: function () {
-            var el = MenuItem.prototype.createEl.call(this);
-            var target = el.querySelector('.vjs-menu-item-text') || el;
-            target.textContent = '';
-            var primary = document.createElement('span'); primary.className = 'stream-option-primary';
-            primary.textContent = this.options_.primary; target.appendChild(primary);
-            if (this.options_.secondary) {
-                var secondaryEl = document.createElement('span'); secondaryEl.className = 'stream-option-secondary';
-                secondaryEl.textContent = this.options_.secondary; target.appendChild(secondaryEl);
-            }
-            if (this.options_.divider) {
-                el.classList.add('stream-option-divider'); el.setAttribute('role', 'separator');
-            } else {
-                el.setAttribute('aria-label', [this.options_.primary, this.options_.secondary].filter(Boolean).join(', '));
-            }
-            return el;
-        },
-        handleClick: function (event) {
-            if (this.options_.divider) return;
-            MenuItem.prototype.handleClick.call(this, event);
-            this.options_.select();
-        }
-    });
-    videojs.registerComponent('RichStreamMenuItem', RichStreamMenuItem);
-
-    var MenuButton = videojs.getComponent('MenuButton');
-    function registerButton(name, className, iconClass, controlText, source) {
-        var Button = videojs.extend(MenuButton, {
-            constructor: function (player, options) {
-                MenuButton.call(this, player, options);
-                className.split(/\s+/).forEach(function (name) { if (name) this.addClass(name); }, this);
-                this.el().querySelector('.vjs-icon-placeholder').classList.add(iconClass);
-                var list = source === qualityOptions ? player.qualityLevels() : player.audioTracks();
-                this.streamList_ = list;
-                this.streamUpdate_ = videojs.bind(this, this.update);
-                list.on(['change', 'addqualitylevel', 'removequalitylevel', 'addtrack', 'removetrack'], this.streamUpdate_);
-                this.on('dispose', function () { list.off(['change', 'addqualitylevel', 'removequalitylevel', 'addtrack', 'removetrack'], this.streamUpdate_); });
-                this.controlText(controlText);
-            },
-            createItems: function () {
-                return source(this.player()).map(function (option) { return new RichStreamMenuItem(this.player(), option); }, this);
-            }
-        });
-        videojs.registerComponent(name, Button);
-    }
-    registerButton('RichQualityButton', 'vjs-rich-quality', 'vjs-icon-cog', (data.mobile_labels || {}).quality || 'Quality', qualityOptions);
-    registerButton('RichAudioButton', 'vjs-rich-audio', 'vjs-icon-audio', (data.mobile_labels || {}).audio || 'Audio', audioOptions);
-
     window.InvidiousStreamMenus = {
         qualityOptions: qualityOptions,
         selectedQualityText: selectedQualityText,
@@ -766,6 +764,9 @@
         preserveAudioSelection: preserveAudioSelection,
         selectedText: selectedText,
         formatBytes: formatBytes,
-        formatBitrate: formatBitrate
+        formatBitrate: formatBitrate,
+        sourceDescription: sourceDescription,
+        selectFallbackSource: selectFallbackSource,
+        fallbackSelectionActive: function (player) { return fallbackSelections.has(player); }
     };
 }());

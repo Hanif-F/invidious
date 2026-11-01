@@ -7,11 +7,11 @@ class Invidious::HttpServer::BotProtectionHandler < Kemal::Handler
     method = request.method
     if {"GET", "HEAD"}.includes?(method)
       return true if {"/verify", "/api/v1/verification", "/privacy", "/licenses", "/api/v1/stats",
-                      "/login", "/signup", "/api/v1/mobile/registration", "/admin/bot-protection"}.includes?(path)
+                      "/login", "/signup", "/api/v1/mobile/registration", "/admin/bot-protection", "/admin/settings"}.includes?(path)
       return true if local_asset?(request)
     elsif method == "POST"
       return true if {"/api/v1/verification/complete", "/login", "/signup", "/signout",
-                      "/api/v1/mobile/login", "/api/v1/mobile/register", "/admin/bot-protection"}.includes?(path)
+                      "/api/v1/mobile/login", "/api/v1/mobile/register", "/admin/bot-protection", "/admin/settings"}.includes?(path)
     end
     # These handlers independently authenticate their subscription signatures.
     {"GET", "POST"}.includes?(method) && path.starts_with?("/feed/webhook/")
@@ -70,8 +70,9 @@ class Invidious::HttpServer::BotProtectionHandler < Kemal::Handler
     if env.request.method == "GET" && (env.request.path.starts_with?("/embed/") || env.request.headers["Sec-Fetch-Dest"]? == "iframe")
       env.response.status_code = 403
       env.response.content_type = "text/html; charset=utf-8"
-      env.response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors *"
-      env.response.print "<!doctype html><meta charset=utf-8><title>Verification required</title><p>Verification is required to play this video. <a target=\"_blank\" rel=\"noopener\" href=\"#{HTML.escape(challenge)}\">Open this instance to verify and watch</a>.</p>"
+      env.response.headers["Content-Security-Policy"] = "default-src 'none'; style-src 'self'; frame-ancestors *"
+      env.response.headers["Referrer-Policy"] = "no-referrer"
+      env.response.print Invidious::Frontend::Standalone.notice(env, 403, "Verification required", "Verification is required to play this video.", challenge, "Open this instance to verify and watch", new_window: true)
     elsif browser_navigation?(env)
       env.redirect(challenge, 303)
     else

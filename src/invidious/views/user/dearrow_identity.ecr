@@ -1,0 +1,25 @@
+<% section = "dearrow-identity" %>
+<% error = env.get?("identity_error").try(&.as(String)) %>
+<% unavailable = env.get?("identity_unavailable") == true %>
+<% uncertain = env.get?("identity_uncertain") == true %>
+<% content_for "header" do %><title><%= I18n.translate(locale, "overhaul_identity_heading") %> - Invidious</title><script src="/js/dearrow-identity.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_settings") %></h1></header>
+<div class="settings-layout"><%= rendered "overhaul/settings_navigation" %>
+<section class="settings-category" id="dearrow-identity-editor" aria-labelledby="identity-heading">
+<h2 id="identity-heading"><%= I18n.translate(locale, "overhaul_identity_heading") %></h2>
+<p><%= I18n.translate(locale, "overhaul_identity_scope") %></p>
+<p id="identity-status" role="<%= error ? "alert" : "status" %>" tabindex="-1"><% if error %><%= HTML.escape(error) %><% elsif env.params.query["saved"]? == "1" %><%= I18n.translate(locale, "dearrow_identity_saved") %><% end %></p>
+<% if env.get?("identity_failed") %><p class="muted"><%= I18n.translate(locale, "overhaul_identity_reenter") %></p><% end %>
+<p id="identity-current" role="status"><% unless unavailable %><%= I18n.translate(locale, identity_state[:configured] ? "dearrow_identity_configured" : "dearrow_identity_new") %><% end %></p>
+<p id="identity-setup" <%= "hidden" if identity_state[:ready] || unavailable %>><%= I18n.translate(locale, "dearrow_setup") %></p>
+<form method="post" action="/dearrow_identity" id="identity-form" class="identity-form">
+<input type="hidden" name="identity_editor" value="1"><input type="hidden" name="csrf_token" value="<%= HTML.escape(identity_state[:csrf]) %>"><input type="hidden" name="browser_profile" value="<%= identity_state[:profile] %>"><input type="hidden" name="revision" value="<%= identity_state[:revision] %>">
+<label for="identity-private-id"><%= I18n.translate(locale, "dearrow_identity") %></label>
+<input id="identity-private-id" name="private_id" type="password" minlength="30" maxlength="256" pattern="[A-Za-z0-9_-]{30,256}" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="identity-hint" <%= "disabled" unless identity_state[:ready] && !unavailable && !uncertain %>>
+<p id="identity-hint" class="muted"><%= I18n.translate(locale, "dearrow_identity_hint") %></p>
+<label class="identity-confirm" <%= "hidden" unless identity_state[:configured] %>><input type="checkbox" name="confirm_replace" <%= "required" if identity_state[:configured] %> <%= "disabled" unless identity_state[:ready] && !unavailable && !uncertain %>><span><%= I18n.translate(locale, "overhaul_identity_confirm") %></span></label>
+<div class="settings-actions"><button class="button button-primary" type="submit" <%= "disabled" unless identity_state[:ready] && !unavailable && !uncertain %>><%= Invidious::Frontend::Icons.render("lock") %><%= I18n.translate(locale, "dearrow_identity_import") %></button><button class="button js-only" type="reset" hidden><%= I18n.translate(locale, "ux_discard") %></button></div>
+</form>
+<div class="toolbar channel-readback"><button class="button js-only" data-identity-check type="button" hidden><%= I18n.translate(locale, "overhaul_identity_check") %></button><button class="button" data-identity-keep type="button" hidden><%= I18n.translate(locale, "overhaul_identity_keep") %></button><a class="button" href="/preferences/dearrow/identity"><%= I18n.translate(locale, "settings_reload") %></a></div>
+</section></div>
+<script id="identity-editor-config" type="application/json"><%= {state: identity_state, uncertain: uncertain, unavailable: unavailable, words: %w(scope confirm load uncertain changed check keep reenter refreshed review_saved discarded).to_h { |key| {key, I18n.translate(locale, "overhaul_identity_#{key}")} }.merge({"configured" => I18n.translate(locale, "dearrow_identity_configured"), "new_identity" => I18n.translate(locale, "dearrow_identity_new"), "setup" => I18n.translate(locale, "dearrow_setup"), "saving" => I18n.translate(locale, "settings_saving"), "saved" => I18n.translate(locale, "dearrow_identity_saved"), "unsaved" => I18n.translate(locale, "settings_unsaved"), "error" => I18n.translate(locale, "dearrow_error"), "invalid" => I18n.translate(locale, "overhaul_identity_invalid"), "profile" => I18n.translate(locale, "overhaul_channel_profile_changed")})}.to_json.gsub("<", "\\u003c") %></script>

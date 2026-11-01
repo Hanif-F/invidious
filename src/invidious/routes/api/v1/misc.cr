@@ -41,6 +41,8 @@ module Invidious::Routes::API::V1::Misc
 
     format = env.params.query["format"]?
     format ||= "json"
+    desktop_fragment = format == "html" && env.params.query["ui"]? == "desktop"
+    env.set "desktop_fragment", true if desktop_fragment
 
     listen_param = env.params.query["listen"]?
     listen = (listen_param == "true" || listen_param == "1")
@@ -62,6 +64,24 @@ module Invidious::Routes::API::V1::Misc
     if !playlist || playlist.privacy.private? && playlist.author != user.try &.email
       return error_json(404, "Playlist does not exist.")
     end
+
+    requested_occurrence = nil.as(Int64?)
+    explicit_occurrence = false
+    current_removed = playlist.is_a?(InvidiousPlaylist) && env.params.query["current_removed"]? == "1"
+    if desktop_fragment && playlist.is_a?(InvidiousPlaylist)
+      if raw = env.params.query["occurrence"]?
+        explicit_occurrence = true
+        requested_occurrence = raw.matches?(/\A[0-9]{1,19}\z/) ? raw.to_i64? : nil
+        return error_json(400, "Invalid occurrence.") unless requested_occurrence
+        if position = playlist.index.index(requested_occurrence)
+          offset = position
+          current_removed = false
+        else
+          current_removed = true
+        end
+      end
+    end
+    video_id = nil if current_removed || explicit_occurrence
 
     # includes into the playlist a maximum of 20 videos, before the offset
     if offset > 0
@@ -88,6 +108,10 @@ module Invidious::Routes::API::V1::Misc
       end
     end
 
+    if desktop_fragment && playlist.is_a?(InvidiousPlaylist) && !current_removed && !explicit_occurrence
+      requested_occurrence = playlist.index[offset]?
+    end
+
     fields = Invidious::NativePlaylists.metadata(playlist, user.try(&.email))
     json_response.as_h.merge!(fields)
     Database::SavedPlaylists.refresh(user.email, fields) if user
@@ -97,22 +121,30 @@ module Invidious::Routes::API::V1::Misc
     if format == "html"
       env.response.headers["Cache-Control"] = "private, no-store"
       editable = playlist.is_a?(InvidiousPlaylist) && playlist.author == user.try &.email
-      show_members = env.get("preferences").as(Preferences).show_member_videos
+      # Desktop queues retain every occurrence. Visibility preferences only
+      # filter discovery; legacy/native HTML keeps its existing contract.
+      show_members = desktop_fragment || env.get("preferences").as(Preferences).show_member_videos
       # Removing the playing occurrence leaves a gap at offset; its successor
       # now occupies that position and must not be skipped during advancement.
-      current_removed = playlist.is_a?(InvidiousPlaylist) && env.params.query["current_removed"]? == "1"
+
       index, next_video = Frontend::MemberVideos.queue_videos(json_response["videos"].as_a.skip((current_removed ? 0 : 1) + lookback), show_members).select { |video| !video["author"].as_s.empty? }[0]?.try { |v| {v["index"], v["videoId"]} } || {nil, nil}
 
       json_response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(json_response["videos"].as_a, show_members))
       ai_thumbnails = Frontend::AiChannels.prepare_queue(env, json_response["videos"].as_a)
-      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode, editable, user.try(&.watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: env.get("preferences").as(Preferences).locale, spoiler_env: env)
+      playlist_html = template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode && !desktop_fragment, editable, user.try(&.watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: env.get("preferences").as(Preferences).locale, spoiler_env: env)
 
-      response = {
+      data = {
         "playlistHtml" => playlist_html,
         "currentIndex" => offset,
         "index"        => index,
         "nextVideo"    => next_video,
-      }.to_json
+      }
+      response = if desktop_fragment && playlist.is_a?(InvidiousPlaylist)
+                   positions = playlist.index.each_with_index.to_h { |occurrence, position| {occurrence.to_s, position + 1} }
+                   data.merge({"currentOccurrence" => requested_occurrence.try(&.to_s), "currentRemoved" => current_removed, "positions" => positions, "total" => playlist.index.size}).to_json
+                 else
+                   data.to_json
+                 end
     end
 
     response
@@ -124,6 +156,8 @@ module Invidious::Routes::API::V1::Misc
     env.response.content_type = "application/json"
 
     rdid = env.params.url["rdid"]
+    desktop_fragment = env.params.query["format"]? == "html" && env.params.query["ui"]? == "desktop"
+    env.set "desktop_fragment", true if desktop_fragment
 
     continuation = env.params.query["continuation"]?
     begin
@@ -194,9 +228,9 @@ module Invidious::Routes::API::V1::Misc
     if format == "html"
       env.response.headers["Cache-Control"] = "private, no-store"
       response = JSON.parse(response)
-      response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(response["videos"].as_a, env.get("preferences").as(Preferences).show_member_videos))
+      response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(response["videos"].as_a, desktop_fragment || env.get("preferences").as(Preferences).show_member_videos))
       ai_thumbnails = Frontend::AiChannels.prepare_queue(env, response["videos"].as_a)
-      playlist_html = template_mix(response, listen, env.get("preferences").as(Preferences).thin_mode, env.get?("user").try(&.as(User).watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: locale, spoiler_env: env)
+      playlist_html = template_mix(response, listen, env.get("preferences").as(Preferences).thin_mode && !desktop_fragment, env.get?("user").try(&.as(User).watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: locale, spoiler_env: env)
       next_video = response["videos"].as_a.select { |video| !video["author"].as_s.empty? }[0]?.try &.["videoId"]
 
       response = {

@@ -34,7 +34,7 @@ def check_codec_preferences
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Guest codec lost" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).video_codec == codec
     env = preferences_post_env("")
-    env.set "preferences", prefs
+    seed_saved_preferences(env, prefs)
     Invidious::Routes::PreferencesRoute.update(env)
     raise "Older form erased codec" unless Preferences.from_json(URI.decode_www_form(env.response.cookies["PREFS"].value)).video_codec == codec
 

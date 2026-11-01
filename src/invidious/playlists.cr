@@ -284,7 +284,7 @@ def create_playlist(title, privacy, user)
   plid = "IVPL#{Random::Secure.urlsafe_base64(24)[0, 31]}"
 
   playlist = InvidiousPlaylist.new({
-    title:       title.byte_slice(0, 150),
+    title:       title.byte_slice(0, 150).scrub(""),
     id:          plid,
     author:      user.email,
     description: "", # Max 5000 characters
@@ -295,7 +295,7 @@ def create_playlist(title, privacy, user)
     index:       [] of Int64,
   })
 
-  Invidious::Database::Playlists.insert(playlist)
+  Invidious::Database::Playlists.insert_owned(playlist)
 
   return playlist
 end
@@ -622,6 +622,8 @@ end
 def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil, spoiler_env = nil)
   if spoiler_env
     Invidious::Frontend::ChannelSpoilers.prepare_queue(spoiler_env, playlist["videos"].as_a)
+    avatar_ids = playlist["videos"].as_a.compact_map { |entry| entry["authorId"]?.try(&.as_s?) }
+    Invidious::Frontend::ChannelAvatars.prepare_ids(spoiler_env, avatar_ids)
   end
   plid = playlist[mix ? "mixId" : "playlistId"].as_s
   String.build do |html|
@@ -638,10 +640,12 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       url = "/watch?v=#{URI.encode_www_form(id)}&list=#{URI.encode_www_form(plid)}"
       url += "&index=#{index}" unless mix
       url += "&listen=1" if listen
-      html << %(<li class="queue-row" data-dearrow-row data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}")
-      if editable && !mix && (index_id = video["indexId"]?.try &.as_s?)
-        # Preserve full 64-bit occurrence IDs as strings in the browser.
-        html << %( data-remove-index="#{index_id.to_u64(16)}")
+      html << %(<li class="queue-row media-item" data-dearrow-row data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}")
+      html << %( data-channel-id="#{HTML.escape(video["authorId"]?.try(&.as_s?) || "")}") if spoiler_env && Invidious::Frontend::Desktop.browser_html?(spoiler_env)
+      if !mix && (index_id = video["indexId"]?.try &.as_s?)
+        occurrence = index_id.to_u64(16).to_s
+        html << %( data-occurrence="#{occurrence}")
+        html << %( data-remove-index="#{occurrence}") if editable
       end
       html << ">"
       html << %(<a href="#{HTML.escape(url)}"><span class="queue-number">#{index >= 0 ? (index + 1).to_s : ""}</span>)
@@ -659,7 +663,9 @@ def template_queue(playlist, listen, mix = false, thin_mode = false, editable = 
       html << Invidious::Frontend::WatchedIndicator.render(id, video["lengthSeconds"].as_i, watched.includes?(id))
       html << "</span>"
       title_html = spoiler_env ? Invidious::Frontend::ChannelSpoilers.title(spoiler_env, id, channel, video["title"].as_s, date) : %(<span data-dearrow-id="#{HTML.escape(id)}">#{title}</span>)
-      html << %(<span><span class="queue-title" dir="auto">#{title_html}</span><span class="queue-meta" dir="auto">#{author})
+      html << %(<span><span class="queue-title" dir="auto">#{title_html}</span><span class="queue-meta" dir="auto">)
+      html << Invidious::Frontend::ChannelAvatars.render(spoiler_env, channel, 20, video["author"].as_s) if spoiler_env && !channel.empty?
+      html << author
       length = video["lengthSeconds"].as_i
       html << " · #{recode_length_seconds(length)}" if length > 0
       if count = Invidious::Videos::ViewCounts.from_api(video.as_h)

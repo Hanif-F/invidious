@@ -302,7 +302,7 @@ module Invidious::Comments
 
     if format == "html"
       response = parsed_response
-      content_html = Frontend::Comments.template_youtube(response, locale, thin_mode)
+      content_html = Frontend::Comments.template_youtube(response, locale, thin_mode, sort_by: sort_by)
       response = JSON.build do |json|
         json.object do
           json.field "contentHtml", content_html

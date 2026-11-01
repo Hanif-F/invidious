@@ -1,0 +1,154 @@
+TAP version 13
+# Subtest: chromium: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+ok 1 - chromium: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+  ---
+  duration_ms: 1248.18654
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution reads distinguish failed, malformed, empty and locked lists
+ok 2 - chromium: D6 contribution reads distinguish failed, malformed, empty and locked lists
+  ---
+  duration_ms: 670.973752
+  type: 'test'
+  ...
+# Subtest: chromium: D6 bounded contribution asset loading recovers explicitly and playback continues through the dialog
+ok 3 - chromium: D6 bounded contribution asset loading recovers explicitly and playback continues through the dialog
+  ---
+  duration_ms: 634.876768
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution review retains literal drafts, renews consent and submits one exact Unicode title
+ok 4 - chromium: D6 contribution review retains literal drafts, renews consent and submits one exact Unicode title
+  ---
+  duration_ms: 1115.337875
+  type: 'test'
+  ...
+# Subtest: chromium: D6 rejected contributions preserve review and an accepted vote never repeats after refresh failure
+ok 5 - chromium: D6 rejected contributions preserve review and an accepted vote never repeats after refresh failure
+  ---
+  duration_ms: 781.376538
+  type: 'test'
+  ...
+# Subtest: chromium: D6 unknown votes lock both directions across refresh and reopen without leaking upstream errors
+ok 6 - chromium: D6 unknown votes lock both directions across refresh and reopen without leaking upstream errors
+  ---
+  duration_ms: 2651.434901
+  type: 'test'
+  ...
+# Subtest: chromium: D6 unknown title creation retains acknowledgements and prevents the same trimmed proposal
+ok 7 - chromium: D6 unknown title creation retains acknowledgements and prevents the same trimmed proposal
+  ---
+  duration_ms: 1157.923309
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution writes reject duplicate dispatch and late replies across close, cache, profile and removal
+ok 8 - chromium: D6 contribution writes reject duplicate dispatch and late replies across close, cache, profile and removal
+  ---
+  duration_ms: 2669.804671
+  type: 'test'
+  ...
+# Subtest: chromium: D6 late contribution reads and assets cannot open or populate a cancelled dialog
+ok 9 - chromium: D6 late contribution reads and assets cannot open or populate a cancelled dialog
+  ---
+  duration_ms: 3194.369911
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution title masking covers labels, hover, notices and scoped reveal without changing playback
+ok 10 - chromium: D6 contribution title masking covers labels, hover, notices and scoped reveal without changing playback
+  ---
+  duration_ms: 898.337082
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution role and no-JavaScript fallbacks explain the available destination
+ok 11 - chromium: D6 contribution role and no-JavaScript fallbacks explain the available destination
+  ---
+  duration_ms: 1501.925925
+  type: 'test'
+  ...
+# Subtest: chromium: D6 contribution persistent header, review and uncertainty fit Light, Dark and enlarged RTL desktops
+ok 12 - chromium: D6 contribution persistent header, review and uncertainty fit Light, Dark and enlarged RTL desktops
+  ---
+  duration_ms: 1807.651449
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+ok 13 - firefox: D6 contributions are lazy, survive asset retries and use shared accessible vote controls
+  ---
+  duration_ms: 1598.319779
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution reads distinguish failed, malformed, empty and locked lists
+ok 14 - firefox: D6 contribution reads distinguish failed, malformed, empty and locked lists
+  ---
+  duration_ms: 968.072015
+  type: 'test'
+  ...
+# Subtest: firefox: D6 bounded contribution asset loading recovers explicitly and playback continues through the dialog
+ok 15 - firefox: D6 bounded contribution asset loading recovers explicitly and playback continues through the dialog
+  ---
+  duration_ms: 1009.327946
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution review retains literal drafts, renews consent and submits one exact Unicode title
+ok 16 - firefox: D6 contribution review retains literal drafts, renews consent and submits one exact Unicode title
+  ---
+  duration_ms: 1827.576059
+  type: 'test'
+  ...
+# Subtest: firefox: D6 rejected contributions preserve review and an accepted vote never repeats after refresh failure
+ok 17 - firefox: D6 rejected contributions preserve review and an accepted vote never repeats after refresh failure
+  ---
+  duration_ms: 1194.21701
+  type: 'test'
+  ...
+# Subtest: firefox: D6 unknown votes lock both directions across refresh and reopen without leaking upstream errors
+ok 18 - firefox: D6 unknown votes lock both directions across refresh and reopen without leaking upstream errors
+  ---
+  duration_ms: 4267.933341
+  type: 'test'
+  ...
+# Subtest: firefox: D6 unknown title creation retains acknowledgements and prevents the same trimmed proposal
+ok 19 - firefox: D6 unknown title creation retains acknowledgements and prevents the same trimmed proposal
+  ---
+  duration_ms: 2696.145281
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution writes reject duplicate dispatch and late replies across close, cache, profile and removal
+ok 20 - firefox: D6 contribution writes reject duplicate dispatch and late replies across close, cache, profile and removal
+  ---
+  duration_ms: 4478.958855
+  type: 'test'
+  ...
+# Subtest: firefox: D6 late contribution reads and assets cannot open or populate a cancelled dialog
+ok 21 - firefox: D6 late contribution reads and assets cannot open or populate a cancelled dialog
+  ---
+  duration_ms: 6038.635455
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution title masking covers labels, hover, notices and scoped reveal without changing playback
+ok 22 - firefox: D6 contribution title masking covers labels, hover, notices and scoped reveal without changing playback
+  ---
+  duration_ms: 1421.087899
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution role and no-JavaScript fallbacks explain the available destination
+ok 23 - firefox: D6 contribution role and no-JavaScript fallbacks explain the available destination
+  ---
+  duration_ms: 3253.86705
+  type: 'test'
+  ...
+# Subtest: firefox: D6 contribution persistent header, review and uncertainty fit Light, Dark and enlarged RTL desktops
+ok 24 - firefox: D6 contribution persistent header, review and uncertainty fit Light, Dark and enlarged RTL desktops
+  ---
+  duration_ms: 3869.474419
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 51826.980309
