@@ -17,7 +17,6 @@ This handbook documents **this repository's implementation**, including its fork
 | Understand backend design and storage | [Architecture](architecture.md), [database](database.md) |
 | Maintain or deploy an instance | [Operations](operations.md), [security](security.md), [troubleshooting](troubleshooting.md) |
 | Change or test the code | [Development](development.md), [frontend](frontend.md), [documentation maintenance](documentation.md) |
-| Review documented UI/UX bugs and audit coverage | [Visual and functional inconsistencies audit](visualFunctionalInconsistencies/README.md) |
 | Understand upstream services | [Integrations](integrations.md) |
 
 ## Feature-specific contracts
