@@ -1,0 +1,179 @@
+[
+  {
+    "name": "audit-hashtag-light",
+    "url": "/hashtag/light",
+    "engine": "chromium",
+    "javascript": true,
+    "views": [
+      {
+        "title": "#light - Invidious",
+        "width": 1280,
+        "height": 720,
+        "documentWidth": 1280,
+        "documentHeight": 720,
+        "h1": [
+          "#light"
+        ],
+        "outside": [],
+        "clipped": [],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSettings\n#light\n12:00\nAn observed moment\nS\nStudio North\n123K views\nShared 3 days ago\nLoad more\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      },
+      {
+        "title": "#light - Invidious",
+        "width": 1440,
+        "height": 900,
+        "documentWidth": 1440,
+        "documentHeight": 900,
+        "h1": [
+          "#light"
+        ],
+        "outside": [],
+        "clipped": [],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSettings\n#light\n12:00\nAn observed moment\nS\nStudio North\n123K views\nShared 3 days ago\nLoad more\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      },
+      {
+        "title": "#light - Invidious",
+        "width": 1920,
+        "height": 1080,
+        "documentWidth": 1920,
+        "documentHeight": 1080,
+        "h1": [
+          "#light"
+        ],
+        "outside": [],
+        "clipped": [],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSettings\n#light\n12:00\nAn observed moment\nS\nStudio North\n123K views\nShared 3 days ago\nLoad more\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "audit-hashtag-dark",
+    "url": "/hashtag/light",
+    "engine": "chromium",
+    "javascript": true,
+    "views": [
+      {
+        "title": "#light - Invidious",
+        "width": 1280,
+        "height": 720,
+        "documentWidth": 1280,
+        "documentHeight": 720,
+        "h1": [
+          "#light"
+        ],
+        "outside": [],
+        "clipped": [],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSettings\n#light\n12:00\nAn observed moment\nS\nStudio North\n123K views\nShared 3 days ago\nLoad more\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      },
+      {
+        "title": "#light - Invidious",
+        "width": 1440,
+        "height": 900,
+        "documentWidth": 1440,
+        "documentHeight": 900,
+        "h1": [
+          "#light"
+        ],
+        "outside": [],
+        "clipped": [],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSettings\n#light\n12:00\nAn observed moment\nS\nStudio North\n123K views\nShared 3 days ago\nLoad more\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      },
+      {
+        "title": "#light - Invidious",
+        "width": 1920,
+        "height": 1080,
+        "documentWidth": 1920,
+        "documentHeight": 1080,
+        "h1": [
+          "#light"
+        ],
+        "outside": [],
+        "clipped": [],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSettings\n#light\n12:00\nAn observed moment\nS\nStudio North\n123K views\nShared 3 days ago\nLoad more\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "audit-feed-menu-reordered",
+    "url": "/preferences?section=browsing",
+    "engine": "chromium",
+    "javascript": true,
+    "views": [
+      {
+        "title": "Settings - Invidious",
+        "width": 1280,
+        "height": 720,
+        "documentWidth": 1280,
+        "documentHeight": 1202,
+        "h1": [
+          "Settings"
+        ],
+        "outside": [],
+        "clipped": [
+          {
+            "element": "label.sr-only",
+            "text": "Find a setting"
+          }
+        ],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSubscriptions\nWatch history\nPlaylists\nMy Clips\nSettings\nSettings\nFind a setting\n\nAppearance\nLanguage\nBrowsing & feeds\nPlayback\nCaptions and comments\nLibrary\nSponsorBlock\nDeArrow\nAI channel filter\nChannel SponsorBlock settings\nChat replay\nDeArrow contribution identity\nBlocked channels\nChannel title and thumbnail settings\nBrowsing & feeds\n\nChoose your home destination and browsing defaults.\n\nDefault homepage:\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 1\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 2\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 3\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 4\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nShow members-only videos\nShow original title\nShow video titles in their original language when available. DeArrow may still replace them.\nSearch privacy:\nEnabling this preference will prevent your search queries from being saved in your browser history.\nAutomatic instance redirection (fallback to redirect.invidious.io):\nSave preferences\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      },
+      {
+        "title": "Settings - Invidious",
+        "width": 1440,
+        "height": 900,
+        "documentWidth": 1440,
+        "documentHeight": 1202,
+        "h1": [
+          "Settings"
+        ],
+        "outside": [],
+        "clipped": [
+          {
+            "element": "label.sr-only",
+            "text": "Find a setting"
+          }
+        ],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSubscriptions\nWatch history\nPlaylists\nMy Clips\nSettings\nSettings\nFind a setting\n\nAppearance\nLanguage\nBrowsing & feeds\nPlayback\nCaptions and comments\nLibrary\nSponsorBlock\nDeArrow\nAI channel filter\nChannel SponsorBlock settings\nChat replay\nDeArrow contribution identity\nBlocked channels\nChannel title and thumbnail settings\nBrowsing & feeds\n\nChoose your home destination and browsing defaults.\n\nDefault homepage:\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 1\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 2\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 3\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 4\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nShow members-only videos\nShow original title\nShow video titles in their original language when available. DeArrow may still replace them.\nSearch privacy:\nEnabling this preference will prevent your search queries from being saved in your browser history.\nAutomatic instance redirection (fallback to redirect.invidious.io):\nSave preferences\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      },
+      {
+        "title": "Settings - Invidious",
+        "width": 1920,
+        "height": 1080,
+        "documentWidth": 1920,
+        "documentHeight": 1202,
+        "h1": [
+          "Settings"
+        ],
+        "outside": [],
+        "clipped": [
+          {
+            "element": "label.sr-only",
+            "text": "Find a setting"
+          }
+        ],
+        "unlabeled": [],
+        "duplicateIds": [],
+        "bodyText": "Skip to content\nInvidious\nPopular\nTrending\nSubscriptions\nWatch history\nPlaylists\nMy Clips\nSettings\nSettings\nFind a setting\n\nAppearance\nLanguage\nBrowsing & feeds\nPlayback\nCaptions and comments\nLibrary\nSponsorBlock\nDeArrow\nAI channel filter\nChannel SponsorBlock settings\nChat replay\nDeArrow contribution identity\nBlocked channels\nChannel title and thumbnail settings\nBrowsing & feeds\n\nChoose your home destination and browsing defaults.\n\nDefault homepage:\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 1\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 2\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 3\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nFeed menu: · 4\nSearch\nPopular\nTrending\nSubscriptions\nPlaylists\nShow members-only videos\nShow original title\nShow video titles in their original language when available. DeArrow may still replace them.\nSearch privacy:\nEnabling this preference will prevent your search queries from being saved in your browser history.\nAutomatic instance redirection (fallback to redirect.invidious.io):\nSave preferences\nView privacy policy.\nView JavaScript license information.\nSource code\nDocumentation\nAGPLv3\nfixture · fixture"
+      }
+    ],
+    "errors": []
+  }
+]

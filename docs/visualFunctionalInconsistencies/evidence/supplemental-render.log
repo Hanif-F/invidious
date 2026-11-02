@@ -1,0 +1,23 @@
+Rendered frontend fixtures to /tmp/invidious-extra-fixtures
+Codec preference persistence and URL/default resolution checks passed
+Seek interval cookie/account/API/JSON/YAML/backup/player checks passed
+Audio preference persistence and URL/default resolution checks passed
+Avatar request-budget, cache precedence, suppression and video-fetch checks passed
+Native response enrichment, cache learning and zero-added-metadata-request checks passed
+Real response avatar extraction, native serialization, cache reuse and zero-metadata-request checks passed
+Recommendation avatar API, cache reuse, main-creator precedence and request-budget checks passed
+Comment/community avatars: 4 real channels learned; 10 unchanged JSON cases and 10 current HTML projections; batch writes, no learning reads, fetched continuations/replies, thin mode and cache failures passed
+Popular refresh: 60 matching first-page videos, 30 live continuation videos, 2 new metadata avatars; one browse/RSS request and one optional batch write; alternate paths and cache failures passed
+Actual Popular template, native Popular API serialization, cross-page cache reuse and zero-added-metadata-request checks passed
+View counts: playlist initial/continuation parsing, API parity, real zero, read-only cache misses, duplicate queues and zero-added-upstream-request checks passed
+Channel masking date reads: zero for inactive/known dates; one filtered batch with memoized misses
+Channel masking runtime rules (500 channels): 68391 -> 45501 bytes; no channel names sent to the masking runtime
+AiSList preference persistence, list/surface matrix, metadata identity, autoplay, failure and zero-request checks passed
+Audio-only watch/embed sources and exact redirects with/without Companion and proxy passed
+Original title settings, persistence, API selection, feeds, metadata, clips and spoiler checks passed
+QoL canonical guest/account preference saves and CSRF checks passed
+Watch presentation membership/block/AI precedence, originals/cache/disabled budgets and queue projections passed
+S16 production reading/error fixtures: legal labels, private-safe diagnostics, ordinary recovery, early errors, escaped preferences and true 404 passed
+S15 production embed fixtures: shared controls, escaped metadata/JSON, preview bounds, profile owner and framed login recovery passed
+Upstream Shows parser/navigation and legacy preference checks passed
+Audit additions: hashtag Light/Dark and reordered feed menu rendered with production templates

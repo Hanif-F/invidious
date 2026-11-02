@@ -240,12 +240,16 @@ def prepare_fixture_user_names
   end
 end
 
-def navigation_fixture
-  env = signed_in_env("/feed/subscriptions")
+def navigation_fixture(menu = ["Trending", "Popular", "Subscriptions", "Playlists"], account = true, popular_enabled = true)
+  env = account ? signed_in_env("/feed/subscriptions") : fixture_env("/feed/trending")
   preferences = env.get("preferences").as(Preferences)
-  preferences.feed_menu = ["Popular", "Trending"]
+  preferences.feed_menu = menu
   locale = preferences.locale
+  previous_popular = CONFIG.popular_enabled
+  CONFIG.popular_enabled = popular_enabled
   render "src/invidious/views/overhaul/navigation.ecr"
+ensure
+  CONFIG.popular_enabled = previous_popular unless previous_popular.nil?
 end
 
 def history_fixture(empty = false, thin = false, history_query = "", sync = false, dearrow = false, ai = false, known_views = false)
@@ -395,6 +399,9 @@ File.write("#{output}/queue.json", queue_fixture)
 File.write("#{output}/queue-thin.json", queue_fixture(true))
 File.write("#{output}/browse-signed-in.html", browse_fixture(signed_in_env("/feed/popular")))
 File.write("#{output}/navigation-subscribed.html", navigation_fixture)
+File.write("#{output}/navigation-selected.html", navigation_fixture(["Trending", "Popular", "Trending", "", "Future feed"]))
+File.write("#{output}/navigation-guest.html", navigation_fixture(account: false))
+File.write("#{output}/navigation-popular-disabled.html", navigation_fixture(popular_enabled: false))
 File.write("#{output}/history.html", history_fixture)
 File.write("#{output}/history-dearrow.html", history_fixture(dearrow: true))
 File.write("#{output}/history-empty.html", history_fixture(empty: true))

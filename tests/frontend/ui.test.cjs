@@ -422,7 +422,7 @@ for (const engine of engines) {
             if (fixture === 'channel-clips') assert.equal(await page.locator('.channel-tabs [aria-current=page]').textContent(), 'Clips');
             if (fixture === 'clips-library') {
                 const links = await page.locator('.sidebar-link').allTextContents();
-                assert.ok(links.findIndex(x => x.includes('My Clips')) === links.findIndex(x => x.includes('Playlists')) + 1);
+                assert.ok(links.findIndex(x => x.includes('My Clips')) === links.findIndex(x => x.includes('Watch history')) + 1);
                 assert.equal(await page.locator('a[href^="/delete_clip"]').count(), 1);
             }
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -1632,9 +1632,13 @@ for (const engine of engines) {
 
 }
 
-test('library navigation survives custom feed settings without channel management links', () => {
+test('navigation honors feed order and selection while retaining account tools and access rules', () => {
     const html = fs.readFileSync(path.join(generated, 'navigation-subscribed.html'), 'utf8');
-    for (const feed of ['history', 'subscriptions', 'playlists']) assert.ok(html.includes(`href="/feed/${feed}"`));
+    const destinations = name => Array.from(fs.readFileSync(path.join(generated, name + '.html'), 'utf8').matchAll(/<a\b[^>]*href="([^"]+)"/g), match => match[1]);
+    assert.deepEqual(destinations('navigation-subscribed'), ['/feed/trending','/feed/popular','/feed/subscriptions','/feed/playlists','/feed/history','/feed/clips','/preferences?section=appearance']);
+    assert.deepEqual(destinations('navigation-selected'), ['/feed/trending','/feed/popular','/feed/history','/feed/clips','/preferences?section=appearance']);
+    assert.deepEqual(destinations('navigation-guest'), ['/feed/trending','/feed/popular','/preferences?section=appearance']);
+    assert.deepEqual(destinations('navigation-popular-disabled'), ['/feed/trending','/feed/subscriptions','/feed/playlists','/feed/history','/feed/clips','/preferences?section=appearance']);
     assert.match(html.match(/<a\b[^>]*href="\/feed\/subscriptions"[^>]*>/)[0], /aria-current=page/);
     assert.ok(!html.includes('/subscription_manager'));
     assert.ok(!html.includes('/channel/'));

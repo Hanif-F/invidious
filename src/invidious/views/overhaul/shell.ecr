@@ -23,7 +23,7 @@
 <a class="skip-link" href="#main-content"><%= I18n.translate(locale, "ui_skip_content") %></a>
 <span id="dark_mode_pref" hidden><%= dark_mode %></span>
 <header class="app-header">
-  <div class="brand-group"><button type="button" id="sidebar-toggle" class="icon-button" aria-controls="app-sidebar" aria-expanded="true" aria-label="<%= I18n.translate(locale, "ux_navigation_toggle") %>" title="<%= I18n.translate(locale, "ux_navigation_toggle") %>"><%= Invidious::Frontend::Icons.render("menu") %></button><a class="brand" href="/"><img src="/invidious-colored-vector.svg" alt="">Invidious</a></div>
+  <div class="brand-group"><button type="button" id="sidebar-toggle" class="icon-button" aria-controls="app-sidebar" aria-expanded="true" aria-label="<%= I18n.translate(locale, "ux_navigation_toggle") %>" title="<%= I18n.translate(locale, "ux_navigation_toggle") %>" hidden><%= Invidious::Frontend::Icons.render("menu") %></button><a class="brand" href="/"><img src="/invidious-colored-vector.svg" alt="">Invidious</a></div>
   <% if env.get?("search_homepage") %><div class="header-search"></div><% else %>
   <form class="header-search" action="/search" method="<%= Invidious::Frontend::Desktop.private_search?(env) ? "post" : "get" %>" role="search"><input type="search" id="searchbox" name="q" aria-label="<%= I18n.translate(locale, "search") %>" placeholder="<%= I18n.translate(locale, "search") %>" value="<%= HTML.escape(env.get?("search").try(&.as(String)) || "") %>" autocapitalize="none" spellcheck="false"><button class="icon-button" aria-label="<%= I18n.translate(locale, "search") %>" title="<%= I18n.translate(locale, "search") %>"><%= Invidious::Frontend::Icons.render("search") %></button></form>
   <% end %>
@@ -33,7 +33,7 @@
     <a href="/preferences?section=appearance"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "overhaul_settings") %></a>
     <% if env.get?("user") && Invidious::Authentication.admin?(env.get("user").as(Invidious::User)) %><a href="/admin/settings"><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "admin_instance_settings") %></a><% end %>
     <form action="/toggle_theme?referer=<%= URI.encode_www_form(page_return) %>" method="post"><input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button id="toggle_theme" data-mode-system="<%= I18n.translate(locale, "preferences_color_system") %>" data-mode-light="<%= I18n.translate(locale, "light") %>" data-mode-dark="<%= I18n.translate(locale, "dark") %>"><%= Invidious::Frontend::Icons.render(dark_mode.empty? ? "monitor" : (dark_mode == "light" ? "sun" : "moon")) %><span><%= I18n.translate(locale, "preferences_color_mode_label") %> <span data-color-mode-value><%= I18n.translate(locale, dark_mode.empty? ? "preferences_color_system" : dark_mode) %></span></span></button></form>
-    <button type="button" data-shortcut-help><%= Invidious::Frontend::Icons.render("keyboard") %><%= I18n.translate(locale, "ux_shortcuts") %></button>
+    <button type="button" data-shortcut-help hidden><%= Invidious::Frontend::Icons.render("keyboard") %><%= I18n.translate(locale, "ux_shortcuts") %></button>
     <% if env.get?("user") %><hr><form action="/signout?referer=/" method="post"><input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button><%= Invidious::Frontend::Icons.render("log-out") %><%= I18n.translate(locale, "Log out") %></button></form><% end %>
   </div></details></div>
 </header>

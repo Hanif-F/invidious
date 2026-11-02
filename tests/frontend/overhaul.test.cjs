@@ -212,6 +212,26 @@ for(const engine of engines) {
         assert.equal(await page.evaluate(()=>player.tech(true).el()===drawerMedia),true);
         assert.deepEqual(errors,[]);await context.close();
     });
+    test(`${engine}: shell fallback hides unavailable controls and retains ordinary navigation`,async()=>{
+        for(const failure of ['disabled','unavailable']) {
+            let unavailable=false;
+            const {page,context,requests,errors}=await setup(engine,'browse','light',{
+                javascript:failure!=='disabled',
+                reply:entry=>unavailable&&entry.url.pathname==='/js/overhaul.js'?{status:503,body:''}:null
+            });
+            if(failure==='unavailable') { unavailable=true; await page.reload(); }
+            assert.equal(await page.locator('#sidebar-toggle').isVisible(),false);
+            await page.locator('.header-account>summary').click();
+            assert.equal(await page.locator('[data-shortcut-help]').isVisible(),false);
+            assert.equal(await page.locator('.header-account a[href="/preferences?section=appearance"]').isVisible(),true);
+            assert.equal(await page.locator('#toggle_theme').isEnabled(),true);
+            await page.locator('.header-account>summary').click();
+            await page.locator('.sidebar-link[href="/feed/trending"]').click();
+            await page.waitForURL('**/feed/trending');
+            assert.equal(requests.filter(entry=>entry.method==='POST').length,0);
+            assert.deepEqual(errors,[]);await context.close();
+        }
+    });
     test(`${engine}: desktop account menu shows the selected color mode with and without JavaScript`,async()=>{
         for(const javascript of [true,false])for(const mode of ['light','dark','system']) {
             const {page,context,errors}=await setup(engine,'browse',mode,{javascript});

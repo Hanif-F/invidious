@@ -54,6 +54,7 @@
     });
     on(scrim, 'click', function () { closeNavigation(true); });
     navigation();
+    toggle.hidden = false;
     function closeMenu(menu, restore) {
         menu.open = false;
         if (restore) menu.querySelector('summary').focus();
@@ -163,7 +164,9 @@
             on(trigger, 'click', function () { openDialog(dialog); }, own(trigger, seenDialogs));
         });
     }
-    on(document.querySelector('[data-shortcut-help]'), 'click', openHelp);
+    var helpTrigger = document.querySelector('[data-shortcut-help]');
+    on(helpTrigger, 'click', openHelp);
+    helpTrigger.hidden = false;
     on(document.querySelector('[data-ui-dismiss]'), 'click', ui.dismissNotice);
     on(document, 'keydown', function (event) {
         if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;

@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-02",
+  "scope": "Regenerated production templates and locally intercepted synthetic responses; no production account or database writes.",
+  "frontend": {
+    "command": "npm test -- --test-concurrency=2",
+    "exitCode": 0,
+    "tests": 912,
+    "pass": 912,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "durationMs": 581384.080427
+  },
+  "findingReplay": {
+    "exitCode": 0,
+    "recordedStates": 22,
+    "browsers": [
+      "chromium",
+      "firefox"
+    ],
+    "descriptionWidths": [
+      1280,
+      1440,
+      1920
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "findings": [
+      "VF-001",
+      "VF-002",
+      "VF-003",
+      "VF-004",
+      "VF-005"
+    ]
+  }
+}

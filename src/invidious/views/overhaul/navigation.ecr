@@ -1,4 +1,7 @@
-<% {"popular" => {"house", "Popular"}, "trending" => {"trending-up", "Trending"}, "subscriptions" => {"bell", "Subscriptions"}, "history" => {"history", "Watch history"}, "playlists" => {"list-video", "Playlists"}, "clips" => {"scissors", "clips_my"}}.each do |feed, entry| %>
+<% navigation_entries = {"popular" => {"house", "Popular"}, "trending" => {"trending-up", "Trending"}, "subscriptions" => {"bell", "Subscriptions"}, "history" => {"history", "Watch history"}, "playlists" => {"list-video", "Playlists"}, "clips" => {"scissors", "clips_my"}} %>
+<% # History and clips are library tools outside the configurable feed menu. %>
+<% (preferences.feed_menu.map(&.downcase) + ["history", "clips"]).uniq.each do |feed| %>
+<% next unless entry = navigation_entries[feed]? %>
 <% next if feed == "popular" && !CONFIG.popular_enabled %>
 <% next if {"subscriptions", "history", "playlists", "clips"}.includes?(feed) && !env.get?("user") %>
 <% navigation_path = env.request.path %>

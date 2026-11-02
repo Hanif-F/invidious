@@ -1,0 +1,314 @@
+[
+  {
+    "id": "VF-002",
+    "engine": "chromium",
+    "mode": "light",
+    "measurements": [
+      {
+        "width": 1280,
+        "color": "rgb(23, 25, 31)",
+        "parentColor": "rgb(23, 25, 31)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      },
+      {
+        "width": 1440,
+        "color": "rgb(23, 25, 31)",
+        "parentColor": "rgb(23, 25, 31)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      },
+      {
+        "width": 1920,
+        "color": "rgb(23, 25, 31)",
+        "parentColor": "rgb(23, 25, 31)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      }
+    ]
+  },
+  {
+    "id": "VF-003",
+    "engine": "chromium",
+    "mode": "light",
+    "viewportWidth": 1280,
+    "documentWidth": 2454,
+    "contentWidth": 752,
+    "contentScrollWidth": 2350,
+    "overflowWrap": "normal"
+  },
+  {
+    "id": "VF-002",
+    "engine": "chromium",
+    "mode": "dark",
+    "measurements": [
+      {
+        "width": 1280,
+        "color": "rgb(241, 243, 247)",
+        "parentColor": "rgb(241, 243, 247)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      },
+      {
+        "width": 1440,
+        "color": "rgb(241, 243, 247)",
+        "parentColor": "rgb(241, 243, 247)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      },
+      {
+        "width": 1920,
+        "color": "rgb(241, 243, 247)",
+        "parentColor": "rgb(241, 243, 247)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      }
+    ]
+  },
+  {
+    "id": "VF-003",
+    "engine": "chromium",
+    "mode": "dark",
+    "viewportWidth": 1280,
+    "documentWidth": 2454,
+    "contentWidth": 752,
+    "contentScrollWidth": 2350,
+    "overflowWrap": "normal"
+  },
+  {
+    "id": "VF-001",
+    "engine": "chromium",
+    "configured": [
+      "Popular",
+      "Trending",
+      "Subscriptions",
+      "Playlists"
+    ],
+    "sidebar": [
+      {
+        "text": "Popular",
+        "href": "/feed/popular"
+      },
+      {
+        "text": "Trending",
+        "href": "/feed/trending"
+      },
+      {
+        "text": "Subscriptions",
+        "href": "/feed/subscriptions"
+      },
+      {
+        "text": "Watch history",
+        "href": "/feed/history"
+      },
+      {
+        "text": "Playlists",
+        "href": "/feed/playlists"
+      },
+      {
+        "text": "My Clips",
+        "href": "/feed/clips"
+      },
+      {
+        "text": "Settings",
+        "href": "/preferences?section=appearance"
+      }
+    ]
+  },
+  {
+    "id": "VF-004",
+    "engine": "chromium",
+    "expandedBefore": "true",
+    "expandedAfter": "true",
+    "shortcutDialogOpen": false
+  },
+  {
+    "id": "VF-005",
+    "engine": "chromium",
+    "kind": "playlist",
+    "actions": [
+      "Cancel",
+      "Delete playlist"
+    ]
+  },
+  {
+    "id": "VF-005",
+    "engine": "chromium",
+    "kind": "clip",
+    "actions": [
+      "Delete clip",
+      "Cancel"
+    ]
+  },
+  {
+    "id": "VF-005",
+    "engine": "chromium",
+    "kind": "account",
+    "actions": [
+      "Delete account",
+      "Cancel"
+    ]
+  },
+  {
+    "id": "VF-002",
+    "engine": "firefox",
+    "mode": "light",
+    "measurements": [
+      {
+        "width": 1280,
+        "color": "rgb(23, 25, 31)",
+        "parentColor": "rgb(23, 25, 31)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      },
+      {
+        "width": 1440,
+        "color": "rgb(23, 25, 31)",
+        "parentColor": "rgb(23, 25, 31)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      },
+      {
+        "width": 1920,
+        "color": "rgb(23, 25, 31)",
+        "parentColor": "rgb(23, 25, 31)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      }
+    ]
+  },
+  {
+    "id": "VF-003",
+    "engine": "firefox",
+    "mode": "light",
+    "viewportWidth": 1280,
+    "documentWidth": 2456,
+    "contentWidth": 752,
+    "contentScrollWidth": 2352,
+    "overflowWrap": "normal"
+  },
+  {
+    "id": "VF-002",
+    "engine": "firefox",
+    "mode": "dark",
+    "measurements": [
+      {
+        "width": 1280,
+        "color": "rgb(241, 243, 247)",
+        "parentColor": "rgb(241, 243, 247)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      },
+      {
+        "width": 1440,
+        "color": "rgb(241, 243, 247)",
+        "parentColor": "rgb(241, 243, 247)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      },
+      {
+        "width": 1920,
+        "color": "rgb(241, 243, 247)",
+        "parentColor": "rgb(241, 243, 247)",
+        "decoration": "none",
+        "weight": "400",
+        "parentWeight": "400"
+      }
+    ]
+  },
+  {
+    "id": "VF-003",
+    "engine": "firefox",
+    "mode": "dark",
+    "viewportWidth": 1280,
+    "documentWidth": 2456,
+    "contentWidth": 752,
+    "contentScrollWidth": 2352,
+    "overflowWrap": "normal"
+  },
+  {
+    "id": "VF-001",
+    "engine": "firefox",
+    "configured": [
+      "Popular",
+      "Trending",
+      "Subscriptions",
+      "Playlists"
+    ],
+    "sidebar": [
+      {
+        "text": "Popular",
+        "href": "/feed/popular"
+      },
+      {
+        "text": "Trending",
+        "href": "/feed/trending"
+      },
+      {
+        "text": "Subscriptions",
+        "href": "/feed/subscriptions"
+      },
+      {
+        "text": "Watch history",
+        "href": "/feed/history"
+      },
+      {
+        "text": "Playlists",
+        "href": "/feed/playlists"
+      },
+      {
+        "text": "My Clips",
+        "href": "/feed/clips"
+      },
+      {
+        "text": "Settings",
+        "href": "/preferences?section=appearance"
+      }
+    ]
+  },
+  {
+    "id": "VF-004",
+    "engine": "firefox",
+    "expandedBefore": "true",
+    "expandedAfter": "true",
+    "shortcutDialogOpen": false
+  },
+  {
+    "id": "VF-005",
+    "engine": "firefox",
+    "kind": "playlist",
+    "actions": [
+      "Cancel",
+      "Delete playlist"
+    ]
+  },
+  {
+    "id": "VF-005",
+    "engine": "firefox",
+    "kind": "clip",
+    "actions": [
+      "Delete clip",
+      "Cancel"
+    ]
+  },
+  {
+    "id": "VF-005",
+    "engine": "firefox",
+    "kind": "account",
+    "actions": [
+      "Delete account",
+      "Cancel"
+    ]
+  }
+]

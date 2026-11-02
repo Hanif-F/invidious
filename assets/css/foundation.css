@@ -217,7 +217,8 @@ p,label,small,.media-meta{overflow-wrap:anywhere}
 .channel-identity h1{margin:0;display:flex;gap:8px;align-items:center}.channel-identity p{margin:4px 0}
 .channel-controls{display:flex;align-items:center;gap:12px;margin-inline-start:auto}
 .channel-about{margin:20px 0;max-width:960px}.channel-about summary{color:var(--muted);cursor:pointer}
-#channel-about{margin-top:16px;overflow-wrap:anywhere}#descriptionWrapper{white-space:pre-wrap}
+#channel-about{margin-top:16px;overflow-wrap:anywhere}#descriptionWrapper{white-space:pre-wrap;overflow-wrap:anywhere}
+#descriptionWrapper a[href],#channel-about a[href],.comment-body a[href],.playlist-description>div a[href]{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
 .channel-tabs{display:flex;align-items:center;gap:24px;border-bottom:1px solid var(--separator);margin:24px 0}
 .channel-tabs>a,.channel-tabs>strong{padding:12px 0;color:var(--muted);font-weight:500;white-space:nowrap;text-decoration:none}
 .channel-tabs>strong{color:var(--text);border-bottom:2px solid var(--accent)}

@@ -10,8 +10,8 @@
     <label for="password"><%= I18n.translate(locale, "Current password") %></label>
     <input id="password" name="password" type="password" autocomplete="current-password" required>
     <div class="toolbar">
+      <a class="button" href="<%= HTML.escape(referer) %>" <%= "autofocus" unless error %>><%= I18n.translate(locale, "Cancel") %></a>
       <button type="submit" name="submit" value="delete_account" class="button button-danger"><%= I18n.translate(locale, "Delete account") %></button>
-      <a class="button" href="<%= HTML.escape(referer) %>"><%= I18n.translate(locale, "Cancel") %></a>
     </div>
   </form>
 </section>
