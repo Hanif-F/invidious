@@ -22,12 +22,22 @@
     var sidebar = document.getElementById('app-sidebar');
     var scrim = document.querySelector('.nav-scrim');
     var collapsed = watch || storage.local.get('navigation_collapsed') === true;
+    var navigationBackground = new Map();
     function navigation() {
         document.body.dataset.navCollapsed = String(collapsed);
         var drawer = watch && !collapsed;
         document.body.dataset.navDrawer = String(drawer);
         scrim.hidden = !drawer;
         toggle.setAttribute('aria-expanded', String(!collapsed));
+        if (drawer) {
+            document.querySelectorAll('.skip-link, .brand, .header-search, .header-actions, .app-main, .app-footer, .ui-notice').forEach(function (element) {
+                if (!navigationBackground.has(element)) navigationBackground.set(element, element.inert);
+                element.inert = true;
+            });
+        } else {
+            navigationBackground.forEach(function (inert, element) { element.inert = inert; });
+            navigationBackground.clear();
+        }
     }
     function closeNavigation(focus) {
         if (!watch || collapsed) return;
@@ -36,6 +46,10 @@
     }
     on(toggle, 'click', function () {
         collapsed = !collapsed; navigation();
+        if (watch && !collapsed) {
+            var first = sidebar.querySelector('a[href]');
+            if (first) first.focus();
+        }
         if (!watch && !storage.local.set('navigation_collapsed', collapsed)) ui.notice(ui.label('page_only'));
     });
     on(scrim, 'click', function () { closeNavigation(true); });
@@ -61,6 +75,12 @@
     }
     on(window, 'resize', function () { menus.forEach(positionMenu); });
     on(document, 'scroll', function () { menus.forEach(positionMenu); }, {capture:true});
+    var menuResize = new ResizeObserver(function (entries) {
+        entries.forEach(function (entry) {
+            var menu = entry.target.closest('[data-ui-menu]');
+            if (menu && menus.has(menu)) positionMenu(menu);
+        });
+    });
     function own(root, seen) {
         var controller = new AbortController();
         owners.add({root:root, seen:seen, controller:controller});
@@ -70,6 +90,10 @@
         owners.forEach(function (entry) {
             if (entry.root.isConnected) return;
             entry.controller.abort(); entry.seen.delete(entry.root);
+            if (menus.has(entry.root)) {
+                var panel = entry.root.querySelector('.menu-content');
+                if (panel) menuResize.unobserve(panel);
+            }
             menus.delete(entry.root); dialogReturns.delete(entry.root); owners.delete(entry);
         });
     }
@@ -79,6 +103,8 @@
             var summary = menu.querySelector('summary');
             if (!summary) return;
             seenMenus.add(menu); menus.add(menu);
+            var panel = menu.querySelector('.menu-content');
+            if (panel) menuResize.observe(panel);
             var options = own(menu, seenMenus);
             function listen(type, listener) { on(menu, type, listener, options); }
             summary.setAttribute('aria-expanded', String(menu.open));
@@ -110,6 +136,7 @@
         sweep();
         menus.forEach(function (menu) { if (menu.open && !menu.contains(event.target)) closeMenu(menu, false); });
         if (watch && !collapsed && !sidebar.contains(event.target) && !toggle.contains(event.target)) closeNavigation(false);
+        else if (watch && !collapsed && sidebar.contains(event.target) && event.target.closest('a[href]')) closeNavigation(false);
     });
     var help = document.getElementById('shortcut-help');
     function initDialogPanel(dialog) {
@@ -140,6 +167,14 @@
     on(document.querySelector('[data-ui-dismiss]'), 'click', ui.dismissNotice);
     on(document, 'keydown', function (event) {
         if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
+        if (event.key === 'Tab' && watch && !collapsed && !document.querySelector('dialog[open]')) {
+            var controls = [toggle].concat(Array.from(sidebar.querySelectorAll('a[href], button:not(:disabled)')).filter(function (element) { return element.getClientRects().length; }));
+            var index = controls.indexOf(document.activeElement);
+            if (index < 0 || event.shiftKey && index === 0 || !event.shiftKey && index === controls.length - 1) {
+                event.preventDefault(); controls[event.shiftKey ? controls.length - 1 : 0].focus();
+            }
+            return;
+        }
         if (event.key === 'Escape') { if (!document.querySelector('dialog[open]')) closeNavigation(true); return; }
         if (event.target.closest('input,textarea,select,button,a,summary,[contenteditable],dialog')) return;
         if (event.key === '?') { event.preventDefault(); openHelp(); }
@@ -344,6 +379,6 @@
     }
     on(window, 'pagehide', function (event) {
         disposeReorder();
-        if (!event.persisted) { lifetime.abort(); owners.forEach(function (entry) { entry.controller.abort(); }); owners.clear(); menus.clear(); }
+        if (!event.persisted) { lifetime.abort(); menuResize.disconnect(); owners.forEach(function (entry) { entry.controller.abort(); }); owners.clear(); menus.clear(); }
     });
 })();

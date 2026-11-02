@@ -60,6 +60,7 @@ label{font-weight:500}
 .header-account{margin-inline-start:auto}
 .app-sidebar{position:fixed;top:60px;bottom:0;inset-inline-start:0;width:var(--sidebar-width);padding:var(--s4) var(--s2);background:var(--page);overflow:auto;border-inline-end:1px solid var(--separator);z-index:25}
 .sidebar-link{display:flex;align-items:center;gap:var(--s4);min-height:44px;padding:10px 12px;margin-bottom:4px;border-radius:var(--radius);font-size:14px;font-weight:500;white-space:nowrap}
+.sidebar-link span{min-width:0;white-space:normal;overflow-wrap:anywhere}
 .sidebar-link:hover{background:var(--surface);text-decoration:none}
 .sidebar-link[aria-current]{background:var(--selection);box-shadow:inset 3px 0 var(--accent);color:var(--accent);font-weight:600}
 [dir=rtl] .sidebar-link[aria-current]{box-shadow:inset -3px 0 var(--accent)}
@@ -75,8 +76,8 @@ body[data-nav-drawer=true] .app-sidebar{width:224px;box-shadow:8px 0 24px #0003}
 .ui-menu{position:relative}
 .ui-menu>summary{list-style:none;display:inline-flex}
 .ui-menu>summary::-webkit-details-marker{display:none}
-.menu-content{position:absolute;inset-inline-end:0;top:calc(100% + 8px);z-index:40;min-width:240px;max-width:calc(100vw - 48px);max-height:70vh;overflow:auto;background:var(--raised);border:1px solid var(--border);border-radius:var(--panel-radius);padding:var(--s2);box-shadow:0 8px 24px #0002}
-.menu-content a,.menu-content button{display:flex;align-items:center;gap:var(--s3);padding:10px 12px;width:100%;background:none;border:0;border-radius:4px;color:var(--text);font-size:14px;text-align:start;text-decoration:none}
+.menu-content{position:absolute;inset-inline-end:0;top:calc(100% + 8px);z-index:40;min-width:min(240px,calc(100vw - 16px));max-width:min(360px,calc(100vw - 16px));max-height:70vh;overflow:auto;overflow-wrap:anywhere;background:var(--raised);border:1px solid var(--border);border-radius:var(--panel-radius);padding:var(--s2);box-shadow:0 8px 24px #0002}
+.menu-content a,.menu-content button{display:flex;align-items:center;justify-content:flex-start;gap:var(--s3);padding:10px 12px;width:100%;background:none;border:0;border-radius:4px;color:var(--text);font-size:14px;text-align:start;text-decoration:none;white-space:normal}
 .menu-content a:hover,.menu-content button:hover{background:var(--selection)}
 .menu-content .menu-note{display:block;padding:10px 12px;color:var(--muted);font-size:14px;max-width:36ch;white-space:normal}
 .settings-legacy-entry>a{display:none}.settings-legacy-entry>a:target{display:inline-flex;margin-block-end:24px;white-space:normal}

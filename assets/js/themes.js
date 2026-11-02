@@ -20,8 +20,11 @@ function setTheme(theme) {
         symbol.setAttribute('href', href + '#' + (colorMode === 'dark' ? 'moon' : colorMode === 'light' ? 'sun' : 'monitor'));
     }
     var label = toggle_theme.getAttribute('data-mode-' + (colorMode || 'system'));
-    toggle_theme.title = label;
-    toggle_theme.setAttribute('aria-label', label);
+    var value = toggle_theme.querySelector('[data-color-mode-value]');
+    if (value) value.textContent = label;
+    var controlLabel = value ? toggle_theme.textContent.trim() : label;
+    toggle_theme.title = controlLabel;
+    toggle_theme.setAttribute('aria-label', controlLabel);
     toggle_theme.dataset.mode = colorMode || 'system';
 }
 

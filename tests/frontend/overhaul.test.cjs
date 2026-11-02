@@ -164,6 +164,71 @@ for(const engine of engines) {
         assert.equal(await page.evaluate(()=>player.paused()),true);
         assert.deepEqual(errors,[]);await context.close();
     });
+    test(`${engine}: desktop menus contain long labels and reposition after live content changes`,async()=>{
+        for(const mode of ['light','dark','rtl']) {
+            const {page,context,errors}=await setup(engine,'browse',mode,{width:1280,height:720});
+            const menu=page.locator('.header-account'),panel=menu.locator('.menu-content');
+            await menu.locator('summary').click();
+            const originalWidth=(await panel.boundingBox()).width;
+            await menu.locator('a').first().evaluate(element=>element.append(' '+ 'LongUnbrokenUsername'.repeat(15)));
+            await menu.locator('[data-shortcut-help]').evaluate(element=>element.append(' '+ 'LongTranslatedAction'.repeat(8)));
+            await page.waitForFunction(()=>{
+                const panel=document.querySelector('.header-account .menu-content'),r=panel.getBoundingClientRect();
+                return r.left>=8&&r.right<=innerWidth-8&&r.top>=8&&r.bottom<=innerHeight-8&&panel.scrollWidth<=panel.clientWidth+1;
+            });
+            assert.ok((await panel.boundingBox()).width>originalWidth,'live growth was positioned');
+            assert.equal(await panel.locator('a,button').evaluateAll(elements=>elements.every(element=>getComputedStyle(element).justifyContent==='flex-start')),true,'links and buttons share the same alignment');
+            await page.setViewportSize({width:1920,height:1080});
+            await page.setViewportSize({width:1280,height:720});
+            await page.screenshot({path:path.join(artifacts,`${engine}-desktop-menu-long-${mode}.png`)});
+            await page.keyboard.press('End');await assertFocus(page,'.header-account [data-shortcut-help]');
+            await page.keyboard.press('Home');await assertFocus(page,'.header-account .menu-content a:first-child');
+            await page.keyboard.press('Escape');await assertFocus(page,'.header-account>summary');
+            assert.deepEqual(errors,[]);await context.close();
+        }
+    });
+    test(`${engine}: desktop watch drawer contains focus, wraps labels and restores the page`,async()=>{
+        const {page,context,errors}=await setup(engine,'watch','light',{width:1280,height:720});
+        await page.locator('.sidebar-link span').first().evaluate(element=>element.textContent='A longer navigation translation that must wrap correctly');
+        await page.addStyleTag({content:'.sidebar-link{font-size:20px}'});
+        await page.evaluate(()=>{window.drawerMedia=player.tech(true).el();document.querySelector('.app-footer').inert=true;});
+        await page.locator('#sidebar-toggle').focus();await page.keyboard.press('Enter');
+        await assertFocus(page,'.sidebar-link:first-child');
+        assert.equal(await page.locator('.app-sidebar').evaluate(element=>element.scrollWidth<=element.clientWidth+1),true);
+        assert.equal(await page.locator('.app-main').evaluate(element=>element.inert),true);
+        await page.locator('#searchbox').evaluate(element=>element.focus());
+        await assertFocus(page,'.sidebar-link:first-child');
+        await page.keyboard.press('Shift+Tab');await assertFocus(page,'#sidebar-toggle');
+        await page.keyboard.press('Shift+Tab');await assertFocus(page,'.sidebar-settings');
+        await page.keyboard.press('Tab');await assertFocus(page,'#sidebar-toggle');
+        await page.keyboard.press('Tab');await assertFocus(page,'.sidebar-link:first-child');
+        await page.screenshot({path:path.join(artifacts,`${engine}-desktop-drawer-long-label.png`)});
+        await page.keyboard.press('Escape');await assertFocus(page,'#sidebar-toggle');
+        assert.equal(await page.locator('.app-main').evaluate(element=>element.inert),false);
+        assert.equal(await page.locator('.app-footer').evaluate(element=>element.inert),true,'existing inert state is retained');
+        await page.locator('#searchbox').focus();await assertFocus(page,'#searchbox');
+        await page.locator('#sidebar-toggle').click();await page.locator('.nav-scrim').click({position:{x:500,y:100}});
+        await assertFocus(page,'#sidebar-toggle');
+        assert.equal(await page.evaluate(()=>player.tech(true).el()===drawerMedia),true);
+        assert.deepEqual(errors,[]);await context.close();
+    });
+    test(`${engine}: desktop account menu shows the selected color mode with and without JavaScript`,async()=>{
+        for(const javascript of [true,false])for(const mode of ['light','dark','system']) {
+            const {page,context,errors}=await setup(engine,'browse',mode,{javascript});
+            await page.locator('.header-account>summary').click();
+            const toggle=page.locator('#toggle_theme'),value=toggle.locator('[data-color-mode-value]');
+            assert.equal(await value.textContent(),await toggle.getAttribute('data-mode-'+mode));
+            if(javascript) {
+                for(const next of ['dark','','light']) {
+                    await page.evaluate(mode=>setTheme(mode),next);
+                    const expected=await toggle.getAttribute('data-mode-'+(next||'system'));
+                    assert.equal(await value.textContent(),expected);
+                    assert.match(await toggle.getAttribute('aria-label'),new RegExp(expected));
+                }
+            }
+            assert.deepEqual(errors,[]);await context.close();
+        }
+    });
     test(`${engine}: D1 appearance preview/Discard and live System mode`,async()=>{
         const{page,context,requests,errors}=await setup(engine,'settings','system');
         await page.emulateMedia({colorScheme:'dark'});assert.equal(await page.locator('body').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(16, 17, 20)');
