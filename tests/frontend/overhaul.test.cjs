@@ -133,8 +133,8 @@ for(const engine of engines) {
         const summary=page.locator('.header-account>summary');await summary.focus();await page.keyboard.press('ArrowDown');
         assert.equal(await page.locator('.header-account').getAttribute('open'),'');assert.equal(await page.evaluate(()=>document.activeElement.textContent.trim()),'Log in');
         await page.keyboard.press('Escape');await assertFocus(page,'.header-account>summary');
-        await summary.click();await page.locator('[data-shortcut-help]').click();await page.locator('#shortcut-help').waitFor({state:'visible'});
-        await page.keyboard.press('Escape');await assertFocus(page,'.header-account>summary');
+        await page.locator('.app-footer [data-shortcut-help]').click();await page.locator('#shortcut-help').waitFor({state:'visible'});
+        await page.keyboard.press('Escape');await assertFocus(page,'.app-footer [data-shortcut-help]');
         await summary.click();await page.locator('h1').click();assert.equal(await page.locator('.header-account').getAttribute('open'),null);
         assert.deepEqual(browsing.errors,[]);await context.close();
         const watching=await setup(engine,'watch');await watching.page.locator('#sidebar-toggle').click();
@@ -171,7 +171,7 @@ for(const engine of engines) {
             await menu.locator('summary').click();
             const originalWidth=(await panel.boundingBox()).width;
             await menu.locator('a').first().evaluate(element=>element.append(' '+ 'LongUnbrokenUsername'.repeat(15)));
-            await menu.locator('[data-shortcut-help]').evaluate(element=>element.append(' '+ 'LongTranslatedAction'.repeat(8)));
+            await menu.locator('a[href="/preferences?section=appearance"]').evaluate(element=>element.append(' '+ 'LongTranslatedAction'.repeat(8)));
             await page.waitForFunction(()=>{
                 const panel=document.querySelector('.header-account .menu-content'),r=panel.getBoundingClientRect();
                 return r.left>=8&&r.right<=innerWidth-8&&r.top>=8&&r.bottom<=innerHeight-8&&panel.scrollWidth<=panel.clientWidth+1;
@@ -181,7 +181,7 @@ for(const engine of engines) {
             await page.setViewportSize({width:1920,height:1080});
             await page.setViewportSize({width:1280,height:720});
             await page.screenshot({path:path.join(artifacts,`${engine}-desktop-menu-long-${mode}.png`)});
-            await page.keyboard.press('End');await assertFocus(page,'.header-account [data-shortcut-help]');
+            await page.keyboard.press('End');await assertFocus(page,'.header-account a[href="/preferences?section=appearance"]');
             await page.keyboard.press('Home');await assertFocus(page,'.header-account .menu-content a:first-child');
             await page.keyboard.press('Escape');await assertFocus(page,'.header-account>summary');
             assert.deepEqual(errors,[]);await context.close();
@@ -232,18 +232,22 @@ for(const engine of engines) {
             assert.deepEqual(errors,[]);await context.close();
         }
     });
-    test(`${engine}: desktop account menu shows the selected color mode with and without JavaScript`,async()=>{
+    test(`${engine}: desktop header shows the selected icon-only color mode with and without JavaScript`,async()=>{
         for(const javascript of [true,false])for(const mode of ['light','dark','system']) {
             const {page,context,errors}=await setup(engine,'browse',mode,{javascript});
-            await page.locator('.header-account>summary').click();
-            const toggle=page.locator('#toggle_theme'),value=toggle.locator('[data-color-mode-value]');
-            assert.equal(await value.textContent(),await toggle.getAttribute('data-mode-'+mode));
+            const toggle=page.locator('#toggle_theme');
+            assert.equal((await toggle.textContent()).trim(),'');
+            assert.equal(await toggle.getAttribute('title'),await toggle.getAttribute('data-mode-'+mode));
+            assert.equal(await toggle.getAttribute('aria-label'),await toggle.getAttribute('title'));
+            assert.ok(await toggle.evaluate(el=>el.getBoundingClientRect().right<=document.querySelector('.header-account').getBoundingClientRect().left));
+            assert.equal(await page.locator('.header-account #toggle_theme,.header-account [data-shortcut-help],.header-account a[href="/token_manager"],.header-account a[href="/admin/settings"]').count(),0);
+            assert.equal(await page.locator('.app-footer [data-shortcut-help] svg').count(),0);
             if(javascript) {
                 for(const next of ['dark','','light']) {
                     await page.evaluate(mode=>setTheme(mode),next);
                     const expected=await toggle.getAttribute('data-mode-'+(next||'system'));
-                    assert.equal(await value.textContent(),expected);
-                    assert.match(await toggle.getAttribute('aria-label'),new RegExp(expected));
+                    assert.equal(await toggle.getAttribute('title'),expected);
+                    assert.equal(await toggle.getAttribute('aria-label'),expected);
                 }
             }
             assert.deepEqual(errors,[]);await context.close();
@@ -1602,6 +1606,9 @@ for(const engine of engines) {
         await page.locator('.vjs-desktop-settings').click();const panel=page.getByRole('dialog',{name:'Settings',exact:true});
         await panel.getByRole('menuitem',{name:/^Captions,/}).click();await panel.getByRole('menuitemradio',{name:'English',exact:true}).click();
         await panel.getByRole('menuitem',{name:/^Captions,/}).click();
+        assert.equal(await panel.locator('.player-settings-content>button').first().getAttribute('data-setting'),'appearance');
+        assert.match(await panel.locator('.player-settings-content>button').nth(1).getAttribute('data-setting'),/^retry-caption:/);
+        assert.equal(await panel.getByRole('menuitem',{name:/Retry captions/}).locator('use[href$="#chevron-right"]').count(),0);
         await panel.getByRole('menuitem',{name:/Retry captions/}).click();
         await page.waitForFunction(()=>Array.from(player.textTracks()).some(track=>track.label==='English'&&track.mode==='showing'&&track.cues&&track.cues.length));
         assert.equal(attempts,2);assert.equal(await panel.getByRole('menuitem',{name:/Retry captions/}).count(),0);
@@ -3865,3 +3872,171 @@ for (const engine of engines) test(`${engine}: D8 Settings search finds descript
     assert.equal(requests.filter(entry=>entry.method==='POST').length,0);
     assert.deepEqual(errors,[]);await context.close();
 });
+
+for (const engine of engines) {
+    test(`${engine}: desktop menu cleanup retains collection actions and trims watch More`, async () => {
+        for (const screen of ['browse', 'playlist']) {
+            const {page, context, errors} = await setup(engine, screen);
+            const menu = page.locator('.media-item .video-context').first();
+            await menu.locator('summary').click();
+            const labels = await menu.locator('.menu-content a,.menu-content button').allTextContents();
+            for (const removed of ['Play video', 'Mark watched', 'Mark unwatched', 'View channel', 'Channel title and thumbnail settings', 'Watch on YouTube', 'Switch Invidious Instance']) assert.ok(!labels.includes(removed), removed);
+            for (const retained of ['Add to playlist', 'Block channel', 'Audio mode']) assert.ok(labels.includes(retained), retained);
+            if (screen === 'playlist') assert.ok(labels.includes('Remove selected'));
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+        const {page, context, errors} = await setup(engine, 'watch', 'dark', {fixture:'d5-single-dark', url:'/watch?v=2isYuQZMbdU'});
+        await page.locator('.watch-actions>.ui-menu>summary').click();
+        const menu = page.locator('.watch-actions .menu-content');
+        assert.equal(await menu.locator('[data-video-action=block],[data-video-action=unblock],a[href^="/preferences/sponsorblock/channels"],a[href^="/preferences/spoilers/channels"],#link-yt-watch,#link-iv-other,#link-iv-embed,#annotations').count(), 0);
+        assert.equal(await menu.locator('#link-yt-embed').textContent(), 'Embed');
+        assert.equal(await menu.getByRole('button', {name:'Download', exact:true}).count(), 1);
+        const avatar = page.locator('.creator .channel-avatar').first();
+        assert.equal(await avatar.evaluate(el=>el.clientWidth===40&&el.clientHeight===40&&el.querySelector('img').getBoundingClientRect().width===40&&el.querySelector('img').getBoundingClientRect().height===40), true);
+        await page.screenshot({path:path.join(artifacts,`${engine}-desktop-watch-menu.png`)});
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: desktop channel menu blocks, unblocks and restores saved state`, async () => {
+        let blocked = false;
+        const writes = [];
+        const {page, context, errors} = await setup(engine, 'browse', 'light', {fixture:'desktop-channel', url:'/channel/UC'+'a'.repeat(22), reply(entry) {
+            if (entry.url.searchParams.get('format') === 'runtime') return {contentType:'application/json', body:JSON.stringify(runtimeOwner(fixtureHTML(blocked ? 'desktop-channel-blocked' : 'desktop-channel'), generated))};
+            if (entry.url.pathname === '/blocked_channels' && entry.method === 'POST') {
+                writes.push(entry.body);
+                blocked = entry.body.get('action') === 'block';
+                return {contentType:'application/json', body:JSON.stringify({blocked})};
+            }
+            if (entry.navigation) return {contentType:'text/html', body:fixtureHTML(blocked ? 'desktop-channel-blocked' : 'desktop-channel')};
+        }});
+        const menu = page.locator('.channel-controls .video-context');
+        await menu.locator('summary').click();
+        await menu.getByRole('button', {name:'Block channel', exact:true}).click();
+        await page.locator('#video-actions-undo').waitFor({state:'visible'});
+        assert.equal(writes[0].get('ucid'), 'UC'+'a'.repeat(22));
+        assert.equal(writes[0].get('csrf_token'), 'fixture-token');
+        assert.equal(writes[0].get('browser_profile'), await page.evaluate(()=>InvidiousStorage.scope));
+        await page.reload();
+        await menu.locator('summary').click();
+        await menu.getByRole('button', {name:'Unblock channel', exact:true}).click();
+        await page.waitForFunction(()=>document.querySelector('#video-actions-notice span').textContent===document.getElementById('video-actions-config').dataset.unblocked);
+        await menu.locator('summary').click();
+        await menu.getByRole('button', {name:'Block channel', exact:true}).click();
+        await page.locator('#video-actions-undo').click();
+        await page.waitForFunction(()=>document.querySelector('#video-actions-notice span').textContent===document.getElementById('video-actions-config').dataset.unblocked);
+        assert.deepEqual(writes.map(body=>body.get('action')), ['block', 'unblock', 'block', 'unblock']);
+        assert.deepEqual(errors, []);
+        await context.close();
+        const guest = await setup(engine, 'browse', 'light', {fixture:'channel-diary', url:'/channel/UCfixture'});
+        await guest.page.locator('.channel-controls .ui-menu>summary').click();
+        assert.equal(await guest.page.locator('.channel-controls').getByRole('link', {name:'Block channel', exact:true}).getAttribute('href'), '/login?referer=%2Fchannel%2FUCfixture');
+        await guest.context.close();
+    });
+
+    test(`${engine}: desktop Admin is a role-aware Settings category with searchable form navigation`, async () => {
+        const admin = await setup(engine, 'settings', 'light', {fixture:'preferences-admin', url:'/preferences', reply(entry) {
+            if (entry.url.pathname === '/admin/settings') return {contentType:'text/html', body:fixtureHTML('admin-settings')};
+        }});
+        await admin.page.locator('#settings-search').fill('Admin');
+        const result = admin.page.locator('#settings-search-results a[href^="/admin/settings"]');
+        assert.equal(await result.count(), 1);
+        await result.click();
+        await admin.page.waitForURL('**/admin/settings?field=login_required');
+        assert.equal(await admin.page.locator('.settings-nav [aria-current=page]').textContent(), 'Admin');
+        assert.equal(await admin.page.locator('body').getAttribute('data-page'), 'settings');
+        assert.equal(await admin.page.locator('.settings-category .admin-settings-form').count(), 1);
+        await assertFocus(admin.page, '#login_required');
+        assert.deepEqual(admin.errors, []);
+        await admin.context.close();
+        for (const fixture of ['preferences', 'preferences-signed-in']) {
+            const ordinary = await setup(engine, 'settings', 'light', {fixture, url:'/preferences'});
+            assert.equal(await ordinary.page.locator('.settings-nav a[href="/admin/settings"]').count(), 0);
+            await ordinary.page.locator('#settings-search').fill('Admin');
+            assert.equal(await ordinary.page.locator('#settings-search-results a[href^="/admin/settings"]').count(), 0);
+            assert.deepEqual(ordinary.errors, []);
+            await ordinary.context.close();
+        }
+    });
+
+    test(`${engine}: desktop player settings widths transparency and caption appearance remain contained`, async () => {
+        const views = [{mode:'light',width:1440,height:900},{mode:'dark',width:1280,height:720},{mode:'system',width:1920,height:1080},{mode:'dark',width:1280,height:720,rtl:true},{mode:'dark',width:1440,height:900,fullscreen:true},{mode:'light',width:1280,height:900,narrow:true}];
+        for (const view of views) {
+            const {page, context, errors} = await setup(engine, 'watch', view.mode, {fixture:`d5-dash-${view.mode==='system'?'light':view.mode}`, url:'/watch?v=2isYuQZMbdU', width:view.width, height:view.height, reply(entry) {
+                if (entry.url.pathname === '/metadata.vtt') return {contentType:'text/vtt', body:'WEBVTT\n\n'};
+                if (entry.url.pathname.startsWith('/api/v1/captions/')) return {contentType:'text/vtt', body:'WEBVTT\n\n00:00.000 --> 00:05.000\nFixture captions\n'};
+            }});
+            await page.evaluate(()=>{player.muted(true);player.play().catch(()=>{});});
+            await page.waitForFunction(()=>player.currentTime()>.1&&player.qualityLevels().length===2&&player.audioTracks().length===3);
+            await page.evaluate(()=>{player.pause();window.desktopMedia=player.tech().el();const metadata=player.addRemoteTextTrack({kind:'metadata',label:'segment-metadata',src:'/metadata.vtt'},false);metadata.track.mode='hidden';});
+            if (view.mode === 'system') await page.evaluate(()=>setTheme(''));
+            if (view.narrow) await page.addStyleTag({content:'.watch-grid>.watch-player{width:440px}'});
+            if (view.rtl) {
+                await page.evaluate(()=>document.documentElement.dir='rtl');
+                await page.addStyleTag({content:'.player-settings-panel{font-size:18px}.player-settings-panel>header h2{font-size:20px}'});
+            }
+            if (view.fullscreen) {
+                await page.locator('.vjs-fullscreen-control').click();
+                await page.waitForFunction(()=>player.isFullscreen());
+            }
+            await page.locator('.vjs-desktop-settings').click();
+            const panel = page.locator('.player-settings-panel');
+            assert.equal(await panel.locator('[data-setting=enhancements]').count(), 0);
+            for (const [name, target] of [['main',360],['quality',300],['audio',300],['speed',240],['captions',320],['appearance',600],['advanced',340]]) {
+                if (name !== 'main') {
+                    if (name === 'appearance') await panel.locator('[data-setting=captions]').click();
+                    await panel.locator(`[data-setting=${name}]`).click();
+                }
+                assert.equal(await panel.getAttribute('data-view'), name);
+                await page.locator('#player').screenshot({path:path.join(artifacts,`${engine}-desktop-settings-${view.mode}-${view.rtl?'rtl':view.fullscreen?'fullscreen':view.narrow?'narrow':view.width}-${name}.png`)});
+                const geometry = await panel.evaluate(el=>{const box=el.getBoundingClientRect(),root=player.el().getBoundingClientRect();return {width:box.width,available:root.width-16,inside:box.left>=root.left&&box.right<=root.right+1&&box.top>=root.top&&box.bottom<=root.bottom,overflow:el.scrollWidth>el.clientWidth+1||el.querySelector('.player-settings-content').scrollWidth>el.querySelector('.player-settings-content').clientWidth+1,bg:getComputedStyle(el).backgroundColor,opacity:getComputedStyle(el).opacity};});
+                assert.ok(geometry.inside, JSON.stringify({view,name,geometry}));
+                assert.ok(!geometry.overflow, JSON.stringify({view,name,geometry}));
+                assert.ok(Math.abs(geometry.width-Math.min(target,geometry.available))<1, JSON.stringify({view,name,geometry}));
+                assert.match(geometry.bg, /0\.5/);
+                assert.equal(geometry.opacity, '1');
+                assert.equal(await panel.locator('header').evaluate(el=>getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+                if (name === 'captions') {
+                    assert.equal(await panel.locator('.player-settings-content>button').first().getAttribute('data-setting'), 'appearance');
+                    assert.equal(await panel.locator('[data-setting^="retry-caption:"]').count(), 0);
+                    assert.equal(await panel.getByRole('menuitemradio', {name:'Off',exact:true}).count(), 1);
+                }
+                if (name === 'advanced') assert.equal(await panel.locator('.player-settings-content use[href$="#chevron-right"]').count(), 0);
+                if (name === 'appearance') {
+                    const controls = await panel.locator('select').evaluateAll(controls=>controls.map(el=>({id:el.id,width:el.getBoundingClientRect().width,right:el.getBoundingClientRect().right,edge:el.closest('.player-settings-content').getBoundingClientRect().right})));
+                    assert.ok(controls.every(el=>el.width>100&&el.right<=el.edge), JSON.stringify(controls));
+                    await panel.getByRole('button', {name:'Done',exact:true}).scrollIntoViewIfNeeded();
+                    assert.equal(await panel.locator('.vjs-default-button').isVisible(), true);
+                    await page.locator('#player').screenshot({path:path.join(artifacts,`${engine}-desktop-settings-${view.mode}-${view.rtl?'rtl':view.fullscreen?'fullscreen':view.narrow?'narrow':view.width}-appearance-controls.png`)});
+                }
+                if (name !== 'main') {
+                    await panel.getByRole('button', {name:'Back',exact:true}).click();
+                    if (name === 'appearance') await panel.getByRole('button', {name:'Back',exact:true}).click();
+                }
+            }
+            assert.equal(await page.evaluate(()=>player.tech().el()===desktopMedia&&player.paused()), true);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+
+    test(`${engine}: desktop Advanced annotations preserve the route and query context`, async () => {
+        for (const enabled of [false, true]) {
+            const {page, context, errors} = await setup(engine, 'watch', 'light', {fixture:'d5-single-light', url:'/watch?v=2isYuQZMbdU&list=PLfixture&index=2&iv_load_policy=1'});
+            await page.evaluate(value=>video_data.params.annotations=value, enabled);
+            await page.locator('.vjs-desktop-settings').click();
+            await page.locator('[data-setting=advanced]').click();
+            await page.getByRole('menuitem', {name:enabled?'Hide annotations':'Show annotations',exact:true}).click();
+            await page.waitForURL(url=>url.searchParams.get('iv_load_policy')===(enabled?'3':'1'));
+            const url = new URL(page.url());
+            assert.equal(url.pathname, '/watch');
+            assert.equal(url.searchParams.get('v'), '2isYuQZMbdU');
+            assert.equal(url.searchParams.get('list'), 'PLfixture');
+            assert.equal(url.searchParams.get('index'), '2');
+            assert.equal(url.searchParams.getAll('iv_load_policy').length, 1);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+}

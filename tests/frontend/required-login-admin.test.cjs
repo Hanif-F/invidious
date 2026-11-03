@@ -53,15 +53,16 @@ test('admin access controls show both states and work without JavaScript at desk
             await page.goto('https://invidious.test/preferences');
             assert.equal(await page.locator('#login_required,#registration_enabled').count(),0);
             assert.equal(await page.locator('[data-category-form] [name=login_required],[data-category-form] [name=registration_enabled]').count(),0);
-            const adminLink=page.locator('.header-account a[href="/admin/settings"]');
+            const adminLink=page.locator('.settings-nav a[href="/admin/settings"]');
             assert.equal(await adminLink.count(),1);
-            await page.locator('.header-account>summary').click();
             assert.equal(await adminLink.isVisible(),true);
+            assert.equal(await adminLink.textContent(),'Admin');
+            assert.equal(await page.locator('.header-account a[href="/admin/settings"]').count(),0);
             assert.equal(await page.locator('a#preferences-administration').getAttribute('href'),'/admin/settings','recognized legacy bookmark opens the current separate admin destination');
         }
         fixture='preferences.html';
         await page.goto('https://invidious.test/preferences');
-        assert.equal(await page.locator('.header-account a[href="/admin/settings"]').count(),0,'ordinary guest navigation has no administration entry');
+        assert.equal(await page.locator('.settings-nav a[href="/admin/settings"]').count(),0,'ordinary guest navigation has no administration entry');
         assert.equal(await page.locator('a#preferences-administration').isVisible(),false,'the finite legacy bookmark bridge is inactive without its recognized fragment');
         assert.equal(await page.locator('#login_required,#registration_enabled').count(),0);
 

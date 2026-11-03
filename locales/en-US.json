@@ -807,6 +807,7 @@
     "ui_enhancements": "Enhancements",
     "ui_library_account": "Library & account",
     "ui_administration": "Administration",
+    "settings_admin": "Admin",
     "ui_preferences_intro": "Set up how Invidious looks, plays, and organizes videos.",
     "ui_browsing_feeds_hint": "Choose what appears on your home page, feeds, and video pages.",
     "ui_enhancements_hint": "Control community powered titles and video segment tools.",

@@ -292,9 +292,10 @@ def history_fixture(empty = false, thin = false, history_query = "", sync = fals
   render "src/invidious/views/feeds/history.ecr", "src/invidious/views/template.ecr"
 end
 
-def diary_channel_fixture(mode = "light", playlists = false, search = false, privacy = false, empty = false, ai = false, secondary = "", literal = false, signed = false)
+def diary_channel_fixture(mode = "light", playlists = false, search = false, privacy = false, empty = false, ai = false, secondary = "", literal = false, signed = false, blocked = false)
   fixture_channel_id = signed ? "UC" + "a" * 22 : "UCfixture"
   env = signed ? signed_in_env("/channel/#{fixture_channel_id}") : fixture_env(search ? "/channel/UCfixture/search" : "/channel/UCfixture", mode)
+  env.set "blocked_channels", [fixture_channel_id] if blocked
   prefs = env.get("preferences").as(Preferences); prefs.dark_mode = mode; env.set "preferences", prefs
   locale = "en-US"
   user = env.get?("user").try &.as(User)
@@ -980,6 +981,9 @@ File.write("#{output}/watch-actions-blocked.html", watch_fixture(blocked_watch_e
   File.write("#{output}/d8-context-subscriptions#{suffix}.html", library_subscriptions_fixture(blocked: blocked))
   File.write("#{output}/d8-context-playlist#{suffix}.html", library_playlist_fixture(channel_id: channel_id, blocked: blocked))
   File.write("#{output}/d8-context-search#{suffix}.html", member_search_fixture(true, channel_id: channel_id, blocked: blocked))
+end
+{false, true}.each do |blocked|
+  File.write("#{output}/desktop-channel#{blocked ? "-blocked" : ""}.html", diary_channel_fixture(signed: true, blocked: blocked))
 end
 File.write("#{output}/runtime-owner-states.json", Invidious::Frontend::Desktop.fixture_owner_states.to_json)
 

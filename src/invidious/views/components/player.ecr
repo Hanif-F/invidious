@@ -106,6 +106,8 @@
     "mobile_labels" => %w(settings quality audio captions speed share back close off appearance).to_h { |key| {key, I18n.translate(locale, "mobile_player_#{key}")} },
     "stream_labels" => %w(auto unknown_codec high_bitrate medium_bitrate low_bitrate stable_volume original_audio dubbed_audio).to_h { |key| {key, I18n.translate(locale, "player_stream_#{key}")} },
     "refresh_buffer" => I18n.translate(locale, "player_refresh_buffer"),
+    "hide_annotations" => I18n.translate(locale, "Hide annotations"),
+    "show_annotations" => I18n.translate(locale, "Show annotations"),
     "stats_labels" => %w(identity title close details copy disable unavailable waiting resolution viewport quality codecs fps bitrate frames buffer bandwidth bytes requests state stalls live help copied fallback).to_h { |key| {key, I18n.translate(locale, "stats_#{key}")} },
     "stats_formats" => (fmt_stream + adaptive_fmts).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate contentLength audioQuality audioTrack).includes?(key) }.merge({"isDrc" => JSON::Any.new(Invidious::Videos::AudioMetadata.stable_volume?(fmt))}) },
     "chapters" => Invidious::Videos::Chapters.parse(video.short_description, video.live_now ? 0 : video.length_seconds),

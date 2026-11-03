@@ -1,25 +1,10 @@
 <% content_for "header" do %><title><%= I18n.translate(locale, "admin_instance_settings") %> - Invidious</title><% end %>
-<% values = env.get?("admin_values").try { |raw| JSON.parse(raw.as(String)).as_h } || Invidious::AdminSettings.current %><% draft = env.get?("admin_draft").try { |value| URI::Params.parse(value.as(String)) } %>
-<header class="page-heading"><h1><%= I18n.translate(locale, "admin_instance_settings") %></h1><a class="button" href="/admin/bot-protection"><%= I18n.translate(locale, "admin_bot_protection") %></a></header>
-<p class="muted"><%= I18n.translate(locale, "admin_instance_scope") %></p>
-<% if error = env.get?("admin_error") %><p role="alert" class="settings-error"><%= HTML.escape(error.as(String)) %> <a href="/admin/settings"><%= I18n.translate(locale, "settings_reload") %></a></p><% elsif env.params.query["saved"]? == "1" %><p role="status"><%= I18n.translate(locale, "ux_saved") %></p><% end %>
-<% revision = env.get?("admin_revision").try(&.as(String)) || "" %>
-<% if revision.empty? %><p role="alert"><%= I18n.translate(locale, "admin_config_unavailable") %></p><% end %>
-<form action="/admin/settings" method="post" class="admin-settings-form">
-<input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><input type="hidden" name="revision" value="<%= HTML.escape(draft.try(&.["revision"]?) || revision) %>">
-<fieldset class="settings-map" <%= "disabled" if revision.empty? %>><legend><%= I18n.translate(locale, "ui_instance_access") %></legend>
-<% Invidious::AdminSettings::BOOLEANS.each do |field| %><% managed = Invidious::AdminSettings.managed?(field) %><% checked = draft && !managed ? draft[field]? == "on" : values[field].as_bool %>
-<div class="field-row"><div><label for="<%= field %>"><%= Invidious::Frontend::Settings.label(locale, field) %></label>
-<% if field == "login_required" %><small id="login-required-help"><%= I18n.translate(locale, "Require an account to access this instance. Login stays enabled while this is on.") %></small><% elsif field == "registration_enabled" %><small id="registration-enabled-help"><%= I18n.translate(locale, "Disable registration for user whitelist mode: only accounts you create manually can sign in.") %></small><% end %>
-<% if managed %><small><%= I18n.translate(locale, "admin_managed_environment") %></small><% end %></div><input type="checkbox" name="<%= field %>" id="<%= field %>" <%= "checked" if checked %> <%= "disabled" if managed %> <%= %(aria-describedby="login-required-help") if field == "login_required" %> <%= %(aria-describedby="registration-enabled-help") if field == "registration_enabled" %>></div>
+<% if Invidious::Frontend::Desktop.api_only? %>
+<%= rendered "admin/settings_form" %>
+<% else %>
+<% section = "admin" %>
+<header class="page-heading"><h1><%= I18n.translate(locale, "overhaul_settings") %></h1></header>
+<div class="settings-layout"><%= rendered "overhaul/settings_navigation" %>
+<section class="settings-category"><%= rendered "admin/settings_form" %></section>
+</div>
 <% end %>
-<div class="field-row"><div><label for="modified_source_code_url"><%= I18n.translate(locale, "adminprefs_modified_source_code_url_label") %></label><% if Invidious::AdminSettings.managed?("modified_source_code_url") %><small><%= I18n.translate(locale, "admin_managed_environment") %></small><% end %></div><input type="url" maxlength="2048" id="modified_source_code_url" name="modified_source_code_url" value="<%= HTML.escape(draft.try(&.["modified_source_code_url"]?) || values["modified_source_code_url"].as_s? || "") %>" <%= "disabled" if Invidious::AdminSettings.managed?("modified_source_code_url") %>></div>
-</fieldset>
-<fieldset class="settings-map" <%= "disabled" if revision.empty? || Invidious::AdminSettings.managed?("admin_default_home") %>><legend><%= I18n.translate(locale, "ui_instance_defaults") %></legend>
-<% if Invidious::AdminSettings.managed?("admin_default_home") %><p class="muted"><%= I18n.translate(locale, "admin_managed_environment") %></p><% end %>
-<% ["admin_default_home", "admin_feed_menu"].each do |field| %><% (field == "admin_feed_menu" ? 4 : 1).times do |index| %><% name = field == "admin_feed_menu" ? "#{field}[#{index}]" : field %><% id = "#{field}-#{index}" %><% selected = draft.try(&.[name]?) || (field == "admin_feed_menu" ? values[field].as_a[index]?.try(&.as_s) : values[field].as_s) || "" %>
-<div class="field-row"><label for="<%= id %>"><%= Invidious::Frontend::Settings.label(locale, field == "admin_feed_menu" ? "feed_menu" : field) %><%= " · #{index + 1}" if field == "admin_feed_menu" %></label><select id="<%= id %>" name="<%= name %>"><% unless Invidious::NativePreferences::HOMES.includes?(selected) %><option value="<%= HTML.escape(selected) %>" selected><%= HTML.escape(selected) %></option><% end %><% Invidious::NativePreferences::HOMES.each do |option| %><option value="<%= option %>" <%= "selected" if option == selected %>><%= I18n.translate(locale, option.empty? ? "Search" : option) %></option><% end %></select></div>
-<% end %><% end %></fieldset>
-<div class="field-row"><div><label for="confirm_access"><%= I18n.translate(locale, "admin_confirm_access") %></label><small id="confirm-access-help"><%= I18n.translate(locale, "admin_confirm_access_hint") %></small></div><input type="checkbox" id="confirm_access" name="confirm_access" aria-describedby="confirm-access-help"></div>
-<div class="settings-actions"><button type="submit" class="button button-primary" <%= "disabled" if revision.empty? %>><%= I18n.translate(locale, "admin_save_instance") %></button><a class="button" href="/admin/settings"><%= I18n.translate(locale, "ux_discard") %></a></div>
-</form>

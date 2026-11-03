@@ -16,6 +16,9 @@
         if (target.origin === location.origin && target.href !== location.href) location.replace(target.href);
     }
     legacyDestination();
+    var adminForm = root.querySelector('.admin-settings-form'), field = new URLSearchParams(location.search).get('field');
+    var adminControl = adminForm && field && adminForm.elements.namedItem(field);
+    if (adminControl && typeof adminControl.focus === 'function') adminControl.focus();
     window.addEventListener('hashchange',legacyDestination,{signal:life.signal});
     var search = root.querySelector('#settings-search'), results = root.querySelector('#settings-search-results'), status = root.querySelector('#settings-search-status');
     search.addEventListener('input',function () {

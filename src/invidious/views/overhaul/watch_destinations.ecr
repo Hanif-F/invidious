@@ -1,46 +1,9 @@
-            <span id="watch-on-youtube">
                 <%-
-                    link_yt_watch = URI.new(scheme: "https", host: "www.youtube.com", path: "/watch", query: "v=#{video.id}")
                     link_yt_embed = URI.new(scheme: "https", host: "www.youtube.com", path: "/embed/#{video.id}")
 
                     if !plid.nil? && !continuation.nil?
                         link_yt_param = URI::Params{"list" => [plid], "index" => [continuation.to_s]}
-                        link_yt_watch = IV::HttpServer::Utils.add_params_to_url(link_yt_watch, link_yt_param)
                         link_yt_embed = IV::HttpServer::Utils.add_params_to_url(link_yt_embed, link_yt_param)
                     end
                 -%>
-                <a id="link-yt-watch" rel="noreferrer noopener" data-base-url="<%= link_yt_watch %>" href="<%= link_yt_watch %>"><%= Invidious::Frontend::Icons.render("external-link") %><%= I18n.translate(locale, "videoinfo_watch_on_youTube") %></a>
                 <% unless native_clip %><a id="link-yt-embed" referrerpolicy="origin-when-cross-origin" rel="noopener" data-base-url="<%= link_yt_embed %>" href="<%= link_yt_embed %>"><%= Invidious::Frontend::Icons.render("external-link") %><%= I18n.translate(locale, "videoinfo_youTube_embed_link") %></a><% end %>
-            </span>
-
-            <% unless native_clip %>
-            <p id="watch-on-another-invidious-instance">
-                <%- link_iv_other = IV::Frontend::Misc.redirect_url(env) -%>
-                <a id="link-iv-other" data-base-url="<%= link_iv_other %>" href="<%= link_iv_other %>"><%= Invidious::Frontend::Icons.render("external-link") %><%= I18n.translate(locale, "Switch Invidious Instance") %></a>
-            </p>
-
-            <p id="embed-link">
-                <%-
-                    params_iv_embed = env.params.query.dup
-                    params_iv_embed.delete_all("v")
-
-                    link_iv_embed = URI.new(path: "/embed/#{id}")
-                    link_iv_embed = IV::HttpServer::Utils.add_params_to_url(link_iv_embed, params_iv_embed)
-                -%>
-                <a id="link-iv-embed" data-base-url="<%= link_iv_embed %>" href="<%= link_iv_embed %>"><%= Invidious::Frontend::Icons.render("external-link") %><%= I18n.translate(locale, "videoinfo_invidious_embed_link") %></a>
-            </p>
-
-            <% end %>
-            <p id="annotations">
-                <% if params.annotations %>
-                    <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&iv_load_policy=3">
-                        <%= Invidious::Frontend::Icons.render("eye-off") %><%= I18n.translate(locale, "Hide annotations") %>
-                    </a>
-                <% else %>
-                    <a href="<%= native_clip ? native_clip.permalink : "/watch" %>?<%= env.params.query %>&iv_load_policy=1">
-                        <%= Invidious::Frontend::Icons.render("eye") %><%= I18n.translate(locale, "Show annotations") %>
-                    </a>
-                <% end %>
-            </p>
-
-

@@ -28,7 +28,7 @@ module Invidious::Frontend::Desktop
   end
 
   def settings?(env) : Bool
-    env.request.path.starts_with?("/preferences") || {"/blocked_channels", "/dearrow_identity"}.includes?(env.request.path)
+    env.request.path.starts_with?("/preferences") || {"/blocked_channels", "/dearrow_identity", "/admin/settings"}.includes?(env.request.path)
   end
 
   def account?(env) : Bool

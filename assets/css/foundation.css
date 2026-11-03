@@ -58,6 +58,7 @@ label{font-weight:500}
 .header-search input{width:100%;border-start-end-radius:0!important;border-end-end-radius:0!important}
 .header-search button{height:40px;border:1px solid var(--border);border-inline-start:0;border-start-start-radius:0;border-end-start-radius:0;background:var(--surface);width:48px}
 .header-account{margin-inline-start:auto}
+.header-actions{display:flex;align-items:center;gap:var(--s2);margin-inline-start:auto}.header-actions form{margin:0}
 .app-sidebar{position:fixed;top:60px;bottom:0;inset-inline-start:0;width:var(--sidebar-width);padding:var(--s4) var(--s2);background:var(--page);overflow:auto;border-inline-end:1px solid var(--separator);z-index:25}
 .sidebar-link{display:flex;align-items:center;gap:var(--s4);min-height:44px;padding:10px 12px;margin-bottom:4px;border-radius:var(--radius);font-size:14px;font-weight:500;white-space:nowrap}
 .sidebar-link span{min-width:0;white-space:normal;overflow-wrap:anywhere}
@@ -68,6 +69,7 @@ label{font-weight:500}
 .app-main,.app-footer{margin-inline-start:var(--sidebar-width)}
 .app-main{padding:var(--s6);min-height:calc(100vh - 180px);max-width:1920px}
 .app-footer{display:flex;flex-wrap:wrap;gap:var(--s3);padding:var(--s6);border-top:1px solid var(--separator);font-size:12px;color:var(--muted)}
+.app-footer .footer-shortcuts{border:0;padding:0;min-height:0;background:none;color:inherit;font:inherit}.app-footer .footer-shortcuts:hover{text-decoration:underline}
 body[data-nav-collapsed=true],body[data-page=watch]{--sidebar-width:64px}
 body[data-nav-collapsed=true] .sidebar-link span,body[data-page=watch]:not([data-nav-drawer=true]) .sidebar-link span{display:none}
 body[data-nav-collapsed=true] .sidebar-link,body[data-page=watch]:not([data-nav-drawer=true]) .sidebar-link{justify-content:center;padding:10px}
@@ -111,7 +113,7 @@ body[data-nav-drawer=true] .app-sidebar{width:224px;box-shadow:8px 0 24px #0003}
 #player-container{width:100%;position:relative}.video-js{width:100%;aspect-ratio:16/9;height:auto;max-height:75vh}
 .watch-heading{margin-top:var(--s4)}.watch-heading h1{margin-bottom:8px}
 .creator-actions{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;margin:var(--s6) 0}
-.creator{display:flex;align-items:center;gap:var(--s3)}.creator img{border-radius:50%;width:40px;height:40px}
+.creator{display:flex;align-items:center;gap:var(--s3)}.creator .channel-avatar{width:40px;height:40px;font-size:20px}
 .watch-description{background:var(--surface);border-radius:var(--panel-radius);padding:var(--s4);margin-bottom:var(--s6)}
 details>summary{font-weight:500}.watch-description details+details{margin-top:var(--s4)}
 .utility-panel{border:1px solid var(--separator);border-radius:var(--panel-radius);min-width:0;overflow:visible}

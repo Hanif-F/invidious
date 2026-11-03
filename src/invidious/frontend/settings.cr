@@ -269,7 +269,8 @@ module Invidious::Frontend::Settings
       {section: "blocked-channels", category: I18n.translate(locale, "Blocked channels"), field: field, label: I18n.translate(locale, key), navigation: "document", url: "/blocked_channels"}
     end : [] of NamedTuple(section: String, category: String, field: String, label: String, navigation: String, url: String)
     identity_entries = env.get?("user") ? [{section: "dearrow-identity", category: "DeArrow", field: "private_id", label: I18n.translate(locale, "overhaul_identity_heading"), navigation: "document", url: "/preferences/dearrow/identity"}] : [] of NamedTuple(section: String, category: String, field: String, label: String, navigation: String, url: String)
-    all_entries = entries + channel_entries + mask_entries + block_entries + identity_entries + chat_fields.map do |field, key|
+    admin_entries = env.get?("user") && Invidious::Authentication.admin?(env.get("user").as(Invidious::User)) ? [{section: "admin", category: I18n.translate(locale, "settings_admin"), field: "login_required", label: I18n.translate(locale, "admin_instance_settings"), navigation: "document", url: "/admin/settings"}] : [] of NamedTuple(section: String, category: String, field: String, label: String, navigation: String, url: String)
+    all_entries = entries + channel_entries + mask_entries + block_entries + identity_entries + admin_entries + chat_fields.map do |field, key|
       {section: "chat", category: I18n.translate(locale, "ui_chat_replay"), field: field, label: I18n.translate(locale, key), navigation: "document", url: ""}
     end
     all_entries.map do |entry|
@@ -282,6 +283,7 @@ module Invidious::Frontend::Settings
                             when "channel-masking"       then "spoilers_hint"
                             when "sponsorblock-channels" then "sb_description"
                             when "dearrow-identity"      then "dearrow_identity_hint"
+                            when "admin"                 then "ui_administration_hint"
                             end
                       key ? I18n.translate(locale, key) : ""
                     end
