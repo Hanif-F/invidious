@@ -1,6 +1,4 @@
 /* Watch utility content; player controls and media keep their own ownership. */
-.watch-enhancements-feedback{margin-block:12px;padding:12px;border:1px solid var(--border);border-radius:var(--radius)}
-.watch-enhancements-feedback p{margin:0;flex:1;min-width:0}
 .transcript-panel{min-width:0}
 .transcript-panel .transcript-toolbar{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .transcript-panel .transcript-toolbar>label{display:flex;flex-direction:column;gap:4px;font-size:14px}

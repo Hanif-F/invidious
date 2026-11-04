@@ -5,7 +5,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { gzipSync } = require('node:zlib');
 const playwright = require('playwright');
-const {runtimeOwner} = require('./runtime-owner.cjs');
 const root = path.resolve(__dirname, '../..');
 const generated = process.env.FRONTEND_FIXTURES || path.join(__dirname, '.generated');
 const artifacts = path.join(__dirname, 'artifacts');
@@ -280,10 +279,7 @@ async function pageFor(engine, options = {}) {
             return route.fulfill({ contentType: 'text/html', body,
                 headers: {'set-cookie': 'IV_BROWSER_PROFILE=' + scope + '; Path=/; SameSite=Lax; Secure'} });
         }
-        if (url.pathname === '/preferences' && url.searchParams.get('format') === 'runtime') {
-            const owner = runtimeOwner(fs.readFileSync(path.join(generated, (options.runtimeFixture?.() || options.profile?.fixture || fixture) + '.html'), 'utf8'), generated);
-            return route.fulfill({status:owner ? 200 : 503,contentType:'application/json',body:JSON.stringify(owner || {error:'Fixture owner unavailable'})});
-        }
+        if (url.pathname === '/preferences' && url.searchParams.get('format') === 'runtime') return route.fulfill({status:410,json:{error:'Reload to apply settings'}});
         if (url.pathname.startsWith('/api/v1/sponsorblock/')) return route.fulfill({ status: options.sponsorblockError ? 503 : 200, contentType: 'application/json', body: JSON.stringify({segments: options.sponsorblockSegments || []}) });
         if (url.pathname.startsWith('/api/v1/dearrow/')) {
             if (options.dearrowGate) await options.dearrowGate;
@@ -1563,7 +1559,7 @@ for (const engine of engines) {
         assert.equal(await page.locator('#tool-queue').evaluate(el=>el.scrollTop),scroll);assert.deepEqual(errors,[]);await context.close();
     });
 
-    test(`${engine}: System follows live appearance changes and color modes synchronize across tabs`, async () => {
+    test(`${engine}: System follows live appearance changes while other tabs retain their color mode`, async () => {
         for (const fixture of ['browse-auto']) {
             const { page, context, requests, errors } = await pageFor(engine, { fixture, systemTheme: 'dark' });
             const stylesheet = await page.locator('link[href*="/css/foundation.css"]').getAttribute('href');
@@ -1589,8 +1585,9 @@ for (const engine of engines) {
             await otherTab.route('**/*', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
             await otherTab.goto('https://invidious.test/other-tab');
             await otherTab.evaluate(() => localStorage.setItem('iv:browser:v2:guest:dark_mode', JSON.stringify('light')));
-            await page.waitForFunction(() => document.body.classList.contains('light-theme'));
-            assert.equal(await scheme(), 'light');
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+            assert.equal(await scheme(), 'dark');
+            assert.equal(await page.locator('#toggle_theme').getAttribute('data-mode'), 'system');
             await otherTab.evaluate(() => localStorage.setItem('iv:browser:v2:guest:dark_mode', JSON.stringify('')));
             await page.waitForFunction(() => document.body.classList.contains('no-theme'));
             assert.equal(await scheme(), 'dark');
@@ -1690,7 +1687,7 @@ for (const engine of engines) {
 
     test(`${engine}: block removes discovery cards only after success and Undo restores them`, async () => {
         let blocked=false;
-        const { page, context } = await pageFor(engine, { fixture: 'd6-block-context-popular', runtimeFixture:()=>blocked?'d6-block-context-filtered':'d6-block-context-popular' });
+        const { page, context } = await pageFor(engine, { fixture: 'd6-block-context-popular' });
         let fail = true;
         const changes = [];
         await page.route('**/blocked_channels?*', route => {
@@ -1719,7 +1716,7 @@ for (const engine of engines) {
     test(`${engine}: block notice disappears after five seconds and a new status resets the timer`, async () => {
         for (const undoBeforeExpiry of [false, true]) {
             let blocked=false;
-            const {page, context, errors} = await pageFor(engine, {fixture:'d6-block-context-popular',runtimeFixture:()=>blocked?'d6-block-context-filtered':'d6-block-context-popular'});
+            const {page, context, errors} = await pageFor(engine, {fixture:'d6-block-context-popular'});
             await page.clock.install();
             await page.route('**/blocked_channels?*', route => {blocked=new URLSearchParams(route.request().postData()).get('action')==='block';return route.fulfill({contentType:'application/json',body:JSON.stringify({blocked})});});
             const menu = page.locator('.video-context').first();
@@ -1838,7 +1835,7 @@ for (const engine of engines) {
 
     test(`${engine}: blocking the next recommendation updates autoplay and Undo restores it`, async () => {
         let blocked=false;
-        const { page, context, errors } = await pageFor(engine, { fixture: 'watch-actions',runtimeFixture:()=>blocked?'watch-actions-blocked':'watch-actions' });
+        const { page, context, errors } = await pageFor(engine, { fixture: 'watch-actions' });
         await page.route('**/blocked_channels?*', route => {blocked=new URLSearchParams(route.request().postData()).get('action')==='block';return route.fulfill({contentType:'application/json',body:JSON.stringify({blocked})});});
         const first = page.locator('.recommendation').first();
         const videoId = await first.getAttribute('data-video-id');
@@ -1860,13 +1857,13 @@ for (const engine of engines) {
     test(`${engine}: blocking leaves subscribed and explicitly included search results visible`, async () => {
         for(const [kind,routePath,count] of [['subscriptions','feed/subscriptions',3],['playlist','playlist?list=IVfixture',6],['search','search?q=light&include_blocked=1',2]]){
             const fixture='d8-context-'+kind;let blocked=false;const writes=[];
-            const {page,context,errors,requests}=await pageFor(engine,{fixture,route:routePath,runtimeFixture:()=>fixture+(blocked?'-blocked':'')});
+            const {page,context,errors,requests}=await pageFor(engine,{fixture,route:routePath});
             const before=await page.locator('.media-item').evaluateAll(rows=>rows.map(row=>row.dataset.videoId));assert.equal(before.length,count);
             await page.route('**/blocked_channels?*',route=>{const fields=new URLSearchParams(route.request().postData());writes.push(Object.fromEntries(fields));blocked=fields.get('action')==='block';return route.fulfill({contentType:'application/json',body:JSON.stringify({blocked})});});
             const menu=page.locator('.video-context').first();await menu.locator('summary').click();await menu.locator('[data-video-action=block]').click();
             await page.waitForFunction(()=>document.querySelector('.video-context [data-video-action=unblock]')?.disabled===false);
             assert.equal(await page.locator('.media-item:visible').count(),count);assert.deepEqual(await page.locator('.media-item').evaluateAll(rows=>rows.map(row=>row.dataset.videoId)),before);
-            assert.equal(writes.length,1);assert.equal(writes[0].ucid,'UC'+'a'.repeat(22));assert.ok(requests.some(url=>url.includes('format=runtime')));
+            assert.equal(writes.length,1);assert.equal(writes[0].ucid,'UC'+'a'.repeat(22));assert.ok(!requests.some(url=>url.includes('format=runtime')));
             await page.locator('#video-actions-undo').click();await page.waitForFunction(()=>document.querySelector('#video-actions-notice span').textContent===document.querySelector('#video-actions-config').dataset.unblocked&&document.querySelector('.video-context [data-video-action=block]')?.disabled===false);
             assert.deepEqual(writes.map(row=>row.action),['block','unblock']);assert.equal(await page.locator('.media-item:visible').count(),count);assert.deepEqual(await page.locator('.media-item').evaluateAll(rows=>rows.map(row=>row.dataset.videoId)),before);assert.deepEqual(errors,[]);await context.close();
         }
@@ -1874,7 +1871,7 @@ for (const engine of engines) {
 
     test(`${engine}: blocking the only remaining recommendation disables autoplay`, async () => {
         let blocked=false;
-        const { page, context } = await pageFor(engine, { fixture: 'watch-actions',runtimeFixture:()=>blocked?'watch-actions-blocked':'watch-actions' });
+        const { page, context } = await pageFor(engine, { fixture: 'watch-actions' });
         await page.route('**/blocked_channels?*', route => {blocked=new URLSearchParams(route.request().postData()).get('action')==='block';return route.fulfill({contentType:'application/json',body:JSON.stringify({blocked})});});
         await page.locator('.recommendation').evaluateAll(cards => cards.slice(1).forEach(card => card.remove()));
         const menu = page.locator('.recommendation .video-context').first();
@@ -4463,9 +4460,9 @@ for (const engine of engines) {
         for (const fixture of ['spoiler-cards-inactive', 'spoiler-cards-indefinite-original']) {
             const {page, context, errors, requests} = await pageFor(engine, {fixture, initScript});
             if (fixture.endsWith('inactive')) {
-                assert.equal(await page.locator('#channel-spoiler-config').count(),1);
-                assert.ok(await page.locator('[data-spoiler-title], [data-spoiler-thumbnail]').count()>0);
-                assert.deepEqual(await page.evaluate(()=>JSON.parse(document.getElementById('channel-spoiler-config').textContent).rules),{});
+                assert.equal(await page.locator('#channel-spoiler-config').count(),0);
+                assert.equal(await page.locator('[data-spoiler-title], [data-spoiler-thumbnail]').count(),0);
+                assert.equal(await page.evaluate(()=>window.InvidiousSpoilers),undefined);
                 assert.ok(!requests.some(url => /^\/api\/v1\/(videos|dearrow)\//.test(url)));
             }
             const scans = await page.evaluate(async () => {
@@ -4481,18 +4478,21 @@ for (const engine of engines) {
         }
     });
 
-    test(`${engine}: channel spoilers activate blank-delay guest rules in an already open inactive tab`, async () => {
+    test(`${engine}: channel spoilers apply blank-delay guest rules after a manual refresh`, async () => {
         const fixture = 'spoiler-cards-guest';
         const body = fs.readFileSync(path.join(generated, fixture + '.html'), 'utf8');
         const id = body.match(/data-spoiler-channel="([^"]+)"/)[1];
         const {page, context, errors} = await pageFor(engine, {fixture});
-        assert.equal(await page.evaluate(() => typeof window.InvidiousSpoilers.configure), 'function');
+        assert.equal(await page.evaluate(() => typeof window.InvidiousSpoilers.scan), 'function');
         await page.evaluate(()=>window.activationDocument=document);
         const second = await context.newPage();
         await second.goto('https://invidious.test/feed/popular');
         await second.evaluate(id => localStorage.setItem('iv:browser:v2:guest:channel_spoiler_settings', JSON.stringify({[id]:{name:'Channel',hide_title:true,hide_thumbnail:true,reveal_after_days:null}})), id);
-        await page.waitForFunction(()=>document.querySelectorAll('.spoiler-title-reveal').length===4);
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(resolve)));
+        assert.equal(await page.locator('.spoiler-title-reveal').count(),0);
         assert.equal(await page.evaluate(()=>document===activationDocument),true);
+        await page.reload();
+        await page.waitForFunction(()=>document.querySelectorAll('.spoiler-title-reveal').length===4);
         assert.equal(await page.locator('.spoiler-title-reveal').count(), 4);
         assert.equal(await page.locator('[data-spoiler-title]').first().textContent(), 'Title hidden');
         await page.locator('[data-spoiler-thumbnail]').first().click();
@@ -4650,7 +4650,7 @@ for (const engine of engines) {
 for(const engine of engines) {
     test(`${engine}: D8 contextual actions keep one delegated owner after repeated script setup`,async()=>{
         let blocked=false;const writes=[];
-        const {page,context,errors}=await pageFor(engine,{fixture:'d6-block-context-popular',runtimeFixture:()=>blocked?'d6-block-context-filtered':'d6-block-context-popular'});
+        const {page,context,errors}=await pageFor(engine,{fixture:'d6-block-context-popular'});
         await page.route('**/blocked_channels?*',route=>{const fields=new URLSearchParams(route.request().postData());writes.push(Object.fromEntries(fields));blocked=fields.get('action')==='block';return route.fulfill({contentType:'application/json',body:JSON.stringify({blocked})});});
         for(let i=0;i<2;i++)await page.addScriptTag({path:path.join(root,'assets/js/video-actions.js')});
         const menu=page.locator('.video-context').first();await menu.locator('summary').click();await menu.locator('[data-video-action=block]').click();

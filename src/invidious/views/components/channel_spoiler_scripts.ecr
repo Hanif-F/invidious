@@ -1,4 +1,4 @@
-<% spoiler_scripts = Invidious::Frontend::ChannelSpoilers.enabled?(env) || Invidious::Frontend::ChannelSpoilers.runtime_enabled?(env) %>
+<% spoiler_scripts = Invidious::Frontend::ChannelSpoilers.enabled?(env) %>
 <% if preferences.dearrow_enabled || spoiler_scripts %>
 <link rel="stylesheet" href="/css/dearrow.css?v=<%= ASSET_COMMIT %>">
 <% end %>

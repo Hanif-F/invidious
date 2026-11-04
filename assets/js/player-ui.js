@@ -6,6 +6,7 @@
     if (!layout || !window.player || typeof player.getChild !== 'function' || player.invidiousLayoutStarted) return;
     player.invidiousLayoutStarted = true;
     var storage = window.InvidiousStorage, ui = window.InvidiousUI;
+    var layoutChoice = storage.local.get('watch_layout');
     var labels = JSON.parse(document.getElementById('watch_ui_data').textContent);
     var words = player_data.interface_labels || {}, life = new AbortController(), active = true;
     var download = document.getElementById('download-options'), downloadDialog = document.getElementById('download-dialog'), downloadFallback = document.getElementById('download-fallback');
@@ -23,20 +24,19 @@
     function on(target, name, handler) { target.addEventListener(name, handler, {signal:life.signal}); }
     function apply(value) {
         if (!current()) return;
-        var mode = value === 'theater' ? 'theater' : 'standard', changed = document.body.dataset.watchLayout !== mode;
+        var mode = layoutChoice = value === 'theater' ? 'theater' : 'standard', changed = document.body.dataset.watchLayout !== mode;
         document.body.dataset.watchLayout = mode;
         wide.el().setAttribute('aria-pressed', String(mode === 'theater'));
         wide.controlText(mode === 'theater' ? (words.exit_theater || labels.wide_player) : (words.enter_theater || labels.wide_player));
         if (changed) { player.trigger('watchlayoutchange'); player.trigger('playerresize'); }
     }
-    function restore() { apply(storage.local.get('watch_layout')); }
+    function restore() { apply(layoutChoice); }
     wide.on('click', function () {
         if (!current()) return;
         var value = document.body.dataset.watchLayout === 'theater' ? 'standard' : 'theater';
         apply(value);
         if (!storage.local.set('watch_layout', value) && ui) ui.notice(ui.label('page_only'));
     });
-    on(window, 'storage', restore);
     on(window, 'browserprofilechange', function () { active = false; wide.disable(); });
     on(window, 'pagehide', function (event) { active = false; if (!event.persisted) dispose(); });
     on(window, 'pageshow', function () { active = !life.signal.aborted; if (current()) { restore(); size(); } });

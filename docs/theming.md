@@ -25,7 +25,8 @@ an alternative shell, font-glyph icons or a second player design in a feature sh
 `dark_mode` remains empty for System, `light`, or `dark`. The header cycles
 System → Light → Dark → System through a CSRF-protected POST to `/toggle_theme`.
 [themes.js](../assets/js/themes.js) updates body classes, the SVG control and its
-accessible label, and synchronizes current-profile browser tabs. CSS follows live
+accessible label in the current tab. Other open tabs apply saved settings after
+a manual refresh. CSS follows live
 system appearance changes while System is selected.
 
 Browser cards and rows use their owning page layout; the player uses unified

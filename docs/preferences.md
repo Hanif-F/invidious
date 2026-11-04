@@ -16,6 +16,13 @@ The [field inventory](reference/preferences.md) lists every model field, and [co
 
 Saved account fields or guest cookie values are parsed over instance defaults. A request may then override rendering through `hl`, `dark_mode` or [video query parameters](playback.md#watch-and-embed-query-options). `thin_mode` remains supported by ordinary API HTML and native/legacy callers; desktop pages and `ui=desktop` fragments use the shared imagery/layout. Browser-local settings such as volume, search choices, temporary player changes and guest enhancements use isolated browser profiles; not every UI action rewrites account preferences.
 
+An open document keeps the settings it loaded. Changes saved in another tab or
+client apply after a manual refresh or fresh navigation. Focus changes and cached
+Back/Forward restoration do not check settings. Controls operated in the current
+tab, such as theme, theater layout, title reveals, and chat previews, respond
+immediately. Playback progress, upload notifications, and account/profile guards
+continue to coordinate independently of settings.
+
 Browser/account state must go through `InvidiousStorage`, not raw unscoped storage keys. Profile IDs are HMAC-derived ownership markers, not authentication tokens. Sign-in, signout, expiry and account switching change the active profile; stale tabs detect a mismatch and stop/reload instead of saving to the wrong account. See [frontend](frontend.md).
 
 ## Category ownership and writes

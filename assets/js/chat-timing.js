@@ -71,10 +71,6 @@
     on(window,'pageshow',function () { active = !disposed; if (alive()) update(uncertain ? config.words.unconfirmed : undefined); });
     on(window,'browserprofilechange',dispose);
     on(document,'iv:content-added',function () { if (!form.isConnected) dispose(); });
-    on(window,'storage',function (event) {
-        if (!alive() || config.account || busy || dirty() || !storage.local.matchesEvent(event,'chat-timing-v1-'+config.videoId)) return;
-        var read = storage.local.get('chat-timing-v1-'+config.videoId); baseline = valid(read) ? read : 0; input.value = String(baseline/1000); emit(); update();
-    });
     input.value = String(baseline/1000); applied = baseline; update();
     window.InvidiousChatTiming = {value:function () { return alive() ? applied : null; },dispose:dispose}; emit();
 })();

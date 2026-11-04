@@ -4,7 +4,6 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const playwright = require('playwright');
-const {runtimeOwner}=require('./runtime-owner.cjs');
 const root=path.resolve(__dirname,'../..'), generated=process.env.FRONTEND_FIXTURES || path.join(__dirname,'.generated'), artifacts=path.join(__dirname,'artifacts','overhaul');
 const engines=(process.env.FRONTEND_BROWSERS || 'chromium,firefox').split(','), browsers={},observations=[];
 before(async()=>{fs.mkdirSync(artifacts,{recursive:true});for(const engine of engines)browsers[engine]=await playwright[engine].launch({headless:true});});
@@ -44,10 +43,7 @@ async function setup(engine,screen,mode='light',options={}) {
     await context.route('**/*',async route=>{
         const req=route.request(),url=new URL(req.url()),entry={url,method:req.method(),navigation:req.isNavigationRequest(),body:new URLSearchParams(req.postData()||''),raw:req.postData()||'',headers:req.headers()};requests.push(entry);
         const response=options.reply&&await options.reply(entry);if(response)return response.abort?route.abort(response.abort):route.fulfill(response);
-        if(url.pathname==='/preferences'&&url.searchParams.get('format')==='runtime') {
-            const owner=runtimeOwner(fs.readFileSync(path.join(generated,fixture+'.html'),'utf8'),generated);
-            return route.fulfill({status:owner?200:503,contentType:'application/json',body:JSON.stringify(owner||{error:'Fixture owner unavailable'})});
-        }
+        if(url.pathname==='/preferences'&&url.searchParams.get('format')==='runtime')return route.fulfill({status:410,json:{error:'Reload to apply settings'}});
         if(/^\/(js|css|icons|videojs|themes|fonts)\//.test(url.pathname)) {
             const file=path.join(root,'assets',url.pathname);
             if(!fs.existsSync(file))return route.fulfill({status:404,body:''});
@@ -795,7 +791,6 @@ for(const engine of engines) {
             const before=await page.locator('[data-browse-items]').innerHTML();
             await page.locator('[data-load-more]').click();
             await page.locator('[data-browse-status] .ui-retry').waitFor();
-            await page.waitForFunction(()=>InvidiousEnhancements.readState()==='initial'||InvidiousEnhancements.readState()==='ready');
             assert.equal(await page.locator('[data-browse-items]').innerHTML(),before,'failed continuation cannot replace existing results');
             if(!unsafe) {
                 assert.equal(await page.locator('[data-load-more]').isVisible(),false);
@@ -1666,7 +1661,7 @@ for(const engine of engines) {
 }
 
 for(const engine of engines) {
-    test(`${engine}: D5 layout follows same-profile tabs and isolates a different signed-in account`,async()=>{
+    test(`${engine}: D5 layout waits for refresh across same-profile tabs and isolates a different account`,async()=>{
         let profile='account';
         const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d5-account-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
             if(entry.navigation&&entry.url.pathname==='/watch') {
@@ -1675,10 +1670,10 @@ for(const engine of engines) {
                 return{contentType:'text/html',headers:{'Set-Cookie':`IV_BROWSER_PROFILE=${scope}; Path=/; Secure; SameSite=Lax`},body};
             }
         }});
-        await page.evaluate(()=>{InvidiousStorage.local.set('watch_layout','theater');InvidiousStorage.local.set('player_dock_enabled',true);});
+        await page.evaluate(()=>{InvidiousStorage.local.set('watch_layout','theater');player.invidiousDockEnabled=true;InvidiousStorage.local.set('player_dock_enabled',true);});
         await page.reload();await page.waitForFunction(()=>document.body.dataset.watchLayout==='theater');
         const other=await context.newPage();await other.goto(page.url());await other.waitForFunction(()=>window.InvidiousStorage&&document.body.dataset.watchLayout==='theater');
-        await other.evaluate(()=>InvidiousStorage.local.set('watch_layout','standard'));await page.waitForFunction(()=>document.body.dataset.watchLayout==='standard');
+        await other.evaluate(()=>InvidiousStorage.local.set('watch_layout','standard'));await returnToSettingsSnapshot(page);assert.equal(await page.locator('body').getAttribute('data-watch-layout'),'theater');await page.reload();await page.waitForFunction(()=>document.body.dataset.watchLayout==='standard');
         await page.goto('https://invidious.test/watch?v=2isYuQZMbdU&profile=bob');await page.waitForFunction(()=>document.body.dataset.watchLayout==='standard');
         assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('player_dock_enabled')===true),false);
         await page.goto('https://invidious.test/watch?v=2isYuQZMbdU&profile=alice');await page.waitForFunction(()=>document.body.dataset.watchLayout==='standard');
@@ -1701,7 +1696,7 @@ for(const engine of engines) {
                 if(width===1440)await page.screenshot({path:path.join(artifacts,`${engine}-d5-${kind}-${mode}-1440.png`),fullPage:true});
             }
             if(kind==='audio') {
-                await page.evaluate(()=>{InvidiousStorage.local.set('player_dock_enabled',true);player.trigger('dockpreferencechange');});
+                await page.evaluate(()=>{player.invidiousDockEnabled=true;InvidiousStorage.local.set('player_dock_enabled',true);player.trigger('dockpreferencechange');});
                 await page.addStyleTag({content:'.watch-primary{min-height:2200px}'});await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();scrollTo(0,1000);});
                 assert.equal(await page.locator('.watch-player.is-docked').count(),0);
                 assert.equal(await page.evaluate(()=>player.tech().el().videoHeight),0,'the listen fixture decodes audio rather than a video stand-in');
@@ -1760,7 +1755,7 @@ for(const engine of engines) {
         const supported=await page.evaluate(()=>!!document.pictureInPictureEnabled);observations.push({engine,feature:'native-picture-in-picture',supported,scope:'API/media identity and docking; no claim about physical OS window appearance'});
         if(!supported) {assert.equal(await page.locator('.vjs-picture-in-picture-control').count(),0);assert.deepEqual(errors,[]);await context.close();return;}
         await page.addStyleTag({content:'.watch-primary{min-height:2200px}'});
-        await page.evaluate(async()=>{InvidiousStorage.local.set('player_dock_enabled',true);player.muted(true);await player.play();player.pause();window.originalMedia=player.tech().el();});
+        await page.evaluate(async()=>{player.invidiousDockEnabled=true;InvidiousStorage.local.set('player_dock_enabled',true);player.muted(true);await player.play();player.pause();window.originalMedia=player.tech().el();});
         await page.locator('.vjs-picture-in-picture-control').click();await page.waitForFunction(()=>!!document.pictureInPictureElement);
         await page.evaluate(()=>scrollTo(0,1000));assert.equal(await page.locator('.watch-player.is-docked').count(),0);
         assert.equal(await page.evaluate(()=>document.pictureInPictureElement===originalMedia),true);
@@ -2200,721 +2195,16 @@ function clipFixtureReply(entry) {
     if(entry.url.pathname.startsWith('/api/v1/live_chat/'))return{contentType:'application/json',body:'{"messages":[],"removedIds":[],"continuation":null}'};
     return null;
 }
-async function configureRuntimeSponsorBlock(page, patch={}) {
+async function configureSponsorBlock(page, patch={}) {
     return page.evaluate(patch=>{
         const base=structuredClone(player_data.sponsorblock);
         const modes=Object.fromEntries(Object.keys(base.modes).map(key=>[key,'disabled']));
-        window.runtimeSponsorConfig={...base,enabled:true,...patch,modes:{...modes,...patch.modes},colors:{...base.colors,...patch.colors}};
-        return InvidiousSponsorBlock.configure(runtimeSponsorConfig);
+        window.sponsorConfig={...base,enabled:true,...patch,modes:{...modes,...patch.modes},colors:{...base.colors,...patch.colors}};
+        return InvidiousSponsorBlock.configure(sponsorConfig);
     },patch);
 }
-function runtimeSnapshot(account=false) {
-    return JSON.parse(fs.readFileSync(path.join(generated,`enhancement-runtime-${account?'account':'guest'}.json`),'utf8'));
-}
-function watchContent(kind,url) {
-    const value=JSON.parse(fs.readFileSync(path.join(generated,`d6-watch-content-${kind}.json`)));
-    if(url&&value.titles) { const ids=(url.searchParams.get('ids')||'').split(',');value.titles=Object.fromEntries(Object.entries(value.titles).filter(([id])=>ids.includes(id))); }
-    if(url&&value.queueThumbnails) { const ids=(url.searchParams.get('channels')||'').split(',');value.queueThumbnails=Object.fromEntries(Object.entries(value.queueThumbnails).filter(([id])=>ids.includes(id))); }
-    return value;
-}
-function watchOwner(kind) { return JSON.parse(fs.readFileSync(path.join(generated,`d6-watch-owner-${kind}.json`))); }
-async function attachWatchEnhancements(page) {
-    await page.addScriptTag({content:fs.readFileSync(path.join(root,'assets/js/watch-enhancements.js'),'utf8')});
-    await attachEnhancementRuntime(page);
-}
-function holdWatchContentReads() {
-    const original=window.fetch.bind(window);window.watchContentReads=[];
-    window.fetch=(url,options={})=>{
-        const target=new URL(url,location.href);
-        if(target.pathname!=='/watch'||target.searchParams.get('format')!=='enhancements')return original(url,options);
-        return new Promise(resolve=>watchContentReads.push({url:target.href,release:body=>resolve(new Response(JSON.stringify(body),{status:200,headers:{'Content-Type':'application/json'}}))}));
-    };
-}
 for(const engine of engines) {
-    test(`${engine}: D6 runtime automatic watch/listing owners handle hints and cached returns without manual script injection`,async()=>{
-        for(const screen of ['watch','browse']) {
-            const {page,context,requests,errors}=await setup(engine,screen,'light',{fixture:screen==='watch'?'d5-single-light':'qol-browse',url:screen==='watch'?'/watch?v=2isYuQZMbdU':'/feed/popular',reply:screen==='watch'?clipFixtureReply:undefined});
-            await page.waitForFunction(()=>!!window.InvidiousEnhancements);
-            assert.equal(await page.locator('script[src*="/js/enhancements.js"]').count(),1);
-            assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,0,'initial server state needs no extra owner GET');
-            if(screen==='watch') {await readyClipMedia(page,13);assert.equal(await page.locator('script[src*="/js/watch-enhancements.js"]').count(),1);}
-            await page.evaluate(()=>InvidiousUI.invalidate('preferences'));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-            assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,1);
-            await page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-            assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,2);
-            if(screen==='watch')assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);
-            assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='enhancements').length,0,'unchanged presentation needs no collection read');
-            assert.deepEqual(errors,[]);await context.close();
-        }
-    });
-    test(`${engine}: D6 watch content updates filters, original titles and advancement on the same media`,async()=>{
-        let kind='all',snapshot=watchOwner(kind);
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-watch-content-initial-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.searchParams.get('format')==='enhancements')return{contentType:'application/json',body:JSON.stringify(watchContent(kind,entry.url))};
-            return clipFixtureReply(entry);
-        }});
-        await readyClipMedia(page,13);await attachWatchEnhancements(page);
-        await page.addScriptTag({content:fs.readFileSync(path.join(root,'assets/js/watch-enhancements.js'),'utf8')});await attachEnhancementRuntime(page,false);
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='enhancements').length,0,'unchanged owner needs no content read');
-        snapshot.state.ai.ai_blocklist_recommendations_action='replace_thumbnail';snapshot.state.sponsorblock.modes.intro='manual';
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='enhancements').length,0,'inactive AI and segment preferences need no content read');
-        await page.locator('#continue').uncheck();kind='filtered';snapshot=watchOwner(kind);
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready'&&document.querySelectorAll('#watch-recommendation-items article').length===1);
-        assert.deepEqual(await page.locator('#watch-recommendation-items article').evaluateAll(rows=>rows.map(row=>row.dataset.videoId)),['previous001']);
-        assert.equal(await page.locator('.watch-heading h1').textContent(),'Selected original <literal> 2isYuQZMbdU');
-        assert.equal(await page.evaluate(()=>document.title),'Selected original <literal> 2isYuQZMbdU - Invidious');
-        assert.equal(await page.locator('#download-options input[name="title"]').inputValue(),'Selected original <literal> 2isYuQZMbdU');
-        assert.equal(await page.evaluate(()=>video_data.next_video),'previous001');assert.equal(await page.locator('#continue').isChecked(),false);
-        await page.screenshot({path:path.join(artifacts,`${engine}-d6-watch-content-filtered-light.png`)});
-        kind='ai';snapshot=watchOwner(kind);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready'&&document.querySelectorAll('#watch-recommendation-items article').length===2);
-        assert.deepEqual(await page.locator('#watch-recommendation-items article').evaluateAll(rows=>rows.map(row=>row.dataset.videoId)),['nextvideo01','abcdefghijk']);
-        assert.equal(await page.locator('#watch-recommendation-items .ai-thumbnail').count(),1);
-        kind='empty';snapshot=watchOwner(kind);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready'&&document.querySelectorAll('#watch-recommendation-items article').length===0);
-        assert.equal(await page.evaluate(()=>video_data.next_video),null);assert.equal(await page.locator('#continue').isDisabled(),true);
-        assert.equal(await page.locator('.watch-actions [data-video-action="unblock"]').count(),1,'canonical blocks refresh the existing contextual action');
-        kind='all';snapshot=watchOwner(kind);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready'&&document.querySelectorAll('#watch-recommendation-items article').length===3);
-        assert.equal(await page.locator('.watch-heading h1').textContent(),'A journey through light, color, and motion');
-        assert.equal(await page.locator('#download-options input[name="title"]').inputValue(),'A journey through light, color, and motion');
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);
-        assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='enhancements').length,4);assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/playlists/')).length,0);
-        assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 watch content activates an initially empty Up next without rebuilding playback`,async()=>{
-        const snapshot=watchOwner('all');
-        const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d6-watch-content-empty-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.searchParams.get('format')==='enhancements')return{contentType:'application/json',body:JSON.stringify(watchContent('all',entry.url))};
-            return clipFixtureReply(entry);
-        }});
-        await readyClipMedia(page,13);assert.equal(await page.locator('#watch-recommendation-items article').count(),0);
-        await attachWatchEnhancements(page);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready'&&document.querySelectorAll('#watch-recommendation-items article').length===3);
-        assert.equal(await page.locator('#continue').isVisible(),true);assert.equal(await page.locator('#continue').isDisabled(),false);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);
-        await page.locator('#continue').check();await page.evaluate(()=>player.trigger('ended'));await page.waitForURL(/v=previous001/);
-        assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 watch content preserves duplicate member queue rows while changing AI/title/masking presentation`,async()=>{
-        let kind='all',snapshot=watchOwner(kind);
-        const {page,context,requests,errors}=await setup(engine,'watch','dark',{fixture:'d6-watch-content-queue-dark',url:'/watch?v=2isYuQZMbdU&list=IVfixture&index=2',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.searchParams.get('format')==='enhancements')return{contentType:'application/json',body:JSON.stringify(watchContent(kind,entry.url))};
-            if(entry.url.pathname==='/api/v1/playlists/IVfixture')return{contentType:'application/json',body:JSON.stringify(watchContent('queue'))};
-            return clipFixtureReply(entry);
-        }});
-        await readyClipMedia(page,13);await page.waitForFunction(()=>document.querySelectorAll('#playlist .queue-row').length===4);
-        const before=await page.locator('#playlist .queue-row').evaluateAll(rows=>{window.preservedQueueRows=rows;return rows.map(row=>[row.dataset.videoId,row.dataset.occurrence]);});
-        await attachWatchEnhancements(page);kind='ai';snapshot=watchOwner(kind);snapshot.state.masking.rules['UC'+'a'.repeat(22)]={hide_title:true,hide_thumbnail:true,reveal_after_days:null};
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready');
-        assert.deepEqual(await page.locator('#playlist .queue-row').evaluateAll(rows=>rows.map(row=>[row.dataset.videoId,row.dataset.occurrence])),before);
-        assert.equal(await page.evaluate(()=>preservedQueueRows.every((row,i)=>row===document.querySelectorAll('#playlist .queue-row')[i])),true);
-        assert.equal(await page.locator('#playlist [data-spoiler-thumbnail] .ai-thumbnail').count(),0,'canonical masking wins over AI replacement');
-        assert.ok((await page.locator('#playlist [data-spoiler-title]').allTextContents()).every(text=>text.startsWith('Title hidden')));
-        await page.locator('#tab-queue').click();await page.locator('#playlist [data-spoiler-thumbnail]').first().click();
-        assert.equal(await page.locator('#playlist [data-spoiler-thumbnail] .ai-thumbnail').count(),1,'explicit image reveal shows the current AI replacement');
-        await page.screenshot({path:path.join(artifacts,`${engine}-d6-watch-content-queue-dark.png`)});
-        await page.evaluate(()=>document.documentElement.dir='rtl');await page.addStyleTag({content:'.queue-row,.queue-row button{font-size:20px!important}'});
-        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-        await page.screenshot({path:path.join(artifacts,`${engine}-d6-watch-content-queue-dark-rtl.png`)});
-        kind='filtered';snapshot=watchOwner(kind);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready'&&document.querySelectorAll('#watch-recommendation-items article').length===1);
-        assert.equal(await page.locator('#playlist .queue-row').count(),4,'membership and manual discovery hides preserve member occurrences');
-        assert.equal(await page.locator('#playlist .ai-thumbnail').count(),0);
-        assert.equal(requests.filter(r=>r.url.pathname==='/api/v1/playlists/IVfixture').length,1,'display preference changes never refetch/reorder the playlist');
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);
-        assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 watch content failure keeps Queue usable and Retry reachable outside inactive tabs`,async()=>{
-        let fail=true;const snapshot=watchOwner('ai');
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-watch-content-queue-light',url:'/watch?v=2isYuQZMbdU&list=IVfixture&index=2',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.searchParams.get('format')==='enhancements')return{contentType:'application/json',body:JSON.stringify(fail?{unexpected:'Unavailable'}:watchContent('ai',entry.url))};
-            if(entry.url.pathname==='/api/v1/playlists/IVfixture')return{contentType:'application/json',body:JSON.stringify(watchContent('queue'))};
-            return clipFixtureReply(entry);
-        }});
-        await readyClipMedia(page,13);await page.waitForFunction(()=>document.querySelectorAll('#playlist .queue-row').length===4);
-        await attachWatchEnhancements(page);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='unavailable');
-        assert.equal(await page.locator('#tool-queue').isVisible(),true);assert.equal(await page.locator('#tool-next').isVisible(),false);
-        assert.equal(await page.locator('#watch-enhancements-feedback').isVisible(),true);assert.equal(await page.locator('#watch-enhancements-retry').isVisible(),true);
-        assert.equal(await page.locator('#playlist .queue-remove').evaluateAll(buttons=>buttons.every(button=>!button.disabled)),true,'accepted owner state permits unrelated explicit queue actions');
-        await page.screenshot({path:path.join(artifacts,`${engine}-d6-watch-content-error-queue-light.png`)});
-        fail=false;await page.locator('#watch-enhancements-retry').click();await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready');
-        assert.equal(await page.locator('#watch-enhancements-feedback').isVisible(),false);assert.equal(await page.locator('#tool-queue').isVisible(),true);
-        assert.equal(requests.filter(r=>r.url.pathname==='/api/v1/playlists/IVfixture').length,1);assert.equal(requests.filter(r=>r.method==='POST'&&r.url.pathname!=='/preferences/timezone').length,0);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 watch content unknown/malformed reads suspend advancement and Retry rechecks only reads`,async()=>{
-        let snapshot=watchOwner('filtered');
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-watch-content-initial-light',url:'/watch?v=2isYuQZMbdU',init:holdWatchContentReads,reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:clipFixtureReply(entry)});
-        await readyClipMedia(page,13);await attachWatchEnhancements(page);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>watchContentReads.length===1);
-        assert.equal(await page.locator('#watch-recommendation-items').isVisible(),false);assert.equal(await page.locator('#continue').isDisabled(),true);
-        await page.evaluate(()=>player.trigger('ended'));assert.equal(requests.filter(r=>r.navigation).length,1,'unknown optional state cannot navigate away from playback');
-        await page.evaluate(()=>watchContentReads[0].release({error:'Unknown result'}));await page.locator('#watch-enhancements-retry').waitFor({state:'visible'});
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.evaluate(()=>watchContentReads.length),1,'unrelated owner checks do not retry the failed content read');
-        const readsBefore=requests.filter(r=>r.url.searchParams.get('format')==='runtime').length;
-        await page.locator('#watch-enhancements-retry').click();await page.waitForFunction(()=>watchContentReads.length===2);
-        assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,readsBefore+1,'Retry first proves the current owner');
-        await page.evaluate(data=>watchContentReads[1].release(data),watchContent('filtered',new URL(await page.evaluate(()=>watchContentReads[1].url))));await page.waitForFunction(()=>InvidiousWatchEnhancements.readState()==='ready');
-        assert.equal(await page.locator('#watch-recommendation-items').isVisible(),true);assert.equal(requests.filter(r=>r.method==='POST'&&r.url.pathname!=='/preferences/timezone').length,0);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 watch content rejects late reads after owner changes, cached returns and profile disposal`,async()=>{
-        for(const boundary of ['owner','cache','profile']) {
-            let snapshot=watchOwner('filtered');
-            const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d6-watch-content-initial-light',url:'/watch?v=2isYuQZMbdU',init:holdWatchContentReads,reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:clipFixtureReply(entry)});
-            await readyClipMedia(page,13);await attachWatchEnhancements(page);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>watchContentReads.length===1);
-            if(boundary==='owner') {snapshot=watchOwner('all');await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');}
-            else if(boundary==='cache') {snapshot=watchOwner('all');await page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');}
-            else await page.evaluate(()=>dispatchEvent(new Event('browserprofilechange')));
-            await page.evaluate(data=>watchContentReads[0].release(data),watchContent('filtered'));await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,50)));
-            assert.equal(await page.locator('#watch-recommendation-items article').count(),3,'late content never replaces the retained owner rows');
-            if(boundary!=='profile')assert.equal(await page.locator('.watch-heading h1').textContent(),'A journey through light, color, and motion');
-            else assert.equal(await page.locator('#watch-recommendation-items').isVisible(),false);
-            assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-        }
-    });
-}
-async function isolateRuntimeTitle(page) {
-    await page.evaluate(()=>document.querySelectorAll('[data-dearrow-id]').forEach(element=>{if(!element.hasAttribute('data-dearrow-watch'))element.removeAttribute('data-dearrow-id');}));
-}
-for(const engine of engines) {
-    test(`${engine}: D6 runtime DeArrow activates, retains explicit title cycles, disables and refreshes contribution winners in place`,async()=>{
-        const snapshot=runtimeSnapshot(true);let title='First replacement <literal>';
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.pathname.startsWith('/api/v1/dearrow/'))return{contentType:'application/json',body:JSON.stringify({title})};
-            return clipFixtureReply(entry);
-        }});
-        await readyClipMedia(page,13);await isolateRuntimeTitle(page);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);
-        const original=await page.locator('.watch-heading h1').textContent();await attachEnhancementRuntime(page);
-        assert.equal(await page.evaluate(()=>InvidiousDeArrow.readState()),'disabled');assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/dearrow/')).length,0);
-        snapshot.state.dearrow.enabled=true;snapshot.fingerprint='b'.repeat(64);await page.evaluate(()=>InvidiousEnhancements.refresh('preferences'));
-        await page.waitForFunction(title=>document.querySelector('.watch-heading h1').textContent===title,title);
-        let cycle=page.locator('.watch-heading .dearrow-reveal');await cycle.hover();await cycle.focus();assert.equal(await page.locator('.watch-heading h1').textContent(),title);
-        await cycle.click();assert.equal(await page.locator('.watch-heading h1').textContent(),original);assert.equal(await cycle.getAttribute('aria-label'),'Show DeArrow title');
-        assert.equal(await page.evaluate(original=>document.title===original+' - Invidious'&&player_data.title===original&&shareOptions.title===original,original),true);
-        snapshot.now++;await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        await page.waitForFunction(original=>document.querySelector('.watch-heading h1').textContent===original,original);
-        assert.equal(await cycle.getAttribute('aria-pressed'),'true');assert.equal(requests.filter(r=>r.url.pathname==='/api/v1/dearrow/2isYuQZMbdU').length,1);
-        snapshot.state.dearrow.enabled=false;snapshot.fingerprint='c'.repeat(64);await page.evaluate(()=>InvidiousEnhancements.refresh('preferences'));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await cycle.count(),0);assert.equal(await page.locator('.watch-heading h1').textContent(),original);
-        snapshot.state.dearrow.enabled=true;snapshot.state.dearrow.showOriginal=false;snapshot.fingerprint='d'.repeat(64);
-        await page.evaluate(()=>InvidiousEnhancements.refresh('preferences'));await page.waitForFunction(title=>document.querySelector('.watch-heading h1').textContent===title,title);
-        assert.equal(await cycle.count(),0);assert.equal(requests.filter(r=>r.url.pathname==='/api/v1/dearrow/2isYuQZMbdU').length,1);
-        title='Second replacement';await page.evaluate(()=>InvidiousUI.invalidate('dearrow'));await page.waitForFunction(title=>document.querySelector('.watch-heading h1').textContent===title,title);
-        assert.equal(requests.filter(r=>r.url.pathname==='/api/v1/dearrow/2isYuQZMbdU').length,2);
-        assert.equal(await page.evaluate(title=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1&&shareOptions.title===title,title),true);
-        assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime DeArrow ignores late reads after disabling, cached restoration and profile changes`,async()=>{
-        for(const lifetime of ['disable','cache','profile']) {
-            const snapshot=runtimeSnapshot(true);snapshot.state.dearrow.enabled=true;
-            const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',init:()=>{
-                const fetch=window.fetch.bind(window);window.heldTitleReads=[];
-                window.fetch=(url,options)=>new URL(url,location.href).pathname.startsWith('/api/v1/dearrow/')?new Promise(resolve=>heldTitleReads.push(title=>resolve(new Response(JSON.stringify({title}),{headers:{'Content-Type':'application/json'}})))):fetch(url,options);
-            },reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:clipFixtureReply(entry)});
-            await readyClipMedia(page,13);await isolateRuntimeTitle(page);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);const original=await page.locator('.watch-heading h1').textContent();
-            await attachEnhancementRuntime(page);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>heldTitleReads.length===1);
-            if(lifetime==='disable') {snapshot.state.dearrow.enabled=false;snapshot.fingerprint='b'.repeat(64);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');}
-            else if(lifetime==='cache') {await page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>heldTitleReads.length===2);}
-            else await page.evaluate(()=>dispatchEvent(new Event('browserprofilechange')));
-            await page.evaluate(()=>heldTitleReads[0]('A late winner'));await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,20)));
-            assert.notEqual(await page.locator('.watch-heading h1').textContent(),'A late winner');
-            if(lifetime==='cache'){await page.evaluate(()=>heldTitleReads[1]('Current winner'));await page.waitForFunction(()=>document.querySelector('.watch-heading h1').textContent==='Current winner');}
-            else assert.equal(await page.locator('.watch-heading h1').textContent(),lifetime==='profile'?'Title hidden':original);
-            assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-        }
-    });
-    test(`${engine}: D6 runtime DeArrow failures keep originals and require the explicit player Settings Retry`,async()=>{
-        for(const failure of ['http','malformed','timeout']) {
-            const snapshot=runtimeSnapshot(true);snapshot.state.dearrow.enabled=true;let reads=0;
-            const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-                if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-                if(entry.url.pathname.startsWith('/api/v1/dearrow/')){reads++;return reads===1&&failure!=='timeout'?(failure==='http'?{status:503,body:''}:{contentType:'application/json',body:'{"title":{}}'}):{contentType:'application/json',body:'{"title":"Retried title"}'};}
-                return clipFixtureReply(entry);
-            }});
-            await readyClipMedia(page,13);await isolateRuntimeTitle(page);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);const original=await page.locator('.watch-heading h1').textContent();
-            if(failure==='timeout')await page.evaluate(()=>{
-                const schedule=setTimeout;window.setTimeout=(fn,ms,...args)=>schedule(fn,ms===10000?40:ms,...args);
-                const fetch=window.fetch.bind(window);let first=true;
-                window.fetch=(url,options={})=>{if(new URL(url,location.href).pathname.startsWith('/api/v1/dearrow/')&&first){first=false;return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError'))));}return fetch(url,options);};
-            });
-            await attachEnhancementRuntime(page);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousDeArrow.readState()==='unavailable');
-            assert.equal(await page.locator('.watch-heading h1').textContent(),original);
-            await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready'&&InvidiousDeArrow.readState()==='unavailable');assert.equal(reads,failure==='timeout'?0:1);
-            await page.locator('.vjs-desktop-settings').click();const panel=page.getByRole('dialog',{name:'Settings',exact:true});await panel.getByRole('menuitem',{name:'Enhancements',exact:true}).click();
-            await panel.getByRole('menuitem',{name:'DeArrow · Retry',exact:true}).click();await page.waitForFunction(()=>document.querySelector('.watch-heading h1').textContent==='Retried title');
-            assert.equal(reads,failure==='timeout'?1:2);assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-        }
-    });
-    test(`${engine}: D6 runtime DeArrow has zero disabled scans, four concurrent reads and one lookup per duplicate ID`,async()=>{
-        const {page,context,errors}=await setup(engine,'browse','light',{fixture:'spoiler-cards-inactive',url:'/feed/popular',init:()=>{
-            window.dearrowScans=0;const query=Element.prototype.querySelectorAll;
-            Element.prototype.querySelectorAll=function(selector){if(selector==='[data-dearrow-id]')dearrowScans++;return query.call(this,selector);};
-        }});
-        assert.equal(await page.evaluate(()=>InvidiousDeArrow.readState()),'disabled');
-        await page.evaluate(()=>{const root=document.createElement('div');for(let i=0;i<1000;i++)root.append(document.createElement('span'));document.body.append(root);});
-        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.equal(await page.evaluate(()=>dearrowScans),0);
-        await page.evaluate(()=>{
-            document.querySelectorAll('[data-dearrow-id]').forEach(element=>element.removeAttribute('data-dearrow-id'));
-            window.budgetTitleReads=[];window.budgetActive=0;window.budgetMax=0;const fetch=window.fetch.bind(window);
-            window.fetch=(url,options)=>{const target=new URL(url,location.href);if(!target.pathname.startsWith('/api/v1/dearrow/'))return fetch(url,options);
-                budgetActive++;budgetMax=Math.max(budgetMax,budgetActive);
-                return new Promise(resolve=>budgetTitleReads.push({id:target.pathname.split('/').at(-1),release(){budgetActive--;resolve(new Response(JSON.stringify({title:'Clear '+this.id}),{headers:{'Content-Type':'application/json'}}));}}));
-            };
-            const region=document.createElement('div');region.id='title-budget';region.style.cssText='position:fixed;inset:100px auto auto 100px;width:400px;height:200px';
-            for(let i=0;i<109;i++) {
-                const row=document.createElement('div');row.dataset.dearrowRow='';row.style.cssText='position:absolute;inset:0';
-                const title=document.createElement('span');title.dataset.dearrowId='runtime'+String(i<9?i:0).padStart(4,'0');title.textContent='Original '+i;row.append(title);region.append(row);
-            }
-            document.body.append(region);InvidiousDeArrow.configure({enabled:true,showOriginal:false,originalLabel:'Show original title'});
-        });
-        await page.waitForFunction(()=>budgetTitleReads.length===4);await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,30)));assert.equal(await page.evaluate(()=>budgetTitleReads.length),4);
-        for(let index=0;index<9;index++){await page.waitForFunction(index=>budgetTitleReads.length>index,index);await page.evaluate(index=>budgetTitleReads[index].release(),index);}
-        await page.waitForFunction(()=>InvidiousDeArrow.readState()==='ready');
-        assert.equal(await page.evaluate(()=>budgetTitleReads.length),9);assert.equal(await page.evaluate(()=>budgetMax),4);
-        assert.equal(await page.locator('#title-budget [data-dearrow-id="runtime0000"]').count(),101);
-        assert.ok((await page.locator('#title-budget [data-dearrow-id="runtime0000"]').allTextContents()).every(title=>title==='Clear runtime0000'));
-        await page.evaluate(()=>{InvidiousDeArrow.configure({enabled:false,showOriginal:false,originalLabel:'Show original title'});dearrowScans=0;const region=document.createElement('div');for(let i=0;i<1000;i++)region.append(document.createElement('span'));document.body.append(region);});
-        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.equal(await page.evaluate(()=>dearrowScans),0);assert.equal(await page.evaluate(()=>budgetTitleReads.length),9);
-        assert.deepEqual(errors,[]);await context.close();
-    });
-}
-for(const engine of engines) {
-    test(`${engine}: D6 runtime masking activates, preserves unchanged reveals and removes rules on the same media`,async()=>{
-        const snapshot=runtimeSnapshot(true);
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:clipFixtureReply(entry)});
-        await readyClipMedia(page,13);
-        const original=await page.locator('.watch-heading h1').textContent(),channel=await page.evaluate(()=>video_data.channel_id);
-        snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);
-        await attachEnhancementRuntime(page);
-        snapshot.state.masking.rules[channel]={hide_title:true,hide_thumbnail:true,reveal_after_days:null};snapshot.fingerprint='b'.repeat(64);
-        await page.evaluate(()=>InvidiousUI.invalidate('preferences'));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        const cycle=page.locator('.watch-heading .spoiler-title-reveal');
-        assert.equal(await page.locator('.watch-heading h1').textContent(),'Title hidden');assert.equal(await page.title(),'Title hidden - Invidious');
-        assert.equal(await page.evaluate(()=>player.poster()===''&&player_data.thumbnail===''&&shareOptions.image===''&&shareOptions.title==='Title hidden'),true);
-        assert.ok((await page.locator('meta[property="og:title"],meta[name="twitter:title"]').evaluateAll(nodes=>nodes.map(n=>n.content))).every(value=>value==='Title hidden'));
-        assert.equal(await page.locator('#download-options input[name="title"]').inputValue(),'Title hidden');
-        assert.equal(await page.locator('#download-options form').evaluate(form=>new FormData(form).get('title')),'Title hidden');
-        await cycle.hover();await cycle.focus();assert.equal(await page.locator('.watch-heading h1').textContent(),'Title hidden');
-        await cycle.click();assert.equal(await page.locator('.watch-heading h1').textContent(),original);assert.equal(await page.title(),original+' - Invidious');
-        assert.equal(await page.locator('#download-options input[name="title"]').inputValue(),'Title hidden','a scoped main-title reveal does not reveal the download filename');
-        await page.locator('.spoiler-poster-reveal').click();assert.equal(await page.locator('.spoiler-poster-reveal').count(),0);
-        assert.equal(await page.evaluate(()=>!!player.poster()&&!player_data.spoiler_thumbnail_hidden),true);
-        snapshot.now++;await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.locator('.watch-heading h1').textContent(),original,'an unchanged check retains an explicit title reveal');
-        assert.equal(await page.locator('.spoiler-poster-reveal').count(),0,'an unchanged check retains an explicit image reveal');
-        snapshot.state.masking.rules[channel].reveal_after_days=7;snapshot.fingerprint='c'.repeat(64);
-        await page.evaluate(()=>InvidiousEnhancements.refresh('preferences'));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await cycle.count(),0);assert.equal(await page.locator('.watch-heading h1').textContent(),original);
-        assert.equal(await page.locator('#download-options input[name="title"]').inputValue(),original);
-        assert.equal(await page.evaluate(()=>!!player.poster()&&!player_data.spoiler_thumbnail_hidden),true);
-        snapshot.state.masking.rules={};snapshot.fingerprint='d'.repeat(64);
-        await page.evaluate(()=>InvidiousEnhancements.refresh('preferences'));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.locator('.spoiler-title-reveal,.spoiler-poster-reveal').count(),0);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);
-        assert.equal(requests.filter(r=>/^\/api\/v1\/(videos|dearrow)\//.test(r.url.pathname)).length,0);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime masking fails closed while owner state is unknown and Retry preserves playback`,async()=>{
-        const snapshot=runtimeSnapshot();
-        const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',init:()=>{
-            const fetch=window.fetch.bind(window);window.maskingReads=[];
-            window.fetch=(url,options)=>new URL(url,location.href).searchParams.get('format')==='runtime'?new Promise(resolve=>maskingReads.push(data=>resolve(new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}})))):fetch(url,options);
-        },reply:clipFixtureReply});
-        await readyClipMedia(page,13);const original=await page.locator('.watch-heading h1').textContent();await attachEnhancementRuntime(page);
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>maskingReads.length===1);
-        assert.equal(await page.locator('.watch-heading h1').textContent(),'Title hidden');assert.equal(await page.locator('.watch-heading .spoiler-title-reveal').isDisabled(),true);
-        assert.equal(await page.locator('.spoiler-poster-reveal').isDisabled(),true);assert.equal(await page.evaluate(()=>player.poster()===''&&player_data.thumbnail===''&&shareOptions.image===''),true);
-        assert.equal(await page.locator('#download-options input[name="title"]').inputValue(),'Title hidden');
-        await page.evaluate(()=>maskingReads[0]({error:'Unavailable'}));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='unavailable');
-        assert.equal(await page.locator('.watch-heading h1').textContent(),'Title hidden');assert.equal(await page.title(),'Title hidden - Invidious');
-        assert.equal(await page.locator('#download-options form').evaluate(form=>{form.reset();return new FormData(form).get('title');}),'Title hidden','a form reset cannot restore the old hidden filename');
-        await page.locator('#ui-notice').getByRole('button',{name:'Retry',exact:true}).click();await page.waitForFunction(()=>maskingReads.length===2);
-        await page.evaluate(data=>maskingReads[1](data),snapshot);await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.locator('.watch-heading h1').textContent(),original);assert.equal(await page.locator('.spoiler-poster-reveal').count(),0);
-        assert.equal(await page.locator('#download-options input[name="title"]').inputValue(),original);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime masking activates guest rules in an open tab without navigation or per-item reads`,async()=>{
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',reply:clipFixtureReply});
-        await readyClipMedia(page,13);const original=await page.locator('.watch-heading h1').textContent(),url=page.url();
-        const other=await context.newPage();await other.goto('https://invidious.test/watch?v=2isYuQZMbdU');
-        await other.evaluate(()=>InvidiousStorage.local.set('channel_spoiler_settings',{[video_data.channel_id]:{name:'Local only',hide_title:true,hide_thumbnail:true,reveal_after_days:null}}));
-        await page.waitForFunction(()=>document.querySelector('.watch-heading h1').textContent==='Title hidden');assert.equal(page.url(),url);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);
-        await other.evaluate(()=>InvidiousStorage.local.set('channel_spoiler_settings',{}));await page.waitForFunction(original=>document.querySelector('.watch-heading h1').textContent===original,original);
-        assert.equal(await page.locator('.spoiler-poster-reveal').count(),0);assert.equal(page.url(),url);
-        assert.equal(requests.filter(r=>/^\/api\/v1\/(videos|dearrow)\//.test(r.url.pathname)).length,0);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime masking reevaluates age boundaries while preserving unknown-date reveals and occurrence order`,async()=>{
-        const snapshot=runtimeSnapshot(true),id='UC'+'a'.repeat(22);snapshot.state.masking.rules[id]={hide_title:true,hide_thumbnail:true,reveal_after_days:7};
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:clipFixtureReply(entry)});
-        await readyClipMedia(page,13);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);
-        await page.evaluate(({id,now})=>{
-            const region=document.createElement('div');region.id='masking-occurrences';
-            for(const [key,published] of [['recent',now-6*86400],['unknown',null],['old',now-8*86400]]) {
-                const row=document.createElement('div');row.dataset.dearrowRow='';row.dataset.occurrence=key;
-                const title=document.createElement('span');title.dataset.spoilerTitle='';title.dataset.spoilerChannel=id;title.dataset.spoilerPublished=published===null?'':String(published);title.dataset.spoilerOriginal=key+' original';title.textContent=title.dataset.spoilerOriginal;row.append(title);region.append(row);
-            }
-            document.querySelector('main').append(region);
-        },{id,now:snapshot.now});
-        await attachEnhancementRuntime(page);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        const recent=page.locator('[data-occurrence=recent]'),unknown=page.locator('[data-occurrence=unknown]');
-        assert.equal(await recent.locator('[data-spoiler-title]').textContent(),'Title hidden');assert.match(await unknown.locator('[data-spoiler-title]').textContent(),/upload date unknown/);
-        await unknown.locator('.spoiler-title-reveal').click();assert.equal(await unknown.locator('[data-spoiler-title]').textContent(),'unknown original');
-        snapshot.now+=2*86400;await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await recent.locator('[data-spoiler-title]').textContent(),'recent original');assert.equal(await recent.locator('.spoiler-title-reveal').count(),0);
-        assert.equal(await unknown.locator('[data-spoiler-title]').textContent(),'unknown original');assert.equal(await unknown.locator('.spoiler-title-reveal').count(),1);
-        assert.deepEqual(await page.locator('#masking-occurrences>[data-occurrence]').evaluateAll(nodes=>nodes.map(n=>n.dataset.occurrence)),['recent','unknown','old']);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);
-        assert.equal(requests.filter(r=>/^\/api\/v1\/(videos|dearrow)\//.test(r.url.pathname)).length,0);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime masking rejects pending title reveals after rule and profile changes`,async()=>{
-        for(const lifetime of ['rules','profile']) {
-            const snapshot=runtimeSnapshot(true);
-            const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:clipFixtureReply(entry)});
-            await readyClipMedia(page,13);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);snapshot.state.dearrow.enabled=true;
-            snapshot.state.masking.rules[await page.evaluate(()=>video_data.channel_id)]={hide_title:true,hide_thumbnail:false,reveal_after_days:null};
-            await attachEnhancementRuntime(page);await page.evaluate(()=>{InvidiousSpoilers.bindDeArrow(()=>new Promise(resolve=>window.releaseMaskedTitle=resolve));InvidiousEnhancements.refresh();});await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-            await page.locator('.watch-heading .spoiler-title-reveal').click();await page.waitForFunction(()=>typeof releaseMaskedTitle==='function');
-            if(lifetime==='rules') {
-                snapshot.state.dearrow.enabled=false;snapshot.fingerprint='e'.repeat(64);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-            } else await page.evaluate(()=>dispatchEvent(new Event('browserprofilechange')));
-            await page.evaluate(()=>releaseMaskedTitle('A late title must stay hidden'));await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,20)));
-            assert.equal(await page.locator('.watch-heading h1').textContent(),'Title hidden');assert.equal(await page.title(),'Title hidden - Invidious');
-            assert.equal(await page.getByText('A late title must stay hidden',{exact:true}).count(),0);
-            assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-        }
-    });
-    test(`${engine}: D6 runtime masking prevents late storyboards from reinstalling hover images and reuses the VTT read`,{timeout:20000},async()=>{
-        const snapshot=runtimeSnapshot(true);let releaseVTT,signalVTT,vttReads=0;const vttStarted=new Promise(resolve=>{signalVTT=resolve;});
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'watch-spoiler-original',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.pathname.startsWith('/api/v1/storyboards/')){vttReads++;return new Promise(resolve=>{releaseVTT=()=>resolve({contentType:'text/vtt',body:'WEBVTT\n\n00:00:00.000 --> 00:03:00.000\n/vi/board-image/mqdefault.jpg#xywh=0,0,90,50\n'});signalVTT();});}
-            return clipFixtureReply(entry);
-        }});
-        await readyClipMedia(page,13);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);const id=await page.evaluate(()=>video_data.channel_id);
-        snapshot.state.masking.rules[id]={hide_title:true,hide_thumbnail:true,reveal_after_days:7};
-        assert.equal(vttReads,0);await page.locator('.spoiler-poster-reveal').click();await page.waitForFunction(()=>!player_data.spoiler_thumbnail_hidden);await vttStarted;
-        await attachEnhancementRuntime(page);snapshot.state.masking.rules[id].reveal_after_days=8;snapshot.fingerprint='f'.repeat(64);
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.evaluate(()=>player_data.spoiler_thumbnail_hidden&&player.poster()===''),true);
-        releaseVTT();await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,40)));assert.equal(await page.locator('.vjs-vtt-thumbnail-display').count(),0);
-        assert.equal(requests.filter(r=>r.url.pathname==='/vi/board-image/mqdefault.jpg').length,0);
-        await page.locator('.spoiler-poster-reveal').click();await page.locator('.vjs-vtt-thumbnail-display').waitFor({state:'attached'});assert.equal(vttReads,1);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-    });
-}
-async function attachEnhancementRuntime(page, collect=true) {
-    await page.addScriptTag({content:fs.readFileSync(path.join(root,'assets/js/enhancements.js'),'utf8')});
-    if(collect)await page.evaluate(()=>{
-        window.runtimeApplications=[];window.runtimeSuspensions=0;window.runtimeDisposals=0;
-        InvidiousEnhancements.register('verification',{
-            suspend(){runtimeSuspensions++;},dispose(){runtimeDisposals++;},
-            apply(value,detail){runtimeApplications.push({value,detail,frozen:Object.isFrozen(value)&&Object.isFrozen(value.masking.rules)&&Object.isFrozen(detail.kinds)});}
-        });
-    });
-}
-async function browseOwnerSnapshot(page) {
-    const owner=await page.evaluate(()=>({profile:InvidiousStorage.scope,fingerprint:InvidiousUI.config.ownerBrowseFingerprint,history:location.pathname==='/feed/history'}));
-    const snapshot=runtimeSnapshot(owner.profile!=='guest');snapshot.state.profile=owner.profile;
-    snapshot.state[owner.history?'historyFingerprint':'browseFingerprint']=owner.fingerprint;
-    return snapshot;
-}
-function fixtureWithBrowseOwner(name,fingerprint) {
-    return fixtureHTML(name).replace(/(<script id="ui-config"[^>]*>)([\s\S]*?)(<\/script>)/,(_,start,raw,end)=>{
-        const config=JSON.parse(raw);config.browseFingerprint=config.ownerBrowseFingerprint=fingerprint;return start+JSON.stringify(config).replace(/</g,'\\u003c')+end;
-    });
-}
-for(const engine of engines) {
-    test(`${engine}: D6 runtime browse unchanged owner checks retain appended pages, Back scroll and reusable descriptors`,async()=>{
-        let snapshot;
-        const {page,context,requests,errors}=await setup(engine,'browse','light',{fixture:'qol-browse',url:'/feed/popular',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.pathname==='/feed/popular'&&entry.url.searchParams.has('page'))return{contentType:'text/html',body:fixtureHTML('qol-browse-next')};
-        }});
-        snapshot=await browseOwnerSnapshot(page);await attachEnhancementRuntime(page);
-        await page.locator('[data-load-more]').click();await page.waitForFunction(()=>document.querySelectorAll('[data-browse-items]>.media-item').length===24);
-        const order=await page.locator('[data-browse-items]>.media-item').evaluateAll(nodes=>nodes.map(node=>node.dataset.videoId));await page.evaluate(()=>scrollTo(0,650));
-        await page.evaluate(()=>InvidiousUI.invalidate('preferences'));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.deepEqual(await page.locator('[data-browse-items]>.media-item').evaluateAll(nodes=>nodes.map(node=>node.dataset.videoId)),order);
-        assert.equal(await page.evaluate(()=>InvidiousStorage.session.get('browse_state').views.at(-1).pages.length),1);
-        await page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});
-        await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');assert.ok(await page.evaluate(()=>scrollY>500));
-        assert.equal(requests.filter(r=>r.url.pathname==='/feed/popular'&&r.url.searchParams.has('page')).length,1,'a cached return does not replay unchanged continuations');
-        assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,2);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime browse changed Back owner state retires old continuations and refreshes through ordinary navigation`,async()=>{
-        let snapshot,changed=false;
-        const {page,context,requests,errors}=await setup(engine,'browse','light',{fixture:'qol-browse',url:'/feed/popular',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.pathname==='/feed/popular')return{contentType:'text/html',body:changed?fixtureWithBrowseOwner('qol-browse','f'.repeat(64)):fixtureHTML(entry.url.searchParams.has('page')?'qol-browse-next':'qol-browse')};
-        }});
-        snapshot=await browseOwnerSnapshot(page);await attachEnhancementRuntime(page);await page.locator('[data-load-more]').click();await page.waitForFunction(()=>document.querySelectorAll('[data-browse-items]>.media-item').length===24);
-        const order=await page.locator('[data-browse-items]>.media-item').evaluateAll(nodes=>nodes.map(node=>node.dataset.videoId));
-        changed=true;snapshot.state.blockedChannels=['UC'+'a'.repeat(22)];snapshot.state.browseFingerprint='f'.repeat(64);snapshot.fingerprint='b'.repeat(64);
-        await page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});
-        await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');assert.match(await page.locator('[data-browse-status]').textContent(),/changed/i);
-        assert.equal(await page.locator('[data-load-more]').isVisible(),false);assert.equal(await page.evaluate(()=>InvidiousStorage.session.get('browse_state')),undefined);
-        assert.deepEqual(await page.locator('[data-browse-items]>.media-item').evaluateAll(nodes=>nodes.map(node=>node.dataset.videoId)),order);
-        assert.equal(requests.filter(r=>r.url.pathname==='/feed/popular'&&r.url.searchParams.has('page')).length,1);
-        await Promise.all([page.waitForNavigation(),page.locator('[data-browse-status] .ui-retry').click()]);await page.waitForFunction(()=>document.body.dataset.uiInitialized==='true');
-        assert.equal(await page.locator('[data-browse-items]>.media-item').count(),12);assert.equal(requests.filter(r=>r.url.pathname==='/feed/popular'&&r.url.searchParams.has('page')).length,1,'the new owner never replays an old preview');
-        assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime browse failed owner checks and late aborted pages cannot unlock or duplicate a later continuation`,async()=>{
-        let snapshot,failed=true;
-        const {page,context,requests,errors}=await setup(engine,'browse','light',{fixture:'qol-browse',url:'/feed/popular',init:()=>{
-            const fetch=window.fetch.bind(window);window.heldBrowsePages=[];
-            window.fetch=(url,options)=>new URL(url,location.href).searchParams.has('page')?new Promise(resolve=>heldBrowsePages.push(html=>resolve(new Response(html,{headers:{'Content-Type':'text/html'}})))):fetch(url,options);
-        },reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return failed?{status:503,body:''}:{contentType:'application/json',body:JSON.stringify(snapshot)};
-        }});
-        snapshot=await browseOwnerSnapshot(page);await attachEnhancementRuntime(page);await page.locator('[data-load-more]').click();await page.waitForFunction(()=>heldBrowsePages.length===1);
-        await page.evaluate(()=>InvidiousUI.invalidate('preferences'));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='unavailable');
-        assert.equal(await page.locator('[data-load-more]').isDisabled(),true);assert.equal(await page.locator('[data-browse-items]>.media-item').count(),12);
-        failed=false;await page.locator('#ui-notice .ui-retry').click();await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        await page.locator('[data-load-more]').click();await page.waitForFunction(()=>heldBrowsePages.length===2);
-        await page.evaluate(html=>heldBrowsePages[0](html),fixtureHTML('qol-browse-next'));await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,20)));
-        assert.equal(await page.locator('[data-load-more]').isDisabled(),true);assert.equal(await page.locator('[data-browse-region]').getAttribute('aria-busy'),'true');
-        assert.equal(await page.locator('[data-browse-items]>.media-item').count(),12);
-        await page.evaluate(html=>heldBrowsePages[1](html),fixtureHTML('qol-browse-next'));await page.waitForFunction(()=>document.querySelectorAll('[data-browse-items]>.media-item').length===24);
-        assert.equal(await page.evaluate(()=>InvidiousStorage.session.get('browse_state').views.at(-1).pages.length),1);
-        assert.ok(requests.filter(r=>r.url.searchParams.get('format')==='runtime').every(r=>r.method==='GET'&&!r.raw));assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime browse uses the history owner key and keeps private POST state out of durable previews`,async()=>{
-        let snapshot;
-        const history=await setup(engine,'browse','light',{fixture:'d4-history-light',url:'/feed/history',reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:null});
-        snapshot=await browseOwnerSnapshot(history.page);await attachEnhancementRuntime(history.page);snapshot.state.browseFingerprint='f'.repeat(64);
-        await history.page.evaluate(()=>InvidiousEnhancements.refresh());await history.page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.doesNotMatch(await history.page.locator('[data-browse-status]').textContent(),/changed/i);
-        const order=await history.page.locator('[data-browse-items] [data-video-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.videoId));
-        snapshot.state.historyFingerprint='e'.repeat(64);await history.page.evaluate(()=>InvidiousEnhancements.refresh());await history.page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.match(await history.page.locator('[data-browse-status]').textContent(),/changed/i);assert.deepEqual(await history.page.locator('[data-browse-items] [data-video-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.videoId)),order);
-        assert.deepEqual(history.errors,[]);await history.context.close();
-        const privatePage=await setup(engine,'browse','light',{fixture:'qol-search-true-1',url:'/search',reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:null});
-        snapshot=await browseOwnerSnapshot(privatePage.page);await attachEnhancementRuntime(privatePage.page);await privatePage.page.evaluate(()=>InvidiousEnhancements.refresh());await privatePage.page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await privatePage.page.evaluate(()=>InvidiousStorage.session.get('browse_state')),undefined);assert.equal(await privatePage.page.evaluate(()=>!!(history.state&&history.state.ivBrowse)),false);
-        assert.equal(privatePage.requests.filter(r=>r.method==='POST'&&r.url.pathname==='/search').length,0);
-        assert.ok(privatePage.requests.filter(r=>r.url.searchParams.get('format')==='runtime').every(r=>r.method==='GET'&&!r.raw));
-        assert.deepEqual(privatePage.errors,[]);await privatePage.context.close();
-    });
-}
-function holdAuxiliaryRuntimeReads() {
-    const fetch=window.fetch.bind(window);window.auxiliaryRuntimeReads=[];
-    window.fetch=(url,options)=>new URL(url,location.href).searchParams.get('format')==='runtime'?new Promise(resolve=>auxiliaryRuntimeReads.push(data=>resolve(new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}})))):fetch(url,options);
-}
-for(const engine of engines) {
-    test(`${engine}: D6 runtime auxiliary contribution masking tracks pending/rule changes and offers a read-only Retry inside the dialog`,async()=>{
-        const snapshot=runtimeSnapshot(true),server=contributionServer();
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-contribution-regular-light',url:'/watch?v=2isYuQZMbdU',init:holdAuxiliaryRuntimeReads,reply:entry=>server.reply(entry)||clipFixtureReply(entry)});
-        await readyClipMedia(page,13);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);const channel=await page.evaluate(()=>video_data.channel_id);
-        await openContributions(page);const original=await page.locator('#dearrow-original-title').textContent(),hidden=await page.evaluate(()=>JSON.parse(document.getElementById('dearrow-contribution-config').textContent).hidden_title);
-        await page.locator('#dearrow-draft').fill('A retained private draft');await attachEnhancementRuntime(page);
-        snapshot.state.masking.rules[channel]={hide_title:true,hide_thumbnail:true,reveal_after_days:null};snapshot.fingerprint='b'.repeat(64);
-        await page.evaluate(()=>InvidiousEnhancements.refresh('preferences'));await page.waitForFunction(()=>auxiliaryRuntimeReads.length===1);
-        assert.equal(await page.locator('#dearrow-original-title').textContent(),hidden);assert.equal(await page.locator('#dearrow-mask-toggle').isDisabled(),true);
-        assert.ok((await page.locator('[data-dearrow-proposal]').allTextContents()).every(value=>value===hidden));
-        await page.evaluate(data=>auxiliaryRuntimeReads[0](data),snapshot);await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        await page.locator('#dearrow-mask-toggle').click();assert.equal(await page.locator('#dearrow-original-title').textContent(),original);assert.equal(await page.locator('.watch-heading h1').textContent(),'Title hidden');
-        snapshot.now++;await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>auxiliaryRuntimeReads.length===2);
-        assert.equal(await page.locator('#dearrow-original-title').textContent(),hidden);assert.equal(await page.locator('#dearrow-mask-toggle').getAttribute('aria-pressed'),'false');
-        await page.evaluate(data=>auxiliaryRuntimeReads[1](data),snapshot);await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.locator('#dearrow-original-title').textContent(),original,'an unchanged canonical read retains only the dialog-scoped reveal');
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>auxiliaryRuntimeReads.length===3);await page.evaluate(()=>auxiliaryRuntimeReads[2]({error:'Unavailable'}));
-        await page.locator('#dearrow-mask-retry').waitFor({state:'visible'});assert.equal(await page.locator('#dearrow-original-title').textContent(),hidden);
-        assert.equal(await page.locator('#dearrow-mask-toggle').isDisabled(),true);assert.equal(await page.locator('#dearrow-draft').inputValue(),'A retained private draft');
-        await page.locator('#dearrow-mask-actions').scrollIntoViewIfNeeded();assert.ok(await page.locator('#dearrow-mask-actions').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
-        await page.screenshot({path:path.join(artifacts,`${engine}-d6-runtime-masking-dialog-error-light.png`)});
-        await page.evaluate(()=>{setTheme('dark');document.documentElement.dir='rtl';});await page.addStyleTag({content:'#dearrow-dialog :is(button,input,span){font-size:20px!important}'});
-        assert.ok(await page.locator('.dearrow-content').evaluate(element=>element.scrollWidth<=element.clientWidth+1));assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-        await page.screenshot({path:path.join(artifacts,`${engine}-d6-runtime-masking-dialog-error-dark-rtl.png`)});
-        snapshot.state.masking.rules={};snapshot.fingerprint='c'.repeat(64);await page.locator('#dearrow-mask-retry').click();await page.waitForFunction(()=>auxiliaryRuntimeReads.length===4);
-        await page.evaluate(data=>auxiliaryRuntimeReads[3](data),snapshot);await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.locator('#dearrow-original-title').textContent(),original);assert.equal(await page.locator('#dearrow-mask-retry').isVisible(),false);
-        assert.equal(await page.locator('#dearrow-draft').inputValue(),'A retained private draft');assert.equal(server.writes.length,0);
-        assert.equal(requests.filter(r=>r.url.pathname==='/dearrow_submit').length,0);assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);
-        assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime auxiliary browser notifications hide titles during checks and follow accepted rules without reordering subscriptions`,async()=>{
-        const snapshot=runtimeSnapshot(true),id='UC'+'a'.repeat(22);
-        const {page,context,requests,errors}=await setup(engine,'browse','light',{fixture:'d4-subscriptions-light',url:'/feed/subscriptions',init:holdAuxiliaryRuntimeReads,reply:entry=>{
-            if(entry.url.pathname==='/js/sse.js')return{contentType:'application/javascript',body:"window.fakeStreams=[];window.SSE=function(){this.listeners={};this.addEventListener=(name,fn)=>this.listeners[name]=fn;this.stream=()=>{};this.close=()=>{};fakeStreams.push(this);};"};
-            if(entry.url.pathname==='/api/v1/auth/subscriptions')return{contentType:'application/json',body:JSON.stringify([{authorId:id}])};
-        }});
-        // This init is installed explicitly before notifications are delivered;
-        // no browser permission prompt or operating-system notification is used.
-        await page.evaluate(()=>{window.browserNotifications=[];window.Notification=function(title,options){browserNotifications.push({title,options});};Notification.permission='granted';});
-        await page.waitForFunction(()=>window.fakeStreams&&fakeStreams.length===1);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);
-        const order=await page.locator('.media-item').evaluateAll(rows=>rows.map(row=>row.dataset.videoId));
-        await attachEnhancementRuntime(page);snapshot.state.masking.rules[id]={hide_title:true,hide_thumbnail:true,reveal_after_days:null};
-        await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>auxiliaryRuntimeReads.length===1);
-        const notify=async(index,title)=>page.evaluate(({index,title,id})=>fakeStreams[0].onmessage({id:String(index),data:JSON.stringify({videoId:'notify'+String(index).padStart(5,'0'),authorId:id,author:'Studio North',title,published:Math.ceil(Date.now()/1000)+1})}),{index,title,id});
-        await notify(1,'A title during an unknown check');assert.equal(await page.evaluate(()=>browserNotifications[0].options.body),'Title hidden');
-        await page.evaluate(data=>auxiliaryRuntimeReads[0](data),snapshot);await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        await notify(2,'A title hidden by the accepted rule');assert.equal(await page.evaluate(()=>browserNotifications[1].options.body),'Title hidden');
-        snapshot.state.masking.rules={};snapshot.fingerprint='d'.repeat(64);await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>auxiliaryRuntimeReads.length===2);
-        await notify(3,'Still unknown');assert.equal(await page.evaluate(()=>browserNotifications[2].options.body),'Title hidden');
-        await page.evaluate(data=>auxiliaryRuntimeReads[1](data),snapshot);await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        await notify(4,'A permitted upload title');assert.equal(await page.evaluate(()=>browserNotifications[3].options.body),'A permitted upload title');
-        assert.deepEqual(await page.locator('.media-item').evaluateAll(rows=>rows.map(row=>row.dataset.videoId)),order);
-        assert.equal(requests.filter(r=>/^\/api\/v1\/(videos|dearrow)\//.test(r.url.pathname)).length,0);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime owner foreground checks refresh without a change channel or media replacement`,async()=>{
-        const snapshot=runtimeSnapshot(true);
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',init:()=>{
-            Object.defineProperty(window,'BroadcastChannel',{value:class{constructor(){throw new DOMException('Denied','SecurityError');}}});
-        },reply:entry=>entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:JSON.stringify(snapshot)}:clipFixtureReply(entry)});
-        await readyClipMedia(page,13);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);const original=await page.locator('.watch-heading h1').textContent(),id=await page.evaluate(()=>video_data.channel_id);
-        await attachEnhancementRuntime(page);await page.evaluate(()=>dispatchEvent(new Event('focus')));assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,0);
-        snapshot.state.masking.rules[id]={hide_title:true,hide_thumbnail:true,reveal_after_days:null};snapshot.fingerprint='b'.repeat(64);
-        await page.evaluate(()=>{dispatchEvent(new Event('blur'));dispatchEvent(new Event('focus'));});await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.locator('.watch-heading h1').textContent(),'Title hidden');assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,1);
-        snapshot.state.masking.rules={};snapshot.fingerprint='c'.repeat(64);
-        await page.evaluate(()=>{window.runtimeVisibility='hidden';Object.defineProperty(document,'visibilityState',{configurable:true,get(){return runtimeVisibility;}});document.dispatchEvent(new Event('visibilitychange'));runtimeVisibility='visible';document.dispatchEvent(new Event('visibilitychange'));});
-        await page.waitForFunction(original=>InvidiousEnhancements.readState()==='ready'&&document.querySelector('.watch-heading h1').textContent===original,original);
-        assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,2);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);assert.deepEqual(errors,[]);await context.close();
-    });
-}
-for(const engine of engines) {
-    test(`${engine}: D6 runtime owner reads coalesce hints, validate projections and retain the current media`,async()=>{
-        const snapshot=runtimeSnapshot(true);snapshot.state.sponsorblock.enabled=true;snapshot.state.sponsorblock.modes.sponsor='manual';
-        snapshot.state.future_native={private_id:'must not reach consumers'};snapshot.state.sponsorblock.private_id='must not reach consumers';
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-            if(entry.url.pathname.startsWith('/api/v1/sponsorblock/'))return{contentType:'application/json',body:'{"segments":[{"id":"manual","category":"sponsor","start":10,"end":18}]}'};
-            return clipFixtureReply(entry);
-        }});
-        await readyClipMedia(page,13);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);
-        await attachEnhancementRuntime(page);assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,0);
-        await page.evaluate(()=>{InvidiousUI.invalidate('dearrow');InvidiousUI.invalidate('blocks');InvidiousUI.invalidate('preferences');});
-        await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready'&&InvidiousSponsorBlock.readState()==='ready');
-        assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,1);
-        assert.deepEqual(await page.evaluate(()=>runtimeApplications[0].detail.kinds),['dearrow','blocks','preferences']);
-        assert.equal(await page.evaluate(()=>runtimeApplications[0].frozen&&!('future_native'in runtimeApplications[0].value)&&!('private_id'in runtimeApplications[0].value.sponsorblock)),true);
-        assert.equal(await page.evaluate(()=>InvidiousEnhancements.register('verification',{apply(){throw Error('duplicate');}})),false);
-        await page.addScriptTag({content:fs.readFileSync(path.join(root,'assets/js/enhancements.js'),'utf8')});
-        snapshot.now++;await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>runtimeApplications.length===2);
-        assert.equal(await page.evaluate(()=>runtimeApplications.at(-1).detail.unchanged),true,'clock advancement does not reset configuration identity');
-        assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/sponsorblock/')).length,1);
-        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);
-        assert.equal(await page.locator('.sb-range').count(),1);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime owner reads reject malformed, foreign and guest-account state without an automatic retry`,async()=>{
-        for(const failure of ['http','profile','version','clock','fingerprint','account','guestRules','mode','color','mask','ai']) {
-            let valid=false,reads=0;const snapshot=runtimeSnapshot();
-            const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-                if(entry.url.searchParams.get('format')!=='runtime')return null;
-                reads++;if(!valid&&failure==='http')return{status:503,contentType:'application/json',body:'{"error":"Unavailable"}'};
-                const value=structuredClone(snapshot);
-                if(!valid){
-                    if(failure==='profile')value.state.profile='a'.repeat(64);
-                    if(failure==='version')value.state.version=2;
-                    if(failure==='clock')value.now='1700000000';
-                    if(failure==='fingerprint')value.fingerprint='invalid';
-                    if(failure==='account')value.state.account=true;
-                    if(failure==='guestRules')value.state.masking.rules['UC'+'a'.repeat(22)]={hide_title:true,hide_thumbnail:true,reveal_after_days:null};
-                    if(failure==='mode')value.state.sponsorblock.modes.sponsor='future';
-                    if(failure==='color')value.state.sponsorblock.colors.sponsor='url(https://external.invalid/)';
-                    if(failure==='mask')value.state.masking.labels.title_hidden=42;
-                    if(failure==='ai')value.state.ai.ai_blocklist_other_pages_action='hide';
-                }
-                return{contentType:'application/json',body:JSON.stringify(value)};
-            }});
-            await attachEnhancementRuntime(page);await page.evaluate(()=>InvidiousEnhancements.refresh('preferences'));
-            await page.waitForFunction(()=>InvidiousEnhancements.readState()==='unavailable');
-            assert.equal(await page.evaluate(()=>runtimeApplications.length),0);assert.ok(await page.evaluate(()=>runtimeSuspensions>=2));assert.equal(reads,1);
-            await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,40)));assert.equal(reads,1);
-            valid=true;await page.locator('#ui-notice').getByRole('button',{name:'Retry',exact:true}).click();await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-            assert.equal(reads,2);assert.equal(await page.evaluate(()=>runtimeApplications.length),1);assert.deepEqual(errors,[]);await context.close();
-        }
-    });
-    test(`${engine}: D6 runtime owner reads reject stale cached/profile replies and preserve superseded invalidation kinds`,async()=>{
-        const snapshot=runtimeSnapshot();
-        const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',init:()=>{
-            const fetch=window.fetch.bind(window);window.heldRuntimeReads=[];
-            window.fetch=(url,options={})=>new URL(url,location.href).searchParams.get('format')==='runtime'?new Promise(resolve=>heldRuntimeReads.push(data=>resolve(new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}})))):fetch(url,options);
-        }});
-        await attachEnhancementRuntime(page);await page.evaluate(()=>InvidiousUI.invalidate('dearrow'));await page.waitForFunction(()=>heldRuntimeReads.length===1);
-        await page.evaluate(()=>InvidiousUI.invalidate('blocks'));await page.waitForFunction(()=>heldRuntimeReads.length===2);
-        await page.evaluate(data=>heldRuntimeReads[0](data),snapshot);await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,20)));assert.equal(await page.evaluate(()=>runtimeApplications.length),0);
-        await page.evaluate(data=>heldRuntimeReads[1](data),snapshot);await page.waitForFunction(()=>runtimeApplications.length===1);
-        assert.deepEqual(await page.evaluate(()=>runtimeApplications[0].detail.kinds),['blocks','dearrow']);
-        await page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>heldRuntimeReads.length===3);
-        await page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true})));await page.evaluate(data=>heldRuntimeReads[2](data),snapshot);
-        await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,20)));assert.equal(await page.evaluate(()=>runtimeApplications.length),1);
-        await page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));await page.waitForFunction(()=>heldRuntimeReads.length===4);
-        await page.evaluate(()=>dispatchEvent(new Event('browserprofilechange')));await page.evaluate(data=>heldRuntimeReads[3](data),snapshot);await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,20)));
-        assert.equal(await page.evaluate(()=>InvidiousEnhancements.readState()),'disposed');assert.equal(await page.evaluate(()=>runtimeApplications.length),1);assert.equal(await page.evaluate(()=>runtimeDisposals),1);
-        await page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));InvidiousEnhancements.refresh();InvidiousUI.invalidate();});
-        assert.equal(await page.evaluate(()=>heldRuntimeReads.length),4);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 runtime owner reads apply account and browser-local SponsorBlock inheritance without importing guest rules`,async()=>{
-        for(const account of [false,true]) {
-            const snapshot=runtimeSnapshot(account),id='UC'+'a'.repeat(22);snapshot.state.sponsorblock.enabled=false;
-            snapshot.state.sponsorblock.overrides=account?{[id]:{enabled:true,modes:{sponsor:'manual'}}}:{};
-            const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:account?'d6-clip-chat-light':'d5-single-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-                if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
-                if(entry.url.pathname.startsWith('/api/v1/sponsorblock/'))return{contentType:'application/json',body:'{"segments":[{"id":"a","category":"sponsor","start":10,"end":18}]}'};
-                return clipFixtureReply(entry);
-            }});
-            await readyClipMedia(page,13);snapshot.state.profile=await page.evaluate(()=>InvidiousStorage.scope);
-            await page.evaluate(({account,id})=>{video_data.channel_id=id;InvidiousStorage.local.set('sponsorblock_channel_overrides',{[id]:{enabled:!account,modes:{sponsor:account?'disabled':'manual'}}});},{account,id});
-            await attachEnhancementRuntime(page);await page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
-            await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready'&&InvidiousSponsorBlock.readState()==='ready');assert.equal(await page.locator('.sb-range').count(),1);
-            assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);
-            assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,1);assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/sponsorblock/')).length,1);
-            assert.deepEqual(errors,[]);await context.close();
-        }
-    });
-    test(`${engine}: D6 runtime owner reads recover from timeouts and failed consumers with a read-only Retry`,async()=>{
-        for(const failure of ['timeout','consumer']) {
-            const snapshot=runtimeSnapshot();let reads=0;
-            const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-                if(entry.url.searchParams.get('format')==='runtime'){reads++;return{contentType:'application/json',body:JSON.stringify(snapshot)};}
-            }});
-            await attachEnhancementRuntime(page);
-            await page.evaluate(failure=>{
-                window.failRuntimeConsumer=failure==='consumer';
-                InvidiousEnhancements.register('failure-owner',{apply(){if(failRuntimeConsumer)throw Error('optional owner failed');}});
-                if(failure==='timeout') {
-                    const schedule=setTimeout;window.setTimeout=(fn,ms,...args)=>schedule(fn,ms===15000?40:ms,...args);
-                    const fetch=window.fetch.bind(window);let first=true;
-                    window.fetch=(url,options={})=>{if(new URL(url,location.href).searchParams.get('format')==='runtime'&&first){first=false;return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError'))));}return fetch(url,options);};
-                }
-                InvidiousEnhancements.refresh('dearrow');
-            },failure);
-            await page.waitForFunction(()=>InvidiousEnhancements.readState()==='unavailable');
-            assert.equal(reads,failure==='timeout'?0:1);
-            await page.evaluate(()=>failRuntimeConsumer=false);
-            await page.locator('#ui-notice').getByRole('button',{name:'Retry',exact:true}).click();await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-            assert.equal(await page.locator('#ui-notice').isVisible(),false);assert.deepEqual(await page.evaluate(()=>runtimeApplications.at(-1).detail.kinds),['dearrow']);
-            assert.ok(requests.filter(r=>r.url.searchParams.get('format')==='runtime').every(r=>r.method==='GET'&&!r.raw));
-            assert.deepEqual(errors,[]);await context.close();
-        }
-    });
-    test(`${engine}: D6 runtime owner reads deliver missed hints and late owners once without dismissing another notice`,async()=>{
-        let failed=true;const snapshot=runtimeSnapshot();
-        const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return failed?{status:503,body:''}:{contentType:'application/json',body:JSON.stringify(snapshot)};
-        }});
-        await page.evaluate(()=>InvidiousUI.invalidate('blocks'));await attachEnhancementRuntime(page);await page.waitForFunction(()=>InvidiousEnhancements.readState()==='unavailable');
-        await page.evaluate(()=>InvidiousUI.notice('Another operation completed'));
-        failed=false;await page.evaluate(()=>InvidiousEnhancements.refresh());await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.locator('#ui-notice').isVisible(),true);assert.equal(await page.locator('#ui-notice [role=status]').textContent(),'Another operation completed');
-        assert.equal(await page.evaluate(()=>{window.lateApplications=[];return InvidiousEnhancements.register('late-owner',{apply(value,detail){lateApplications.push({profile:value.profile,detail});}});}),true);
-        assert.equal(await page.evaluate(()=>lateApplications.length),1);assert.deepEqual(await page.evaluate(()=>lateApplications[0].detail.kinds),['blocks']);
-        assert.equal(requests.filter(r=>r.url.searchParams.get('format')==='runtime').length,2);
-        await page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false})));
-        assert.equal(await page.evaluate(()=>InvidiousEnhancements.register('disposed-owner',{apply(){}})),false);
-        assert.equal(await page.locator('#ui-notice').isVisible(),true);assert.deepEqual(errors,[]);await context.close();
-    });
-}
-for(const engine of engines) {
-    test(`${engine}: D6 runtime SponsorBlock changes reuse segments, skip history and the existing media`,async()=>{
+    test(`${engine}: D6 SponsorBlock changes reuse segments, skip history and the existing media`,async()=>{
         const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
             if(entry.url.pathname.startsWith('/api/v1/sponsorblock/'))return{contentType:'application/json',body:JSON.stringify({segments:[{id:'manual',category:'sponsor',start:10,end:18},{id:'auto',category:'intro',start:20,end:30},{id:'marker',category:'outro',start:35,end:40}]})};
             return clipFixtureReply(entry);
@@ -2924,19 +2214,19 @@ for(const engine of engines) {
         assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.readState()),'disabled');
         assert.equal(await page.locator('.sb-overlay').count(),0);
         assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/sponsorblock/')).length,0);
-        assert.equal(await configureRuntimeSponsorBlock(page,{modes:{sponsor:'manual',intro:'auto',outro:'marker'}}),true);
+        assert.equal(await configureSponsorBlock(page,{modes:{sponsor:'manual',intro:'auto',outro:'marker'}}),true);
         await page.waitForFunction(()=>InvidiousSponsorBlock.readState()==='ready'&&document.querySelectorAll('.sb-range').length===3);
         await page.locator('.sb-skip').waitFor({state:'visible'});
         assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1&&player.playbackRate()===1.25&&player.volume()===.4),true);
         await page.locator('.sb-close').click();
-        await configureRuntimeSponsorBlock(page,{modes:{sponsor:'manual',intro:'auto'},colors:{sponsor:'#123456'}});
+        await configureSponsorBlock(page,{modes:{sponsor:'manual',intro:'auto'},colors:{sponsor:'#123456'}});
         assert.equal(await page.locator('.sb-overlay.sb-visible').count(),0,'a canonical refresh retains a dismissal');
         assert.equal(await page.locator('.sb-range').first().evaluate(el=>el.style.backgroundColor),'rgb(18, 52, 86)');
         await page.evaluate(()=>player.currentTime(21));await page.waitForFunction(()=>!player.seeking()&&Math.abs(player.currentTime()-30)<.1);
-        await configureRuntimeSponsorBlock(page,{enabled:false,modes:{sponsor:'manual',intro:'auto'}});
+        await configureSponsorBlock(page,{enabled:false,modes:{sponsor:'manual',intro:'auto'}});
         assert.equal(await page.locator('.sb-range,.sb-overlay.sb-visible').count(),0);
         assert.deepEqual(await page.evaluate(()=>segmentEvents.at(-1)),[],'chapters receive an empty segment list when disabled');
-        await configureRuntimeSponsorBlock(page,{modes:{sponsor:'manual',intro:'auto'}});
+        await configureSponsorBlock(page,{modes:{sponsor:'manual',intro:'auto'}});
         await page.evaluate(()=>player.currentTime(21));await page.waitForFunction(()=>!player.seeking()&&document.querySelector('.sb-skip').offsetParent);
         await page.evaluate(()=>{for(let i=0;i<10;i++)player.trigger('timeupdate');});
         assert.ok(await page.evaluate(()=>Math.abs(player.currentTime()-21)<.1),'configuration changes cannot repeat a completed automatic skip');
@@ -2946,9 +2236,13 @@ for(const engine of engines) {
         assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/sponsorblock/')).length,1);
         assert.equal(await page.locator('.sb-close svg use').getAttribute('href'),await page.evaluate(()=>player_data.icon_sprite+'#x'));
         assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&player.playbackRate()===1.25&&player.volume()===.4),true);
+        await returnToSettingsSnapshot(page);
+        assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.readState()),'ready');
+        assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/sponsorblock/')).length,1,'cached return reuses the accepted segments');
+        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()),true);
         assert.deepEqual(errors,[]);await context.close();
     });
-    test(`${engine}: D6 runtime SponsorBlock failed reads require an explicit Settings retry`,async()=>{
+    test(`${engine}: D6 SponsorBlock failed reads require an explicit retry`,async()=>{
         for(const failure of ['http','malformed','timeout']) {
             let reads=0;
             const {page,context,requests,errors}=await setup(engine,'watch','dark',{fixture:'d6-clip-chat-dark',url:'/watch?v=2isYuQZMbdU',init:failure==='timeout'?()=>{
@@ -2959,17 +2253,13 @@ for(const engine of engines) {
                 if(entry.url.pathname.startsWith('/api/v1/sponsorblock/')){reads++;return reads===1&&failure!=='timeout'?(failure==='http'?{status:503,body:''}:{contentType:'application/json',body:'{"segments":{}}'}):{contentType:'application/json',body:'{"segments":[]}'};}
                 return clipFixtureReply(entry);
             }});
-            await readyClipMedia(page,13);await configureRuntimeSponsorBlock(page,{modes:{sponsor:'manual'}});
+            await readyClipMedia(page,13);await configureSponsorBlock(page,{modes:{sponsor:'manual'}});
             await page.waitForFunction(()=>InvidiousSponsorBlock.readState()==='unavailable');
-            await page.evaluate(()=>{InvidiousSponsorBlock.configure(runtimeSponsorConfig);InvidiousSponsorBlock.suspend();InvidiousSponsorBlock.configure(runtimeSponsorConfig);});
+            await page.evaluate(()=>{InvidiousSponsorBlock.configure(sponsorConfig);InvidiousSponsorBlock.suspend();InvidiousSponsorBlock.configure(sponsorConfig);});
             assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.readState()),'unavailable');
             assert.equal(reads,failure==='timeout'?0:1,'refreshing settings never retries a failed optional read');
-            await page.locator('.vjs-desktop-settings').click();const panel=page.getByRole('dialog',{name:'Settings',exact:true});
-            await panel.getByRole('menuitem',{name:'Enhancements',exact:true}).click();
-            assert.match(await panel.locator('.player-settings-status').textContent(),/SponsorBlock/);
-            await panel.getByRole('menuitem',{name:'SponsorBlock · Retry',exact:true}).click();
+            await page.evaluate(()=>InvidiousSponsorBlock.retry());
             await page.waitForFunction(()=>InvidiousSponsorBlock.readState()==='ready');
-            await panel.getByRole('menuitem',{name:'SponsorBlock · Retry',exact:true}).waitFor({state:'hidden'});
             assert.equal(reads,failure==='timeout'?1:2);assert.equal(await page.locator('.sb-range').count(),0);
             assert.ok(requests.filter(r=>r.url.pathname.startsWith('/api/v1/sponsorblock/')).every(r=>r.method==='GET'));
             assert.equal(requests.filter(r=>r.method==='POST'&&['/preferences','/dearrow_submit','/dearrow_vote'].includes(r.url.pathname)).length,0);
@@ -2977,18 +2267,17 @@ for(const engine of engines) {
             assert.deepEqual(errors,[]);await context.close();
         }
     });
-    test(`${engine}: D6 runtime SponsorBlock ignores pending reads after cache, disable, profile and player removal`,async()=>{
-        for(const lifetime of ['cache','disable','profile','remove']) {
+    test(`${engine}: D6 SponsorBlock ignores pending reads after disable, profile and player removal`,async()=>{
+        for(const lifetime of ['disable','profile','remove']) {
             const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',init:()=>{
                 const fetch=window.fetch.bind(window);window.pendingSegments=[];
                 window.fetch=(url,options)=>new URL(url,location.href).pathname.startsWith('/api/v1/sponsorblock/')?new Promise(resolve=>pendingSegments.push(()=>resolve(new Response('{"segments":[{"id":"late","category":"sponsor","start":10,"end":18}]}',{headers:{'Content-Type':'application/json'}})))):fetch(url,options);
             },reply:clipFixtureReply});
-            await readyClipMedia(page,13);await configureRuntimeSponsorBlock(page,{modes:{sponsor:'auto'}});
+            await readyClipMedia(page,13);await configureSponsorBlock(page,{modes:{sponsor:'auto'}});
             await page.waitForFunction(()=>pendingSegments.length===1);
             await page.evaluate(lifetime=>{
                 window.staleSponsorAPI=InvidiousSponsorBlock;
-                if(lifetime==='cache'){InvidiousSponsorBlock.setManaged();dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));}
-                else if(lifetime==='disable')InvidiousSponsorBlock.configure({...runtimeSponsorConfig,enabled:false});
+                if(lifetime==='disable')InvidiousSponsorBlock.configure({...sponsorConfig,enabled:false});
                 else if(lifetime==='profile')dispatchEvent(new Event('browserprofilechange'));
                 else player.el().remove();
             },lifetime);
@@ -2997,28 +2286,27 @@ for(const engine of engines) {
             assert.equal(await page.evaluate(()=>pendingSegments.length),1);
             if(lifetime==='cache'||lifetime==='disable') {
                 assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&Math.abs(player.currentTime()-13)<.1),true);
-                if(lifetime==='cache')await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-                assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.readState()),'disabled','the current canonical owner disables the temporary controller-only setting on Back');
-                await configureRuntimeSponsorBlock(page,{modes:{sponsor:'manual'}});await page.waitForFunction(()=>pendingSegments.length===2);
+                assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.readState()),'disabled','an explicit disable retires the pending optional read');
+                await configureSponsorBlock(page,{modes:{sponsor:'manual'}});await page.waitForFunction(()=>pendingSegments.length===2);
                 await page.evaluate(()=>pendingSegments[1]());await page.waitForFunction(()=>InvidiousSponsorBlock.readState()==='ready');
                 assert.equal(await page.locator('.sb-range').count(),1);
-            } else assert.equal(await page.evaluate(()=>!window.InvidiousSponsorBlock&&!staleSponsorAPI.configure(runtimeSponsorConfig)),true);
+            } else assert.equal(await page.evaluate(()=>!window.InvidiousSponsorBlock&&!staleSponsorAPI.configure(sponsorConfig)),true);
             assert.deepEqual(errors,[]);await context.close();
         }
     });
-    test(`${engine}: D6 runtime SponsorBlock validates optional data and keeps marker-only playback unchanged`,async()=>{
+    test(`${engine}: D6 SponsorBlock validates optional data and keeps marker-only playback unchanged`,async()=>{
         const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
             if(entry.url.pathname.startsWith('/api/v1/sponsorblock/'))return{contentType:'application/json',body:JSON.stringify({segments:[null,{id:'a',category:'sponsor',start:0,end:18,untrusted:'<img>'},{id:'a',category:'sponsor',start:3,end:19},{id:'future',category:'unknown',start:1,end:2},{id:'bad',category:'intro',start:-1,end:3},{id:'text',category:'intro',start:'1',end:3}]})};
             return clipFixtureReply(entry);
         }});
         await readyClipMedia(page,13);
         await page.evaluate(()=>{window.publishedSegments=[];player.on('sponsorblocksegments',event=>publishedSegments.push(event.segments));});
-        await configureRuntimeSponsorBlock(page,{modes:{sponsor:'marker'}});await page.waitForFunction(()=>InvidiousSponsorBlock.readState()==='ready');
+        await configureSponsorBlock(page,{modes:{sponsor:'marker'}});await page.waitForFunction(()=>InvidiousSponsorBlock.readState()==='ready');
         assert.equal(await page.locator('.sb-range').count(),1);assert.equal(await page.locator('.sb-overlay.sb-visible').count(),0);
         assert.deepEqual(await page.evaluate(()=>publishedSegments.at(-1)),[{id:'a',category:'sponsor',start:0,end:18}]);
-        assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.configure({...runtimeSponsorConfig,modes:{sponsor:'invalid'}})),false);
+        assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.configure({...sponsorConfig,modes:{sponsor:'invalid'}})),false);
         assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.readState()),'suspended');assert.equal(await page.locator('.sb-range').count(),0);
-        await configureRuntimeSponsorBlock(page,{modes:{sponsor:'marker'}});
+        await configureSponsorBlock(page,{modes:{sponsor:'marker'}});
         assert.equal(await page.evaluate(()=>InvidiousSponsorBlock.readState()),'ready');assert.equal(await page.locator('.sb-range').count(),1);
         assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/sponsorblock/')).length,1);
         assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);
@@ -3136,22 +2424,17 @@ for(const engine of engines) {
         await page.locator('#clip-close').click();await page.waitForFunction(()=>player.paused()&&!player.seeking()&&Math.abs(player.currentTime()-50)<.1);assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia),true);assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D6 clip editing suspends SponsorBlock skips and optional docking on the same media`,async()=>{
-        const snapshot=runtimeSnapshot(true);snapshot.state.sponsorblock.enabled=true;snapshot.state.sponsorblock.modes.sponsor='auto';snapshot.state.sponsorblock.modes.intro='manual';
         const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-            if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(snapshot)};
             if(entry.navigation){const body=fs.readFileSync(path.join(generated,'d6-clip-chat-light.html'),'utf8').replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/,(_,start,raw,end)=>{const data=JSON.parse(raw);data.sponsorblock={...data.sponsorblock,enabled:true,modes:{...data.sponsorblock.modes,sponsor:'auto',intro:'manual'}};return start+JSON.stringify(data).replace(/</g,'\\u003c')+end;});return{contentType:'text/html',body};}
             if(entry.url.pathname.startsWith('/api/v1/sponsorblock/'))return{contentType:'application/json',body:JSON.stringify({segments:[{id:'auto',category:'sponsor',start:20,end:30},{id:'manual',category:'intro',start:12,end:18}]})};
             return clipFixtureReply(entry);
         }});
         await readyClipMedia(page,13);await page.locator('.sb-overlay.sb-visible').first().waitFor();assert.equal(await page.locator('.sb-range').count(),2);
-        await page.evaluate(()=>{InvidiousStorage.local.set('player_dock_enabled',true);player.trigger('dockpreferencechange');});
+        await page.evaluate(()=>{player.invidiousDockEnabled=true;InvidiousStorage.local.set('player_dock_enabled',true);player.trigger('dockpreferencechange');});
         await page.locator('#create-clip').click();await page.locator('#tool-clip-editor').waitFor({state:'visible'});assert.equal(await page.locator('.sb-overlay.sb-visible').count(),0);
         await page.locator('#clip-title').fill('Preview without skips');await page.locator('#clip-start').fill('00:10');await page.locator('#clip-end').fill('00:35');await page.locator('#clip-preview').click();await page.waitForFunction(()=>!player.paused()&&!player.seeking()&&player.currentTime()>=10&&player.currentTime()<12);
         await page.evaluate(()=>{player.pause();player.currentTime(21);});await page.waitForFunction(()=>!player.seeking()&&Math.abs(player.currentTime()-21)<.1);await page.evaluate(()=>{player.trigger('timeupdate');document.querySelector('.sb-skip').click();});
-        snapshot.state.masking.rules[await page.evaluate(()=>video_data.channel_id)]={hide_title:true,hide_thumbnail:true,reveal_after_days:null};
-        assert.equal(await page.evaluate(()=>!!window.InvidiousEnhancements),true,'the template activates the owner coordinator');
-        await page.evaluate(()=>InvidiousUI.invalidate('preferences'));await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
-        assert.equal(await page.locator('#clip-title').inputValue(),'Preview without skips');assert.equal(await page.locator('.watch-heading h1').textContent(),'Title hidden');
+        assert.equal(await page.locator('#clip-title').inputValue(),'Preview without skips');
         assert.ok(await page.evaluate(()=>Math.abs(player.currentTime()-21)<.1));assert.equal(await page.locator('.sb-overlay.sb-visible').count(),0);assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia),true);
         await page.evaluate(()=>{const space=document.createElement('div');space.style.height='2000px';document.body.append(space);scrollTo(0,2000);});await page.waitForFunction(()=>document.querySelector('.watch-player').getBoundingClientRect().bottom<=96);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.equal(await page.locator('.watch-player.is-docked').count(),0);
         await page.locator('#clip-close').click();await page.waitForFunction(()=>!player.seeking()&&Math.abs(player.currentTime()-13)<.1);await page.evaluate(()=>player.currentTime(21));await page.waitForFunction(()=>player.currentTime()>=29.9);assert.equal(await page.locator('.sb-notice.sb-visible').count(),1);assert.deepEqual(errors,[]);await context.close();
@@ -3284,18 +2567,6 @@ for(const engine of engines) {
             assert.equal(await page.locator('#sponsorblock_mode_intro').inputValue(),expected[0]);assert.equal(await page.locator('#sponsorblock_color_intro').inputValue(),expected[1]);assert.equal(await page.locator('#sponsorblock_color_intro').getAttribute('type'),'text');assert.equal(await page.locator('[data-category-form] [type=submit]').isDisabled(),kind==='future');assert.equal(await page.locator('[data-category-form] draft,[data-category-form] mode,[data-category-form] color').count(),0);assert.deepEqual(errors,[]);await context.close();
         }
     });
-    test(`${engine}: D6 SponsorBlock guest external updates preserve drafts, latest resets and cleared channels`,async()=>{
-        const id='UC'+'a'.repeat(22),other='UC'+'b'.repeat(22),third='UC'+'c'.repeat(22);
-        const {page,context,requests,errors}=await setup(engine,'settings','light',{fixture:'sponsorblock-channels-guest-editor',url:'/preferences/sponsorblock/channels'});
-        const external=async data=>page.evaluate(value=>{InvidiousStorage.local.set('sponsorblock_channel_overrides',value);dispatchEvent(new StorageEvent('storage',{key:InvidiousStorage.local.key('sponsorblock_channel_overrides'),storageArea:localStorage}));},data);
-        await external({[id]:{name:'Initial',enabled:false,modes:{sponsor:'manual'}},[other]:{name:'Other',enabled:true,modes:{intro:'auto'}}});
-        const form=page.locator('.sponsorblock-channel-form'),save=form.locator('[value=save]');await page.locator('#mode_intro').selectOption('marker');
-        await external({[id]:{name:'Renamed upstream',enabled:true,modes:{sponsor:'auto'}},[other]:{name:'Other',enabled:false,modes:{intro:'manual'}},[third]:{name:'Third',enabled:true,modes:{outro:'disabled'}}});
-        assert.equal(await page.locator('#mode_intro').inputValue(),'marker');assert.match(await page.locator('#sponsorblock-save-status').textContent(),/Saved settings changed/);await form.locator('[type=reset]').click();assert.equal(await page.locator('#mode_sponsor').inputValue(),'auto');assert.equal(await page.locator('#enabled').inputValue(),'true');assert.equal(await save.isDisabled(),true,'Discard uses the latest saved baseline');
-        await page.locator('#mode_intro').selectOption('marker');await page.locator(`[data-channel="${other}"] [value=reset]`).click();await page.waitForFunction(id=>!InvidiousStorage.local.readStored('sponsorblock_channel_overrides')[id],other);assert.equal(await page.locator('#mode_intro').inputValue(),'marker');assert.equal(await save.isEnabled(),true);assert.ok((await page.evaluate(()=>InvidiousStorage.local.readStored('sponsorblock_channel_overrides')))[third]);
-        // A removal without a delivered storage event must not resurrect the old list.
-        await page.evaluate(()=>InvidiousStorage.local.remove('sponsorblock_channel_overrides'));await save.click();await page.waitForFunction(()=>document.querySelector('#sponsorblock-save-status').textContent==='Saved');const stored=await page.evaluate(()=>InvidiousStorage.local.readStored('sponsorblock_channel_overrides'));assert.deepEqual(Object.keys(stored),[id]);assert.equal(stored[id].modes.intro,'marker');assert.equal(requests.filter(r=>r.method==='POST').length,0);assert.deepEqual(errors,[]);await context.close();
-    });
     test(`${engine}: D6 SponsorBlock actual denied storage keeps a retryable browser draft`,async()=>{
         const {page,context,requests,errors}=await setup(engine,'settings','light',{fixture:'sponsorblock-channels-guest-editor',url:'/preferences/sponsorblock/channels'});await page.evaluate(()=>{
             window.sbOriginalLocal=Object.getOwnPropertyDescriptor(window,'localStorage');window.sbOriginalCookie=Object.getOwnPropertyDescriptor(Document.prototype,'cookie');
@@ -3363,12 +2634,6 @@ for(const engine of engines) {
         const server=maskingEditorServer(),invalid=await setup(engine,'settings','light',{fixture:'d6-masking-invalid-light',url:'/preferences/spoilers/channels',reply:server.reply});assert.equal(await invalid.page.locator('#spoiler-days').inputValue(),'days<draft>&');await invalid.page.locator('#spoiler-days').fill('2147483648');await invalid.page.locator('.spoiler-channel-form [value=save]').click();assert.equal(server.writes.length,0);assert.equal(await invalid.page.locator('#spoiler-days').getAttribute('aria-invalid'),'true');await invalid.page.locator('#spoiler-days').fill('14');await invalid.page.locator('.spoiler-channel-form [value=save]').click();await invalid.page.waitForFunction(()=>document.querySelector('#spoiler-save-status').textContent==='Saved');assert.equal(server.writes.length,1);assert.equal(await invalid.page.locator('#spoiler-days').getAttribute('type'),'text');assert.deepEqual(invalid.errors,[]);await invalid.context.close();
         const {page,context,requests,errors}=await setup(engine,'settings','light',{fixture:'spoiler-editor-guest',url:'/preferences/spoilers/channels'}),id=await page.locator('.spoiler-channel-form [name=channel]').inputValue();await page.locator('#spoiler-hide-title').check();await page.locator('#spoiler-days').fill('7');await page.locator('.spoiler-channel-form [value=save]').click();await page.waitForFunction(()=>document.querySelector('#spoiler-save-status').textContent==='Saved');assert.equal((await page.evaluate(()=>InvidiousStorage.local.readStored('channel_spoiler_settings')))[id].reveal_after_days,7);assert.ok((await context.cookies()).some(c=>c.name==='iv_spoilers_guest'&&c.value==='1'));
         await page.evaluate(()=>{window.maskLocal=Object.getOwnPropertyDescriptor(window,'localStorage');window.maskCookie=Object.getOwnPropertyDescriptor(Document.prototype,'cookie');Object.defineProperty(window,'localStorage',{configurable:true,get(){throw new DOMException('Denied','SecurityError');}});Object.defineProperty(document,'cookie',{configurable:true,get(){return maskCookie.get.call(document);},set(){throw new DOMException('Denied','SecurityError');}});});await page.locator('#spoiler-days').fill('14');await page.locator('.spoiler-channel-form [value=save]').click();await page.waitForFunction(()=>document.querySelector('#spoiler-save-status').textContent.includes('could not be saved'));assert.equal(await page.locator('#spoiler-days').inputValue(),'14');assert.equal(await page.locator('.spoiler-channel-form [value=save]').isEnabled(),true);assert.equal(await page.evaluate(()=>InvidiousStorage.local.readStored('channel_spoiler_settings')),undefined);await page.evaluate(()=>{Object.defineProperty(window,'localStorage',maskLocal);delete document.cookie;});await page.locator('.spoiler-channel-form [value=save]').click();await page.waitForFunction(()=>document.querySelector('#spoiler-save-status').textContent==='Saved');assert.equal((await page.evaluate(()=>InvidiousStorage.local.readStored('channel_spoiler_settings')))[id].reveal_after_days,14);assert.equal(requests.filter(r=>r.method==='POST').length,0);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 masking external updates, Discard and targeted removal preserve other guest rules`,async()=>{
-        const {page,context,requests,errors}=await setup(engine,'settings','light',{fixture:'spoiler-editor-guest',url:'/preferences/spoilers/channels'}),id=await page.locator('.spoiler-channel-form [name=channel]').inputValue(),other='UC'+'b'.repeat(22);
-        const external=async value=>page.evaluate(data=>{InvidiousStorage.local.set('channel_spoiler_settings',data);dispatchEvent(new StorageEvent('storage',{key:InvidiousStorage.local.key('channel_spoiler_settings'),storageArea:localStorage}));},value);
-        await external({[id]:{name:'Original',hide_title:true,hide_thumbnail:false,reveal_after_days:7},[other]:{name:'Other',hide_title:false,hide_thumbnail:true,reveal_after_days:null}});await page.locator('#spoiler-days').fill('21');assert.equal(await page.locator('.spoiler-channel-form [value=save]').isEnabled(),true,JSON.stringify(await page.evaluate(()=>({status:document.querySelector('#spoiler-save-status').textContent,fields:Array.from(document.querySelector('.spoiler-channel-form').elements,e=>[e.name,e.value,e.checked])}))));await external({[id]:{name:'Latest <channel>',hide_title:false,hide_thumbnail:true,reveal_after_days:14},[other]:{name:'Other',hide_title:true,hide_thumbnail:false,reveal_after_days:null}});assert.equal(await page.locator('#spoiler-days').inputValue(),'21');assert.equal(await page.locator('.spoiler-channel-form [type=reset]').isVisible(),true,JSON.stringify(await page.evaluate(()=>({status:document.querySelector('#spoiler-save-status').textContent,fields:Array.from(document.querySelector('.spoiler-channel-form').elements,e=>[e.name,e.value,e.checked]),saved:InvidiousStorage.local.readStored('channel_spoiler_settings')}))));await page.locator('.spoiler-channel-form [type=reset]').click();assert.equal(await page.locator('#spoiler-days').inputValue(),'14');assert.equal(await page.locator('#spoiler-hide-title').isChecked(),false);assert.equal(await page.locator('.spoiler-channel-form [value=save]').isDisabled(),true);await page.locator('#spoiler-days').fill('21');await page.locator(`[data-channel="${other}"] [value=reset]`).click();await page.waitForFunction(id=>!InvidiousStorage.local.readStored('channel_spoiler_settings')[id],other);assert.equal(await page.locator('#spoiler-days').inputValue(),'21');await page.locator('.spoiler-channel-form [value=save]').click();await page.waitForFunction(()=>document.querySelector('#spoiler-save-status').textContent==='Saved');assert.equal((await page.evaluate(()=>InvidiousStorage.local.readStored('channel_spoiler_settings')))[id].name,'Latest <channel>');
-        await page.locator('#spoiler-days').fill('28');await page.evaluate(()=>InvidiousStorage.local.remove('channel_spoiler_settings'));await page.locator('.spoiler-channel-form [value=save]').click();await page.waitForFunction(()=>document.querySelector('#spoiler-save-status').textContent==='Saved');assert.deepEqual(Object.keys(await page.evaluate(()=>InvidiousStorage.local.readStored('channel_spoiler_settings'))),[id]);await page.locator('.spoiler-channel-form [value=reset]').click();await page.waitForFunction(()=>Object.keys(InvidiousStorage.local.readStored('channel_spoiler_settings')).length===0);assert.equal((await context.cookies()).some(c=>c.name==='iv_spoilers_guest'),false);assert.equal(requests.filter(r=>r.method==='POST').length,0);assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D6 masking cached pages, profile changes and detached editors reject completed stale writes`,async()=>{
         for(const lifetime of ['cache','profile','removal']){
@@ -3470,7 +2735,6 @@ for(const engine of engines) {
             let fail=!library,blocked=false;const writes=[];
             const fixture=library?'d6-block-context-library':'d6-block-context-popular';
             const {page,context,errors}=await setup(engine,'browse','light',{fixture,url:library?'/feed/history':'/feed/popular',reply(entry){
-                if(entry.url.searchParams.get('format')==='runtime')return{contentType:'application/json',body:JSON.stringify(runtimeOwner(fixtureHTML(blocked?'d6-block-context-filtered':fixture),generated))};
                 if(entry.url.pathname==='/blocked_channels'&&entry.method==='POST'){
                     writes.push(Object.fromEntries(entry.body));if(fail)return{status:400,contentType:'application/json',body:JSON.stringify({error:'Block rejected'})};
                     blocked=entry.body.get('action')==='block';return{contentType:'application/json',body:JSON.stringify({blocked})};
@@ -3592,24 +2856,6 @@ function holdPreferenceMutation() {
         return fetch(url,options);
     };
 }
-async function sameProfileObserver(context) {
-    const page=await context.newPage(),errors=[];page.setDefaultTimeout(10000);page.on('pageerror',error=>errors.push(error.message));await page.goto('https://invidious.test/preferences?section=appearance');await page.waitForFunction(()=>document.body.dataset.uiInitialized==='true');await page.evaluate(()=>{window.remoteChanges=[];document.addEventListener('iv:preferences-change',event=>{if(event.detail.remote)remoteChanges.push(event.detail);});});return{page,errors};
-}
-for(const engine of engines) {
-    test(`${engine}: D6 cross-document invalidations clear same-profile previews with bounded metadata and no echo`,async()=>{
-        const{page,context,requests,errors}=await setup(engine,'settings','light',{fixture:'settings-appearance',url:'/preferences?section=appearance'}),other=await sameProfileObserver(context);await seedBrowsePreview(page);await seedBrowsePreview(other.page);await page.evaluate(()=>{window.changeWire=[];window.changeTap=new BroadcastChannel('invidious:changes:v1:'+InvidiousStorage.scope);changeTap.onmessage=event=>changeWire.push(event.data);window.localChanges=[];document.addEventListener('iv:preferences-change',event=>localChanges.push(event.detail));InvidiousUI.invalidate('dearrow');});await other.page.waitForFunction(()=>remoteChanges.length===1);assert.equal(await other.page.evaluate(()=>InvidiousStorage.session.readStored('browse_state')),undefined);assert.deepEqual(await other.page.evaluate(()=>InvidiousUI.invalidationsSince(0)),['dearrow']);assert.equal(await page.evaluate(()=>localChanges.length),1);assert.equal(await other.page.evaluate(()=>remoteChanges[0].kind),'dearrow');await page.waitForFunction(()=>changeWire.length===1);assert.deepEqual(await page.evaluate(()=>Object.keys(changeWire[0]).sort()),['kind','profile','sender','serial','version']);assert.ok(!(await page.evaluate(()=>JSON.stringify(changeWire))).includes('fixture-token'));
-        await other.page.addScriptTag({content:fs.readFileSync(path.join(root,'assets/js/ui.js'),'utf8')});await page.evaluate(()=>InvidiousUI.invalidate('blocks'));await other.page.waitForFunction(()=>remoteChanges.length===2);assert.deepEqual(await other.page.evaluate(()=>InvidiousUI.invalidationsSince(0)),['dearrow','blocks']);assert.equal(await other.page.evaluate(()=>InvidiousStorage.local.get('watch_layout')),'theater');assert.equal(requests.filter(r=>r.method==='POST'||r.url.searchParams.get('format')==='runtime').length,0);assert.deepEqual([...errors,...other.errors],[]);await context.close();
-    });
-    test(`${engine}: D6 cross-document invalidations reject foreign, malformed and disposed-profile signals`,async()=>{
-        const{page,context,errors}=await setup(engine,'settings','light',{fixture:'settings-appearance',url:'/preferences?section=appearance'});await seedBrowsePreview(page);await page.evaluate(()=>{window.remoteChanges=[];document.addEventListener('iv:preferences-change',event=>{if(event.detail.remote)remoteChanges.push(event.detail);});window.signalChannel=new BroadcastChannel('invidious:changes:v1:'+InvidiousStorage.scope);window.otherChannel=new BroadcastChannel('invidious:changes:v1:another-profile');window.signalMessage={version:1,profile:InvidiousStorage.scope,kind:'preferences',sender:'other-document-123',serial:1};for(const patch of [{version:2},{profile:'b'.repeat(64)},{kind:'untrusted title'},{sender:'<invalid>'},{serial:0},{serial:1.5}])signalChannel.postMessage({...signalMessage,...patch});otherChannel.postMessage(signalMessage);});await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,40)));assert.equal(await page.evaluate(()=>remoteChanges.length),0);assert.equal((await page.evaluate(()=>InvidiousStorage.session.readStored('browse_state'))).views.length,1);await page.evaluate(()=>signalChannel.postMessage(signalMessage));await page.waitForFunction(()=>remoteChanges.length===1);await page.evaluate(()=>{dispatchEvent(new Event('browserprofilechange'));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));signalChannel.postMessage({...signalMessage,serial:2,kind:'blocks'});InvidiousUI.invalidate('dearrow');});await page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,40)));assert.equal(await page.evaluate(()=>remoteChanges.length),1);assert.deepEqual(await page.evaluate(()=>InvidiousUI.invalidationsSince(0)),['preferences']);assert.deepEqual(errors,[]);await context.close();
-    });
-    test(`${engine}: D6 cross-document channels close for cached pages and reconnect once on restoration`,async()=>{
-        const{page,context,errors}=await setup(engine,'settings','light',{fixture:'settings-appearance',url:'/preferences?section=appearance'}),other=await sameProfileObserver(context);await seedBrowsePreview(other.page);await other.page.evaluate(()=>dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true})));await page.evaluate(()=>InvidiousUI.invalidate('preferences'));await other.page.evaluate(()=>new Promise(resolve=>setTimeout(resolve,40)));assert.equal(await other.page.evaluate(()=>remoteChanges.length),0);assert.equal((await other.page.evaluate(()=>InvidiousStorage.session.readStored('browse_state'))).views.length,1,'restoration still needs its canonical state check');await other.page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.evaluate(()=>InvidiousUI.invalidate('blocks'));await other.page.waitForFunction(()=>remoteChanges.length===1);assert.equal(await other.page.evaluate(()=>InvidiousStorage.session.readStored('browse_state')),undefined);assert.deepEqual([...errors,...other.errors],[]);await context.close();
-    });
-    test(`${engine}: D6 cross-document channel denial preserves local invalidation and ordinary requests`,async()=>{
-        const{page,context,requests,errors}=await setup(engine,'settings','light',{fixture:'settings-appearance',url:'/preferences?section=appearance',init:()=>{Object.defineProperty(window,'BroadcastChannel',{configurable:true,value:class{constructor(){throw new DOMException('Denied','SecurityError');}}});},reply:entry=>entry.url.pathname==='/preferences'&&entry.url.searchParams.get('format')==='runtime'?{contentType:'application/json',body:'{"checked":true}'}:null});await seedBrowsePreview(page);assert.equal(await page.evaluate(async()=>{InvidiousUI.invalidate('unknown kind');return(await InvidiousUI.request('/preferences?format=runtime')).checked;}),true);assert.equal(await page.evaluate(()=>InvidiousStorage.session.readStored('browse_state')),undefined);assert.deepEqual(await page.evaluate(()=>InvidiousUI.invalidationsSince(0)),['preferences']);assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('watch_layout')),'theater');assert.equal(requests.filter(r=>r.method==='POST').length,0);assert.deepEqual(errors,[]);await context.close();
-    });
-}
 async function seedBrowsePreview(page) {
     await page.evaluate(()=>{
         const value={views:[{id:'freshness-check',url:'/feed/popular',fingerprint:'a'.repeat(64),pages:[{url:'/feed/popular?page=2',method:'GET'}],scroll:240}]};
@@ -3629,9 +2875,9 @@ for(const engine of engines) {
             const server=masking?maskingEditorServer():sbEditorServer(),button=masking?'[data-mask-readback]':'[data-sb-readback]',root=masking?'#channel-spoilers':'#sponsorblock-channels';const{page,context,errors}=await setup(engine,'settings','light',{fixture:masking?'spoiler-editor-account':'sponsorblock-channels',url:masking?'/preferences/spoilers/channels':'/preferences/sponsorblock/channels',reply:server.reply});await seedBrowsePreview(page);await page.locator(button).click();await page.waitForFunction(root=>document.querySelector(root).getAttribute('aria-busy')==='false',root);assert.equal((await page.evaluate(()=>InvidiousStorage.session.readStored('browse_state'))).views.length,1,'unchanged canonical checks do not erase valid previews');const id=Object.keys(server.state)[0];if(masking)server.state[id].reveal_after_days=27;else server.state[id].modes.intro='marker';await page.locator(button).click();await page.waitForFunction(root=>document.querySelector(root).getAttribute('aria-busy')==='false',root);assert.equal(await page.evaluate(()=>InvidiousStorage.session.readStored('browse_state')),undefined);assert.equal(server.writes.length,0);assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('watch_layout')),'theater');assert.deepEqual(errors,[]);await context.close();
         }
     });
-    test(`${engine}: D6 saved and external guest enhancement rules clear previews without changing unrelated browser state`,async()=>{
+    test(`${engine}: D6 guest saves clear local previews while external rules leave them unchanged`,async()=>{
         for(const masking of [false,true]){
-            const key=masking?'channel_spoiler_settings':'sponsorblock_channel_overrides',form=masking?'.spoiler-channel-form':'.sponsorblock-channel-form';const{page,context,requests,errors}=await setup(engine,'settings','light',{fixture:masking?'spoiler-editor-guest':'sponsorblock-channels-guest-editor',url:masking?'/preferences/spoilers/channels':'/preferences/sponsorblock/channels'});await seedBrowsePreview(page);if(masking){await page.locator('#spoiler-hide-title').check();await page.locator('#spoiler-days').fill('7');}else await page.locator('#mode_intro').selectOption('marker');await page.locator(form+' [value=save]').click();await page.waitForFunction(masking=>document.querySelector(masking?'#spoiler-save-status':'#sponsorblock-save-status').textContent==='Saved',masking);assert.equal(await page.evaluate(()=>InvidiousStorage.session.readStored('browse_state')),undefined);await seedBrowsePreview(page);await page.evaluate(({key,masking})=>{const rules=InvidiousStorage.local.readStored(key),id=Object.keys(rules)[0];if(masking)rules[id].reveal_after_days=14;else rules[id].modes.intro='auto';InvidiousStorage.local.set(key,rules);dispatchEvent(new StorageEvent('storage',{key:InvidiousStorage.local.key(key),storageArea:localStorage}));},{key,masking});assert.equal(await page.evaluate(()=>InvidiousStorage.session.readStored('browse_state')),undefined);assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('watch_layout')),'theater');assert.equal(requests.filter(r=>r.method==='POST').length,0);assert.deepEqual(errors,[]);await context.close();
+            const key=masking?'channel_spoiler_settings':'sponsorblock_channel_overrides',form=masking?'.spoiler-channel-form':'.sponsorblock-channel-form';const{page,context,requests,errors}=await setup(engine,'settings','light',{fixture:masking?'spoiler-editor-guest':'sponsorblock-channels-guest-editor',url:masking?'/preferences/spoilers/channels':'/preferences/sponsorblock/channels'});await seedBrowsePreview(page);if(masking){await page.locator('#spoiler-hide-title').check();await page.locator('#spoiler-days').fill('7');}else await page.locator('#mode_intro').selectOption('marker');await page.locator(form+' [value=save]').click();await page.waitForFunction(masking=>document.querySelector(masking?'#spoiler-save-status':'#sponsorblock-save-status').textContent==='Saved',masking);assert.equal(await page.evaluate(()=>InvidiousStorage.session.readStored('browse_state')),undefined);await seedBrowsePreview(page);await page.evaluate(({key,masking})=>{const rules=InvidiousStorage.local.readStored(key),id=Object.keys(rules)[0];if(masking)rules[id].reveal_after_days=14;else rules[id].modes.intro='auto';InvidiousStorage.local.set(key,rules);dispatchEvent(new StorageEvent('storage',{key:InvidiousStorage.local.key(key),storageArea:localStorage}));},{key,masking});assert.equal((await page.evaluate(()=>InvidiousStorage.session.readStored('browse_state'))).views.length,1);assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('watch_layout')),'theater');assert.equal(requests.filter(r=>r.method==='POST').length,0);assert.deepEqual(errors,[]);await context.close();
         }
     });
     test(`${engine}: D6 default and explicit category unknown saves invalidate previews at dispatch and retain drafts`,async()=>{
@@ -3694,7 +2940,7 @@ for(const engine of engines) test(`${engine}: D8 repeated player setup preserves
     assert.equal(reads(),initialReads,'duplicate setup reloaded media');
     const themeWrites=requests.filter(r=>r.url.pathname==='/toggle_theme'&&r.method==='POST').length;await page.locator('.header-account>summary').click();await page.locator('#toggle_theme').click();assert.equal(await page.locator('body').getAttribute('class'),'dark-theme');assert.equal(requests.filter(r=>r.url.pathname==='/toggle_theme'&&r.method==='POST').length,themeWrites+1);
     await page.evaluate(()=>document.activeElement.blur());await page.keyboard.press('k');await page.waitForFunction(()=>!player.paused());await page.keyboard.press('k');await page.waitForFunction(()=>player.paused());
-    await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');
+    await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});
     for(const script of scripts)await page.addScriptTag({url:'/js/'+script+'?duplicate=2'});
     for(const selector of selectors)assert.equal(await page.locator(selector).count(),1,selector+' after cached return');
     await page.locator('.vjs-desktop-settings').click();assert.equal(await page.locator('.player-settings-panel').isVisible(),true);await page.keyboard.press('Escape');
@@ -3903,7 +3149,6 @@ for (const engine of engines) {
         let blocked = false;
         const writes = [];
         const {page, context, errors} = await setup(engine, 'browse', 'light', {fixture:'desktop-channel', url:'/channel/UC'+'a'.repeat(22), reply(entry) {
-            if (entry.url.searchParams.get('format') === 'runtime') return {contentType:'application/json', body:JSON.stringify(runtimeOwner(fixtureHTML(blocked ? 'desktop-channel-blocked' : 'desktop-channel'), generated))};
             if (entry.url.pathname === '/blocked_channels' && entry.method === 'POST') {
                 writes.push(entry.body);
                 blocked = entry.body.get('action') === 'block';
@@ -4040,3 +3285,268 @@ for (const engine of engines) {
         }
     });
 }
+
+async function settingsWriter(context) {
+    const writer = await context.newPage();
+    await writer.route('**/*', route => route.fulfill({contentType:'text/html', body:'<!doctype html><title>Settings writer</title>'}));
+    await writer.goto('https://invidious.test/settings-writer');
+    return writer;
+}
+async function returnToSettingsSnapshot(page) {
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('blur'));
+        window.dispatchEvent(new Event('focus'));
+        document.dispatchEvent(new Event('visibilitychange'));
+        window.dispatchEvent(new PageTransitionEvent('pagehide', {persisted:true}));
+        window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted:true}));
+    });
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+function assertNoSettingsReads(requests) {
+    assert.equal(requests.filter(r => ['runtime','enhancements'].includes(r.url.searchParams.get('format'))).length, 0);
+}
+for (const engine of engines) {
+    test(`${engine}: refresh settings keep guest masking, reveals and upload clock until reload`, async () => {
+        const {page,context,requests,errors} = await setup(engine,'watch','light',{
+            fixture:'watch-light',url:'/watch?v=2isYuQZMbdU',reply:clipFixtureReply
+        });
+        const writer = await settingsWriter(context);
+        const channel = await page.evaluate(() => video_data.channel_id);
+        const original = await page.locator('.watch-heading h1').textContent();
+        const key = 'iv:browser:v2:guest:channel_spoiler_settings';
+        await writer.evaluate(({channel,key}) => localStorage.setItem(key,JSON.stringify({[channel]:{
+            name:'Channel',hide_title:true,hide_thumbnail:true,reveal_after_days:null
+        }})),{channel,key});
+        await returnToSettingsSnapshot(page);
+        assert.equal(await page.locator('.watch-heading h1').textContent(),original);
+        assertNoSettingsReads(requests);
+        await page.reload();
+        await page.locator('.watch-heading .spoiler-title-reveal').waitFor();
+        assert.match(await page.locator('.watch-heading h1').textContent(),/^Title hidden/);
+        await page.locator('.watch-heading .spoiler-title-reveal').click();
+        assert.equal(await page.locator('.watch-heading h1').textContent(),original);
+        const clock = await page.evaluate(() => JSON.parse(document.querySelector('#channel-spoiler-config').textContent).now);
+        await writer.evaluate(key => localStorage.removeItem(key),key);
+        await returnToSettingsSnapshot(page);
+        assert.equal(await page.locator('.watch-heading h1').textContent(),original,'cached return preserves an explicit reveal');
+        await page.locator('.watch-heading .spoiler-title-reveal').click();
+        assert.match(await page.locator('.watch-heading h1').textContent(),/^Title hidden/,'external removal cannot change the retained rule');
+        assert.equal(await page.evaluate(() => JSON.parse(document.querySelector('#channel-spoiler-config').textContent).now),clock);
+        await page.reload();
+        assert.equal(await page.locator('.watch-heading .spoiler-title-reveal').count(),0);
+        assert.equal(await page.locator('.watch-heading h1').textContent(),original);
+        assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+    });
+    test(`${engine}: refresh settings keep account title rules, DeArrow and SponsorBlock until reload`, async () => {
+        let updated = false;
+        const base = fixtureHTML('d6-clip-chat-light');
+        const {page,context,requests,errors} = await setup(engine,'watch','light',{
+            fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry => {
+                if (entry.navigation) return {contentType:'text/html',body:updated ? base.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/,(_,start,raw,end) => {
+                    const data=JSON.parse(raw);data.sponsorblock.enabled=true;data.sponsorblock.modes.sponsor='marker';
+                    return start+JSON.stringify(data)+end;
+                }).replace(/(<script id="dearrow-config"[^>]*>)([\s\S]*?)(<\/script>)/,(_,start,raw,end) => start+JSON.stringify({...JSON.parse(raw),enabled:true})+end) : base};
+                if (entry.url.pathname.startsWith('/api/v1/dearrow/')) return {json:{title:'Updated DeArrow title'}};
+                if (entry.url.pathname.startsWith('/api/v1/sponsorblock/')) return {json:{segments:[]}};
+                return clipFixtureReply(entry);
+            }
+        });
+        await readyClipMedia(page,13);
+        const original = await page.locator('.watch-heading h1').textContent();
+        updated = true;
+        const writer = await settingsWriter(context);
+        await writer.evaluate(() => {
+            const profile = localStorage.getItem('iv:browser:v2:active');
+            const hint = new BroadcastChannel('invidious:changes:v1:'+(profile||'guest'));
+            hint.postMessage({version:1,profile,kind:'preferences',sender:'settings-writer',serial:1});hint.close();
+        });
+        await returnToSettingsSnapshot(page);
+        assert.equal(await page.locator('.watch-heading h1').textContent(),original);
+        assert.equal(await page.evaluate(() => InvidiousSponsorBlock.readState()),'disabled');
+        assert.equal(await page.evaluate(() => player.tech().el()===clipSourceMedia&&player.paused()&&Math.abs(player.currentTime()-13)<.1),true);
+        assertNoSettingsReads(requests);
+        await page.reload();
+        await page.waitForFunction(() => document.querySelector('.watch-heading h1').textContent==='Updated DeArrow title');
+        await page.waitForFunction(() => InvidiousSponsorBlock.readState()==='ready');
+        assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+    });
+    test(`${engine}: refresh settings preserve theater and docking choices across remote storage and incidental events`, async () => {
+        const {page,context,requests,errors} = await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:clipFixtureReply});
+        await readyClipMedia(page,13);
+        const writer = await settingsWriter(context), scope = await page.evaluate(() => InvidiousStorage.scope);
+        await writer.evaluate(scope => {
+            localStorage.setItem('iv:browser:v2:'+scope+':watch_layout',JSON.stringify('theater'));
+            localStorage.setItem('iv:browser:v2:'+scope+':player_dock_enabled',JSON.stringify(true));
+        },scope);
+        await returnToSettingsSnapshot(page);
+        await page.setViewportSize({width:1280,height:720});
+        await page.evaluate(() => {dispatchEvent(new Event('scroll'));dispatchEvent(new StorageEvent('storage',{key:'unrelated'}));});
+        assert.equal(await page.locator('body').getAttribute('data-watch-layout'),'standard');
+        assert.equal(await page.evaluate(() => player.invidiousDockEnabled),false);
+        await page.locator('.vjs-desktop-settings').click();
+        await page.locator('[data-setting=advanced]').click();
+        assert.equal(await page.locator('[data-setting=dock]').getAttribute('aria-checked'),'false');
+        await page.locator('[data-setting=dock]').click();
+        assert.equal(await page.evaluate(() => player.invidiousDockEnabled),true);
+        await page.keyboard.press('Escape');
+        await page.locator('.vjs-theater-control').click();
+        assert.equal(await page.locator('body').getAttribute('data-watch-layout'),'theater');
+        await page.reload();
+        assert.equal(await page.locator('body').getAttribute('data-watch-layout'),'theater');
+        assert.equal(await page.evaluate(() => player.invidiousDockEnabled),true);
+        assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+    });
+    test(`${engine}: refresh settings keep chat preferences and guest timing local until reload`, async () => {
+        const {page,context,requests,errors} = await setup(engine,'watch','light',{fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',reply:clipFixtureReply});
+        await page.locator('[data-open-dialog=chat-settings-dialog]').click();
+        const scale = await page.locator('[name=chat_font_scale]').inputValue();
+        const writer=await settingsWriter(context),scope=await page.evaluate(() => InvidiousStorage.scope),id=await page.evaluate(() => video_data.id);
+        await writer.evaluate(({scope,id}) => {
+            localStorage.setItem('iv:browser:v2:'+scope+':chat-settings-v1',JSON.stringify({chat_font_scale:150}));
+            localStorage.setItem('iv:browser:v2:'+scope+':chat-timing-v1-'+id,JSON.stringify(2500));
+        },{scope,id});
+        await returnToSettingsSnapshot(page);
+        assert.equal(await page.locator('[name=chat_font_scale]').inputValue(),scale);
+        assert.equal(await page.locator('#chat-timing').inputValue(),'0');
+        await page.locator('#chat-timing').fill('1.25');await page.locator('#chat-timing').blur();
+        assert.equal(await page.evaluate(() => InvidiousChatTiming.value()),1250);
+        await page.reload();
+        await page.locator('[data-open-dialog=chat-settings-dialog]').click();
+        assert.equal(await page.locator('[name=chat_font_scale]').inputValue(),'150');
+        assert.equal(await page.locator('#chat-timing').inputValue(),'2.5');
+        assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+    });
+    for (const masking of [false,true]) test(`${engine}: refresh settings ${masking?'masking':'SponsorBlock'} editor keeps its draft and merges current unrelated rules on save`, async () => {
+        const key=masking?'channel_spoiler_settings':'sponsorblock_channel_overrides';
+        const other='UC'+'b'.repeat(22);
+        const initial=masking?{name:'Initial',hide_title:true,hide_thumbnail:false,reveal_after_days:7}:{name:'Initial',enabled:false,modes:{sponsor:'manual'}};
+        const latest=masking?{name:'Renamed',hide_title:false,hide_thumbnail:true,reveal_after_days:14}:{name:'Renamed',enabled:true,modes:{sponsor:'auto'}};
+        const {page,context,requests,errors}=await setup(engine,'settings','light',{
+            fixture:masking?'spoiler-editor-guest':'sponsorblock-channels-guest-editor',url:masking?'/preferences/spoilers/channels':'/preferences/sponsorblock/channels',
+        });
+        const id=await page.locator((masking?'.spoiler-channel-form':'.sponsorblock-channel-form')+' [name=channel]').inputValue();
+        await page.evaluate(({key,id,initial}) => InvidiousStorage.local.set(key,{[id]:initial}),{key,id,initial});
+        await page.reload();
+        const input=page.locator(masking?'#spoiler-days':'#mode_intro');
+        if(masking)await input.fill('21');else await input.selectOption('marker');
+        const writer=await settingsWriter(context);
+        await writer.evaluate(({key,id,other,latest}) => localStorage.setItem('iv:browser:v2:guest:'+key,JSON.stringify({[id]:latest,[other]:latest})),{key,id,other,latest});
+        await returnToSettingsSnapshot(page);
+        assert.equal(await input.inputValue(),masking?'21':'marker');
+        const form=page.locator(masking?'.spoiler-channel-form':'.sponsorblock-channel-form');
+        await form.locator('[type=reset]').click();
+        assert.equal(await input.inputValue(),masking?'7':'inherit');
+        if(masking)await input.fill('21');else await input.selectOption('marker');
+        await form.locator('[value=save]').click();
+        await page.waitForFunction(masking => document.querySelector(masking?'#spoiler-save-status':'#sponsorblock-save-status').textContent==='Saved',masking);
+        const stored=await page.evaluate(key => InvidiousStorage.local.readStored(key),key);
+        assert.deepEqual(stored[other],latest);assert.equal(stored[id].name,'Renamed');
+        assert.equal(requests.filter(r=>r.method==='POST').length,0);assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+    });
+}
+for (const engine of engines) {
+    test(`${engine}: refresh settings apply the first account masking rule only after a manual reload`, async () => {
+        let saved=false;
+        const {page,context,requests,errors}=await setup(engine,'watch','light',{
+            fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
+                if(entry.navigation)return{contentType:'text/html',body:fixtureHTML(saved?'watch-spoiler-indefinite':'d6-clip-chat-light')};
+                if(entry.url.pathname.startsWith('/api/v1/dearrow/'))return{json:{title:null}};
+                return clipFixtureReply(entry);
+            }
+        });
+        await readyClipMedia(page,13);
+        const original=await page.locator('.watch-heading h1').textContent();
+        assert.equal(await page.locator('#channel-spoiler-config').count(),0);
+        const writer=await settingsWriter(context),scope=await page.evaluate(()=>InvidiousStorage.scope);
+        saved=true;
+        await writer.evaluate(scope=>{
+            const channel=new BroadcastChannel('invidious:changes:v1:'+scope);
+            channel.postMessage({version:1,profile:scope,kind:'preferences',sender:'settings-writer',serial:1});channel.close();
+        },scope);
+        await returnToSettingsSnapshot(page);
+        assert.equal(await page.locator('.watch-heading h1').textContent(),original);
+        assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia&&player.paused()),true);
+        await page.reload();
+        await page.locator('.watch-heading .spoiler-title-reveal').waitFor();
+        assert.match(await page.locator('.watch-heading h1').textContent(),/^Title hidden/);
+        assert.equal(await page.evaluate(()=>player_data.spoiler_thumbnail_hidden),true);
+        await page.locator('.watch-heading .spoiler-title-reveal').click();
+        await page.waitForFunction(original=>document.querySelector('.watch-heading h1').textContent===original,original);
+        assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+    });
+    test(`${engine}: refresh settings retain account recommendations and autoplay until a manual reload`, async () => {
+        let saved=false;
+        const {page,context,requests,errors}=await setup(engine,'watch','light',{
+            fixture:'d6-watch-content-initial-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
+                if(entry.navigation)return{contentType:'text/html',body:fixtureHTML(saved?'d6-watch-content-empty-light':'d6-watch-content-initial-light')};
+                return clipFixtureReply(entry);
+            }
+        });
+        const recommendations=await page.locator('#watch-recommendation-items').innerHTML();
+        const next=await page.evaluate(()=>video_data.next_video);
+        assert.ok(await page.locator('#watch-recommendation-items article').count()>0);
+        saved=true;
+        await returnToSettingsSnapshot(page);
+        assert.equal(await page.locator('#watch-recommendation-items').innerHTML(),recommendations);
+        assert.equal(await page.evaluate(()=>video_data.next_video),next);
+        await page.reload();
+        assert.equal(await page.locator('#watch-recommendation-items article').count(),0);
+        assert.equal(await page.evaluate(()=>!!video_data.next_video),false);
+        assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+    });
+    test(`${engine}: refresh settings update a confirmed local DeArrow contribution without rereading preferences`, async () => {
+        const server=contributionServer();const titleReads=[];
+        const {page,context,requests,errors}=await setup(engine,'watch','light',{
+            fixture:'d6-contribution-regular-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
+                if(entry.navigation)return{contentType:'text/html',body:fixtureHTML('d6-contribution-regular-light').replace(/(<script id="dearrow-config"[^>]*>)([\s\S]*?)(<\/script>)/,(_,start,raw,end)=>start+JSON.stringify({...JSON.parse(raw),enabled:true})+end)};
+                if(entry.url.pathname.match(/^\/api\/v1\/dearrow\/[^/]+$/)){titleReads.push(entry.url.pathname);return{json:{title:server.writes.length?'Locally updated title':'Initial replacement'}};}
+                return server.reply(entry)||clipFixtureReply(entry);
+            }
+        });
+        await page.waitForFunction(()=>document.querySelector('.watch-heading h1').textContent==='Initial replacement');
+        await openContributions(page);await reviewContribution(page,'Locally updated title');await acknowledgeContribution(page);await page.locator('#dearrow-send').click();
+        await page.waitForFunction(()=>document.querySelector('.watch-heading h1').textContent==='Locally updated title');
+        assert.equal(server.writes.length,1);assert.equal(titleReads.filter(path=>path==='/api/v1/dearrow/2isYuQZMbdU').length,2);
+        assert.ok([...new Set(titleReads)].filter(path=>!path.endsWith('/2isYuQZMbdU')).every(path=>titleReads.filter(read=>read===path).length===1));
+        assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+    });
+}
+for (const engine of engines) test(`${engine}: refresh settings apply saved theme after reload while direct toggles stay immediate`, async () => {
+    let dark=false;
+    const {page,context,requests,errors}=await setup(engine,'browse','light',{
+        fixture:'overhaul-browse-light',url:'/feed/popular',reply:entry=>entry.navigation?{contentType:'text/html',body:fixtureHTML(dark?'overhaul-browse-dark':'overhaul-browse-light')}:null
+    });
+    const writer=await settingsWriter(context);
+    dark=true;
+    await writer.evaluate(()=>localStorage.setItem('iv:browser:v2:guest:dark_mode',JSON.stringify('dark')));
+    await returnToSettingsSnapshot(page);
+    assert.equal(await page.locator('body').getAttribute('class'),'light-theme');
+    await page.reload();
+    assert.equal(await page.locator('body').getAttribute('class'),'dark-theme');
+    await page.locator('.header-account>summary').click();await page.locator('#toggle_theme').click();
+    assert.equal(await page.locator('body').getAttribute('class'),'no-theme');
+    assert.equal(requests.filter(r=>r.url.pathname==='/toggle_theme'&&r.method==='POST').length,1);
+    assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+});
+for (const engine of engines) test(`${engine}: refresh settings keep DeArrow labels and restored share titles without an inactive masking controller`, async () => {
+    let available=true;
+    const {page,context,requests,errors}=await setup(engine,'watch','light',{
+        fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
+            if(entry.navigation)return{contentType:'text/html',body:fixtureHTML('d6-clip-chat-light').replace(/(<script id="dearrow-config"[^>]*>)([\s\S]*?)(<\/script>)/,(_,start,raw,end)=>start+JSON.stringify({...JSON.parse(raw),enabled:true,originalLabel:'Localized original',replacementLabel:'Localized replacement'})+end)};
+            if(entry.url.pathname.startsWith('/api/v1/dearrow/'))return{json:{title:available?'Replacement title':null}};
+            return clipFixtureReply(entry);
+        }
+    });
+    const original=await page.evaluate(()=>video_data.title||JSON.parse(document.querySelector('#player_data').textContent).title);
+    await page.waitForFunction(()=>document.querySelector('.watch-heading h1').textContent==='Replacement title');
+    assert.equal(await page.locator('#channel-spoiler-config').count(),0);
+    const toggle=page.locator('.watch-heading .dearrow-reveal');
+    assert.equal(await toggle.getAttribute('aria-label'),'Localized original');
+    await toggle.click();assert.equal(await toggle.getAttribute('aria-label'),'Localized replacement');
+    await toggle.click();available=false;
+    await page.evaluate(()=>InvidiousDeArrow.invalidate(video_data.id));
+    await page.waitForFunction(original=>document.querySelector('.watch-heading h1').textContent===original,original);
+    assert.equal(await page.evaluate(()=>player_data.title),original);
+    assert.equal(await page.evaluate(()=>shareOptions.title),original);
+    assertNoSettingsReads(requests);assert.deepEqual(errors,[]);await context.close();
+});

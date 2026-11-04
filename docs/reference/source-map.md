@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **458 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **455 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -76,7 +76,6 @@ Browser behavior; individual module responsibilities are described in frontend d
 | [assets/js/dearrow-loader.js](../../assets/js/dearrow-loader.js) | dearrow loader |
 | [assets/js/dearrow.js](../../assets/js/dearrow.js) | dearrow |
 | [assets/js/embed.js](../../assets/js/embed.js) | embed |
-| [assets/js/enhancements.js](../../assets/js/enhancements.js) | enhancements |
 | [assets/js/handlers.js](../../assets/js/handlers.js) | handlers |
 | [assets/js/library.js](../../assets/js/library.js) | library |
 | [assets/js/live-chat.js](../../assets/js/live-chat.js) | live chat |
@@ -105,7 +104,6 @@ Browser behavior; individual module responsibilities are described in frontend d
 | [assets/js/verification.js](../../assets/js/verification.js) | verification |
 | [assets/js/video-actions.js](../../assets/js/video-actions.js) | video actions |
 | [assets/js/videojs-youtube-annotations.min.js](../../assets/js/videojs-youtube-annotations.min.js) | videojs youtube annotations.min |
-| [assets/js/watch-enhancements.js](../../assets/js/watch-enhancements.js) | watch enhancements |
 | [assets/js/watch.js](../../assets/js/watch.js) | watch |
 | [assets/js/watched_indicator.js](../../assets/js/watched_indicator.js) | watched indicator |
 ## config/migrate-scripts
@@ -329,7 +327,6 @@ Presentation helpers for cards, filters, history, channels and page data.
 | [src/invidious/frontend/comments_youtube.cr](../../src/invidious/frontend/comments_youtube.cr) | comments youtube |
 | [src/invidious/frontend/data_control.cr](../../src/invidious/frontend/data_control.cr) | data control |
 | [src/invidious/frontend/desktop.cr](../../src/invidious/frontend/desktop.cr) | desktop |
-| [src/invidious/frontend/enhancement_state.cr](../../src/invidious/frontend/enhancement_state.cr) | enhancement state |
 | [src/invidious/frontend/error_pages.cr](../../src/invidious/frontend/error_pages.cr) | error pages |
 | [src/invidious/frontend/icons.cr](../../src/invidious/frontend/icons.cr) | icons |
 | [src/invidious/frontend/member_videos.cr](../../src/invidious/frontend/member_videos.cr) | member videos |

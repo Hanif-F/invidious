@@ -70,7 +70,6 @@ GGPHT_POOL           = YoutubeConnectionPool.new(URI.parse("https://yt3.ggpht.co
 COMPANION_POOL       = CompanionConnectionPool.new(capacity: 1)
 
 FIXTURE_ORIGINAL_TITLES = Invidious::OriginalTitles::Client.new(->(_id : String) { Invidious::OriginalTitles::Result.new(nil, 10.minutes) })
-require "./runtime_owner_fixtures"
 
 def fixture_env(path, mode = "dark", thin = false, density = "balanced", locale = "en-US", method = "GET")
   preferences = Preferences.from_json({"dark_mode" => mode, "thin_mode" => thin, "ui_density" => density, "locale" => locale, "comments" => ["", ""], "preload" => false}.to_json)
@@ -380,10 +379,6 @@ require "./ai_slist_checks"
 
 output = ENV["FRONTEND_FIXTURES"]? || "tests/frontend/.generated"
 Dir.mkdir_p(output)
-{"guest" => fixture_env("/watch?v=2isYuQZMbdU"), "account" => signed_in_env("/watch?v=2isYuQZMbdU")}.each do |kind, env|
-  snapshot = Invidious::Frontend::EnhancementState.snapshot(env.get("preferences").as(Preferences), Invidious::BrowserProfiles.render_scope(env), !!env.get?("user"), ([] of String), HMAC_KEY, Time.unix(1_700_000_000))
-  File.write("#{output}/enhancement-runtime-#{kind}.json", snapshot.to_json)
-end
 {"dark", "light", ""}.each do |mode|
   suffix = mode.empty? ? "auto" : mode
   File.write("#{output}/watch-#{suffix}.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU&list=PLfixture&index=2", mode)))
@@ -985,7 +980,6 @@ end
 {false, true}.each do |blocked|
   File.write("#{output}/desktop-channel#{blocked ? "-blocked" : ""}.html", diary_channel_fixture(signed: true, blocked: blocked))
 end
-File.write("#{output}/runtime-owner-states.json", Invidious::Frontend::Desktop.fixture_owner_states.to_json)
 
 require "./account_surface_checks"
 write_account_surface_fixtures(output)

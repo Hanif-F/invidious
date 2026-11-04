@@ -12,12 +12,6 @@ module Invidious::Frontend::ChannelSpoilers
     !env.get?("user") || !env.get("preferences").as(Preferences).channel_spoiler_settings.empty?
   end
 
-  # A cached watch/listing can receive its first rule without a navigation.
-  # Metadata uses supplied/request-local dates; this does not enable cache reads.
-  def runtime_enabled?(env) : Bool
-    Desktop.watch?(env) || Desktop.embedded?(env) || Desktop.listing?(env)
-  end
-
   def cache_enabled?(env) : Bool
     env.get?("user") ? !env.get("preferences").as(Preferences).channel_spoiler_settings.empty? : env.request.cookies.has_key?("iv_spoilers_guest")
   end
@@ -138,11 +132,9 @@ module Invidious::Frontend::ChannelSpoilers
   end
 
   def title(env, id : String, ucid : String, original : String, published : Time?, watch = false, dearrow = true, tag = "span", *, custom = false) : String
-    source_title = original
     original = Invidious::OriginalTitles.title(env, id, original) unless custom
     base = %( dir="auto"#{dearrow ? " data-dearrow-id=\"#{HTML.escape(id)}\"" : ""}#{watch ? " data-dearrow-watch" : ""})
-    base += %( data-title-source="#{HTML.escape(source_title)}") if runtime_enabled?(env) && dearrow
-    return %(<#{tag}#{base}>#{HTML.escape(original)}</#{tag}>) unless applies?(env, ucid, :title) || runtime_enabled?(env)
+    return %(<#{tag}#{base}>#{HTML.escape(original)}</#{tag}>) unless applies?(env, ucid, :title)
     date = publication(env, id, published)
     hidden = hidden?(env, ucid, date, :title)
     text = hidden ? label(env, :title, date.nil?) : original
@@ -150,7 +142,7 @@ module Invidious::Frontend::ChannelSpoilers
   end
 
   def thumbnail(env, id : String, ucid : String, published : Time?, normal : String, url = "/vi/#{id}/mqdefault.jpg") : String
-    return normal unless applies?(env, ucid, :thumbnail) || runtime_enabled?(env)
+    return normal unless applies?(env, ucid, :thumbnail)
     date = publication(env, id, published)
     hidden = hidden?(env, ucid, date, :thumbnail)
     content = hidden ? %(<span class="spoiler-placeholder">#{HTML.escape(label(env, :thumbnail, date.nil?))}</span>) : normal

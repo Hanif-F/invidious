@@ -109,7 +109,6 @@
     on(form,'input',function(){failed=false;fields.forEach(function(f){f.setCustomValidity('');f.removeAttribute('aria-invalid');});currentMessage=false;message('');update();});on(form,'change',function(){failed=false;currentMessage=false;message('');update();});
     on(form,'reset',function(event){event.preventDefault();if(!alive()||busy)return;apply(saved[id]);failed=false;currentMessage=false;message('');update();});
     on(search,'input',render);on(readback,'click',check);
-    on(window,'storage',function(event){if(!config.account&&alive()&&storage.local.matchesEvent(event,key)){var data=storage.local.readStored(key)||{},changed=dirty(), changedState=stable(saved)!==stable(data);saved=data;if(form)original=stable(values(saved[id]));if(!changed)apply(saved[id]);render();if(changedState)ui.invalidate();if(changed)message(config.words.changed);}});
     on(window,'pagehide',function(event){epoch++;if(request)request.abort();request=null;busy=false;active=false;if(!event.persisted)dispose();});
     on(window,'pageshow',function(){active=!disposed;if(alive())update();else if(!disposed)dispose();});
     on(window,'browserprofilechange',dispose);on(document,'iv:content-added',function(){if(!root.isConnected)dispose();});

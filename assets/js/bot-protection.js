@@ -33,7 +33,7 @@
         if (embedded) {
             // Consumers retire before media, preventing a late source/queue result
             // from restarting detached playback or issuing a previous-profile write.
-            ['InvidiousEmbed','InvidiousEnhancements','InvidiousDeArrow','InvidiousSpoilers','InvidiousSponsorBlock'].forEach(function (name) {
+            ['InvidiousEmbed','InvidiousDeArrow','InvidiousSpoilers','InvidiousSponsorBlock'].forEach(function (name) {
                 var owner = window[name]; if (owner && typeof owner.dispose === 'function') owner.dispose();
             });
             if (player && typeof player.dispose === 'function' && (typeof player.isDisposed !== 'function' || !player.isDisposed())) player.dispose();

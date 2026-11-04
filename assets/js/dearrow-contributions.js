@@ -11,7 +11,6 @@
     var refresh = dialog.querySelector('#dearrow-refresh'), editButton = dialog.querySelector('#dearrow-edit');
     var originalRow = dialog.querySelector('#dearrow-original'), originalTitle = dialog.querySelector('#dearrow-original-title'), titles = dialog.querySelector('#dearrow-titles');
     var maskActions = dialog.querySelector('#dearrow-mask-actions'), maskToggle = dialog.querySelector('#dearrow-mask-toggle');
-    var maskState = dialog.querySelector('#dearrow-mask-state'), maskRetry = dialog.querySelector('#dearrow-mask-retry');
     var checks = Array.from(confirm.querySelectorAll('input[type=checkbox]')), template = document.getElementById('dearrow-vote-template');
     var original = originalTitle.dataset.originalTitle, rows = [], proposal = '', loaded = false, revealed = false, maskIdentity;
     var pending = null, epoch = 0, active = dialog.dataset.dearrowActive !== 'false', disposed = false, returnFocus;
@@ -48,9 +47,6 @@
         checks.forEach(function (check) { check.disabled = !!pending || disposed; });
         send.disabled = !!pending || disposed || !proposal || uncertain.has(titleKey(proposal)) || !checks.every(function (check) { return check.checked; });
         maskToggle.disabled = disposed || maskPending();
-        var runtime = window.InvidiousEnhancements, unavailable = runtime && runtime.readState() === 'unavailable';
-        if (maskState) { maskState.hidden = !maskPending(); maskState.textContent = maskPending() ? unavailable ? ui.config.words.read_error || ui.label('error') : ui.label('loading') : ''; }
-        if (maskRetry) { maskRetry.hidden = !maskPending() || !unavailable; maskRetry.disabled = disposed; }
         dialog.querySelector('#dearrow-uncertain').hidden = uncertain.size === 0 || uncertain.size === 1 && !!pending && !!pending.key && uncertain.has(pending.key);
         var warning = !disposed && (!!draft.value || !!pending && !!pending.key || uncertain.size > 0);
         if (warning && !warned) { window.addEventListener('beforeunload', warn); warned = true; }
@@ -119,13 +115,14 @@
         if (!alive() || !dialog.open || pending || uncertain.has(key)) return;
         if (fields.action === 'submit' && (!proposal || !checks.every(function (check) { return check.checked; }))) return;
         var generation = ++epoch, controller = new AbortController();
-        pending = {controller: controller, key: key}; uncertain.add(key); update(); message(config.sending); ui.invalidate('dearrow');
+        pending = {controller: controller, key: key}; uncertain.add(key); update(); message(config.sending); ui.invalidate();
         try {
             fields.video_id = dialog.dataset.videoId; fields.csrf_token = config.csrf; fields.browser_profile = config.profile;
             var result = await ui.request('/dearrow_submit', {method: 'POST', body: new URLSearchParams(fields), signal: controller.signal});
             if (!current(generation)) return;
             if (!result || result.ok !== true) throw new Error();
-            uncertain.delete(key); pending.key = null; pending.accepted = true; ui.invalidate('dearrow');
+            uncertain.delete(key); pending.key = null; pending.accepted = true; ui.invalidate();
+            if (window.InvidiousDeArrow) InvidiousDeArrow.invalidate(dialog.dataset.videoId);
             if (fields.action === 'submit') { draft.value = ''; preview.textContent = ''; edit(false); }
             message(config.success);
             try { var entries = await fetchTitles(controller.signal); if (current(generation)) { render(entries); message(config.success); } }
@@ -166,8 +163,6 @@
     on(refresh,'click',reload); on(editButton,'click',function () { if (!pending && alive()) edit(true); });
     on(maskToggle,'click',function () { if (alive() && !maskPending()) { revealed = !revealed; paintTitles(); } });
     on(document,'iv:masking-change',function () { if (!disposed) { paintTitles(); update(); } });
-    on(document,'iv:enhancements-state',function () { if (!disposed) { paintTitles(); update(); } });
-    if (maskRetry) on(maskRetry,'click',function () { if (alive() && window.InvidiousEnhancements) InvidiousEnhancements.refresh(); });
     on(dialog.querySelector('#dearrow-draft-form'),'submit',function (event) {
         event.preventDefault(); if (pending || !alive()) return;
         var title = draft.value.trim();

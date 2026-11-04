@@ -64,9 +64,6 @@ def write_embed_surface_fixtures(output)
         raise "Embed preview lost its immutable range/isolation" unless data["clip"]["startTime"] == 1.0 && data["clip"]["endTime"] == 6.0 && !data["playback_sync"].as_bool && data["plid"].raw.nil?
       end
       File.write("#{output}/d7-embed-#{kind}-#{variant}.html", source)
-      blocked = [] of String
-      owner = Invidious::Frontend::EnhancementState.snapshot(preferences, Invidious::BrowserProfiles.render_scope(env), !!env.get?("user"), blocked, HMAC_KEY)
-      File.write("#{output}/d7-embed-owner-#{kind}-#{variant}.json", owner.to_json)
     end
     previous = CONFIG.login_required
     begin

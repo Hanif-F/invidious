@@ -26,7 +26,7 @@
     var selectedVideo = '';
     var returnFocus;
     var pending = false;
-    var lastBlock, ownerPending = false;
+    var lastBlock;
     var activePage = true, requests = new Set(), additions = new Set(), uncertainAdditions = new Set(), creationUncertain = false, uncertainBlocks = new Set();
     var playlistEpoch = 0, pageEpoch = 0;
     function alive() { return activePage && dialog.isConnected && InvidiousStorage.isCurrent(); }
@@ -87,18 +87,18 @@
     async function setBlocked(ucid, name, blocked) {
         includeBlocked = new URLSearchParams(location.search).get('include_blocked') === '1' || !!document.querySelector('#filters input[name=include_blocked]:checked');
         discovery = ['/feed/popular', '/feed/trending', '/'].includes(location.pathname) || location.pathname.startsWith('/hashtag/') || (location.pathname === '/search' && !includeBlocked);
-        if (ownerPending || busyChannels.has(ucid) || uncertainBlocks.has(ucid) || !alive()) return;
+        if (busyChannels.has(ucid) || uncertainBlocks.has(ucid) || !alive()) return;
         if (typeof InvidiousUI.config.discovery === 'boolean') discovery = InvidiousUI.config.discovery && !includeBlocked;
         busyChannels.add(ucid);
         var buttons = Array.from(menus).filter(function (menu) { return menu.dataset.channelId === ucid; })
             .map(function (menu) { return menu.querySelector('[data-video-action="block"], [data-video-action="unblock"]'); }).filter(Boolean);
         buttons.forEach(function (button) { button.disabled = true; });
         try {
-            InvidiousUI.invalidate('blocks');
+            InvidiousUI.invalidate();
             var result = await request('/blocked_channels?redirect=false', { action: blocked ? 'block' : 'unblock', ucid: ucid, name: name, browser_profile: InvidiousStorage.scope });
             if (!result || result.blocked !== blocked) throw new Error(words.blockUncertain);
             if (!alive()) return;
-            InvidiousUI.invalidate('blocks');
+            InvidiousUI.invalidate();
             buttons.forEach(function (button) {
                 button.dataset.videoAction = blocked ? 'unblock' : 'block';
                 (button.querySelector('[data-action-label]') || button).textContent = blocked ? words.unblock : words.block;
@@ -128,30 +128,12 @@
             if (isUncertain(error)) {
                 uncertainBlocks.add(ucid);
                 if (lastBlock && lastBlock.ucid === ucid) undo.disabled = true;
-                InvidiousUI.invalidate('blocks');
+                InvidiousUI.invalidate();
                 InvidiousUI.notice(words.blockUncertain, function () { location.reload(); });
             } else InvidiousUI.notice(error.userMessage || words.error, function () { setBlocked(ucid, name, blocked); });
         }
-        finally { busyChannels.delete(ucid); buttons.forEach(function (button) { if (alive()) button.disabled = ownerPending || uncertainBlocks.has(ucid); }); }
+        finally { busyChannels.delete(ucid); buttons.forEach(function (button) { if (alive()) button.disabled = uncertainBlocks.has(ucid); }); }
     }
-    function blockControls(blocked) {
-        if (blocked && lastBlock && !busyChannels.has(lastBlock.ucid) && !blocked.has(lastBlock.ucid)) { lastBlock = null; undo.hidden = true; }
-        undo.disabled = ownerPending || !alive() || !!lastBlock && (busyChannels.has(lastBlock.ucid) || uncertainBlocks.has(lastBlock.ucid));
-        menus.forEach(function (menu) {
-            var id = menu.dataset.channelId, button = menu.querySelector('[data-video-action="block"],[data-video-action="unblock"]');
-            if (!button) return;
-            button.disabled = ownerPending || !alive() || busyChannels.has(id) || uncertainBlocks.has(id);
-            if (blocked && !busyChannels.has(id)) {
-                var hidden = blocked.has(id);
-                button.dataset.videoAction = hidden ? 'unblock' : 'block';
-                (button.querySelector('[data-action-label]') || button).textContent = hidden ? words.unblock : words.block;
-            }
-        });
-    }
-    window.InvidiousVideoActions = {
-        suspend:function () { ownerPending = true; blockControls(); },
-        apply:function (value) { if (!alive()) return false; ownerPending = false; blockControls(new Set(value.blockedChannels)); return true; }
-    };
     undo.addEventListener('click', async function () {
         if (!lastBlock) return;
         undo.disabled = true;

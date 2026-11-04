@@ -19,6 +19,7 @@
         var PiP = videojs.getComponent('PictureInPictureToggle');
         if (PiP && document.pictureInPictureEnabled && !video_data.params.listen && !bar.getChild('pictureInPictureToggle')) bar.addChild(new PiP(player),{},bar.children().indexOf(bar.getChild('fullscreenToggle')));
         var storage = window.InvidiousStorage, life = new AbortController(), active = true, disposed = false, route = 'main', queued = null;
+        if (player.invidiousDockEnabled === undefined) player.invidiousDockEnabled = storage.local.get('player_dock_enabled') === true;
         var gear = new (videojs.getComponent('Button'))(player);
         gear.addClass('vjs-desktop-settings'); gear.controlText(labels.settings); gear.el().setAttribute('aria-haspopup','dialog'); gear.el().setAttribute('aria-expanded','false');
         gear.el().querySelector('.vjs-icon-placeholder').replaceChildren(icon('settings'));
@@ -169,10 +170,11 @@
         function advanced() {
             heading.textContent = word('advanced',labels.settings);
             if (document.querySelector('.watch-player')) {
-                var enabled = storage.local.get('player_dock_enabled') === true;
+                var enabled = player.invidiousDockEnabled;
                 var toggle = row('dock',word('dock',labels.settings),enabled ? word('on','On') : labels.off,'picture-in-picture-2',function () {
                     if (!current()) return;
-                    var saved = storage.local.set('player_dock_enabled',storage.local.get('player_dock_enabled') !== true);
+                    player.invidiousDockEnabled = !player.invidiousDockEnabled;
+                    var saved = storage.local.set('player_dock_enabled',player.invidiousDockEnabled);
                     player.trigger('dockpreferencechange'); render('advanced',true);
                     if (!saved) status.textContent = window.InvidiousUI ? InvidiousUI.label('page_only') : word('page_only','Saved for this page only.');
                 });
@@ -254,7 +256,6 @@
         player.on(['loadedmetadata','playerSourcesChanged','ratechange','sponsorblockstatechange','dearrowstatechange'],refresh);
         function contextChanged() { hide(false); }
         player.on(['fullscreenchange','dockchange'],contextChanged);
-        on(window,'storage',refresh);
         on(window,'browserprofilechange',function () { hide(false); active = false; gear.disable(); trackOwners.forEach(function (owner) { clearTimeout(owner.timer); owner.timer = null; }); });
         on(window,'pagehide',function (event) { hide(false); active = false; trackOwners.forEach(function (owner) { clearTimeout(owner.timer); owner.timer = null; }); if (!event.persisted) cleanup(); });
         on(window,'pageshow',function () { active = !disposed; observeTracks(); });

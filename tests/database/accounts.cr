@@ -107,7 +107,7 @@ require "./settings_checks"
 require "./dearrow_identity_editor_checks"
 require "./dearrow_contribution_editor_checks"
 require "./settings_entry_checks"
-require "./enhancement_runtime_checks"
+require "./retired_enhancement_checks"
 require "./account_surface_checks"
 require "./data_surface_checks"
 

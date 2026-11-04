@@ -109,8 +109,11 @@ language/original/DRC identity with duplicate itags, fallback and buffer refresh
 Codec Auto still considers all playable renditions; manual menus abbreviate large
 resolution/FPS groups. Synthetic tracks do not prove physical codec support.
 
-Masking checks cover upload-age/null/unknown dates, guest cross-tab activation,
-first-rule runtime updates, title/poster/thumbnail reveals, safe auxiliary labels,
+Settings checks verify that other tabs retain their load-time configuration until
+reload, including after focus, storage events and cached returns. Direct controls,
+editor drafts, explicit read-back and merging unrelated saved rules remain covered.
+Masking checks cover upload-age/null/unknown dates, fixed page clocks,
+title/poster/thumbnail reveals, safe auxiliary labels,
 no hidden hover-preview leak, pending/failed DeArrow and dynamic duplicates.
 Inactive rules cause no masking scans/date reads. `channel-spoilers.test.cjs`
 checks a batch of 1,000 nested insertions; `SPOILER_BASELINE_SCRIPT` optionally

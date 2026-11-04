@@ -7,7 +7,7 @@
     if (!node || node.dataset.embedInitialized || !ui || !storage || !media) return;
     node.dataset.embedInitialized = 'true';
     var data = JSON.parse(node.textContent), words = config ? JSON.parse(config.textContent) : {};
-    var life = new AbortController(), active = true, disposed = false, managed = false, started = false;
+    var life = new AbortController(), active = true, disposed = false, started = false;
     var pending, epoch = 0, ended, next, status = document.getElementById('embed-status');
     [status,document.getElementById('ui-notice')].forEach(function (notice) { if (notice) media.el().append(notice); });
     var series = Array.isArray(data.video_series) ? data.video_series.slice() : [];
@@ -75,17 +75,12 @@
     function dispose() {
         if (disposed) return;
         suspend(); disposed = true; life.abort(); media.off('dispose',dispose);
-        if (window.InvidiousEnhancements) window.InvidiousEnhancements.dispose();
     }
     function start() { if (started || disposed) return; started = true; read(); }
-    window.InvidiousEmbed = {
-        setManaged:function () { managed = true; },
-        suspend:suspend,dispose:dispose,
-        apply:function () { if (disposed || !storage.isCurrent()) return false; active = true; if (started) read(); return true; }
-    };
+    window.InvidiousEmbed = {suspend:suspend,dispose:dispose};
     window.addEventListener('load',start,{once:true,signal:life.signal});
     window.addEventListener('pagehide',function (event) { suspend(); if (!event.persisted) dispose(); },{signal:life.signal});
-    window.addEventListener('pageshow',function (event) { if (!disposed && !managed && storage.isCurrent()) { active = true; if (event.persisted) read(); } },{signal:life.signal});
+    window.addEventListener('pageshow',function (event) { if (!disposed && storage.isCurrent()) { active = true; if (event.persisted) read(); } },{signal:life.signal});
     window.addEventListener('browserprofilechange',dispose,{signal:life.signal});
     media.on('dispose',dispose);
     if (document.readyState === 'complete') start();

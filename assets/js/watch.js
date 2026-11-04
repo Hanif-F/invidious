@@ -4,7 +4,6 @@ var watch_ui = JSON.parse(document.getElementById('watch_ui_data').textContent);
 var playlist_ended_handler;
 var playlist_request = 0;
 var playlist_mutating = false;
-var watchOwnerPending = false, queueOwnerPending = false, watchManaged = false, deferredQueueRead = false;
 
 // Keep ordinary navigation and playlist advancement on the existing playback settings.
 function playback_url(url, advancing) {
@@ -19,7 +18,7 @@ function playback_url(url, advancing) {
 }
 
 function next_video() {
-    if (!watchCurrent() || watchOwnerPending || document.body.dataset.clipEditing === 'true' || video_data.clip || video_data.plid || !video_data.next_video) return;
+    if (!watchCurrent() || document.body.dataset.clipEditing === 'true' || video_data.clip || video_data.plid || !video_data.next_video) return;
     location.assign(playback_url('/watch?v=' + encodeURIComponent(video_data.next_video) + '&continue=1', true));
 }
 
@@ -59,7 +58,7 @@ function queueURL() {
 }
 function queueButtons() {
     document.querySelectorAll('#playlist .queue-remove').forEach(function (button) {
-        button.disabled = !watchCurrent() || queueOwnerPending || queueLoading || queueUnavailable || playlist_mutating || uncertainRemovals.size > 0;
+        button.disabled = !watchCurrent() || queueLoading || queueUnavailable || playlist_mutating || uncertainRemovals.size > 0;
     });
 }
 async function readQueue(url, signal) {
@@ -71,8 +70,6 @@ async function readQueue(url, signal) {
 async function get_playlist(plid, removedNotice, focusIndex) {
     var playlist = document.getElementById('playlist');
     if (!playlist || !watchCurrent()) return;
-    if (queueOwnerPending) { deferredQueueRead = true; return; }
-    deferredQueueRead = false;
     if (queueRead) queueRead.abort();
     var controller = new AbortController(); queueRead = controller;
     var request = ++playlist_request, epoch = watchEpoch;
@@ -152,7 +149,7 @@ async function get_playlist(plid, removedNotice, focusIndex) {
             }
             navigationLink(playback_url(next.href,false),watch_ui.next,'next');
             if (!uncertainRemovals.size) {
-                playlist_ended_handler = function () { if (watchCurrent() && !queueOwnerPending && document.body.dataset.clipEditing !== 'true' && epoch === watchEpoch && !queueLoading && !playlist_mutating) location.assign(playback_url(next.href,true)); };
+                playlist_ended_handler = function () { if (watchCurrent() && document.body.dataset.clipEditing !== 'true' && epoch === watchEpoch && !queueLoading && !playlist_mutating) location.assign(playback_url(next.href,true)); };
                 player.on('ended',playlist_ended_handler);
             }
         }
@@ -167,7 +164,7 @@ async function get_playlist(plid, removedNotice, focusIndex) {
     }
 }
 async function remove_queue_item(row,plid) {
-    if (!watchCurrent() || queueOwnerPending || playlist_mutating || queueLoading || queueUnavailable || uncertainRemovals.size || !row.dataset.removeIndex) return;
+    if (!watchCurrent() || playlist_mutating || queueLoading || queueUnavailable || uncertainRemovals.size || !row.dataset.removeIndex) return;
     var epoch = watchEpoch, occurrence = row.dataset.removeIndex, removedIndex = Number(row.dataset.index), status = document.getElementById('queue-status');
     playlist_mutating = true; pendingOccurrence = occurrence; stopQueueAdvancement(); queueButtons();
     var controller = new AbortController(); queueWrite = controller;
@@ -200,8 +197,7 @@ window.addEventListener('browserprofilechange',function () { suspendWatch(); },{
 window.addEventListener('pageshow',function (event) {
     watchActive = !queueLife.signal.aborted;
     if (event.persisted && watchCurrent() && video_data.plid) {
-        if (watchManaged) { deferredQueueRead = true; watchOwnerPending = queueOwnerPending = true; }
-        else get_playlist(video_data.plid);
+        get_playlist(video_data.plid);
     }
 },{signal:queueLife.signal});
 player.on('ended',function () { if (document.body.dataset.clipEditing !== 'true' && video_data.plid && (queueLoading || playlist_mutating || uncertainRemovals.size)) queueEnded = true; });
@@ -209,23 +205,6 @@ player.on('dispose',function () { suspendWatch(); });
 window.addEventListener('resize',function () { if (watchCurrent()) reveal_current_queue_item(); },{signal:queueLife.signal});
 
 if (!video_data.clip && video_data.play_next && !video_data.plid) player.on('ended', next_video);
-
-window.InvidiousWatch = {
-    setManaged:function () { watchManaged = true; },
-    setOwnerPending:function (value,ownerKnown) {
-        watchOwnerPending = value;
-        queueOwnerPending = ownerKnown === false;
-        if (queueOwnerPending && queueRead) {
-            queueRead.abort(); queueRead = null; playlist_request++; queueLoading = false; queueUnavailable = true; deferredQueueRead = true;
-            var list = document.getElementById('playlist'); if (list) list.setAttribute('aria-busy','false');
-        }
-        queueButtons();
-        if (watchCurrent()) {
-            if (!value && continue_button) continue_autoplay({target:continue_button});
-            if (!queueOwnerPending && deferredQueueRead && video_data.plid && !playlist_mutating) get_playlist(video_data.plid);
-        }
-    }
-};
 
 addEventListener('load', function () { if (video_data.plid) get_playlist(video_data.plid); });
 

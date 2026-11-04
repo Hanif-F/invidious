@@ -66,7 +66,7 @@
         channels = data.channels; csrf = data.csrf; unavailable = false;
         root.querySelectorAll('[data-block-pending]').forEach(function (notice) { notice.hidden = true; });
         render(); message(text);
-        if (changed) ui.invalidate('blocks');
+        if (changed) ui.invalidate();
         if (restore && focusIndex !== undefined) {
             var generation = epoch;
             queueMicrotask(function () {
@@ -91,17 +91,17 @@
                 accept(before, config.words.unblocked, index); return;
             }
             var body = new URLSearchParams({ucid: id, action: 'unblock', browser_profile: config.profile, csrf_token: before.csrf});
-            outcome = {id: id, action: 'unblock'}; dispatched = true; uncertain = true; ui.invalidate('blocks');
+            outcome = {id: id, action: 'unblock'}; dispatched = true; uncertain = true; ui.invalidate();
             var written = await ui.request('/blocked_channels?format=json', {method: 'POST', body: body, signal: controller.signal});
             if (!alive() || token !== epoch) return;
             var saved = canonical(written), matched = desired(saved, outcome);
-            uncertain = false; outcome = null; ui.invalidate('blocks');
+            uncertain = false; outcome = null; ui.invalidate();
             accept(saved, matched ? config.words.unblocked : config.words.changed, index);
         } catch (error) {
             if (!alive() || token !== epoch || controller.signal.aborted) return;
             if (error.status === 409) { dispose(); return; }
             if (!dispatched || [400,401,403,404,405,413,415,422,429].includes(error.status)) { uncertain = false; outcome = null; }
-            if (uncertain) ui.invalidate('blocks');
+            if (uncertain) ui.invalidate();
             message(uncertain ? config.words.unconfirmed : error.userMessage || config.words.error, true);
             status.focus({preventScroll: true}); status.scrollIntoView({block: 'nearest'});
         } finally {

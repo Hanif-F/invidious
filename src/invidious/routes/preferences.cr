@@ -18,10 +18,10 @@ module Invidious::Routes::PreferencesRoute
   end
 
   def self.show(env)
+    return runtime(env) if env.params.query["format"]? == "runtime"
     if section = env.params.query["section"]?
       return show_section(env, section)
     end
-    return runtime(env) if env.params.query["format"]? == "runtime"
     # Fragments never reach the server. The default category includes ordinary
     # links for recognized old anchors; the browser can replace that entry with
     # its canonical destination without changing legacy POST/native contracts.
@@ -29,25 +29,9 @@ module Invidious::Routes::PreferencesRoute
     show_section(env, "appearance")
   end
 
-  def self.runtime_preferences(env) : Preferences
-    user = env.get?("user").try(&.as(User))
-    raw = user ? Invidious::Database::Users.preference_json(user.email) : guest_fields(env).to_json
-    Preferences.from_json(raw)
-  end
-
   def self.runtime(env)
     Authentication.no_store(env)
-    env.response.content_type = "application/json"
-    user = env.get?("user").try(&.as(User))
-    preferences = runtime_preferences(env)
-    blocked = user ? Invidious::Database::BlockedChannels.ids(user.email) : [] of String
-    Invidious::Frontend::EnhancementState.snapshot(preferences, Invidious::BrowserProfiles.render_scope(env), !!user, blocked, HMAC_KEY).to_json
-  rescue DB::NoResultsError
-    env.response.status_code = 403
-    {error: "This account is no longer available. Reload to sign in again."}.to_json
-  rescue
-    env.response.status_code = 503
-    {error: "Enhancement settings could not be checked. Try again."}.to_json
+    Errors.error_json(410, "Live settings synchronization has been removed. Reload the page to apply saved settings.")
   end
 
   def self.update(env)

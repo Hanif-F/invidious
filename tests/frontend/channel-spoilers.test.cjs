@@ -9,7 +9,7 @@ const channel = 'UC' + 'a'.repeat(22);
 
 function runtime(rules = {}, scope = 'account', code = source) {
     const callbacks = [], events = {}, scans = [];
-    let reloads = 0, storedRules = rules;
+    let reloads = 0, storedRules = rules, clock = 1791986400000;
     function element(parentElement = null, children = 0) {
         const attrs = new Map();
         return {nodeType: 1, tagName: 'DIV', isConnected: true, parentElement, childElementCount: children,
@@ -23,8 +23,9 @@ function runtime(rules = {}, scope = 'account', code = source) {
     const window = {InvidiousStorage: {scope, isCurrent() { return true; }, local: {get() { return storedRules; }, matchesEvent() { return true; }}},
         addEventListener(name, callback) { events[name] = callback; }};
     vm.runInNewContext(code, {window, document, AbortController, CustomEvent:class {constructor(type,options){this.type=type;this.detail=options.detail;}}, location: {reload() { reloads++; }},
+        Date: class extends Date { static now() { return clock; } },
         MutationObserver: class { constructor(callback) { callbacks.push(callback); } observe() {} disconnect() {} }});
-    return {window, callbacks, events, scans, element, reloads: () => reloads, setRules(value) { storedRules = value; }};
+    return {window, callbacks, events, scans, element, reloads: () => reloads, setRules(value) { storedRules = value; }, advanceTime(ms) { clock += ms; }};
 }
 
 test('missing and null delays hide old uploads indefinitely; timed rules still expire', () => {
@@ -38,13 +39,13 @@ test('missing and null delays hide old uploads indefinitely; timed rules still e
     assert.equal(r.window.InvidiousSpoilers.decision(channel, 1262304000, 'title').hidden, false);
 });
 
-test('inactive rules export a controller without observers or scans; guest activation does not navigate', () => {
+test('inactive rules install no observers, scans, or storage listeners', () => {
     for (const scope of ['account', 'guest']) {
         const r = runtime({}, scope);
         assert.equal(r.callbacks.length, 0);
         assert.equal(r.scans.length, 0);
-        assert.equal(typeof r.window.InvidiousSpoilers.configure, 'function');
-        if (scope === 'guest') { r.events.storage({}); assert.equal(r.reloads(), 0); }
+        assert.equal(typeof r.window.InvidiousSpoilers.scan, 'function');
+        assert.equal(r.events.storage, undefined);
     }
 });
 
@@ -59,16 +60,25 @@ test('a mutation batch scans only topmost subtrees and never queries leaf descen
     assert.equal(r.scans.length, 0);
 });
 
-test('guest activation reads the current browser rules and returns to zero-observer work after removal', () => {
-    const r=runtime({},'guest');
-    r.setRules({[channel]:{hide_title:true,hide_thumbnail:true,reveal_after_days:null}});
-    assert.equal(r.window.InvidiousSpoilers.decision(channel,1262304000,'title').hidden,false);
-    r.events.storage({});
+test('guest rules and masking clock stay fixed across storage edits and cached return', () => {
+    const r=runtime({[channel]:{hide_title:true,hide_thumbnail:true,reveal_after_days:null}},'guest');
+    r.setRules({});
+    r.events.pagehide({persisted:true});r.events.pageshow({persisted:true});
     assert.equal(r.window.InvidiousSpoilers.decision(channel,1262304000,'title').hidden,true);
-    assert.equal(r.callbacks.length,1);assert.equal(r.reloads(),0);
-    r.setRules({});r.events.storage({});
-    assert.equal(r.window.InvidiousSpoilers.decision(channel,1262304000,'title').hidden,false);
-    r.scans.length=0;r.window.InvidiousSpoilers.scan(r.element(null,5));assert.equal(r.scans.length,0);
+    assert.equal(r.events.storage,undefined);assert.equal(r.reloads(),0);
+    const empty=runtime({},'guest');empty.setRules({[channel]:{hide_title:true,hide_thumbnail:true,reveal_after_days:null}});
+    empty.events.pagehide({persisted:true});empty.events.pageshow({persisted:true});
+    assert.equal(empty.window.InvidiousSpoilers.decision(channel,1262304000,'title').hidden,false);
+    assert.equal(empty.callbacks.length,0);
+});
+
+test('cached return preserves the upload-age boundary captured when the document loaded', () => {
+    const r=runtime({[channel]:{hide_title:true,reveal_after_days:7}},'guest');
+    const published=1791986400-6*86400;
+    assert.equal(r.window.InvidiousSpoilers.decision(channel,published,'title').hidden,true);
+    r.advanceTime(2*86400*1000);
+    r.events.pagehide({persisted:true});r.events.pageshow({persisted:true});
+    assert.equal(r.window.InvidiousSpoilers.decision(channel,published,'title').hidden,true);
 });
 
 if (process.env.SPOILER_BASELINE_SCRIPT) {

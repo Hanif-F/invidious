@@ -46,8 +46,15 @@ saves preserve the map. No database migration is required. Public video metadata
 
 Blank delays serialize explicitly as `null`; omitted delays in older saved rules
 also mean indefinite hiding. Both forms retain the same manual reveal controls.
-The browser runtime receives only hiding switches and delays, without channel
-names. Watch/embed/listing pages retain the masking controller and presentation metadata so their first rule can activate without replacing the media element. Empty rules install no masking observers/scans and trigger no publication-date cache reads. Guest storage changes update an open document in place; confirmed account owner-state reads refresh cached pages. Settings editor pages omit the content runtime so external changes cannot reload an unsaved draft.
+The browser controller receives only hiding switches and delays, without channel
+names. Each document uses the settings and upload-age clock captured at load.
+Saving rules in another tab does not update an open document, including after
+focus changes or cached Back/Forward returns; refresh it to apply saved changes.
+Explicit reveals remain local to each displayed occurrence. Empty rules install
+no masking observers/scans and trigger no publication-date cache reads. Account
+pages without channel rules omit masking-only assets and metadata. Guest pages
+retain the controller so initial browser-local rules can apply. Editors preserve
+their drafts until an explicit save, saved-settings check, or refresh.
 
 Date fallback reads only missing publication dates in a batch. Account lookups
 include matching channels only; guest lookups use the optional browser marker

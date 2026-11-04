@@ -15,7 +15,7 @@
     <div class="dearrow-content">
     <p id="dearrow-status" tabindex="-1" role="status" aria-live="polite"></p>
     <p id="dearrow-uncertain" class="dearrow-warning" hidden><%= I18n.translate(locale, "overhaul_dearrow_uncertain") %></p>
-    <div class="toolbar" id="dearrow-mask-actions" hidden><button type="button" class="button" id="dearrow-mask-toggle" aria-pressed="false"><%= Invidious::Frontend::Icons.render("eye") %><span><%= I18n.translate(locale, "overhaul_dearrow_reveal") %></span></button><span id="dearrow-mask-state" role="status" hidden></span><button type="button" class="button" id="dearrow-mask-retry" hidden><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "ux_retry") %></button></div>
+    <div class="toolbar" id="dearrow-mask-actions" hidden><button type="button" class="button" id="dearrow-mask-toggle" aria-pressed="false"><%= Invidious::Frontend::Icons.render("eye") %><span><%= I18n.translate(locale, "overhaul_dearrow_reveal") %></span></button></div>
     <section id="dearrow-editor">
         <h3><%= I18n.translate(locale, "dearrow_original") %></h3>
         <% contribution_date = Invidious::ChannelSpoilers.video_publication(video.info) %>

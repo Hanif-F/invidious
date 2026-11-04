@@ -4,7 +4,7 @@
     if (!settings || !storage || window.InvidiousSpoilers) return;
     var config = JSON.parse(settings.textContent), rules = config.rules, requestTitle, playerMask;
     var titles = new Map(), thumbnails = new Map(), observer, life = new AbortController();
-    var suspended = false, disposed = false, managed = false, mainDisplay;
+    var suspended = false, disposed = false, mainDisplay;
     if (storage.scope === 'guest') { rules = storage.local.get('channel_spoiler_settings') || {}; config.now = Math.floor(Date.now()/1000); }
     function current() { return !disposed && storage.isCurrent(); }
     function text(element,value) { if (element.textContent !== value) element.textContent = value; }
@@ -42,7 +42,7 @@
         var entry = titles.get(element), result = state(element,'title');
         if (!entry) { entry = {original:original(element),index:0,replacement:null,serial:0,loading:false,identity:null}; titles.set(element,entry); }
         var nextIdentity = identity(element,'title',result);
-        // A canonical check temporarily masks display but retains unchanged reveals.
+        // Lifecycle suspension retains each occurrence's reveal choice.
         if (!suspended && entry.identity !== nextIdentity) {
             entry.index = 0; entry.replacement = null; entry.loading = false; entry.serial++; entry.identity = nextIdentity;
         }
@@ -186,14 +186,12 @@
         if (!suspended && !Object.keys(rules).length && observer) { observer.disconnect(); observer = null; }
         document.dispatchEvent(new CustomEvent('iv:masking-change',{detail:{suspended:suspended}}));
     }
-    function configure(value,now) {
-        if (!current() || !value || !value.rules || !value.labels || !Number.isSafeInteger(now)) return false;
-        rules = storage.scope === 'guest' ? storage.local.get('channel_spoiler_settings') || {} : value.rules;
-        config.labels = value.labels; config.dearrow = value.dearrow === true; config.now = now; suspended = false;
-        api.thumbnailRevealLabel = config.labels.reveal_thumbnail; api.replacementRevealLabel = config.labels.next_dearrow; refresh(); return true;
+    function resume() {
+        if (!current() || !suspended) return;
+        suspended = false; refresh();
     }
     function suspend() {
-        if (disposed || suspended) return;
+        if (disposed || suspended || !Object.keys(rules).length) return;
         suspended = true; mainDisplay = null;
         titles.forEach(function (entry) { entry.serial++; entry.loading = false; }); refresh();
     }
@@ -204,34 +202,14 @@
         thumbnails.forEach(function (entry) { entry.life.abort(); });
         titles.clear(); thumbnails.clear(); requestTitle = playerMask = null;
     }
-    function updateTitle(element,value) {
-        if (!current() || !element.isConnected || typeof value !== 'string' || original(element) === value) return;
-        var entry = titles.get(element);
-        if (window.InvidiousDeArrow) InvidiousDeArrow.forget(element);
-        if (entry) { entry.serial++; if (entry.buttonLife) entry.buttonLife.abort(); if (entry.button) entry.button.remove(); titles.delete(element); }
-        element.dataset.spoilerOriginal = value; delete element.dataset.dearrowOriginal;
-        if (element.hasAttribute('data-dearrow-watch') && primary(element)) {
-            if (config.page) config.page.title = value;
-            mainDisplay = null;
-        }
-        if (!state(element,'title').hidden) {
-            text(element,value);
-            if (element.hasAttribute('data-dearrow-watch') && primary(element)) updateMain(value);
-        }
-        title(element); metadata();
-        if (window.InvidiousDeArrow) InvidiousDeArrow.rescan(element);
-    }
-    function updateThumbnail(element,content) {
-        if (!current() || !element.isConnected || !content) return;
-        var entry = thumbnails.get(element), nodes = Array.from(content.childNodes,function (node) { return node.cloneNode(true); });
-        if (entry) entry.normal = nodes;
-        if (!state(element,'thumbnail').hidden || entry && entry.revealed && !suspended) element.replaceChildren(...nodes.map(function (node) { return node.cloneNode(true); }));
-        if (entry || suspended || Object.keys(rules).length) thumbnail(element);
-    }
     var api = window.InvidiousSpoilers = {
-        thumbnailRevealLabel:config.labels.reveal_thumbnail,replacementRevealLabel:config.labels.next_dearrow,decision:decision,signature:signature,isSuspended:function () { return suspended; },scan:scan,configure:configure,suspend:suspend,dispose:dispose,
-        setManaged:function () { managed = true; },bindDeArrow:function (request) { requestTitle = request; },
-        bindPlayer:function (apply) { playerMask = apply; metadata(); },displayTitle:updateMain,updateTitle:updateTitle,updateThumbnail:updateThumbnail,
+        thumbnailRevealLabel:config.labels.reveal_thumbnail,replacementRevealLabel:config.labels.next_dearrow,decision:decision,signature:signature,isSuspended:function () { return suspended; },scan:scan,suspend:suspend,dispose:dispose,
+        invalidateTitle:function (element) {
+            var entry = titles.get(element);
+            if (entry) { entry.serial++; entry.loading = false; entry.replacement = null; entry.index = 0; title(element); }
+        },
+        bindDeArrow:function (request) { requestTitle = request; },
+        bindPlayer:function (apply) { playerMask = apply; metadata(); },displayTitle:updateMain,
         player:function (data,channel,published) {
             var titleState = decision(channel,published,'title'), imageState = decision(channel,published,'thumbnail');
             if (titleState.hidden) { data.title = titleState.label; document.title = data.title+' - Invidious'; }
@@ -239,11 +217,8 @@
             data.spoiler_thumbnail_hidden = imageState.hidden; return data;
         }
     };
-    window.addEventListener('storage',function (event) {
-        if (!managed && storage.scope === 'guest' && storage.local.matchesEvent(event,'channel_spoiler_settings')) configure({rules:{},labels:config.labels,dearrow:config.dearrow},Math.floor(Date.now()/1000));
-    },{signal:life.signal});
     window.addEventListener('pagehide',function (event) { suspend(); if (!event.persisted) dispose(); },{signal:life.signal});
-    window.addEventListener('pageshow',function () { if (!managed && current() && suspended) configure({rules:rules,labels:config.labels,dearrow:config.dearrow},Math.floor(Date.now()/1000)); },{signal:life.signal});
+    window.addEventListener('pageshow',resume,{signal:life.signal});
     window.addEventListener('browserprofilechange',dispose,{signal:life.signal});
     if (Object.keys(rules).length) refresh();
 }());

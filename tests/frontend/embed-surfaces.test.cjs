@@ -12,7 +12,6 @@ async function setup(engine,kind,variant='light',options={}) {
     const context=await browsers[engine].newContext({viewport:{width:1280,height:720},javaScriptEnabled:options.javascript!==false,colorScheme:variant==='light'?'light':'dark'});
     if(options.init)await context.addInitScript(options.init);
     const page=await context.newPage(),requests=[],errors=[],messages=[];page.on('console',message=>messages.push(message.text()));page.on('requestfailed',request=>messages.push({url:request.url(),failure:request.failure()}));page.setDefaultTimeout(12000);page.on('pageerror',error=>errors.push(error.message));
-    const owner=kind==='login'?null:JSON.parse(fs.readFileSync(path.join(generated,`d7-embed-owner-${kind}-${variant}.json`)));
     await context.route('**/*',async route=>{
         const req=route.request(),url=new URL(req.url()),entry={url,method:req.method(),body:req.postData()||'',navigation:req.isNavigationRequest()};requests.push(entry);
         const custom=options.reply&&await options.reply(entry);if(custom)return route.fulfill(custom);
@@ -24,7 +23,6 @@ async function setup(engine,kind,variant='light',options={}) {
             if(url.pathname==='/css/foundation.css'&&variant==='rtl')body=Buffer.from(body.toString()+'\nbody{font-size:20px}.button{font-size:18px}h1{font-size:30px}.player-settings-panel{font-size:20px}');
             return route.fulfill({contentType:url.pathname.endsWith('.js')?'application/javascript':url.pathname.endsWith('.css')?'text/css':url.pathname.endsWith('.svg')?'image/svg+xml':'application/octet-stream',body});
         }
-        if(url.pathname==='/preferences'&&url.searchParams.get('format')==='runtime')return route.fulfill({json:owner});
         if(url.pathname==='/api/v1/stats')return route.fulfill({status:200,body:''});
         if(url.pathname==='/api/v1/verification')return route.fulfill({json:{required:false,expiresAt:null}});
         if(url.pathname.startsWith('/api/manifest/dash/'))return route.fulfill({contentType:'application/dash+xml',path:path.join(generated,'watch-media','manifest.mpd')});
@@ -47,7 +45,7 @@ async function setup(engine,kind,variant='light',options={}) {
     const surface=options.frame?page.frames().find(frame=>frame.url().startsWith('https://invidious.test/')):page;
     if(options.javascript!==false&&kind!=='login'){await surface.waitForFunction(()=>window.InvidiousEmbed&&window.player&&player.isReady_);// Loading an already attached MSE source can reload a revoked blob URL.
         if(!['dash','live'].includes(kind))await surface.evaluate(()=>player.load());}
-    return {context,page,surface,requests,errors,messages,owner};
+    return {context,page,surface,requests,errors,messages};
 }
 for(const engine of engines) {
     test(`${engine}: D7 embeds use one full-size media surface in Light Dark RTL with ordinary no-JavaScript controls`,async()=>{
@@ -127,8 +125,8 @@ for(const engine of engines) {
         const segments=requests.filter(r=>r.url.pathname.startsWith('/d7-hls/'));assert.ok(segments.length>0);for(const request of segments){assert.equal(request.url.searchParams.get('opaque'),'segment+token=');assert.equal(request.url.searchParams.get('keep'),'1');assert.equal(request.url.searchParams.get('local'),'true');}
         assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/sponsorblock/')).length,0);assert.deepEqual(errors,[]);await context.close();
     });
-    test(`${engine}: D7 embedded cached return reads one canonical owner without replacing media`,async()=>{
-        const {context,page,requests,errors}=await setup(engine,'single');await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();window.embedMedia=player.tech().el();window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');assert.equal(requests.filter(r=>r.url.pathname==='/preferences'&&r.url.searchParams.get('format')==='runtime').length,1);assert.equal(await page.evaluate(()=>player.tech().el()===embedMedia&&player.paused()),true);assert.deepEqual(errors,[]);await context.close();
+    test(`${engine}: D7 embedded cached return preserves settings without replacing media`,async()=>{
+        const {context,page,requests,errors}=await setup(engine,'single');await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();window.embedMedia=player.tech().el();window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});assert.equal(requests.filter(r=>r.url.pathname==='/preferences'&&r.url.searchParams.get('format')==='runtime').length,0);assert.equal(await page.evaluate(()=>player.tech().el()===embedMedia&&player.paused()),true);assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D7 disposed real embedded player cannot issue a delayed speed write or react to keyboard/return`,async()=>{
         const {context,page,requests,errors}=await setup(engine,'masked');await page.evaluate(()=>{window.heldSpeed=[];const original=fetch;window.fetch=(url,options)=>String(url).includes('/api/v1/auth/csrf')?new Promise(resolve=>heldSpeed.push({resolve,signal:options.signal})):original(url,options);player.playbackRate(1.5);});await page.waitForFunction(()=>heldSpeed.length===1);await page.evaluate(()=>{player.dispose();heldSpeed[0].resolve(new Response(JSON.stringify({csrfToken:'late-speed-token'}),{headers:{'Content-Type':'application/json'}}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));window.dispatchEvent(new Event('online'));document.dispatchEvent(new Event('visibilitychange'));});await page.keyboard.press('k');assert.equal(await page.evaluate(()=>heldSpeed[0].signal.aborted),true);assert.equal(requests.filter(r=>r.method==='PATCH').length,0);assert.deepEqual(errors,[]);await context.close();
@@ -150,7 +148,7 @@ for(const engine of engines) {
             const original=window.fetch;window.accessProbes=[];window.fetch=(url,options={})=>String(url).includes('/api/v1/stats')?new Promise(resolve=>accessProbes.push({resolve,signal:options.signal})):original(url,options);
         },reply:entry=>entry.url.pathname==='/permission-failure'?{status:401,json:{error:'invalid_scope'}}:null});
         await surface.evaluate(()=>{InvidiousVerification.check();window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));accessProbes[0].resolve(new Response('',{status:401,headers:{'X-Invidious-Login-Required':'1'}}));});
-        await surface.waitForFunction(()=>InvidiousEnhancements.readState()==='ready');assert.equal(await surface.evaluate(()=>accessProbes.length),1);assert.equal(await surface.evaluate(()=>accessProbes[0].signal.aborted),true);assert.equal(await surface.evaluate(()=>player.isDisposed()),false);assert.equal(await surface.locator('main a[href^="/login"]').count(),0);
+        assert.equal(await surface.evaluate(()=>accessProbes.length),1);assert.equal(await surface.evaluate(()=>accessProbes[0].signal.aborted),true);assert.equal(await surface.evaluate(()=>player.isDisposed()),false);assert.equal(await surface.locator('main a[href^="/login"]').count(),0);
         await surface.evaluate(()=>{InvidiousVerification.check();accessProbes[1].resolve(new Response('',{status:200}));});await surface.waitForFunction(()=>accessProbes.length===2);await surface.evaluate(()=>fetch('/permission-failure'));assert.equal(await surface.evaluate(()=>player.isDisposed()),false);assert.equal(await surface.locator('main a[href^="/login"]').count(),0);
         assert.ok(!requests.some(r=>r.url.pathname.startsWith('/api/v1/videos/')||r.method==='POST'||r.method==='PATCH'));assert.deepEqual(errors,[]);await context.close();
     });

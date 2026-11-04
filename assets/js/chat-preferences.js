@@ -163,10 +163,6 @@
     on(form,'change',function (event) { if (alive() && !busy && event.target.tagName === 'TEXTAREA') { var valid = emit(); update(valid ? undefined : invalidMessage()); } });
     on(window,'pagehide',suspend); on(window,'pageshow',function () { activePage = !disposed; if (alive()) update(uncertain ? config.words.unconfirmed : undefined); });
     on(window,'browserprofilechange',dispose);
-    on(window,'storage',function (event) {
-        if (!alive() || busy || dirty() || !storage.local.matchesEvent(event,'chat-settings-v1')) return;
-        var latest = local(); localKeys.forEach(function (key) { snapshot[key] = Object.prototype.hasOwnProperty.call(latest,key) ? effective(latest,key) : effective(config.values,key); }); writeForm(snapshot); emit(); update();
-    });
     on(document,'iv:content-added',function () { if (!form.isConnected) dispose(); });
     window.InvidiousChatPreferences = {values:function () { return alive() && preview ? Object.assign({},preview) : null; },patterns:patterns,mutation:mutation,dispose:dispose};
     var focusField = new URLSearchParams(location.search).get('field'), target = focusField && control(focusField); if (target && typeof target.focus === 'function') target.focus();

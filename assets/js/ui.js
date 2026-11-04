@@ -4,31 +4,10 @@ window.InvidiousUI = (function () {
     if (window.InvidiousUI) return window.InvidiousUI;
     var config = JSON.parse(document.getElementById('ui-config').textContent);
     var locks = new Set();
-    // Signals carry no settings/drafts. Receivers must read canonical owner state.
-    var channel, active = true, disposed = false, revision = 0, serial = 0, changes = new Map();
-    var sender = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
-    var kinds = ['preferences', 'blocks', 'dearrow'];
-    function closeChannel() { if (channel) { channel.onmessage = null; channel.close(); channel = null; } }
-    function invalidateLocal(kind, remote) {
-        InvidiousStorage.session.remove('browse_state');
-        changes.set(kind, ++revision);
-        document.dispatchEvent(new CustomEvent('iv:preferences-change', {detail: {kind: kind, remote: remote, revision: revision}}));
-    }
-    function connectChannel() {
-        if (channel || !active || disposed || typeof BroadcastChannel !== 'function' || location.origin === 'null' || !InvidiousStorage.isCurrent()) return;
-        try {
-            channel = new BroadcastChannel('invidious:changes:v1:' + InvidiousStorage.scope);
-            channel.onmessage = function (event) {
-                var data = event.data;
-                if (!active || disposed || !InvidiousStorage.isCurrent() || event.origin && event.origin !== location.origin || !data || data.version !== 1 || data.profile !== InvidiousStorage.scope || !kinds.includes(data.kind) || typeof data.sender !== 'string' || !/^[a-z0-9-]{8,80}$/.test(data.sender) || data.sender === sender || !Number.isSafeInteger(data.serial) || data.serial < 1) return;
-                invalidateLocal(data.kind, true);
-            };
-        } catch (_) { closeChannel(); /* Cached-page reads remain the fallback. */ }
-    }
-    window.addEventListener('pagehide', function (event) { active = false; closeChannel(); if (!event.persisted) disposed = true; });
-    window.addEventListener('pageshow', function () { if (!disposed) { active = true; connectChannel(); } });
-    window.addEventListener('browserprofilechange', function () { disposed = true; active = false; closeChannel(); });
-    connectChannel();
+    var active = true, disposed = false;
+    window.addEventListener('pagehide', function (event) { active = false; if (!event.persisted) disposed = true; });
+    window.addEventListener('pageshow', function () { if (!disposed) active = true; });
+    window.addEventListener('browserprofilechange', function () { disposed = true; active = false; });
     function label(key, values) {
         var text = config.words[key] || key;
         Object.keys(values || {}).forEach(function (name) { text = text.replaceAll('{' + name + '}', String(values[name])); });
@@ -132,17 +111,9 @@ window.InvidiousUI = (function () {
         }
     }
     function changed(root) { document.dispatchEvent(new CustomEvent('iv:content-added', {detail: root})); }
-    function invalidate(kind) {
-        if (!active || disposed || !InvidiousStorage.isCurrent()) return;
-        kind = kinds.includes(kind) ? kind : 'preferences';
-        invalidateLocal(kind, false);
-        connectChannel();
-        if (channel) {
-            try { channel.postMessage({version: 1, profile: InvidiousStorage.scope, kind: kind, sender: sender, serial: ++serial}); }
-            catch (_) { closeChannel(); }
-        }
+    function invalidate() {
+        if (active && !disposed && InvidiousStorage.isCurrent()) InvidiousStorage.session.remove('browse_state');
     }
-    function invalidationsSince(after) { return Array.from(changes).filter(function (entry) { return entry[1] > after; }).map(function (entry) { return entry[0]; }); }
     function removeRows(rows, amount) {
         var count = document.getElementById('count');
         if (count && /^\d+$/.test(count.textContent.trim())) count.textContent = Math.max(0, Number(count.textContent) - (amount === undefined ? rows.length : amount));
@@ -183,5 +154,5 @@ window.InvidiousUI = (function () {
         return positions;
     }
     return {config: config, label: label, request: request, post: post, status: status, notice: notice, dismissNotice: dismissNotice,
-        action: action, changed: changed, invalidate: invalidate, invalidationsSince: invalidationsSince, removeRows: removeRows, watched: watched, playlistOrder: playlistOrder};
+        action: action, changed: changed, invalidate: invalidate, removeRows: removeRows, watched: watched, playlistOrder: playlistOrder};
 })();

@@ -42,11 +42,11 @@ for(const engine of engines) {
         await page.evaluate(()=>emit('ended'));await page.waitForFunction(()=>document.title==='Advanced');
         const next=new URL(page.url());assert.equal(next.pathname,'/embed/nextvideo01');for(const[key,value]of Object.entries({list:'IVfixture',index:'4',autoplay:'1',listen:'true',speed:'1.5',local:'true'}))assert.equal(next.searchParams.get(key),value);assert.deepEqual(errors,[]);await context.close();
     });
-    test(`${engine}: D7 embed cached return retires late next results and waits for canonical managed owner`,async()=>{
-        const {context,page,errors}=await setup(engine);await page.evaluate(()=>{InvidiousEmbed.setManaged();window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));held[0].resolve({nextVideo:'abcdefghijk',index:3});emit('ended');});
-        assert.equal(await page.evaluate(()=>held[0].signal.aborted),true);assert.equal(await page.evaluate(()=>calls.length),1);assert.equal(await page.evaluate(()=>handlers.get('ended')?.size||0),0);assert.ok(page.url().endsWith('/embed/2isYuQZMbdU'));
-        await page.evaluate(()=>InvidiousEmbed.apply());assert.equal(await page.evaluate(()=>calls.length),2);await page.evaluate(()=>held[1].resolve({nextVideo:'nextvideo01',index:4}));await page.waitForFunction(()=>handlers.get('ended')?.size===1);
-        await page.evaluate(()=>{window.currentProfile=false;window.dispatchEvent(new Event('browserprofilechange'));emit('ended');});assert.equal(await page.evaluate(()=>handlers.get('ended')?.size||0),0);assert.equal(await page.evaluate(()=>InvidiousEmbed.apply()),false);assert.deepEqual(errors,[]);await context.close();
+    test(`${engine}: D7 embed cached return retires late next results and resumes its own continuation`,async()=>{
+        const {context,page,errors}=await setup(engine);await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));held[0].resolve({nextVideo:'abcdefghijk',index:3});emit('ended');});
+        assert.equal(await page.evaluate(()=>held[0].signal.aborted),true);assert.equal(await page.evaluate(()=>calls.length),2);assert.equal(await page.evaluate(()=>handlers.get('ended')?.size||0),0);assert.ok(page.url().endsWith('/embed/2isYuQZMbdU'));
+        assert.equal(await page.evaluate(()=>calls.length),2);await page.evaluate(()=>held[1].resolve({nextVideo:'nextvideo01',index:4}));await page.waitForFunction(()=>handlers.get('ended')?.size===1);
+        await page.evaluate(()=>{window.currentProfile=false;window.dispatchEvent(new Event('browserprofilechange'));emit('ended');});assert.equal(await page.evaluate(()=>handlers.get('ended')?.size||0),0);await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));assert.equal(await page.evaluate(()=>calls.length),2);assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D7 embed failed/malformed next reads expose explicit Retry without automatic replay`,async()=>{
         for(const result of [{},null,[],{nextVideo:'https://outside.test/private',index:2},{nextVideo:'nextvideo01',index:'9223372036854775808'},{nextVideo:'nextvideo01',index:9007199254740992}]) {

@@ -6,6 +6,7 @@
     var storage = InvidiousStorage, ui = window.InvidiousUI, words = (window.player_data || {}).interface_labels || {};
     var life = new AbortController(), active = true, dismissed = false, docked = false, frame = null;
     var editing = false;
+    if (player.invidiousDockEnabled === undefined) player.invidiousDockEnabled = storage.local.get('player_dock_enabled') === true;
     var started = typeof player.hasStarted === 'function' && player.hasStarted();
     var desktop = matchMedia('(min-width:1100px)'), controls = document.createElement('div');
     controls.className = 'dock-controls'; controls.hidden = true;
@@ -58,7 +59,7 @@
         frame = null;
         if (!current()) { setDock(false); return; }
         var params = (window.video_data || {}).params || {}, root = player.el();
-        var blocked = storage.local.get('player_dock_enabled') !== true || !desktop.matches || dismissed || !started ||
+        var blocked = !player.invidiousDockEnabled || !desktop.matches || dismissed || !started ||
             document.fullscreenElement || document.pictureInPictureElement || player.isFullscreen && player.isFullscreen() ||
             params.listen || params.controls === false || editing || document.body.dataset.clipEditing === 'true' || root.dataset.clipPreview === 'true';
         // The shell keeps its aspect ratio while only its existing media surface is fixed.
@@ -73,7 +74,7 @@
     }
     player.on('play',played); player.on('pause',updateButtons); player.on('volumechange',updateButtons);
     ['fullscreenchange','watchlayoutchange','dockpreferencechange'].forEach(function (name) { player.on(name,schedule); });
-    on(window,'scroll',schedule,{passive:true}); on(window,'resize',schedule); on(window,'storage',schedule);
+    on(window,'scroll',schedule,{passive:true}); on(window,'resize',schedule);
     on(document,'fullscreenchange',schedule); on(document,'enterpictureinpicture',schedule,{capture:true}); on(document,'leavepictureinpicture',schedule,{capture:true});
     on(document,'iv:clip-preview',function (event) { editing = !!event.detail && event.detail.active === true; schedule(); });
     on(window,'browserprofilechange',function () { active = false; setDock(false); });

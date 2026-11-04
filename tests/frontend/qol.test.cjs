@@ -173,7 +173,7 @@ for (const engine of engines) {
         const {page,context,requests,errors} = await setup(engine,{fixture:'watch-single',path:'/watch?v=aaaaaaaaaaa',real:true});
         await page.waitForFunction(()=>window.player&&typeof player.play==='function');
         await page.addStyleTag({content:'.watch-primary{min-height:2200px}'});
-        await page.evaluate(()=>{InvidiousStorage.local.set('player_dock_enabled',true);player.trigger('dockpreferencechange');});
+        await page.evaluate(()=>{player.invidiousDockEnabled=true;InvidiousStorage.local.set('player_dock_enabled',true);player.trigger('dockpreferencechange');});
         await page.evaluate(async()=>{window.__originalPlayer=player;player.loop(true);player.muted(true);player.playbackRate(.5);await player.play();});
         await page.evaluate(()=>scrollTo(0,1000));
         await page.waitForFunction(()=>document.querySelector('.watch-player').classList.contains('is-docked'));
@@ -234,7 +234,7 @@ for (const engine of engines) {
         const {page,context,errors}=await setup(engine,{fixture:'clip-watch',path:'/watch?v=2isYuQZMbdU',real:true});
         await page.waitForFunction(()=>window.player&&typeof player.play==='function');
         await page.addStyleTag({content:'.watch-primary{min-height:2200px}'});
-        await page.evaluate(()=>{InvidiousStorage.local.set('player_dock_enabled',true);player.trigger('dockpreferencechange');});
+        await page.evaluate(()=>{player.invidiousDockEnabled=true;InvidiousStorage.local.set('player_dock_enabled',true);player.trigger('dockpreferencechange');});
         await page.evaluate(async()=>{player.muted(true);await player.play()});
         await page.evaluate(()=>scrollTo(0,1000));
         await page.waitForFunction(()=>document.querySelector('.watch-player').classList.contains('is-docked'));

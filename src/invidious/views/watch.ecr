@@ -83,7 +83,6 @@
 }.to_pretty_json.gsub("<", "\\u003c")
 %>
 </script>
-<script id="watch-enhancements-config" type="application/json"><%= Invidious::Frontend::WatchEnhancements.configuration(preferences, Invidious::Frontend::BlockedChannels.ids(env)).to_json.gsub("<", "\\u003c") %></script>
 <script id="config" type="application/json">
 <%=
 {
@@ -150,7 +149,6 @@
 <div class="watch-player"><div id="player-container"><%= rendered "components/player" %></div></div>
 <div class="watch-primary">
 <%= rendered "overhaul/watch_heading" %>
-<div class="toolbar watch-enhancements-feedback" id="watch-enhancements-feedback" hidden><p id="watch-enhancements-status" role="status" aria-live="polite"></p><button class="button" id="watch-enhancements-retry" type="button" hidden><%= I18n.translate(locale, "ui_retry") %></button></div>
 <div class="creator-actions">
 <div class="creator"><a href="/channel/<%= HTML.escape(video.ucid) %>" class="creator"><%= Invidious::Frontend::ChannelAvatars.render(env, video.ucid, 40, video.author) %><strong dir="auto"><%= author %></strong><% if video.author_verified %><span aria-label="<%= I18n.translate(locale, "ui_verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></a><% sub_count_text = video.sub_count_text %><%= rendered "overhaul/subscribe" %></div>
 <div class="toolbar watch-actions" data-video-actions data-video-id="<%= HTML.escape(video.id) %>" aria-label="<%= I18n.translate(locale, "ui_more_tools") %>">

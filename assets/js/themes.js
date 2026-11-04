@@ -46,13 +46,6 @@ if (systemColor) {
     else if (systemColor.addListener) systemColor.addListener(systemChanged);
 }
 
-addEventListener('storage', function (event) {
-    if (helpers.storage.matchesEvent(event, STORAGE_KEY_THEME)) {
-        var mode = helpers.storage.get(STORAGE_KEY_THEME);
-        if (mode === '' || mode === THEME_LIGHT || mode === THEME_DARK) setTheme(mode);
-    }
-});
-
 addEventListener('DOMContentLoaded', function () {
     var pref = document.getElementById('dark_mode_pref');
     if (!pref) return;

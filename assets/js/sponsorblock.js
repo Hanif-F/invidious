@@ -4,7 +4,7 @@
     if (!node || !storage || typeof player === 'undefined' || typeof player.el !== 'function' || window.InvidiousSponsorBlock) return;
     var initial = storage.sponsorblock(JSON.parse(node.textContent).sponsorblock, video_data.channel_id, video_data.live_now), config;
     var segments = [], active = null, dismissed = new Set(), bypassedAuto = new Set(), timer, disposed = false, seeking = false;
-    var allSegments = [], loaded = false, readFailed = false, pending = null, epoch = 0, activePage = true, suspended = false, managed = false, mounted = false, state = 'disabled';
+    var allSegments = [], loaded = false, readFailed = false, pending = null, epoch = 0, activePage = true, suspended = false, mounted = false, state = 'disabled';
     var categories = ['sponsor','selfpromo','interaction','intro','outro','preview','music_offtopic','filler'], life = new AbortController();
     // Page-local history: replayed automatic segments use the manual controls.
     var skippedAuto = new Set();
@@ -190,9 +190,9 @@
         state = 'disabled'; if (window.InvidiousSponsorBlock === api) delete window.InvidiousSponsorBlock;
     }
     window.addEventListener('pagehide',function (event) { activePage = false; suspend(); if (!event.persisted) dispose(); },{signal:life.signal});
-    window.addEventListener('pageshow',function () { activePage = !disposed; if (!usable()) return; if (!managed && config) configure(config); },{signal:life.signal});
+    window.addEventListener('pageshow',function () { activePage = !disposed; if (!usable()) return; if (config) configure(config); },{signal:life.signal});
     window.addEventListener('browserprofilechange',dispose,{signal:life.signal});
     var observer = new MutationObserver(function () { if (!root.isConnected) dispose(); }); observer.observe(document.body,{childList:true,subtree:true});
-    var api = window.InvidiousSponsorBlock = {configure:configure,suspend:suspend,dispose:dispose,readState:function () { return state; },setManaged:function () { managed = true; },retry:function () { if (state === 'unavailable') load(); }};
+    var api = window.InvidiousSponsorBlock = {configure:configure,suspend:suspend,dispose:dispose,readState:function () { return state; },retry:function () { if (state === 'unavailable') load(); }};
     player.on('dispose',dispose); configure(initial);
 }());

@@ -200,7 +200,7 @@ def check_settings_merges
   check_identity_editor_routes
   check_contribution_editor_routes
   check_settings_entry_routes(sid, owner)
-  check_enhancement_runtime_routes
+  check_retired_enhancement_routes
   puts "Settings ownership, canonical values, atomic category writes, unrelated/native/unknown preservation, real row-lock concurrency and independent playback cleanup passed"
 end
 

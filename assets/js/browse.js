@@ -10,7 +10,7 @@
     var lifetime = new AbortController(), pending, scrollFrame;
     var privateSearch = ui.config.privateBrowse || (ui.config.privateSearch && /(?:^\/search$|\/search$|^\/add_playlist_items$)/.test(location.pathname));
     var next, busy = false, pages = [], seen = new Set(), restoreEntry, recordable = true;
-    var managed = false, canonicalPending = false, stale = false, activePage = true;
+    var stale = false, activePage = true;
     var initialURL = location.pathname + location.search;
     var view = !privateSearch && history.state && history.state.ivBrowse;
     if (!view && !privateSearch) {
@@ -62,7 +62,7 @@
         region.append(controls);
     }
     function save() {
-        if (privateSearch || canonicalPending || !recordable || !view || !InvidiousStorage.isCurrent()) return;
+        if (privateSearch || !recordable || !view || !InvidiousStorage.isCurrent()) return;
         var state = InvidiousStorage.session.get('browse_state') || {views:[]};
         state.views = state.views.filter(function (entry) { return entry.id !== view; });
         if (pages.every(function (item) { return item.method === 'GET'; })) {
@@ -104,7 +104,7 @@
         return {doc:doc,next:descriptor(doc)};
     }
     async function more(item, replay) {
-        if (!alive() || canonicalPending || stale || busy || !item || seen.has(key(item)) || pages.length >= 100) return false;
+        if (!alive() || stale || busy || !item || seen.has(key(item)) || pages.length >= 100) return false;
         var origin = document.activeElement;
         busy = true; load.disabled = true; region.setAttribute('aria-busy','true'); ui.status(status,ui.label('loading'));
         var request = pending = new AbortController();
@@ -132,12 +132,12 @@
         } finally {
             if (pending === request) {
                 pending = null; busy = false;
-                if (alive()) { load.disabled = canonicalPending || stale; region.setAttribute('aria-busy','false'); }
+                if (alive()) { load.disabled = stale; region.setAttribute('aria-busy','false'); }
             }
         }
     }
     async function resumeRestore() {
-        if (canonicalPending || stale || busy || !restoreEntry || !alive()) return;
+        if (stale || busy || !restoreEntry || !alive()) return;
         var entry = restoreEntry;
         while (pages.length < entry.pages.length) {
             if (!await more(entry.pages[pages.length],true)) return;
@@ -149,45 +149,24 @@
     on(document,'click',function (event) { if (event.target.closest('a[href]')) save(); },{capture:true});
     function suspend() {
         if (lifetime.signal.aborted) return;
-        canonicalPending = true;
         if (pending) { pending.abort(); pending = null; }
         busy = false; load.disabled = true; region.setAttribute('aria-busy','false'); cancelAnimationFrame(scrollFrame);
         if (alive()) ui.status(status,ui.label('loading'));
-    }
-    function requireRefresh() {
-        InvidiousStorage.session.remove('browse_state');
-        stale = true; recordable = false; pages = []; restoreEntry = null; load.hidden = true; load.disabled = true;
-        region.querySelectorAll('.page-nav-container').forEach(function (navigation) { navigation.hidden = true; });
-        controls.hidden = false;
-        ui.status(status,controls.dataset.changedLabel || ui.label('error'),function () { if (alive() && InvidiousStorage.isCurrent()) location.reload(); });
-    }
-    function applyOwner(value) {
-        if (!alive() || !InvidiousStorage.isCurrent()) return false;
-        var fingerprint = location.pathname === '/feed/history' ? value.historyFingerprint : value.browseFingerprint;
-        if (typeof fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(fingerprint) || typeof ui.config.ownerBrowseFingerprint !== 'string') return false;
-        canonicalPending = false;
-        if (stale || fingerprint !== ui.config.ownerBrowseFingerprint) requireRefresh();
-        else {
-            configure(region,next); load.disabled = false; save();
-            if (restoreEntry) resumeRestore();
-        }
-        return true;
     }
     function dispose() {
         if (lifetime.signal.aborted) return;
         suspend(); activePage = false; lifetime.abort(); pages = []; seen.clear(); restoreEntry = null;
     }
-    on(document,'iv:preferences-change',function () { if (managed) suspend(); else { suspend(); requireRefresh(); } });
     on(window,'pagehide',function (event) {
         save();
         activePage = false;
-        if (pending) { pending.abort(); pending = null; busy = false; region.setAttribute('aria-busy','false'); load.disabled = canonicalPending || stale; ui.status(status,''); }
+        if (pending) { pending.abort(); pending = null; busy = false; region.setAttribute('aria-busy','false'); load.disabled = stale; ui.status(status,''); }
         cancelAnimationFrame(scrollFrame);
         if (!event.persisted) dispose();
     });
     on(window,'pageshow',function (event) {
         activePage = true;
-        if (!busy) { region.setAttribute('aria-busy','false'); load.disabled = canonicalPending || stale; }
+        if (!busy) { region.setAttribute('aria-busy','false'); load.disabled = stale; }
         if (event.persisted || privateSearch) return;
         var state = InvidiousStorage.session.get('browse_state');
         restoreEntry = state && state.views.find(function (entry) { return entry.id === view && entry.url === initialURL && entry.fingerprint === ui.config.browseFingerprint; });
@@ -197,5 +176,5 @@
     catch (_) { load.hidden = true; ui.status(status,ui.label('error')); }
     seen.add(key({url:initialURL,method:privateSearch ? 'POST' : 'GET'}));
     on(window,'browserprofilechange',dispose);
-    window.InvidiousBrowse = {setManaged:function () { managed = true; },suspend:suspend,apply:applyOwner,dispose:dispose};
+    window.InvidiousBrowse = {dispose:dispose};
 })();

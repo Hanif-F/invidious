@@ -2,7 +2,7 @@
 
 [Documentation index](README.md)
 
-The current web interface uses compiled Crystal ECR templates, shared CSS and browser JavaScript. Page handlers render HTML; browser scripts handle playback, menus, dynamic content and storage/synchronization behavior.
+The current web interface uses compiled Crystal ECR templates, shared CSS and browser JavaScript. Page handlers render HTML; browser scripts handle playback, menus, dynamic content and profile-scoped storage.
 
 ## Templates and page data
 
@@ -36,7 +36,6 @@ Keep escaping/context correct when adding titles, descriptions, identities or JS
 | `subscriptions.js`, `playlist-forms.js`, `video-actions.js` | Subscription/library/context actions and ordinary form enhancement |
 | `sse.js`, `notifications.js` | Notification streams, tab ownership and counters |
 | `sponsorblock.js`, `sponsorblock-preferences.js` | Segment presentation/skipping and category/channel controls |
-| `enhancements.js`, `watch-enhancements.js` | Canonical owner-state checks on watch/listing pages; in-place cached watch title/thumbnail/Up next refresh, preserving media and queue occurrences |
 | `dearrow.js`, `dearrow-loader.js`, `dearrow-contributions.js` | Lazy title replacement, original-title interaction and explicit contribution flow |
 | `clip-loader.js`, `clip-editor.js`, `clip-session.js`, `clip-player.js` | Same-player editor loading, temporary preview ownership, standalone fallback and immutable bounded playback |
 | `live-chat.js`, `chat-preferences.js`, `chat-timing.js` | Panel replay synchronization/filtering, explicit display/filter saves and per-video timing |
@@ -55,7 +54,7 @@ Storage denial/quota failure uses bounded cookie fallbacks for small validated s
 
 [foundation.css](../assets/css/foundation.css) defines shared tokens, document layout, cards, navigation, forms, menus and dialogs. Feature sheets cover the player, watch utilities, chat, clips, DeArrow and verification. First-party icons use the local [Lucide sprite](../assets/icons/lucide.svg). The unused Diary theme, Pure stylesheets and Ionicons font assets have been removed; required Video.js/plugin assets remain.
 
-Light/Dark/System uses the existing preference, header toggle and browser synchronization. Browser pages use one grid/row and player design. Older density, thin-mode and player-style values remain compatible with native and legacy preference submissions; browser Settings no longer edits them. Ordinary API playlist HTML still honors thin mode; explicitly requested desktop fragments share browser cards. See [styling](theming.md) for component and player guidance.
+Light/Dark/System uses the existing preference, header toggle in the current document. Browser pages use one grid/row and player design. Older density, thin-mode and player-style values remain compatible with native and legacy preference submissions; browser Settings no longer edits them. Ordinary API playlist HTML still honors thin mode; explicitly requested desktop fragments share browser cards. See [styling](theming.md) for component and player guidance.
 
 ## Avatars, card visibility and progress
 
@@ -136,21 +135,18 @@ tabs, layouts and the Settings hierarchy retain the existing media instance.
 Transcript following scrolls only its own viewport;
 manual interaction/search turns following off until explicitly re-enabled.
 
-The masking runtime keeps metadata on watch/listing titles and thumbnails so
-the first channel rule can activate in an open document. Empty rules retain a
-controller without masking observers/scans or date-cache reads. Guest rule
-changes update that document and player in place. Explicit reveals survive an
-unchanged configuration check; changed rules and unknown/failed checks hide the
-affected content. Poster, share, document-title and social metadata follow the
-mask, and hidden hover thumbnails reject late VTT setup. The shared canonical
-owner-state coordinator loads on watch/listing pages; watch presentation updates
-use a separate cache-only read after a relevant confirmed owner change. The
-coordinator performs no initial runtime GET, fetches no private identity and never
-rebuilds playlist membership to apply display choices. Unknown state suspends
-advancement and exposes read-only recovery while playback remains available.
+Settings are initialized once per document from server-rendered configuration and
+initial browser-local values. Refresh or fresh navigation applies saves made
+elsewhere; focus, storage events and cached returns do not re-read settings.
+Cached pages resume their own masking rules, upload-age clock, reveal choices,
+DeArrow configuration and SponsorBlock state. Direct controls and explicit saved
+settings checks still act immediately. Dynamic fragments use existing content
+observers; incompatible browse fingerprints require a manual reload before
+pagination can continue. Playback, notification and profile coordination remain
+independent of settings. The former internal `/preferences?format=runtime` and
+`/watch?format=enhancements` reads return JSON 410 without settings/watch effects.
 See [frontend verification](../tests/frontend/README.md#settings-visibility-and-enhancements)
-for cached-page/account transitions and enhancement coexistence checks.
-
+for refresh and cached-page regression coverage.
 
 ## Embedded media ownership
 

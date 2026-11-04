@@ -3,7 +3,7 @@
     var settings = document.getElementById('dearrow-config'), storage = window.InvidiousStorage;
     if (!settings || !storage || window.InvidiousDeArrow) return;
     var config = JSON.parse(settings.textContent), requests = new Map(), entries = new Map(), seen = new WeakSet();
-    var queue = [], jobs = new Set(), observer, visible, epoch = 0, suspended = false, disposed = false, activePage = true, managed = false;
+    var queue = [], jobs = new Set(), observer, visible, epoch = 0, suspended = false, disposed = false, activePage = true;
     var life = new AbortController(), failures = new Set(), state = 'disabled';
     config.enabled = config.enabled !== false;
     function current() { return !disposed && activePage && storage.isCurrent(); }
@@ -81,8 +81,7 @@
         if (restore && entry.element.dataset.spoilerHidden !== 'true') {
             if (entry.element.textContent !== entry.original) entry.element.textContent = entry.original;
             if (entry.element.hasAttribute('data-dearrow-watch') && (!entry.element.closest('.vjs-overlay') || !document.querySelector('.watch-heading [data-dearrow-watch]'))) {
-                if (window.InvidiousSpoilers) InvidiousSpoilers.displayTitle(entry.original);
-                else document.title = entry.original+' - Invidious';
+                display(entry,entry.original);
             }
         }
     }
@@ -93,7 +92,7 @@
         display(entry,showing ? entry.original : entry.replacement);
         if (entry.button) {
             entry.button.setAttribute('aria-pressed',String(showing));
-            var label = watchCycle && showing ? window.InvidiousSpoilers && InvidiousSpoilers.replacementRevealLabel || 'Show DeArrow title' : config.originalLabel || 'Show original title';
+            var label = watchCycle && showing ? config.replacementLabel || 'Show DeArrow title' : config.originalLabel || 'Show original title';
             entry.button.setAttribute('aria-label',label);
         }
     }
@@ -170,23 +169,28 @@
         suspended = true; cancelReads(); disconnect();
         entries.forEach(function (entry) { if (entry.button) entry.button.disabled = true; }); readState();
     }
-    function configure(value,detail) {
-        if (!current() || !value || typeof value.enabled !== 'boolean' || typeof value.showOriginal !== 'boolean' || typeof value.originalLabel !== 'string') return false;
-        var changed = value.enabled !== config.enabled || value.showOriginal !== config.showOriginal || value.originalLabel !== config.originalLabel;
-        var invalidate = detail && detail.kinds && detail.kinds.includes('dearrow');
-        if (changed || invalidate) {
-            cancelReads(); disconnect();
-            if (invalidate) { requests.clear(); failures.clear(); }
-            entries.forEach(function (entry) { clean(entry,true); entry.replacement = null; entry.toggled = entry.hovered = entry.focused = entry.touch = false; });
-        }
-        config = {enabled:value.enabled,showOriginal:value.showOriginal,originalLabel:value.originalLabel}; suspended = false;
-        entries.forEach(function (entry,element) {
-            if (entry.hiddenByMask && element.dataset.spoilerHidden === 'true') { clean(entry,false); entries.delete(element); seen.delete(element); }
-            else entry.hiddenByMask = false;
+    function resume() {
+        if (!current() || !suspended) return;
+        suspended = false;
+        entries.forEach(function (entry) { if (entry.button) entry.button.disabled = false; });
+        seen = new WeakSet(); observe(); scan(document.body); readState();
+    }
+    // A confirmed contribution affects only this video's title in this document.
+    function invalidate(id) {
+        if (!enabled() || !/^[A-Za-z0-9_-]{11}$/.test(id)) return;
+        var affected = queue.filter(function (job) { return job.id === id; }).concat(Array.from(jobs).filter(function (job) { return job.id === id; }));
+        queue = queue.filter(function (job) { return job.id !== id; });
+        affected.forEach(function (job) { if (job.controller) job.controller.abort(); finish(job,null,false); });
+        requests.delete(id); failures.delete(id);
+        document.querySelectorAll('[data-dearrow-id]').forEach(function (element) {
+            if (element.dataset.dearrowId !== id) return;
+            var entry = entries.get(element);
+            if (entry) { clean(entry,true); entries.delete(element); }
+            seen.delete(element);
+            if (window.InvidiousSpoilers) InvidiousSpoilers.invalidateTitle(element);
+            scan(element);
         });
-        if (!config.enabled) { cancelReads(); disconnect(); entries.forEach(function (entry) { clean(entry,true); }); }
-        else { seen = new WeakSet(); entries.forEach(function (entry) { if (entry.button) entry.button.disabled = false; }); observe(); scan(document.body); }
-        readState(); return true;
+        pump();
     }
     function dispose() {
         if (disposed) return;
@@ -198,13 +202,13 @@
         if (entry) { clean(entry,false); entries.delete(element); }
         seen.delete(element); if (visible) visible.unobserve(element);
     }
-    var api = window.InvidiousDeArrow = {configure:configure,suspend:suspend,dispose:dispose,rescan:rescan,forget:forget,request:request,readState:function () { return state; },setManaged:function () { managed = true; },retry:function () {
+    var api = window.InvidiousDeArrow = {invalidate:invalidate,suspend:suspend,dispose:dispose,rescan:rescan,forget:forget,request:request,readState:function () { return state; },retry:function () {
         if (!enabled() || !failures.size) return;
         failures.forEach(function (id) { requests.delete(id); }); failures.clear(); seen = new WeakSet(); scan(document.body); readState();
     }};
     if (window.InvidiousSpoilers) InvidiousSpoilers.bindDeArrow(request);
     window.addEventListener('pagehide',function (event) { activePage = false; suspend(); if (!event.persisted) dispose(); },{signal:life.signal});
-    window.addEventListener('pageshow',function () { activePage = !disposed; if (!managed && current() && suspended) configure({enabled:config.enabled,showOriginal:!!config.showOriginal,originalLabel:config.originalLabel || 'Show original title'}); },{signal:life.signal});
+    window.addEventListener('pageshow',function () { activePage = !disposed; resume(); },{signal:life.signal});
     window.addEventListener('browserprofilechange',dispose,{signal:life.signal});
     if (config.enabled) { observe(); scan(document.body); } readState();
 }());

@@ -222,31 +222,10 @@ module Invidious::Routes::Watch
     templated "watch"
   end
 
-  # Optional read for the existing watch document. A cache miss is unavailable,
-  # never a hidden video/stream fetch or a second watch/history mutation.
+  # Retired read format must never fall through to watch/history side effects.
   def self.enhancements(env)
     Authentication.no_store(env)
-    env.response.content_type = "application/json"
-    id = env.params.query["v"]? || ""
-    ids = (env.params.query["ids"]? || "").split(',', remove_empty: true).uniq
-    channels = (env.params.query["channels"]? || "").split(',', remove_empty: true).uniq
-    return Errors.error_json(400, "Invalid watch presentation request.") unless validate_video_id(id) && ids.size <= 200 && channels.size <= 200 &&
-                                                                                ids.all? { |value| validate_video_id(value) } && channels.all?(&.matches?(/\AUC[A-Za-z0-9_-]{22}\z/))
-    user = env.get?("user").try(&.as(User))
-    preferences = PreferencesRoute.runtime_preferences(env)
-    blocked = user ? Database::BlockedChannels.ids(user.email) : [] of String
-    fingerprint = Frontend::Misc.browse_fingerprint(preferences, blocked: blocked)
-    return Errors.error_json(409, "Enhancement settings changed. Check them again.") unless env.params.query["owner"]? == fingerprint
-    env.set "preferences", preferences
-    env.set "blocked_channels", blocked
-    video = Database::Videos.select(id)
-    return Errors.error_json(503, "Cached watch information is unavailable. Try again.") unless video
-    result = Frontend::WatchEnhancements.projection(env, video, ids, channels, env.params.query["listen"]? == "1")
-    result.merge({profile: Invidious::BrowserProfiles.render_scope(env), browseFingerprint: fingerprint}).to_json
-  rescue DB::NoResultsError
-    Errors.error_json(403, "This account is no longer available. Reload to sign in again.")
-  rescue
-    Errors.error_json(503, "Watch information could not be checked. Try again.")
+    Errors.error_json(410, "Live watch settings updates have been removed. Reload the page to apply saved settings.")
   end
 
   def self.redirect(env)

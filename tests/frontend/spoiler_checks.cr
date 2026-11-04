@@ -112,8 +112,8 @@ def check_spoiler_preferences(output)
   File.write("#{output}/queue-spoiler-indefinite.json", {playlistHtml: Invidious::Playlists::Playlists.template_playlist(queue, false, spoiler_env: spoiler_env("/", days: nil)), index: 1, nextVideo: "00000000000"}.to_json)
   inactive = signed_in_env("/feed/popular")
   html = browse_fixture(inactive)
-  raise "Inactive cached-page masking metadata missing" unless html.includes?("channel-spoiler-config") && html.includes?("data-spoiler-title") && html.includes?("/js/channel-spoilers.js")
-  raise "Inactive runtime rules fabricated" unless JSON.parse(Invidious::Frontend::ChannelSpoilers.config(inactive))["rules"].as_h.empty?
+  raise "Inactive account pages retained masking-only assets" if html.includes?("channel-spoiler-config") || html.includes?("data-spoiler-title") || html.includes?("/js/channel-spoilers.js")
+  raise "Inactive masking rules fabricated" unless JSON.parse(Invidious::Frontend::ChannelSpoilers.config(inactive))["rules"].as_h.empty?
   File.write("#{output}/spoiler-cards-inactive.html", html)
 
   many = spoiler_env("/")
