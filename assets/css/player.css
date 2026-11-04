@@ -85,10 +85,30 @@ ul.vjs-menu-content::-webkit-scrollbar {
 }
 
 .video-js .vjs-text-track-display > div > div > div {
-  background-color: rgba(0, 0, 0, 0.75) !important;
   border-radius: 9px !important;
   padding: 5px !important;
   line-height: 1.5 !important;
+}
+
+.video-js .invidious-caption-composited {
+  isolation: isolate;
+}
+
+.video-js .invidious-caption-composited .vjs-text-track-cue > div {
+  background-color: transparent !important;
+  z-index: 2;
+}
+
+.invidious-caption-backgrounds {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.invidious-caption-backgrounds > div {
+  position: absolute;
+  background-color: currentColor;
 }
 
 .vjs-play-control,
@@ -101,8 +121,7 @@ ul.vjs-menu-content::-webkit-scrollbar {
   order: 1;
 }
 
-.vjs-refresh-buffer,
-.vjs-captions-button {
+.vjs-refresh-buffer {
   order: 2;
 }
 
@@ -333,7 +352,7 @@ video.video-js {
 @media (prefers-reduced-motion: reduce) { .video-js .sb-overlay { transition: none; } }
 
 /* Mobile uses one settings entry point; playback components still own their state. */
-.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-refresh-buffer, .vjs-captions-button, .vjs-audio-button, .vjs-quality-selector, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-theater-control) { display: none; }
+.invidious-mobile .vjs-control-bar > :is(.vjs-play-control, .vjs-volume-panel, .vjs-refresh-buffer, .vjs-audio-button, .vjs-quality-selector, .vjs-playback-rate, .vjs-http-source-selector, .vjs-share-control, .vjs-theater-control) { display: none; }
 .video-js .vjs-mobile-settings { order: 6; min-width: 44px; min-height: 44px; align-self: center; }
 .vjs-mobile-settings .vjs-icon-placeholder::before { content: '⚙'; font: 26px/44px sans-serif; }
 .video-js .mobile-player-settings {

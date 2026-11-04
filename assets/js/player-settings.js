@@ -42,7 +42,6 @@
             var volume = bar.getChild('volumePanel');
             controlIcon(volume && volume.getChild('muteToggle'),player.muted() || player.volume() === 0 ? 'volume-x' : 'volume-2');
         }
-        controlIcon(bar.getChild('captionsButton'),'captions');
         controlIcon(bar.getChild('fullscreenToggle'),'maximize');
         controlIcon(player.getChild('bigPlayButton'),'play');
         var posterReveal = root.querySelector('.spoiler-poster-reveal');

@@ -368,7 +368,7 @@ async function pageFor(engine, options = {}) {
             return route.fulfill({ contentType: 'video/webm', headers: { 'accept-ranges': 'bytes' }, body });
         }
         if (options.storyboards && url.pathname.startsWith('/api/v1/storyboards/')) return route.fulfill({contentType:'text/vtt', body:'WEBVTT\n\n00:00.000 --> 00:04.000\nhttps://invidious.test/vi/fixture/preview.jpg#xywh=0,0,160,90\n'});
-        if (url.pathname.startsWith('/api/v1/captions/')) return route.fulfill({ contentType: 'text/vtt', body: 'WEBVTT\n\n00:00.000 --> 00:04.000\nFixture captions\n' });
+        if (url.pathname.startsWith('/api/v1/captions/')) return route.fulfill({ contentType: 'text/vtt', body: options.captionVtt || 'WEBVTT\n\n00:00.000 --> 00:04.000\nFixture captions\n' });
         if (/^\/(css|js|fonts|videojs|themes|icons)\//.test(url.pathname)) {
             const file = path.join(root, 'assets', url.pathname);
             if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: '' });
@@ -391,6 +391,35 @@ async function openPlayerAdvancedAction(page, label) {
         await panel.getByRole('menuitem', {name:'Advanced',exact:true}).click();
         await panel.getByRole('menuitem', {name:label,exact:true}).click();
     }
+}
+
+async function openCaptionAppearance(page) {
+    await page.evaluate(() => player.userActive(true));
+    const mobile = await page.locator('.vjs-mobile-settings').count();
+    await page.locator(mobile ? '.vjs-mobile-settings' : '.vjs-desktop-settings').click();
+    const panel = page.locator(mobile ? '.mobile-player-settings' : '.player-settings-panel');
+    await panel.getByRole(mobile ? 'button' : 'menuitem', {name:/^Captions/}).click();
+    await panel.getByRole(mobile ? 'button' : 'menuitem', {name:/appearance/i}).click();
+    return panel;
+}
+
+async function captionBackgroundPixels(page) {
+    const points = await page.evaluate(() => {
+        const rects = Array.from(document.querySelectorAll('.invidious-caption-backgrounds > div'), el => el.getBoundingClientRect());
+        const [first, second] = rects;
+        const left = Math.max(first.left, second.left), right = Math.min(first.right, second.right);
+        const top = Math.max(first.top, second.top), bottom = Math.min(first.bottom, second.bottom);
+        if (bottom - top < 2) throw new Error('Fixture must retain overlapping caption backgrounds');
+        const x = Math.floor((left + right) / 2);
+        return [{x, y:Math.floor(Math.min(first.top, second.top) + 10)}, {x, y:Math.floor((top + bottom) / 2)}];
+    });
+    const screenshot = await page.screenshot();
+    return page.evaluate(async ({png, points}) => {
+        const image = new Image(); image.src = 'data:image/png;base64,' + png; await image.decode();
+        const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+        const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+        return points.map(({x,y}) => Array.from(context.getImageData(x,y,1,1).data).slice(0,3));
+    }, {png:screenshot.toString('base64'), points});
 }
 
 async function waitForDeArrowRequest(page, requests, id) {
@@ -1145,7 +1174,7 @@ for (const engine of engines) {
             await page.waitForFunction(() => player.currentTime() >= 0.9);
             assert.ok(await page.evaluate(() => player.currentTime() >= 0.9));
             assert.equal(await page.locator('.vjs-fullscreen-control').count(), 1);
-            assert.equal(await page.locator('button.vjs-captions-button').count(), 1);
+            assert.equal(await page.locator('button.vjs-captions-button').count(), 0);
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
             const playerBox = await page.locator('#player').boundingBox();
             const fullBox = await page.locator('.vjs-fullscreen-control').boundingBox();
@@ -1157,6 +1186,141 @@ for (const engine of engines) {
             assert.deepEqual(errors, []);
             await context.close();
         }
+    });
+
+    test(`${engine}: caption backgrounds honor appearance without darkening overlapping rows`, async () => {
+        for (const [fixture,touch,width] of [['watch-single',false,1440],['embed-mobile',false,1280],['embed-mobile',true,390]]) {
+            const {page, context, errors} = await pageFor(engine, {
+                fixture, touch, width, height:fixture==='embed-mobile'?500:900, realPlayer:true,
+                route:fixture==='embed-mobile'?'embed/2isYuQZMbdU':undefined,
+                captionVtt:'WEBVTT\n\n00:00.000 --> 00:02.000\nFirst caption row\nSecond caption row\n\n00:02.000 --> 00:03.000 size:35%\nA long caption that wraps onto several lines when the player becomes narrow enough to need wrapping.\n'
+            });
+            await page.evaluate(async () => {player.muted(true); await player.play();});
+            await page.waitForFunction(() => player.currentTime()>.1);
+            const mobile = await page.locator('.vjs-mobile-settings').count();
+            await page.locator(mobile ? '.vjs-mobile-settings' : '.vjs-desktop-settings').click();
+            const selection = page.locator(mobile ? '.mobile-player-settings' : '.player-settings-panel');
+            await selection.getByRole(mobile ? 'button' : 'menuitem', {name:/^Captions/}).click();
+            await selection.getByRole(mobile ? 'button' : 'menuitemradio', {name:'English',exact:true}).click();
+            await selection.getByRole('button', {name:'Close',exact:true}).click();
+            await page.locator('.vjs-text-track-cue').waitFor();
+            await page.evaluate(() => {player.pause();player.currentTime(.25);});
+            await page.waitForFunction(() => !player.seeking() && Math.abs(player.currentTime()-.25)<.01);
+            assert.equal(await page.locator('.vjs-captions-button').count(), 0);
+            const chrome = await page.evaluate(() => {
+                const bar = player.getChild('controlBar'), children = bar.children();
+                return children[children.indexOf(bar.getChild('Spacer')) + 1].hasClass('vjs-refresh-buffer');
+            });
+            assert.equal(chrome, true);
+            assert.equal(await page.locator('.invidious-caption-backgrounds').evaluate(el => el.style.opacity), '1');
+            // A solid backing makes the screenshot colors independent of video
+            // decoding, while invisible glyphs leave all text geometry intact.
+            const pixelStyle = await page.addStyleTag({content:'#player{background:#90a0b0!important}#player .vjs-tech,#player .vjs-poster,#player .vjs-control-bar{visibility:hidden!important}.vjs-text-track-cue>div{color:transparent!important;text-shadow:none!important}'});
+            const opacities = touch ? ['1','0.5','0'] : fixture==='embed-mobile' ? ['1','0','0.5'] : ['0','0.5','1'];
+            let geometry;
+            for (const color of ['#000','#F00']) for (const opacity of opacities) {
+                // Show the controls only while navigating the actual appearance menu.
+                await pixelStyle.evaluate(el => el.sheet.disabled=true);
+                const panel = await openCaptionAppearance(page);
+                await panel.locator('.vjs-font-percent select').selectOption('0.50');
+                await panel.locator('.vjs-bg-color > select').selectOption(color);
+                await panel.locator('.vjs-bg-opacity select').selectOption(opacity);
+                await panel.locator('.vjs-done-button').click();
+                await panel.getByRole('button', {name:'Close',exact:true}).click();
+                await pixelStyle.evaluate(el => el.sheet.disabled=false);
+                const pixels = await captionBackgroundPixels(page);
+                const rgb = color==='#000'?[0,0,0]:[255,0,0];
+                const expected = rgb.map((value,i) => Math.round(value*Number(opacity)+[144,160,176][i]*(1-Number(opacity))));
+                assert.deepEqual(pixels[0], pixels[1], `${fixture}: overlap has the same opacity`);
+                assert.ok(pixels[0].every((value,i) => Math.abs(value-expected[i])<=1), JSON.stringify({fixture,color,opacity,pixels,expected}));
+                const next = await page.locator('.vjs-text-track-cue > div').evaluate(el => Array.from(el.getClientRects(),rect=>({x:rect.x,y:rect.y,width:rect.width,height:rect.height})));
+                if (geometry) assert.deepEqual(next, geometry, 'appearance modes preserve row spacing');
+                geometry = next;
+                if (color==='#000' && opacity==='0.5') {
+                    await pixelStyle.evaluate(el=>el.sheet.disabled=true);
+                    await page.locator('#player').screenshot({path:path.join(artifacts,`${engine}-caption-backgrounds-semi-${touch?'touch':fixture}.png`)});
+                    await pixelStyle.evaluate(el=>el.sheet.disabled=false);
+                }
+            }
+            await pixelStyle.evaluate(el => el.remove());
+            await page.locator('#player').screenshot({path:path.join(artifacts,`${engine}-caption-backgrounds-${touch?'touch':fixture}.png`)});
+            await page.reload();
+            await page.waitForFunction(() => window.player && player.isReady_);
+            assert.equal(await page.evaluate(() => player.getChild('textTrackSettings').getValues().backgroundOpacity), opacities[opacities.length-1]);
+            assert.equal(await page.evaluate(() => player.getChild('textTrackSettings').getValues().backgroundColor), '#F00');
+            await page.evaluate(async () => {player.muted(true);await player.play();});
+            await page.evaluate(() => Array.from(player.textTracks()).forEach(track => {if (track.kind==='captions') track.mode='disabled';}));
+            await page.locator('#player').focus();
+            await page.keyboard.press('c');
+            await page.waitForFunction(() => document.querySelectorAll('.invidious-caption-backgrounds > div').length===2);
+            assert.equal(await page.locator('.invidious-caption-backgrounds').evaluate(el=>el.style.opacity), opacities[opacities.length-1]);
+            await page.evaluate(() => {player.pause();player.currentTime(.25);});
+            await page.keyboard.press('c');
+            await page.waitForFunction(() => !document.querySelector('.invidious-caption-backgrounds > div'));
+            await page.keyboard.press('c');
+            await page.locator('.vjs-text-track-cue').waitFor();
+            await page.evaluate(() => player.currentTime(2.25));
+            await page.waitForFunction(() => document.querySelector('.vjs-text-track-cue')?.textContent.startsWith('A long caption'));
+            await page.setViewportSize({width:touch?320:640,height:900});
+            await page.waitForFunction(() => {
+                const text = document.querySelector('.vjs-text-track-cue > div');
+                const shapes = Array.from(document.querySelectorAll('.invidious-caption-backgrounds > div'), el=>el.getBoundingClientRect());
+                return text.getClientRects().length>1 && Array.from(text.getClientRects()).every((rect,i) => shapes[i] && Math.abs(rect.x-shapes[i].x)<1 && Math.abs(rect.y-shapes[i].y)<1 && Math.abs(rect.width-shapes[i].width)<1);
+            });
+            await page.evaluate(() => player.currentTime(3.5));
+            await page.waitForFunction(() => !document.querySelector('.invidious-caption-backgrounds > div'));
+            assert.deepEqual(errors, []);
+            await page.evaluate(() => player.dispose());
+            await context.close();
+        }
+    });
+
+    test(`${engine}: separate caption cues composite above windows and follow fullscreen geometry`, async () => {
+        const {page, context, errors} = await pageFor(engine, {
+            fixture:'watch-single', realPlayer:true,
+            captionVtt:'WEBVTT\n\n00:00.000 --> 00:04.000\nFirst\n\n00:00.000 --> 00:04.000\nSecond\n'
+        });
+        await page.evaluate(async () => {
+            player.muted(true); await player.play();
+            Array.from(player.textTracks()).find(track=>track.label==='English').mode='showing';
+        });
+        await page.waitForFunction(() => document.querySelectorAll('.vjs-text-track-cue').length===2);
+        await page.evaluate(() => {player.pause();player.currentTime(.3);});
+        const panel = await openCaptionAppearance(page);
+        await panel.locator('.vjs-font-percent select').selectOption('4.00');
+        await panel.locator('.vjs-bg-color > select').selectOption('#F00');
+        await panel.locator('.vjs-bg-opacity select').selectOption('0.5');
+        await panel.locator('.vjs-window-color > select').selectOption('#00F');
+        await panel.locator('.vjs-window-opacity select').selectOption('1');
+        await panel.locator('.vjs-text-opacity select').selectOption('0.5');
+        await panel.locator('.vjs-done-button').click();
+        await panel.getByRole('button', {name:'Close',exact:true}).click();
+        assert.equal(await page.locator('.vjs-text-track-cue > div').first().evaluate(el=>getComputedStyle(el).color), 'rgba(255, 255, 255, 0.5)');
+        const textStyle = await page.addStyleTag({content:'.vjs-text-track-cue>div{color:transparent!important;text-shadow:none!important}'});
+        const pixels = await captionBackgroundPixels(page);
+        assert.deepEqual(pixels[0], pixels[1], 'separate overlapping cues have equal opacity');
+        assert.ok(pixels[0].every((value,i)=>Math.abs(value-[128,0,127][i])<=1), JSON.stringify(pixels));
+        await textStyle.evaluate(el=>el.remove());
+        await page.locator('#player').screenshot({path:path.join(artifacts,`${engine}-caption-backgrounds-separate-cues.png`)});
+        await page.evaluate(()=>player.userActive(true));
+        await page.locator('.vjs-fullscreen-control').click();
+        await page.waitForFunction(()=>player.isFullscreen());
+        await page.waitForFunction(()=>{
+            const texts=Array.from(document.querySelectorAll('.vjs-text-track-cue > div')).flatMap(el=>Array.from(el.getClientRects()));
+            const shapes=Array.from(document.querySelectorAll('.invidious-caption-backgrounds > div'),el=>el.getBoundingClientRect());
+            return texts.length===shapes.length && texts.every((rect,i)=>Math.abs(rect.x-shapes[i].x)<1&&Math.abs(rect.y-shapes[i].y)<1&&Math.abs(rect.width-shapes[i].width)<1);
+        });
+        await page.evaluate(()=>{player.exitFullscreen();});
+        await page.waitForFunction(()=>!player.isFullscreen());
+        const defaults = await openCaptionAppearance(page);
+        await defaults.locator('.vjs-default-button').click();
+        assert.equal(await page.locator('.invidious-caption-backgrounds').evaluate(el=>el.style.opacity), '1');
+        assert.equal(await page.locator('.invidious-caption-backgrounds').evaluate(el=>el.style.color), 'rgb(0, 0, 0)');
+        await defaults.locator('.vjs-done-button').click();
+        await defaults.getByRole('button', {name:'Close',exact:true}).click();
+        await page.evaluate(()=>player.dispose());
+        assert.deepEqual(errors, []);
+        await context.close();
     });
 
     test(`${engine}: buffer refresh reloads the selected source and restores playback`, async () => {

@@ -41,7 +41,6 @@ var options = {
             'progressControl',
             'remainingTimeDisplay',
             'Spacer',
-            'captionsButton',
             ...(video_data.params.quality === 'dash' && !video_data.params.listen ? [] : ['audioTrackButton','qualitySelector']),
             'playbackRateMenuButton',
             'fullscreenToggle'
@@ -253,7 +252,7 @@ refreshButton.addClass('vjs-refresh-buffer');
 refreshButton.controlText(player_data.refresh_buffer);
 refreshButton.on('click', player.refreshBuffer);
 var controlBar = player.getChild('controlBar');
-controlBar.addChild(refreshButton, {}, controlBar.children().indexOf(controlBar.getChild('captionsButton')));
+controlBar.addChild(refreshButton, {}, controlBar.children().indexOf(controlBar.getChild('Spacer')) + 1);
 
 player.on('error', function () {
     if (!currentPlayerWork()) return;
@@ -474,6 +473,66 @@ function storageStatus() {
     }
     return preferenceStatus;
 }
+
+// Composite all caption backgrounds together so overlapping line fragments
+// retain one opacity, independently of text and the caption window.
+(function () {
+    var display = player.getChild('textTrackDisplay');
+    if (!display) return;
+    var root = display.el(), update = display.updateDisplay, clear = display.clearDisplay;
+    var backgrounds = document.createElement('div');
+    backgrounds.className = 'invidious-caption-backgrounds';
+    backgrounds.setAttribute('aria-hidden', 'true');
+    root.classList.add('invidious-caption-composited');
+
+    function drawBackgrounds() {
+        if (player.isDisposed() || !root.isConnected) return;
+        var settings = player.getChild('textTrackSettings');
+        if (!settings) return;
+        var values = settings.getValues(), origin = root.getBoundingClientRect(), boxes = [];
+        root.querySelectorAll('.vjs-text-track-cue > div').forEach(function (text) {
+            var radius = getComputedStyle(text).borderRadius;
+            Array.from(text.getClientRects()).forEach(function (rect) {
+                if (rect.width && rect.height) boxes.push({
+                    left: rect.left - origin.left, top: rect.top - origin.top,
+                    width: rect.width, height: rect.height, radius: radius
+                });
+            });
+        });
+        var fragments = document.createDocumentFragment();
+        boxes.forEach(function (box) {
+            var fragment = document.createElement('div');
+            fragment.style.left = box.left + 'px'; fragment.style.top = box.top + 'px';
+            fragment.style.width = box.width + 'px'; fragment.style.height = box.height + 'px';
+            fragment.style.borderRadius = box.radius;
+            fragments.appendChild(fragment);
+        });
+        backgrounds.style.color = values.backgroundColor || '#000';
+        backgrounds.style.opacity = values.backgroundOpacity === undefined ? '1' : values.backgroundOpacity;
+        backgrounds.replaceChildren(fragments);
+        root.prepend(backgrounds);
+    }
+
+    display.clearDisplay = function () {
+        backgrounds.replaceChildren();
+        return clear.apply(this, arguments);
+    };
+    display.updateDisplay = function () {
+        var result = update.apply(this, arguments);
+        drawBackgrounds();
+        return result;
+    };
+    // The display also changes height when the playback controls fade away.
+    var resize = window.ResizeObserver ? new ResizeObserver(drawBackgrounds) : null;
+    if (resize) resize.observe(root);
+    if (document.fonts) document.fonts.addEventListener('loadingdone', drawBackgrounds);
+    player.one('dispose', function () {
+        if (resize) resize.disconnect();
+        if (document.fonts) document.fonts.removeEventListener('loadingdone', drawBackgrounds);
+        display.updateDisplay = update; display.clearDisplay = clear;
+        backgrounds.remove(); root.classList.remove('invidious-caption-composited');
+    });
+})();
 
 var captionSettings = player.getChild('textTrackSettings');
 if (captionSettings) {
