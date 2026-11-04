@@ -13,6 +13,11 @@ module Invidious::Routes::Verification
     # No Cloudflare permissions on ordinary pages, admin pages, or the API.
     env.response.headers["Content-Security-Policy"] = "default-src 'none'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; connect-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
     env.response.headers["Referrer-Policy"] = "no-referrer"
+    # Edge clearance is independent of the optional instance Turnstile policy.
+    # Do not read policy/readiness or emit a backend completion from this page.
+    if env.params.query["client"]? == "native-cloudflare"
+      return render "src/invidious/views/cloudflare_verification.ecr"
+    end
     destination = Protection.safe_return(env.params.query["return"]?)
     native = env.params.query["client"]? == "native"
     policy = Protection.settings

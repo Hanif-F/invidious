@@ -46,6 +46,8 @@
     "This form has expired. Review it and save again.": "Formulir ini telah kedaluwarsa. Tinjau dan simpan kembali.",
     "Bot protection settings saved.": "Pengaturan perlindungan bot disimpan.",
     "verify_heading": "Verifikasi akses",
+    "verify_cloudflare_heading": "Verifikasi Cloudflare",
+    "verify_cloudflare_checking": "Menunggu aplikasi mengonfirmasi akses Cloudflare…",
     "verify_explanation": "Selesaikan pemeriksaan ini untuk menjelajah dan memutar video. Akun tidak diperlukan.",
     "verify_disabled": "Verifikasi saat ini dinonaktifkan.",
     "verify_loading": "Memuat verifikasi…",

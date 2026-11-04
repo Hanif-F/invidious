@@ -752,6 +752,14 @@ comma-separated features without additional server endpoints.
 
 ## Instance access verification (Turnstile)
 
+`GET /verify?client=native-cloudflare` is a separate, private/no-store Cloudflare
+handoff page. It needs no backend policy/provider readiness and issues no backend
+token or completion event. Native clients confirm browser-issued clearance using
+`GET /api/v1/verification`, then open `/verify?client=native` separately if backend
+verification remains required. Existing native/browser contracts are unchanged;
+deploy the server addition before clients that use the new mode. No migration or
+new account scopes are required.
+
 An administrator can enable Turnstile for all browsing and playback, including
 signed-in accounts. An account token does not bypass this gate. Protection is
 initially disabled; unchanged Android clients cannot use an enabled instance.

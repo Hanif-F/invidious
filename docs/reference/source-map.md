@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **456 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **458 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -527,11 +527,13 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | [src/invidious/views/add_playlist_items.ecr](../../src/invidious/views/add_playlist_items.ecr) | add playlist items |
 | [src/invidious/views/admin/bot_protection.ecr](../../src/invidious/views/admin/bot_protection.ecr) | bot protection |
 | [src/invidious/views/admin/settings.ecr](../../src/invidious/views/admin/settings.ecr) | settings |
+| [src/invidious/views/admin/settings_form.ecr](../../src/invidious/views/admin/settings_form.ecr) | settings form |
 | [src/invidious/views/admin/standalone_shell.ecr](../../src/invidious/views/admin/standalone_shell.ecr) | standalone shell |
 | [src/invidious/views/channel.ecr](../../src/invidious/views/channel.ecr) | channel |
 | [src/invidious/views/channel_clips.ecr](../../src/invidious/views/channel_clips.ecr) | channel clips |
 | [src/invidious/views/channel_search.ecr](../../src/invidious/views/channel_search.ecr) | channel search |
 | [src/invidious/views/clip_unavailable.ecr](../../src/invidious/views/clip_unavailable.ecr) | clip unavailable |
+| [src/invidious/views/cloudflare_verification.ecr](../../src/invidious/views/cloudflare_verification.ecr) | cloudflare verification |
 | [src/invidious/views/community.ecr](../../src/invidious/views/community.ecr) | community |
 | [src/invidious/views/components/ai-filter-empty.ecr](../../src/invidious/views/components/ai-filter-empty.ecr) | ai filter empty |
 | [src/invidious/views/components/ai-filter-status.ecr](../../src/invidious/views/components/ai-filter-status.ecr) | ai filter status |

@@ -1,0 +1,8 @@
+<% verification_preferences = env.get?("preferences").try(&.as(Preferences)) || Preferences.from_json("{}"); locale = verification_preferences.locale %>
+<!doctype html>
+<html lang="<%= HTML.escape(locale) %>" dir="<%= I18n.locale_is_rtl?(locale) ? "rtl" : "ltr" %>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><%= I18n.translate(locale, "verify_cloudflare_heading") %> - Invidious</title>
+<link rel="stylesheet" href="/css/foundation.css?v=<%= ASSET_COMMIT %>"><link rel="stylesheet" href="/css/verification.css?v=<%= ASSET_COMMIT %>">
+</head><body class="<%= verification_preferences.dark_mode == "dark" ? "dark" : verification_preferences.dark_mode == "light" ? "light" : "no" %>-theme"><main class="verification-panel" id="main-content">
+<header><span class="brand">Invidious</span><h1 dir="auto"><%= I18n.translate(locale, "verify_cloudflare_heading") %></h1></header>
+<p dir="auto" role="status" aria-live="polite"><%= I18n.translate(locale, "verify_cloudflare_checking") %></p>
+</main></body></html>

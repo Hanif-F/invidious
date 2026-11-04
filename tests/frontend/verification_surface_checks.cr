@@ -1,4 +1,9 @@
 # D7 standalone views use synthetic public configuration and no policy/provider IO.
+def standalone_cloudflare_fixture(mode, locale = "en-US")
+  env = fixture_env("/verify?client=native-cloudflare", mode, locale: locale)
+  Invidious::Routes::Verification.page(env).as(String)
+end
+
 def standalone_verification_fixture(mode, locale = "en-US", native = false, enabled = true, ready = true)
   env = fixture_env("/verify", mode, locale: locale)
   policy = Invidious::BotProtection::Settings.new(enabled, 12, 1_i64)
@@ -25,6 +30,7 @@ end
 def write_verification_surface_fixtures(output)
   {"light", "dark", "rtl"}.each do |variant|
     mode, locale = variant == "rtl" ? {"dark", "ar"} : {variant, "en-US"}
+    File.write("#{output}/d7-verify-cloudflare-#{variant}.html", standalone_cloudflare_fixture(mode, locale))
     {"browser" => {false, true, true}, "native" => {true, true, true}, "disabled" => {true, false, true}, "unconfigured" => {false, true, false}}.each do |name, settings|
       File.write("#{output}/d7-verify-#{name}-#{variant}.html", standalone_verification_fixture(mode, locale, *settings))
     end
@@ -37,4 +43,5 @@ def write_verification_surface_fixtures(output)
     File.write("#{output}/d7-verify-admin-failed-#{variant}.html", standalone_bot_admin_fixture(mode, locale, false, true))
   end
   File.write("#{output}/d7-verify-native-id.html", standalone_verification_fixture("light", "id", true))
+  File.write("#{output}/d7-verify-cloudflare-id.html", standalone_cloudflare_fixture("light", "id"))
 end

@@ -37,7 +37,13 @@ It does not itself issue an edge clearance cookie or provide a broad request rat
 limiter. When a zone also uses Managed Challenge, the edge can block requests
 before this server sees them, including native bootstrap and verification APIs.
 
-Mobivious can display the same-origin native verification page, obtain browser
+Mobivious uses `/verify?client=native-cloudflare` for a dedicated Cloudflare
+handoff page, then `/verify?client=native` in a separate dialog only if backend
+Turnstile is required. The Cloudflare page renders without consulting backend
+policy/readiness, has no widget or completion event and never tells the visitor
+that backend verification is disabled or to return to the app. Deploy this
+backward-compatible server addition before distributing the updated client.
+Mobivious can obtain browser
 `cf_clearance`, and confirm it through a native discovery request. The cookie,
 backend signed pass and account bearer are independent credentials. The client
 uses the browser's user agent and limits clearance to the exact instance origin.

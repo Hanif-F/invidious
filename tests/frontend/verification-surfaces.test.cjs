@@ -23,10 +23,30 @@ async function setup(engine,screen,variant='light',options={}) {
   return fs.existsSync(file)?route.fulfill({path:file}):route.fulfill({status:404,body:''});
  });
  await page.goto('https://invidious.test'+(options.url||(screen.startsWith('admin')?'/admin/bot-protection':'/verify')));
- if(!options.api&&options.javascript!==false&&!screen.startsWith('admin')&&screen!=='disabled'&&screen!=='unconfigured')await page.waitForFunction(()=>window.widgetOptions);
+ if(!options.api&&options.javascript!==false&&!screen.startsWith('admin')&&!['disabled','unconfigured','cloudflare'].includes(screen))await page.waitForFunction(()=>window.widgetOptions);
  return {context,page,requests,errors};
 }
 for(const engine of engines) {
+ test(`${engine}: Cloudflare handoff is localized and independent of backend policy in ordinary and API-only builds`,async()=>{
+  for(const variant of ['light','dark','rtl','id'])for(const javascript of [false,true]) {
+   const {context,page,requests,errors}=await setup(engine,'cloudflare',variant,{javascript,url:'/verify?client=native-cloudflare'});
+   assert.match(await page.locator('h1').innerText(),/Cloudflare/);
+   if(variant==='id')assert.match(await page.locator('[role=status]').innerText(),/Menunggu aplikasi/);
+   for(const width of [360,1280]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);}
+   assert.equal(await page.locator('script,#turnstile-widget,button,a').count(),0);
+   assert.doesNotMatch(await page.locator('body').innerText(),/disabled|return to the app|does not currently require/);
+   assert.equal(requests.filter(r=>r.method==='POST'||r.url.hostname==='challenges.cloudflare.com').length,0);
+   if(javascript)assert.deepEqual(await page.evaluate(()=>bridgeEvents),[]);
+   if(javascript&&variant==='light')await page.screenshot({path:path.join(artifacts,`${engine}-cloudflare.png`),fullPage:true});
+   assert.deepEqual(errors,[]);await context.close();
+  }
+  for(const mode of ['light','dark']) {
+   const {context,page,requests}=await setup(engine,'cloudflare',mode,{api:true,fixture:`d7-api-cloudflare-${mode}.html`,url:'/verify?client=native-cloudflare'});
+   assert.equal(await page.locator('script,#turnstile-widget,.app-sidebar').count(),0);
+   assert.equal(requests.filter(r=>r.method==='POST'||r.url.hostname==='challenges.cloudflare.com').length,0);
+   assert.deepEqual(await page.evaluate(()=>bridgeEvents),[]);await context.close();
+  }
+ });
  test(`${engine}: D7 standalone verification/admin Light Dark RTL and no-JavaScript geometry`,async()=>{
   for(const variant of ['light','dark','rtl'])for(const screen of ['browser','native','unconfigured','admin','admin-missing','admin-failed','notice-iframe','notice-denied']) {
    const {context,page,requests,errors}=await setup(engine,screen,variant,{javascript:false});

@@ -56,7 +56,7 @@ assume the `tests/frontend` directory unless stated otherwise.
 | `qol.test.cjs` | Explicit navigation/filtering, Load more/Back, category saves, real-player docking and transcript following |
 | `overhaul.test.cjs` | Desktop shell, categories, discovery, collections, watch, utilities, clips, dedicated editors, enhancement coexistence and repeated setup |
 | `account-surfaces.test.cjs` | Ordinary account/consent/session/delete/TV and seven-source import/export forms |
-| `verification-surfaces.test.cjs` | Challenge/admin/recovery forms, no-JS/API-only paths, confidentiality and cached/late callbacks |
+| `verification-surfaces.test.cjs` | Challenge/admin/recovery forms, separate localized Cloudflare handoff, no-JS/API-only paths, confidentiality and cached/late callbacks |
 | `status-surfaces.test.cjs` | Privacy/licenses/messages/errors, no-JS reading, safe reports, read-only recovery and vendor/LibreJS attribution |
 | `embed-surfaces.test.cjs` | Actual shared player, progressive/audio/DASH/HLS decode, masking, captions, iframe geometry and private recovery |
 | `embed-lifecycle.test.cjs` | Next-item ownership, exact decimal cursors, duplicate series, explicit read retry and cached/profile/disposal callbacks |

@@ -189,9 +189,27 @@ def complete(base, token = "success", transport = "native", origin = "https://in
     headers: HTTP::Headers{"Content-Type" => "application/json", "Origin" => origin})
 end
 
+def check_cloudflare_handoff(base)
+  before = BotTestEndpoint.provider_calls
+  page = request(base, "/verify?client=native-cloudflare")
+  check(page.status_code == 200 && page.body.includes?("Cloudflare verification"), "Cloudflare handoff unavailable")
+  check(page.headers["Cache-Control"] == "private, no-store", "Cloudflare handoff was cacheable")
+  check(!page.cookies.has_key?("IV_VERIFIED"), "Cloudflare handoff issued a backend verification pass")
+  ["verification-config", "verification.js", "turnstile-widget", "turnstile/v0", "return to the app", "disabled"].each do |forbidden|
+    check(!page.body.includes?(forbidden), "Cloudflare handoff included backend verification: #{forbidden}")
+  end
+  check(BotTestEndpoint.provider_calls == before, "Cloudflare handoff contacted Siteverify")
+end
+
 begin
   check(request(base, "/watch").status_code == 200, "Disabled gate blocked content")
+  check_cloudflare_handoff(base)
   policy = Protection.save(true, 12)
+  check_cloudflare_handoff(base)
+  previous_key = CONFIG.turnstile_site_key
+  CONFIG.turnstile_site_key = ""
+  check_cloudflare_handoff(base)
+  CONFIG.turnstile_site_key = previous_key
   count = BotTestEndpoint.upstream_calls
   paths = %w[/ /watch?v=test /watch/test /w/test /v/test /e/test /shorts/test /live/test /clip/test /embed/test /search?q=test /results /channel/UCtest /playlist?list=PLtest /feed/channel/UCtest /feed/private?token=secret /api/v1/videos/test /api/v1/captions/test /api/v1/auth/preferences /api/manifest/dash/id/test /api/manifest/dash/id/videoplayback /api/manifest/hls_playlist/test /videoplayback /videoplayback/id/test /latest_version /download /companion /companion/ /companion/videoplayback /vi/test/hqdefault.jpg /sb/test/storyboard3_L0/0.jpg /s_p/test/a /yts/img/a /ggpht/test /pl_c/test/a /tvfilm_banner/test/a /new-route]
   paths.each do |path|

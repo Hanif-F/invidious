@@ -98,6 +98,10 @@ Dir.mkdir_p(output)
   html = render "src/invidious/views/verification.ecr"
   raise "API-only verification offers an unavailable Privacy route" if html.includes?("href=\"/privacy")
   File.write("#{output}/d7-api-verify-#{mode}.html", html)
+  edge_env = recovery_env("/verify?client=native-cloudflare", mode)
+  html = Invidious::Routes::Verification.page(edge_env).as(String)
+  raise "API-only Cloudflare handoff lost private headers" unless edge_env.response.headers["Cache-Control"] == "private, no-store"
+  File.write("#{output}/d7-api-cloudflare-#{mode}.html", html)
   error_env = recovery_env("/api/private-sentinel?token=private-sentinel", mode)
   html = Errors.error_template_helper(error_env, 500, Exception.new("private-sentinel")).as(String)
   raise "API-only error exposed a credential or unavailable browsing action" if html.includes?("private-sentinel") || html.includes?("href=\"/search") || html.includes?("app-sidebar")

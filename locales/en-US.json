@@ -46,6 +46,8 @@
     "This form has expired. Review it and save again.": "This form has expired. Review it and save again.",
     "Bot protection settings saved.": "Bot protection settings saved.",
     "verify_heading": "Verify access",
+    "verify_cloudflare_heading": "Cloudflare verification",
+    "verify_cloudflare_checking": "Waiting for the app to confirm Cloudflare access…",
     "verify_explanation": "Complete this check to browse and play videos. No account is required.",
     "verify_disabled": "Verification is currently disabled.",
     "verify_loading": "Loading verification…",
