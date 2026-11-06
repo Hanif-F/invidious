@@ -17,6 +17,7 @@ def check_mobile_security
   data = JSON.parse(login.get("test_result").as(String))
   login_time = Time.utc.to_unix
   token = data["accessToken"].as_s
+  check_music_playback(token, email, sid)
   check_mobile_dearrow(token, email, sid)
   check_mobile_sponsorblock(token, email, sid)
   check_mobile_preferences(token, email, sid)
@@ -100,6 +101,84 @@ def check_mobile_security
     end
   end
   puts "Native sign-in, least privilege, expiry, revocation, settings preservation and history API passed"
+end
+
+def check_music_playback(token, email, sid)
+  positions = Invidious::Database::PlaybackPositions
+  videos = Invidious::Database::Videos
+  music, ordinary, empty, cold, new_music = {"musicresume", "otherresume", "emptyresume", "coldresume1", "newmusicvid"}
+  raw = JSON.parse(File.read("mocks/video/regular_mrbeast.player.json")).as_h
+  raw.merge!(JSON.parse(File.read("mocks/video/regular_mrbeast.next.json")).as_h)
+  info = Invidious::Videos::Parser.parse_video_info(music, raw)
+  info["version"] = JSON::Any.new(Video::SCHEMA_VERSION.to_i64)
+  info["streamingData"] = JSON.parse(%({"formats":[{"itag":18,"mimeType":"video/mp4","quality":"medium","url":"https://fixture.googlevideo.com/videoplayback"}],
+    "adaptiveFormats":[{"itag":140,"mimeType":"audio/mp4","bitrate":128000,"url":"https://fixture.googlevideo.com/videoplayback"}]}))
+  {music => "  mUsIc  ", ordinary => "Entertainment", empty => "", new_music => "Music"}.each do |id, genre|
+    video = Video.new({id: id, info: info.dup, updated: Time.utc})
+    video.genre = genre
+    videos.insert(video)
+  end
+  {music, ordinary, cold}.each { |id| positions.upsert(email, id, 42) }
+  music_timestamp = positions.select(email, music).not_nil![:updated_at]
+  ordinary_timestamp = positions.select(email, ordinary).not_nil![:updated_at]
+  path = "/api/v1/auth/playback"
+
+  {"/watch?v=", "/embed/"}.each do |page|
+    separator = page.starts_with?("/watch") ? "&" : "?"
+    {nil, sid}.each do |browser_sid|
+      response = security_request("GET", "#{page}#{music}#{separator}save_player_pos=1&t=30&quality=medium&listen=1", sid: browser_sid)
+      check(response.response.status_code == 200, "Music playback route #{page} returned #{response.response.status_code}")
+      data = JSON.parse(response.get("test_result").as(String).match(/<script id="video_data"[^>]*>(.*?)<\/script>/m).not_nil![1])
+      check(data["skip_playback_position"].as_bool && !data["playback_sync"].as_bool && data["playback_position"].raw.nil?, "Music route sent saved progress")
+      check(data["params"]["listen"].as_bool && data["params"]["video_start"].as_f == 30, "Music route lost audio-only playback or the explicit timestamp")
+    end
+    response = security_request("GET", "#{page}#{ordinary}#{separator}quality=medium", sid: sid)
+    data = JSON.parse(response.get("test_result").as(String).match(/<script id="video_data"[^>]*>(.*?)<\/script>/m).not_nil![1])
+    check(!data["skip_playback_position"].as_bool && data["playback_sync"].as_bool && data["playback_position"].as_i == 42, "Ordinary video lost saved progress")
+  end
+  bulk = security_request("GET", path, bearer: token)
+  payload = JSON.parse(bulk.get("test_result").as(String))
+  check(payload["positions"] == JSON.parse(%({"#{ordinary}":42})), "Bulk playback exposed Music or an unclassified legacy position")
+  check(payload["watched"].as_a.includes?(JSON::Any.new(music)), "Music playback failed to record watch history")
+  check(positions.select(email, music).not_nil![:resume_eligible] == false, "Bulk playback failed to record Music's eligibility")
+  check(positions.select(email, ordinary).not_nil![:resume_eligible] == true, "Bulk playback failed to record ordinary eligibility")
+  check(positions.select(email, music).not_nil![:updated_at] == music_timestamp, "Genre classification modified Music's timestamp")
+  check(positions.select(email, ordinary).not_nil![:updated_at] == ordinary_timestamp, "Genre classification modified the ordinary timestamp")
+  check(security_request("GET", "#{path}/#{music}", bearer: token).response.status_code == 404, "Single playback read exposed Music")
+
+  csrf = Invidious::Helpers::Tokens.generate_response(sid, {":watch_ajax"}, HMAC_KEY)
+  body = URI::Params.encode({"csrf_token" => csrf, "position" => "99"})
+  ajax = security_request("POST", "/watch_ajax?action=set_progress&redirect=false&id=#{music}", sid: sid, body: body, content_type: "application/x-www-form-urlencoded")
+  check(ajax.response.status_code == 200, "Music save from an older browser tab did not acknowledge")
+  {music, new_music, ordinary, empty}.each do |id|
+    check(security_request("PUT", "#{path}/#{id}", bearer: token, body: %({"position":99})).response.status_code == 204, "Valid playback save did not acknowledge")
+  end
+  check(positions.select(email, music).not_nil![:position_seconds] == 42, "A save overwrote the archived Music position")
+  check(positions.select(email, new_music).nil?, "Music save inserted a new row")
+  check(positions.select(email, cold).not_nil![:resume_eligible].nil?, "Bulk read verified an uncached row")
+
+  {music, ordinary, empty}.each { |id| videos.delete(id) }
+  check(security_request("GET", "#{path}/#{music}", bearer: token).response.status_code == 404, "Music position reappeared after cache eviction")
+  {ordinary, empty}.each do |id|
+    result = security_request("GET", "#{path}/#{id}", bearer: token)
+    check(result.response.status_code == 200 && JSON.parse(result.get("test_result").as(String))["position"].as_i == 99, "Verified position lost after cache eviction")
+  end
+  bulk = security_request("GET", path, bearer: token)
+  check(JSON.parse(bulk.get("test_result").as(String))["positions"] == JSON.parse(%({"#{ordinary}":99,"#{empty}":99})), "Bulk positions regressed after cache eviction")
+  check(security_request("GET", "#{path}/#{cold}", bearer: token).response.status_code == 503, "Unclassified cold position was exposed when metadata failed")
+  check(security_request("PUT", "#{path}/#{cold}", bearer: token, body: %({"position":99})).response.status_code == 503, "Failed genre lookup acknowledged a save")
+  check(positions.select(email, cold).not_nil![:position_seconds] == 42, "Failed lookup overwrote existing unclassified progress")
+  puts "Music playback eligibility, web routes, legacy entries, cache eviction, and metadata failures passed"
+ensure
+  {music, ordinary, empty, cold, new_music}.each do |id|
+    next unless id
+    positions.try &.delete(email, id)
+    videos.try &.delete(id)
+  end
+  user = Invidious::Database::Users.select!(email: email)
+  {music, ordinary}.each do |id|
+    Invidious::Database::Users.mark_unwatched(user, id) if id
+  end
 end
 
 def check_mobile_preferences(token, email, sid)

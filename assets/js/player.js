@@ -604,7 +604,7 @@ if (video_data.premiere_timestamp && Math.round(new Date() / 1000) < video_data.
     player.getChild('bigPlayButton').hide();
 }
 
-if (!video_data.clip && video_data.params.save_player_pos) {
+if (!video_data.clip && !video_data.skip_playback_position && video_data.params.save_player_pos) {
     const url = new URL(location);
     const hasTimeParam = url.searchParams.has('t') || url.searchParams.has('start') || url.searchParams.has('time_continue');
     const rememberedTime = video_data.playback_sync ? (video_data.playback_position || 0) : get_video_time();
@@ -683,7 +683,7 @@ if (!video_data.clip && video_data.params.save_player_pos) {
         window.addEventListener('online', function () { flushPosition(false); },{signal:playerWorkLife.signal});
     }
 }
-else if (!video_data.clip) remove_all_video_times();
+else if (!video_data.clip && !video_data.skip_playback_position) remove_all_video_times();
 
 if (video_data.params.autoplay) {
     var bpb = player.getChild('bigPlayButton');

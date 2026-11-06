@@ -60,6 +60,7 @@
     "playlist_occurrence" => env.get?("playlist_occurrence").try(&.as(String)),
     "plid" => plid,
     "length_seconds" => video.length_seconds.to_f,
+    "skip_playback_position" => video.music_genre?,
     "playback_sync" => playback_sync,
     "playback_position" => playback_position,
     "csrf_token" => env.get?("csrf_token").try(&.as(String)) || "",

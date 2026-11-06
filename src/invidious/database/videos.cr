@@ -54,7 +54,9 @@ module Invidious::Database::Videos
   def select_metadata(ids : Array(String)) : Hash(String, JSON::Any)
     metadata = {} of String => JSON::Any
     return metadata if ids.empty?
-    PG_DB.query_all("SELECT id, info FROM videos WHERE id = ANY($1)", ids, as: {String, String}).each do |id, info|
+    PG_DB.query_all("SELECT id, info FROM videos WHERE id = ANY($1)", ids, as: {String, String?}).each do |id, info|
+      next unless info
+
       begin
         metadata[id] = JSON.parse(info)
       rescue JSON::ParseException

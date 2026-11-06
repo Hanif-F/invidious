@@ -4,6 +4,7 @@ require "../../src/invidious/database/migration"
 require "../../src/invidious/database/migrator"
 require "../../src/invidious/database/migrations/0011_create_playback_positions_table"
 require "../../src/invidious/database/migrations/0012_create_blocked_channels_table"
+require "../../src/invidious/database/migrations/0026_playback_resume_eligibility"
 require "../../src/invidious/database/blocked_channels"
 require "./playback_positions"
 

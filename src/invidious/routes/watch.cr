@@ -107,7 +107,7 @@ module Invidious::Routes::Watch
       Invidious::Database::Users.mark_watched(user.as(User), id, video)
     end
 
-    playback_sync = !native_clip && !preview_clip && !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now
+    playback_sync = !native_clip && !preview_clip && !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now && !video.music_genre?
     env.response.headers["Cache-Control"] = "private, no-store" if playback_sync
     playback_position = playback_sync ? Invidious::Database::PlaybackPositions.select(user.not_nil!.email, id).try(&.[:position_seconds]) : nil
     chat_timing_ms = user && video.live_chat_replay? ? Invidious::Database::ChatTimingOffsets.select(user.email, id) : 0
@@ -288,7 +288,7 @@ module Invidious::Routes::Watch
       position = env.params.body["position"]?.try &.to_i?
       return Errors.error_json(400, "Invalid playback position.") unless position && position >= 0
 
-      Invidious::Database::PlaybackPositions.upsert(user.email, id, position)
+      Invidious::PlaybackProgress.save(user.email, id, position)
     when "clear_progress"
       return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
 
@@ -303,6 +303,8 @@ module Invidious::Routes::Watch
       env.response.content_type = "application/json"
       "{}"
     end
+  rescue ex : Invidious::PlaybackProgress::MetadataUnavailable
+    Errors.error_json(503, ex)
   end
 
   def self.clip(env)

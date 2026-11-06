@@ -135,6 +135,15 @@ class SecurityTestEndpoint
                Invidious::Routes::API::V1::DeArrow.submit(env, DEARROW_TEST_CLIENT)
              when "/api/v1/auth/history"
                Invidious::Routes::API::V1::Authenticated.get_history(env)
+             when "/api/v1/auth/playback"
+               Invidious::Routes::API::V1::Authenticated.get_playback_positions(env)
+             when .starts_with?("/api/v1/auth/playback/")
+               env.params.url["id"] = env.request.path.split('/').last
+               if env.request.method == "PUT"
+                 Invidious::Routes::API::V1::Authenticated.set_playback_position(env)
+               else
+                 Invidious::Routes::API::V1::Authenticated.get_playback_position(env)
+               end
              when "/api/v1/auth/subscriptions/search"
                Invidious::Routes::API::V1::Authenticated.search_subscriptions(env)
              when "/api/v1/auth/blocked_channels"
@@ -163,7 +172,9 @@ class SecurityTestEndpoint
              when "/preferences"
                env.request.method == "GET" ? Invidious::Routes::PreferencesRoute.show(env) : Invidious::Routes::PreferencesRoute.update(env)
              when "/watch"
-               Invidious::Routes::Watch.enhancements(env)
+               Invidious::Routes::Watch.handle(env)
+             when "/watch_ajax"
+               Invidious::Routes::Watch.mark_watched(env)
              when "/preferences/sponsorblock/channels"
                env.request.method == "GET" ? Invidious::Routes::SponsorBlockPreferences.show(env) : Invidious::Routes::SponsorBlockPreferences.update(env)
              when "/preferences/spoilers/channels"
@@ -194,6 +205,9 @@ class SecurityTestEndpoint
                Invidious::Routes::Embed.redirect(env)
              when "/embed/videoseries"
                env.params.url["id"] = "videoseries"
+               Invidious::Routes::Embed.show(env)
+             when .starts_with?("/embed/")
+               env.params.url["id"] = env.request.path.split('/').last
                Invidious::Routes::Embed.show(env)
              when .starts_with?("/api/v1/playlists/")
                env.params.url["plid"] = env.request.path.split('/').last

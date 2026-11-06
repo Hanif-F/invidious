@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.playback_positions
     video_id text NOT NULL,
     position_seconds integer NOT NULL CHECK (position_seconds >= 0),
     updated_at timestamptz NOT NULL DEFAULT now(),
+    resume_eligible boolean,
     PRIMARY KEY (email, video_id)
 );
 

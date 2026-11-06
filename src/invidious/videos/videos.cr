@@ -179,6 +179,14 @@ struct Video
     info["genreUcid"].try &.as_s? ? "/channel/#{info["genreUcid"]}" : nil
   end
 
+  def self.music_genre?(genre : String?) : Bool
+    !!genre && genre.strip.compare("Music", case_insensitive: true) == 0
+  end
+
+  def music_genre? : Bool
+    Video.music_genre?(info["genre"]?.try(&.as_s?))
+  end
+
   def vr? : Bool?
     return {"EQUIRECTANGULAR", "MESH"}.includes? self.projection_type
   end

@@ -148,6 +148,8 @@ Native clips use immutable stored boundaries and a local timeline while still de
 
 Without account sync, existing profile-local fallback is available. Local state is never silently copied from guest to account. Switching accounts invalidates stale tabs/callbacks. Physical mobile process-unload behavior remains a manual test, described in [frontend test notes](../tests/frontend/README.md#playback-sync).
 
+Videos with the `Music` genre start at the beginning on watch pages and embeds unless the link specifies a timestamp. The web player skips saved positions, and the authenticated playback API treats Music as having no saved position. A valid Music save returns 204. Bulk reads omit legacy positions until their eligibility can be verified. Native apps can still use positions stored on the device.
+
 ## Archived chat replay
 
 Replay is read-only and offered when `liveChatReplay` is true and the video is neither live nor upcoming. The public replay API returns messages, removals and an opaque continuation, with an offset in milliseconds. Initial requests obtain a replay continuation; subsequent requests reuse it. Invalid IDs, negative offsets, oversized continuations or offsets beyond duration are rejected. No replay returns 404; upstream failures return 503 without requiring playback to stop.

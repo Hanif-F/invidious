@@ -250,18 +250,19 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.content_type = "application/json"
     env.response.headers["Cache-Control"] = "private, no-store"
     user = env.get("user").as(User)
-    positions = Invidious::Database::PlaybackPositions.select_all(user.email)
+    positions = Invidious::PlaybackProgress.select_all(user.email)
     {positions: positions.to_h { |entry| {entry[:video_id], entry[:position_seconds]} }, watched: user.watched}.to_json
   end
 
   def self.get_playback_position(env)
     env.response.content_type = "application/json"
+    env.response.headers["Cache-Control"] = "private, no-store"
     user = env.get("user").as(User)
     id = env.params.url["id"]
 
     return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
 
-    if position = Invidious::Database::PlaybackPositions.select(user.email, id)
+    if position = Invidious::PlaybackProgress.select(user.email, id)
       return {
         videoId:   position[:video_id],
         position:  position[:position_seconds],
@@ -270,6 +271,8 @@ module Invidious::Routes::API::V1::Authenticated
     end
 
     Errors.error_json(404, "Playback position does not exist.")
+  rescue ex : Invidious::PlaybackProgress::MetadataUnavailable
+    Errors.error_json(503, ex)
   end
 
   def self.set_playback_position(env)
@@ -284,8 +287,10 @@ module Invidious::Routes::API::V1::Authenticated
       return Errors.error_json(400, "Invalid playback position.")
     end
 
-    Invidious::Database::PlaybackPositions.upsert(user.email, id, position.to_i32)
+    Invidious::PlaybackProgress.save(user.email, id, position.to_i32)
     env.response.status_code = 204
+  rescue ex : Invidious::PlaybackProgress::MetadataUnavailable
+    Errors.error_json(503, ex)
   end
 
   def self.delete_playback_position(env)

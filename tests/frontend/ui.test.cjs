@@ -2456,6 +2456,42 @@ for (const engine of engines) {
 
 
 for (const engine of engines) {
+    test(`${engine}: Music ignores saved positions on watch and embed while honoring timestamps`, async () => {
+        for (const [fixture, route] of [['watch-single', 'watch?v=2isYuQZMbdU'], ['embed-mobile', 'embed/2isYuQZMbdU']]) {
+            for (const sync of [true, false]) {
+                const separator = route.includes('?') ? '&' : '?';
+                const {page, context, errors, requests} = await pageFor(engine, {
+                    fixture, route: sync ? route : route + separator + 't=1',
+                    realPlayer: true,
+                    initScript: () => localStorage.setItem('iv:browser:v2:guest:save_player_pos',
+                        JSON.stringify({'2isYuQZMbdU': 2, abcdefghijk: 123})),
+                    videoData: {
+                        skip_playback_position: true, playback_sync: sync, playback_position: 2,
+                        params: {save_player_pos: true, video_start: sync ? 0 : 1}
+                    }
+                });
+                await page.waitForFunction(() => window.player && player.isReady_);
+                const startedAt = await page.evaluate(async () => {
+                    player.muted(true);
+                    await player.play();
+                    player.pause();
+                    return player.currentTime();
+                });
+                assert.ok(Math.abs(startedAt - (sync ? 0 : 1)) < 0.5, `${route} started at ${startedAt}`);
+                const saved = await page.evaluate(() => {
+                    player.trigger('playing');
+                    player.currentTime(3);
+                    for (const event of ['timeupdate', 'seeked', 'pause', 'ended']) player.trigger(event);
+                    return helpers.storage.get('save_player_pos');
+                });
+                assert.deepEqual(saved, {'2isYuQZMbdU': 2, abcdefghijk: 123});
+                assert.equal(requests.some(url => /watch_ajax.*(?:set_progress|clear_progress)/.test(url)), false);
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+    });
+
     test(`${engine}: synced playback restores progress after seeking back from completion`, async () => {
         const { page, context, errors } = await pageFor(engine, {
             fixture: 'watch-single', realPlayer: true,

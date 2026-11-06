@@ -4,16 +4,16 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync(require('node:path').join(__dirname, '../../assets/js/player.js'), 'utf8');
-const start = source.indexOf('if (!video_data.clip && video_data.params.save_player_pos) {');
+const start = source.lastIndexOf('\nif (', source.indexOf('    const rememberedTime ='));
 const end = source.indexOf('\nif (video_data.params.autoplay)', start);
 assert.notEqual(start, -1, "Resume implementation must be included in this harness");
-function session(saved = 492, clip = false, save = true, sync = true) {
+function session(saved = 492, clip = false, save = true, sync = true, skip = false) {
     const events = {}, windowEvents = {}, documentEvents = {}, requests = [];
     let time = 0, now = 20000, cleared = false;
     let active = true, available = true;
     const document = {body:{dataset:{}},visibilityState: 'visible', addEventListener: (e, cb) => documentEvents[e] = cb};
     const context = {
-        video_data: {clip: clip ? {} : null, params: {save_player_pos: save}, playback_sync: sync, playback_position: saved, length_seconds: 2000},
+        video_data: {clip: clip ? {} : null, params: {save_player_pos: save}, playback_sync: sync, playback_position: saved, length_seconds: 2000, skip_playback_position: skip},
         URL, location: 'https://test/watch?v=abcdefghijk', Date: {now: () => now}, isFinite,
         player: {on: (e, cb) => events[e] = cb, currentTime: () => time, ended: () => false},
         window: {addEventListener: (e, cb) => windowEvents[e] = cb}, document,
@@ -33,6 +33,24 @@ test('native clips never restore, save or clear full-video progress', () => {
         assert.equal(s.time(), 0); assert.deepEqual(s.events, {});
         assert.equal(s.requests.length, 0); assert.equal(s.cleared(), false);
     }
+});
+test('Music skips account and local positions without clearing local progress for other videos', () => {
+    for (const sync of [true, false]) {
+        for (const save of [true, false]) {
+            const s = session(492, false, save, sync, true);
+            assert.equal(s.time(), 0);
+            assert.deepEqual(s.events, {});
+            assert.deepEqual(s.windowEvents, {});
+            assert.deepEqual(s.documentEvents, {});
+            assert.deepEqual(s.requests, []);
+            assert.equal(s.cleared(), false);
+        }
+    }
+    const ordinary = session(492, false, true, false);
+    assert.equal(ordinary.time(), 492);
+    ordinary.setTime(600);
+    ordinary.events.timeupdate();
+    assert.deepEqual(ordinary.requests, [{action: 'local', position: 600}]);
 });
 test('startup does not overwrite restored progress; periodic save survives a fresh load', () => {
     const s = session();
