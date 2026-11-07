@@ -4619,6 +4619,51 @@ for (const engine of engines) {
         }
     });
 
+    test(`${engine}: channel spoilers leave watch navigation responsive with whitespace in titles`, async () => {
+        let releaseDeArrow;
+        const dearrowGate = new Promise(resolve => { releaseDeArrow = resolve; });
+        const {page, context, errors, requests} = await pageFor(engine, {
+            fixture: 'spoiler-cards-inactive', realPlayer: true, dearrowGate, dearrowTitle: 'Community  title ',
+            initScript: () => {
+                window.titleMutations = 0;
+                const observer = new MutationObserver(records => {
+                    window.titleMutations += records.filter(record => record.target.nodeName === 'TITLE').length;
+                    // Break a regression's loop so it fails the assertion without wedging the browser.
+                    if (window.titleMutations >= 12) {
+                        observer.disconnect();
+                        window.InvidiousSpoilers.dispose();
+                    }
+                });
+                observer.observe(document, {childList: true, subtree: true});
+            }
+        });
+        const previousURL = page.url();
+        await context.route('**/watch?v=2isYuQZMbdU', route => route.fulfill({
+            contentType: 'text/html', path: path.join(generated, 'watch-spoiler-whitespace.html')
+        }));
+        try {
+            await page.goto('https://invidious.test/watch?v=2isYuQZMbdU');
+            assert.ok(await page.evaluate(() => window.titleMutations < 12), 'original title mutations must settle');
+            const title = page.locator('head > title').first();
+            assert.equal(await title.textContent(), 'Original title  - Invidious');
+            assert.equal(await page.title(), 'Original title - Invidious');
+
+            await finishDeArrowPrefetch(page, requests, '2isYuQZMbdU', releaseDeArrow);
+            assert.ok(await page.evaluate(() => window.titleMutations < 12), 'replacement title mutations must settle');
+            assert.equal(await title.textContent(), 'Community  title  - Invidious');
+            assert.equal(await page.title(), 'Community title - Invidious');
+            await page.locator('.watch-heading .dearrow-reveal').click();
+            assert.equal(await title.textContent(), 'Original title  - Invidious');
+            assert.ok(await page.evaluate(() => window.titleMutations < 12), 'restored title mutations must settle');
+            await page.goBack();
+            assert.equal(page.url(), previousURL);
+            assert.deepEqual(errors, []);
+        } finally {
+            releaseDeArrow();
+            await context.close();
+        }
+    });
+
     test(`${engine}: channel spoilers keep indefinite watch, embed and duplicate queue reveals functional`, async () => {
         const queue = JSON.parse(fs.readFileSync(path.join(generated, 'queue-spoiler-indefinite.json')));
         const watch = await pageFor(engine, {fixture: 'watch-spoiler-indefinite', queue, realPlayer: true, dearrowTitle: 'Clear indefinite title'});

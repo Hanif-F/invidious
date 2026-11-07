@@ -17,9 +17,16 @@
     function state(element,kind) {
         return decision(element.dataset.spoilerChannel,element.dataset.spoilerPublished ? Number(element.dataset.spoilerPublished) : NaN,kind);
     }
+    function setDocumentTitle(value) {
+        var display = value + ' - Invidious';
+        var titleElement = document.head.querySelector('title');
+        // The document.title getter collapses whitespace. Compare the raw text
+        // so the observer does not keep reacting to its own writes.
+        if (!titleElement || titleElement.textContent !== display) document.title = display;
+    }
     function updateMain(value) {
         mainDisplay = value;
-        if (document.title !== value+' - Invidious') document.title = value+' - Invidious';
+        setDocumentTitle(value);
         if (window.player_data) window.player_data.title = value;
         if (window.shareOptions) window.shareOptions.title = value;
         document.querySelectorAll('.vjs-overlay [data-spoiler-title]').forEach(function (element) { text(element,value); });
@@ -137,7 +144,7 @@
         if (!config.page) return;
         var titleState = decision(config.page.channel,config.page.published,'title'), imageState = decision(config.page.channel,config.page.published,'thumbnail');
         var display = titleState.hidden ? mainDisplay || titleState.label : mainDisplay || config.page.title;
-        if (display && document.title !== display+' - Invidious') document.title = display+' - Invidious';
+        if (display) setDocumentTitle(display);
         document.querySelectorAll('meta').forEach(function (element) {
             var name = element.getAttribute('property') || element.getAttribute('name');
             if (['og:title','twitter:title'].includes(name)) attribute(element,'content',titleState.hidden ? titleState.label : config.page.title);
@@ -212,7 +219,7 @@
         bindPlayer:function (apply) { playerMask = apply; metadata(); },displayTitle:updateMain,
         player:function (data,channel,published) {
             var titleState = decision(channel,published,'title'), imageState = decision(channel,published,'thumbnail');
-            if (titleState.hidden) { data.title = titleState.label; document.title = data.title+' - Invidious'; }
+            if (titleState.hidden) { data.title = titleState.label; setDocumentTitle(data.title); }
             if (imageState.hidden) data.thumbnail = '';
             data.spoiler_thumbnail_hidden = imageState.hidden; return data;
         }

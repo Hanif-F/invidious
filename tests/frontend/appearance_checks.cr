@@ -103,7 +103,7 @@ def check_appearance_preferences
   raise "API color mode lost" unless JSON.parse(Invidious::Routes::API::V1::Authenticated.get_preferences(env))["dark_mode"] == "dark"
   # Empty supporting tables let the production exporter run without upstream calls.
   PG_DB.exec("CREATE TABLE playlists (title TEXT, id TEXT, author TEXT, description TEXT, video_count INTEGER, created TEXT, updated TEXT, privacy TEXT, \"index\" TEXT)")
-  PG_DB.exec("CREATE TABLE playback_positions (email TEXT, video_id TEXT, position_seconds INTEGER, updated_at TEXT)")
+  PG_DB.exec("CREATE TABLE playback_positions (email TEXT, video_id TEXT, position_seconds INTEGER, updated_at TEXT, resume_eligible BOOLEAN)")
   PG_DB.exec("CREATE TABLE chat_timing_offsets (email TEXT, video_id TEXT, offset_ms INTEGER, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (email, video_id))")
   timing_env = HTTP::Server::Context.new(HTTP::Request.new("PUT", "/api/v1/auth/chat_timing/2isYuQZMbdU",
     HTTP::Headers{"Content-Type" => "application/json"}, {offsetMs: -1_000}.to_json), HTTP::Server::Response.new(IO::Memory.new))

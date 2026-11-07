@@ -1,8 +1,8 @@
-def spoiler_env(path, guest = false, dearrow = false, days : Int32? = 7)
+def spoiler_env(path, guest = false, dearrow = false, days : Int32? = 7, channel = fixture_video.ucid)
   env = guest ? fixture_env(path) : signed_in_env(path)
   prefs = env.get("preferences").as(Preferences)
   prefs.dearrow_enabled = dearrow
-  prefs.channel_spoiler_settings[fixture_video.ucid] = Invidious::ChannelSpoilers::Rule.new("Studio <North>", true, true, days) unless guest
+  prefs.channel_spoiler_settings[channel] = Invidious::ChannelSpoilers::Rule.new("Studio <North>", true, true, days) unless guest
   env.set "preferences", prefs
   env.get?("user").try { |user| user.as(User).preferences = prefs }
   env
@@ -108,6 +108,10 @@ def check_spoiler_preferences(output)
     File.write("#{output}/spoiler-cards-legacy-#{dearrow ? "dearrow" : "original"}.html", html.sub(old_config, legacy.to_json.gsub("<", "\\u003c")))
   end
   File.write("#{output}/watch-spoiler-indefinite.html", watch_fixture(spoiler_env("/watch?v=#{video.id}", dearrow: true, days: nil), "PLfixture", supplied_video: video, account: true))
+  whitespace_video = fixture_video
+  whitespace_video.info["title"] = JSON::Any.new("Original title ")
+  whitespace_env = spoiler_env("/watch?v=#{whitespace_video.id}", dearrow: true, channel: "UC" + "z" * 22)
+  File.write("#{output}/watch-spoiler-whitespace.html", watch_fixture(whitespace_env, nil, supplied_video: whitespace_video, account: true))
   File.write("#{output}/embed-spoiler-indefinite.html", watch_fixture(spoiler_env("/embed/#{video.id}", dearrow: true, days: nil), nil, true, supplied_video: video))
   File.write("#{output}/queue-spoiler-indefinite.json", {playlistHtml: Invidious::Playlists::Playlists.template_playlist(queue, false, spoiler_env: spoiler_env("/", days: nil)), index: 1, nextVideo: "00000000000"}.to_json)
   inactive = signed_in_env("/feed/popular")
