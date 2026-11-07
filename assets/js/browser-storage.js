@@ -6,6 +6,7 @@ window.InvidiousStorage = (function () {
     var element = document.getElementById('browser-profile');
     var context = element ? JSON.parse(element.textContent) : {scope: 'guest'};
     var scope = /^(guest|[0-9a-f]{64})$/.test(context.scope) ? context.scope : 'guest';
+    var markerName = 'IV_BROWSER_PROFILE_V2';
     var prefix = 'iv:browser:v2:';
     var activeKey = prefix + 'active';
     var purgeKey = prefix + 'purge';
@@ -126,15 +127,42 @@ window.InvidiousStorage = (function () {
         return clean;
     }
 
+    function recoverProfile() {
+        window.dispatchEvent(new Event('browserprofilechange'));
+        var notice = document.getElementById('browser-profile-recovery');
+        if (notice) {
+            notice.querySelector('button').addEventListener('click', function () {
+                if (context.posted) {
+                    var destination = new URL(location.href);
+                    // Force a GET document navigation even when the POST URL has a fragment.
+                    destination.hash = '';
+                    location.replace(destination.href);
+                } else location.reload();
+            });
+            // Leave manual recovery available if the browser cancels the automatic reload.
+            notice.hidden = false;
+        }
+
+        if (context.posted) return;
+        try {
+            var state = history.state;
+            if (state && state.ivBrowserProfileRefreshed) return;
+            // This history entry survives reload, including when storage is denied.
+            history.replaceState(Object.assign({}, state, {ivBrowserProfileRefreshed: true}), '');
+        } catch (_) { return; }
+        setTimeout(function () { location.reload(); }, 0);
+    }
+
     function current(issued) {
         if (stale) return false;
-        var signals = [cookie('IV_BROWSER_PROFILE'), rawGet(backend(false), activeKey), issued];
+        var signals = [cookie(markerName), rawGet(backend(false), activeKey), issued];
         if (signals.some(function (active) {
             return typeof active === 'string' && /^(guest|[0-9a-f]{64})$/.test(active) && active !== scope;
         })) {
             stale = true;
-            window.dispatchEvent(new Event('browserprofilechange'));
-            setTimeout(function () { location.reload(); }, 0);
+            // Invalidate owners after they have loaded when the mismatch is detected in the head.
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', recoverProfile, {once: true});
+            else recoverProfile();
             return false;
         }
         return true;
@@ -255,7 +283,7 @@ window.InvidiousStorage = (function () {
         writeCookie('IV_BROWSER_PURGE', '', true);
     }
     // A freshly rendered document is authoritative when cookies are disabled.
-    var marker = cookie('IV_BROWSER_PROFILE');
+    var marker = cookie(markerName);
     if (!marker || marker === scope) { try { if (oldStore) oldStore.setItem(activeKey, scope); } catch (_) {} }
     else current();
     window.addEventListener('storage', function (event) {

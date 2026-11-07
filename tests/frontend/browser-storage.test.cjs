@@ -7,6 +7,7 @@ const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../../assets/js/browser-storage.js'), 'utf8');
 const alice = 'a'.repeat(64), bob = 'b'.repeat(64), video = 'abcdefghijk', channel = 'UC' + 'c'.repeat(22);
 const prefix = 'iv:browser:v2:';
+const marker = 'IV_BROWSER_PROFILE_V2';
 const plain = value => value === undefined ? value : JSON.parse(JSON.stringify(value));
 
 function memoryStorage() {
@@ -21,11 +22,17 @@ function memoryStorage() {
 function browser() {
     const local = memoryStorage(), cookies = new Map(), writes = [];
     function page(scope = 'guest', options = {}) {
-        if (options.marker !== false) cookies.set('IV_BROWSER_PROFILE', options.marker || scope);
+        if (options.marker !== false) cookies.set(marker, options.marker || scope);
         const events = {}, docEvents = {}, timers = new Map(); let timerId = 0;
         const session = options.session || memoryStorage();
+        const refresh = new EventTarget();
+        const notice = {hidden: true, querySelector() { return refresh; }};
         const document = {
-            getElementById(id) { return id === 'browser-profile' ? {textContent: JSON.stringify({scope, saveError: 'Save failed'})} : null; },
+            getElementById(id) {
+                if (id === 'browser-profile') return {textContent: JSON.stringify({scope, saveError: 'Save failed'})};
+                if (id === 'browser-profile-recovery') return notice;
+                return null;
+            },
             addEventListener(name, callback) { (docEvents[name] ||= []).push(callback); },
             dispatchEvent(event) { for (const callback of docEvents[event.type] || []) callback(event); },
             querySelector() { return null; }
@@ -49,10 +56,14 @@ function browser() {
             Object.defineProperty(window, name, {get() { if (options.denied) throw new Error('Denied'); return value; }});
         }
         let reloads = 0;
-        const context = vm.createContext({window, document, location: {protocol: 'https:', hostname: 'invidious.test', reload() { reloads++; }},
+        const history = {state: null, replaceState(state) {
+            if (options.historyDenied) throw new Error('History denied');
+            this.state = state;
+        }};
+        const context = vm.createContext({window, document, history, location: {protocol: 'https:', hostname: 'invidious.test', reload() { reloads++; }},
             Event: function (type) { this.type = type; }, setTimeout(callback) { timers.set(++timerId,callback); return timerId; }, clearTimeout(id) { timers.delete(id); }});
         vm.runInContext(source, context);
-        return {api: window.InvidiousStorage, context, session, document, events,
+        return {api: window.InvidiousStorage, context, session, document, events, notice, refresh,
             dispatch(name, event = {type: name}) { window.dispatchEvent({...event, type: name}); },
             flush() { while (timers.size) { const [id, callback] = timers.entries().next().value; timers.delete(id); callback(); } }, reloads: () => reloads};
     }
@@ -123,7 +134,20 @@ test('stale tabs reject writes, callbacks and guest preference updates after swi
     assert.equal(changed, 1);
     guest.flush();
     assert.equal(guest.reloads(), 1);
+    assert.equal(guest.notice.hidden, false, 'manual refresh remains available if navigation is canceled');
     assert.equal(b.cookies.has('PREFS'), false);
+});
+
+test('a stale page offers manual refresh when it cannot record an automatic attempt', () => {
+    const b = browser(), p = b.page(alice, {historyDenied: true});
+    assert.equal(p.notice.hidden, true);
+    b.page(bob);
+    assert.equal(p.api.local.set('dark_mode', 'dark'), false);
+    p.flush();
+    assert.equal(p.reloads(), 0);
+    assert.equal(p.notice.hidden, false);
+    p.refresh.dispatchEvent(new Event('click'));
+    assert.equal(p.reloads(), 1);
 });
 
 test('storage events and session continuations are filtered by profile and backend', () => {
@@ -234,7 +258,7 @@ test('guest speed preserves form-encoded spaces and literal plus signs', () => {
 test('late response cookies cannot override a newer active profile, and response headers guard denied storage', () => {
     const b = browser(), old = b.page(alice);
     b.page(bob);
-    b.cookies.set('IV_BROWSER_PROFILE', alice); // A request started before Bob signed in.
+    b.cookies.set(marker, alice); // A request started before Bob signed in.
     assert.equal(old.api.isCurrent(), false);
     const denied = b.page(alice, {denied: true, cookieDenied: true});
     assert.equal(denied.api.checkResponse({headers: {get: () => bob}}), false);
@@ -481,6 +505,6 @@ test('persisted channel reads follow durable changes and remain profile guarded'
     assert.deepEqual(plain(p.api.local.readStored('sponsorblock_channel_overrides')),value);
     b.local[prefix+alice+':sponsorblock_channel_overrides']=JSON.stringify({});
     assert.deepEqual(plain(p.api.local.readStored('sponsorblock_channel_overrides')),{});
-    b.cookies.set('IV_BROWSER_PROFILE',bob);
+    b.cookies.set(marker,bob);
     assert.equal(p.api.local.readStored('sponsorblock_channel_overrides'),undefined);
 });

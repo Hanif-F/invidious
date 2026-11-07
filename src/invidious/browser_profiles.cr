@@ -4,7 +4,7 @@ require "openssl/hmac"
 module Invidious::BrowserProfiles
   extend self
 
-  MARKER = "IV_BROWSER_PROFILE"
+  MARKER = "IV_BROWSER_PROFILE_V2"
   PURGE  = "IV_BROWSER_PURGE"
 
   def account_scope(email : String) : String
@@ -30,12 +30,12 @@ module Invidious::BrowserProfiles
     env.response.headers["X-Invidious-Browser-Profile"] = profile
     return if env.request.cookies[MARKER]?.try(&.value) == profile && !env.response.cookies.has_key?(MARKER)
     Authentication.no_store(env)
-    env.response.cookies[MARKER] = cookie(env, MARKER, profile)
+    env.response.cookies[MARKER] = cookie(env, MARKER, profile, host_only: true)
   end
 
-  def cookie(env, name : String, value : String, clear = false) : HTTP::Cookie
+  def cookie(env, name : String, value : String, clear = false, *, host_only = false) : HTTP::Cookie
     domain = Authentication.cookie_domain(env)
-    HTTP::Cookie.new(name: name, value: value, domain: domain, path: "/",
+    HTTP::Cookie.new(name: name, value: value, domain: host_only ? nil : domain, path: "/",
       expires: clear ? Time.unix(0) : Time.utc + 2.years,
       secure: User::Cookies.secure?(domain), http_only: false, samesite: HTTP::Cookie::SameSite::Lax)
   end

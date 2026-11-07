@@ -759,6 +759,107 @@ function profileFrom(html) { return JSON.parse(html.match(/<script id="browser-p
 function withProfile(html, scope) {
     return html.replace(/(<script id="browser-profile"[^>]*>)([\s\S]*?)(<\/script>)/,(_,start,json,end)=>start+JSON.stringify({...JSON.parse(json),scope})+end);
 }
+
+function profileDocument(body, scope) {
+    return {contentType: 'text/html', body, headers: {'Set-Cookie': 'IV_BROWSER_PROFILE_V2=' + scope + '; Path=/; Secure; SameSite=Lax'}};
+}
+
+for (const engine of engines) {
+    test(engine + ': conflicting legacy profile cookies leave saved settings usable', async () => {
+        const body = fixtureHTML('qol-browse'), scope = profileFrom(body);
+        const {page, context, requests, errors} = await setup(engine, 'browse', 'light', {
+            fixture: 'qol-browse', reply: entry => entry.navigation ? profileDocument(body, scope) : null
+        });
+        await page.evaluate(() => InvidiousStorage.local.set('invidious_player_volume', .45));
+        await context.addCookies([
+            {name: 'IV_BROWSER_PROFILE', value: 'guest', domain: 'invidious.test', path: '/feed', secure: true},
+            {name: 'IV_BROWSER_PROFILE', value: scope, url: 'https://invidious.test/'}
+        ]);
+        await page.reload();
+        assert.deepEqual(await page.evaluate(() => ({
+            legacyMarkers: document.cookie.split('; ').filter(pair => pair.startsWith('IV_BROWSER_PROFILE=')).length,
+            current: InvidiousStorage.isCurrent(),
+            volume: InvidiousStorage.local.get('invidious_player_volume')
+        })), {legacyMarkers: 2, current: true, volume: .45});
+        assert.equal(await page.locator('#browser-profile-recovery').isVisible(), false);
+        assert.equal(requests.filter(entry => entry.navigation).length, 2);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(engine + ': persistent profile mismatch refreshes once and leaves manual recovery', async () => {
+        const body = fixtureHTML('qol-browse'), scope = profileFrom(body);
+        let marker = scope, documents = 0;
+        const {page, context, errors} = await setup(engine, 'browse', 'light', {
+            fixture: 'qol-browse',
+            init: () => {
+                window.profileChanges = 0;
+                window.addEventListener('browserprofilechange', () => window.profileChanges++);
+            },
+            // Stop serving the mismatch if the test has already exceeded its expected navigation count.
+            reply: entry => entry.navigation ? profileDocument(body, ++documents > 4 ? scope : marker) : null
+        });
+        const browseId = await page.evaluate(() => history.state.ivBrowse);
+        marker = 'guest';
+        await Promise.all([page.waitForEvent('domcontentloaded'), page.evaluate(() =>
+            InvidiousStorage.checkResponse(new Response(null, {headers: {'X-Invidious-Browser-Profile': 'guest'}}))
+        )]);
+        const refresh = page.locator('#browser-profile-recovery').getByRole('button', {name: 'Refresh'});
+        await refresh.waitFor();
+        assert.equal(documents, 2);
+        assert.equal(await page.evaluate(() => history.state.ivBrowse), browseId);
+        assert.deepEqual(await page.evaluate(() => ({
+            changes: window.profileChanges,
+            current: InvidiousStorage.isCurrent(),
+            wrote: InvidiousStorage.local.set('invidious_player_volume', .45)
+        })), {changes: 1, current: false, wrote: false});
+        assert.equal(await page.locator('.brand').isVisible(), true);
+
+        await Promise.all([page.waitForEvent('domcontentloaded'), refresh.click()]);
+        await refresh.waitFor();
+        assert.equal(documents, 3);
+        marker = scope;
+        await Promise.all([page.waitForEvent('domcontentloaded'), refresh.click()]);
+        assert.equal(await page.evaluate(() => InvidiousStorage.isCurrent()), true);
+        assert.equal(await refresh.isVisible(), false);
+        assert.equal(documents, 4);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(engine + ': stale private search recovers with a GET and never replays its POST', async () => {
+        const get = fixtureHTML('qol-search-true-1'), scope = profileFrom(get);
+        const post = fixtureHTML('qol-search-post');
+        const {page, context, requests, errors} = await setup(engine, 'browse', 'light', {
+            fixture: 'qol-search-true-1', url: '/search?region=US',
+            reply(entry) {
+                if (!entry.navigation) return;
+                return entry.method === 'POST' ? profileDocument(post, 'guest') : profileDocument(get, scope);
+            }
+        });
+        await Promise.all([page.waitForEvent('domcontentloaded'), page.evaluate(() => {
+            const search = document.getElementById('searchbox');
+            search.form.action = '/search?region=US#results';
+            search.value = 'private search';
+            search.form.submit();
+        })]);
+        const refresh = page.locator('#browser-profile-recovery').getByRole('button', {name: 'Refresh'});
+        await refresh.waitFor();
+        assert.equal(requests.filter(entry => entry.navigation).length, 2);
+        assert.equal(await page.evaluate(() => InvidiousStorage.isCurrent()), false);
+        await Promise.all([page.waitForEvent('domcontentloaded'), refresh.click()]);
+        assert.equal(await page.evaluate(() => InvidiousStorage.isCurrent()), true);
+        assert.deepEqual(requests.filter(entry => entry.navigation).map(entry =>
+            [entry.method, entry.url.pathname + entry.url.search, entry.body.get('q')]), [
+            ['GET', '/search?region=US', null],
+            ['POST', '/search?region=US', 'private search'],
+            ['GET', '/search?region=US', null]
+        ]);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+}
+
 for(const engine of engines) {
     test(`${engine}: D3 browse to watch, Back and reload reconstruct GET pages and scroll`,async()=>{
         const scope=profileFrom(fixtureHTML('qol-browse'));
@@ -1667,7 +1768,7 @@ for(const engine of engines) {
             if(entry.navigation&&entry.url.pathname==='/watch') {
                 if(entry.url.searchParams.has('profile'))profile=entry.url.searchParams.get('profile')==='bob'?'bob':'account';
                 const body=fs.readFileSync(path.join(generated,`d5-${profile}-light.html`),'utf8'),scope=JSON.parse(body.match(/<script id="browser-profile"[^>]*>([^]*?)<\/script>/)[1]).scope;
-                return{contentType:'text/html',headers:{'Set-Cookie':`IV_BROWSER_PROFILE=${scope}; Path=/; Secure; SameSite=Lax`},body};
+                return profileDocument(body,scope);
             }
         }});
         await page.evaluate(()=>{InvidiousStorage.local.set('watch_layout','theater');player.invidiousDockEnabled=true;InvidiousStorage.local.set('player_dock_enabled',true);});

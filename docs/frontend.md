@@ -44,7 +44,7 @@ Pinned/minified player plugins coexist with these first-party files. Their inven
 
 ## Storage and profile isolation
 
-`InvidiousStorage` owns application localStorage/sessionStorage/cookie access. Keys use `iv:browser:v2:<guest or opaque account HMAC>:<setting>`. Server context, `IV_BROWSER_PROFILE` and response headers identify the active profile. The ID grants no authorization. A delayed response or background tab must pass current-profile checks before mutating storage/account state.
+`InvidiousStorage` owns application localStorage/sessionStorage/cookie access. Keys use `iv:browser:v2:<guest or opaque account HMAC>:<setting>`. Server context, the host-only `IV_BROWSER_PROFILE_V2` cookie and response headers identify the active profile. The ID grants no authorization. A delayed response or background tab must pass current-profile checks before mutating storage/account state. Stale GET pages can reload automatically once per history entry. A persistent mismatch, unavailable history or a POST page offers manual refresh.
 
 Recognized persistent legacy values migrate only into guest storage without replacing newer guest values. Old continuation/notification locks are discarded. Login/logout/signup never copy guest settings into an account; logout preserves all profiles. Account deletion publishes a purge marker and clears only that account's browser state. Native bearer requests do not switch the browser's active profile.
 

@@ -222,8 +222,8 @@ def queue_fixture(thin = false)
   {playlistHtml: Invidious::Playlists::Playlists.template_playlist(playlist, false, thin), nextVideo: "nextvideo01", index: 3}.to_json
 end
 
-def signed_in_env(path)
-  env = fixture_env(path)
+def signed_in_env(path, method = "GET")
+  env = fixture_env(path, method: method)
   user = Invidious::User.new({updated: Time.utc, notifications: [] of String, subscriptions: [] of String, email: "viewer@example.test", username: "viewer@example.test", credential_version: 1, preferences: env.get("preferences").as(Preferences), password: nil, token: "fixture", watched: [] of String, feed_needs_update: false})
   env.set "user", user
   env.set "csrf_token", "fixture-token"
@@ -686,6 +686,9 @@ File.write("#{output}/qol-browse-end.html", browse_fixture(signed_in_env("/feed/
     File.write("#{output}/qol-search-#{private_search}-#{page}.html", qol_search_fixture(env, page, page == 2))
   end
 end
+posted_search = signed_in_env("/search", "POST")
+posted_search.get("preferences").as(Preferences).search_privacy = true
+File.write("#{output}/qol-search-post.html", qol_search_fixture(posted_search, 1))
 require "./qol_checks"
 check_qol_preferences
 

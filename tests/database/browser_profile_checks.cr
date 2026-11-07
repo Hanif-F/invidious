@@ -4,6 +4,7 @@ def check_browser_profiles
   password = "separate browser profiles test password"
   accounts = Invidious::Database::Accounts
   registration = CONFIG.registration_enabled
+  domain = CONFIG.domain
   CONFIG.registration_enabled = true
   alice_sid = accounts.register("ProfileAlice", password, Preferences.from_json(%({"dark_mode":"dark","speed":1.5})))
   bob_sid = accounts.register("ProfileBob", password, Preferences.from_json("{}"))
@@ -14,12 +15,15 @@ def check_browser_profiles
   check(alice.matches?(/\A[0-9a-f]{64}\z/) && alice != bob, "Browser profiles expose account identities or collide")
   guest_prefs = URI.encode_www_form(%({"dark_mode":"light","speed":0.75}))
   cookie_header = "PREFS=#{guest_prefs}; SEARCH_SHOW_MEMBER_VIDEOS=1; SEARCH_INCLUDE_BLOCKED_#{bob}=1"
-  env = context("GET", "/preferences", cookies: "SID=#{alice_sid}; #{cookie_header}")
+  env = context("GET", "/preferences", cookies: "SID=#{alice_sid}; #{cookie_header}; IV_BROWSER_PROFILE=guest; IV_BROWSER_PROFILE=#{alice}")
+  CONFIG.domain = "example.test"
   Invidious::Routes::BeforeAll.handle(env)
+  CONFIG.domain = domain
   check(env.get("browser_profile").as(String) == alice && env.get("preferences").as(Preferences).speed == 1.5, "Guest preferences overrode account data")
   check(!Invidious::Frontend::SearchPreferences.apply(env, HTTP::Params.new, false), "Account inherited guest search settings")
   check(Invidious::Frontend::SubscriptionManager.preference(env) == "alphabetical", "Account did not start with default sorting")
-  check(env.response.cookies[Invidious::BrowserProfiles::MARKER].value == alice, "Server did not publish browser profile")
+  marker = env.response.cookies[Invidious::BrowserProfiles::MARKER]
+  check(marker.name == "IV_BROWSER_PROFILE_V2" && marker.value == alice && marker.domain.nil?, "Server did not publish a host-only browser profile")
   check(env.response.headers["X-Invidious-Browser-Profile"] == alice, "Browser response omitted profile header")
 
   # Signing in preserves the guest cookie and does not copy it into the account.
@@ -74,4 +78,5 @@ def check_browser_profiles
   puts "Browser profile defaults, guest preservation, account isolation, credential rotation, bearer compatibility and deletion passed"
 ensure
   CONFIG.registration_enabled = registration unless registration.nil?
+  CONFIG.domain = domain
 end

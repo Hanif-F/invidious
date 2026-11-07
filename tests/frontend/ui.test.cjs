@@ -277,7 +277,7 @@ async function pageFor(engine, options = {}) {
             if (options.extraQuality) body = body.replace('</video>', '<source src="/latest_version?id=2isYuQZMbdU&itag=44" type="video/webm" label="high"></video>');
             if (options.sponsorblock) body = body.replace(/(<script id="player_data"[^>]*>)([\s\S]*?)(<\/script>)/, (_, start, data, end) => start + JSON.stringify({...JSON.parse(data), sponsorblock: {...JSON.parse(data).sponsorblock, ...options.sponsorblock}}).replace(/</g, '\\u003c') + end);
             return route.fulfill({ contentType: 'text/html', body,
-                headers: {'set-cookie': 'IV_BROWSER_PROFILE=' + scope + '; Path=/; SameSite=Lax; Secure'} });
+                headers: {'set-cookie': 'IV_BROWSER_PROFILE_V2=' + scope + '; Path=/; SameSite=Lax; Secure'} });
         }
         if (url.pathname === '/preferences' && url.searchParams.get('format') === 'runtime') return route.fulfill({status:410,json:{error:'Reload to apply settings'}});
         if (url.pathname.startsWith('/api/v1/sponsorblock/')) return route.fulfill({ status: options.sponsorblockError ? 503 : 200, contentType: 'application/json', body: JSON.stringify({segments: options.sponsorblockSegments || []}) });

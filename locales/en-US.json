@@ -1047,6 +1047,7 @@
     "clips_done": "Done",
     "clips_copy_fallback": "Select and copy the link below.",
     "browser_save_error": "These settings could not be saved. Your changes will only last for this page.",
+    "browser_profile_refresh": "Refresh to continue with the current browser profile.",
     "sb_channels_guest": "Channel settings are saved in this browser for signed-out use.",
     "sb_channels_guest_js": "Enable JavaScript to save channel settings in this browser, or sign in to use account settings.",
     "spoilers_settings": "Channel title and thumbnail settings",
