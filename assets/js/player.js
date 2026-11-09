@@ -733,44 +733,21 @@ function disableVideoThumbnails() {
     if (!videoThumbnailsInitialized || !player.vttThumbnails.detach) return;
     var data = player.vttThumbnails.vttData;
     player.vttThumbnails.detach();
-    // Reuse the successful page-local VTT read after a deliberate reveal.
+    // Keep the page-local VTT data across suspension and resumption.
     if (data) player.vttThumbnails.vttData = data;
 }
 if (!player_data.spoiler_thumbnail_hidden) enableVideoThumbnails();
 if (window.InvidiousSpoilers && InvidiousSpoilers.bindPlayer) {
-    var spoilerPoster, spoilerImageRevealed = false, spoilerImageIdentity, spoilerMaskState;
-    function renderSpoilerPoster(state) {
+    InvidiousSpoilers.bindPlayer(function (hidden) {
         if (player.isDisposed()) return;
-        spoilerMaskState = state;
-        if (!state.suspended && spoilerImageIdentity !== state.thumbnailIdentity) { spoilerImageRevealed = false; spoilerImageIdentity = state.thumbnailIdentity; }
-        var hidden = state.thumbnail.hidden && (state.suspended || !spoilerImageRevealed);
         player_data.spoiler_thumbnail_hidden = hidden;
         player_data.thumbnail = hidden ? '' : spoilerOriginalPoster;
         if (window.shareOptions) shareOptions.image = player_data.thumbnail;
         if (player.poster() !== player_data.thumbnail) player.poster(player_data.thumbnail);
         player.el().classList.toggle('spoiler-thumbnails-hidden',hidden);
-        if (hidden) {
-            disableVideoThumbnails();
-            if (!spoilerPoster) {
-                spoilerPoster = document.createElement('button'); spoilerPoster.type = 'button'; spoilerPoster.className = 'spoiler-poster-reveal';
-                if (document.body.hasAttribute('data-overhaul') && window.InvidiousPlayerInterface) spoilerPoster.append(InvidiousPlayerInterface.icon('eye'));
-                var spoilerPosterLabel = document.createElement('span'); spoilerPoster.append(spoilerPosterLabel); player.el().appendChild(spoilerPoster);
-                spoilerPoster.addEventListener('click',function (event) {
-                    event.preventDefault(); event.stopPropagation();
-                    if (spoilerMaskState.suspended || !InvidiousStorage.isCurrent()) return;
-                    spoilerImageRevealed = true; renderSpoilerPoster(spoilerMaskState);
-                });
-            }
-            spoilerPoster.lastElementChild.textContent = document.body.hasAttribute('data-overhaul') ? InvidiousSpoilers.thumbnailRevealLabel : state.thumbnail.label;
-            spoilerPoster.disabled = state.suspended; spoilerPoster.hidden = !player.paused();
-        } else {
-            if (spoilerPoster) { spoilerPoster.remove(); spoilerPoster = null; }
-            enableVideoThumbnails();
-        }
-    }
-    InvidiousSpoilers.bindPlayer(renderSpoilerPoster);
-    // A masking control never covers playing media or changes its pause state.
-    player.on(['playing','pause'],function () { if (spoilerPoster) spoilerPoster.hidden = !player.paused(); });
+        if (hidden) disableVideoThumbnails();
+        else enableVideoThumbnails();
+    });
 }
 
 // Enable annotations

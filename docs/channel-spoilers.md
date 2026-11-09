@@ -16,10 +16,10 @@ video's publication date, rather than the clip creation date. Date-only metadata
 uses midnight UTC; exact timestamps retain their precision. Expiry is checked
 when loading content, without a background timer changing an open page.
 
-Click a hidden thumbnail to reveal its original image. That first click does not
-open the video; clicking again follows the link. A hidden player poster has its
-own reveal button that does not start playback. Hiding does not prevent playback
-or autoplay. Scrubbing previews remain disabled while the poster is hidden.
+Click a hidden thumbnail on a video card or queue entry to reveal its original
+image. Click again to open the video. On watch and embed players, the poster,
+share image, and scrubbing previews stay hidden while the rule applies.
+Playback and autoplay remain available.
 
 The title uses the shared title-cycle icon. With DeArrow enabled and a
 replacement available, clicks cycle **Hidden → DeArrow → Original → Hidden**.
@@ -45,7 +45,7 @@ saves preserve the map. No database migration is required. Public video metadata
 [sparse preference and cache-only publication APIs](mobile-api.md#native-channel-title-and-thumbnail-settings).
 
 Blank delays serialize explicitly as `null`; omitted delays in older saved rules
-also mean indefinite hiding. Both forms retain the same manual reveal controls.
+also mean indefinite hiding. Both forms retain the same title and card reveal controls.
 The browser controller receives only hiding switches and delays, without channel
 names. Each document uses the settings and upload-age clock captured at load.
 Saving rules in another tab does not update an open document, including after

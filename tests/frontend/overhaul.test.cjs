@@ -1914,10 +1914,7 @@ for(const engine of engines) {
             assert.equal(await control.locator('use').count(),1);assert.ok((await control.locator('use').getAttribute('href')).endsWith('#rotate-cw'));
             if(masked)assert.ok(requests.filter(r=>r.url.pathname==='/api/v1/dearrow/2isYuQZMbdU').length<=1,'masked fields share the existing title cache');
             const before=await title.textContent();await control.hover();await control.focus();assert.equal(await title.textContent(),before);
-            if(masked) {
-                const reveal=page.getByRole('button',{name:'Reveal original thumbnail',exact:true});assert.ok(await reveal.isVisible());
-                assert.ok(await reveal.evaluate(el=>{const a=el.getBoundingClientRect(),b=document.querySelector('.vjs-big-play-button').getBoundingClientRect();return a.bottom<=b.top||a.top>=b.bottom||a.right<=b.left||a.left>=b.right;}),'thumbnail reveal stays separate from Play');
-            }
+            assert.equal(await page.locator('.video-js').getByRole('button',{name:'Reveal original thumbnail',exact:true,includeHidden:true}).count(),0);
             if(masked)await page.screenshot({path:path.join(artifacts,`${engine}-d5-title-hidden-light-1440.png`),fullPage:true});
             assert.ok(!(await control.getAttribute('aria-label')).includes(original));assert.equal(await control.getAttribute('title'),null);
             await control.click();

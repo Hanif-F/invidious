@@ -44,8 +44,6 @@
         }
         controlIcon(bar.getChild('fullscreenToggle'),'maximize');
         controlIcon(player.getChild('bigPlayButton'),'play');
-        var posterReveal = root.querySelector('.spoiler-poster-reveal');
-        if (posterReveal && document.body.hasAttribute('data-overhaul')) posterReveal.prepend(icon('eye'));
         // A dynamically created component has no registered child name.
         bar.children().forEach(function (component) { if (component.hasClass('vjs-picture-in-picture-control')) controlIcon(component,'picture-in-picture-2'); });
         player.on(['play','pause','volumechange'],playbackIcons); playbackIcons();

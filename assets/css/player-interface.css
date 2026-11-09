@@ -66,7 +66,6 @@
 body[data-page=watch] .dearrow-reveal{display:flex;align-items:center;justify-content:center;border-radius:4px;color:var(--muted)}
 body[data-page=watch] .dearrow-reveal::before{content:none}
 body[data-page=watch] .dearrow-reveal:hover,body[data-page=watch] .dearrow-reveal[aria-pressed=true]{background:var(--selection);color:var(--accent)}
-.video-js.invidious-desktop .spoiler-poster-reveal{position:absolute;inset:auto;inset-inline-start:16px;inset-block-end:56px;display:inline-flex;align-items:center;gap:8px;width:auto;height:auto;max-width:calc(100% - 32px);padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--raised);color:var(--text);font:14px/1.4 system-ui,sans-serif;z-index:6}
 .watch-grid.watch-no-tools,body[data-watch-layout=theater] .watch-grid.watch-no-tools{grid-template-columns:minmax(0,1fr);grid-template-areas:"media" "details"}
 body[data-watch-layout=theater] .watch-grid:not(.watch-no-tools){grid-template-columns:minmax(0,1fr) clamp(280px,var(--utility-width,360px),45%);grid-template-areas:"media media" "details tools"}
 body[data-watch-layout=theater] .utility-panel{max-width:none}.watch-player #player-container{position:relative}

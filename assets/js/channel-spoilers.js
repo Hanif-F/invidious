@@ -155,8 +155,7 @@
         document.querySelectorAll('#download-options input[type="hidden"][name="title"]').forEach(function (element) {
             attribute(element,'value',titleState.hidden ? titleState.label : config.page.title);
         });
-        var imageRule = rules[config.page.channel];
-        if (playerMask) playerMask({title:titleState,thumbnail:imageState,suspended:suspended,thumbnailIdentity:JSON.stringify([imageRule && imageRule.hide_thumbnail,imageRule && imageRule.reveal_after_days,imageState.hidden,imageState.label])});
+        if (playerMask) playerMask(imageState.hidden);
     }
     function scan(root) {
         if (disposed || !root || root.nodeType !== 1 || !suspended && !Object.keys(rules).length) return;
@@ -210,7 +209,7 @@
         titles.clear(); thumbnails.clear(); requestTitle = playerMask = null;
     }
     var api = window.InvidiousSpoilers = {
-        thumbnailRevealLabel:config.labels.reveal_thumbnail,replacementRevealLabel:config.labels.next_dearrow,decision:decision,signature:signature,isSuspended:function () { return suspended; },scan:scan,suspend:suspend,dispose:dispose,
+        replacementRevealLabel:config.labels.next_dearrow,decision:decision,signature:signature,isSuspended:function () { return suspended; },scan:scan,suspend:suspend,dispose:dispose,
         invalidateTitle:function (element) {
             var entry = titles.get(element);
             if (entry) { entry.serial++; entry.loading = false; entry.replacement = null; entry.index = 0; title(element); }
