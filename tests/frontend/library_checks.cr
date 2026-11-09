@@ -78,8 +78,14 @@ end
 def library_subscriptions_fixture(mode = "light", filtered = false, empty = false, blocked = false)
   env = signed_in_env("/feed/subscriptions#{filtered ? "?latest_only=1&unseen_only=1&notifications_only=0&sort=alphabetically" : ""}")
   preferences = env.get("preferences").as(Preferences); preferences.dark_mode = mode; env.set "preferences", preferences
-  user = env.get("user").as(User); user.subscriptions = ["UC" + "a" * 22]; user.preferences = preferences; env.set "user", user
-  env.set "blocked_channels", user.subscriptions if blocked
+  now = Time.utc
+  names = ["Studio North", "A very long creator name <script> & details"] + (3..18).map { |i| "Channel #{i}" }
+  shortcut_channels = names.map_with_index do |name, index|
+    InvidiousChannel.new({id: "UC" + ('a'.ord + index).chr.to_s * 22, author: name, updated: now, deleted: false, subscribed: nil})
+  end
+  shortcut_channels.clear if empty
+  user = env.get("user").as(User); user.subscriptions = shortcut_channels.map(&.id); user.preferences = preferences; env.set "user", user
+  env.set "blocked_channels", [user.subscriptions.first] if blocked && !empty
   view = Frontend::SubscriptionFeed.preferences(preferences, env.params.query, true); env.set "subscription_view_preferences", view
   locale = preferences.locale
   videos = empty ? [] of SearchVideo : (0...3).map { |i| SearchVideo.new({id: i.to_s.rjust(11, '0'), title: "A field note #{i}", author: "Studio North", ucid: user.subscriptions.first, length_seconds: 120, published: Time.utc - 2.days, views: 0_i64, description_html: "", premiere_timestamp: nil, author_verified: false, author_thumbnail: nil, badges: VideoBadges::None}) }
@@ -121,6 +127,7 @@ end
 
 def write_library_fixtures(output)
   prepare_fixture_user_names
+  Invidious::Database::ChannelAvatars.observe({"UC" + "a" * 22 => "https://yt3.ggpht.com/studio-north=s48"})
   %w(light dark).each do |mode|
     File.write("#{output}/d4-manager-#{mode}.html", avatar_manager_fixture(mode: mode))
     File.write("#{output}/d4-mix-#{mode}.html", library_mix_fixture(mode))

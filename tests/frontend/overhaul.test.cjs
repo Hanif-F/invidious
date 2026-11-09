@@ -1308,6 +1308,70 @@ for(const engine of engines) {
         await page.screenshot({path:path.join(artifacts,`${engine}-d4-manager-partial-1440.png`),fullPage:true});
         assert.deepEqual(errors,[]);await context.close();
     });
+    test(`${engine}: subscription shortcuts fit one row and keep the manager reachable without JavaScript`, async () => {
+        const feed = '/feed/subscriptions';
+        const firstChannel = '/channel/UC' + 'a'.repeat(22);
+        const longName = 'A very long creator name <script> & details';
+        const {page, context} = await setup(engine, 'browse', 'dark', {
+            fixture: 'd4-subscriptions-dark', url: feed, javascript: false, width: 2300,
+        });
+        try {
+            const row = page.locator('.subscription-shortcuts');
+            const channels = row.locator('.subscription-shortcut-list a:visible');
+            const manager = row.getByRole('link', {name: 'All subscriptions'});
+            assert.equal(await channels.count(), 18);
+            assert.equal(await page.getByRole('link', {name: 'Manage subscriptions'}).count(), 0);
+            assert.ok((await row.boundingBox()).y < (await page.locator('#subscription-search').boundingBox()).y);
+            assert.equal(await channels.first().getAttribute('href'), firstChannel);
+            assert.equal(await channels.first().locator('img').getAttribute('src'), '/ggpht/studio-north=s88');
+
+            await page.setViewportSize({width: 640, height: 720});
+            const outsideRow = 640 - (await row.boundingBox()).width;
+            await page.setViewportSize({width: outsideRow + 207, height: 720});
+            assert.equal(await channels.count(), 0);
+            assert.equal(await manager.isVisible(), true);
+            await page.setViewportSize({width: outsideRow + 303, height: 720});
+            assert.equal(await channels.count(), 1);
+            await channels.first().focus();
+            await page.keyboard.press('Tab');
+            assert.equal(await row.locator('.subscription-shortcut-all:focus').count(), 1);
+            await page.keyboard.press('Tab');
+            assert.equal(await page.locator('#subscription-search:focus').count(), 1);
+
+            await page.setViewportSize({width: outsideRow + 304, height: 720});
+            assert.equal(await channels.count(), 2);
+            const second = row.getByRole('link', {name: longName, exact: true});
+            assert.equal(await second.locator('.channel-avatar-initial').textContent(), 'A');
+            assert.equal(await second.locator('img').count(), 0);
+            for (const dir of ['ltr', 'rtl']) {
+                await page.locator('html').evaluate((html, direction) => { html.dir = direction; }, dir);
+                const bounds = await row.boundingBox();
+                const all = await manager.boundingBox();
+                assert.equal(dir === 'rtl' ? all.x : all.x + all.width, dir === 'rtl' ? bounds.x : bounds.x + bounds.width);
+                assert.equal(await row.evaluate(element => element.scrollWidth <= element.clientWidth), true);
+            }
+
+            await channels.first().click();
+            assert.equal(new URL(page.url()).pathname, firstChannel);
+            await page.goto('https://invidious.test' + feed);
+            await manager.click();
+            assert.equal(new URL(page.url()).pathname, '/subscription_manager');
+        } finally {
+            await context.close();
+        }
+
+        const empty = await setup(engine, 'browse', 'light', {
+            fixture: 'd4-subscriptions-empty', url: feed, javascript: false, width: 640,
+        });
+        try {
+            assert.equal(await empty.page.locator('.subscription-shortcut-list').count(), 0);
+            assert.equal(await empty.page.getByRole('link', {name: 'All subscriptions'}).isVisible(), true);
+            assert.match(await empty.page.locator('[data-browse-empty]').textContent(), /No subscriptions yet/);
+        } finally {
+            await empty.context.close();
+        }
+    });
+
     test(`${engine}: D4 subscriptions apply view choices explicitly and incoming uploads only offer refresh`,async()=>{
         const fakeSSE="window.fakeStreams=[];window.SSE=function(url,options){this.listeners={};this.url=url;this.options=options;this.addEventListener=(event,fn)=>this.listeners[event]=fn;this.stream=()=>{};this.close=()=>this.closed=true;window.fakeStreams.push(this)};";
         const {page,context,requests,errors}=await setup(engine,'browse','light',{fixture:'d4-subscriptions-light',url:'/feed/subscriptions',init:()=>{

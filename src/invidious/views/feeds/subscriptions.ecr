@@ -1,17 +1,43 @@
-<% feed_preferences = env.get?("subscription_view_preferences").try(&.as(Preferences)) || user.preferences %>
+<%
+  feed_preferences = env.get?("subscription_view_preferences").try(&.as(Preferences)) || user.preferences
+  items = notifications + videos
+  source_count = items.size
+  items = Invidious::Frontend::MemberVideos.filter(items, Invidious::Frontend::MemberVideos.show?(env))
+  env.set "subscription_notification_ids", notifications.map(&.id)
+  Invidious::Frontend::ChannelSpoilers.prepare(env, items)
+  Invidious::Frontend::AiChannels.prepare(env, items)
+  Invidious::Frontend::ChannelAvatars.prepare(env, items, extra_ids: shortcut_channels.map(&.id))
+  Invidious::Frontend::ViewCounts.prepare(env, items)
+%>
 <% content_for "header" do %><title><%= I18n.translate(locale, "Subscriptions") %> - Invidious</title><link rel="alternate" type="application/rss+xml" title="RSS" href="/feed/private?token=<%= HTML.escape(token) %>"><% end %>
 <header class="page-heading"><h1><%= I18n.translate(locale, "Subscriptions") %></h1></header>
 <div class="subscription-toolbar">
+<nav class="subscription-shortcuts" aria-label="<%= I18n.translate(locale, "Subscriptions") %>">
+  <% unless shortcut_channels.empty? %>
+  <div class="subscription-shortcut-space">
+    <ul class="subscription-shortcut-list" role="list">
+      <% shortcut_channels.each do |channel| %>
+      <li><a class="subscription-shortcut" href="/channel/<%= URI.encode_path_segment(channel.id) %>" title="<%= HTML.escape(channel.author) %>">
+        <%= Invidious::Frontend::ChannelAvatars.render(env, channel.id, 48, name: channel.author) %>
+        <span class="subscription-shortcut-name" dir="auto"><%= HTML.escape(channel.author) %></span>
+      </a></li>
+      <% end %>
+    </ul>
+  </div>
+  <% end %>
+  <a class="subscription-shortcut subscription-shortcut-all" href="/subscription_manager">
+    <span class="subscription-shortcut-icon"><%= Invidious::Frontend::Icons.render("list-video") %></span>
+    <span><%= I18n.translate(locale, "overhaul_subscriptions_all") %></span>
+  </a>
+</nav>
 <form class="scoped-search" action="/search" method="<%= feed_preferences.search_privacy ? "post" : "get" %>" role="search"><label for="subscription-search"><%= I18n.translate(locale, "overhaul_subscriptions_search_scope") %></label><div><input type="search" name="q" id="subscription-search" placeholder="<%= I18n.translate(locale, "search") %>" data-subscription-search><input type="hidden" name="subscriptions" value="true"><button class="icon-button" aria-label="<%= I18n.translate(locale, "search") %>"><%= Invidious::Frontend::Icons.render("search") %></button></div></form>
-<div class="toolbar"><a class="button" href="/subscription_manager"><%= Invidious::Frontend::Icons.render("user") %><%= I18n.translate(locale, "Manage subscriptions") %></a><details class="ui-menu" data-ui-menu><summary class="button"><%= Invidious::Frontend::Icons.render("ellipsis-vertical") %><%= I18n.translate(locale, "overhaul_more") %></summary><div class="menu-content"><a href="/preferences?section=library"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "overhaul_feed_defaults") %></a><a href="/feed/private?token=<%= HTML.escape(token) %>"><%= Invidious::Frontend::Icons.render("rss") %><%= I18n.translate(locale, "generic_button_rss") %></a><% if CONFIG.enable_user_notifications %><button type="button" data-browser-notifications hidden data-default="<%= I18n.translate(locale, "overhaul_notifications_default") %>" data-granted="<%= I18n.translate(locale, "overhaul_notifications_granted") %>" data-denied="<%= I18n.translate(locale, "overhaul_notifications_denied") %>"><%= Invidious::Frontend::Icons.render("bell") %><span><%= I18n.translate(locale, "Enable web notifications") %></span></button><p class="muted" role="status" data-notification-status></p><% end %></div></details></div>
+<div class="toolbar"><details class="ui-menu" data-ui-menu><summary class="button"><%= Invidious::Frontend::Icons.render("ellipsis-vertical") %><%= I18n.translate(locale, "overhaul_more") %></summary><div class="menu-content"><a href="/preferences?section=library"><%= Invidious::Frontend::Icons.render("settings") %><%= I18n.translate(locale, "overhaul_feed_defaults") %></a><a href="/feed/private?token=<%= HTML.escape(token) %>"><%= Invidious::Frontend::Icons.render("rss") %><%= I18n.translate(locale, "generic_button_rss") %></a><% if CONFIG.enable_user_notifications %><button type="button" data-browser-notifications hidden data-default="<%= I18n.translate(locale, "overhaul_notifications_default") %>" data-granted="<%= I18n.translate(locale, "overhaul_notifications_granted") %>" data-denied="<%= I18n.translate(locale, "overhaul_notifications_denied") %>"><%= Invidious::Frontend::Icons.render("bell") %><span><%= I18n.translate(locale, "Enable web notifications") %></span></button><p class="muted" role="status" data-notification-status></p><% end %></div></details></div>
 <form class="toolbar subscription-filters" action="/feed/subscriptions" method="get">
 <label for="subscription-sort"><%= I18n.translate(locale, "search_filters_sort_label") %></label><select name="sort" id="subscription-sort"><% Invidious::Frontend::SubscriptionFeed::SORTS.each do |sort| %><option value="<%= HTML.escape(sort) %>" <%= "selected" if feed_preferences.sort == sort %>><%= I18n.translate(locale, Invidious::Frontend::SubscriptionFeed::SORT_LABELS[sort]) %></option><% end %></select>
 <% {"latest_only", "unseen_only", "notifications_only"}.each do |key| %><% next if key == "notifications_only" && !CONFIG.enable_user_notifications %><input type="hidden" name="<%= key %>" value="0"><label><input type="checkbox" name="<%= key %>" value="1" <%= "checked" if JSON.parse(feed_preferences.to_json)[key].as_bool %>><%= I18n.translate(locale, "overhaul_feed_#{key}") %></label><% end %>
 <input type="hidden" name="max_results" value="<%= max_results %>"><button class="button" type="submit"><%= I18n.translate(locale, "search_filters_apply_button") %></button>
 </form></div>
 <% if CONFIG.enable_user_notifications %><aside class="subscription-updates status-panel" data-subscription-updates hidden><span role="status" data-subscription-updates-text data-count-template="<%= I18n.translate(locale, "overhaul_new_uploads", "{count}") %>"></span><a class="button button-primary" href="<%= HTML.escape(env.request.resource) %>"><%= Invidious::Frontend::Icons.render("rotate-cw") %><%= I18n.translate(locale, "overhaul_refresh") %></a></aside><% end %>
-<% items = notifications + videos; source_count = items.size; items = Invidious::Frontend::MemberVideos.filter(items, Invidious::Frontend::MemberVideos.show?(env)); env.set "subscription_notification_ids", notifications.map(&.id) %>
-<% Invidious::Frontend::ChannelSpoilers.prepare(env, items); Invidious::Frontend::AiChannels.prepare(env, items); Invidious::Frontend::ChannelAvatars.prepare(env, items); Invidious::Frontend::ViewCounts.prepare(env, items) %>
 <% collection_kind = "subscriptions"; env.set "collection_kind", collection_kind %>
 <section data-collection data-collection-kind="subscriptions">
 <%= rendered "overhaul/collection_toolbar" %>

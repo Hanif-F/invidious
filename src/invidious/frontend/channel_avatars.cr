@@ -6,9 +6,9 @@ add_context_storage_type(Hash(String, String))
 module Invidious::Frontend::ChannelAvatars
   extend self
 
-  def prepare(env, items)
+  def prepare(env, items, extra_ids : Array(String) = [] of String)
     Invidious::Frontend::AiChannels.observe(items)
-    ids = [] of String
+    ids = extra_ids.dup
     supplied = Invidious::ChannelAvatars.from_items(items)
     items.each do |item|
       if item.responds_to?(:ucid)

@@ -271,6 +271,69 @@ p,label,small,.media-meta{overflow-wrap:anywhere}
 .video-thumbnail:has(.ai-thumbnail) .duration{top:4px;bottom:auto;padding:0 3px;background:#202326;color:#858c93;font-size:10px;font-weight:400}
 /* Account collections keep controls and selection in their owning section. */
 .subscription-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 24px;align-items:end;margin-bottom:24px}
+.subscription-shortcuts {
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,7rem);
+  gap:.5rem;
+  align-items:start;
+}
+.subscription-shortcut-space { container:subscription-channels / inline-size; }
+.subscription-shortcut-list { display:flex; gap:.5rem; margin:0; padding:0; list-style:none; }
+.subscription-shortcut-list > li { display:none; flex:0 0 5.5rem; min-inline-size:0; }
+.subscription-shortcut {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:var(--s2);
+  border-radius:var(--radius);
+  font-size:.8125rem;
+  font-weight:500;
+  line-height:1.3;
+  text-align:center;
+  overflow-wrap:anywhere;
+}
+.subscription-shortcut-name {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  max-inline-size:100%;
+  overflow:hidden;
+}
+.subscription-shortcut .channel-avatar, .subscription-shortcut-icon {
+  inline-size:min(3rem,100%);
+  block-size:auto;
+  aspect-ratio:1;
+  font-size:1.5rem;
+}
+.subscription-shortcut-all { grid-column:2; font-weight:600; }
+.subscription-shortcut-icon {
+  display:grid;
+  place-items:center;
+  border:1px solid var(--border);
+  border-radius:50%;
+  background:var(--raised);
+}
+.subscription-shortcut-all:hover .subscription-shortcut-icon { background:var(--selection); }
+/* Each additional tile needs 6rem including its gap. See CHANNEL_SHORTCUT_LIMIT. */
+@container subscription-channels (min-inline-size:5.5rem) { .subscription-shortcut-list > li:nth-child(1) { display:block; } }
+@container subscription-channels (min-inline-size:11.5rem) { .subscription-shortcut-list > li:nth-child(2) { display:block; } }
+@container subscription-channels (min-inline-size:17.5rem) { .subscription-shortcut-list > li:nth-child(3) { display:block; } }
+@container subscription-channels (min-inline-size:23.5rem) { .subscription-shortcut-list > li:nth-child(4) { display:block; } }
+@container subscription-channels (min-inline-size:29.5rem) { .subscription-shortcut-list > li:nth-child(5) { display:block; } }
+@container subscription-channels (min-inline-size:35.5rem) { .subscription-shortcut-list > li:nth-child(6) { display:block; } }
+@container subscription-channels (min-inline-size:41.5rem) { .subscription-shortcut-list > li:nth-child(7) { display:block; } }
+@container subscription-channels (min-inline-size:47.5rem) { .subscription-shortcut-list > li:nth-child(8) { display:block; } }
+@container subscription-channels (min-inline-size:53.5rem) { .subscription-shortcut-list > li:nth-child(9) { display:block; } }
+@container subscription-channels (min-inline-size:59.5rem) { .subscription-shortcut-list > li:nth-child(10) { display:block; } }
+@container subscription-channels (min-inline-size:65.5rem) { .subscription-shortcut-list > li:nth-child(11) { display:block; } }
+@container subscription-channels (min-inline-size:71.5rem) { .subscription-shortcut-list > li:nth-child(12) { display:block; } }
+@container subscription-channels (min-inline-size:77.5rem) { .subscription-shortcut-list > li:nth-child(13) { display:block; } }
+@container subscription-channels (min-inline-size:83.5rem) { .subscription-shortcut-list > li:nth-child(14) { display:block; } }
+@container subscription-channels (min-inline-size:89.5rem) { .subscription-shortcut-list > li:nth-child(15) { display:block; } }
+@container subscription-channels (min-inline-size:95.5rem) { .subscription-shortcut-list > li:nth-child(16) { display:block; } }
+@container subscription-channels (min-inline-size:101.5rem) { .subscription-shortcut-list > li:nth-child(17) { display:block; } }
+@container subscription-channels (min-inline-size:107.5rem) { .subscription-shortcut-list > li:nth-child(18) { display:block; } }
 .subscription-filters{grid-column:1/-1}.subscription-filters label{display:inline-flex;align-items:center;gap:8px;font-size:14px}
 .collection-filters,.collection-heading-actions{margin-bottom:24px}.collection-filters{margin-top:24px}
 .collection-toolbar,.selection-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.collection-toolbar{margin:16px 0}

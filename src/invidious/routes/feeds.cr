@@ -92,6 +92,7 @@ module Invidious::Routes::Feeds
 
     page = page.clamp(1, Int32::MAX)
     videos, notifications = Invidious::User::Users.get_subscription_feed(user, max_results, page, feed_preferences)
+    shortcut_channels = Frontend::SubscriptionFeed.channel_shortcuts(user, Frontend::MemberVideos.show?(env))
 
     if CONFIG.enable_user_notifications
       # "updated" here is used for delivering new notifications, so if
@@ -105,6 +106,7 @@ module Invidious::Routes::Feeds
 
     # Used for pagination links
     base_url = "/feed/subscriptions?#{Frontend::SubscriptionFeed.params(feed_preferences, max_results)}"
+    env.response.headers["Cache-Control"] = "private, no-cache"
 
     templated "feeds/subscriptions"
   end

@@ -243,6 +243,7 @@ def ai_subscriptions_fixture(env, items)
   token = "fixture"
   videos = [items[0], items[2]]
   notifications = [items[1]]
+  shortcut_channels = [] of InvidiousChannel
   page = 1
   max_results = 20
   base_url = "/feed/subscriptions"
