@@ -1317,7 +1317,7 @@ for(const engine of engines) {
         });
         try {
             const row = page.locator('.subscription-shortcuts');
-            const channels = row.locator('.subscription-shortcut-list a:visible');
+            const channels = row.locator('.subscription-shortcut-channel a:visible');
             const manager = row.getByRole('link', {name: 'All subscriptions'});
             assert.equal(await channels.count(), 18);
             assert.equal(await page.getByRole('link', {name: 'Manage subscriptions'}).count(), 0);
@@ -1330,8 +1330,10 @@ for(const engine of engines) {
             await page.setViewportSize({width: outsideRow + 207, height: 720});
             assert.equal(await channels.count(), 0);
             assert.equal(await manager.isVisible(), true);
-            await page.setViewportSize({width: outsideRow + 303, height: 720});
-            assert.equal(await channels.count(), 1);
+            for (const rowWidth of [208, 303]) {
+                await page.setViewportSize({width: outsideRow + rowWidth, height: 720});
+                assert.equal(await channels.count(), 1);
+            }
             await channels.first().focus();
             await page.keyboard.press('Tab');
             assert.equal(await row.locator('.subscription-shortcut-all:focus').count(), 1);
@@ -1343,12 +1345,31 @@ for(const engine of engines) {
             const second = row.getByRole('link', {name: longName, exact: true});
             assert.equal(await second.locator('.channel-avatar-initial').textContent(), 'A');
             assert.equal(await second.locator('img').count(), 0);
-            for (const dir of ['ltr', 'rtl']) {
-                await page.locator('html').evaluate((html, direction) => { html.dir = direction; }, dir);
-                const bounds = await row.boundingBox();
-                const all = await manager.boundingBox();
-                assert.equal(dir === 'rtl' ? all.x : all.x + all.width, dir === 'rtl' ? bounds.x : bounds.x + bounds.width);
-                assert.equal(await row.evaluate(element => element.scrollWidth <= element.clientWidth), true);
+            for (const [width, tileCount] of [[2300, 19], [outsideRow + 304, 3]]) {
+                await page.setViewportSize({width, height: 720});
+                for (const dir of ['ltr', 'rtl']) {
+                    await page.locator('html').evaluate((html, direction) => { html.dir = direction; }, dir);
+                    const bounds = await row.boundingBox();
+                    const all = await manager.boundingBox();
+                    const trailingGap = dir === 'rtl' ? all.x - bounds.x : bounds.x + bounds.width - all.x - all.width;
+                    assert.ok(Math.abs(trailingGap) <= 1);
+                    assert.equal(await row.evaluate(element => element.scrollWidth <= element.clientWidth), true);
+
+                    const icons = await row.locator('.channel-avatar:visible, .subscription-shortcut-icon:visible').evaluateAll(elements =>
+                        elements.map(element => {
+                            const {x, y, width} = element.getBoundingClientRect();
+                            return {center: x + width / 2, y};
+                        })
+                    );
+                    assert.equal(icons.length, tileCount);
+                    assert.ok(icons.every(icon => icon.y === icons[0].y), 'icons should fit on one row');
+                    const step = icons[1].center - icons[0].center;
+                    assert.ok(dir === 'rtl' ? step < 0 : step > 0);
+                    for (let i = 2; i < icons.length; i++) {
+                        const distance = icons[i].center - icons[i - 1].center;
+                        assert.ok(Math.abs(distance - step) <= 1, `uneven shortcut spacing at ${width}px (${dir}), tile ${i + 1}`);
+                    }
+                }
             }
 
             await channels.first().click();
@@ -1364,8 +1385,13 @@ for(const engine of engines) {
             fixture: 'd4-subscriptions-empty', url: feed, javascript: false, width: 640,
         });
         try {
-            assert.equal(await empty.page.locator('.subscription-shortcut-list').count(), 0);
-            assert.equal(await empty.page.getByRole('link', {name: 'All subscriptions'}).isVisible(), true);
+            const row = empty.page.locator('.subscription-shortcuts');
+            const manager = row.getByRole('link', {name: 'All subscriptions'});
+            assert.equal(await row.getByRole('link').count(), 1);
+            assert.equal(await manager.isVisible(), true);
+            const bounds = await row.boundingBox();
+            const all = await manager.boundingBox();
+            assert.equal(all.x + all.width, bounds.x + bounds.width);
             assert.match(await empty.page.locator('[data-browse-empty]').textContent(), /No subscriptions yet/);
         } finally {
             await empty.context.close();

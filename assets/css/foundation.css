@@ -273,14 +273,19 @@ p,label,small,.media-meta{overflow-wrap:anywhere}
 .subscription-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 24px;align-items:end;margin-bottom:24px}
 .subscription-shortcuts {
   grid-column:1/-1;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,7rem);
-  gap:.5rem;
-  align-items:start;
+  container:subscription-channels / inline-size;
 }
-.subscription-shortcut-space { container:subscription-channels / inline-size; }
-.subscription-shortcut-list { display:flex; gap:.5rem; margin:0; padding:0; list-style:none; }
-.subscription-shortcut-list > li { display:none; flex:0 0 5.5rem; min-inline-size:0; }
+.subscription-shortcut-list {
+  display:flex;
+  justify-content:flex-end;
+  gap:.5rem;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+.subscription-shortcut-list > li { min-inline-size:0; }
+.subscription-shortcut-channel { display:none; flex:1 1 0; }
+.subscription-shortcut-manager { flex:0 0 min(7rem,100%); }
 .subscription-shortcut {
   display:flex;
   flex-direction:column;
@@ -306,7 +311,7 @@ p,label,small,.media-meta{overflow-wrap:anywhere}
   aspect-ratio:1;
   font-size:1.5rem;
 }
-.subscription-shortcut-all { grid-column:2; font-weight:600; }
+.subscription-shortcut-all { font-weight:600; }
 .subscription-shortcut-icon {
   display:grid;
   place-items:center;
@@ -315,25 +320,28 @@ p,label,small,.media-meta{overflow-wrap:anywhere}
   background:var(--raised);
 }
 .subscription-shortcut-all:hover .subscription-shortcut-icon { background:var(--selection); }
-/* Each additional tile needs 6rem including its gap. See CHANNEL_SHORTCUT_LIMIT. */
-@container subscription-channels (min-inline-size:5.5rem) { .subscription-shortcut-list > li:nth-child(1) { display:block; } }
-@container subscription-channels (min-inline-size:11.5rem) { .subscription-shortcut-list > li:nth-child(2) { display:block; } }
-@container subscription-channels (min-inline-size:17.5rem) { .subscription-shortcut-list > li:nth-child(3) { display:block; } }
-@container subscription-channels (min-inline-size:23.5rem) { .subscription-shortcut-list > li:nth-child(4) { display:block; } }
-@container subscription-channels (min-inline-size:29.5rem) { .subscription-shortcut-list > li:nth-child(5) { display:block; } }
-@container subscription-channels (min-inline-size:35.5rem) { .subscription-shortcut-list > li:nth-child(6) { display:block; } }
-@container subscription-channels (min-inline-size:41.5rem) { .subscription-shortcut-list > li:nth-child(7) { display:block; } }
-@container subscription-channels (min-inline-size:47.5rem) { .subscription-shortcut-list > li:nth-child(8) { display:block; } }
-@container subscription-channels (min-inline-size:53.5rem) { .subscription-shortcut-list > li:nth-child(9) { display:block; } }
-@container subscription-channels (min-inline-size:59.5rem) { .subscription-shortcut-list > li:nth-child(10) { display:block; } }
-@container subscription-channels (min-inline-size:65.5rem) { .subscription-shortcut-list > li:nth-child(11) { display:block; } }
-@container subscription-channels (min-inline-size:71.5rem) { .subscription-shortcut-list > li:nth-child(12) { display:block; } }
-@container subscription-channels (min-inline-size:77.5rem) { .subscription-shortcut-list > li:nth-child(13) { display:block; } }
-@container subscription-channels (min-inline-size:83.5rem) { .subscription-shortcut-list > li:nth-child(14) { display:block; } }
-@container subscription-channels (min-inline-size:89.5rem) { .subscription-shortcut-list > li:nth-child(15) { display:block; } }
-@container subscription-channels (min-inline-size:95.5rem) { .subscription-shortcut-list > li:nth-child(16) { display:block; } }
-@container subscription-channels (min-inline-size:101.5rem) { .subscription-shortcut-list > li:nth-child(17) { display:block; } }
-@container subscription-channels (min-inline-size:107.5rem) { .subscription-shortcut-list > li:nth-child(18) { display:block; } }
+/* Keep the visibility cutoffs: 7rem for the manager plus 6rem per channel including its gap. See CHANNEL_SHORTCUT_LIMIT. */
+@container subscription-channels (min-inline-size:13rem) {
+  .subscription-shortcut-channel:nth-child(1) { display:block; }
+  .subscription-shortcut-manager:not(:only-child) { flex:1 1 0; }
+}
+@container subscription-channels (min-inline-size:19rem) { .subscription-shortcut-channel:nth-child(2) { display:block; } }
+@container subscription-channels (min-inline-size:25rem) { .subscription-shortcut-channel:nth-child(3) { display:block; } }
+@container subscription-channels (min-inline-size:31rem) { .subscription-shortcut-channel:nth-child(4) { display:block; } }
+@container subscription-channels (min-inline-size:37rem) { .subscription-shortcut-channel:nth-child(5) { display:block; } }
+@container subscription-channels (min-inline-size:43rem) { .subscription-shortcut-channel:nth-child(6) { display:block; } }
+@container subscription-channels (min-inline-size:49rem) { .subscription-shortcut-channel:nth-child(7) { display:block; } }
+@container subscription-channels (min-inline-size:55rem) { .subscription-shortcut-channel:nth-child(8) { display:block; } }
+@container subscription-channels (min-inline-size:61rem) { .subscription-shortcut-channel:nth-child(9) { display:block; } }
+@container subscription-channels (min-inline-size:67rem) { .subscription-shortcut-channel:nth-child(10) { display:block; } }
+@container subscription-channels (min-inline-size:73rem) { .subscription-shortcut-channel:nth-child(11) { display:block; } }
+@container subscription-channels (min-inline-size:79rem) { .subscription-shortcut-channel:nth-child(12) { display:block; } }
+@container subscription-channels (min-inline-size:85rem) { .subscription-shortcut-channel:nth-child(13) { display:block; } }
+@container subscription-channels (min-inline-size:91rem) { .subscription-shortcut-channel:nth-child(14) { display:block; } }
+@container subscription-channels (min-inline-size:97rem) { .subscription-shortcut-channel:nth-child(15) { display:block; } }
+@container subscription-channels (min-inline-size:103rem) { .subscription-shortcut-channel:nth-child(16) { display:block; } }
+@container subscription-channels (min-inline-size:109rem) { .subscription-shortcut-channel:nth-child(17) { display:block; } }
+@container subscription-channels (min-inline-size:115rem) { .subscription-shortcut-channel:nth-child(18) { display:block; } }
 .subscription-filters{grid-column:1/-1}.subscription-filters label{display:inline-flex;align-items:center;gap:8px;font-size:14px}
 .collection-filters,.collection-heading-actions{margin-bottom:24px}.collection-filters{margin-top:24px}
 .collection-toolbar,.selection-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.collection-toolbar{margin:16px 0}
