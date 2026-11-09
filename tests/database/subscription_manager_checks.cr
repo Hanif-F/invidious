@@ -113,6 +113,15 @@ def check_subscription_manager
     export = security_request("GET", "/subscription_manager?action_takeout=1&sort_by=relevance", alice_sid)
     check(XML.parse(export.get("test_result").as(String)).xpath_nodes("//outline[@type='rss']").size == channels.size, "Sorting changed the OPML export")
     check(export.response.cookies[cookie_name]?.nil?, "Export changed the browser sort preference")
+
+    channels.each { |id| Invidious::Database::Channels.update_mark_deleted(id) }
+    feed = security_request("GET", "/feed/subscriptions", alice_sid)
+    check(feed.response.status_code == 200, "Subscriptions feed failed with channels marked deleted")
+    shortcuts = XML.parse_html(feed.get("test_result").as(String)).xpath_nodes("//nav[@class='subscription-shortcuts']//a")
+    channel_links = shortcuts.select { |link| link["href"].starts_with?("/channel/") }.map { |link| link["href"] }
+    check(channel_links.sort == channels.map { |id| "/channel/#{id}" }.sort, "Refresh flags hid subscribed channel shortcuts")
+    check(shortcuts.any? { |link| link["href"] == "/subscription_manager" && link.content.strip == "All subscriptions" }, "Feed lost its All subscriptions link")
+
     csrf = Invidious::Helpers::Tokens.generate_response(alice_sid, {"POST:subscription_ajax"}, HMAC_KEY)
     remove = security_request("POST", "/subscription_ajax?action=remove_subscriptions&redirect=false&c=#{channels[0]}", alice_sid, body: URI::Params.encode({"csrf_token" => csrf}), content_type: "application/x-www-form-urlencoded")
     check(remove.response.status_code == 200 && !Invidious::Database::Users.select!(email: alice_email).subscriptions.includes?(channels[0]), "Sorting broke subscription removal")

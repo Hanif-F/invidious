@@ -18,7 +18,7 @@ module Invidious::Frontend::SubscriptionFeed
   def channel_shortcuts(user : User, show_members : Bool, now : Time = Time.utc) : Array(InvidiousChannel)
     return [] of InvidiousChannel if user.subscriptions.empty?
 
-    channels = Database::Channels.select(user.subscriptions).reject { |channel| channel.deleted || channel.author.blank? }
+    channels = Database::Channels.select(user.subscriptions).reject(&.author.blank?)
     return channels if channels.empty?
 
     stats = {} of String => SubscriptionManager::Stats
