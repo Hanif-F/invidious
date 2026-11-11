@@ -26,11 +26,17 @@ def desktop_watch_fixture(kind, mode = "light", locale = "en-US")
     video.info["streamingData"] = JSON.parse({adaptiveFormats: formats}.to_json)
     video.info["version"] = JSON::Any.new(Video::SCHEMA_VERSION.to_i64)
   end
-  video.info["captions"] = JSON.parse("{}") if kind == "no-tools"
+  video.info["captions"] = JSON.parse("{}") if {"timestamps-only", "no-tools"}.includes?(kind)
+  if {"transcript-only", "no-tools"}.includes?(kind)
+    video.short_description = "A video without chapters."
+    video.description_html = video.short_description
+  elsif kind == "timestamps-only"
+    video.short_description = "0:00 Introduction\n0:02 Finding the light"
+  end
   video.info["title"] = JSON::Any.new("A long title with <markup> & literal </script> — 観察の記録 — ملاحظات " * 3) if kind == "long"
   plid = {"owned", "queue-chat"}.includes?(kind) ? "IVfixture" : kind == "queue" ? "PLfixture" : nil
   chat = {"replay", "queue-chat"}.includes?(kind)
-  chat_only = {"transcript-only", "no-tools"}.includes?(kind)
+  chat_only = {"transcript-only", "timestamps-only", "no-tools"}.includes?(kind)
   watch_fixture(env, plid, account: account, chat: chat, chat_only: chat_only, supplied_video: video,
     quality: kind == "dash" ? "dash" : "medium", aspect: kind == "portrait" ? "9:16" : "16:9",
     fallback_formats: kind == "quality" ? JSON.parse(%([
@@ -41,7 +47,7 @@ end
 
 def write_watch_fixtures(output)
   {"light", "dark"}.each do |mode|
-    {"single", "queue", "owned", "replay", "queue-chat", "transcript-only", "no-tools", "audio", "portrait", "dash", "quality", "account", "bob", "second", "long"}.each do |kind|
+    {"single", "queue", "owned", "replay", "queue-chat", "transcript-only", "timestamps-only", "no-tools", "audio", "portrait", "dash", "quality", "account", "bob", "second", "long"}.each do |kind|
       source = desktop_watch_fixture(kind, mode)
       raise "D5 produced duplicate media" unless source.scan(/<video\b/).size == 1
       raise "D5 lost its production shell" unless source.includes?("data-overhaul") && source.includes?("data-page=\"watch\"")

@@ -140,6 +140,8 @@
   supplied_avatars[video.ucid] = video.author_thumbnail unless video.author_thumbnail.empty?
   Invidious::Frontend::ChannelAvatars.prepare_ids(env, avatar_ids, supplied_avatars)
   has_transcript = !video.captions.empty?
+  chapters = Invidious::Videos::Chapters.from_descriptions(video.short_description, video.description_html, video.live_now ? 0 : video.length_seconds)
+  has_timestamps = params.controls && !chapters.empty?
   has_tools = !!plid || video.live_chat_replay? || params.related_videos
   clip_available = Invidious::Clips.source_error(video).nil?
   clip_inline = !!user && clip_available
@@ -167,10 +169,11 @@
 <p id="share-status" role="status"></p><div id="share-fallback" hidden><label for="share-url"><%= I18n.translate(locale, "ui_share") %></label><input id="share-url" type="url" readonly></div>
 <%= rendered "overhaul/watch_description" %>
 </div>
-<% if has_tools || has_transcript || clip_inline %>
+<% if has_tools || has_transcript || has_timestamps || clip_inline %>
 <aside class="utility-panel" id="watch-sidebar" <%= "hidden" unless has_tools %> aria-label="<%= I18n.translate(locale, "overhaul_video_tools") %>">
 <div id="watch-tools">
 <% if has_transcript %><%= rendered "overhaul/watch_transcript" %><% end %>
+<% if has_timestamps %><%= rendered "overhaul/watch_timestamps" %><% end %>
 <% if video.live_chat_replay? %><%= rendered "overhaul/watch_chat" %><% end %>
 <% if plid %><%= rendered "overhaul/watch_queue" %><% end %>
 <% if params.related_videos %><section class="watch-tool recommendations" id="tool-next" aria-labelledby="recommendations-heading"><h2 id="recommendations-heading"><%= I18n.translate(locale, "overhaul_up_next") %></h2>

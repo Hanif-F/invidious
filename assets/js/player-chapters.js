@@ -13,11 +13,12 @@
     }
     var ticks = element(bar, 'chapter-markers'), tooltip = element(root, 'chapter-tooltip');
     var sponsor = element(tooltip, ''), title = element(tooltip, '');
-    var currentTitle = document.createElement('span');
-    currentTitle.className = 'current-chapter';
+    var currentControl = document.createElement('span'), currentTitle = currentControl;
+    var fallbackTitle = '', updatePanel;
+    currentControl.className = 'current-chapter';
     currentTitle.dir = 'auto';
-    currentTitle.hidden = true;
-    durationDisplay.after(currentTitle);
+    currentControl.hidden = true;
+    durationDisplay.after(currentControl);
     title.dir = 'auto';
     var pointerTime = null, focused = false;
     tooltip.id = 'chapter-tooltip';
@@ -44,26 +45,48 @@
         tooltip.style.left = Math.max(4, Math.min(bounds.width - tooltip.offsetWidth - 4, center - tooltip.offsetWidth / 2)) + 'px';
     }
     function refresh() {
-        var current = chapters.findLast((c) => c.start <= player.currentTime());
-        currentTitle.hidden = !current;
-        currentTitle.textContent = current ? current.title : '';
-        currentTitle.title = current ? current.title : '';
+        var time = player.currentTime();
+        var index = chapters.findLastIndex((chapter) => chapter.start <= time);
+        var current = chapters[index];
+        var label = current ? current.title : fallbackTitle;
+        currentControl.hidden = !chapters.length || !label;
+        if (currentTitle.textContent !== label) {
+            currentTitle.textContent = label;
+            currentControl.title = label;
+            if (updatePanel) currentControl.setAttribute('aria-label', current ? label + ', ' + fallbackTitle : label);
+        }
+        if (updatePanel) updatePanel(chapters, index);
         if (pointerTime !== null) show(pointerTime);
-        else if (focused) show(player.currentTime());
+        else if (focused) show(time);
     }
     function render() {
         var duration = player.duration();
-        chapters = player_data.chapters.filter(function (c) {
-            return Number.isFinite(duration) && c.start >= 0 && c.start < duration;
+        var measured = Number.isFinite(duration) && duration > 0;
+        var limit = updatePanel && Number.isNaN(duration) ? video_data.length_seconds : duration;
+        var available = player_data.chapters.filter(function (c) {
+            return Number.isFinite(limit) && c.start >= 0 && c.start < limit;
         });
-        if (chapters.length < 2) chapters = [];
+        if (available.length < 2) available = [];
+        if (chapters.length !== available.length || chapters.some((chapter, i) => chapter !== available[i])) chapters = available;
         root.classList.toggle('has-chapters', chapters.length > 0);
-        ticks.textContent = '';
-        chapters.forEach(function (c) {
-            element(ticks, 'chapter-marker').style.left = 100 * c.start / duration + '%';
-        });
+        ticks.replaceChildren();
+        if (measured) {
+            chapters.forEach(function (c) {
+                element(ticks, 'chapter-marker').style.left = 100 * c.start / duration + '%';
+            });
+        }
         hide(); refresh();
     }
+    player.invidiousChapters = {
+        attachPanel: function (control, name, update) {
+            currentControl.replaceWith(control);
+            currentControl = control;
+            currentTitle = control.querySelector('.chapter-label');
+            fallbackTitle = name;
+            updatePanel = update;
+            render();
+        }
+    };
     function move(e) {
         var point = e.touches ? e.touches[0] : e;
         var bounds = bar.getBoundingClientRect();
@@ -77,14 +100,16 @@
         touchstart: move, touchmove: move, touchend: leave, touchcancel: leave};
     Object.keys(mouseListeners).forEach((name) => progress.addEventListener(name, mouseListeners[name]));
     Object.keys(barListeners).forEach((name) => bar.addEventListener(name, barListeners[name]));
-    var events = {sponsorblocksegments: receive, loadedmetadata: render, durationchange: render,
+    var events = {sponsorblocksegments: receive, loadstart: render, loadedmetadata: render, durationchange: render,
         timeupdate: refresh, seeked: refresh, playerresize: refresh};
     Object.keys(events).forEach((name) => player.on(name, events[name]));
     player.on('dispose', function () {
         Object.keys(mouseListeners).forEach((name) => progress.removeEventListener(name, mouseListeners[name]));
         Object.keys(barListeners).forEach((name) => bar.removeEventListener(name, barListeners[name]));
         Object.keys(events).forEach((name) => player.off(name, events[name]));
-        currentTitle.remove();
+        delete player.invidiousChapters;
+        updatePanel = null;
+        currentControl.remove();
     });
     render();
 }());

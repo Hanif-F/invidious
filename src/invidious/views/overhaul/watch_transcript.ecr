@@ -1,5 +1,8 @@
                 <section id="transcript-panel" class="watch-tool transcript-panel js-only" aria-labelledby="transcript-heading" hidden>
-                    <h2 id="transcript-heading" tabindex="-1"><%= I18n.translate(locale, "ui_transcript") %></h2>
+                    <header class="watch-tool-heading">
+                        <h2 id="transcript-heading" tabindex="-1"><%= I18n.translate(locale, "ui_transcript") %></h2>
+                        <button id="transcript-close" type="button" class="icon-button" aria-label="<%= HTML.escape(I18n.translate(locale, "ui_close_transcript")) %>"><%= Invidious::Frontend::Icons.render("x") %></button>
+                    </header>
                     <div class="transcript-toolbar">
                         <label for="transcript-language"><%= I18n.translate(locale, "ui_language") %><select id="transcript-language">
                             <% video.captions.each do |caption| %><option value="<%= HTML.escape(caption.name) %>" data-auto="<%= caption.auto_generated %>"><%= HTML.escape(caption.name) %></option><% end %>

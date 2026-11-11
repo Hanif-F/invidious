@@ -110,7 +110,7 @@
     "show_annotations" => I18n.translate(locale, "Show annotations"),
     "stats_labels" => %w(identity title close details copy disable unavailable waiting resolution viewport quality codecs fps bitrate frames buffer bandwidth bytes requests state stalls live help copied fallback).to_h { |key| {key, I18n.translate(locale, "stats_#{key}")} },
     "stats_formats" => (fmt_stream + adaptive_fmts).map { |fmt| fmt.select { |key, _| %w(itag mimeType width height fps bitrate contentLength audioQuality audioTrack).includes?(key) }.merge({"isDrc" => JSON::Any.new(Invidious::Videos::AudioMetadata.stable_volume?(fmt))}) },
-    "chapters" => Invidious::Videos::Chapters.parse(video.short_description, video.live_now ? 0 : video.length_seconds),
+    "chapters" => chapters,
     "aspect_ratio" => aspect_ratio,
     "seek_seconds" => preferences.seek_seconds,
     "title" => player_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, player_spoiler_date.nil?) : (env.get?("native_clip_title").try(&.as(String)) || Invidious::OriginalTitles.title(env, video.id, video.title)),

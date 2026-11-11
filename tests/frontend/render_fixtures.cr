@@ -489,6 +489,11 @@ File.write("#{output}/channel-search-private.html", diary_channel_fixture(search
 File.write("#{output}/channel-search-empty.html", diary_channel_fixture(search: true, empty: true))
 
 File.write("#{output}/watch-chapters.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), chapter_description: "0:00 </script><script>alert(1)</script>\n0:02 日本語 & details"))
+metadata_video.short_description = "Description from the player."
+metadata_video.description_html = %(<p><a href="/watch?v=2isYuQZMbdU&amp;t=0">0:00</a> Introduction</p><p>1:04 Middle<br>1:40:05 Ending</p>)
+metadata_video.info["description"] = JSON::Any.new("A longer description. " * 12)
+metadata_video.length_seconds = 7000
+File.write("#{output}/watch-description.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), supplied_video: metadata_video))
 
 require "./member_checks"
 check_member_preferences

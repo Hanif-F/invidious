@@ -361,7 +361,8 @@ async function pageFor(engine, options = {}) {
         if (options.brokenAvatars && url.pathname.startsWith('/ggpht')) return route.fulfill({ status: 404, body: '' });
         if (url.pathname.startsWith('/vi/') || url.pathname.startsWith('/ggpht')) return route.fulfill({ contentType: 'image/svg+xml', body: picture });
         if (options.realPlayer && url.pathname === '/latest_version') {
-            const body = fs.readFileSync(path.join(generated, fixture === 'clip-watch' || new URL(route.request().frame().url()).searchParams.get('clip_preview') === '1' ? 'clip-fixture.webm' : 'fixture.webm'));
+            const useClip = fixture === 'clip-watch' || new URL(route.request().frame().url()).searchParams.get('clip_preview') === '1';
+            const body = fs.readFileSync(path.join(generated, options.media || (useClip ? 'clip-fixture.webm' : 'fixture.webm')));
             const range = route.request().headers().range;
             const match = range && range.match(/bytes=(\d+)-(\d*)/);
             if (match) {
@@ -1196,6 +1197,7 @@ for (const engine of engines) {
             await page.waitForFunction(() => player.currentTime() >= 0.9);
             assert.ok(await page.evaluate(() => player.currentTime() >= 0.9));
             assert.equal(await page.locator('.vjs-fullscreen-control').count(), 1);
+            assert.equal(await page.locator('.vjs-remaining-time').count(), 0);
             assert.equal(await page.locator('button.vjs-captions-button').count(), 0);
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
             const playerBox = await page.locator('#player').boundingBox();
@@ -1727,10 +1729,9 @@ for (const engine of engines) {
         await page.waitForFunction(() => document.getElementById('transcript-status').textContent.includes('Automatically'));
         await page.locator('#transcript-language').selectOption({ index: 0 });
         assert.equal(transcriptCalls(), 3);
-        assert.equal(await page.locator('#timestamp-panel').evaluate(panel => panel.open), false);
-        await page.locator('#timestamp-panel > summary').click();
-        await page.locator('#timestamp-list a').nth(1).click();
-        assert.equal(await page.evaluate(() => window.__time), 80);
+        await page.getByRole('button', {name: 'Close transcript'}).click();
+        assert.equal(await page.locator('#transcript-panel').isVisible(), false);
+        assert.equal(await page.locator('.watch-actions > .ui-menu > summary').evaluate(el => el === document.activeElement), true);
         assert.deepEqual(errors, []);
         await context.close();
     });
@@ -1811,6 +1812,21 @@ for (const engine of engines) {
         assert.ok(await thin.page.locator('.queue-row img, .recommendation img').count() > 0);
         assert.deepEqual(thin.errors, []);
         await thin.context.close();
+    });
+
+    test(`${engine}: Description reveals the original links, music and metadata together without JavaScript`, async () => {
+        const {page, context} = await pageFor(engine, {fixture: 'watch-description', javascript: false});
+        assert.equal(await page.locator('#description-box > summary').count(), 1);
+        assert.equal(await page.locator('#description-box footer').isVisible(), false);
+        assert.equal(await page.getByText('Video details', {exact: true}).count(), 0);
+        await page.locator('#description-box > summary').click();
+        assert.match(await page.locator('#descriptionWrapper a').getAttribute('href'), /&t=0$/);
+        assert.equal(await page.locator('#description-box .music-item').isVisible(), true);
+        assert.match(await page.locator('#description-box > footer #license').innerText(), /Creative Commons Attribution/);
+        assert.equal(await page.locator('#description-box > footer #family_friendly').isVisible(), true);
+        assert.equal(await page.locator('#description-box > footer #genre').isVisible(), true);
+        assert.equal(await page.locator('#timestamp-panel').isVisible(), false);
+        await context.close();
     });
 
 
@@ -3754,11 +3770,13 @@ for (const engine of engines) {
     test(`${engine}: current chapter beside duration follows playback and seeking`, async () => {
         const {page, context, errors} = await pageFor(engine, {realPlayer:true,
             playerData:{chapters:[{start:0.5,title:'Intro <img src=x>'},{start:2,title:'日本語 & details'}]}});
-        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.evaluate(() => { player.muted(true); return player.play(); });
         await page.waitForFunction(() => document.querySelectorAll('.chapter-marker').length === 2);
         await page.evaluate(() => { player.pause(); player.userActive(true); player.currentTime(0.1); });
         const current = page.locator('.current-chapter');
-        assert.equal(await current.isVisible(), false);
+        assert.equal(await current.innerText(), 'Timestamps');
+        assert.equal(await current.getAttribute('aria-expanded'), 'false');
+        assert.equal(await page.locator('#timestamp-panel').isVisible(), false);
         assert.equal(await page.locator('.video-js').evaluate(el => el.classList.contains('has-chapters')), true);
         await page.evaluate(() => player.currentTime(0.7));
         await page.waitForFunction(() => document.querySelector('.current-chapter').textContent === 'Intro <img src=x>');
@@ -3772,7 +3790,7 @@ for (const engine of engines) {
         await page.evaluate(() => player.currentTime(2.5));
         await page.waitForFunction(() => document.querySelector('.current-chapter').textContent === '日本語 & details');
         await page.evaluate(() => player.currentTime(0.1));
-        await page.waitForFunction(() => document.querySelector('.current-chapter').hidden);
+        await page.waitForFunction(() => document.querySelector('.current-chapter').textContent === 'Timestamps');
         await page.evaluate(() => player.duration(1.5));
         assert.equal(await page.locator('.video-js').evaluate(el => el.classList.contains('has-chapters')), false);
         assert.equal(await current.isVisible(), false);
@@ -3786,40 +3804,108 @@ for (const engine of engines) {
         await empty.context.close();
     });
 
-    test(`${engine}: chapter title fits unified touch desktop and mobile embed controls`, async () => {
+    test(`${engine}: chapter sidebar opens by keyboard, seeks without resuming and returns focus`, async () => {
+        const {page, context, errors} = await pageFor(engine, {realPlayer: true, fixture: 'd5-timestamps-only-light',
+            route: 'watch?v=2isYuQZMbdU', width: 390, height: 844, touch: true});
+        await page.evaluate(async () => { player.muted(true); await player.play(); player.pause(); player.userActive(true); });
+        const toggle = page.locator('#timestamp-toggle');
+        const panel = page.locator('#timestamp-panel');
+        assert.equal(await page.locator('#watch-sidebar').isVisible(), false);
+        await toggle.focus();
+        await page.keyboard.press('Enter');
+        assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+        assert.equal(await page.locator('#timestamp-heading').evaluate(el => el === document.activeElement), true);
+        const heading = await page.locator('#timestamp-heading').boundingBox();
+        assert.ok(heading.y >= 0 && heading.y < 844);
+        await panel.getByRole('link', {name: /Finding the light/}).click();
+        await page.waitForFunction(() => player.paused() && !player.seeking() && Math.abs(player.currentTime() - 2) < .1);
+        await panel.locator('[data-chapter-start="2"][aria-current=true]').waitFor();
+        assert.match(await panel.locator('[aria-current=true]').innerText(), /Finding the light/);
+        assert.equal(await panel.isVisible(), true);
+        await panel.getByRole('button', {name: 'Close timestamps'}).click();
+        assert.equal(await page.locator('#watch-sidebar').isVisible(), false);
+        assert.equal(await toggle.evaluate(el => el === document.activeElement), true);
+        await page.keyboard.press('Space');
+        await toggle.click();
+        assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+        assert.equal(await page.locator('#watch-sidebar').isVisible(), false);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: Timestamps stays usable in fullscreen beside Chat Replay and returns below Transcript`, async () => {
+        const chapters = Array.from({length: 40}, (_, start) => ({start, title: `Chapter ${start}`}));
+        const {page, context, errors} = await pageFor(engine, {realPlayer: true, fixture: 'watch-chat',
+            route: 'watch?v=2isYuQZMbdU', media: 'watch-media/clip.webm', playerData: {chapters}});
+        await page.evaluate(async () => { player.muted(true); await player.play(); player.pause(); player.currentTime(30); player.userActive(true); });
+        await page.waitForFunction(() => player.currentTime() >= 29.9);
+        await page.locator('.watch-actions > .ui-menu > summary').click();
+        await page.locator('#transcript-toggle').click();
+        await page.getByRole('button', {name: 'Show chat', exact: true}).click();
+        await page.locator('.vjs-fullscreen-control').click();
+        await page.waitForFunction(() => document.fullscreenElement === player.el());
+        const toggle = page.locator('#timestamp-toggle');
+        const panel = page.locator('#player > #timestamp-panel');
+        await toggle.click();
+        await panel.waitFor();
+        const list = panel.locator('#timestamp-list');
+        assert.match(await list.locator('[aria-current=true]').innerText(), /Chapter 30/);
+        assert.ok(await list.evaluate(el => el.scrollTop > 0));
+        const [panelBox, chatBox, seekBox] = await Promise.all([panel.boundingBox(), page.locator('#tool-chat').boundingBox(), page.locator('.vjs-progress-control').boundingBox()]);
+        assert.ok(panelBox.x + panelBox.width <= chatBox.x + 1);
+        assert.ok(panelBox.y + panelBox.height <= seekBox.y + 1);
+        await page.evaluate(() => player.userActive(false));
+        assert.equal(await page.locator('.vjs-fullscreen-control').isVisible(), true);
+        await panel.getByRole('button', {name: 'Close timestamps'}).click();
+        assert.equal(await page.evaluate(() => player.isFullscreen()), true);
+        assert.equal(await toggle.evaluate(el => el === document.activeElement), true);
+        await toggle.click();
+        await list.evaluate(el => { el.scrollTop = 240; });
+        await page.locator('.vjs-fullscreen-control').click();
+        await page.locator('#transcript-panel + #timestamp-panel').waitFor();
+        assert.equal(await page.locator('#timestamp-list').evaluate(el => el.scrollTop), 240);
+        assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+        assert.equal(await page.locator('#transcript-panel').isVisible(), true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
+    test(`${engine}: chapter title fits desktop, touch and mobile embed controls`, async () => {
         const longTitle = 'A long chapter title that should be truncated before it covers any playback control';
-        for (const [width, style, embed] of [[1280, 'unified', false], [320, 'unified', true],
-            [1440, 'unified', false], [390, 'unified', true]]) {
-            const {page, context, errors} = await pageFor(engine, {realPlayer:true, width, touch:true,
-                fixture:embed ? 'embed-mobile' : 'watch-dark', route:embed ? 'embed/2isYuQZMbdU' : undefined,
+        for (const [width, fixture, touch] of [[1280, 'watch-dark', true], [320, 'embed-mobile', true],
+            [1440, 'watch-light', false], [390, 'watch-rtl', true]]) {
+            const embed = fixture === 'embed-mobile';
+            const {page, context, errors} = await pageFor(engine, {realPlayer:true, width, touch,
+                fixture, route:embed ? 'embed/2isYuQZMbdU' : undefined,
                 playerData:{chapters:[{start:0,title:'Start'},{start:2,title:longTitle}]}});
-            await page.evaluate(style => {
-                player.muted(true); player.play();
-            }, style);
+            await page.evaluate(() => { player.muted(true); return player.play(); });
             await page.waitForFunction(() => document.querySelectorAll('.chapter-marker').length === 2);
             await page.evaluate(() => { player.pause(); player.currentTime(2.5); player.userActive(true); });
             await page.waitForFunction(title => document.querySelector('.current-chapter').textContent === title, longTitle);
             const layout = await page.evaluate(() => {
                 const title = document.querySelector('.current-chapter');
                 const duration = document.querySelector('.vjs-duration');
-                const controls = ['.vjs-mobile-settings', '.vjs-fullscreen-control']
+                const controls = ['.vjs-mobile-settings, .vjs-desktop-settings', '.vjs-fullscreen-control', '.vjs-progress-control']
                     .map(selector => document.querySelector(selector));
+                const label = title.querySelector('.chapter-label') || title;
                 const box = el => el.getBoundingClientRect();
                 const overlaps = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-                return {title:box(title), duration:box(duration), controls:controls.map(box),
+                return {title:box(title), duration:box(duration), controls:controls.map(box), rtl:getComputedStyle(title.parentElement).direction==='rtl',
                     overlap:controls.some(el => overlaps(box(title), box(el))),
-                    titleAttribute:title.title, titleOverflow:getComputedStyle(title).textOverflow,
-                    titleScrollWidth:title.scrollWidth,
+                    titleAttribute:title.title, titleOverflow:getComputedStyle(label).textOverflow,
+                    labelWidth:label.clientWidth, labelScrollWidth:label.scrollWidth,
                     rootWidth:player.el().clientWidth, rootScrollWidth:player.el().scrollWidth};
             });
-            assert.ok(layout.duration.width > 0 && layout.title.width >= 40, `${width}px ${style}: time and title readable ${JSON.stringify(layout)}`);
-            assert.ok(layout.duration.right <= layout.title.left + 1, `${width}px ${style}: title follows duration`);
-            assert.equal(layout.overlap, false, `${width}px ${style}: playback controls remain clear`);
-            assert.ok(layout.controls.every(box => box.width > 0), `${width}px ${style}: playback controls visible`);
+            assert.ok(layout.duration.width > 0 && layout.title.width >= 40, `${fixture}: time and title readable ${JSON.stringify(layout)}`);
+            assert.ok(layout.rtl ? layout.title.right <= layout.duration.left + 1 : layout.duration.right <= layout.title.left + 1, `${fixture}: title follows duration`);
+            assert.equal(layout.overlap, false, `${fixture}: playback controls remain clear`);
+            assert.ok(layout.controls.every(box => box.width > 0), `${fixture}: playback controls visible`);
             assert.equal(layout.titleAttribute, longTitle);
             assert.equal(layout.titleOverflow, 'ellipsis');
-            assert.ok(layout.titleScrollWidth > layout.title.width, `${width}px ${style}: long title is truncated`);
-            assert.ok(layout.rootScrollWidth <= layout.rootWidth + 1, `${width}px ${style}: no horizontal overflow`);
+            assert.ok(layout.labelScrollWidth > layout.labelWidth, `${fixture}: long title is truncated`);
+            assert.ok(layout.rootScrollWidth <= layout.rootWidth + 1, `${fixture}: no horizontal overflow`);
+            assert.equal(await page.locator('#timestamp-toggle').count(), embed ? 0 : 1);
+            await page.locator('#player').screenshot({path:path.join(artifacts, `${engine}-chapter-controls-${fixture}.png`)});
             if (!embed && width === 1280) {
                 await page.evaluate(() => player.userActive(false));
                 await page.waitForFunction(() => getComputedStyle(document.querySelector('.vjs-control-bar')).visibility === 'hidden');
@@ -3835,7 +3921,7 @@ for (const engine of engines) {
                 await track.tap({position:{x:bounds.width * .75, y:bounds.height / 2}});
                 await page.waitForFunction(() => player.currentTime() > 2);
             }
-            assert.deepEqual(errors, []);
+            assert.deepEqual(errors, [], fixture);
             await context.close();
         }
     });
@@ -3948,6 +4034,9 @@ test('manual chapter template serializes titles safely for watch and embed', () 
     assert.deepEqual(JSON.parse(payload).chapters, [{start:0,title:'</script><script>alert(1)</script>'},{start:2,title:'日本語 & details'}]);
     const embed = fs.readFileSync(path.join(generated, 'embed-mobile.html'), 'utf8');
     assert.equal(JSON.parse(embed.match(/<script id="player_data"[^>]*>([\s\S]*?)<\/script>/)[1]).chapters.length, 3);
+    const fallback = fs.readFileSync(path.join(generated, 'watch-description.html'), 'utf8');
+    assert.deepEqual(JSON.parse(fallback.match(/<script id="player_data"[^>]*>([\s\S]*?)<\/script>/)[1]).chapters,
+        [{start: 0, title: 'Introduction'}, {start: 64, title: 'Middle'}, {start: 6005, title: 'Ending'}]);
 });
 
 for (const engine of engines) {

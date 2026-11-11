@@ -1,9 +1,19 @@
 /* Shared player timeline and controls. Retired style preferences do not select CSS variants. */
+.video-js.player-style-unified {
+  --player-control-height: 40px;
+  --player-seek-height: 24px;
+}
+
+.video-js.player-style-unified.invidious-mobile {
+  --player-control-height: 44px;
+  --player-seek-height: 44px;
+}
+
 .video-js.player-style-unified .vjs-progress-control {
   /* Keep the thin rail inside a usable desktop hover/drag target. */
-  height: 24px;
+  height: var(--player-seek-height);
   top: auto;
-  bottom: calc(100% - 12px);
+  bottom: 100%;
 }
 
 .video-js.player-style-unified .vjs-progress-control .vjs-progress-holder, .video-js.player-style-unified .vjs-progress-control {
@@ -16,6 +26,8 @@
 
 .video-js.player-style-unified .vjs-control-bar {
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.2));
+  height: var(--player-control-height);
+  align-items: center;
 }
 
 .video-js.player-style-unified .vjs-slider {
@@ -74,7 +86,7 @@
   padding-top: 2em
 }
 
-.video-js.player-style-unified .vjs-progress-holder { height: 5px; }
+.video-js.player-style-unified .vjs-progress-control .vjs-progress-holder { height: 5px; bottom: 8px; }
 
 ul.vjs-menu-content::-webkit-scrollbar {
   display: none;
@@ -116,8 +128,7 @@ ul.vjs-menu-content::-webkit-scrollbar {
 .vjs-current-time,
 .vjs-time-control,
 .vjs-duration,
-.vjs-progress-control,
-.vjs-remaining-time {
+.vjs-progress-control {
   order: 1;
 }
 
@@ -253,16 +264,22 @@ ul.vjs-menu-content::-webkit-scrollbar {
   background-color: rgba(35, 35, 35, 0.75);
 }
 
-.video-js .vjs-current-time,
-.video-js .vjs-time-divider,
-.video-js .vjs-duration {
+.video-js .vjs-control-bar > :is(.vjs-current-time, .vjs-time-divider, .vjs-duration) {
   display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  padding: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
 }
 
-.video-js .vjs-time-divider {
-  min-width: 0px;
-  padding-left: 0px;
-  padding-right: 0px;
+.video-js .vjs-control-bar > .vjs-current-time { margin-inline-start: 6px; }
+.video-js .vjs-control-bar > .vjs-time-divider { padding-inline: 4px; color: #fffc; }
+.video-js.invidious-mobile .vjs-control-bar > :is(.vjs-current-time, .vjs-time-divider, .vjs-duration) {
+  font-size: 12px;
 }
 
 .video-js .vjs-poster {
@@ -309,7 +326,7 @@ video.video-js {
   pointer-events: none;
   transition: opacity .2s, visibility .2s;
 }
-:is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started:is(.vjs-user-active, .vjs-ended) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control),
+:is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started:is(.vjs-user-active, .vjs-ended, .timestamps-fullscreen-open) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control),
 :is(body[data-page=watch] .video-js, .video-js.invidious-mobile).vjs-has-started:has(.vjs-control-bar :focus-visible, .vjs-touch-overlay .vjs-play-control:focus-visible, .vjs-menu.vjs-lock-showing) :is(.vjs-control-bar, .vjs-touch-overlay .vjs-play-control) {
   opacity: 1;
   visibility: visible;
@@ -457,12 +474,40 @@ body .video-js .vjs-menu li.vjs-menu-item:focus-visible {
 
 .chapter-markers { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 .chapter-marker { position: absolute; top: 0; height: 100%; width: 2px; background: rgba(0,0,0,.65); transform: translateX(-1px); }
-.video-js.has-chapters .vjs-duration { display: block !important; }
-.video-js .current-chapter { order: 1; flex: 0 1 auto; align-self: center; box-sizing: border-box; min-width: 0; max-width: min(24em, 30%); padding-inline: .6em .3em; border-inline-start: 1px solid currentColor; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; }
-.video-js .current-chapter[hidden] { display: none; }
-.video-js.invidious-mobile.has-chapters .vjs-remaining-time { display: none; }
-.video-js.invidious-mobile.has-chapters.player-style-unified .vjs-progress-control { position: absolute; top: -30px; bottom: auto; left: 12px; right: 12px; width: auto; height: 44px; margin: 0; }
-.video-js.invidious-mobile.has-chapters.player-style-unified .vjs-progress-holder { width: 100%; margin: 0; }
+.video-js.has-chapters .vjs-control-bar > :is(.vjs-current-time, .vjs-time-divider, .vjs-duration) { display: block !important; }
+.video-js .current-chapter {
+  order: 1;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(30%, 240px);
+  margin-inline-start: 8px;
+  padding-inline: 8px;
+  font: 500 13px/1.35 system-ui, sans-serif;
+  text-align: start;
+}
+.video-js :is(span.current-chapter, .chapter-label) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.video-js button.current-chapter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 38px;
+  min-height: 32px;
+  border: 1px solid #ffffff40;
+  border-radius: 999px;
+  background: #ffffff14;
+  color: inherit;
+  cursor: pointer;
+}
+.video-js .current-chapter > .ui-icon { flex: none; width: 14px; height: 14px; }
+.video-js button.current-chapter:is(:hover, [aria-expanded=true]) { background: #ffffff36; color: inherit; }
+.video-js button.current-chapter:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+.video-js button.current-chapter:disabled { opacity: .6; cursor: default; }
+.video-js.invidious-mobile .current-chapter { font-size: 12px; }
+.video-js.invidious-mobile button.current-chapter { min-height: var(--player-control-height); min-width: 44px; }
+@media (forced-colors: active) {
+  .video-js button.current-chapter { border-color: ButtonText; }
+  .video-js button.current-chapter[aria-expanded=true] { background: Highlight; color: HighlightText; }
+}
 .video-js .chapter-tooltip { position: absolute; z-index: 30; pointer-events: none; max-width: min(320px, calc(100% - 8px)); box-sizing: border-box; padding: 6px 9px; border-radius: 4px; background: rgba(20,20,20,.95); color: white; font: 13px/1.4 sans-serif; overflow-wrap: anywhere; text-align: center; }
 .video-js .chapter-tooltip[hidden] { display: none; }
 .chapter-tooltip > :first-child { font-weight: bold; }

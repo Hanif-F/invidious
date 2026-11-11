@@ -1,10 +1,11 @@
 /* Owned desktop controls; stream and media behavior remains in Video.js/player.js. */
 .invidious-desktop{--player-control-fg:#fff;--player-control-bg:#101114;--player-control-hover:#ffffff26}
 .invidious-desktop .player-secondary-control{display:none!important}
-.invidious-desktop .vjs-control-bar{height:40px;align-items:center;background:linear-gradient(transparent,#000c);padding-inline:4px}
+.invidious-desktop .vjs-control-bar{padding-inline:4px}
+.video-js.player-style-unified.invidious-desktop .vjs-control-bar{background:linear-gradient(transparent,#000c)}
 .invidious-desktop .vjs-control{height:36px;min-width:32px}
 @media (forced-colors:active){
-  .video-js.player-style-unified .vjs-control-bar{background:Canvas;color:CanvasText;border-block-start:1px solid CanvasText}
+  .video-js.player-style-unified .vjs-control-bar,.video-js.player-style-unified.invidious-desktop .vjs-control-bar{background:Canvas;color:CanvasText;border-block-start:1px solid CanvasText}
   .video-js.player-style-unified .vjs-progress-holder,.video-js.player-style-unified .vjs-volume-bar{border:1px solid CanvasText}
   .video-js.player-style-unified .vjs-play-progress,.video-js.player-style-unified .vjs-volume-level{background:Highlight}
 }
@@ -64,6 +65,4 @@ body[data-page=watch] .dearrow-reveal{display:flex;align-items:center;justify-co
 body[data-page=watch] .dearrow-reveal::before{content:none}
 body[data-page=watch] .dearrow-reveal:hover,body[data-page=watch] .dearrow-reveal[aria-pressed=true]{background:var(--selection);color:var(--accent)}
 .watch-player .video-js.vjs-fullscreen,.video-js.invidious-desktop:fullscreen{width:100%;height:100%;max-height:100%;aspect-ratio:auto;border-radius:0}
-.watch-description .metadata-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px;font-size:14px}.watch-description .metadata-grid p{margin:0}
-.watch-description .music-item{font-size:14px;padding-block:8px;border-top:1px solid var(--separator)}.watch-description .music-item p{margin:0}
 .dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.dialog-heading h2{margin:0}

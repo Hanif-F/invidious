@@ -251,7 +251,7 @@ function updateWatchSidebar(widthChanged) {
     if (!panel || !trigger) return;
     function open() {
         if (scrollPositions || !watchCurrent()) return false;
-        scrollPositions = Array.from(watchTools.querySelectorAll('#transcript-lines, #chat-messages, #playlist'), function (list) {
+        scrollPositions = Array.from(watchTools.querySelectorAll('#transcript-lines, #timestamp-list, #chat-messages, #playlist'), function (list) {
             return [list, list.scrollTop];
         });
         watchTools.hidden = true;
@@ -316,14 +316,19 @@ if (transcript_panel) {
             };
             document.head.append(script);
         }
-        transcriptToggle.addEventListener('click', function () {
+        function setOpen(opening) {
             if (!watchCurrent() || watchTools.hidden) return;
-            var opening = transcript_panel.hidden;
             transcript_panel.hidden = !opening;
             transcriptToggle.setAttribute('aria-expanded', String(opening));
             menu.open = false;
             updateWatchSidebar();
             (opening ? heading : menu.querySelector('summary')).focus();
+        }
+        transcriptToggle.addEventListener('click', function () {
+            setOpen(transcript_panel.hidden);
+        }, {signal:life.signal});
+        document.getElementById('transcript-close').addEventListener('click', function () {
+            setOpen(false);
         }, {signal:life.signal});
         watchTools.addEventListener('iv:watch-tools-visibility',function () {
             if (visible()) start(); else if (owner) owner.setVisible(false);
@@ -338,36 +343,116 @@ if (transcript_panel) {
     })();
 }
 
-// Use only a consecutive, increasing series of description timestamps.
 (function () {
-    var description = document.getElementById('descriptionWrapper');
-    if (!description) return;
-    var clone = description.cloneNode(true);
-    clone.querySelectorAll('br').forEach(function (br) { br.replaceWith(document.createTextNode('\n')); });
-    clone.querySelectorAll('p, div').forEach(function (node) { node.appendChild(document.createTextNode('\n')); });
-    var entries = [];
-    clone.textContent.split('\n').forEach(function (line) {
-        var match = line.trim().match(/^(\d{1,2}:)?(\d{1,2}):(\d{2})\s+[-–—]?\s*(\S.*)$/);
-        if (!match) return;
-        var seconds = (match[1] ? parseInt(match[1], 10) * 3600 : 0) + Number(match[2]) * 60 + Number(match[3]);
-        if (Number(match[3]) >= 60 || (match[1] && Number(match[2]) >= 60)) return;
-        if (seconds >= video_data.length_seconds || (entries.length && seconds <= entries[entries.length - 1].seconds)) return;
-        entries.push({seconds: seconds, label: line.trim()});
-    });
-    if (entries.length < 2) return;
+    var panel = document.getElementById('timestamp-panel');
+    if (!panel || !player.invidiousChapters) return;
+
+    var root = player.el(), heading = document.getElementById('timestamp-heading');
     var list = document.getElementById('timestamp-list');
-    entries.forEach(function (entry) {
-        var item = document.createElement('li');
-        var link = document.createElement('a');
-        var url = new URL(location.href);
-        url.searchParams.set('t', entry.seconds);
-        link.href = url.pathname + url.search;
-        link.textContent = entry.label;
-        link.onclick = function (event) { event.preventDefault(); player.currentTime(entry.seconds); };
-        item.appendChild(link);
-        list.appendChild(item);
+    var toggle = document.getElementById('timestamp-toggle-template').content.firstElementChild.cloneNode(true);
+    var sidebarPosition = document.createComment('Timestamps sidebar position');
+    panel.before(sidebarPosition);
+    var life = new AbortController(), expanded = false;
+    var entries, active;
+
+    function syncVisibility() {
+        toggle.disabled = watchTools.hidden;
+        panel.hidden = !expanded || toggle.disabled;
+        toggle.setAttribute('aria-expanded', String(!panel.hidden));
+        root.classList.toggle('timestamps-fullscreen-open', panel.parentNode === root && !panel.hidden);
+    }
+    function setOpen(open, moveFocus) {
+        expanded = open;
+        syncVisibility();
+        updateWatchSidebar();
+        if (!moveFocus) return;
+        if (open) {
+            if (active) {
+                var row = active.getBoundingClientRect(), viewport = list.getBoundingClientRect();
+                if (row.top < viewport.top || row.bottom > viewport.bottom) list.scrollTop += row.top - viewport.top;
+            }
+            if (panel.parentNode === root) heading.focus({preventScroll: true});
+            else if (matchMedia('(max-width: 959px)').matches) {
+                heading.focus({preventScroll: true});
+                panel.scrollIntoView({block: 'start'});
+            } else heading.focus();
+        } else {
+            player.userActive(true);
+            player.reportUserActivity();
+            toggle.focus();
+        }
+    }
+    function placePanel() {
+        var fullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+        var inPlayer = player.isFullWindow || (fullscreen && fullscreen.contains(root));
+        if (!!inPlayer === (panel.parentNode === root)) return;
+        var scroll = list.scrollTop;
+        var focus = panel.contains(document.activeElement) ? document.activeElement : null;
+        if (inPlayer) root.append(panel);
+        else sidebarPosition.after(panel);
+        syncVisibility();
+        updateWatchSidebar();
+        list.scrollTop = scroll;
+        if (focus && !panel.hidden) focus.focus({preventScroll: true});
+    }
+    function updateChapters(chapters, index) {
+        if (entries !== chapters) {
+            entries = chapters;
+            active = null;
+            var url = new URL(location.href);
+            var rows = chapters.map(function (chapter) {
+                var row = document.createElement('li');
+                var link = document.createElement('a');
+                var time = document.createElement('time');
+                var title = document.createElement('span');
+                url.searchParams.set('t', chapter.start);
+                link.href = url.pathname + url.search;
+                link.dataset.chapterStart = chapter.start;
+                time.dateTime = 'PT' + chapter.start + 'S';
+                time.textContent = videojs.formatTime(chapter.start, video_data.length_seconds);
+                title.textContent = chapter.title;
+                title.dir = 'auto';
+                link.append(time, title);
+                row.append(link);
+                return row;
+            });
+            list.replaceChildren(...rows);
+            if (!chapters.length && expanded) setOpen(false, false);
+        }
+        var row = list.children[index];
+        var current = row ? row.firstElementChild : null;
+        if (active === current) return;
+        if (active) active.removeAttribute('aria-current');
+        if (current) current.setAttribute('aria-current', 'true');
+        active = current;
+    }
+
+    toggle.addEventListener('click', function () {
+        if (watchCurrent() && !toggle.disabled) setOpen(!expanded, true);
+    }, {signal: life.signal});
+    document.getElementById('timestamp-close').addEventListener('click', function () {
+        if (watchCurrent()) setOpen(false, true);
+    }, {signal: life.signal});
+    list.addEventListener('click', function (event) {
+        var link = event.target.closest('a[data-chapter-start]');
+        if (!link || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !watchCurrent()) return;
+        event.preventDefault();
+        player.currentTime(Number(link.dataset.chapterStart));
+    }, {signal: life.signal});
+    panel.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') event.stopPropagation();
+    }, {signal: life.signal});
+    watchTools.addEventListener('iv:watch-tools-visibility', syncVisibility, {signal: life.signal});
+    document.addEventListener('fullscreenchange', placePanel, {signal: life.signal});
+    player.on(['fullscreenchange', 'enterFullWindow', 'exitFullWindow'], placePanel);
+    player.on('dispose', function () {
+        life.abort();
+        player.off(['fullscreenchange', 'enterFullWindow', 'exitFullWindow'], placePanel);
+        sidebarPosition.after(panel);
+        setOpen(false, false);
     });
-    document.getElementById('timestamp-panel').hidden = false;
+    player.invidiousChapters.attachPanel(toggle, heading.textContent.trim(), updateChapters);
+    placePanel();
 })();
 
 var clipLoop = document.getElementById('clip-loop');

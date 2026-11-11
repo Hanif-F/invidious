@@ -1,4 +1,7 @@
 require "spec"
+require "db"
+require "xml"
+require "../src/invidious/helpers/helpers"
 require "../src/invidious/videos/chapters"
 
 describe Invidious::Videos::Chapters do
@@ -20,5 +23,14 @@ describe Invidious::Videos::Chapters do
   end
   it "preserves titles as plain text" do
     Invidious::Videos::Chapters.parse("0:00 <script>alert(1)</script>\n0:01 A & B", 2).first[:title].should eq("<script>alert(1)</script>")
+  end
+
+  it "falls back to linked timestamps in the rendered description when needed" do
+    html = %(<p><a href="/watch?v=test&amp;t=0">0:00</a> A &amp; B<br />1:04 Middle</p><div>1:40:05 End</div>)
+    chapters = Invidious::Videos::Chapters.from_descriptions("0:00 Incomplete", html, 7000)
+    chapters.map(&.[:start]).should eq([0, 64, 6005])
+    chapters.map(&.[:title]).should eq(["A & B", "Middle", "End"])
+    Invidious::Videos::Chapters.from_descriptions("0:00 Intro\n0:12 Next", html, 7000).map(&.[:start]).should eq([0, 12])
+    Invidious::Videos::Chapters.from_descriptions("", html, 0).should be_empty
   end
 end

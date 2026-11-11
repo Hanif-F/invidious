@@ -768,6 +768,8 @@
     "ui_description": "Description",
     "ui_timestamps": "Timestamps",
     "ui_transcript": "Transcript",
+    "ui_close_timestamps": "Close timestamps",
+    "ui_close_transcript": "Close transcript",
     "ui_language": "Language",
     "ui_search_transcript": "Search transcript",
     "ui_video_details": "Video details",

@@ -39,7 +39,6 @@ var options = {
             'timeDivider',
             'durationDisplay',
             'progressControl',
-            'remainingTimeDisplay',
             'Spacer',
             ...(video_data.params.quality === 'dash' && !video_data.params.listen ? [] : ['audioTrackButton','qualitySelector']),
             'playbackRateMenuButton',

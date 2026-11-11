@@ -1,0 +1,10 @@
+<section id="timestamp-panel" class="watch-tool js-only" aria-labelledby="timestamp-heading" hidden>
+    <header class="watch-tool-heading">
+        <h2 id="timestamp-heading" tabindex="-1"><%= I18n.translate(locale, "ui_timestamps") %></h2>
+        <button id="timestamp-close" type="button" class="icon-button" aria-label="<%= HTML.escape(I18n.translate(locale, "ui_close_timestamps")) %>"><%= Invidious::Frontend::Icons.render("x") %></button>
+    </header>
+    <ol id="timestamp-list" class="timestamp-list" role="list"></ol>
+    <template id="timestamp-toggle-template">
+        <button id="timestamp-toggle" class="current-chapter" type="button" aria-controls="timestamp-panel" aria-expanded="false" hidden><span class="chapter-label" dir="auto"></span><%= Invidious::Frontend::Icons.render("list-video") %></button>
+    </template>
+</section>

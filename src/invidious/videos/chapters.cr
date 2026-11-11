@@ -1,5 +1,14 @@
 # Only explicit description timestamps are used; never upstream automatic chapters.
 module Invidious::Videos::Chapters
+  def self.from_descriptions(short_description : String, description_html : String, duration : Int32)
+    chapters = parse(short_description, duration)
+    return chapters if !chapters.empty? || duration <= 0 || description_html.empty?
+
+    # The attributed description can contain chapter links missing from the short description.
+    lines = description_html.gsub(/<br\b[^>]*>|<\/(?:p|div)\s*>/i, "\n")
+    parse(Invidious::Helpers.html_to_content(lines), duration)
+  end
+
   def self.parse(description : String, duration : Int32)
     chapters = [] of NamedTuple(start: Int64, title: String)
     seen = Set(Int64).new

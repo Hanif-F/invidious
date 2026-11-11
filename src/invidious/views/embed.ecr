@@ -62,6 +62,7 @@
 </script>
 
 <main id="main-content" class="embed-player" aria-label="<%= I18n.translate(locale, "embed_player_label") %>">
+<% chapters = Invidious::Videos::Chapters.from_descriptions(video.short_description, video.description_html, video.live_now ? 0 : video.length_seconds) %>
 <%= rendered "components/player" %>
 <aside id="embed-status" class="embed-status" role="status" hidden></aside>
 <aside id="ui-notice" class="embed-status" hidden><span role="status"></span></aside>
