@@ -1,5 +1,5 @@
 'use strict';
-// Replay owns one utility panel. Settings and per-video timing have separate editors.
+// One replay session follows the chat panel between the player and sidebar.
 (function () {
     var panel = document.getElementById('chat-panel');
     if (!panel || !window.player || !window.video_data || panel.dataset.initialized) return;
@@ -7,10 +7,15 @@
     var list = document.getElementById('chat-messages'), status = document.getElementById('chat-status'), retry = document.getElementById('chat-retry'), sync = document.getElementById('chat-sync');
     var labels = JSON.parse(document.getElementById('watch_ui_data').textContent), ui = InvidiousUI, storage = InvidiousStorage;
     var preferences = window.InvidiousChatPreferences, timing = window.InvidiousChatTiming;
-    if (!preferences || !timing || !preferences.values() || timing.value() === null) { status.textContent = labels.chat_error; return; }
+    if (!preferences || !timing || !preferences.values() || timing.value() === null) {
+        panel.hidden = false; status.textContent = labels.chat_error; return;
+    }
     var settings = null, timingMs = timing.value(), life = new AbortController(), activePage = true, disposed = false, shown = false;
-    var layout = document.getElementById('watch-layout'), stack = document.getElementById('watch-tools');
-    var toggle = document.getElementById('chat-toggle'), expanded = true;
+    var root = player.el(), shell = root.closest('.watch-player'), stack = document.getElementById('watch-tools');
+    var section = document.getElementById('tool-chat'), dialog = document.getElementById('chat-settings-dialog');
+    var sidebarToggle = document.getElementById('chat-toggle'), playerHeading = section.querySelector('.chat-player-heading');
+    var sidebarPosition = dialog.nextSibling, desktopViewport = matchMedia('(min-width: 960px)');
+    var control, desktop = false, expanded = false;
     var segments = [], activeSegment = null, removed = new Set(), cacheUse = 0, displayCursor = 0;
     var lastPlaybackPosition = 0, seekStartPosition = null, loading = false, generation = 0, controller = null, prefetchTimer = null;
     var nextRequestAt = 0, autoScroll = true, windowAtTail = true, wordPatterns = [], userBlacklist = [];
@@ -21,18 +26,12 @@
     function selected() {
         var fullscreen = document.fullscreenElement;
         return expanded && !document.hidden && !stack.hidden && (!fullscreen || fullscreen.contains(panel)) &&
-            (!(player.isFullscreen && player.isFullscreen()) || fullscreen && fullscreen.contains(panel));
+            (!player.isFullscreen() || fullscreen || desktop && player.isFullWindow) &&
+            !(desktop && shell.classList.contains('is-docked'));
     }
     function stop() {
         generation++; clearTimeout(prefetchTimer); prefetchTimer = null;
         if (controller) controller.abort(); controller = null; loading = false; list.setAttribute('aria-busy','false');
-    }
-    function setWidth() {
-        var width = settings.chat_width_px+'px';
-        if (layout.style.getPropertyValue('--watch-chat-width') !== width) {
-            layout.style.setProperty('--watch-chat-width',width);
-            player.trigger('playerresize');
-        }
     }
     function validMessage(message) {
         var id = message.authorChannelId.toLocaleLowerCase(), handle = message.authorHandle.toLocaleLowerCase().replace(/^@/,'');
@@ -365,17 +364,35 @@
         var next = event ? event.detail.values : preferences.values();
         if (!next || settings && Object.keys(next).every(function (key) { return next[key] === settings[key]; })) return;
         var filtersChanged = !settings || next.chat_user_blacklist !== settings.chat_user_blacklist || next.chat_word_blacklist !== settings.chat_word_blacklist;
+        var widthChanged = !settings || next.chat_width_px !== settings.chat_width_px;
         settings = Object.assign({},next); userBlacklist = settings.chat_user_blacklist.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean); wordPatterns = preferences.patterns(settings.chat_word_blacklist);
         maintainScroll(function () {
             panel.classList.toggle('chat-hide-timestamps',!settings.chat_show_timestamps); panel.classList.toggle('chat-hide-user-ids',settings.chat_hide_user_ids);
-            panel.style.setProperty('--chat-font-scale',String(settings.chat_font_scale/100)); setWidth(); return 0;
+            panel.style.setProperty('--chat-font-scale',String(settings.chat_font_scale/100));
+            if (widthChanged) root.style.setProperty('--chat-width', settings.chat_width_px + 'px');
+            return 0;
         });
+        if (widthChanged && desktop && shown) player.trigger('playerresize');
         if (filtersChanged) rebuildVisible(true);
     }
     function setVisible(value) {
         if (disposed) return;
-        var next = value === true && alive() && selected();
+        var next = !!(value && alive() && selected());
+        var playerChatOpen = desktop && next;
+        var resized = root.classList.contains('chat-replay-open') !== playerChatOpen;
+        root.classList.toggle('chat-replay-open', playerChatOpen);
+        section.hidden = desktop && !next;
         panel.hidden = !next;
+        if (desktop && dialog.open && (stack.hidden || shell.classList.contains('is-docked'))) dialog.close();
+        sidebarToggle.setAttribute('aria-expanded', String(expanded));
+        if (control) {
+            var label = next ? labels.hide_chat : labels.show_chat;
+            control.controlText(label);
+            control.el().title = label;
+            control.el().setAttribute('aria-expanded', String(next));
+            if (stack.hidden) control.disable(); else control.enable();
+        }
+        if (resized) player.trigger('playerresize');
         if (next === shown) return;
         shown = next;
         if (next) { selectPosition(false); showDue(); }
@@ -384,8 +401,26 @@
     function navigate(value) {
         if (!alive() || stack.hidden) return;
         expanded = value === true;
-        toggle.setAttribute('aria-expanded', String(expanded));
         setVisible(expanded);
+    }
+    function placeChat() {
+        if (!alive()) return;
+        var inPlayer = !!control && desktopViewport.matches;
+        if (desktop === inPlayer) return;
+        if (dialog.open) dialog.close();
+        desktop = inPlayer;
+        if (desktop) {
+            root.append(section, dialog);
+            control.show();
+        } else {
+            stack.insertBefore(section, sidebarPosition);
+            stack.insertBefore(dialog, sidebarPosition);
+            control.hide();
+        }
+        sidebarToggle.hidden = desktop;
+        playerHeading.hidden = !desktop;
+        section.hidden = desktop && !shown;
+        updateWatchSidebar();
     }
     function timeupdate() { if (!player.seeking || !player.seeking()) lastPlaybackPosition = positionMs(); if (visible()) showDue(); }
     function seeking() { seekStartPosition = lastPlaybackPosition; }
@@ -401,20 +436,25 @@
         showDue(); lastPlaybackPosition = current; seekStartPosition = null;
     }
     function dispose() {
-        if (disposed) return; stop(); shown = false; disposed = true; activePage = false; life.abort();
-        player.off('timeupdate',timeupdate); player.off('seeking',seeking); player.off('seeked',seeked); player.off('fullscreenchange',fullscreen); player.off('dispose',dispose);
+        if (disposed) return;
+        setVisible(false); disposed = true; activePage = false; life.abort();
+        if (control) control.hide();
+        player.off('timeupdate',timeupdate); player.off('seeking',seeking); player.off('seeked',seeked); player.off(['fullscreenchange','dockchange'],syncVisibility); player.off('dispose',dispose);
         segments.length=0; activeSegment=null; removed.clear(); wordPatterns=[]; userBlacklist=[]; settings=null;
     }
-    function fullscreen() { setVisible(selected()); }
-    on(stack,'iv:watch-tools-visibility',fullscreen);
-    on(toggle,'click',function () { navigate(!expanded); });
+    function syncVisibility() { setVisible(expanded); }
+    on(stack,'iv:watch-tools-visibility',syncVisibility);
+    on(sidebarToggle,'click',function () { navigate(!expanded); });
+    on(desktopViewport,'change',placeChat);
     on(document,'iv:chat-preferences',applyPreferences);
     on(document,'iv:chat-timing',function (event) { if (!alive() || event.detail.offsetMs === timingMs) return; timingMs=event.detail.offsetMs; if (visible()) selectPosition(true); });
-    on(document,'visibilitychange',fullscreen); on(document,'fullscreenchange',fullscreen);
+    on(document,'visibilitychange',syncVisibility); on(document,'fullscreenchange',syncVisibility);
     on(window,'pagehide',function (event) { setVisible(false); activePage=false; if (!event.persisted) dispose(); });
-    on(window,'pageshow',function () { activePage=!disposed; if (alive()) setVisible(selected()); });
+    on(window,'pageshow',function () { activePage=!disposed; if (alive()) { placeChat(); syncVisibility(); } });
     on(window,'browserprofilechange',dispose); on(document,'iv:content-added',function () { if (!panel.isConnected) dispose(); });
-    on(list,'keydown',function (event) { if (event.key !== 'Escape') event.stopPropagation(); });
+    on(section,'keydown',function (event) { if (event.key !== 'Escape') event.stopPropagation(); });
+    on(section,'click',function (event) { if (desktop) event.stopPropagation(); });
+    on(section,'dblclick',function (event) { if (desktop) event.stopPropagation(); });
     on(list,'click',function (event) { var button=event.target.closest('[data-chat-seek]'); if (button && visible()) player.currentTime(Math.max(0,(Number(button.dataset.chatSeek)+timingMs)/1000)); });
     on(retry,'click',function () {
         if (!visible() || !activeSegment) return;
@@ -427,7 +467,25 @@
         if (nearBottom()) { if (!autoScroll) { if (windowAtTail) { setAutoScroll(true); showDue(); } else rebuildVisible(); } }
         else { setAutoScroll(false); showOlder(); }
     });
-    player.on('timeupdate',timeupdate); player.on('seeking',seeking); player.on('seeked',seeked); player.on('fullscreenchange',fullscreen); player.on('dispose',dispose);
-    window.invidiousChat={toggle:function () { navigate(!visible()); },setVisible:navigate,isVisible:visible,showLabel:labels.show_chat,hideLabel:labels.hide_chat};
-    applyPreferences(); lastPlaybackPosition=positionMs(); setVisible(selected());
+    player.on('timeupdate',timeupdate); player.on('seeking',seeking); player.on('seeked',seeked); player.on(['fullscreenchange','dockchange'],syncVisibility); player.on('dispose',dispose);
+    window.invidiousChat={toggle:function () { navigate(!expanded); },setVisible:navigate,isVisible:visible,showLabel:labels.show_chat,hideLabel:labels.hide_chat};
+    applyPreferences(); lastPlaybackPosition=positionMs();
+    player.ready(function () {
+        if (!alive()) return;
+        var bar = player.getChild('controlBar');
+        var gear = bar.children().find(function (child) { return child.hasClass('vjs-desktop-settings'); });
+        if (gear) {
+            control = new (videojs.getComponent('Button'))(player);
+            control.addClass('vjs-chat-control');
+            control.addClass('owned-control-icon');
+            control.el().setAttribute('aria-controls', section.id);
+            control.el().querySelector('.vjs-icon-placeholder').replaceChildren(document.getElementById('chat-control-icon').content.cloneNode(true));
+            control.on('click', function () { navigate(!expanded); });
+            bar.addChild(control, {}, bar.children().indexOf(gear));
+            control.hide();
+        }
+        expanded = !control || !desktopViewport.matches;
+        placeChat();
+        syncVisibility();
+    });
 })();

@@ -1,11 +1,81 @@
-/* Replay is a utility panel. Media placement and fullscreen belong to the player. */
+/* The same replay panel is used in the desktop player and the compact sidebar. */
+.invidious-desktop .vjs-chat-control { order: 6; }
+.invidious-desktop .vjs-chat-control[aria-expanded=true] { background: var(--player-control-hover); }
+.video-js.chat-replay-open { --chat-column-width: min(var(--chat-width, 480px), 50%); }
+.video-js.chat-replay-open > :is(.vjs-tech, .vjs-poster, .vjs-text-track-display, .vjs-error-display) {
+    left: auto;
+    right: auto;
+    inset-inline: 0 var(--chat-column-width);
+    width: calc(100% - var(--chat-column-width));
+}
+.video-js.chat-replay-open > .vjs-tech {
+    /* The server-rendered video supplies a width inline. */
+    width: calc(100% - var(--chat-column-width)) !important;
+    object-fit: contain;
+}
+.video-js.chat-replay-open > .vjs-poster { background-size: contain; }
+.video-js.chat-replay-open > .vjs-poster img { object-fit: contain; }
+.watch-player .video-js.chat-replay-open > :is(.vjs-big-play-button, .vjs-loading-spinner) {
+    left: auto;
+    right: auto;
+    inset-inline-start: calc((100% - var(--chat-column-width)) / 2);
+}
+[dir=rtl] .watch-player .video-js.chat-replay-open > .vjs-big-play-button { transform: translate(50%, -50%); }
+[dir=rtl] .watch-player .video-js.chat-replay-open > .vjs-loading-spinner { margin-inline: -25px 0; }
+.video-js.chat-replay-open > .player-stats { max-width: calc(100% - var(--chat-column-width) - 16px); }
+.video-js.chat-replay-open > .sb-overlay {
+    left: auto;
+    inset-inline-start: 12px;
+    max-width: calc(100% - var(--chat-column-width) - 24px);
+}
+.video-js > #tool-chat {
+    position: absolute;
+    /* Leave the control bar and timeline hit area available across the player. */
+    inset-block: 0 52px;
+    inset-inline-end: 0;
+    width: var(--chat-column-width);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 8px 12px;
+    border: 0;
+    border-inline-start: 1px solid var(--separator);
+    border-radius: 0;
+    background: var(--surface);
+    color: var(--text);
+    z-index: 2;
+}
+.video-js > :is(#tool-chat, #chat-settings-dialog) {
+    font: 400 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    text-align: start;
+}
+/* Video.js resets every descendant button, including the application controls. */
+.video-js :is(#tool-chat, #chat-settings-dialog) button:is(.button, .icon-button) {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    background: var(--raised);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.4;
+}
+.video-js :is(#tool-chat, #chat-settings-dialog) button.icon-button { border-color: transparent; background: transparent; }
+.video-js :is(#tool-chat, #chat-settings-dialog) button:hover { color: var(--accent); }
+.video-js #chat-settings-dialog button.button-primary {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-text);
+}
+.video-js > #tool-chat .chat-heading { flex: none; border-block-end: 1px solid var(--separator); }
+.video-js > #tool-chat .chat-panel { flex: 1; height: auto; min-height: 0; }
+.video-js > #tool-chat .chat-time { font-size: .75em; color: var(--accent); }
+.video-js > #tool-chat .chat-footer:has(p:empty):has(button[hidden]) { display: none; }
 .chat-panel{box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0;width:100%;height:min(560px,calc(100vh - 188px));min-height:200px;overflow:hidden;color:var(--text);font:inherit;font-size:calc(16px * var(--chat-font-scale,1));line-height:1.5}
 .chat-panel[hidden]{display:none!important}
 .chat-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .watch-tool .chat-heading h2{margin:0}
 .chat-heading .chat-toggle{display:flex;align-items:center;gap:8px;min-height:36px;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:start}
 .chat-toggle[aria-expanded=true] .ui-icon{transform:rotate(180deg)}
-.chat-heading:has(.chat-toggle[aria-expanded=true]) + .chat-panel{margin-block-start:8px;border-block-start:1px solid var(--separator)}
+#watch-tools .chat-heading:has(.chat-toggle[aria-expanded=true]) + .chat-panel{margin-block-start:8px;border-block-start:1px solid var(--separator)}
 .chat-scroll-area{position:relative;flex:1 1 auto;min-height:0}
 .chat-messages{box-sizing:border-box;height:100%;min-height:0;overflow:auto;overflow-anchor:none;overscroll-behavior:contain;padding:12px 4px;scrollbar-gutter:stable}
 .chat-messages:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}

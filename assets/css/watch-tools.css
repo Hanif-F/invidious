@@ -1,6 +1,6 @@
 /* Standard and theater layouts use the same watch sections. */
 .watch-grid {
-    --watch-sidebar-width: var(--watch-chat-width, 480px);
+    --watch-sidebar-width: 480px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) min(var(--watch-sidebar-width), 45%);
     grid-template-areas: "media tools" "details tools" "comments tools";

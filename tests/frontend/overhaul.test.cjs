@@ -1707,17 +1707,21 @@ for(const engine of engines) {
     });
 }
 
+async function openReplayChat(page) {
+    await page.getByRole('button', {name: 'Show chat', exact: true}).click();
+}
+
 for(const engine of engines) {
-    test(`${engine}: D5 utility defaults and deliberate transcript loading keep replay outside media`,async()=>{
+    test(`${engine}: D5 utility defaults and deliberate transcript loading`,async()=>{
         for(const [kind,sections] of [
-            ['queue',['Queue','Up next']], ['replay',['Chat replay','Up next']],
-            ['queue-chat',['Chat replay','Queue','Up next']], ['single',['Up next']],
+            ['queue',['Queue','Up next']], ['replay',['Up next']],
+            ['queue-chat',['Queue','Up next']], ['single',['Up next']],
             ['transcript-only',[]], ['no-tools',[]]
         ]) {
             const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:`d5-${kind}-light`,url:'/watch?v=2isYuQZMbdU'+(kind==='queue'?'&list=PLfixture':kind==='queue-chat'?'&list=IVfixture':'')});
             assert.deepEqual(await page.locator('#watch-tools > section:visible h2').allInnerTexts(),sections);
             assert.equal(await page.getByRole('tab').count(),0);
-            assert.equal(await page.locator('#player-container #chat-panel').count(),0);
+            assert.equal(await page.locator('#chat-panel').isVisible(),false);
             assert.ok(!requests.some(r=>r.url.pathname.startsWith('/api/v1/transcripts/')));
             if(kind==='transcript-only') {
                 assert.equal(await page.locator('#watch-sidebar').isVisible(),false);
@@ -1731,6 +1735,21 @@ for(const engine of engines) {
             if(kind==='no-tools')assert.equal(await page.locator('.utility-panel').count(),0);
             assert.equal(await page.locator('video,audio').count(),1);assert.deepEqual(errors,[],kind);await context.close();
         }
+
+        const {page, context, errors} = await setup(engine, 'watch', 'light', {
+            fixture: 'watch-chat-only', url: '/watch?v=2isYuQZMbdU',
+            reply: ({url}) => url.pathname.startsWith('/api/v1/live_chat/') ? {json: {messages: [], removedIds: [], continuation: null}} : null
+        });
+        await page.getByRole('button', {name: 'Show chat', exact: true}).waitFor();
+        assert.equal(await page.locator('#watch-sidebar').isVisible(), false);
+        assert.equal(await page.locator('#watch-layout').evaluate(el => el.classList.contains('watch-no-tools')), true);
+        await page.setViewportSize({width: 800, height: 900});
+        await page.locator('#watch-sidebar #chat-toggle').waitFor();
+        assert.equal(await page.locator('#chat-panel').isVisible(), false);
+        await page.locator('#chat-toggle').click();
+        await page.locator('#watch-sidebar #chat-panel').waitFor();
+        assert.deepEqual(errors, []);
+        await context.close();
     });
     test(`${engine}: stacked watch sidebar shares row geometry and uses independent scroll areas`, async () => {
         const queue = fs.readFileSync(path.join(generated, 'd6-watch-content-queue.json'));
@@ -1748,6 +1767,7 @@ for(const engine of engines) {
                     }};
                 }
             });
+            await openReplayChat(page);
             await page.locator('.queue-row').first().waitFor();
             await page.locator('.chat-message').first().waitFor();
             assert.equal(requests.some(({url}) => url.pathname === '/js/transcript.js'), false);
@@ -1758,7 +1778,7 @@ for(const engine of engines) {
             await assertFocus(page, '#transcript-heading');
             await page.locator('.transcript-line').last().waitFor();
             assert.deepEqual(await page.locator('#watch-tools > section:visible').evaluateAll(sections => sections.map(el => el.id)),
-                ['transcript-panel', 'tool-chat', 'playlist-panel', 'tool-next']);
+                ['transcript-panel', 'playlist-panel', 'tool-next']);
 
             const firstRow = page.locator('.queue-row').first();
             assert.equal(await firstRow.locator('.queue-meta time').getAttribute('datetime'), '2020-01-02');
@@ -1992,7 +2012,7 @@ for(const engine of engines) {
                 assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${kind}/${mode}/${width} fits`);
                 assert.equal(await page.locator('video,audio').count(),1);
                 if(kind==='no-tools')assert.ok(await page.locator('.watch-primary').evaluate(el=>Math.abs(el.getBoundingClientRect().width-document.querySelector('.watch-grid').getBoundingClientRect().width)<1),'details use the available column when no utility tools exist');
-                if(kind==='replay') {assert.equal(await page.locator('#player-container #chat-panel').count(),0);assert.equal(await page.locator('#chat-panel').isVisible(),true);}
+                if(kind==='replay') {assert.equal(await page.locator('#player-container #chat-panel').count(),1);assert.equal(await page.locator('#chat-panel').isVisible(),false);}
                 if(kind==='single') {
                     const boxes=await page.locator('.recommendation').first().evaluate(row=>({thumbnail:row.querySelector('.thumbnail').getBoundingClientRect().top,menu:row.querySelector('summary').getBoundingClientRect().top}));
                     assert.ok(Math.abs(boxes.thumbnail-boxes.menu)<2,'recommendation menu stays in its row');
@@ -2365,16 +2385,74 @@ for(const engine of engines) test(`${engine}: D6 chat Settings light, dark and e
 
 function replayMessage(id,offsetMs,text,extra={}) { return {id,offsetMs,text,author:'A reader',authorChannelId:'UCreader',authorHandle:'@reader',kind:'text',amount:'',...extra}; }
 for(const engine of engines) {
+    test(`${engine}: desktop replay reserves space inside the player independently of Up next`, async () => {
+        const init = () => localStorage.setItem('iv:browser:v2:guest:chat-settings-v1', JSON.stringify({chat_width_px: 360}));
+        const regular = await setup(engine, 'watch', 'dark', {fixture: 'd5-single-dark', init});
+        const regularSidebar = await regular.page.locator('#tool-next').boundingBox();
+        assert.equal(await regular.page.locator('.vjs-chat-control').count(), 0);
+        await regular.context.close();
+
+        const {page, context, requests, errors} = await setup(engine, 'watch', 'dark', {
+            fixture: 'd5-replay-dark', init,
+            reply: entry => entry.url.pathname.startsWith('/api/v1/live_chat/') ? {json: {
+                messages: [replayMessage('cached', 0, 'Cached replay')], removedIds: [], continuation: null
+            }} : null
+        });
+        const readCount = () => requests.filter(({url}) => url.pathname.startsWith('/api/v1/live_chat/')).length;
+        const chat = page.locator('#tool-chat'), toggle = page.getByRole('button', {name: 'Show chat', exact: true});
+        const gear = page.locator('.vjs-desktop-settings'), next = page.locator('#tool-next');
+        const player = page.locator('#player-container .video-js'), bar = player.locator('.vjs-control-bar');
+        await toggle.waitFor();
+        assert.equal(await chat.isVisible(), false);
+        assert.equal(readCount(), 0);
+        assert.equal(await toggle.getAttribute('aria-controls'), 'tool-chat');
+        assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+        const [chatButton, settingsButton, outer] = await Promise.all([toggle.boundingBox(), gear.boundingBox(), player.boundingBox()]);
+        assert.ok(Math.abs(chatButton.x + chatButton.width - settingsButton.x) < 1);
+        assert.equal((await next.boundingBox()).width, regularSidebar.width);
+
+        await toggle.press('Enter');
+        await page.locator('[data-message-id=cached]').waitFor();
+        assert.equal(await page.getByRole('button', {name: 'Hide chat', exact: true}).getAttribute('aria-expanded'), 'true');
+        assert.equal((await chat.boundingBox()).width, 360);
+        assert.equal((await player.locator('.vjs-tech').boundingBox()).width, outer.width - 360);
+        assert.equal((await bar.boundingBox()).width, outer.width);
+        assert.deepEqual(await player.boundingBox(), outer);
+        assert.equal((await next.boundingBox()).width, regularSidebar.width);
+
+        await chat.getByRole('button', {name: 'Chat settings', exact: true}).click();
+        await page.locator('#chat-width-value').fill('640');
+        assert.equal((await chat.boundingBox()).width, outer.width / 2);
+        assert.equal((await next.boundingBox()).width, regularSidebar.width);
+        await page.locator('[data-chat-discard]').click();
+        await page.keyboard.press('Escape');
+        await page.getByRole('button', {name: 'Hide chat', exact: true}).press('Enter');
+        assert.equal(await chat.isVisible(), false);
+        assert.equal((await player.locator('.vjs-tech').boundingBox()).width, outer.width);
+        await openReplayChat(page);
+        await page.locator('[data-message-id=cached]').waitFor();
+        assert.equal(readCount(), 1);
+
+        await page.setViewportSize({width: 800, height: 900});
+        await page.locator('#watch-tools #tool-chat').waitFor();
+        assert.equal(await page.locator('.vjs-chat-control').isVisible(), false);
+        await page.setViewportSize({width: 1440, height: 900});
+        await player.locator('#tool-chat').waitFor();
+        assert.equal(readCount(), 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
     test(`${engine}: D6 replay panel and dialog fit desktop light, dark, enlarged RTL and forced colors`,async()=>{
         for(const view of [{name:'light',mode:'light',width:1280,height:720},{name:'dark',mode:'dark',width:1920,height:1080},{name:'rtl',mode:'dark',width:1440,height:900},{name:'forced',mode:'light',width:1280,height:720}]) {
             const {page,context,errors}=await setup(engine,'watch',view.mode,{fixture:`d5-replay-${view.mode}`,url:'/watch?v=2isYuQZMbdU',width:view.width,height:view.height,init:`localStorage.setItem('iv:browser:v2:guest:chat-settings-v1','{"chat_show_timestamps":true,"chat_font_scale":150,"chat_width_px":640}')`,reply:entry=>entry.url.pathname.startsWith('/api/v1/live_chat/')?{contentType:'application/json',body:JSON.stringify({messages:[replayMessage('visible',0,'مرحبا بالعالم — a long message '+ 'LongUnbrokenMessage'.repeat(25),{author:'قارئ — Reader',authorChannelId:'UClong'.repeat(25)})],removedIds:[],continuation:null})}:null});
+            await openReplayChat(page);
             await page.locator('[data-message-id=visible]').waitFor();
             if(view.name==='rtl') { await page.locator('html').evaluate(el=>el.dir='rtl');await page.addStyleTag({content:'.chat-preferences-form label,.chat-preferences-form legend,.chat-preferences-form textarea{font-size:20px}'}); }
             if(view.name==='forced')await page.emulateMedia({forcedColors:'active'});
             assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
             assert.ok(await page.locator('#chat-messages').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'long messages and IDs wrap inside the log');
-            const media=await page.locator('.watch-player').boundingBox(),panel=await page.locator('.utility-panel').boundingBox();
-            assert.ok(view.name==='rtl'?panel.x+panel.width<=media.x-8:media.x+media.width<=panel.x-8,'the panel stays outside the media');
+            const media=await page.locator('.vjs-tech').boundingBox(),panel=await page.locator('#tool-chat').boundingBox();
+            assert.ok(view.name==='rtl'?panel.x+panel.width<=media.x+1:media.x+media.width<=panel.x+1,'chat and video occupy adjacent columns');
             await page.locator('#chat-messages').focus();await page.keyboard.press('Tab');await assertFocus(page,'.chat-time');assert.ok(await page.locator('.chat-time').evaluate(el=>getComputedStyle(el).outlineStyle!=='none'));
             await page.screenshot({path:path.join(artifacts,`${engine}-d6-replay-panel-${view.name}.png`)});
             await page.locator('[data-open-dialog=chat-settings-dialog]').click();await page.locator('#chat-word-blacklist').fill('/[/');await page.locator('#chat-word-blacklist').blur();await page.locator('[data-chat-save-status]').getByText('Invalid regular expression').waitFor();
@@ -2389,12 +2467,25 @@ for(const engine of engines) {
             assert.deepEqual(errors,[]);await context.close();
         }
     });
-    test(`${engine}: D6 replay suspends outside native fullscreen and returns to its cached panel`,async()=>{
+    test(`${engine}: D6 replay stays inside Theater and player fullscreen and suspends in the mini player`,async()=>{
         const {page,context,errors,requests}=await setup(engine,'watch','dark',{fixture:'d5-replay-dark',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/live_chat/')?{contentType:'application/json',body:JSON.stringify({messages:[replayMessage('cached',0,'Cached replay')],removedIds:[],continuation:null})}:null});
+        await openReplayChat(page);
         await page.locator('[data-message-id=cached]').waitFor();await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();window.fullscreenReplayMedia=player.tech().el();});
-        await page.locator('.vjs-fullscreen-control').click();await page.waitForFunction(()=>player.isFullscreen()&&!invidiousChat.isVisible());
-        assert.equal(await page.locator('#chat-panel').isVisible(),false);assert.equal(await page.locator('#player #chat-panel').count(),0);assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/live_chat/')).length,1);
+        await page.getByRole('button', {name: 'Theater mode', exact: true}).click();
+        assert.equal(await page.locator('body').getAttribute('data-watch-layout'), 'theater');
+        assert.equal(await page.locator('#player #chat-panel').isVisible(), true);
+        await page.locator('.vjs-fullscreen-control').click();await page.waitForFunction(()=>player.isFullscreen()&&invidiousChat.isVisible());
+        assert.equal(await page.locator('#player #chat-panel').isVisible(),true);
+        await page.locator('[data-open-dialog=chat-settings-dialog]').click();
+        assert.equal(await page.locator('#player #chat-settings-dialog').isVisible(), true);
+        await page.locator('#chat-settings-dialog').getByRole('button', {name: 'Close', exact: true}).click();
         await page.evaluate(()=>{player.exitFullscreen();});await page.waitForFunction(()=>!player.isFullscreen()&&invidiousChat.isVisible());await page.locator('[data-message-id=cached]').waitFor();
+        await page.addStyleTag({content: '.watch-primary{min-height:2200px}'});
+        await page.evaluate(() => {player.invidiousDockEnabled = true; player.trigger('dockpreferencechange'); scrollTo(0, 1500);});
+        await page.locator('.watch-player.is-docked').waitFor();
+        assert.equal(await page.locator('#chat-panel').isVisible(), false);
+        await page.locator('[data-dock=return]').click();
+        await page.locator('#chat-panel').waitFor();
         assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/live_chat/')).length,1);assert.equal(await page.evaluate(()=>player.tech().el()===fullscreenReplayMedia),true);assert.deepEqual(errors,[]);await context.close();
     });
 }
@@ -2403,15 +2494,15 @@ for(const engine of engines) {
         const raw={chat_overlay_mode:true,chat_overlay_opacity:0,chat_overlay_x:550,chat_overlay_y:75,chat_overlay_width:400,chat_overlay_height:800};
         const messages=[replayMessage('first',0,'First message',{author:'Reader <literal>'}),replayMessage('blocked',100,'Hidden user message',{authorChannelId:'UCblocked'}),replayMessage('spam',200,'A spam message'),replayMessage('safe',1000,'Literal <img src=x onerror=alert(1)>'),replayMessage('paid',1500,'Thank you',{kind:'paid',amount:'$2.00'}),replayMessage('later',3000,'A later message')];
         const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',init:`localStorage.setItem('iv:browser:v2:guest:chat-settings-v1',${JSON.stringify(JSON.stringify(raw))})`,reply:entry=>entry.url.pathname.startsWith('/api/v1/live_chat/')?{contentType:'application/json',body:JSON.stringify({messages,removedIds:[],continuation:null})}:null});
+        await openReplayChat(page);
         await page.locator('[data-message-id=first]').waitFor();await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();player.currentTime(1.5);window.replayMedia=player.tech().el();});await page.waitForFunction(()=>document.querySelectorAll('.chat-message').length===5);
-        assert.equal(await page.locator('#chat-panel img').count(),0);assert.equal(await page.locator('[data-message-id=first] .chat-author').textContent(),'Reader <literal>');assert.equal(await page.locator('#player-container #chat-panel').count(),0);assert.equal(await page.locator('[id^=chat-overlay]').count(),0);
+        assert.equal(await page.locator('#chat-panel img').count(),0);assert.equal(await page.locator('[data-message-id=first] .chat-author').textContent(),'Reader <literal>');assert.equal(await page.locator('#player-container #chat-panel').count(),1);assert.equal(await page.locator('[id^=chat-overlay]').count(),0);
         await page.locator('[data-open-dialog=chat-settings-dialog]').click();const dialog=page.locator('#chat-settings-dialog');await dialog.waitFor({state:'visible'});
         await page.locator('#chat-hide-user-ids').check();await page.locator('#chat-font-value').fill('125');await page.locator('#chat-width-value').fill('600');await page.locator('#chat-user-blacklist').fill('UCblocked');await page.locator('#chat-word-blacklist').fill('spam');await page.locator('#chat-word-blacklist').blur();
         await page.waitForFunction(()=>document.querySelectorAll('.chat-message').length===3);assert.equal(await page.locator('#chat-panel .chat-author-id').first().isVisible(),false);
         await dialog.locator('[data-chat-save]').click();await page.waitForFunction(()=>document.querySelector('[data-chat-save]').disabled);const saved=await page.evaluate(()=>InvidiousStorage.local.get('chat-settings-v1'));for(const key of Object.keys(raw))assert.equal(saved[key],raw[key]);
         const timing=page.locator('#chat-timing-form');assert.equal(await page.locator('#chat-timing').getAttribute('step'),'0.001');await page.locator('#chat-timing').fill('-0.125');await page.locator('#chat-timing').blur();await timing.getByRole('button',{name:'Save timing',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#chat-timing-form [type=submit]').disabled);assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('chat-timing-v1-'+video_data.id)),-125);
         assert.ok(await dialog.getByRole('button',{name:'Close',exact:true}).evaluate(el=>{const a=el.getBoundingClientRect(),b=document.querySelector('#chat-settings-dialog').getBoundingClientRect();return a.top>=b.top&&a.bottom<=b.bottom&&a.top>=0;}),'the close control remains visible after scrolling to timing');
-        assert.ok(await page.locator('.utility-panel').evaluate(el=>{const w=document.querySelector('#watch-layout').getBoundingClientRect().width;return Math.abs(el.getBoundingClientRect().width-Math.min(600,w*.45))<2;}),'the preferred panel width affects the actual standard grid');
         await page.screenshot({path:path.join(artifacts,`${engine}-d6-replay-settings-light.png`)});await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('#chat-settings-dialog').open);await assertFocus(page,'[data-open-dialog=chat-settings-dialog]');
         assert.equal(await page.evaluate(()=>player.tech().el()===replayMedia&&player.paused()&&Math.abs(player.currentTime()-1.5)<.05),true);
         await page.locator('[data-message-id=safe] .chat-time').click();await page.waitForFunction(()=>Math.abs(player.currentTime()-.875)<.05);const volume=await page.evaluate(()=>player.volume());await page.locator('#chat-messages').focus();await page.keyboard.press('ArrowDown');assert.equal(await page.evaluate(()=>player.volume()),volume);
@@ -2420,6 +2511,7 @@ for(const engine of engines) {
     test(`${engine}: D6 replay manual reading stays anchored until current-time return and DOM stays bounded`,async()=>{
         const messages=Array.from({length:300},(_,i)=>replayMessage('m'+i,i*10,'Message '+i));
         const {page,context,errors}=await setup(engine,'watch','dark',{fixture:'d5-replay-dark',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/live_chat/')?{contentType:'application/json',body:JSON.stringify({messages,removedIds:[],continuation:null})}:null});
+        await openReplayChat(page);
         await page.locator('.chat-message').first().waitFor();await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();player.currentTime(1.7);});await page.waitForFunction(()=>document.querySelectorAll('.chat-message').length===120);
         const log=page.locator('#chat-messages');await log.hover();await page.mouse.wheel(0,-1000);await page.locator('#chat-sync').waitFor({state:'visible'});const top=await log.evaluate(el=>el.scrollTop),ids=await log.locator('.chat-message').evaluateAll(rows=>rows.map(row=>row.dataset.messageId));
         await page.evaluate(()=>player.play());await page.waitForFunction(()=>player.currentTime()>3.1);await page.evaluate(()=>player.pause());assert.ok(Math.abs(await log.evaluate(el=>el.scrollTop)-top)<1);assert.deepEqual(await log.locator('.chat-message').evaluateAll(rows=>rows.map(row=>row.dataset.messageId)),ids,'newly due messages do not replace the reading window');
@@ -2433,19 +2525,21 @@ for(const engine of engines) {
             if(calls<=2)return{status:calls===1?503:404,contentType:'application/json',body:'{}'};
             return{contentType:'application/json',body:JSON.stringify({messages:calls===3?[{id:'bad',text:17,offsetMs:0}]:messages,removedIds:[],continuation:null})};
         }});
+        await openReplayChat(page);
         await page.locator('#chat-retry').waitFor({state:'visible'});const failed=await page.locator('#chat-status').textContent();await page.locator('#chat-retry').click();await page.waitForFunction(()=>document.querySelector('#chat-status').textContent===JSON.parse(document.querySelector('#watch_ui_data').textContent).chat_unavailable);assert.notEqual(await page.locator('#chat-status').textContent(),failed);
         await page.locator('#chat-retry').click();await page.waitForFunction(()=>!document.querySelector('#chat-retry').hidden&&document.querySelector('#chat-status').textContent===JSON.parse(document.querySelector('#watch_ui_data').textContent).chat_error);
         await page.locator('#chat-retry').click();await page.waitForFunction(()=>document.querySelector('#chat-status').textContent===JSON.parse(document.querySelector('#watch_ui_data').textContent).chat_waiting);assert.equal(calls,4);assert.equal(await page.locator('.chat-message').count(),0);
         await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();player.currentTime(1.1);});await page.locator('[data-message-id=future]').waitFor();await page.locator('[data-open-dialog=chat-settings-dialog]').click();await page.locator('#chat-word-blacklist').fill('future');await page.locator('#chat-word-blacklist').blur();await page.waitForFunction(()=>document.querySelector('#chat-status').textContent===JSON.parse(document.querySelector('#watch_ui_data').textContent).chat_filtered_empty);assert.equal(calls,4);await page.locator('[data-chat-discard]').click();await page.keyboard.press('Escape');assert.deepEqual(errors,[]);await context.close();
-        const empty=await setup(engine,'watch','dark',{fixture:'d5-replay-dark',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/live_chat/')?{contentType:'application/json',body:'{"messages":[],"removedIds":[],"continuation":null}'}:null});await empty.page.waitForFunction(()=>document.querySelector('#chat-status').textContent===JSON.parse(document.querySelector('#watch_ui_data').textContent).chat_empty);assert.equal(await empty.page.locator('.chat-message').count(),0);assert.deepEqual(empty.errors,[]);await empty.context.close();
-        let stuckCalls=0;const stuck=await setup(engine,'watch','light',{fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{if(!entry.url.pathname.startsWith('/api/v1/live_chat/'))return null;stuckCalls++;return{contentType:'application/json',body:JSON.stringify({messages:[replayMessage('same',0,'Same cursor')],removedIds:[],continuation:'same'})};}});await stuck.page.locator('#chat-retry').waitFor({state:'visible'});assert.equal(stuckCalls,2,'a replay continuation without progress cannot poll forever');assert.deepEqual(stuck.errors,[]);await stuck.context.close();
+        const empty=await setup(engine,'watch','dark',{fixture:'d5-replay-dark',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/live_chat/')?{contentType:'application/json',body:'{"messages":[],"removedIds":[],"continuation":null}'}:null});await openReplayChat(empty.page);await empty.page.waitForFunction(()=>document.querySelector('#chat-status').textContent===JSON.parse(document.querySelector('#watch_ui_data').textContent).chat_empty);assert.equal(await empty.page.locator('.chat-message').count(),0);assert.deepEqual(empty.errors,[]);await empty.context.close();
+        let stuckCalls=0;const stuck=await setup(engine,'watch','light',{fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{if(!entry.url.pathname.startsWith('/api/v1/live_chat/'))return null;stuckCalls++;return{contentType:'application/json',body:JSON.stringify({messages:[replayMessage('same',0,'Same cursor')],removedIds:[],continuation:'same'})};}});await openReplayChat(stuck.page);await stuck.page.locator('#chat-retry').waitFor({state:'visible'});assert.equal(stuckCalls,2,'a replay continuation without progress cannot poll forever');assert.deepEqual(stuck.errors,[]);await stuck.context.close();
     });
     test(`${engine}: D6 replay collapse, cached-page and profile owners reject ignored aborts`,async()=>{
         const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',init:()=>{
             const original=window.fetch.bind(window);window.replayReads=[];window.fetch=(url,options)=>new URL(url,location.href).pathname.startsWith('/api/v1/live_chat/')?new Promise(resolve=>replayReads.push(data=>resolve(new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}})))):original(url,options);
         }});
-        await page.waitForFunction(()=>replayReads.length===1);await page.locator('#chat-toggle').click();await page.evaluate(()=>replayReads[0]({messages:[{id:'late',offsetMs:0,text:'Late hidden reply'}],removedIds:[],continuation:null}));assert.equal(await page.locator('[data-message-id=late]').count(),0);
-        await page.locator('#chat-toggle').click();await page.waitForFunction(()=>replayReads.length===2);await page.evaluate(()=>replayReads[1]({messages:[{id:'ahead',offsetMs:40000,text:'Ahead'}],removedIds:[],continuation:'next'}));await page.waitForFunction(()=>document.querySelector('#chat-messages').getAttribute('aria-busy')==='false');
+        await openReplayChat(page);
+        await page.waitForFunction(()=>replayReads.length===1);await page.getByRole('button',{name:'Hide chat',exact:true}).click();await page.evaluate(()=>replayReads[0]({messages:[{id:'late',offsetMs:0,text:'Late hidden reply'}],removedIds:[],continuation:null}));assert.equal(await page.locator('[data-message-id=late]').count(),0);
+        await openReplayChat(page);await page.waitForFunction(()=>replayReads.length===2);await page.evaluate(()=>replayReads[1]({messages:[{id:'ahead',offsetMs:40000,text:'Ahead'}],removedIds:[],continuation:'next'}));await page.waitForFunction(()=>document.querySelector('#chat-messages').getAttribute('aria-busy')==='false');
         await page.locator('[data-open-dialog=chat-settings-dialog]').click();await page.locator('#chat-timing').fill('-120');await page.locator('#chat-timing').blur();await page.waitForFunction(()=>replayReads.length===3);await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>replayReads.length===4);
         await page.evaluate(()=>replayReads[2]({messages:[{id:'stale-page',offsetMs:120000,text:'Stale cached page'}],removedIds:[],continuation:null}));assert.equal(await page.locator('[data-message-id=stale-page]').count(),0);await page.evaluate(()=>replayReads[3]({messages:[{id:'current',offsetMs:120000,text:'Current cached page'}],removedIds:[],continuation:'next'}));await page.locator('[data-message-id=current]').waitFor({state:'attached'});
         await page.locator('#chat-timing').fill('-240');await page.locator('#chat-timing').blur();await page.waitForFunction(()=>replayReads.length===5);await page.evaluate(()=>{window.dispatchEvent(new Event('browserprofilechange'));replayReads[4]({messages:[{id:'stale-profile',offsetMs:240000,text:'Stale profile'}],removedIds:[],continuation:null});});assert.equal(await page.locator('[data-message-id=stale-profile]').count(),0);assert.equal(await page.evaluate(()=>invidiousChat.isVisible()),false);assert.equal(await page.locator('#chat-timing').isDisabled(),true);assert.deepEqual(errors,[]);await context.close();
@@ -2461,6 +2555,7 @@ for(const engine of engines) {
                 return{contentType:'application/json',body:JSON.stringify({offsetMs:offset})};
             }
         }});
+        await openReplayChat(page);
         await page.locator('[data-message-id=start]').waitFor();await page.locator('[data-open-dialog=chat-settings-dialog]').click();const form=page.locator('#chat-timing-form');await page.locator('#chat-timing').fill('0.125');await page.locator('#chat-timing').blur();assert.equal(puts,0);
         await form.getByRole('button',{name:'Save timing',exact:true}).click();await form.locator('[data-timing-readback]').waitFor({state:'visible'});assert.equal(await page.locator('#chat-timing').inputValue(),'0.125');assert.equal(puts,1);await form.locator('[data-timing-readback]').click();await page.waitForFunction(()=>document.querySelector('[data-timing-readback]').hidden);assert.equal(await form.locator('[type=submit]').isDisabled(),true);assert.deepEqual(writes,[{value:125,token:'timing-test-token'}]);
         await page.locator('#chat-timing').fill('3600.001');await form.locator('[type=submit]').click();assert.equal(puts,1);assert.equal(await page.locator('#chat-timing').evaluate(el=>el.validity.rangeOverflow),true);await form.locator('[type=reset]').click();assert.equal(await page.locator('#chat-timing').inputValue(),'0.125');assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('chat-timing-v1-'+video_data.id)),undefined);assert.deepEqual(errors,[]);await context.close();
@@ -2475,6 +2570,7 @@ for(const engine of engines) {
             const offset=Number(entry.url.searchParams.get('offset_ms'));calls.push(offset);
             return{contentType:'application/json',body:JSON.stringify({messages:Array.from({length:200},(_,i)=>replayMessage(offset+':'+i,offset+i,'Cached message '+i)),removedIds:[],continuation:'pending'})};
         }});
+        await openReplayChat(page);
         await page.locator('.chat-message').first().waitFor();await page.locator('[data-open-dialog=chat-settings-dialog]').click();
         for(let position=1;position<=25;position++) {
             await page.locator('#chat-timing').fill(String(-35*position));await page.locator('#chat-timing').blur();
@@ -2487,6 +2583,7 @@ for(const engine of engines) {
             const messages=chunks===1?[replayMessage('alpha',0,'Removed message'),replayMessage('beta',100,'Surviving message')]:[replayMessage('alpha',0,'Must stay removed'),replayMessage('beta',100,'Duplicate'),replayMessage('gamma',200,'New message')];
             return{contentType:'application/json',body:JSON.stringify({messages,removedIds:chunks===1?[]:['alpha'],continuation:chunks===1?'second':null})};
         }});
+        await openReplayChat(removed.page);
         await removed.page.locator('[data-message-id=alpha]').waitFor();await removed.page.locator('[data-message-id=gamma]').waitFor();assert.equal(await removed.page.locator('[data-message-id=alpha]').count(),0);assert.equal(await removed.page.locator('[data-message-id=beta]').count(),1);assert.equal(await removed.page.locator('.chat-message').count(),2);assert.equal(chunks,2);assert.deepEqual(removed.errors,[]);await removed.context.close();
     });
 }
@@ -2622,6 +2719,7 @@ for(const engine of engines) {
     test(`${engine}: D6 clip side editor previews on the same media and restores the sidebar, draft and local progress`,async()=>{
         const {page,context,errors,requests}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:clipFixtureReply});
         await readyClipMedia(page);const before=await page.evaluate(()=>JSON.stringify(InvidiousStorage.local.get('save_player_pos')));const initialWrites=requests.filter(r=>r.method!=='GET').length;
+        await openReplayChat(page);
         await toggleTranscript(page);
         await page.locator('.transcript-line').first().waitFor();
         await page.locator('#create-clip').click();const panel=page.locator('#tool-clip-editor');await panel.waitFor({state:'visible'});assert.equal(await page.locator('#clip-dialog').count(),0);assert.equal(await page.locator('iframe').count(),0);assert.equal(await page.locator('#clip-start').inputValue(),'00:25');assert.equal(await page.locator('#clip-end').inputValue(),'00:55');
@@ -2632,9 +2730,9 @@ for(const engine of engines) {
         await page.locator('#clip-close').click();await page.waitForFunction(()=>player.paused()&&!player.seeking()&&Math.abs(player.currentTime()-40)<.05);await assertFocus(page,'#create-clip');assert.equal(await page.locator('#tool-chat').isVisible(),true);
         assert.equal(await page.locator('#transcript-panel').isVisible(),true);
         assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/transcripts/')).length,1);
-        await page.locator('#chat-toggle').click();
+        await page.getByRole('button',{name:'Hide chat',exact:true}).click();
         await page.locator('#create-clip').click();await panel.waitFor({state:'visible'});assert.equal(await page.locator('#clip-title').inputValue(),'A clip <literal> 🎵');assert.equal(await page.locator('#clip-start').inputValue(),'00:10');await page.locator('#clip-title').focus();await page.keyboard.press('Escape');await panel.waitFor({state:'hidden'});assert.equal(await page.locator('video,audio').count(),1);
-        assert.equal(await page.locator('#chat-toggle').getAttribute('aria-expanded'),'false');
+        assert.equal(await page.locator('.vjs-chat-control').getAttribute('aria-expanded'),'false');
         assert.equal(requests.filter(r=>r.url.pathname==='/js/clip-editor.js').length,1);assert.equal(requests.filter(r=>r.url.pathname==='/js/clip-session.js').length,1);assert.equal(requests.filter(r=>r.method!=='GET').length,initialWrites,'the editor makes no mutation before Publish');assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D6 clip editor creates an empty utility slot and excludes account progress and queue advancement`,async()=>{
@@ -3714,6 +3812,7 @@ for (const engine of engines) {
     });
     test(`${engine}: refresh settings keep chat preferences and guest timing local until reload`, async () => {
         const {page,context,requests,errors} = await setup(engine,'watch','light',{fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',reply:clipFixtureReply});
+        await openReplayChat(page);
         await page.locator('[data-open-dialog=chat-settings-dialog]').click();
         const scale = await page.locator('[name=chat_font_scale]').inputValue();
         const writer=await settingsWriter(context),scope=await page.evaluate(() => InvidiousStorage.scope),id=await page.evaluate(() => video_data.id);
@@ -3727,6 +3826,7 @@ for (const engine of engines) {
         await page.locator('#chat-timing').fill('1.25');await page.locator('#chat-timing').blur();
         assert.equal(await page.evaluate(() => InvidiousChatTiming.value()),1250);
         await page.reload();
+        await openReplayChat(page);
         await page.locator('[data-open-dialog=chat-settings-dialog]').click();
         assert.equal(await page.locator('[name=chat_font_scale]').inputValue(),'150');
         assert.equal(await page.locator('#chat-timing').inputValue(),'2.5');

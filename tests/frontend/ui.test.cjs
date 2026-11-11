@@ -518,9 +518,14 @@ for (const engine of engines) {
     });
 }
 
+async function openReplayChat(page) {
+    await page.getByRole('button', {name: 'Show chat', exact: true}).click();
+}
+
 for (const engine of engines) {
     test(`${engine}: chat replay keeps fetched messages across pause and seeks`, async () => {
         const {page, context, errors, requests, chatCalls} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true});
+        await openReplayChat(page);
         await page.locator('.chat-message').first().waitFor();
         assert.equal(await page.locator('.chat-message').count(), 1);
         assert.match(await page.locator('.chat-message').first().textContent(), /Hello <script>alert\(1\)<\/script>/);
@@ -567,6 +572,7 @@ for (const engine of engines) {
         };
         const {page, context, chatCalls, requests, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true,
             videoData: {length_seconds: 180}, chatReply});
+        await openReplayChat(page);
         await page.getByText('start', {exact: true}).waitFor();
         await page.waitForTimeout(950);
         assert.equal(chatCalls(), 2);
@@ -599,6 +605,7 @@ for (const engine of engines) {
             {data: {messages: [message('current', 120000)], removedIds: [], continuation: null}};
         const {page, context, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true,
             videoData: {length_seconds: 180}, chatReply});
+        await openReplayChat(page);
         await page.waitForTimeout(50);
         assert.equal(chatCalls(), 1);
         await page.evaluate(() => {
@@ -624,6 +631,7 @@ for (const engine of engines) {
             {data: {messages: [message('kept', 0), message('deleted', 0)], removedIds: [], continuation: 'next'}};
         const {page, context, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true,
             videoData: {length_seconds: 180}, chatReply});
+        await openReplayChat(page);
         await page.getByText('kept', {exact: true}).waitFor();
         await page.waitForTimeout(950);
         assert.equal(await page.getByText('deleted', {exact: true}).count(), 0);
@@ -643,6 +651,7 @@ for (const engine of engines) {
             id: `old-${index}`, offsetMs: 0, author: `Viewer ${index}`, text: `Old message ${index}`, kind: 'text', amount: ''
         }));
         const {page, context, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatMessages});
+        await openReplayChat(page);
         await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 120);
         assert.equal(await page.locator('[data-message-id="old-0"]').count(), 0);
         const calls = chatCalls();
@@ -662,6 +671,7 @@ for (const engine of engines) {
             id: `bulk-${index}`, offsetMs: index, author: 'Viewer', text: `Bulk ${index}`, kind: 'text', amount: ''
         }));
         const {page, context, chatCalls, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatMessages});
+        await openReplayChat(page);
         await page.locator('[data-message-id="bulk-250"]').waitFor();
         assert.equal(chatCalls(), 1);
         await page.evaluate(() => player.trigger('seeked'));
@@ -687,6 +697,7 @@ for (const engine of engines) {
             author: `Viewer ${index}`, text: `Message ${index} with enough words to wrap in a narrow panel`, kind: 'text', amount: ''
         }));
         const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatMessages});
+        await openReplayChat(page);
         await page.evaluate(() => { player.muted(true); player.play(); });
         await page.waitForFunction(() => player.currentTime() > 0.1);
         await page.evaluate(() => player.pause());
@@ -731,6 +742,7 @@ for (const engine of engines) {
 
     test(`${engine}: chat replay errors can be retried`, async () => {
         const {page, context, errors, chatCalls} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatError: 1});
+        await openReplayChat(page);
         await page.locator('#chat-retry').waitFor({state: 'visible'});
         await page.locator('#chat-retry').click();
         await page.locator('.chat-message').first().waitFor();
@@ -741,6 +753,7 @@ for (const engine of engines) {
 
     test(`${engine}: unavailable chat replay has a clear state`, async () => {
         const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatUnavailable: true});
+        await openReplayChat(page);
         await page.locator('#chat-status').filter({hasText:/unavailable/i}).waitFor();
         assert.equal(await page.locator('#chat-retry').isVisible(), true);
         assert.deepEqual(errors, []);
@@ -760,6 +773,7 @@ for (const engine of engines) {
             {id: 'spam', offsetMs: 0, author: 'Other', authorChannelId: 'UCOther', text: 'SpAm message', kind: 'text', amount: ''}
         ];
         const {page, context, errors} = await pageFor(engine, {fixture: 'watch-chat', realPlayer: true, chatMessages});
+        await openReplayChat(page);
         await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 4);
         assert.equal(await page.locator('.chat-author-id').first().textContent(), chatMessages[0].authorChannelId);
         assert.ok(await page.locator('.chat-author-id').first().evaluate(el => el.scrollWidth <= el.clientWidth));
@@ -793,6 +807,7 @@ for (const engine of engines) {
         await page.locator('#chat-timing-form [type=submit]').click();
         await page.waitForFunction(()=>document.querySelector('#chat-timing-form').getAttribute('aria-busy')!=='true'&&document.querySelector('#chat-timing-form [type=submit]').disabled);
         await page.reload();
+        await openReplayChat(page);
         await page.waitForFunction(() => document.querySelectorAll('.chat-message').length === 1);
         assert.equal(await page.locator('#chat-font-scale').inputValue(), '150');
         assert.equal(await page.locator('#chat-width').inputValue(), '640');
@@ -815,6 +830,8 @@ for (const engine of engines) {
             initScript: `if (!localStorage.getItem('iv:browser:v2:${accountProfile}:chat-settings-v1')) localStorage.setItem('iv:browser:v2:${accountProfile}:chat-settings-v1', JSON.stringify({chat_hide_user_ids:true, chat_font_scale:50, chat_width_px:200, chat_overlay_mode:false}))`});
         const second = await pageFor(engine, {fixture: 'watch-chat-account', realPlayer: true,
             videoData: {preferences: legacy}});
+        await openReplayChat(first.page);
+        await openReplayChat(second.page);
         await first.page.locator('.chat-message').first().waitFor();
         await second.page.locator('.chat-message').first().waitFor();
         assert.equal(await first.page.locator('#chat-font-value').inputValue(), '75');
@@ -822,7 +839,7 @@ for (const engine of engines) {
         assert.equal(await first.page.locator('#chat-hide-user-ids').isChecked(), true);
         assert.deepEqual(await first.page.evaluate(()=>{const raw=helpers.storage.get('chat-settings-v1');return [raw.chat_font_scale,raw.chat_width_px];}),[50,200],'opening the editor does not rewrite historical local values');
         assert.equal(await second.page.locator('#chat-font-value').inputValue(), '100');
-        assert.equal(await second.page.locator('#chat-width-value').inputValue(), '440');
+        assert.equal(await second.page.locator('#chat-width-value').inputValue(), '480');
         assert.equal(await second.page.locator('[id^=chat-overlay]').count(), 0);
         assert.equal(await second.page.locator('#chat-hide-user-ids').isChecked(), false);
         await first.page.locator('[data-open-dialog=chat-settings-dialog]').click();
@@ -837,7 +854,7 @@ for (const engine of engines) {
         assert.equal(await first.page.locator('#chat-width-value').inputValue(), '600');
         assert.equal(await first.page.locator('[id^=chat-overlay]').count(), 0);
         assert.equal(await second.page.locator('#chat-font-value').inputValue(), '100');
-        assert.equal(await second.page.locator('#chat-width-value').inputValue(), '440');
+        assert.equal(await second.page.locator('#chat-width-value').inputValue(), '480');
         assert.equal(first.chatWrites.filter(write => write.path === '/api/v1/auth/chat_preferences').length, 0);
         assert.deepEqual(first.errors, []);
         assert.deepEqual(second.errors, []);
@@ -850,6 +867,7 @@ for (const engine of engines) {
         const chatMessages = [{id: 'timed', offsetMs: 500, author: 'Reader', authorChannelId: 'UCReader', text: 'Timed message', kind: 'text', amount: ''}];
         const {page, context, chatWrites, errors} = await pageFor(engine, {fixture: 'watch-chat-account', realPlayer: true, chatMessages,
             initScript: `localStorage.setItem('chat-settings-v1', JSON.stringify({chat_show_timestamps:false}));localStorage.setItem('iv:browser:v2:${accountProfile}:chat-settings-v1',JSON.stringify({chat_overlay_mode:true,chat_overlay_opacity:0}));`});
+        await openReplayChat(page);
         assert.equal(await page.locator('#chat-show-timestamps').isChecked(), true);
         await page.evaluate(() => { player.muted(true); player.play(); });
         await page.waitForFunction(() => player.currentTime() > 0.1);
@@ -3520,6 +3538,7 @@ for (const engine of engines) {
         }
         async function change(volume, captions, font, speed) {
             await ready();
+            await openReplayChat(page);
             await page.locator('[data-open-dialog="chat-settings-dialog"]').click();
             await page.locator('#chat-font-value').fill(String(font));
             await page.locator('[data-chat-save]').click();
