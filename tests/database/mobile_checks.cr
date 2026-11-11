@@ -130,6 +130,7 @@ def check_music_playback(token, email, sid)
       check(response.response.status_code == 200, "Music playback route #{page} returned #{response.response.status_code}")
       data = JSON.parse(response.get("test_result").as(String).match(/<script id="video_data"[^>]*>(.*?)<\/script>/m).not_nil![1])
       check(data["skip_playback_position"].as_bool && !data["playback_sync"].as_bool && data["playback_position"].raw.nil?, "Music route sent saved progress")
+      check(data["record_completion"].as_bool == !!browser_sid, "Completion must follow account history even when Music skips resume")
       check(data["params"]["listen"].as_bool && data["params"]["video_start"].as_f == 30, "Music route lost audio-only playback or the explicit timestamp")
     end
     response = security_request("GET", "#{page}#{ordinary}#{separator}quality=medium", sid: sid)
@@ -140,6 +141,7 @@ def check_music_playback(token, email, sid)
   payload = JSON.parse(bulk.get("test_result").as(String))
   check(payload["positions"] == JSON.parse(%({"#{ordinary}":42})), "Bulk playback exposed Music or an unclassified legacy position")
   check(payload["watched"].as_a.includes?(JSON::Any.new(music)), "Music playback failed to record watch history")
+  check(payload["completed"].as_a.empty?, "Opening watch pages must not return completed videos")
   check(positions.select(email, music).not_nil![:resume_eligible] == false, "Bulk playback failed to record Music's eligibility")
   check(positions.select(email, ordinary).not_nil![:resume_eligible] == true, "Bulk playback failed to record ordinary eligibility")
   check(positions.select(email, music).not_nil![:updated_at] == music_timestamp, "Genre classification modified Music's timestamp")
@@ -147,6 +149,16 @@ def check_music_playback(token, email, sid)
   check(security_request("GET", "#{path}/#{music}", bearer: token).response.status_code == 404, "Single playback read exposed Music")
 
   csrf = Invidious::Helpers::Tokens.generate_response(sid, {":watch_ajax"}, HMAC_KEY)
+  completion_path = "/watch_ajax?action=complete_progress&redirect=false&id=#{music}"
+  check(security_request("POST", completion_path, sid: sid).response.status_code == 400, "Completion accepted a missing CSRF token")
+  completion_body = URI::Params.encode({"csrf_token" => csrf})
+  2.times do
+    completion = security_request("POST", completion_path, sid: sid, body: completion_body, content_type: "application/x-www-form-urlencoded")
+    check(completion.response.status_code == 200, "Completion did not acknowledge")
+  end
+  completed = security_request("GET", path, bearer: token)
+  check(JSON.parse(completed.get("test_result").as(String))["completed"].as_a == [JSON::Any.new(music)], "Bulk playback must return completion independently of Music resume")
+
   body = URI::Params.encode({"csrf_token" => csrf, "position" => "99"})
   ajax = security_request("POST", "/watch_ajax?action=set_progress&redirect=false&id=#{music}", sid: sid, body: body, content_type: "application/x-www-form-urlencoded")
   check(ajax.response.status_code == 200, "Music save from an older browser tab did not acknowledge")

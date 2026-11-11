@@ -217,6 +217,14 @@ test('invalid stored values are removed and complex settings are allowlisted', (
     assert.equal(p.api.local.set('SID', 'secret'), false);
 });
 
+test('guest completion is validated and stays in the guest profile', () => {
+    const b = browser(), guest = b.page();
+    assert.equal(guest.api.local.set('completed_videos', {[video]: true, bad: true, invalid0001: 1}), true);
+    assert.deepEqual(plain(guest.api.local.get('completed_videos')), {[video]: true});
+    assert.equal(b.page(alice).api.local.get('completed_videos'), undefined);
+    assert.deepEqual(plain(b.page().api.local.get('completed_videos')), {[video]: true});
+});
+
 test('guest SponsorBlock overrides inherit categories, support enablement and never affect accounts or live video', () => {
     const b = browser(), p = b.page();
     p.api.local.set('sponsorblock_channel_overrides', {[channel]: {name: '<Channel>', enabled: true, modes: {sponsor: 'auto', unknown: 'manual'}}});

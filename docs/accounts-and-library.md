@@ -58,7 +58,7 @@ When `watch_history` is enabled, watched IDs are recorded with best-effort descr
 
 Detailed history includes `video_id`, title, channel name/ID, release date, latest watched date, archived dates and optional positive duration. The original watched-ID array remains for compatibility/order. Native clients can request basic, detailed or organized history, described in [API](api.md). Marking watched/unwatched returns 409 when history is disabled. Clearing history also clears account playback positions, in the same transaction. With recording off, existing history remains readable and sync remains independent; individual watched/unwatched actions are unavailable, while clearing all history/positions remains available.
 
-`save_player_pos` independently enables position synchronization. It defaults false. Turning it off clears account positions; watch history is not an equivalent opt-in. Thumbnail bars use known durations and watched/position state. Unknown durations cannot show a partial percentage. Account-backed bars do not import another profile's browser fallback. See [playback](playback.md#resume-and-synchronization).
+`save_player_pos` independently enables position synchronization. It defaults false. Turning it off clears account positions. Thumbnail bars use saved positions with known durations or a recorded completion mark. Completion marks follow the watch-history preference. Account-backed bars do not import another profile's browser fallback. See [playback](playback.md#resume-and-synchronization).
 
 ## Owned playlists
 

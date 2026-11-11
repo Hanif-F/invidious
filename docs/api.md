@@ -145,7 +145,7 @@ for browser cookies, account sync and compatibility.
 | `GET /history` | Watched-ID array; page/max_results; details=true adds detail entries; also organized=true returns `{entries,total,hasMore,today,timezone}` with optional q |
 | `POST /history/:id`, `DELETE /history/:id` | Mark watched/unwatched; 204; 409 when history disabled |
 | `DELETE /history` | Clear watched/details and playback positions; 204 |
-| `GET /playback` | `{positions:{id:seconds}, watched:[id]}` |
+| `GET /playback` | `{positions:{id:seconds}, watched:[id], completed:[id]}` |
 | `GET /playback/:id` | `{videoId,position,updatedAt}`; absent 404 |
 | `PUT /playback/:id` | `{position:nonnegative integer}` <= Int32 max; 204; disabled 409 |
 | `DELETE /playback/:id`, `DELETE /playback` | Clear one/all positions; 204 |

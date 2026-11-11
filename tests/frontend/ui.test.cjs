@@ -2492,44 +2492,57 @@ for (const engine of engines) {
         }
     });
 
-    test(`${engine}: synced playback restores progress after seeking back from completion`, async () => {
-        const { page, context, errors } = await pageFor(engine, {
-            fixture: 'watch-single', realPlayer: true,
-            videoData: { playback_sync: true, playback_position: 0, csrf_token: 'fixture-csrf', params: { save_player_pos: true } }
-        });
-        await page.waitForFunction(() => window.player && player.isReady_);
-        const updates = await page.evaluate(() => {
-            const updates = [];
-            helpers.xhr = (method, url, options, callbacks) => {
-                if (url.startsWith('/watch_ajax')) updates.push({
-                    action: new URL(url, location.origin).searchParams.get('action'),
-                    position: new URLSearchParams(options.payload).get('position')
-                });
-                if (callbacks.on200) callbacks.on200({});
-            };
-            let time = 60;
-            // Keep the real player's event handlers; simulate a longer video's clock.
-            player.currentTime = () => time;
-            player.ended = () => false;
-            player.trigger('playing');
-            player.trigger('timeupdate');
-            time = video_data.length_seconds - 1;
-            player.trigger('timeupdate');
-            time = 60;
-            player.trigger('seeked');
-            time = video_data.length_seconds - 15 + 0.5;
-            player.trigger('timeupdate');
-            player.trigger('pause');
-            return updates;
-        });
-        assert.deepEqual(updates, [
-            { action: 'set_progress', position: '60' },
-            { action: 'clear_progress', position: null },
-            { action: 'set_progress', position: '60' },
-            { action: 'clear_progress', position: null }
-        ]);
-        assert.deepEqual(errors, []);
-        await context.close();
+    test(`${engine}: watch and embed record completion at 95% and clear resume at the end`, async () => {
+        for (const [fixture, route] of [['watch-single', 'watch?v=2isYuQZMbdU'], ['embed-mobile', 'embed/2isYuQZMbdU']]) {
+            const {page, context, errors} = await pageFor(engine, {fixture, route, realPlayer: true,
+                videoData: {length_seconds: 100, record_completion: true, playback_sync: true, playback_position: 0,
+                    csrf_token: 'fixture-csrf', params: {save_player_pos: true}}});
+            await page.waitForFunction(() => window.player && player.isReady_);
+            const updates = await page.evaluate(() => {
+                const updates = [];
+                helpers.xhr = (method, url, options, callbacks) => {
+                    if (url.startsWith('/watch_ajax')) {
+                        const action = new URL(url, location.origin).searchParams.get('action');
+                        const position = new URLSearchParams(options.payload).get('position');
+                        updates.push([action, position]);
+                    }
+                    if (callbacks.on200) callbacks.on200({});
+                };
+                // Keep the real player's event handlers and simulate the media clock.
+                let time = 3, ended = false;
+                player.currentTime = () => time;
+                player.duration = () => 100;
+                player.seeking = () => false;
+                player.paused = () => false;
+                player.ended = () => ended;
+                player.trigger('playing');
+                player.trigger('timeupdate');
+                time = 94.99;
+                player.trigger('seeked');
+                player.trigger('timeupdate');
+                time = 95;
+                player.trigger('timeupdate');
+                time = 99;
+                player.trigger('pause');
+                time = 100;
+                ended = true;
+                player.trigger('ended');
+                ended = false;
+                time = 3;
+                player.trigger('seeked');
+                return updates;
+            });
+            assert.deepEqual(updates, [
+                ['set_progress', '3'],
+                ['set_progress', '94'],
+                ['complete_progress', null],
+                ['set_progress', '99'],
+                ['clear_progress', null],
+                ['set_progress', '3']
+            ]);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
     });
 
     test(`${engine}: rejected progress beacon falls back to a keepalive request`, async () => {
@@ -3680,7 +3693,7 @@ for (const engine of engines) {
     for (const width of [390, 1440]) {
         test(`${engine}: account thumbnail bars ignore local progress and update dynamic queues at ${width}px`, async () => {
             const page = await browsers[engine].newPage({viewport: {width, height: 900}});
-            await page.setContent(`<script id="watched-config" type="application/json">{"sync":true}</script>
+            await page.setContent(`<script id="watched-config" type="application/json">{"account":true,"sync":true}</script>
                 <div class="watched-indicator" data-id="partial" data-length="1000" hidden></div>
                 <div class="watched-indicator" data-id="full" data-length="1000" hidden></div>
                 <div class="watched-indicator" data-id="new" data-length="1000" hidden></div>`);
@@ -3691,7 +3704,7 @@ for (const engine of engines) {
                     storage: {get: () => { throw new Error('Account bars must not read local storage'); }},
                     xhr: (method, url, options, callbacks) => {
                         window.calls++;
-                        callbacks.on200({positions: {partial: 492, early: 1, late: 950}, watched: ['partial', 'full']});
+                        callbacks.on200({positions: {partial: 492, early: 3, late: 910}, watched: ['partial', 'full', 'new'], completed: ['full']});
                     }
                 };
             });
@@ -3923,7 +3936,7 @@ for (const engine of engines) {
             for (const thin of [false, true]) {
                 const suffix = 'diary-' + (thin ? 'thin' : 'normal');
                 const history = await pageFor(engine, {fixture: 'history-progress-' + suffix, route: 'feed/history', width,
-                    playback: {positions: {'2isYuQZMbdU': 492, nextvideo01: 100}, watched: ['2isYuQZMbdU', 'previous001', 'nextvideo01']}});
+                    playback: {positions: {'2isYuQZMbdU': 492, nextvideo01: 100}, watched: ['2isYuQZMbdU', 'previous001', 'nextvideo01'], completed: ['previous001']}});
                 const partial = history.page.locator('.watched-indicator[data-id="2isYuQZMbdU"]');
                 await partial.waitFor({state: 'visible'});
                 assert.equal(await partial.evaluate(el => el.style.width), '49%');
@@ -3981,11 +3994,14 @@ for (const engine of engines) {
         await indicator.waitFor({state: 'visible'});
         assert.equal(await indicator.evaluate(el => el.style.width), '49%');
         await search.context.close();
-        const local = await pageFor(engine, {fixture: 'history', route: 'feed/history', initScript: `localStorage.setItem('iv:browser:v2:${accountProfile}:save_player_pos', JSON.stringify({'2isYuQZMbdU':492}));`});
+        const local = await pageFor(engine, {fixture: 'history', route: 'feed/history',
+            playback: {positions: {'2isYuQZMbdU': 999}, watched: ['2isYuQZMbdU', 'previous001'], completed: ['previous001']},
+            initScript: `localStorage.setItem('iv:browser:v2:${accountProfile}:save_player_pos', JSON.stringify({'2isYuQZMbdU':492}));`});
         const partial = local.page.locator('.watched-indicator[data-id="2isYuQZMbdU"]');
         await partial.waitFor({state: 'visible'});
         assert.equal(await partial.evaluate(el => el.style.width), '49%');
-        assert.equal(local.requests.some(url => url === '/api/v1/auth/playback'), false);
+        await local.page.locator('.watched-indicator[data-id="previous001"]').waitFor({state: 'visible'});
+        assert.equal(local.requests.filter(url => url === '/api/v1/auth/playback').length, 1);
         await local.page.evaluate(() => {
             const key = helpers.storage.key('save_player_pos');
             localStorage.setItem(key, JSON.stringify({'2isYuQZMbdU':250}));

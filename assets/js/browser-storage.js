@@ -82,6 +82,10 @@ window.InvidiousStorage = (function () {
             Object.keys(value).slice(-1000).forEach(function (id) {
                 if (/^[A-Za-z0-9_-]{11}$/.test(id) && number(value[id], 0, Number.MAX_SAFE_INTEGER)) clean[id] = value[id];
             });
+        } else if (key === 'completed_videos') {
+            Object.keys(value).slice(-1000).forEach(function (id) {
+                if (/^[A-Za-z0-9_-]{11}$/.test(id) && value[id] === true) clean[id] = true;
+            });
         } else if (key === 'chat-settings-v1') {
             ['chat_show_timestamps', 'chat_hide_user_ids', 'chat_overlay_mode'].forEach(function (name) {
                 if (typeof value[name] === 'boolean') clean[name] = value[name];

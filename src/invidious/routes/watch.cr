@@ -104,7 +104,7 @@ module Invidious::Routes::Watch
     env.params.query.delete_all("iv_load_policy")
 
     if watched && preferences.watch_history
-      Invidious::Database::Users.mark_watched(user.as(User), id, video)
+      Invidious::Database::WatchHistory.record(user.as(User), id, video)
     end
 
     playback_sync = !native_clip && !preview_clip && !!user && user.preferences.save_player_pos && params.save_player_pos && !video.live_now && !video.music_genre?
@@ -278,9 +278,16 @@ module Invidious::Routes::Watch
 
     case action = env.params.query["action"]?
     when "mark_watched"
-      Invidious::Database::Users.mark_watched(user, id)
+      unless Invidious::Database::Users.mark_watched(user, id)
+        return Errors.error_json(409, "Watch history is disabled in preferences.")
+      end
     when "mark_unwatched"
       Invidious::Database::Users.mark_unwatched(user, id)
+    when "complete_progress"
+      return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)
+      unless Invidious::Database::WatchHistory.complete(user, id)
+        return Errors.error_json(409, "Watch history is disabled in preferences.")
+      end
     when "set_progress"
       return Errors.error_json(409, "Saving playback position is disabled in preferences.") unless user.preferences.save_player_pos
       return Errors.error_json(400, "Invalid video id.") unless id.match(/^[a-zA-Z0-9_-]{11}$/)

@@ -14,6 +14,7 @@ module Invidious::Database::WatchHistory
     property archived_dates : Array(String) = [] of String
     @[JSON::Field(converter: Invidious::Database::WatchHistory::Duration)]
     property length_seconds : Int32? = nil
+    property completed : Bool = false
 
     def initialize(@video_id, @title = nil, @channel_name = nil, @channel_id = nil, @release_date = nil, @latest_watched = nil, @archived_dates = [] of String, @length_seconds = nil)
     end
@@ -34,10 +35,10 @@ module Invidious::Database::WatchHistory
   end
 
   # Read only local caches. Dates missing from video.info must remain unknown.
-  def cached(ids : Array(String)) : Hash(String, Entry)
+  def cached(ids : Array(String), conn = PG_DB) : Hash(String, Entry)
     result = {} of String => Entry
     return result if ids.empty?
-    PG_DB.query_all(<<-SQL, ids, as: {String, String?, String?, String?, String?, String?}).each do |id, title, author, ucid, published, duration|
+    conn.query_all(<<-SQL, ids, as: {String, String?, String?, String?, String?, String?}).each do |id, title, author, ucid, published, duration|
       SELECT id, title, author, ucid, to_char(published AT TIME ZONE 'UTC', 'YYYY-MM-DD'), length_seconds::text
       FROM channel_videos WHERE id = ANY($1)
       UNION ALL
@@ -57,14 +58,19 @@ module Invidious::Database::WatchHistory
   end
 
   def select_all(email : String, conn = PG_DB) : Array(Entry)
-    conn.query_all("SELECT row_to_json(h)::text FROM (SELECT video_id, title, channel_name, channel_id, release_date, latest_watched, archived_dates, length_seconds FROM watch_history WHERE email = $1) h", email, as: String).map { |json| Entry.from_json(json) }
+    conn.query_all("SELECT row_to_json(h)::text FROM (SELECT video_id, title, channel_name, channel_id, release_date, latest_watched, archived_dates, length_seconds, completed FROM watch_history WHERE email = $1) h", email, as: String).map { |json| Entry.from_json(json) }
+  end
+
+  def completed_ids(email : String) : Array(String)
+    PG_DB.query_all("SELECT video_id FROM watch_history WHERE email = $1 AND completed", email, as: String)
   end
 
   def save(conn : DB::Connection, email : String, entry : Entry)
-    conn.exec <<-SQL, email, entry.video_id, present(entry.title), present(entry.channel_name), present(entry.channel_id), History.date(entry.release_date), History.date(entry.latest_watched), entry.archived_dates.compact_map { |d| History.date(d) }.reject { |d| d == History.date(entry.latest_watched) }.uniq.sort, Duration.normalize(entry.length_seconds)
-      INSERT INTO watch_history AS h (email, video_id, title, channel_name, channel_id, release_date, latest_watched, archived_dates, length_seconds)
-      VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8::date[], $9)
+    conn.exec <<-SQL, email, entry.video_id, present(entry.title), present(entry.channel_name), present(entry.channel_id), History.date(entry.release_date), History.date(entry.latest_watched), entry.archived_dates.compact_map { |d| History.date(d) }.reject { |d| d == History.date(entry.latest_watched) }.uniq.sort, Duration.normalize(entry.length_seconds), entry.completed
+      INSERT INTO watch_history AS h (email, video_id, title, channel_name, channel_id, release_date, latest_watched, archived_dates, length_seconds, completed)
+      VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8::date[], $9, $10)
       ON CONFLICT (email, video_id) DO UPDATE SET
+        completed = h.completed OR EXCLUDED.completed,
         length_seconds = COALESCE(EXCLUDED.length_seconds, h.length_seconds),
         title = COALESCE(EXCLUDED.title, h.title),
         channel_name = COALESCE(EXCLUDED.channel_name, h.channel_name),
@@ -76,8 +82,9 @@ module Invidious::Database::WatchHistory
       SQL
   end
 
-  def record(user : User, id : String, video : Video? = nil)
+  def record(user : User, id : String, video : Video? = nil, *, completed = false) : Bool
     entry = cached([id])[id]? || Entry.new(id)
+    entry.completed = completed
     if video
       entry.length_seconds = Duration.normalize(video.length_seconds) || entry.length_seconds
       entry.title = present(video.title) || entry.title
@@ -87,11 +94,40 @@ module Invidious::Database::WatchHistory
     end
     PG_DB.transaction do |tx|
       conn = tx.connection
-      preferences = conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", user.email, as: String)
-      entry.latest_watched = History.today(Preferences.from_json(preferences).timezone)
-      conn.exec("UPDATE users SET watched = array_append(array_remove(watched, $1), $1) WHERE email = $2", id, user.email)
-      save(conn, user.email, entry)
-    end
+      preferences = history_preferences(conn, user.email)
+      next false unless preferences.watch_history
+
+      record_entry(conn, user.email, entry, preferences)
+      true
+    end || false
+  end
+
+  def complete(user : User, id : String) : Bool
+    PG_DB.transaction do |tx|
+      conn = tx.connection
+      preferences = history_preferences(conn, user.email)
+      next false unless preferences.watch_history
+
+      # The watch page already recorded the visit. Completion also works for
+      # embeds, which may reach the threshold without a prior history entry.
+      updated = conn.exec("UPDATE watch_history SET completed = true WHERE email = $1 AND video_id = $2", user.email, id)
+      if updated.rows_affected == 0
+        entry = cached([id], conn)[id]? || Entry.new(id)
+        entry.completed = true
+        record_entry(conn, user.email, entry, preferences)
+      end
+      true
+    end || false
+  end
+
+  private def history_preferences(conn : DB::Connection, email : String) : Preferences
+    Preferences.from_json(conn.query_one("SELECT preferences FROM users WHERE email = $1 FOR UPDATE", email, as: String))
+  end
+
+  private def record_entry(conn : DB::Connection, email : String, entry : Entry, preferences : Preferences)
+    entry.latest_watched = History.today(preferences.timezone)
+    conn.exec("UPDATE users SET watched = array_append(array_remove(watched, $1), $1) WHERE email = $2", entry.video_id, email)
+    save(conn, email, entry)
   end
 
   # Persist recovered cache metadata so subsequent cache expiry cannot remove it.
@@ -133,6 +169,7 @@ module Invidious::Database::WatchHistory
           next unless ids.includes?(entry.video_id)
           entry.latest_watched = History.date(entry.latest_watched)
           if old = existing[entry.video_id]?
+            entry.completed ||= old.completed
             dates = (old.archived_dates + entry.archived_dates + [old.latest_watched, entry.latest_watched].compact).compact_map { |d| History.date(d) }.uniq.sort
             entry.latest_watched = [old.latest_watched, entry.latest_watched].compact.max?
             entry.archived_dates = dates.reject { |d| d == entry.latest_watched }

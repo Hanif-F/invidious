@@ -51,8 +51,8 @@ module Invidious::Database::Users
     end
   end
 
-  def mark_watched(user : User, vid : String, video : Video? = nil)
-    WatchHistory.record(user, vid, video)
+  def mark_watched(user : User, vid : String) : Bool
+    WatchHistory.record(user, vid, completed: true)
   end
 
   def mark_unwatched(user : User, vid : String)

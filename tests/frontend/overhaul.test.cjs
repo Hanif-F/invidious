@@ -1566,10 +1566,17 @@ for(const engine of engines) {
 
 for(const engine of engines) {
     test(`${engine}: D4 signed-in discovery keeps selection and duplicate watched progress through appended pages`,async()=>{
+        const completed = new Set();
         const {page,context,requests,errors}=await setup(engine,'browse','light',{fixture:'qol-browse',url:'/feed/popular',reply:entry=>{
             if(entry.url.pathname==='/feed/popular'&&entry.url.searchParams.get('page')==='2')return{contentType:'text/html',body:fs.readFileSync(path.join(generated,'qol-browse-next.html'))};
             if(entry.url.pathname==='/video_actions')return{contentType:'application/json',body:JSON.stringify({playlists:[{id:'IVtarget',title:'Field notes'}],defaultPlaylist:'IVtarget'})};
-            if(entry.url.pathname==='/watch_ajax')return{contentType:'application/json',body:'{}'};
+            if(entry.url.pathname==='/api/v1/auth/playback')return{json:{positions:{},watched:[...completed],completed:[...completed]}};
+            if(entry.url.pathname==='/watch_ajax') {
+                const id=entry.url.searchParams.get('id');
+                if(entry.url.searchParams.get('action')==='mark_watched')completed.add(id);
+                else completed.delete(id);
+                return{contentType:'application/json',body:'{}'};
+            }
         }});
         await page.locator('[data-select-toggle]').click();await page.locator('[data-select-all]').click();
         assert.equal(await page.locator('[data-select-item]:checked').count(),12);
@@ -1578,6 +1585,7 @@ for(const engine of engines) {
         await page.locator('[data-select-clear]').click();await page.locator('[data-select-item]').first().check();
         await page.locator('[data-batch-operation]').selectOption('watched');await page.locator('[data-batch-apply]').click();
         await page.waitForFunction(()=>document.querySelectorAll('.watched-indicator[data-id="00000000000"][data-watched=true]:not([hidden])').length===2);
+        assert.deepEqual(await page.locator('.watched-indicator[data-id="00000000000"]').evaluateAll(els=>els.map(el=>el.style.width)),['100%','100%']);
         await page.locator('[data-select-item]').first().check();await page.locator('[data-batch-operation]').selectOption('unwatched');await page.locator('[data-batch-apply]').click();
         await page.waitForFunction(()=>document.querySelectorAll('.watched-indicator[data-id="00000000000"][data-watched=false][hidden]').length===2);
         assert.equal(requests.filter(r=>r.url.pathname==='/watch_ajax').length,2);

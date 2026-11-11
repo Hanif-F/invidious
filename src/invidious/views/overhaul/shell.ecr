@@ -50,7 +50,7 @@
 <% if Invidious::Frontend::Desktop.listing?(env) || Invidious::Frontend::Desktop.watch?(env) %>
 <%= rendered "components/video-actions-dialog" %>
 <script id="dearrow-config" type="application/json"><%= {"enabled" => preferences.dearrow_enabled, "showOriginal" => preferences.dearrow_show_original, "originalLabel" => I18n.translate(locale, "dearrow_reveal_original"), "replacementLabel" => I18n.translate(locale, "spoilers_next_dearrow")}.to_json.gsub("<", "\\u003c") %></script><script src="/js/dearrow.js?v=<%= ASSET_COMMIT %>" defer></script>
-<script id="watched-config" type="application/json"><%= {"sync" => !!env.get?("user") && env.get("user").as(Invidious::User).preferences.save_player_pos}.to_json %></script>
+<script id="watched-config" type="application/json"><%= {"account" => !!env.get?("user"), "sync" => !!env.get?("user") && env.get("user").as(Invidious::User).preferences.save_player_pos}.to_json %></script>
 <script src="/js/watched_indicator.js?v=<%= ASSET_COMMIT %>" defer></script>
 <script src="/js/video-actions.js?v=<%= ASSET_COMMIT %>" defer></script>
 <% if Invidious::Frontend::Desktop.listing?(env) %><script src="/js/browse.js?v=<%= ASSET_COMMIT %>" defer></script><% end %>

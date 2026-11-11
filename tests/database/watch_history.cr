@@ -6,11 +6,13 @@ require "../../src/invidious/database/migration"
 require "../../src/invidious/database/migrator"
 require "../../src/invidious/database/migrations/0014_create_watch_history_table"
 require "../../src/invidious/database/migrations/0016_add_history_duration"
+require "../../src/invidious/database/migrations/0027_watch_history_completion"
 
 # Minimal domain types let this test exercise production persistence independently.
 struct Preferences
   include JSON::Serializable
   property timezone : String? = nil
+  property watch_history : Bool = true
 end
 
 struct User
@@ -55,6 +57,10 @@ begin
     duration_migration.up(conn)
     duration_migration.up(conn)
     check(conn.query_one("SELECT length_seconds FROM watch_history WHERE email = 'migration'", as: Int32?).nil?, "Migration must retain legacy rows with unknown duration")
+    completion_migration = Invidious::Database::Migrations::WatchHistoryCompletion.new(PG_DB)
+    completion_migration.up(conn)
+    completion_migration.up(conn)
+    check(!conn.query_one("SELECT completed FROM watch_history WHERE email = 'migration'", as: Bool), "Legacy history cannot imply completion")
     conn.exec("DELETE FROM users WHERE email = 'migration'")
   end
   2.times do |schema|
@@ -65,6 +71,7 @@ begin
     entry = history.select_all("a").first
     check(entry.latest_watched == Invidious::History.today("Asia/Jakarta"), "First watch must record account date")
     check(entry.archived_dates.empty?, "First watch has no archive")
+    check(!entry.completed && history.completed_ids("a").empty?, "Opening a watch page must not imply completion")
     history.record(user, "video")
     check(history.select_all("a").first.archived_dates.empty?, "Same-day watch must deduplicate")
     PG_DB.exec("UPDATE watch_history SET latest_watched = '2020-01-01', title = 'Saved', channel_name = 'Channel', channel_id = 'UCsaved', release_date = '2019-01-01' WHERE email = 'a'")
@@ -92,6 +99,24 @@ begin
     end }
     check(history.select_all("a").first.archived_dates == ["2020-01-01"], "Concurrent recording must retain unique dates")
     check(history.select_all("b").empty?, "Account isolation")
+    check(history.complete(user, "video"), "Playback completion must succeed")
+    completed = history.select_all("a").first
+    check(completed.completed, "Playback completion must update an existing entry")
+    check(history.complete(user, "video") && history.select_all("a").first.to_json == completed.to_json, "Completion retries must be idempotent")
+    check(history.record(user, "video") && history.select_all("a").first.completed, "Reopening a video must preserve completion")
+    PG_DB.exec("UPDATE users SET preferences = $1 WHERE email = 'a'", {timezone: "Asia/Jakarta", watch_history: false}.to_json)
+    check(!history.complete(user, "paused") && !Invidious::Database::Users.mark_watched(user, "paused"), "A history pause must block new completion marks")
+    check(history.completed_ids("a") == ["video"], "History pause must preserve existing marks")
+    PG_DB.exec("UPDATE users SET preferences = $1 WHERE email = 'a'", {timezone: "Asia/Jakarta"}.to_json)
+
+    other = User.new("b")
+    check(history.complete(other, "embed"), "Embed playback completion must create history")
+    check(history.completed_ids("b") == ["embed"], "Embed completion must belong to its account")
+    Invidious::Database::Users.mark_unwatched(other, "embed")
+    check(history.completed_ids("b").empty?, "Mark unwatched must remove completion")
+    check(Invidious::Database::Users.mark_watched(other, "manual"), "Mark watched must succeed")
+    check(history.completed_ids("b") == ["manual"], "Mark watched must record completion")
+    Invidious::Database::Users.mark_unwatched(other, "manual")
     user.watched = ["video", "legacy"]
     PG_DB.exec("UPDATE users SET watched = $1 WHERE email = 'a'", user.watched)
     PG_DB.exec("INSERT INTO videos VALUES ('legacy', $1)", {title: "Legacy", author: "Old channel", ucid: "UClegacy", published: "2018-01-01", lengthSeconds: 900}.to_json)
@@ -116,9 +141,15 @@ begin
     history.import(user, [JSON.parse(%({"video_id":"legacy"}))])
     check(history.select_all("a").find { |e| e.video_id == "legacy" }.not_nil!.length_seconds == 900, "Older imports must not erase duration")
     check(history.select_all("a").find { |e| e.video_id == "video" }.not_nil!.archived_dates == ["2020-01-01"], "Export/import retains archive")
-    history.record(User.new("b"), "video")
+    history.record(other, "video")
+    history.import(other, exported)
+    check(history.completed_ids("b") == ["video"], "History backup round trip must restore completion")
+    history.import(user, [JSON.parse(%({"video_id":"video"}))])
+    check(history.completed_ids("a") == ["video"], "An older backup must preserve existing completion")
+    check(!history.select_all("a").find { |e| e.video_id == "legacy" }.not_nil!.completed, "A legacy import cannot infer completion")
     Invidious::Database::Users.mark_unwatched(user, "video")
     check(history.select_all("a").none? { |e| e.video_id == "video" }, "Removal deletes archived metadata")
+    check(history.completed_ids("a").empty?, "Removal deletes the completion mark")
     Invidious::Database::Users.clear_watch_history(user)
     check(history.select_all("a").empty?, "Clear removes all history details")
     check(PG_DB.query_one("SELECT watched FROM users WHERE email = 'a'", as: Array(String)).empty?, "Clear removes compatibility IDs")

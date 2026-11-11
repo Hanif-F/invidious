@@ -219,7 +219,9 @@ module Invidious::Routes::API::V1::Authenticated
       return Errors.error_json(400, InvalidVideoID.new(id))
     end
 
-    Invidious::Database::Users.mark_watched(user, id)
+    unless Invidious::Database::Users.mark_watched(user, id)
+      return Errors.error_json(409, "Watch history is disabled in preferences.")
+    end
     env.response.status_code = 204
   end
 
@@ -251,7 +253,11 @@ module Invidious::Routes::API::V1::Authenticated
     env.response.headers["Cache-Control"] = "private, no-store"
     user = env.get("user").as(User)
     positions = Invidious::PlaybackProgress.select_all(user.email)
-    {positions: positions.to_h { |entry| {entry[:video_id], entry[:position_seconds]} }, watched: user.watched}.to_json
+    {
+      positions: positions.to_h { |entry| {entry[:video_id], entry[:position_seconds]} },
+      watched:   user.watched,
+      completed: Invidious::Database::WatchHistory.completed_ids(user.email),
+    }.to_json
   end
 
   def self.get_playback_position(env)

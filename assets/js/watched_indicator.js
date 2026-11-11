@@ -1,47 +1,52 @@
 'use strict';
 (function () {
-    var config = document.getElementById('watched-config');
-    var sync = config && JSON.parse(config.textContent).sync;
+    var configNode = document.getElementById('watched-config');
+    var config = configNode ? JSON.parse(configNode.textContent) : {};
+    var sync = config.sync;
+    var account = config.account || sync;
     var positions = {};
-    var watched = new Set();
-    var ready = !sync;
+    var completed = new Set();
     var loading = false;
     var confirmed = new Map();
+    var changeSequence = 0;
     var refreshAgain = false;
 
     function render() {
-        if (!ready) return;
-        var local = sync ? {} : (helpers.storage.get('save_player_pos') || {});
+        var saved = sync ? positions : (helpers.storage.get('save_player_pos') || {});
+        var guestCompleted = account ? {} : (helpers.storage.get('completed_videos') || {});
         document.querySelectorAll('.watched-indicator').forEach(function (indicator) {
             var id = indicator.dataset.id;
-            var position = (sync ? positions : local)[id];
-            var isWatched = confirmed.has(id) ? confirmed.get(id) : sync ? watched.has(id) : indicator.dataset.watched === 'true';
+            var position = saved[id];
+            var change = confirmed.get(id);
+            var isCompleted = change ? change.completed : completed.has(id) || guestCompleted[id] === true;
             var total = Number(indicator.dataset.length);
-            indicator.hidden = position === undefined && !isWatched;
+            var hasProgress = Number.isFinite(position) && position > 0 && Number.isFinite(total) && total > 0;
+            indicator.hidden = !hasProgress && !isCompleted;
             if (indicator.hidden) return;
-            // Unknown duration cannot provide a meaningful partial percentage.
-            if (position !== undefined && (!Number.isFinite(total) || total <= 0)) {
-                indicator.hidden = true;
-                return;
-            }
-            var percentage = position === undefined ? 100 : Math.round(position / total * 100);
+            var percentage = hasProgress ? Math.round(position / total * 100) : 100;
             indicator.style.width = (percentage > 90 ? 100 : Math.max(5, percentage)) + '%';
         });
     }
 
     function refresh() {
-        if (!sync) { render(); return; }
+        render();
+        if (!account) return;
         if (!window.InvidiousStorage.isCurrent()) return;
         if (loading) { refreshAgain = true; return; }
         loading = true;
+        var requestedAfter = changeSequence;
         function finished() { loading = false; if (refreshAgain) { refreshAgain = false; refresh(); } }
         helpers.xhr('GET', '/api/v1/auth/playback', {}, {
             on200: function (response) {
-                if (!response || !response.positions || !Array.isArray(response.watched)) { finished(); return; }
+                if (!response || !response.positions) { finished(); return; }
                 positions = response.positions;
-                watched = new Set(response.watched);
-                confirmed.forEach(function (value, id) { if (watched.has(id) === value) confirmed.delete(id); });
-                ready = true;
+                if (Array.isArray(response.completed)) {
+                    completed = new Set(response.completed);
+                    // A snapshot requested before a manual action may still be in flight.
+                    confirmed.forEach(function (change, id) {
+                        if (change.sequence <= requestedAfter) confirmed.delete(id);
+                    });
+                }
                 render();
                 finished();
             },
@@ -64,9 +69,12 @@
     window.addEventListener('pageshow', function (event) { if (event.persisted) refresh(); });
     document.addEventListener('iv:library-change', refresh);
     document.addEventListener('iv:watched-change', function (event) {
-        confirmed.set(event.detail.id, event.detail.watched);
+        confirmed.set(event.detail.id, {completed: event.detail.watched, sequence: ++changeSequence});
         render();
     });
-    window.addEventListener('storage', function (event) { if (!sync && helpers.storage.matchesEvent(event, 'save_player_pos')) render(); });
+    window.addEventListener('storage', function (event) {
+        if ((!sync && helpers.storage.matchesEvent(event, 'save_player_pos')) ||
+            (!account && helpers.storage.matchesEvent(event, 'completed_videos'))) render();
+    });
     refresh();
 })();
