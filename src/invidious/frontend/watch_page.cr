@@ -4,6 +4,26 @@ module Invidious::Frontend::WatchPage
   # Display adapter for shared recommendation menus; metadata stays in the source hash.
   record Recommendation, id : String, author : String
 
+  def publication_html(date : Time, locale : String?) : String
+    locale ||= "en-US"
+    calendar_date = date.to_s("%Y-%m-%d")
+    label = date <= Time.utc ? I18n.translate(locale, "`x` ago", recode_date(date, locale)) : calendar_date
+    %(<time datetime="#{calendar_date}" title="#{calendar_date}">#{HTML.escape(label)}</time>)
+  end
+
+  def prepare_queue_publications(env, videos : Array(JSON::Any))
+    dates = env.get?("spoiler_dates").try(&.as(Hash(String, Time?))) || {} of String => Time?
+    missing = videos.compact_map do |video|
+      id = video["videoId"].as_s
+      id unless dates.has_key?(id) || Invidious::Frontend::ChannelSpoilers.queue_date(video)
+    end.uniq
+    return if missing.empty?
+
+    cached = Invidious::Database::Videos.select_spoiler_dates(missing)
+    missing.each { |id| dates[id] = cached[id]? }
+    env.set "spoiler_dates", dates
+  end
+
   def playlist_cursor(env, plid : String?, id : String)
     query = env.params.query
     if plid && plid.starts_with?("IV")

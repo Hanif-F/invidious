@@ -13,8 +13,7 @@
         function on(target,name,handler,options) { target.addEventListener(name,handler,Object.assign({signal:life.signal},options)); }
         function alive() { return activePage && !disposed && panel.isConnected && storage.isCurrent() && !(player.isDisposed && player.isDisposed()); }
         function displayed() {
-            var owner = panel.closest('[role=tabpanel]');
-            return panel.isConnected && !panel.hidden && (!owner || !owner.hidden) && panel.getClientRects().length > 0;
+            return panel.getClientRects().length > 0;
         }
         function cancel() {
             generation++; if (request) request.abort(); request = null;

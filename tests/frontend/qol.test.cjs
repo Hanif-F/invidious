@@ -209,7 +209,8 @@ for (const engine of engines) {
     });
     test(`${engine}: QoL transcript highlights playback and manual search disables following`, async () => {
         const {page,context,errors} = await setup(engine,{fixture:'watch-single',path:'/watch?v=aaaaaaaaaaa'});
-        await page.getByRole('tab',{name:'Transcript',exact:true}).click();
+        await page.locator('.watch-actions > .ui-menu > summary').click();
+        await page.locator('#transcript-toggle').click();
         await page.locator('.transcript-line').first().waitFor();
         await page.evaluate(()=>{player.currentTime(1.5);player.trigger('timeupdate')});
         assert.match(await page.locator('.transcript-line.is-active').textContent(),/Second line/);

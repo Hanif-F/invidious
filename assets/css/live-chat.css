@@ -1,8 +1,11 @@
 /* Replay is a utility panel. Media placement and fullscreen belong to the player. */
-.chat-panel{box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0;width:100%;height:min(640px,calc(100vh - 188px));min-height:240px;overflow:hidden;background:var(--surface);color:var(--text);font:inherit;font-size:calc(16px * var(--chat-font-scale,1));line-height:1.5}
+.chat-panel{box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0;width:100%;height:min(560px,calc(100vh - 188px));min-height:200px;overflow:hidden;color:var(--text);font:inherit;font-size:calc(16px * var(--chat-font-scale,1));line-height:1.5}
 .chat-panel[hidden]{display:none!important}
-.chat-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:44px;padding-block-end:8px;border-block-end:1px solid var(--separator)}
-.chat-heading h2{font-size:16px;margin:0}
+.chat-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.watch-tool .chat-heading h2{margin:0}
+.chat-heading .chat-toggle{display:flex;align-items:center;gap:8px;min-height:36px;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:start}
+.chat-toggle[aria-expanded=true] .ui-icon{transform:rotate(180deg)}
+.chat-heading:has(.chat-toggle[aria-expanded=true]) + .chat-panel{margin-block-start:8px;border-block-start:1px solid var(--separator)}
 .chat-scroll-area{position:relative;flex:1 1 auto;min-height:0}
 .chat-messages{box-sizing:border-box;height:100%;min-height:0;overflow:auto;overflow-anchor:none;overscroll-behavior:contain;padding:12px 4px;scrollbar-gutter:stable}
 .chat-messages:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}

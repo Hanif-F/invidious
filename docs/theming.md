@@ -44,9 +44,9 @@ shared media, embed and native compatibility still apply.
 
 Watch and embedded pages share media controls; embeds omit application navigation.
 Keep source/audio/caption identity, playhead, speed, pause, volume and bounded clip
-playback when controls or utility tabs change. Existing player elements and their
-owners must survive such interactions. Repeated setup must not add another media
-element, control bar, dialog or keyboard handler.
+playback when controls or watch sidebar sections change. Existing player elements
+and their owners must survive such interactions. Repeated setup must not add
+another media element, control bar, dialog or keyboard handler.
 
 Dialogs and menus need focus return, Escape handling, readable labels and contained
 hit targets. Shared comment and timestamp delegation remains available for appended

@@ -36,10 +36,10 @@ end
 
 def view_count_queue_fixture
   playlist = JSON.parse({playlistId: "PLfixture", title: "Counts", videoCount: 4, videos: [
-    {videoId: "2isYuQZMbdU", index: 0, title: "First occurrence", author: "Creator", lengthSeconds: 240},
+    {videoId: "2isYuQZMbdU", index: 0, title: "First occurrence", author: "Creator", lengthSeconds: 240, published: Time.utc(2020, 1, 2).to_unix},
     {videoId: "previous001", index: 1, title: "Real zero", author: "Creator", lengthSeconds: 360},
     {videoId: "2isYuQZMbdU", index: 2, title: "Repeated occurrence", author: "Creator", lengthSeconds: 930},
-    {videoId: "nextvideo01", index: 3, title: "Unknown count", author: "Creator", lengthSeconds: 420},
+    {videoId: "nextvideo01", index: 3, title: "Unknown count", author: "Creator", lengthSeconds: 420, published: Time.utc(2020, 1, 2).to_unix},
   ]}.to_json)
   reads = [] of Array(String)
   Invidious::JSONify::APIv1::VideoMetadata.enrich(playlist, "en-US") do |ids|

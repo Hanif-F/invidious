@@ -33,6 +33,10 @@ function holdPlaylistWrites() {
         return new Promise(resolve=>delayedPlaylistWrites.push({url:target.href,body:fields.toString(),release:()=>resolve(new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}}))}));
     };
 }
+async function toggleTranscript(page) {
+    await page.locator('.watch-actions > .ui-menu > summary').click();
+    await page.locator('#transcript-toggle').click();
+}
 async function setup(engine,screen,mode='light',options={}) {
     const fixture=options.fixture || `overhaul-${screen}-${mode}`;
     const context=await browsers[engine].newContext({viewport:{width:options.width||1440,height:options.height||900},colorScheme:mode==='dark'?'dark':'light',reducedMotion:'reduce',javaScriptEnabled:options.javascript!==false});
@@ -140,17 +144,20 @@ for(const engine of engines) {
         assert.equal(await watching.page.locator('#sidebar-toggle').getAttribute('aria-expanded'),'false');
         assert.deepEqual(watching.errors,[]);await watching.context.close();
     });
-    test(`${engine}: D1 actual player survives tab changes and transcript is deferred`,async()=>{
+    test(`${engine}: D1 actual player survives transcript toggling and transcript is deferred`,async()=>{
         const{page,context,requests,errors}=await setup(engine,'watch');
         await page.waitForFunction(()=>window.player&&player.readyState()>0);
         await page.evaluate(()=>{window.originalMedia=player.tech(true).el();player.pause();player.currentTime(1);player.playbackRate(1.5);player.volume(.4);});
         assert.ok(!requests.some(r=>r.url.pathname==='/js/transcript.js'));
-        await page.getByRole('tab',{name:'Transcript',exact:true}).click();
+        await toggleTranscript(page);
         await page.waitForFunction(()=>document.querySelectorAll('.transcript-line').length>0);
         assert.equal(await page.evaluate(()=>player.tech(true).el()===originalMedia),true);
         assert.equal(await page.locator('video').count(),1);
-        await page.getByRole('tab',{name:'Transcript',exact:true}).press('ArrowRight');
-        assert.equal(await page.getByRole('tab',{name:'Up next',exact:true}).getAttribute('aria-selected'),'true');
+        await assertFocus(page,'#transcript-heading');
+        assert.equal(await page.locator('#tool-next').isVisible(),true);
+        await toggleTranscript(page);
+        await assertFocus(page,'.watch-actions > .ui-menu > summary');
+        assert.equal(await page.locator('#transcript-panel').isVisible(),false);
         assert.equal(await page.evaluate(()=>player.tech(true).el()===originalMedia),true);
         assert.equal(await page.locator('video').count(),1);
         assert.equal(requests.filter(r=>r.url.pathname==='/js/transcript.js').length,1);
@@ -1645,11 +1652,11 @@ for(const engine of engines) {
         await page.waitForFunction(()=>window.player&&typeof player.play==='function');
         await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();player.currentTime(.25);player.playbackRate(1.25);window.originalMedia=player.tech().el();window.originalPlayer=player;});
         await page.waitForFunction(()=>player.currentTime()>=.2);
-        assert.equal(await page.locator('[role=tab][aria-selected=true]').textContent(),'Up next');
+        assert.equal(await page.locator('#tool-next').isVisible(),true);
         assert.ok(!requests.some(r=>r.url.pathname.startsWith('/api/v1/transcripts/')));
-        await page.getByRole('tab',{name:'Transcript',exact:true}).click();
+        await toggleTranscript(page);
         await page.locator('.transcript-line').first().waitFor();
-        await page.getByRole('tab',{name:'Up next',exact:true}).click();
+        await toggleTranscript(page);
         await page.getByRole('button',{name:'Theater mode',exact:true}).click();
         assert.equal(await page.locator('body').getAttribute('data-watch-layout'),'theater');
         assert.equal(await page.evaluate(()=>player===originalPlayer&&player.tech().el()===originalMedia&&player.paused()&&player.playbackRate()===1.25),true);
@@ -1702,19 +1709,117 @@ for(const engine of engines) {
 
 for(const engine of engines) {
     test(`${engine}: D5 utility defaults and deliberate transcript loading keep replay outside media`,async()=>{
-        for(const [kind,selected] of [['queue','Queue'],['replay','Chat replay'],['queue-chat','Queue'],['single','Up next'],['transcript-only',null],['no-tools',null]]) {
+        for(const [kind,sections] of [
+            ['queue',['Queue','Up next']], ['replay',['Chat replay','Up next']],
+            ['queue-chat',['Chat replay','Queue','Up next']], ['single',['Up next']],
+            ['transcript-only',[]], ['no-tools',[]]
+        ]) {
             const {page,context,requests,errors}=await setup(engine,'watch','light',{fixture:`d5-${kind}-light`,url:'/watch?v=2isYuQZMbdU'+(kind==='queue'?'&list=PLfixture':kind==='queue-chat'?'&list=IVfixture':'')});
-            assert.deepEqual(await page.locator('[role=tab][aria-selected=true]').allTextContents(),selected?[selected]:[]);
+            assert.deepEqual(await page.locator('#watch-tools > section:visible h2').allInnerTexts(),sections);
+            assert.equal(await page.getByRole('tab').count(),0);
             assert.equal(await page.locator('#player-container #chat-panel').count(),0);
             assert.ok(!requests.some(r=>r.url.pathname.startsWith('/api/v1/transcripts/')));
             if(kind==='transcript-only') {
-                assert.ok(await page.locator('[data-tab-placeholder]').isVisible());
-                await page.getByRole('tab',{name:'Transcript',exact:true}).click();
+                assert.equal(await page.locator('#watch-sidebar').isVisible(),false);
+                assert.equal(await page.locator('#watch-layout').evaluate(el=>el.classList.contains('watch-no-tools')),true);
+                await toggleTranscript(page);
                 await page.locator('.transcript-line').first().waitFor();
-                assert.equal(await page.locator('[data-tab-placeholder]').isVisible(),false);
+                assert.equal(await page.locator('#watch-sidebar').isVisible(),true);
+                await toggleTranscript(page);
+                assert.equal(await page.locator('#watch-sidebar').isVisible(),false);
             }
             if(kind==='no-tools')assert.equal(await page.locator('.utility-panel').count(),0);
             assert.equal(await page.locator('video,audio').count(),1);assert.deepEqual(errors,[],kind);await context.close();
+        }
+    });
+    test(`${engine}: stacked watch sidebar shares row geometry and uses independent scroll areas`, async () => {
+        const queue = fs.readFileSync(path.join(generated, 'd6-watch-content-queue.json'));
+        for (const mode of ['light', 'dark']) {
+            const {page, context, errors, requests} = await setup(engine, 'watch', mode, {
+                fixture: `d5-queue-chat-${mode}`, url: '/watch?v=2isYuQZMbdU&list=IVfixture&index=2',
+                reply: ({url}) => {
+                    if (url.pathname === '/api/v1/playlists/IVfixture') return {contentType: 'application/json', body: queue};
+                    if (url.pathname.startsWith('/api/v1/live_chat/')) return {json: {
+                        messages: Array.from({length: 60}, (_, i) => replayMessage(`message-${i}`, 0, `Chat message ${i}`)),
+                        removedIds: [], continuation: null
+                    }};
+                    if (url.pathname.startsWith('/api/v1/transcripts/')) return {json: {
+                        transcript: {body: Array.from({length: 60}, (_, i) => ({line: `Transcript line ${i}`, startMs: i * 1000}))}
+                    }};
+                }
+            });
+            await page.locator('.queue-row').first().waitFor();
+            await page.locator('.chat-message').first().waitFor();
+            assert.equal(requests.some(({url}) => url.pathname === '/js/transcript.js'), false);
+            if (mode === 'dark') await page.locator('html').evaluate(el => el.dir = 'rtl');
+            const more = page.locator('.watch-actions > .ui-menu > summary');
+            await more.press('Enter');
+            await page.getByRole('button', {name: 'Transcript', exact: true}).press('Enter');
+            await assertFocus(page, '#transcript-heading');
+            await page.locator('.transcript-line').last().waitFor();
+            assert.deepEqual(await page.locator('#watch-tools > section:visible').evaluateAll(sections => sections.map(el => el.id)),
+                ['transcript-panel', 'tool-chat', 'playlist-panel', 'tool-next']);
+
+            const firstRow = page.locator('.queue-row').first();
+            assert.equal(await firstRow.locator('.queue-meta time').getAttribute('datetime'), '2020-01-02');
+            assert.equal(await page.locator('.queue-row').nth(1).locator('time').count(), 0);
+            assert.equal(await page.locator('.queue-row').nth(3).locator('time').getAttribute('datetime'), '2021-02-03');
+            assert.ok(await page.locator('.recommendation time').count() > 0);
+            for (const row of [firstRow, page.locator('.recommendation').first()]) {
+                assert.ok(await row.evaluate(el => {
+                    const box = selector => el.querySelector(selector).getBoundingClientRect();
+                    const thumb = box('.watch-video-thumbnail'), duration = box('.duration');
+                    const avatar = box('.channel-avatar'), channel = box('.watch-video-channel > :nth-child(2)');
+                    const meta = box('.watch-video-meta');
+                    return duration.bottom <= thumb.bottom && duration.bottom > thumb.top + thumb.height / 2 &&
+                        Math.abs(avatar.top + avatar.height / 2 - channel.top - channel.height / 2) < 1 &&
+                        meta.top >= Math.max(avatar.bottom, channel.bottom);
+                }));
+            }
+
+            await page.evaluate(() => {
+                document.getElementById('transcript-follow').click();
+                for (const list of [document.querySelector('#playlist ol'), document.getElementById('watch-recommendation-items')]) {
+                    for (let i = 0; i < 10; i++) list.append(list.lastElementChild.cloneNode(true));
+                }
+            });
+            const scrollers = ['#transcript-lines', '#chat-messages', '#playlist'];
+            const scroll = () => page.evaluate(selectors => selectors.map(selector => document.querySelector(selector).scrollTop), scrollers);
+            for (const selector of scrollers) {
+                const positions = await scroll();
+                await page.locator(selector).evaluate(list => list.scrollTop = list.scrollTop ? 0 : 60);
+                const expected = [...positions];
+                const i = scrollers.indexOf(selector);
+                expected[i] = positions[i] ? 0 : 60;
+                assert.deepEqual(await scroll(), expected);
+            }
+            const lastRecommendation = page.locator('.recommendation').last();
+            assert.equal(await page.locator('#tool-next').evaluate(el => el.scrollHeight <= el.clientHeight + 1), true);
+            await page.evaluate(() => scrollTo(0, 0));
+            await lastRecommendation.scrollIntoViewIfNeeded();
+            assert.ok(await page.evaluate(() => scrollY > 0));
+            await page.evaluate(() => scrollTo(0, 0));
+            assert.ok(Math.abs((await page.locator('#watch-sidebar').boundingBox()).width - 480) < 1);
+            assert.ok(await page.evaluate(() => {
+                const bounds = selector => document.querySelector(selector).getBoundingClientRect();
+                return bounds('.watch-primary').top - bounds('.watch-player').bottom <= 17 &&
+                    bounds('#comments').top - bounds('.watch-primary').bottom <= 41;
+            }), 'a long sidebar keeps video details and comments close to the player');
+            await page.screenshot({path: path.join(artifacts, `${engine}-watch-sidebar-${mode}-1440.png`)});
+            await page.getByRole('button', {name: 'Theater mode', exact: true}).click();
+            assert.equal(await page.locator('body').getAttribute('data-watch-layout'), 'theater');
+            assert.equal(await page.locator('#watch-sidebar').evaluate(el => el.getBoundingClientRect().top >= document.querySelector('.watch-player').getBoundingClientRect().bottom), true);
+            await page.setViewportSize({width: 390, height: 844});
+            assert.ok(await page.evaluate(() => {
+                const bounds = selector => document.querySelector(selector).getBoundingClientRect();
+                const sidebar = bounds('#watch-sidebar'), details = bounds('.watch-primary'), comments = bounds('#comments');
+                return document.documentElement.scrollWidth <= innerWidth + 1 &&
+                    Math.abs(sidebar.width - details.width) < 1 && sidebar.top >= details.bottom && comments.top >= sidebar.bottom;
+            }));
+            await page.locator('#transcript-heading').evaluate(el => el.scrollIntoView());
+            await page.screenshot({path: path.join(artifacts, `${engine}-watch-sidebar-${mode}-390.png`)});
+            assert.deepEqual(errors, []);
+            await context.close();
         }
     });
     test(`${engine}: D5 opt-in docking preserves the placeholder and supports return, dismissal and exclusions`,async()=>{
@@ -2053,7 +2158,7 @@ for(const engine of engines) {
         const english=Array.from({length:100},(_,i)=>({line:i===99?'<img src=x onerror=alert(1)> literal text':`Line ${i}`,startMs:i*100,durationMs:100}));
         const {page,context,errors,requests}=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/transcripts/')?{contentType:'application/json',body:JSON.stringify({transcript:{body:entry.url.searchParams.get('label').startsWith('English')?english:[{line:'Indonesian line',startMs:0}],autoGenerated:!entry.url.searchParams.get('label').startsWith('English')}})}:null});
         await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();window.originalMedia=player.tech().el();});
-        assert.ok(!requests.some(r=>r.url.pathname==='/js/transcript.js'));await page.getByRole('tab',{name:'Transcript',exact:true}).click();
+        assert.ok(!requests.some(r=>r.url.pathname==='/js/transcript.js'));await toggleTranscript(page);
         await page.waitForFunction(()=>document.querySelectorAll('.transcript-line').length===100);assert.equal(await page.locator('#transcript-panel>summary').count(),0);
         await page.evaluate(()=>player.currentTime(.8));await page.waitForFunction(()=>document.querySelector('.transcript-line.is-active p')?.textContent==='Line 8');
         const lines=page.getByRole('region',{name:'Transcript lines',exact:true});await lines.hover();await page.mouse.wheel(0,2000);
@@ -2073,7 +2178,7 @@ for(const engine of engines) {
         await page.locator('#transcript-language').selectOption({index:1});await page.waitForFunction(()=>document.querySelector('.transcript-line p')?.textContent==='Indonesian line');assert.ok((await page.locator('#transcript-status').textContent()).includes('Automatically'));
         await page.locator('#transcript-language').selectOption({index:0});await page.waitForFunction(()=>document.querySelectorAll('.transcript-line').length===100);
         assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/transcripts/')).length,2);
-        await page.getByRole('tab',{name:'Up next',exact:true}).click();await page.getByRole('tab',{name:'Transcript',exact:true}).click();assert.equal(await page.locator('#transcript-follow').count(),1);
+        await toggleTranscript(page);await toggleTranscript(page);assert.equal(await page.locator('#transcript-follow').count(),1);
         assert.equal(await page.evaluate(()=>player.tech().el()===originalMedia&&player.paused()),true);assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D6 transcript failure, unavailable, empty and invalid responses retain explicit retry`,async()=>{
@@ -2083,7 +2188,7 @@ for(const engine of engines) {
             if(calls<=2)return{status:calls===1?503:404,contentType:'application/json',body:'{}'};
             return{contentType:'application/json',body:JSON.stringify({transcript:{body:calls===3?[]:calls===4?[{line:'Invalid time',startMs:'bad'}]:[{line:'Recovered transcript',startMs:0}]}})};
         }});
-        await page.getByRole('tab',{name:'Transcript',exact:true}).click();await page.locator('#transcript-retry').waitFor({state:'visible'});const failed=await page.locator('#transcript-status').textContent();
+        await toggleTranscript(page);await page.locator('#transcript-retry').waitFor({state:'visible'});const failed=await page.locator('#transcript-status').textContent();
         await page.locator('#transcript-retry').click();await page.waitForFunction(()=>document.querySelector('#transcript-status').textContent.includes('unavailable'));assert.notEqual(await page.locator('#transcript-status').textContent(),failed);
         await page.locator('#transcript-retry').click();await page.waitForFunction(()=>document.querySelector('#transcript-status').textContent==='No transcript lines are available.');assert.ok(await page.locator('#transcript-retry').isVisible());
         await page.locator('#transcript-retry').click();
@@ -2094,8 +2199,8 @@ for(const engine of engines) {
     test(`${engine}: D6 transcript script recovery stays deferred and initializes only once`,async()=>{
         let scripts=0;
         const {page,context,errors,requests}=await setup(engine,'watch','light',{fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname==='/js/transcript.js'&&++scripts===1?{status:503,body:''}:null});
-        await page.getByRole('tab',{name:'Up next',exact:true}).click();assert.equal(scripts,0);await page.getByRole('tab',{name:'Transcript',exact:true}).click();await page.locator('#transcript-retry').waitFor({state:'visible'});
-        await page.locator('#transcript-retry').click();await page.locator('.transcript-line').first().waitFor();await page.getByRole('tab',{name:'Up next',exact:true}).click();await page.getByRole('tab',{name:'Transcript',exact:true}).click();
+        assert.equal(await page.locator('#tool-next').isVisible(),true);assert.equal(scripts,0);await toggleTranscript(page);await page.locator('#transcript-retry').waitFor({state:'visible'});
+        await page.locator('#transcript-retry').click();await page.locator('.transcript-line').first().waitFor();await toggleTranscript(page);await toggleTranscript(page);
         assert.equal(scripts,2);assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/transcripts/')).length,1);assert.equal(await page.locator('#transcript-follow').count(),1);assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D6 transcript generations and cached-page lifetimes reject transport that ignores abort`,async()=>{
@@ -2103,7 +2208,7 @@ for(const engine of engines) {
             const original=window.fetch.bind(window);window.transcriptReads=[];
             window.fetch=(url,options)=>new URL(url,location.href).pathname.startsWith('/api/v1/transcripts/')?new Promise(resolve=>transcriptReads.push(body=>resolve(new Response(JSON.stringify({transcript:{body:[{line:body,startMs:0}]}}),{headers:{'Content-Type':'application/json'}})))):original(url,options);
         }});
-        await page.getByRole('tab',{name:'Transcript',exact:true}).click();await page.waitForFunction(()=>transcriptReads.length===1);
+        await toggleTranscript(page);await page.waitForFunction(()=>transcriptReads.length===1);
         await page.locator('#transcript-language').selectOption({index:1});await page.waitForFunction(()=>transcriptReads.length===2);await page.evaluate(()=>transcriptReads[0]('Stale English'));
         assert.equal(await page.locator('.transcript-line').count(),0);await page.evaluate(()=>transcriptReads[1]('Current Indonesian'));await page.waitForFunction(()=>document.querySelector('.transcript-line p')?.textContent==='Current Indonesian');
         await page.locator('#transcript-language').selectOption({index:0});await page.waitForFunction(()=>transcriptReads.length===3);
@@ -2117,7 +2222,7 @@ for(const engine of engines) {
 for(const engine of engines) test(`${engine}: D6 transcript light, dark and enlarged RTL keyboard views`,async()=>{
     for(const mode of ['light','dark','rtl']) {
         const {page,context,errors}=await setup(engine,'watch',mode==='rtl'?'dark':mode,{fixture:mode==='rtl'?'d5-watch-rtl':`d5-single-${mode}`,url:'/watch?v=2isYuQZMbdU',width:1280,height:900,reply:entry=>entry.url.pathname.startsWith('/api/v1/transcripts/')?{contentType:'application/json',body:JSON.stringify({transcript:{body:Array.from({length:35},(_,i)=>({line:i===2?'A multilingual line العربية 日本語 with a very long literal '+ 'UnbrokenWord'.repeat(20):`A useful transcript passage ${i+1}.`,startMs:i*1000}))}})}:null});
-        await page.locator('#tab-transcript').click();await page.locator('.transcript-line').first().waitFor();
+        await toggleTranscript(page);await page.locator('.transcript-line').first().waitFor();
         if(mode==='rtl')await page.addStyleTag({content:'.transcript-panel .transcript-line,.transcript-panel .transcript-line p,.transcript-panel .transcript-line h3,.transcript-panel .transcript-toolbar>label{font-size:20px}'});
         assert.ok(await page.locator('#transcript-lines').evaluate(el=>el.scrollWidth<=el.clientWidth+1));assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
         await page.locator('#transcript-follow').focus();await page.keyboard.press('Tab');await assertFocus(page,'#transcript-lines');assert.ok(await page.locator('#transcript-lines').evaluate(el=>getComputedStyle(el).outlineStyle!=='none'));
@@ -2335,12 +2440,12 @@ for(const engine of engines) {
         const empty=await setup(engine,'watch','dark',{fixture:'d5-replay-dark',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/live_chat/')?{contentType:'application/json',body:'{"messages":[],"removedIds":[],"continuation":null}'}:null});await empty.page.waitForFunction(()=>document.querySelector('#chat-status').textContent===JSON.parse(document.querySelector('#watch_ui_data').textContent).chat_empty);assert.equal(await empty.page.locator('.chat-message').count(),0);assert.deepEqual(empty.errors,[]);await empty.context.close();
         let stuckCalls=0;const stuck=await setup(engine,'watch','light',{fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{if(!entry.url.pathname.startsWith('/api/v1/live_chat/'))return null;stuckCalls++;return{contentType:'application/json',body:JSON.stringify({messages:[replayMessage('same',0,'Same cursor')],removedIds:[],continuation:'same'})};}});await stuck.page.locator('#chat-retry').waitFor({state:'visible'});assert.equal(stuckCalls,2,'a replay continuation without progress cannot poll forever');assert.deepEqual(stuck.errors,[]);await stuck.context.close();
     });
-    test(`${engine}: D6 replay tab, cached-page and profile owners reject ignored aborts`,async()=>{
+    test(`${engine}: D6 replay collapse, cached-page and profile owners reject ignored aborts`,async()=>{
         const {page,context,errors}=await setup(engine,'watch','light',{fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',init:()=>{
             const original=window.fetch.bind(window);window.replayReads=[];window.fetch=(url,options)=>new URL(url,location.href).pathname.startsWith('/api/v1/live_chat/')?new Promise(resolve=>replayReads.push(data=>resolve(new Response(JSON.stringify(data),{headers:{'Content-Type':'application/json'}})))):original(url,options);
         }});
-        await page.waitForFunction(()=>replayReads.length===1);await page.getByRole('tab',{name:'Transcript',exact:true}).click();await page.evaluate(()=>replayReads[0]({messages:[{id:'late',offsetMs:0,text:'Late hidden reply'}],removedIds:[],continuation:null}));assert.equal(await page.locator('[data-message-id=late]').count(),0);
-        await page.getByRole('tab',{name:'Chat replay',exact:true}).click();await page.waitForFunction(()=>replayReads.length===2);await page.evaluate(()=>replayReads[1]({messages:[{id:'ahead',offsetMs:40000,text:'Ahead'}],removedIds:[],continuation:'next'}));await page.waitForFunction(()=>document.querySelector('#chat-messages').getAttribute('aria-busy')==='false');
+        await page.waitForFunction(()=>replayReads.length===1);await page.locator('#chat-toggle').click();await page.evaluate(()=>replayReads[0]({messages:[{id:'late',offsetMs:0,text:'Late hidden reply'}],removedIds:[],continuation:null}));assert.equal(await page.locator('[data-message-id=late]').count(),0);
+        await page.locator('#chat-toggle').click();await page.waitForFunction(()=>replayReads.length===2);await page.evaluate(()=>replayReads[1]({messages:[{id:'ahead',offsetMs:40000,text:'Ahead'}],removedIds:[],continuation:'next'}));await page.waitForFunction(()=>document.querySelector('#chat-messages').getAttribute('aria-busy')==='false');
         await page.locator('[data-open-dialog=chat-settings-dialog]').click();await page.locator('#chat-timing').fill('-120');await page.locator('#chat-timing').blur();await page.waitForFunction(()=>replayReads.length===3);await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});await page.waitForFunction(()=>replayReads.length===4);
         await page.evaluate(()=>replayReads[2]({messages:[{id:'stale-page',offsetMs:120000,text:'Stale cached page'}],removedIds:[],continuation:null}));assert.equal(await page.locator('[data-message-id=stale-page]').count(),0);await page.evaluate(()=>replayReads[3]({messages:[{id:'current',offsetMs:120000,text:'Current cached page'}],removedIds:[],continuation:'next'}));await page.locator('[data-message-id=current]').waitFor({state:'attached'});
         await page.locator('#chat-timing').fill('-240');await page.locator('#chat-timing').blur();await page.waitForFunction(()=>replayReads.length===5);await page.evaluate(()=>{window.dispatchEvent(new Event('browserprofilechange'));replayReads[4]({messages:[{id:'stale-profile',offsetMs:240000,text:'Stale profile'}],removedIds:[],continuation:null});});assert.equal(await page.locator('[data-message-id=stale-profile]').count(),0);assert.equal(await page.evaluate(()=>invidiousChat.isVisible()),false);assert.equal(await page.locator('#chat-timing').isDisabled(),true);assert.deepEqual(errors,[]);await context.close();
@@ -2356,7 +2461,7 @@ for(const engine of engines) {
                 return{contentType:'application/json',body:JSON.stringify({offsetMs:offset})};
             }
         }});
-        await page.getByRole('tab',{name:'Chat replay',exact:true}).click();await page.locator('[data-message-id=start]').waitFor();await page.locator('[data-open-dialog=chat-settings-dialog]').click();const form=page.locator('#chat-timing-form');await page.locator('#chat-timing').fill('0.125');await page.locator('#chat-timing').blur();assert.equal(puts,0);
+        await page.locator('[data-message-id=start]').waitFor();await page.locator('[data-open-dialog=chat-settings-dialog]').click();const form=page.locator('#chat-timing-form');await page.locator('#chat-timing').fill('0.125');await page.locator('#chat-timing').blur();assert.equal(puts,0);
         await form.getByRole('button',{name:'Save timing',exact:true}).click();await form.locator('[data-timing-readback]').waitFor({state:'visible'});assert.equal(await page.locator('#chat-timing').inputValue(),'0.125');assert.equal(puts,1);await form.locator('[data-timing-readback]').click();await page.waitForFunction(()=>document.querySelector('[data-timing-readback]').hidden);assert.equal(await form.locator('[type=submit]').isDisabled(),true);assert.deepEqual(writes,[{value:125,token:'timing-test-token'}]);
         await page.locator('#chat-timing').fill('3600.001');await form.locator('[type=submit]').click();assert.equal(puts,1);assert.equal(await page.locator('#chat-timing').evaluate(el=>el.validity.rangeOverflow),true);await form.locator('[type=reset]').click();assert.equal(await page.locator('#chat-timing').inputValue(),'0.125');assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('chat-timing-v1-'+video_data.id)),undefined);assert.deepEqual(errors,[]);await context.close();
     });
@@ -2514,28 +2619,43 @@ async function readyClipMedia(page,time=40,playing=false) {
     await page.waitForFunction(time=>!player.seeking()&&Math.abs(player.currentTime()-time)<1,time);
 }
 for(const engine of engines) {
-    test(`${engine}: D6 clip side editor previews on the same media and restores its tab, draft and local progress`,async()=>{
+    test(`${engine}: D6 clip side editor previews on the same media and restores the sidebar, draft and local progress`,async()=>{
         const {page,context,errors,requests}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:clipFixtureReply});
         await readyClipMedia(page);const before=await page.evaluate(()=>JSON.stringify(InvidiousStorage.local.get('save_player_pos')));const initialWrites=requests.filter(r=>r.method!=='GET').length;
+        await toggleTranscript(page);
+        await page.locator('.transcript-line').first().waitFor();
         await page.locator('#create-clip').click();const panel=page.locator('#tool-clip-editor');await panel.waitFor({state:'visible'});assert.equal(await page.locator('#clip-dialog').count(),0);assert.equal(await page.locator('iframe').count(),0);assert.equal(await page.locator('#clip-start').inputValue(),'00:25');assert.equal(await page.locator('#clip-end').inputValue(),'00:55');
-        assert.equal(await page.locator('[role=tablist]').isVisible(),false);assert.equal(await page.locator('#tool-chat').isVisible(),false);
+        assert.equal(await page.locator('#watch-tools').isVisible(),false);assert.equal(await page.locator('#tool-chat').isVisible(),false);
         await page.locator('#clip-title').fill('A clip <literal> 🎵');await page.locator('#clip-start').fill('00:10');await page.locator('#clip-end').fill('00:15');await page.locator('#clip-end').blur();await page.locator('#clip-preview').click();await page.waitForFunction(()=>player.currentTime()>=10&&player.currentTime()<15&&!player.paused());
         assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia),true);await page.evaluate(()=>player.currentTime(100));await page.waitForFunction(()=>player.paused()&&player.currentTime()>14.9&&player.currentTime()<15);
         assert.equal(await page.evaluate(()=>JSON.stringify(InvidiousStorage.local.get('save_player_pos'))),before,'preview positions never enter local full-video progress');
         await page.locator('#clip-close').click();await page.waitForFunction(()=>player.paused()&&!player.seeking()&&Math.abs(player.currentTime()-40)<.05);await assertFocus(page,'#create-clip');assert.equal(await page.locator('#tool-chat').isVisible(),true);
+        assert.equal(await page.locator('#transcript-panel').isVisible(),true);
+        assert.equal(requests.filter(r=>r.url.pathname.startsWith('/api/v1/transcripts/')).length,1);
+        await page.locator('#chat-toggle').click();
         await page.locator('#create-clip').click();await panel.waitFor({state:'visible'});assert.equal(await page.locator('#clip-title').inputValue(),'A clip <literal> 🎵');assert.equal(await page.locator('#clip-start').inputValue(),'00:10');await page.locator('#clip-title').focus();await page.keyboard.press('Escape');await panel.waitFor({state:'hidden'});assert.equal(await page.locator('video,audio').count(),1);
+        assert.equal(await page.locator('#chat-toggle').getAttribute('aria-expanded'),'false');
         assert.equal(requests.filter(r=>r.url.pathname==='/js/clip-editor.js').length,1);assert.equal(requests.filter(r=>r.url.pathname==='/js/clip-session.js').length,1);assert.equal(requests.filter(r=>r.method!=='GET').length,initialWrites,'the editor makes no mutation before Publish');assert.deepEqual(errors,[]);await context.close();
     });
     test(`${engine}: D6 clip editor creates an empty utility slot and excludes account progress and queue advancement`,async()=>{
         for(const kind of ['empty','sync','queue']) {
             const {page,context,requests,errors}=await setup(engine,'watch','dark',{fixture:`d6-clip-${kind}-dark`,url:'/watch?v=2isYuQZMbdU'+(kind==='queue'?'&list=PLfixture&index=2':''),reply:entry=>entry.url.pathname==='/watch_ajax'?{contentType:'application/json',body:'{}'}:clipFixtureReply(entry)});
-            await readyClipMedia(page,40,true);if(kind==='queue')await page.locator('#playlist .queue-row').first().waitFor();
+            await readyClipMedia(page,40,true);
+            if(kind==='queue') {
+                await page.locator('#playlist .queue-row').first().waitFor();
+                await page.locator('#playlist').evaluate(list => {
+                    const rows = list.querySelector('ol');
+                    for (let i = 0; i < 8; i++) rows.append(rows.lastElementChild.cloneNode(true));
+                    list.scrollTop = 90;
+                });
+            }
             if(kind==='empty')assert.equal(await page.locator('#watch-layout').evaluate(el=>el.classList.contains('watch-no-tools')),true);
             await page.locator('#create-clip').click();await page.locator('#tool-clip-editor').waitFor({state:'visible'});assert.equal(await page.locator('#watch-layout').evaluate(el=>el.classList.contains('watch-no-tools')),false);
             await page.locator('#clip-start').fill('01:45');await page.locator('#clip-end').fill('01:55');await page.locator('#clip-end').blur();const writes=requests.filter(r=>r.url.pathname==='/watch_ajax').length,navigations=requests.filter(r=>r.navigation).length;
             await page.locator('#clip-preview').click();await page.waitForFunction(()=>player.currentTime()>=105&&player.currentTime()<115);await page.evaluate(()=>{player.trigger('timeupdate');player.trigger('seeked');player.trigger('ended');});
             assert.equal(requests.filter(r=>r.url.pathname==='/watch_ajax').length,writes);assert.equal(requests.filter(r=>r.navigation).length,navigations);assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia),true);
             await page.locator('#clip-close').click();await page.waitForFunction(()=>!player.paused()&&player.currentTime()>=40&&player.currentTime()<42);await page.evaluate(()=>player.pause());
+            if(kind==='queue')assert.equal(await page.locator('#playlist').evaluate(el=>el.scrollTop),90);
             if(kind==='empty'){assert.equal(await page.locator('#watch-layout').evaluate(el=>el.classList.contains('watch-no-tools')),true);assert.equal(await page.locator('.utility-panel').isVisible(),false);}
             assert.equal(await page.locator('video,audio').count(),1);assert.deepEqual(errors,[]);await context.close();
         }

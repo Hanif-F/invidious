@@ -10,6 +10,9 @@ def desktop_watch_fixture(kind, mode = "light", locale = "en-US")
     user = env.get("user").as(User); user.preferences = prefs; user.email = "bob@example.test" if kind == "bob"; env.set "user", user
   end
   video = fixture_video(video_id)
+  if kind == "queue-chat"
+    video.info["relatedVideos"].as_a.first.as_h["published"] = JSON::Any.new(Time.utc(2022, 3, 4).to_rfc3339)
+  end
   video = audio_fixture_video if kind == "audio"
   if kind == "dash"
     # IDs match the locally encoded MPD; duplicate audio itags exercise identity.

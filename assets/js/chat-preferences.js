@@ -9,7 +9,7 @@
     var localKeys = config.account ? ['chat_hide_user_ids','chat_font_scale','chat_width_px'] : serverKeys.concat(['chat_hide_user_ids','chat_font_scale','chat_width_px']);
     var keys = serverKeys.concat(['chat_hide_user_ids','chat_font_scale','chat_width_px']);
     var status = form.querySelector('[data-chat-save-status]'), save = form.querySelector('[data-chat-save]'), discard = form.querySelector('[data-chat-discard]'), check = form.querySelector('[data-chat-readback]');
-    var snapshot = Object.assign({chat_hide_user_ids:false,chat_font_scale:100,chat_width_px:440},config.values), preview = null;
+    var snapshot = Object.assign({chat_hide_user_ids:false,chat_font_scale:100,chat_width_px:480},config.values), preview = null;
     var localPending = new Set(), operation = null, issued = 0, busy = false, uncertain = false, activePage = true, disposed = false, warned = false;
     form.querySelectorAll('[data-chat-browser-fields] input').forEach(function (input) { input.disabled = false; });
     function on(target,name,handler,options) { target.addEventListener(name,handler,Object.assign({signal:life.signal},options)); }
@@ -20,7 +20,7 @@
         var value = source[key];
         if (key === 'chat_font_scale' || key === 'chat_width_px') {
             var input = control(key), number = Number(value);
-            return Number.isInteger(number) ? Math.max(Number(input.min),Math.min(Number(input.max),number)) : key === 'chat_font_scale' ? 100 : 440;
+            return Number.isInteger(number) ? Math.max(Number(input.min),Math.min(Number(input.max),number)) : key === 'chat_font_scale' ? 100 : 480;
         }
         if (key === 'chat_hide_user_ids' || key === 'chat_show_timestamps') return typeof value === 'boolean' ? value : key === 'chat_show_timestamps';
         return typeof value === 'string' ? value : '';

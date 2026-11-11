@@ -1,4 +1,5 @@
 require "../frontend/watched_indicator"
+require "../frontend/watch_page"
 require "../frontend/ai_thumbnail"
 require "../helpers/channel_avatars"
 require "../videos/view_counts"
@@ -68,7 +69,7 @@ struct PlaylistVideo
     to_json(json, locale: locale)
   end
 
-  def to_json(json : JSON::Builder, index : Int32? = nil, *, locale : String? = nil)
+  def to_json(json : JSON::Builder, index : Int32? = nil, *, locale : String? = nil, include_publication = false)
     json.object do
       json.field "type", "video"
 
@@ -97,6 +98,9 @@ struct PlaylistVideo
       json.field "lengthSeconds", self.length_seconds
       json.field "liveNow", self.live_now
       json.field "isMember", self.members_only
+      if include_publication && self.published_known && (date = Invidious::ChannelSpoilers.publication(self.published))
+        json.field "published", date.to_unix
+      end
       Invidious::Videos::ViewCounts.from_item(self).try &.to_json_fields(json, locale)
     end
   end
@@ -122,7 +126,7 @@ struct Playlist
   property thumbnail : String?
   property subtitle : String?
 
-  def to_json(offset, json : JSON::Builder, video_id : String? = nil)
+  def to_json(offset, json : JSON::Builder, video_id : String? = nil, include_publication = false)
     json.object do
       json.field "type", "playlist"
       json.field "title", self.title
@@ -164,16 +168,16 @@ struct Playlist
         json.array do
           videos = Invidious::Playlists::Playlists.get_playlist_videos(self, offset: offset, video_id: video_id)
           videos.each do |video|
-            video.to_json(json)
+            video.to_json(json, include_publication: include_publication)
           end
         end
       end
     end
   end
 
-  def to_json(offset, _json : Nil = nil, video_id : String? = nil)
+  def to_json(offset, _json : Nil = nil, video_id : String? = nil, *, include_publication = false)
     JSON.build do |json|
-      to_json(offset, json, video_id: video_id)
+      to_json(offset, json, video_id, include_publication)
     end
   end
 
@@ -216,7 +220,7 @@ struct InvidiousPlaylist
     Invidious::Database::Users.display_name(author)
   end
 
-  def to_json(offset, json : JSON::Builder, video_id : String? = nil)
+  def to_json(offset, json : JSON::Builder, video_id : String? = nil, include_publication = false)
     json.object do
       json.field "type", "invidiousPlaylist"
       json.field "title", self.title
@@ -244,16 +248,16 @@ struct InvidiousPlaylist
 
           videos = Invidious::Playlists::Playlists.get_playlist_videos(self, offset: offset, video_id: video_id)
           videos.each_with_index do |video, idx|
-            video.to_json(json, offset + idx)
+            video.to_json(json, offset + idx, include_publication: include_publication)
           end
         end
       end
     end
   end
 
-  def to_json(offset, _json : Nil = nil, video_id : String? = nil)
+  def to_json(offset, _json : Nil = nil, video_id : String? = nil, *, include_publication = false)
     JSON.build do |json|
-      to_json(offset, json, video_id: video_id)
+      to_json(offset, json, video_id, include_publication)
     end
   end
 
@@ -623,9 +627,13 @@ module Invidious::Playlists::Playlists
 
   # The DOM carries occurrence indices; video IDs alone are not unique in playlists.
   def template_queue(playlist, listen, mix = false, thin_mode = false, editable = false, watched = [] of String, *, ai_thumbnails = {} of String => String, locale : String? = nil, spoiler_env = nil)
+    videos = playlist["videos"].as_a
+    desktop = !spoiler_env || Invidious::Frontend::Desktop.browser_html?(spoiler_env)
+    cached_dates = {} of String => Time?
     if spoiler_env
-      Invidious::Frontend::ChannelSpoilers.prepare_queue(spoiler_env, playlist["videos"].as_a)
-      avatar_ids = playlist["videos"].as_a.compact_map { |entry| entry["authorId"]?.try(&.as_s?) }
+      Invidious::Frontend::ChannelSpoilers.prepare_queue(spoiler_env, videos)
+      cached_dates = spoiler_env.get?("spoiler_dates").try(&.as(Hash(String, Time?))) || cached_dates if desktop
+      avatar_ids = videos.compact_map { |entry| entry["authorId"]?.try(&.as_s?) }
       Invidious::Frontend::ChannelAvatars.prepare_ids(spoiler_env, avatar_ids)
     end
     plid = playlist[mix ? "mixId" : "playlistId"].as_s
@@ -635,7 +643,7 @@ module Invidious::Playlists::Playlists
         html << %( data-count="#{count.as_i}")
       end
       html << "></div><ol>"
-      playlist["videos"].as_a.each do |video|
+      videos.each do |video|
         id = video["videoId"].as_s
         index = video["index"].as_i64
         title = HTML.escape(video["title"].as_s)
@@ -643,8 +651,8 @@ module Invidious::Playlists::Playlists
         url = "/watch?v=#{URI.encode_www_form(id)}&list=#{URI.encode_www_form(plid)}"
         url += "&index=#{index}" unless mix
         url += "&listen=1" if listen
-        html << %(<li class="queue-row media-item" data-dearrow-row data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}")
-        html << %( data-channel-id="#{HTML.escape(video["authorId"]?.try(&.as_s?) || "")}") if spoiler_env && Invidious::Frontend::Desktop.browser_html?(spoiler_env)
+        html << %(<li class="queue-row media-item#{" watch-video-row" if desktop}" data-dearrow-row data-video-id="#{HTML.escape(id)}" data-index="#{index}" data-unavailable="#{author.empty?}")
+        html << %( data-channel-id="#{HTML.escape(video["authorId"]?.try(&.as_s?) || "")}") if spoiler_env && desktop
         if !mix && (index_id = video["indexId"]?.try &.as_s?)
           occurrence = index_id.to_u64(16).to_s
           html << %( data-occurrence="#{occurrence}")
@@ -652,29 +660,47 @@ module Invidious::Playlists::Playlists
         end
         html << ">"
         html << %(<a href="#{HTML.escape(url)}"><span class="queue-number">#{index >= 0 ? (index + 1).to_s : ""}</span>)
-        html << %(<span class="queue-thumbnail">)
+        html << %(<span class="queue-thumbnail#{" thumbnail video-thumbnail watch-video-thumbnail" if desktop}">)
         image = if ai_kind = ai_thumbnails[video["authorId"]?.try(&.as_s?) || ""]?
                   Invidious::Frontend::AiThumbnail.render(ai_kind, locale, compact: true)
                 elsif thin_mode
                   %(<span class="thumbnail-placeholder video-placeholder"></span>)
                 else
-                  %(<img loading="lazy" width="88" height="50" src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
+                  dimensions = desktop ? %(width="320" height="180") : %(width="88" height="50")
+                  %(<img loading="lazy" #{dimensions} src="/vi/#{URI.encode_www_form(id)}/mqdefault.jpg" alt="">)
                 end
         channel = video["authorId"]?.try(&.as_s?) || ""
         date = Invidious::Frontend::ChannelSpoilers.queue_date(video)
         html << (spoiler_env ? Invidious::Frontend::ChannelSpoilers.thumbnail(spoiler_env, id, channel, date, image) : image)
-        html << Invidious::Frontend::WatchedIndicator.render(id, video["lengthSeconds"].as_i, watched.includes?(id))
+        length = video["lengthSeconds"].as_i
+        html << Invidious::Frontend::WatchedIndicator.render(id, length, watched.includes?(id))
+        html << %(<span class="duration">#{recode_length_seconds(length)}</span>) if desktop && length > 0
         html << "</span>"
         title_html = spoiler_env ? Invidious::Frontend::ChannelSpoilers.title(spoiler_env, id, channel, video["title"].as_s, date) : %(<span data-dearrow-id="#{HTML.escape(id)}">#{title}</span>)
-        html << %(<span><span class="queue-title" dir="auto">#{title_html}</span><span class="queue-meta" dir="auto">)
-        html << Invidious::Frontend::ChannelAvatars.render(spoiler_env, channel, 20, video["author"].as_s) if spoiler_env && !channel.empty?
-        html << author
-        length = video["lengthSeconds"].as_i
-        html << " · #{recode_length_seconds(length)}" if length > 0
-        if count = Invidious::Videos::ViewCounts.from_api(video.as_h)
-          html << " · #{HTML.escape(count.text(locale))}"
+        count = Invidious::Videos::ViewCounts.from_api(video.as_h)
+        unless desktop
+          html << %(<span><span class="queue-title" dir="auto">#{title_html}</span><span class="queue-meta" dir="auto">)
+          html << Invidious::Frontend::ChannelAvatars.render(spoiler_env, channel, 20, video["author"].as_s) if spoiler_env && !channel.empty?
+          html << author
+          html << " · #{recode_length_seconds(length)}" if length > 0
+          html << " · #{HTML.escape(count.text(locale))}" if count
+          html << "</span></span></a></li>"
+          next
         end
-        html << "</span></span></a></li>"
+        html << %(<span class="watch-video-details"><span class="queue-title watch-video-title" dir="auto">#{title_html}</span>)
+        unless author.empty?
+          html << %(<span class="watch-video-channel">)
+          html << Invidious::Frontend::ChannelAvatars.render(spoiler_env, channel, 24, video["author"].as_s) if spoiler_env && !channel.empty?
+          html << %(<span dir="auto">#{author}</span></span>)
+        end
+        date ||= cached_dates[id]?
+        if count || date
+          html << %(<span class="queue-meta watch-video-meta">)
+          html << %(<span>#{HTML.escape(count.text(locale))}</span>) if count
+          html << Invidious::Frontend::WatchPage.publication_html(date, locale) if date
+          html << "</span>"
+        end
+        html << "</span></a></li>"
       end
       html << "</ol>"
     end

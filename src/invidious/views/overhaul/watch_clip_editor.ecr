@@ -8,7 +8,7 @@
   clip_end_value = Invidious::Clips::Validation.timestamp(Math.min(30, video.length_seconds).to_f)
   clip_csrf = env.get?("sid").try { |sid| Invidious::Helpers::Tokens.generate_response(sid.as(String), {"POST:create_clip"}, HMAC_KEY) } || ""
 %>
-<section class="clip-panel utility-body" id="tool-clip-editor" hidden aria-labelledby="clip-heading">
+<section class="clip-panel watch-tool" id="tool-clip-editor" hidden aria-labelledby="clip-heading">
     <header class="clip-panel-heading"><h2 id="clip-heading" tabindex="-1"><%= I18n.translate(locale, "clips_create") %></h2><button id="clip-close" type="button" class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>"><%= Invidious::Frontend::Icons.render("x") %></button></header>
     <div class="clip-panel-body" tabindex="-1"><%= rendered "components/clip_editor" %>
     <section id="clip-result" hidden aria-labelledby="clip-result-heading"><h3 id="clip-result-heading" tabindex="-1"><%= I18n.translate(locale, "clips_published") %></h3><p id="clip-result-title" dir="auto"></p><label for="clip-share-url"><%= I18n.translate(locale, "clips_link") %></label><input id="clip-share-url" type="text" readonly dir="ltr"><p id="clip-copy-status" role="status"></p>

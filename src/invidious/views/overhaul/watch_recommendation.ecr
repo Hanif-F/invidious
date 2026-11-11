@@ -6,17 +6,20 @@
   item_url = "/watch#{endpoint_params}"
   rv_date = Invidious::ChannelSpoilers.publication(rv["published"]?)
   duration = rv["length_seconds"]?.try(&.to_i?)
+  count = Invidious::Frontend::ViewCounts.get(env, recommendation_id)
 %>
-<article class="media-item media-row recommendation" data-video-id="<%= HTML.escape(recommendation_id) %>" data-channel-id="<%= HTML.escape(channel_id) %>">
-<div class="thumbnail video-thumbnail"><a href="<%= HTML.escape(item_url) %>" tabindex="-1"><% thumbnail_html = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, channel_id)
+<article class="media-item watch-video-row recommendation" data-video-id="<%= HTML.escape(recommendation_id) %>" data-channel-id="<%= HTML.escape(channel_id) %>">
+<div class="thumbnail video-thumbnail watch-video-thumbnail"><a href="<%= HTML.escape(item_url) %>" tabindex="-1"><% thumbnail_html = if ai_kind = Invidious::Frontend::AiChannels.thumbnail_kind(env, channel_id)
   Invidious::Frontend::AiChannels.render_thumbnail(ai_kind, locale)
 else
   %(<img loading="lazy" width="320" height="180" src="/vi/#{HTML.escape(recommendation_id)}/mqdefault.jpg" alt="">)
 end %><%= Invidious::Frontend::ChannelSpoilers.thumbnail(env, recommendation_id, channel_id, rv_date, thumbnail_html) %></a>
 <%= Invidious::Frontend::WatchedIndicator.render(recommendation_id, duration, !!user.try(&.watched.includes?(recommendation_id))) %>
 <% if duration && duration > 0 %><span class="duration"><%= recode_length_seconds(duration) %></span><% end %></div>
-<div class="media-details"><h3 class="media-title" data-dearrow-row><a href="<%= HTML.escape(item_url) %>"><%= Invidious::Frontend::ChannelSpoilers.title(env, recommendation_id, channel_id, rv["title"]? || "", rv_date) %></a></h3>
-<div class="channel-meta"><% unless channel_id.empty? %><%= Invidious::Frontend::ChannelAvatars.render(env, channel_id, 20, item.author) %><a href="/channel/<%= HTML.escape(channel_id) %>" dir="auto"><%= HTML.escape(item.author) %></a><% else %><span dir="auto"><%= HTML.escape(item.author) %></span><% end %><% if rv["author_verified"]? == "true" %><span aria-label="<%= I18n.translate(locale, "ui_verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></div>
-<div class="media-meta"><% if count = Invidious::Frontend::ViewCounts.get(env, recommendation_id) %><span><%= HTML.escape(count.text(locale)) %></span><% end %><% if date = rv["published"]?.try { |value| Time.parse_rfc3339(value) rescue nil } %><span><%= I18n.translate(locale, "`x` ago", recode_date(date, locale)) %></span><% end %></div></div>
+<div class="watch-video-details">
+<h3 class="watch-video-title" data-dearrow-row><a href="<%= HTML.escape(item_url) %>" dir="auto"><%= Invidious::Frontend::ChannelSpoilers.title(env, recommendation_id, channel_id, rv["title"]? || "", rv_date) %></a></h3>
+<% unless item.author.empty? %><div class="watch-video-channel"><% unless channel_id.empty? %><%= Invidious::Frontend::ChannelAvatars.render(env, channel_id, 24, item.author) %><a href="/channel/<%= HTML.escape(channel_id) %>" dir="auto"><%= HTML.escape(item.author) %></a><% else %><span dir="auto"><%= HTML.escape(item.author) %></span><% end %><% if rv["author_verified"]? == "true" %><span aria-label="<%= I18n.translate(locale, "ui_verified") %>"><%= Invidious::Frontend::Icons.render("check") %></span><% end %></div><% end %>
+<% if count || rv_date %><div class="watch-video-meta media-meta"><% if count %><span><%= HTML.escape(count.text(locale)) %></span><% end %><% if rv_date %><%= Invidious::Frontend::WatchPage.publication_html(rv_date, locale) %><% end %></div><% end %>
+</div>
 <%= rendered "overhaul/item_menu" %>
 </article>

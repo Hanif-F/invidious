@@ -86,7 +86,7 @@ module Invidious::Routes::API::V1::Misc
     # includes into the playlist a maximum of 20 videos, before the offset
     if offset > 0
       lookback = offset < 50 ? offset : 50
-      response = playlist.to_json(offset - lookback)
+      response = playlist.to_json(offset - lookback, include_publication: desktop_fragment)
       json_response = JSON.parse(response)
     else
       #  Unless the continuation is really the offset 0, it becomes expensive.
@@ -95,7 +95,7 @@ module Invidious::Routes::API::V1::Misc
       #  it shouldn't happen often though
 
       lookback = 0
-      response = playlist.to_json(offset, video_id: video_id)
+      response = playlist.to_json(offset, video_id: video_id, include_publication: desktop_fragment)
       json_response = JSON.parse(response)
 
       if json_response["videos"].as_a.empty?
@@ -103,7 +103,7 @@ module Invidious::Routes::API::V1::Misc
       elsif json_response["videos"].as_a[0]["index"] != offset
         offset = json_response["videos"].as_a[0]["index"].as_i
         lookback = offset < 50 ? offset : 50
-        response = playlist.to_json(offset - lookback)
+        response = playlist.to_json(offset - lookback, include_publication: desktop_fragment)
         json_response = JSON.parse(response)
       end
     end
@@ -130,6 +130,7 @@ module Invidious::Routes::API::V1::Misc
       index, next_video = Frontend::MemberVideos.queue_videos(json_response["videos"].as_a.skip((current_removed ? 0 : 1) + lookback), show_members).select { |video| !video["author"].as_s.empty? }[0]?.try { |v| {v["index"], v["videoId"]} } || {nil, nil}
 
       json_response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(json_response["videos"].as_a, show_members))
+      Frontend::WatchPage.prepare_queue_publications(env, json_response["videos"].as_a) if desktop_fragment
       ai_thumbnails = Frontend::AiChannels.prepare_queue(env, json_response["videos"].as_a)
       playlist_html = Invidious::Playlists::Playlists.template_playlist(json_response, listen, env.get("preferences").as(Preferences).thin_mode && !desktop_fragment, editable, user.try(&.watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: env.get("preferences").as(Preferences).locale, spoiler_env: env)
 
@@ -229,6 +230,7 @@ module Invidious::Routes::API::V1::Misc
       env.response.headers["Cache-Control"] = "private, no-store"
       response = JSON.parse(response)
       response.as_h["videos"] = JSON::Any.new(Frontend::MemberVideos.queue_videos(response["videos"].as_a, desktop_fragment || env.get("preferences").as(Preferences).show_member_videos))
+      Frontend::WatchPage.prepare_queue_publications(env, response["videos"].as_a) if desktop_fragment
       ai_thumbnails = Frontend::AiChannels.prepare_queue(env, response["videos"].as_a)
       playlist_html = template_mix(response, listen, env.get("preferences").as(Preferences).thin_mode && !desktop_fragment, env.get?("user").try(&.as(User).watched) || [] of String, ai_thumbnails: ai_thumbnails, locale: locale, spoiler_env: env)
       next_video = response["videos"].as_a.select { |video| !video["author"].as_s.empty? }[0]?.try &.["videoId"]

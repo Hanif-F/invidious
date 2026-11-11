@@ -108,7 +108,6 @@ body[data-nav-drawer=true] .app-sidebar{width:224px;box-shadow:8px 0 24px #0003}
 .playlist-grip:active,.playlist-grip[aria-pressed=true]{cursor:grabbing;color:var(--accent);background:var(--selection)}
 .media-row[data-drop=before]{box-shadow:0 -3px var(--accent)}.media-row[data-drop=after]{box-shadow:0 3px var(--accent)}
 .media-row.is-dragging{opacity:.55}
-.watch-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:var(--s6);align-items:start}
 .watch-primary{min-width:0}.watch-player{border-radius:var(--panel-radius);overflow:hidden;background:#000}
 #player-container{width:100%;position:relative}.video-js{width:100%;aspect-ratio:16/9;height:auto;max-height:75vh}
 .watch-heading{margin-top:var(--s4)}.watch-heading h1{margin-bottom:8px}
@@ -116,18 +115,6 @@ body[data-nav-drawer=true] .app-sidebar{width:224px;box-shadow:8px 0 24px #0003}
 .creator{display:flex;align-items:center;gap:var(--s3)}.creator .channel-avatar{width:40px;height:40px;font-size:20px}
 .watch-description{background:var(--surface);border-radius:var(--panel-radius);padding:var(--s4);margin-bottom:var(--s6)}
 details>summary{font-weight:500}.watch-description details+details{margin-top:var(--s4)}
-.utility-panel{border:1px solid var(--separator);border-radius:var(--panel-radius);min-width:0;overflow:visible}
-.utility-tabs{display:flex;border-bottom:1px solid var(--separator);padding:0 var(--s2);gap:4px}
-.utility-tabs button{background:transparent;color:var(--muted);border:0;border-radius:0;border-bottom:2px solid transparent;padding:12px 8px;font-size:14px;font-weight:500;flex:1}
-.utility-tabs button[aria-selected=true]{border-bottom-color:var(--accent);color:var(--accent);font-weight:600}
-.utility-body{padding:var(--s4);max-height:calc(100vh - 160px);overflow:auto}
-.queue-heading h2,.panel-heading{font-size:16px}.queue-context{font-size:14px;color:var(--muted)}
-.queue-row{display:flex;gap:8px;padding:8px 0;font-size:14px;position:relative}.queue-row img{width:112px;aspect-ratio:16/9;object-fit:cover;border-radius:4px}.queue-row h4,.queue-row p{margin:0 0 4px}.queue-row[aria-current=true]{background:var(--selection)}
-.queue-list{display:flex;flex-direction:column}.queue-navigation{display:flex;gap:8px}
-.recommendation{display:grid;grid-template-columns:128px minmax(0,1fr);gap:12px;margin-bottom:16px}.recommendation h3{font-size:14px;margin:0 0 4px}.recommendation p{font-size:12px;color:var(--muted);margin:0 0 4px}.recommendation>.video-context{grid-column:2;justify-self:end}
-.recommendation .thumbnail img{width:100%}.bottom-right-overlay{position:absolute;bottom:4px;inset-inline-end:4px}.length{background:#101114e6;color:#fff;padding:2px 4px;border-radius:4px;font-size:12px}
-body[data-watch-layout=theater] .watch-grid{grid-template-columns:minmax(0,1fr)}
-body[data-watch-layout=theater] .utility-panel{max-width:800px}
 body[data-watch-layout=theater] .watch-player{max-height:75vh}
 .settings-layout{display:grid;grid-template-columns:200px minmax(0,800px);gap:var(--s8)}
 .settings-nav{display:flex;flex-direction:column;gap:4px}.settings-nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;font-size:14px;border-radius:6px}.settings-nav a[aria-current]{background:var(--selection);color:var(--accent);font-weight:600}
@@ -146,31 +133,19 @@ body[data-watch-layout=theater] .watch-player{max-height:75vh}
 dialog{max-width:640px;border:1px solid var(--border);border-radius:8px;padding:24px;background:var(--raised);color:var(--text)}dialog::backdrop{background:#0008}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .watched-indicator{position:absolute;bottom:0;inset-inline-start:0;height:3px;background:var(--accent)}
-.transcript-lines{max-height:55vh;overflow:auto}.transcript-toolbar{display:flex;flex-direction:column;gap:12px}.transcript-toolbar label{font-size:14px;display:flex;flex-direction:column;gap:4px}
 @media(prefers-reduced-motion:no-preference){a,button,summary{transition:background-color .12s,color .12s}}
-@media(forced-colors:active){.button,.icon-button,.sidebar-link[aria-current],.utility-tabs button[aria-selected=true]{border:1px solid ButtonText}.sidebar-link[aria-current]{outline:2px solid Highlight}.media-row[data-drop]{outline:2px solid Highlight}}
+@media(forced-colors:active){.button,.icon-button,.sidebar-link[aria-current]{border:1px solid ButtonText}.sidebar-link[aria-current]{outline:2px solid Highlight}.media-row[data-drop]{outline:2px solid Highlight}}
 
 /* Keep Video.js intrinsic ratio geometry; its tech remains absolutely positioned. */
 .video-js.vjs-fluid,.video-js.vjs-16-9,.video-js.vjs-4-3{aspect-ratio:auto}
 
 .watch-player .video-js{width:100%;height:auto;aspect-ratio:var(--video-aspect,16/9);padding-top:0;max-height:75vh}
 .watch-player .video-js .vjs-big-play-button{left:50%;top:50%;transform:translate(-50%,-50%);margin:0}
-.queue-list ol{list-style:none;padding:0;margin:12px 0 0}
-.queue-row>a{display:grid;grid-template-columns:16px 88px minmax(0,1fr);align-items:center;gap:8px;width:100%}
-.queue-number{font-size:12px;color:var(--muted);text-align:center}
-.queue-thumbnail{display:block;position:relative;width:88px}
-.queue-row .queue-thumbnail img{display:block;width:88px;height:50px}
-.queue-title{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;font-weight:500}
-.queue-meta{display:block;color:var(--muted);font-size:12px;margin-top:4px}
-.queue-current-marker{display:block;color:var(--accent);font-size:12px}
 .playlist-grip{touch-action:none;user-select:none}
 
 .watch-player #player-container{height:auto;padding:0;margin:0}
-.queue-playing{display:block;font-size:12px;color:var(--accent);margin-top:4px}
 .playlist-grip{width:32px;margin-inline:-4px}
 strong,b{font-weight:600}
-.queue-row:has(a[aria-current=true]){background:var(--selection);border-radius:6px}
-.queue-row a[aria-current=true] .queue-title{color:var(--accent);-webkit-line-clamp:unset}
 .header-search input{height:40px;min-height:40px;padding-block:4px;line-height:1.5}
 .media-details{min-width:0}
 .channel-attribution{min-width:0}

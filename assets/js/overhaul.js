@@ -5,7 +5,7 @@
     document.body.dataset.uiInitialized = 'true';
     var ui = window.InvidiousUI, storage = window.InvidiousStorage;
     var lifetime = new AbortController();
-    var seenMenus = new WeakSet(), seenDialogs = new WeakSet(), seenTabs = new WeakSet(), seenDialogPanels = new WeakSet();
+    var seenMenus = new WeakSet(), seenDialogs = new WeakSet(), seenDialogPanels = new WeakSet();
     var owners = new Set(), dialogReturns = new WeakMap();
     var menus = new Set(), disposeReorder = function () {};
     function on(element, type, listener, options) {
@@ -183,67 +183,7 @@
         if (event.key === '?') { event.preventDefault(); openHelp(); }
         else if (event.key === '/') { event.preventDefault(); document.getElementById('searchbox').focus(); }
     });
-    function initTabs(container) {
-        candidates(container, '[data-ui-tabs]').forEach(function (root) {
-            if (seenTabs.has(root)) return;
-            seenTabs.add(root);
-            var options = own(root, seenTabs), tabs = Array.from(root.querySelectorAll('[role=tab]')), temporary = null;
-            function available() { return !options.signal.aborted && root.isConnected && storage.isCurrent(); }
-            function announce(tab, panel) { root.dispatchEvent(new CustomEvent('iv:utility-tab-change',{bubbles:true,detail:{tab:tab,panel:panel,temporary:!!temporary}})); }
-            function select(tab, focus) {
-                if (!available() || temporary || !tabs.includes(tab)) return false;
-                var selectedPanel = document.getElementById(tab.getAttribute('aria-controls'));
-                if (!selectedPanel || !root.contains(selectedPanel)) return false;
-                tabs.forEach(function (item) {
-                    var selected = item === tab;
-                    item.setAttribute('aria-selected', String(selected)); item.tabIndex = selected ? 0 : -1;
-                    var panel = document.getElementById(item.getAttribute('aria-controls'));
-                    panel.hidden = !selected;
-                });
-                var placeholder = root.querySelector('[data-tab-placeholder]'); if (placeholder) placeholder.hidden = true;
-                root.dataset.activeTab = tab.id;
-                announce(tab,selectedPanel);
-                if (focus) tab.focus();
-                return true;
-            }
-            function beginTemporary(panel) {
-                if (!available() || temporary || !panel || !panel.id || !root.contains(panel)) return false;
-                var list = root.querySelector('[role=tablist]'), placeholder = root.querySelector('[data-tab-placeholder]');
-                temporary = {panel:panel,tab:tabs.find(function (tab) { return tab.getAttribute('aria-selected') === 'true'; }),list:list,listHidden:list && list.hidden,placeholder:placeholder,placeholderHidden:placeholder && placeholder.hidden};
-                tabs.forEach(function (tab) { var target = document.getElementById(tab.getAttribute('aria-controls')); if (target) target.hidden = true; });
-                if (list) list.hidden = true;
-                if (placeholder) placeholder.hidden = true;
-                panel.hidden = false; root.dataset.activeTab = panel.id; announce(null,panel); return true;
-            }
-            function endTemporary(panel) {
-                if (!available() || !temporary || temporary.panel !== panel) return false;
-                var previous = temporary; temporary = null; panel.hidden = true;
-                if (previous.list) previous.list.hidden = previous.listHidden;
-                if (previous.tab && previous.tab.isConnected && select(previous.tab,false)) return true;
-                delete root.dataset.activeTab;
-                if (previous.placeholder) previous.placeholder.hidden = previous.placeholderHidden;
-                announce(null,null); return true;
-            }
-            root.invidiousTabs = {select:select,beginTemporary:beginTemporary,endTemporary:endTemporary};
-            tabs.forEach(function (tab) {
-                on(tab, 'click', function () { select(tab, false); }, options);
-                on(tab, 'keydown', function (event) {
-                    if (!['ArrowRight','ArrowLeft','Home','End'].includes(event.key)) return;
-                    event.preventDefault();
-                    var rtl = document.documentElement.dir === 'rtl', index = tabs.indexOf(tab);
-                    var step = event.key === 'ArrowRight' ? (rtl ? -1 : 1) : (rtl ? 1 : -1);
-                    index = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + step + tabs.length) % tabs.length;
-                    select(tabs[index], true);
-                }, options);
-            });
-            if (tabs.length) {
-                var initial = tabs.find(function (tab) { return tab.getAttribute('aria-selected') === 'true'; });
-                if (initial || !root.hasAttribute('data-tab-empty')) select(initial || tabs[0],false);
-                else tabs[0].tabIndex = 0;
-            }
-        });
-    }
-    function init(root) { sweep(); initMenus(root); initDialogs(root); initTabs(root); }
+    function init(root) { sweep(); initMenus(root); initDialogs(root); }
     on(document, 'iv:content-added', function (event) {
         var root = event.detail && (event.detail.root || event.detail.container || event.detail);
         init(root && root.querySelectorAll ? root : document);

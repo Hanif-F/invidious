@@ -50,9 +50,9 @@ A staging smoke test should use controlled accounts/data and check:
 
 - Browse/search/Apply/Load more/Back, channel tabs, direct pagination,
   Light/Dark/System, keyboard focus and versioned asset URLs.
-- Watch/embed progressive, adaptive and audio content through the real
-  Companion/proxy; check range requests, captions, audio identity, utility tabs,
-  Theater and the optional mini player.
+- Play progressive, adaptive and audio content on watch and embed pages through
+  the real Companion/proxy. Check range requests, captions, audio identity, the
+  watch sidebar, Theater and the optional mini player.
 - Signup/login, subscriptions/notifications, history/positions, owned/saved/private
   playlists and same-player clip previews.
 - Separate Settings category saves across reload, guest/account switching,

@@ -4,6 +4,9 @@ require "../../../src/invidious/playlists/mixes"
 require "../../../src/invidious/frontend/channel_spoilers"
 require "../../../src/invidious/frontend/channel_avatars"
 require "../../../src/invidious/frontend/desktop"
+require "../../../src/invidious/jsonify/api_v1/common"
+
+HOST_URL = "https://invidious.test"
 
 private def queue_test_data
   JSON.parse({playlistId: "PLtest", mixId: "RDtest", title: "A <playlist>", videoCount: 2, videos: [
@@ -36,6 +39,21 @@ Spectator.describe "Watch queue rendering" do
     html = template_mix(queue_test_data, false)
     expect(html).to contain("list=RDtest")
     expect(html).to_not contain("&amp;index=")
+  end
+
+  it "passes only known publication dates to the desktop queue projection" do
+    published = Time.utc(2020, 1, 2)
+    video = PlaylistVideo.new({
+      title: "Video", id: "repeat12345", author: "Author", ucid: "",
+      length_seconds: 90, published: published, plid: "PLtest", index: 0_i64, live_now: false, members_only: false,
+    })
+    expect(video.to_json(nil)).to_not contain(%("published"))
+    desktop_json = JSON.build { |json| video.to_json(json, include_publication: true) }
+    expect(JSON.parse(desktop_json)["published"].as_i64).to eq(published.to_unix)
+
+    video.published_known = false
+    desktop_json = JSON.build { |json| video.to_json(json, include_publication: true) }
+    expect(desktop_json).to_not contain(%("published"))
   end
 end
 

@@ -113,6 +113,8 @@ module Invidious::Database::Videos
       dates[id] ||= Invidious::ChannelSpoilers.publication(published)
     end
     dates
+  rescue
+    dates || {} of String => Time?
   end
 
   # Only read metadata already cached locally; never refresh videos from YouTube.

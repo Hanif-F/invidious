@@ -9,7 +9,8 @@
     var preferences = window.InvidiousChatPreferences, timing = window.InvidiousChatTiming;
     if (!preferences || !timing || !preferences.values() || timing.value() === null) { status.textContent = labels.chat_error; return; }
     var settings = null, timingMs = timing.value(), life = new AbortController(), activePage = true, disposed = false, shown = false;
-    var layout = document.getElementById('watch-layout'), host = panel.closest('[role=tabpanel]'), ownedWidth = null, previousWidth = '';
+    var layout = document.getElementById('watch-layout'), stack = document.getElementById('watch-tools');
+    var toggle = document.getElementById('chat-toggle'), expanded = true;
     var segments = [], activeSegment = null, removed = new Set(), cacheUse = 0, displayCursor = 0;
     var lastPlaybackPosition = 0, seekStartPosition = null, loading = false, generation = 0, controller = null, prefetchTimer = null;
     var nextRequestAt = 0, autoScroll = true, windowAtTail = true, wordPatterns = [], userBlacklist = [];
@@ -19,7 +20,7 @@
     function visible() { return shown && alive(); }
     function selected() {
         var fullscreen = document.fullscreenElement;
-        return !document.hidden && (!host || !host.hidden) && (!fullscreen || fullscreen.contains(panel)) &&
+        return expanded && !document.hidden && !stack.hidden && (!fullscreen || fullscreen.contains(panel)) &&
             (!(player.isFullscreen && player.isFullscreen()) || fullscreen && fullscreen.contains(panel));
     }
     function stop() {
@@ -27,19 +28,11 @@
         if (controller) controller.abort(); controller = null; loading = false; list.setAttribute('aria-busy','false');
     }
     function setWidth() {
-        if (!visible()) return;
-        if (ownedWidth === null) previousWidth = layout.style.getPropertyValue('--utility-width');
         var width = settings.chat_width_px+'px';
-        if (layout.style.getPropertyValue('--utility-width') !== width) { layout.style.setProperty('--utility-width',width); player.trigger('playerresize'); }
-        ownedWidth = width;
-    }
-    function releaseWidth() {
-        if (ownedWidth === null) return;
-        if (layout.style.getPropertyValue('--utility-width') === ownedWidth) {
-            if (previousWidth) layout.style.setProperty('--utility-width',previousWidth); else layout.style.removeProperty('--utility-width');
-            if (!(player.isDisposed && player.isDisposed())) player.trigger('playerresize');
+        if (layout.style.getPropertyValue('--watch-chat-width') !== width) {
+            layout.style.setProperty('--watch-chat-width',width);
+            player.trigger('playerresize');
         }
-        ownedWidth = null;
     }
     function validMessage(message) {
         var id = message.authorChannelId.toLocaleLowerCase(), handle = message.authorHandle.toLocaleLowerCase().replace(/^@/,'');
@@ -382,20 +375,17 @@
     function setVisible(value) {
         if (disposed) return;
         var next = value === true && alive() && selected();
+        panel.hidden = !next;
         if (next === shown) return;
-        shown = next; panel.hidden = !next;
-        if (next) { setWidth(); selectPosition(false); showDue(); }
-        else { stop(); releaseWidth(); }
+        shown = next;
+        if (next) { selectPosition(false); showDue(); }
+        else stop();
     }
     function navigate(value) {
-        if (!alive()) return;
-        var tab = document.getElementById('tab-chat');
-        if (value) { if (tab) tab.click(); else setVisible(true); }
-        else {
-            var alternative = host && host.parentNode.querySelector('[role=tab]:not(#tab-chat)');
-            if (alternative) alternative.click();
-            else { if (tab) tab.setAttribute('aria-selected','false'); if (host) host.hidden = true; setVisible(false); }
-        }
+        if (!alive() || stack.hidden) return;
+        expanded = value === true;
+        toggle.setAttribute('aria-expanded', String(expanded));
+        setVisible(expanded);
     }
     function timeupdate() { if (!player.seeking || !player.seeking()) lastPlaybackPosition = positionMs(); if (visible()) showDue(); }
     function seeking() { seekStartPosition = lastPlaybackPosition; }
@@ -411,12 +401,13 @@
         showDue(); lastPlaybackPosition = current; seekStartPosition = null;
     }
     function dispose() {
-        if (disposed) return; stop(); shown = false; releaseWidth(); disposed = true; activePage = false; life.abort();
+        if (disposed) return; stop(); shown = false; disposed = true; activePage = false; life.abort();
         player.off('timeupdate',timeupdate); player.off('seeking',seeking); player.off('seeked',seeked); player.off('fullscreenchange',fullscreen); player.off('dispose',dispose);
         segments.length=0; activeSegment=null; removed.clear(); wordPatterns=[]; userBlacklist=[]; settings=null;
     }
     function fullscreen() { setVisible(selected()); }
-    on(document,'iv:utility-tab-change',function (event) { if (event.target.contains(panel)) setVisible(selected()); });
+    on(stack,'iv:watch-tools-visibility',fullscreen);
+    on(toggle,'click',function () { navigate(!expanded); });
     on(document,'iv:chat-preferences',applyPreferences);
     on(document,'iv:chat-timing',function (event) { if (!alive() || event.detail.offsetMs === timingMs) return; timingMs=event.detail.offsetMs; if (visible()) selectPosition(true); });
     on(document,'visibilitychange',fullscreen); on(document,'fullscreenchange',fullscreen);

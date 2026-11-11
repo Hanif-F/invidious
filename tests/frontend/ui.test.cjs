@@ -55,6 +55,10 @@ for (const engine of engines) {
         assert.equal(queueText.filter(text => text.includes('1.2K views')).length, 2);
         assert.equal(queueText.filter(text => text.includes('0 views')).length, 1);
         assert.ok(!queueText[3].includes('views'));
+        const rows = page.locator('.queue-row');
+        assert.equal(await rows.nth(0).locator('.queue-meta time').getAttribute('datetime'), '2020-01-02');
+        assert.equal(await rows.nth(2).locator('.queue-meta time').count(), 0);
+        assert.equal(await rows.nth(3).locator('.queue-meta time').getAttribute('datetime'), '2020-01-02');
         assert.deepEqual(errors, []);
         await context.close();
     });
@@ -1688,7 +1692,8 @@ for (const engine of engines) {
         const { page, context, errors, requests, transcriptCalls } = await pageFor(engine, { transcriptError: 1 });
         assert.equal(transcriptCalls(), 0);
         assert.equal(requests.some(url => url.startsWith('/js/transcript.js')), false);
-        await page.getByRole('tab',{name:'Transcript',exact:true}).click();
+        await page.locator('.watch-actions > .ui-menu > summary').click();
+        await page.locator('#transcript-toggle').click();
         await page.waitForSelector('#transcript-retry:not([hidden])');
         await page.locator('#transcript-retry').click();
         await page.waitForSelector('.transcript-line');
@@ -1717,10 +1722,10 @@ for (const engine of engines) {
         await page.locator('.queue-row').first().waitFor();assert.equal(await page.locator('#playlist').isVisible(),true);
         assert.equal(await page.locator('#queue-toggle').count(),0);
         await page.locator('.queue-row a').first().focus();assert.equal(await page.locator('.queue-row a').first().evaluate(el=>el===document.activeElement),true);
-        await page.evaluate(()=>{const list=document.querySelector('#tool-queue'),rows=list.querySelector('ol');for(let i=0;i<8;i++)rows.appendChild(rows.lastElementChild.cloneNode(true));list.scrollTop=list.scrollHeight;});
-        const scroll=await page.locator('#tool-queue').evaluate(el=>el.scrollTop);assert.ok(scroll>0);
+        await page.evaluate(()=>{const list=document.querySelector('#playlist'),rows=list.querySelector('ol');for(let i=0;i<8;i++)rows.appendChild(rows.lastElementChild.cloneNode(true));list.scrollTop=180;});
+        const scroll=await page.locator('#playlist').evaluate(el=>el.scrollTop);assert.ok(scroll>0);
         await page.setViewportSize({width:1440,height:900});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-        assert.equal(await page.locator('#tool-queue').evaluate(el=>el.scrollTop),scroll);assert.deepEqual(errors,[]);await context.close();
+        assert.equal(await page.locator('#playlist').evaluate(el=>el.scrollTop),scroll);assert.deepEqual(errors,[]);await context.close();
     });
 
     test(`${engine}: System follows live appearance changes while other tabs retain their color mode`, async () => {
@@ -2292,7 +2297,6 @@ for (const engine of engines) {
         await page.waitForFunction(() => document.querySelector('#playlist [data-dearrow-id="2isYuQZMbdU"]')?.textContent.startsWith('A clear title'));
         assert.equal(requests.filter(url => url === '/api/v1/dearrow/' + id).length, 1);
         assert.deepEqual(errors, []);
-        await page.getByRole('tab',{name:'Up next',exact:true}).click();
         await page.evaluate(() => {
             window.removedRecommendation = document.querySelector('.recommendation');
             window.removedRecommendation.remove();
@@ -2356,8 +2360,6 @@ for (const engine of engines) {
                 ? ['[data-dearrow-watch]', '#queue-current [data-dearrow-id]', '.queue-row [data-dearrow-id]', '.recommendation [data-dearrow-id]']
                 : ['[data-dearrow-id]'];
             for (const selector of selectors) {
-                if(selector.includes('queue'))await page.locator('#tab-queue').click();
-                else if(selector.includes('recommendation'))await page.locator('#tab-next').click();
                 const title = page.locator(selector).first();
                 await title.scrollIntoViewIfNeeded();
                 await page.waitForFunction(selector => document.querySelector(selector).dataset.dearrowOriginal !== undefined, selector);
@@ -3518,7 +3520,6 @@ for (const engine of engines) {
         }
         async function change(volume, captions, font, speed) {
             await ready();
-            await page.getByRole('tab', {name:'Chat replay', exact:true}).click();
             await page.locator('[data-open-dialog="chat-settings-dialog"]').click();
             await page.locator('#chat-font-value').fill(String(font));
             await page.locator('[data-chat-save]').click();
@@ -3977,7 +3978,6 @@ for (const engine of engines) {
                 const metadata = await recommendation.evaluate(el => ({id: el.dataset.id, length: Number(el.dataset.length)}));
                 await session.page.route('**/api/v1/auth/playback', route => route.fulfill({contentType: 'application/json', body: JSON.stringify({positions: {[metadata.id]: metadata.length / 2, '2isYuQZMbdU': 60}, watched: []})}));
                 await session.page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted: true})));
-                await session.page.locator('#tab-next').click();
                 await recommendation.waitFor({state:'visible'});
                 assert.equal(await recommendation.evaluate(el => el.style.width), '50%');
                 await session.page.waitForFunction(() => document.querySelector('.queue-row .watched-indicator[data-id="2isYuQZMbdU"]').style.width === '25%');
