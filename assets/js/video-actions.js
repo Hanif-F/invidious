@@ -17,9 +17,15 @@
     var words = config.dataset;
     var dialog = document.getElementById('video-playlist-dialog');
     var select = document.getElementById('video-playlist-select');
+    var playlistChoices = document.getElementById('video-playlist-choices');
+    var playlistList = playlistChoices.querySelector('.video-playlist-list');
     var status = document.getElementById('video-playlist-status');
     var saveForm = document.getElementById('video-playlist-save');
+    var saveButton = saveForm.querySelector('[type=submit]');
+    var reloadButton = document.getElementById('video-playlist-reload');
+    var createDetails = document.getElementById('video-playlist-create-details');
     var createForm = document.getElementById('video-playlist-create');
+    var createButton = createForm.querySelector('[type=submit]');
     var notice = document.getElementById('video-actions-notice');
     var undo = document.getElementById('video-actions-undo');
     var noticeTimeout;
@@ -34,7 +40,15 @@
     function isUncertain(error) { return !error.status || error.status >= 500 || error.status === 408 || error.status < 400; }
     function checkLibrary() { var link = document.createElement('a'); link.href = '/feed/playlists'; link.textContent = words.library; link.className = 'button'; status.append(' ',link); }
     function checkPlaylist() {
-        var link = document.createElement('a'); link.className = 'button'; link.href = '/playlist?list='+encodeURIComponent(select.value); link.textContent = InvidiousUI.label('check_playlist'); status.append(' ',link);
+        var link = document.createElement('a'); link.className = 'button'; link.href = '/playlist?list='+encodeURIComponent(select.value); link.textContent = words.openPlaylist; status.append(' ',link);
+    }
+    function updatePlaylistStatus(message, additionMessage) {
+        var key = additionKey();
+        if (!additionMessage && uncertainAdditions.has(key)) additionMessage = InvidiousUI.label('check_playlist');
+        var result = additionMessage || (additions.has(key) ? words.saved : '');
+        status.textContent = [message, creationUncertain && words.creationUncertain, result].filter(Boolean).join(' ');
+        if (creationUncertain) checkLibrary();
+        if (additionMessage) checkPlaylist();
     }
     var hiddenCards = new Map();
     var busyChannels = new Set();
@@ -61,7 +75,7 @@
         if (pending) {
             if (createForm.dataset.pending === 'true') creationUncertain = true;
             if (saveForm.dataset.pending === 'true') uncertainAdditions.add(additionKey());
-            status.textContent = InvidiousUI.label('check_playlist');
+            updatePlaylistStatus();
         }
         pending = false;
     });
@@ -142,10 +156,38 @@
     });
     function busy(value) {
         pending = value;
-        dialog.querySelectorAll('#video-playlist-save button, #video-playlist-create button').forEach(function (button) { button.disabled = value || !alive(); });
-        select.disabled = value || !alive() || !select.options.length;
-        saveForm.querySelector('[type=submit]').disabled = value || !alive() || !select.options.length || uncertainAdditions.has(additionKey()) || additions.has(additionKey());
-        createForm.querySelector('[type=submit]').disabled = value || !alive() || creationUncertain;
+        var disabled = value || !alive();
+        select.disabled = disabled || !select.options.length;
+        playlistChoices.disabled = select.disabled;
+        reloadButton.disabled = disabled;
+        saveButton.disabled = select.disabled || uncertainAdditions.has(additionKey()) || additions.has(additionKey());
+        createButton.disabled = disabled || creationUncertain;
+    }
+    function renderPlaylistChoices() {
+        var rows = Array.from(select.options, function (option) {
+            var row = document.createElement('label');
+            row.className = 'video-playlist-choice';
+            var radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'video-playlist-choice';
+            radio.value = option.value;
+            radio.checked = option.selected;
+            var title = document.createElement('span');
+            title.dir = 'auto';
+            title.textContent = option.text;
+            row.append(radio, title);
+            return row;
+        });
+        playlistList.replaceChildren(...rows);
+        playlistChoices.hidden = !rows.length;
+
+        var selected = playlistList.querySelector(':checked');
+        if (!selected || !playlistList.clientHeight) return;
+        var rowBox = selected.parentElement.getBoundingClientRect();
+        var listTop = playlistList.getBoundingClientRect().top + playlistList.clientTop;
+        var listBottom = listTop + playlistList.clientHeight;
+        if (rowBox.top < listTop || rowBox.height > playlistList.clientHeight) playlistList.scrollTop += rowBox.top - listTop;
+        else if (rowBox.bottom > listBottom) playlistList.scrollTop += rowBox.bottom - listBottom;
     }
     async function loadPlaylists() {
         if (pending || !alive()) return;
@@ -160,11 +202,9 @@
             data.playlists.forEach(function (playlist) { select.add(new Option(playlist.title, playlist.id)); });
             if (data.playlists.some(function (playlist) { return playlist.id === previous; })) select.value = previous;
             else if (data.playlists.some(function (playlist) { return playlist.id === data.defaultPlaylist; })) select.value = data.defaultPlaylist;
-            status.textContent = creationUncertain ? words.creationUncertain : data.playlists.length ? '' : words.empty;
-            if (creationUncertain) checkLibrary();
-            if (uncertainAdditions.has(additionKey())) { status.append(' ',InvidiousUI.label('check_playlist')); checkPlaylist(); }
-            else if (!creationUncertain && additions.has(additionKey())) status.textContent = words.saved;
-        } catch (_) { if (alive() && epoch === playlistEpoch) status.textContent = words.error; }
+            renderPlaylistChoices();
+            updatePlaylistStatus(data.playlists.length ? '' : words.empty);
+        } catch (_) { if (alive() && epoch === playlistEpoch) updatePlaylistStatus(InvidiousUI.label('read_error')); }
         finally { if (alive() && epoch === playlistEpoch) busy(false); }
     }
     async function addVideo() {
@@ -173,14 +213,23 @@
         saveForm.dataset.pending = 'true';
         try {
             await request('/playlist_ajax?action=add_video&redirect=false&video_id=' + encodeURIComponent(video) + '&playlist_id=' + encodeURIComponent(playlist), {});
-            if (alive()) { additions.add(key); status.textContent = words.saved; }
+            if (alive()) { additions.add(key); updatePlaylistStatus(); }
         } catch (error) { if (isUncertain(error)) uncertainAdditions.add(key); throw error; }
         finally { delete saveForm.dataset.pending; }
     }
-    select.addEventListener('change',function () {
+    function playlistSelectionChanged() {
+        updatePlaylistStatus();
+        busy(false);
+    }
+    select.addEventListener('change', function () {
         if (pending) return;
-        status.textContent = additions.has(additionKey()) ? words.saved : uncertainAdditions.has(additionKey()) ? InvidiousUI.label('check_playlist') : '';
-        if (uncertainAdditions.has(additionKey())) checkPlaylist(); busy(false);
+        playlistList.querySelectorAll('input').forEach(function (radio) { radio.checked = radio.value === select.value; });
+        playlistSelectionChanged();
+    });
+    playlistList.addEventListener('change', function (event) {
+        if (pending || !event.target.checked) return;
+        select.value = event.target.value;
+        playlistSelectionChanged();
     });
     document.addEventListener('click', function (event) {
         var action = event.target.closest('[data-video-action]');
@@ -193,7 +242,7 @@
             selectedVideo = menu.dataset.videoId;
             additions.forEach(function (key) { if (key.startsWith(selectedVideo+':')) additions.delete(key); });
             returnFocus = menu.matches('details') ? menu.querySelector('summary') : action;
-            document.getElementById('video-playlist-create-details').open = false;
+            createDetails.open = false;
             dialog.showModal();
             loadPlaylists();
         } else {
@@ -209,12 +258,12 @@
         var box = dialog.getBoundingClientRect();
         if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) dialog.close();
     });
-    document.getElementById('video-playlist-reload').addEventListener('click', loadPlaylists);
+    reloadButton.addEventListener('click', loadPlaylists);
     saveForm.addEventListener('submit', async function (event) {
         event.preventDefault();
         if (pending || !select.value) return;
         busy(true);
-        try { await addVideo(); } catch (error) { if (alive()) { status.textContent = error.userMessage || InvidiousUI.label('check_playlist'); checkPlaylist(); } }
+        try { await addVideo(); } catch (error) { if (alive()) updatePlaylistStatus('', error.userMessage || InvidiousUI.label('check_playlist')); }
         finally { if (alive()) busy(false); }
     });
     createForm.addEventListener('submit', async function (event) {
@@ -227,19 +276,20 @@
             var playlist = await request('/create_playlist?redirect=false', { title: createForm.elements.title.value, privacy: createForm.elements.privacy.value });
             if (!alive()) return;
             if (!playlist || typeof playlist.playlistId !== 'string' || !/^IV[A-Za-z0-9_-]+$/.test(playlist.playlistId) || typeof playlist.title !== 'string') throw new Error(words.error);
+            created = true;
             delete createForm.dataset.pending;
             select.add(new Option(playlist.title, playlist.playlistId));
             select.value = playlist.playlistId;
-            created = true;
+            renderPlaylistChoices();
             createForm.reset();
-            document.getElementById('video-playlist-create-details').open = false;
+            if (createForm.contains(document.activeElement)) createDetails.querySelector('summary').focus();
+            createDetails.open = false;
             await addVideo();
         } catch (error) {
             if (!created && isUncertain(error)) creationUncertain = true;
             if (alive()) {
-                status.textContent = created ? (uncertainAdditions.has(additionKey()) ? words.createdUncertain : words.created) : creationUncertain ? words.creationUncertain : error.userMessage || words.error;
-                if (created) checkPlaylist();
-                else if (creationUncertain) checkLibrary();
+                if (created) updatePlaylistStatus('', uncertainAdditions.has(additionKey()) ? words.createdUncertain : words.created);
+                else updatePlaylistStatus(creationUncertain ? '' : error.userMessage || words.error);
             }
         } finally { delete createForm.dataset.pending; if (alive()) busy(false); }
     });

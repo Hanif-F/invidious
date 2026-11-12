@@ -1487,13 +1487,166 @@ for(const engine of engines) {
         assert.ok(requests.filter(r=>r.url.pathname==='/subscription_ajax').every(r=>r.body.get('csrf_token')==='fixture-token'));
         assert.deepEqual(errors,[]);await context.close();
     });
+    test(`${engine}: D4 Save dialog selects, scrolls and saves from the desktop playlist list`, async () => {
+        const playlists = Array.from({length: 40}, (_, index) => ({id: 'IVrow' + index, title: 'Playlist ' + index}));
+        playlists[39].title = '<em>' + 'LongPlaylistTitle'.repeat(8) + '</em>';
+        const {page, context, requests, errors} = await setup(engine, 'playlist', 'light', {reply: entry => {
+            if (entry.url.pathname === '/video_actions') return {json: {playlists, defaultPlaylist: 'IVrow39'}};
+            if (entry.url.pathname === '/playlist_ajax') return {json: {}};
+        }});
+        const menu = page.locator('.video-context').first();
+        const trigger = menu.locator('summary');
+        const dialog = page.locator('#video-playlist-dialog');
+        const close = dialog.getByRole('button', {name: 'Close'});
+        const list = dialog.locator('.video-playlist-list');
+        const select = dialog.locator('#video-playlist-select');
+        await trigger.click();
+        await menu.locator('[data-video-action=playlist]').click();
+        await list.getByRole('radio', {name: playlists[39].title, exact: true}).waitFor();
+        assert.equal(await list.getByRole('radio').count(), playlists.length);
+        assert.equal(await select.isVisible(), false);
+        assert.equal(await list.locator('em').count(), 0);
+        assert.ok(await list.evaluate(element => {
+            const row = element.querySelector(':checked').parentElement.getBoundingClientRect();
+            const box = element.getBoundingClientRect();
+            return element.scrollTop > 0 && row.top >= box.top && row.bottom <= box.bottom + 1 &&
+                element.scrollWidth === element.clientWidth;
+        }));
+        await assertFocus(page, '#video-playlist-dialog .dialog-close');
+        await page.keyboard.press('Tab');
+        assert.equal(await page.evaluate(() => document.activeElement.value ?? document.activeElement.className), 'IVrow39');
+        await page.keyboard.press('ArrowUp');
+        assert.equal(await list.getByRole('radio', {name: 'Playlist 38', exact: true}).isChecked(), true);
+        assert.equal(await select.inputValue(), 'IVrow38');
+        assert.equal(requests.filter(request => request.url.pathname === '/playlist_ajax').length, 0);
+
+        await page.setViewportSize({width: 1023, height: 720});
+        assert.equal(await list.isVisible(), false);
+        assert.equal(await select.isVisible(), true);
+        assert.equal(await select.inputValue(), 'IVrow38');
+        await select.selectOption('IVrow12');
+        await page.setViewportSize({width: 1024, height: 720});
+        assert.equal(await list.getByRole('radio', {name: 'Playlist 12', exact: true}).isChecked(), true);
+        const reload = dialog.getByRole('button', {name: 'Reload playlists'});
+        await reload.click();
+        await page.waitForFunction(() => !document.getElementById('video-playlist-reload').disabled);
+        assert.equal(await list.getByRole('radio', {name: 'Playlist 12', exact: true}).isChecked(), true);
+        await dialog.getByRole('button', {name: 'Add to playlist'}).click();
+        await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent === 'Added to playlist.');
+        const writes = requests.filter(request => request.url.pathname === '/playlist_ajax');
+        assert.equal(writes.length, 1);
+        assert.equal(writes[0].url.searchParams.get('playlist_id'), 'IVrow12');
+        assert.equal(writes[0].url.searchParams.get('video_id'), await menu.getAttribute('data-video-id'));
+        assert.equal(writes[0].body.get('csrf_token'), 'fixture-token');
+
+        await close.click();
+        await dialog.waitFor({state: 'hidden'});
+        assert.equal(await trigger.evaluate(element => element === document.activeElement), true);
+        await trigger.click();
+        await menu.locator('[data-video-action=playlist]').click();
+        await page.waitForFunction(() => !document.getElementById('video-playlist-reload').disabled);
+        await page.mouse.click(8, 8);
+        await dialog.waitFor({state: 'hidden'});
+        assert.equal(await trigger.evaluate(element => element === document.activeElement), true);
+
+        await page.setViewportSize({width: 900, height: 720});
+        await trigger.click();
+        await menu.locator('[data-video-action=playlist]').click();
+        await select.selectOption('IVrow9');
+        await dialog.getByRole('button', {name: 'Add to playlist'}).click();
+        await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent === 'Added to playlist.');
+        assert.equal(await list.isVisible(), false);
+        assert.deepEqual(requests.filter(request => request.url.pathname === '/playlist_ajax')
+            .map(request => request.url.searchParams.get('playlist_id')), ['IVrow12', 'IVrow9']);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    test(`${engine}: D4 Save dialog fits light, dark, RTL and enlarged text layouts`, async () => {
+        const playlists = Array.from({length: 30}, (_, index) => ({id: 'IVrow' + index, title: 'قائمة التشغيل ' + index}));
+        for (const mode of ['light', 'dark']) {
+            const {page, context, errors} = await setup(engine, 'playlist', mode, {reply: entry => {
+                if (entry.url.pathname === '/video_actions') return {json: {playlists}};
+            }});
+            const menu = page.locator('.video-context').first();
+            await menu.locator('summary').click();
+            await menu.locator('[data-video-action=playlist]').click();
+            const dialog = page.locator('#video-playlist-dialog');
+            await dialog.getByRole('radio').first().waitFor();
+            await page.screenshot({path: path.join(artifacts, `${engine}-save-playlist-${mode}.png`)});
+            await page.setViewportSize({width: 1280, height: 380});
+            await page.evaluate(() => document.documentElement.dir = 'rtl');
+            await page.addStyleTag({content: '#video-playlist-dialog, #video-playlist-dialog h2, #video-playlist-dialog button { font-size: 24px; }'});
+            await page.emulateMedia({forcedColors: 'active'});
+            const close = dialog.getByRole('button', {name: 'Close'});
+            const box = await dialog.boundingBox();
+            const headerClose = await close.boundingBox();
+            assert.ok(box.x >= 0 && box.x + box.width <= 1280 && box.y >= 0 && box.y + box.height <= 380);
+            assert.ok(box.x + box.width - headerClose.x - headerClose.width < 32);
+            assert.ok(headerClose.y - box.y < 20);
+            const selected = dialog.locator('.video-playlist-choice').first();
+            const unselected = dialog.locator('.video-playlist-choice').nth(1);
+            assert.notEqual(await selected.evaluate(element => getComputedStyle(element).borderColor),
+                await unselected.evaluate(element => getComputedStyle(element).borderColor));
+            await dialog.locator('#video-playlist-create-details > summary').click();
+            const expandedClose = await close.boundingBox();
+            const title = dialog.getByRole('textbox', {name: 'Title'});
+            await title.fill('A new playlist');
+            await dialog.getByRole('button', {name: 'Create and save'}).scrollIntoViewIfNeeded();
+            assert.equal(await dialog.locator('.video-playlist-body').evaluate(element =>
+                element.scrollTop > 0 && element.scrollWidth === element.clientWidth), true);
+            assert.deepEqual(await close.boundingBox(), expandedClose);
+            await page.keyboard.press('Escape');
+            await dialog.waitFor({state: 'hidden'});
+            assert.equal(await menu.locator('summary').evaluate(element => element === document.activeElement), true);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+    test(`${engine}: D4 Save dialog reloads a failed read and creates from an empty list`, async () => {
+        let reads = 0;
+        let finishRead;
+        const firstRead = new Promise(resolve => { finishRead = resolve; });
+        const {page, context, requests, errors} = await setup(engine, 'playlist', 'light', {reply: entry => {
+            if (entry.url.pathname === '/video_actions') return ++reads === 1 ? firstRead : {json: {playlists: []}};
+            if (entry.url.pathname === '/create_playlist') return {json: {playlistId: 'IVnew', title: 'New playlist'}};
+            if (entry.url.pathname === '/playlist_ajax') return {json: {}};
+        }});
+        const menu = page.locator('.video-context').first();
+        await menu.locator('summary').click();
+        await menu.locator('[data-video-action=playlist]').click();
+        const dialog = page.locator('#video-playlist-dialog');
+        const save = dialog.getByRole('button', {name: 'Add to playlist'});
+        const reload = dialog.getByRole('button', {name: 'Reload playlists'});
+        await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent === 'Loading playlists');
+        assert.equal(await save.isDisabled(), true);
+        assert.equal(await reload.isDisabled(), true);
+        finishRead({status: 503, json: {}});
+        await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent === InvidiousUI.label('read_error'));
+        await reload.click();
+        await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent === 'No playlists available');
+        assert.equal(await dialog.getByRole('radio').count(), 0);
+        assert.equal(await save.isDisabled(), true);
+        await dialog.locator('#video-playlist-create-details > summary').click();
+        await dialog.getByRole('textbox', {name: 'Title'}).fill('New playlist');
+        assert.equal(await dialog.getByRole('combobox', {name: 'Playlist privacy'}).inputValue(), 'Private');
+        await dialog.getByRole('button', {name: 'Create and save'}).click();
+        await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent === 'Added to playlist.');
+        assert.equal(await dialog.getByRole('radio', {name: 'New playlist'}).isChecked(), true);
+        assert.equal(await dialog.getByRole('textbox', {name: 'Title'}).isVisible(), false);
+        assert.equal(await save.isDisabled(), true);
+        assert.equal(requests.filter(request => request.url.pathname === '/create_playlist' && request.method === 'POST').length, 1);
+        assert.equal(requests.filter(request => request.url.pathname === '/playlist_ajax').length, 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
     test(`${engine}: D4 Save dialog retains uncertain creation drafts and never repeats an ambiguous addition`,async()=>{
+        let failedRead = false;
         const {page,context,requests,errors}=await setup(engine,'playlist','light',{reply:entry=>{
-            if(entry.url.pathname==='/video_actions')return{contentType:'application/json',body:JSON.stringify({playlists:[{id:'IVtarget',title:'Field notes'}],defaultPlaylist:'IVtarget'})};
+            if(entry.url.pathname==='/video_actions')return failedRead ? {status:503,json:{}} : {json:{playlists:[{id:'IVtarget',title:'Field notes'},{id:'IVother',title:'Other'}],defaultPlaylist:'IVtarget'}};
             if(entry.url.pathname==='/playlist_ajax'||entry.url.pathname==='/create_playlist'&&entry.method==='POST')return{status:503,contentType:'application/json',body:'{}'};
         }});
         const menu=page.locator('.video-context').first();await menu.locator('summary').click();await menu.locator('[data-video-action=playlist]').click();
-        await page.waitForFunction(()=>document.querySelector('#video-playlist-select').options.length===1);
+        await page.waitForFunction(()=>document.querySelector('#video-playlist-select').value==='IVtarget');
         await page.locator('#video-playlist-save button[type=submit]').click();await page.waitForFunction(()=>document.querySelector('#video-playlist-status a'));
         assert.equal(await page.locator('#video-playlist-save button[type=submit]').isDisabled(),true);
         await page.locator('#video-playlist-reload').click();await page.waitForFunction(()=>!document.querySelector('#video-playlist-reload').disabled);
@@ -1504,6 +1657,17 @@ for(const engine of engines) {
         assert.equal(await page.locator('#video-playlist-create button[type=submit]').isDisabled(),true);
         assert.equal(await page.locator('#video-playlist-title').inputValue(),'Keep <this> creation draft');
         assert.equal(await page.locator('#video-playlist-privacy').inputValue(),'Private');
+        const dialog = page.locator('#video-playlist-dialog');
+        await dialog.getByRole('radio', {name:'Other'}).check();
+        assert.equal(await page.locator('#video-playlist-status a[href="/feed/playlists"]').count(),1);
+        assert.equal(await page.locator('#video-playlist-save button[type=submit]').isEnabled(),true);
+        await dialog.getByRole('radio', {name:'Field notes'}).check();
+        failedRead = true;
+        await page.locator('#video-playlist-reload').click();
+        await page.waitForFunction(()=>!document.querySelector('#video-playlist-reload').disabled);
+        assert.equal(await page.locator('#video-playlist-status a[href="/feed/playlists"]').count(),1);
+        assert.equal(await page.locator('#video-playlist-status a[href="/playlist?list=IVtarget"]').count(),1);
+        failedRead = false;
         await page.locator('#video-playlist-dialog .dialog-close').click();await menu.locator('summary').click();await menu.locator('[data-video-action=playlist]').click();
         await page.waitForFunction(()=>!document.querySelector('#video-playlist-reload').disabled);
         assert.equal(await page.locator('#video-playlist-title').inputValue(),'Keep <this> creation draft');
@@ -2129,12 +2293,13 @@ for(const engine of engines) {
 }
 
 for(const engine of engines) {
-    test(`${engine}: D5 title cycles use one SVG control and reveal masked names only after a click`,async()=>{
+    test(`${engine}: D5 title cycles use the blue control and reveal masked names only after a click`,async()=>{
         for(const masked of [false,true]) {
             const {page,context,errors,requests}=await setup(engine,'watch','light',{fixture:masked?'watch-spoiler-dearrow':'watch-dearrow',url:'/watch?v=2isYuQZMbdU',reply:entry=>entry.url.pathname.startsWith('/api/v1/dearrow/')?{contentType:'application/json',body:JSON.stringify({title:'Replacement fixture title'})}:null});
             const title=page.locator('.watch-heading h1'),control=page.locator('.watch-heading .dearrow-reveal');
             await control.waitFor();const original=await title.evaluate(el=>el.dataset.spoilerOriginal||el.dataset.dearrowOriginal);
-            assert.equal(await control.locator('use').count(),1);assert.ok((await control.locator('use').getAttribute('href')).endsWith('#rotate-cw'));
+            assert.equal(await control.locator('svg').count(),0);
+            assert.equal(await control.evaluate(el=>getComputedStyle(el,'::before').borderTopColor),'rgb(64, 60, 255)');
             if(masked)assert.ok(requests.filter(r=>r.url.pathname==='/api/v1/dearrow/2isYuQZMbdU').length<=1,'masked fields share the existing title cache');
             const before=await title.textContent();await control.hover();await control.focus();assert.equal(await title.textContent(),before);
             assert.equal(await page.locator('.video-js').getByRole('button',{name:'Reveal original thumbnail',exact:true,includeHidden:true}).count(),0);
@@ -2151,15 +2316,16 @@ for(const engine of engines) {
 for(const engine of engines) {
     test(`${engine}: D5 watch Save, Share and Download keep one media element and retain HTML fallbacks`,async()=>{
         const {page,context,errors,requests}=await setup(engine,'watch','light',{fixture:'d5-account-light',url:'/watch?v=2isYuQZMbdU',reply:entry=>{
-            if(entry.url.pathname==='/video_actions')return{contentType:'application/json',body:JSON.stringify({playlists:[{id:'IVtarget',title:'Saved videos'}],defaultPlaylist:'IVtarget'})};
+            if(entry.url.pathname==='/video_actions')return{json:{playlists:[{id:'IVdefault',title:'Watch later'},{id:'IVtarget',title:'Saved videos'}],defaultPlaylist:'IVdefault'}};
             if(entry.url.pathname==='/playlist_ajax')return{contentType:'application/json',body:'{}'};
         }});
         await page.evaluate(async()=>{player.muted(true);await player.play();player.pause();player.currentTime(1);window.originalMedia=player.tech().el();});
         await page.locator('.watch-actions [data-video-action=playlist]').click();await page.locator('#video-playlist-dialog').waitFor({state:'visible'});
-        await page.waitForFunction(()=>document.querySelector('#video-playlist-select').options.length===1);
+        await page.locator('#video-playlist-dialog').getByRole('radio',{name:'Saved videos'}).check();
         await page.locator('#video-playlist-save button[type=submit]').click();await page.waitForFunction(()=>document.querySelector('#video-playlist-status').textContent==='Added to playlist.');
         await page.locator('#video-playlist-dialog .dialog-close').click();
-        assert.equal(requests.filter(r=>r.url.pathname==='/playlist_ajax').length,1);
+        await assertFocus(page,'.watch-actions [data-video-action=playlist]');
+        assert.deepEqual(requests.filter(r=>r.url.pathname==='/playlist_ajax').map(r=>r.url.searchParams.get('playlist_id')),['IVtarget']);
         await page.evaluate(()=>{Object.defineProperty(navigator,'clipboard',{value:undefined,configurable:true});});
         await page.locator('#share-video').click();assert.ok(await page.locator('#share-fallback').isVisible());
         const shared=new URL(await page.locator('#share-url').inputValue());assert.equal(shared.searchParams.get('v'),'2isYuQZMbdU');assert.equal(shared.searchParams.get('t'),'1');

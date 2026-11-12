@@ -472,7 +472,18 @@ write_sponsorblock_editor_fixtures(output)
   env.set "preferences", prefs
   suffix = show_original ? "dearrow" : "dearrow-no-original"
   File.write("#{output}/watch-#{suffix}.html", watch_fixture(env))
-  File.write("#{output}/browse-#{suffix}.html", browse_fixture(env))
+  browse_env = fixture_env("/feed/popular")
+  browse_env.set "preferences", prefs
+  File.write("#{output}/browse-#{suffix}.html", browse_fixture(browse_env))
+  if show_original
+    search_env = fixture_env("/search?q=light")
+    search_env.set "preferences", prefs
+    File.write("#{output}/search-dearrow.html", browse_fixture(search_env))
+
+    embed_env = fixture_env("/embed/2isYuQZMbdU")
+    embed_env.set "preferences", prefs
+    File.write("#{output}/embed-dearrow.html", watch_fixture(embed_env, nil, true))
+  end
 end
 
 File.write("#{output}/embed-mobile.html", watch_fixture(fixture_env("/embed/2isYuQZMbdU"), nil, true))

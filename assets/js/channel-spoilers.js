@@ -83,7 +83,6 @@
             var button = entry.button = document.createElement('button');
             entry.buttonLife = new AbortController();
             button.type = 'button'; button.className = 'dearrow-reveal spoiler-title-reveal';
-            if (document.body && document.body.dataset.page === 'watch' && window.InvidiousPlayerInterface) button.append(InvidiousPlayerInterface.icon('rotate-cw'));
             row.classList.add('dearrow-title-row'); row.appendChild(button);
             button.addEventListener('click',function () {
                 if (!current() || suspended || entry.loading || !element.isConnected) return;

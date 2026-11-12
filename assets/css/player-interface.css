@@ -61,8 +61,5 @@
 .dock-controls [data-dock=return]{margin-inline-start:auto}.dock-controls :focus-visible{outline:2px solid var(--focus,#9cbfff);outline-offset:-2px}
 .watch-primary .watch-heading{margin-top:0}.watch-heading .video-stats{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;font-size:14px;color:var(--muted)}
 .watch-heading .video-stats p{display:inline-flex;align-items:center;gap:4px;margin:0}.watch-heading h3{font-size:16px;margin:8px 0}
-body[data-page=watch] .dearrow-reveal{display:flex;align-items:center;justify-content:center;border-radius:4px;color:var(--muted)}
-body[data-page=watch] .dearrow-reveal::before{content:none}
-body[data-page=watch] .dearrow-reveal:hover,body[data-page=watch] .dearrow-reveal[aria-pressed=true]{background:var(--selection);color:var(--accent)}
 .watch-player .video-js.vjs-fullscreen,.video-js.invidious-desktop:fullscreen{width:100%;height:100%;max-height:100%;aspect-ratio:auto;border-radius:0}
 .dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.dialog-heading h2{margin:0}

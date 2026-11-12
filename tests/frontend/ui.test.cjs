@@ -427,13 +427,18 @@ async function captionBackgroundPixels(page) {
     }, {png:screenshot.toString('base64'), points});
 }
 
-async function waitForDeArrowRequest(page, requests, id) {
+async function waitForDeArrowRequest(requests, id) {
     const endpoint = '/api/v1/dearrow/' + id;
-    if (!requests.includes(endpoint)) await page.waitForRequest(request => new URL(request.url()).pathname === endpoint);
+    const deadline = Date.now() + 10000;
+    // Playwright emits the request event before the route records it.
+    while (!requests.includes(endpoint) && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    assert.ok(requests.includes(endpoint), `Timed out waiting for ${endpoint}`);
 }
 
 async function finishDeArrowPrefetch(page, requests, id, release) {
-    await waitForDeArrowRequest(page, requests, id);
+    await waitForDeArrowRequest(requests, id);
     const response = page.waitForResponse(response => new URL(response.url()).pathname === '/api/v1/dearrow/' + id);
     release();
     await (await response).finished();
@@ -1971,6 +1976,7 @@ for (const engine of engines) {
         await page.locator('#video-playlist-create button').click();
         await page.waitForFunction(()=>document.querySelector('#video-playlist-select').value==='IVnew'&&document.querySelector('#video-playlist-save').dataset.pending!=='true'&&!document.querySelector('#video-playlist-create button').disabled);
         assert.equal(await page.locator('#video-playlist-select').inputValue(), 'IVnew');
+        assert.equal(await page.locator('#video-playlist-dialog').getByRole('radio', {name: 'New playlist'}).isChecked(), true);
         if(failureStatus===400) {
         await page.locator('#video-playlist-save [type=submit]').click();
         await page.waitForFunction(() => document.getElementById('video-playlist-status').textContent === document.getElementById('video-actions-config').dataset.saved);
@@ -2374,6 +2380,8 @@ for (const engine of engines) {
             assert.equal(await title.textContent(), original);
             assert.equal(await button.getAttribute('aria-pressed'), 'true');
             assert.deepEqual(await button.boundingBox(), before);
+            await button.blur();
+            assert.equal(await title.textContent(), original);
             await button.tap();
             assert.equal(await title.textContent(), replacement);
             assert.deepEqual(await button.boundingBox(), before);
@@ -2386,20 +2394,25 @@ for (const engine of engines) {
     });
 
     test(`${engine}: DeArrow targets stay fixed across title lengths and page layouts`, async () => {
-        for (const fixture of ['watch-dearrow', 'history-dearrow']) {
+        const layouts = [
+            ['browse-dearrow', ['.media-grid [data-dearrow-id]']],
+            ['search-dearrow', ['.media-rows [data-dearrow-id]']],
+            ['history-dearrow', ['[data-dearrow-id]']],
+            ['watch-dearrow', ['[data-dearrow-watch]', '#queue-current [data-dearrow-id]', '.queue-row [data-dearrow-id]', '.recommendation [data-dearrow-id]']]
+        ];
+        for (const [fixture, selectors] of layouts) {
             const longTitle = 'An original title with many more words to wrap across multiple lines. '.repeat(4);
             const {page, context, errors} = await pageFor(engine, {fixture, dearrowOriginal: longTitle, dearrowTitle: 'Short'});
-            const watchCycle=fixture==='watch-dearrow';
-            const selectors = fixture === 'watch-dearrow'
-                ? ['[data-dearrow-watch]', '#queue-current [data-dearrow-id]', '.queue-row [data-dearrow-id]', '.recommendation [data-dearrow-id]']
-                : ['[data-dearrow-id]'];
             for (const selector of selectors) {
                 const title = page.locator(selector).first();
                 await title.scrollIntoViewIfNeeded();
                 await page.waitForFunction(selector => document.querySelector(selector).dataset.dearrowOriginal !== undefined, selector);
+                const original = await title.getAttribute('data-dearrow-original');
                 const row = title.locator('xpath=ancestor::*[@data-dearrow-row][1]');
                 const button = row.locator('.dearrow-reveal');
                 assert.equal(await button.evaluate(el => !!el.closest('a')), false);
+                assert.equal(await button.locator('svg').count(), 0);
+                assert.equal(await button.evaluate(el => getComputedStyle(el, '::before').borderTopColor), 'rgb(64, 60, 255)');
                 // A removable queue row has a separate action at its trailing edge.
                 if (selector.startsWith('.queue-row')) await row.evaluate(el => {
                     const remove = document.createElement('button');
@@ -2412,15 +2425,21 @@ for (const engine of engines) {
                     await button.scrollIntoViewIfNeeded();
                     const before = await button.boundingBox();
                     await button.hover();
-                    assert.equal(await title.textContent(),watchCycle?'Short':await title.getAttribute('data-dearrow-original'));
+                    assert.equal(await title.textContent(), 'Short');
                     assert.deepEqual(await button.boundingBox(), before);
                     const url = page.url();
                     await button.click();
-                    assert.equal(await title.textContent(),await title.getAttribute('data-dearrow-original'));
-                    if(watchCycle)await button.click();
-                    assert.equal(page.url(), url);
+                    assert.equal(await title.textContent(), original);
+                    assert.equal(await button.getAttribute('aria-label'), 'Show DeArrow title');
+                    assert.equal(await button.getAttribute('aria-pressed'), 'true');
                     await page.mouse.move(0, 0);
+                    await button.blur();
+                    assert.equal(await title.textContent(), original);
+                    assert.deepEqual(await button.boundingBox(), before);
+                    await button.click();
                     assert.equal(await title.textContent(), 'Short');
+                    assert.equal(await button.getAttribute('aria-label'), 'Show original title');
+                    assert.equal(await button.getAttribute('aria-pressed'), 'false');
                     assert.deepEqual(await button.boundingBox(), before);
                     const link = row.locator('a').first();
                     if (await link.count()) {
@@ -2432,12 +2451,13 @@ for (const engine of engines) {
                         await button.focus();
                     }
                     assert.equal(await button.evaluate(el => el === document.activeElement), true);
-                    assert.equal(await title.textContent(),watchCycle?'Short':await title.getAttribute('data-dearrow-original'));
-                    if(watchCycle){await page.keyboard.press('Enter');
-                    assert.equal(await title.textContent(),await title.getAttribute('data-dearrow-original'));
-                    await page.keyboard.press('Enter');}
+                    assert.equal(await title.textContent(), 'Short');
+                    await page.keyboard.press('Enter');
+                    assert.equal(await title.textContent(), original);
+                    await page.keyboard.press('Space');
                     await page.keyboard.press('Tab');
                     assert.equal(await title.textContent(), 'Short');
+                    assert.equal(page.url(), url);
                 }
             }
             assert.deepEqual(errors, []);
@@ -4552,7 +4572,7 @@ for (const engine of engines) {
         const {page, context, errors, requests} = await pageFor(engine, {fixture: 'spoiler-cards-indefinite-dearrow', dearrowTitle: 'Prefetched title', dearrowGate});
         const title = page.locator('[data-spoiler-title]').first();
         const button = page.locator('.spoiler-title-reveal').first();
-        await waitForDeArrowRequest(page, requests, '00000000000');
+        await waitForDeArrowRequest(requests, '00000000000');
         await button.click();
         assert.equal(await button.isDisabled(), true);
         assert.equal(await title.textContent(), 'Title hidden');
@@ -4596,7 +4616,7 @@ for (const engine of engines) {
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         assert.ok(!requests.includes('/api/v1/dearrow/' + id));
         await page.locator('#prefetch-offscreen').evaluate(row => { row.style.top = (innerHeight + 100) + 'px'; });
-        await waitForDeArrowRequest(page, requests, id);
+        await waitForDeArrowRequest(requests, id);
         assert.equal(await title.textContent(), 'Title hidden');
         assert.equal(requests.filter(url => url === '/api/v1/dearrow/' + id).length, 1);
         assert.deepEqual(errors, []);
@@ -4666,7 +4686,7 @@ for (const engine of engines) {
         await rows.first().waitFor();
         assert.equal(await rows.count(), 2);
         assert.match(await rows.first().locator('[data-spoiler-title]').textContent(), /upload date unknown/);
-        await waitForDeArrowRequest(page, requests, '00000000000');
+        await waitForDeArrowRequest(requests, '00000000000');
         await rows.first().locator('.spoiler-title-reveal').click();
         await page.waitForFunction(() => document.querySelector('#playlist [data-spoiler-title]').textContent === 'Clear watch title');
         assert.equal(await rows.first().locator('[data-spoiler-title]').textContent(), 'Clear watch title');
@@ -4687,6 +4707,35 @@ for (const engine of engines) {
 }
 
 for (const engine of engines) {
+    test(`${engine}: DeArrow cycles embed titles without affecting playback`, async () => {
+        const {page, context, errors} = await pageFor(engine, {fixture: 'embed-dearrow', embedFixture: 'embed-dearrow',
+            route: 'embed/2isYuQZMbdU', realPlayer: true, width: 390, dearrowTitle: 'Clear embed title'});
+        await page.evaluate(() => player.load());
+        await page.waitForFunction(() => player.readyState() >= 1);
+        const overlay = page.locator('.vjs-overlay:visible').first();
+        const button = overlay.locator('.dearrow-reveal');
+        const title = overlay.locator('[data-dearrow-watch]');
+        await button.waitFor();
+        const original = await title.getAttribute('data-dearrow-original');
+        const url = page.url();
+        assert.equal(await button.evaluate(el => getComputedStyle(el, '::before').borderTopColor), 'rgb(64, 60, 255)');
+        await button.hover();
+        await button.focus();
+        assert.equal(await title.textContent(), 'Clear embed title');
+        await button.click();
+        await page.mouse.move(0, 0);
+        await button.blur();
+        assert.equal(await title.textContent(), original);
+        assert.equal(await page.title(), original + ' - Invidious');
+        await button.press('Space');
+        assert.equal(await title.textContent(), 'Clear embed title');
+        assert.equal(await page.title(), 'Clear embed title - Invidious');
+        assert.equal(await page.evaluate(() => player.paused()), true);
+        assert.equal(page.url(), url);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+
     test(`${engine}: channel spoilers keep embed overlays hidden until the DeArrow button is activated`, async () => {
         let release;
         const dearrowGate = new Promise(resolve => { release = resolve; });
@@ -4701,6 +4750,9 @@ for (const engine of engines) {
         await page.waitForFunction(() => player.readyState() >= 1);
         const button = page.locator('.vjs-overlay:visible .spoiler-title-reveal').first();
         await button.waitFor();
+        assert.equal(await button.evaluate(el => getComputedStyle(el, '::before').borderTopColor), 'rgb(64, 60, 255)');
+        await button.hover();
+        await button.focus();
         assert.equal(await page.locator('.vjs-overlay:visible [data-spoiler-title]').first().textContent(), 'Title hidden');
         await button.click();
         await page.waitForFunction(() => document.title === 'Clear embed title - Invidious');
@@ -4735,7 +4787,7 @@ for (const engine of engines) {
             for (const label of await titles.allTextContents()) assert.match(label, /^Title hidden/);
             assert.equal(await page.locator('.spoiler-title-reveal').count(), 4);
             if (replacement) {
-                await waitForDeArrowRequest(page, requests, '00000000000');
+                await waitForDeArrowRequest(requests, '00000000000');
             } else assert.equal(requests.filter(url => url.startsWith('/api/v1/dearrow/')).length, 0);
             const first = titles.first(), button = page.locator('.spoiler-title-reveal').first();
             await button.hover();

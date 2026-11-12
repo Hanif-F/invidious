@@ -201,7 +201,7 @@
     "ai_filter_settings": "Change AI channel filter settings",
     "dearrow_reveal_original": "Show original title",
     "preferences_dearrow_enabled_label": "Replace video titles with DeArrow",
-    "preferences_dearrow_show_original_label": "Show original titles using the DeArrow icon (hover, focus, or tap)",
+    "preferences_dearrow_show_original_label": "Show original titles using the DeArrow icon",
     "preferences_dearrow_attribution": "Uses community title data from",
     "preferences_color_system": "System",
     "preferences_color_mode_label": "Color mode:",

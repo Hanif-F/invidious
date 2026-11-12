@@ -87,36 +87,31 @@
     }
     function render(entry) {
         if (!entry.replacement || entry.element.dataset.spoilerHidden === 'true') return;
-        var watchCycle = document.body.dataset.page === 'watch';
-        var showing = watchCycle ? entry.toggled : entry.hovered || entry.focused || entry.toggled;
+        var showing = entry.showingOriginal;
         display(entry,showing ? entry.original : entry.replacement);
         if (entry.button) {
             entry.button.setAttribute('aria-pressed',String(showing));
-            var label = watchCycle && showing ? config.replacementLabel || 'Show DeArrow title' : config.originalLabel || 'Show original title';
+            var label = showing ? config.replacementLabel || 'Show DeArrow title' : config.originalLabel || 'Show original title';
             entry.button.setAttribute('aria-label',label);
         }
     }
-    function originalOnInteraction(entry) {
+    function addTitleToggle(entry) {
         var element = entry.element, row = element.closest('[data-dearrow-row]');
         if (!row || entry.button) return;
         var button = entry.button = document.createElement('button'); entry.life = new AbortController();
-        button.type = 'button'; button.className = 'dearrow-reveal'; button.setAttribute('aria-label',config.originalLabel || 'Show original title');
-        if (document.body.dataset.page === 'watch' && window.InvidiousPlayerInterface) button.append(InvidiousPlayerInterface.icon('rotate-cw'));
-        function on(name,callback) { button.addEventListener(name,function (event) { if (enabled()) callback(event); },{signal:entry.life.signal}); }
-        on('pointerenter',function (event) { if (event.pointerType === 'mouse') { entry.touch = false; entry.hovered = true; render(entry); } });
-        on('pointerleave',function () { entry.hovered = false; render(entry); });
-        on('pointerdown',function (event) { entry.touch = event.pointerType !== 'mouse'; entry.focused = false; });
-        on('focus',function () { entry.focused = !entry.touch && button.matches(':focus-visible'); render(entry); });
-        on('blur',function () { entry.focused = false; entry.touch = false; render(entry); });
-        on('keydown',function () { entry.touch = false; entry.focused = true; render(entry); });
-        on('click',function () { if (document.body.dataset.page === 'watch' || entry.touch) { entry.toggled = !entry.toggled; entry.hovered = entry.focused = false; } render(entry); });
+        button.type = 'button'; button.className = 'dearrow-reveal';
+        button.addEventListener('click',function () {
+            if (!enabled()) return;
+            entry.showingOriginal = !entry.showingOriginal;
+            render(entry);
+        },{signal:entry.life.signal});
         row.classList.add('dearrow-title-row'); row.appendChild(button);
     }
     function replace(element) {
         if (!enabled()) return;
         var entry = entries.get(element);
         if (!entry) {
-            entry = {element:element,original:element.dataset.spoilerOriginal !== undefined ? element.dataset.spoilerOriginal : element.dataset.dearrowOriginal !== undefined ? element.dataset.dearrowOriginal : element.textContent};
+            entry = {element:element,showingOriginal:false,original:element.dataset.spoilerOriginal !== undefined ? element.dataset.spoilerOriginal : element.dataset.dearrowOriginal !== undefined ? element.dataset.dearrowOriginal : element.textContent};
             entries.set(element,entry);
         }
         var generation = epoch;
@@ -124,7 +119,7 @@
             if (!enabled() || generation !== epoch || !element.isConnected || entries.get(element) !== entry || element.dataset.spoilerHidden === 'true') return;
             if (!title || title === entry.original) { clean(entry,true); entry.replacement = null; return; }
             entry.replacement = title; element.dataset.dearrowOriginal = entry.original;
-            if (config.showOriginal) originalOnInteraction(entry);
+            if (config.showOriginal) addTitleToggle(entry);
             element.dearrowCleanup = function (temporary) {
                 clean(entry,false); entry.hiddenByMask = !!temporary;
                 if (!temporary) { entries.delete(element); seen.delete(element); if (visible) visible.unobserve(element); }
