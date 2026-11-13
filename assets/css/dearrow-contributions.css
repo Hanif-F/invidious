@@ -13,3 +13,9 @@
 .dearrow-confirm-actions{display:flex;flex-wrap:wrap;gap:8px}#dearrow-refresh{margin-block-start:16px}
 #dearrow-dialog :is(input,button,a),#dearrow-status{scroll-margin-block:16px}
 @media(forced-colors:active){#dearrow-dialog .button{border:1px solid ButtonText}}
+
+@media (width < 768px), (width < 960px) and (orientation: landscape) and (height <= 500px) {
+    .dearrow-header, .dearrow-content { padding: var(--s3); }
+    .dearrow-row { flex-direction: column; gap: var(--s2); }
+    .dearrow-votes { max-inline-size: 100%; }
+}

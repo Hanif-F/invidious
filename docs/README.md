@@ -17,6 +17,7 @@ This handbook documents **this repository's implementation**, including its fork
 | Understand backend design and storage | [Architecture](architecture.md), [database](database.md) |
 | Maintain or deploy an instance | [Operations](operations.md), [security](security.md), [troubleshooting](troubleshooting.md) |
 | Change or test the code | [Development](development.md), [frontend](frontend.md), [documentation maintenance](documentation.md) |
+| Implement phone responsiveness | [Phone responsiveness plan](implementResponsiveness/README.md) |
 | Understand upstream services | [Integrations](integrations.md) |
 
 ## Feature-specific contracts

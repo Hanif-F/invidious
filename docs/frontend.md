@@ -102,8 +102,7 @@ Batch operations run sequentially, preserve failed selections, and report partia
 success. Removals/unsubscriptions confirm the action and count. Playlist additions
 are never automatically retried after an ambiguous response.
 
-Owned playlists use one leading grip for pointer drag or keyboard pickup,
-arrow movement and drop/cancel among loaded rows. The web
+Owned playlists use Move up and Move down in phone row menus. Wider layouts use a leading grip for pointer drag or keyboard pickup, arrow movement and drop or cancel. Both controls reorder among loaded rows. The web
 `playlist_ajax` action `move_video_before` accepts POST body fields `source`,
 `anchor` (decimal occurrence IDs as strings), and `placement=before|after`, plus
 the existing CSRF token and playlist ID query parameter. It locks the playlist,

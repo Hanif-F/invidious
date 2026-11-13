@@ -38,7 +38,7 @@ ignored by Git.
 
 ## Suite ownership
 
-The `package.json` test command explicitly lists these 17 files. Commands below
+The `package.json` test command explicitly lists these suites. Commands below
 assume the `tests/frontend` directory unless stated otherwise.
 
 | Suite | Direct coverage |
@@ -59,6 +59,7 @@ assume the `tests/frontend` directory unless stated otherwise.
 | `verification-surfaces.test.cjs` | Challenge/admin/recovery forms, separate localized Cloudflare handoff, no-JS/API-only paths, confidentiality and cached/late callbacks |
 | `status-surfaces.test.cjs` | Privacy/licenses/messages/errors, no-JS reading, safe reports, read-only recovery and vendor/LibreJS attribution |
 | `embed-surfaces.test.cjs` | Actual shared player, progressive/audio/DASH/HLS decode, masking, captions, iframe geometry and private recovery |
+| `responsive.test.cjs` | Production phone fixtures, route-family geometry, ordinary HTML, RTL and enlarged text, iframe sizes, and visual snapshots |
 | `embed-lifecycle.test.cjs` | Next-item ownership, exact decimal cursors, duplicate series, explicit read retry and cached/profile/disposal callbacks |
 
 The full npm command is also used by
@@ -71,8 +72,7 @@ The desktop matrix uses Chromium/Firefox at 1280×720, 1440×900 and 1920×1080,
 Light/Dark/System, RTL/enlarged text, forced colors, focus, reduced motion and
 long/incomplete content. Inspect generated screenshots alongside behavioral
 results; generating a screenshot does not constitute review.
-Mobile website redesign is deferred; existing touch/media/embed compatibility
-checks remain in the retained suite.
+Phone checks cover 320 × 568, 390 × 844, and 844 × 390, with breakpoint and interaction cases in the owning suites. See the [phone verification plan](../../docs/implementResponsiveness/05-verification-and-handoffs.md).
 
 Shell checks cover one sidebar toggle, profile collapse/watch drawer, role-aware
 navigation, contained menus and keyboard help. Discovery checks use production
@@ -86,8 +86,7 @@ Library checks cover cached subscription statistics, incoming new-upload notices
 with explicit Refresh, notification permission/lease, loaded-only selection,
 unselected appended rows, partial confirmed writes and ambiguous additions.
 History merges date groups and retains unknown metadata. Owned/saved playlists
-keep distinct semantics. The single row grip supports pointer/keyboard ordering,
-scroll/cancel and exact decimal occurrence IDs; stale order offers Reload.
+keep distinct semantics. Phone row menus offer Move up and Move down. The wider grip supports pointer and keyboard ordering, scroll and cancel. Both keep exact decimal occurrence IDs and offer Reload after a stale order.
 Real ownership/CSRF/transactions/concurrency are checked separately in the guarded
 [account harness](../database/README.md), including `--qol-only` on an empty
 `invidious_accounts_test` database.

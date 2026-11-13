@@ -36,9 +36,11 @@ module Invidious::Frontend::ChannelPage
 
   def generate_tabs_links(locale : String, channel : AboutChannel, selected_tab : TabsAvailable)
     String.build do |str|
+      str << %(<div class="channel-core-tabs">)
       {TabsAvailable::Videos, TabsAvailable::Shorts, TabsAvailable::Streams, TabsAvailable::Playlists, TabsAvailable::Clips, TabsAvailable::Posts, TabsAvailable::Search}.each do |tab|
         tab_link(str, locale, channel, tab, selected_tab) if available?(channel, tab, selected_tab)
       end
+      str << "</div>"
       overflow = {TabsAvailable::Podcasts, TabsAvailable::Releases, TabsAvailable::Courses, TabsAvailable::Shows, TabsAvailable::Channels}
       selected_more = overflow.includes?(selected_tab)
       str << %(<details class="ui-menu channel-more" data-ui-menu><summary class="button")

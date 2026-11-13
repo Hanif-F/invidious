@@ -14,7 +14,8 @@
     var root = player.el(), shell = root.closest('.watch-player'), stack = document.getElementById('watch-tools');
     var section = document.getElementById('tool-chat'), dialog = document.getElementById('chat-settings-dialog');
     var sidebarToggle = document.getElementById('chat-toggle'), playerHeading = section.querySelector('.chat-player-heading');
-    var sidebarPosition = dialog.nextSibling, desktopViewport = matchMedia('(min-width: 960px)');
+    var shortcut = document.getElementById('chat-shortcut');
+    var sidebarPosition = dialog.nextSibling, desktopViewport = matchMedia('(width >= 960px)');
     var control, desktop = false, expanded = false;
     var segments = [], activeSegment = null, removed = new Set(), cacheUse = 0, displayCursor = 0;
     var lastPlaybackPosition = 0, seekStartPosition = null, loading = false, generation = 0, controller = null, prefetchTimer = null;
@@ -385,6 +386,7 @@
         panel.hidden = !next;
         if (desktop && dialog.open && (stack.hidden || shell.classList.contains('is-docked'))) dialog.close();
         sidebarToggle.setAttribute('aria-expanded', String(expanded));
+        shortcut.setAttribute('aria-expanded', String(next));
         if (control) {
             var label = next ? labels.hide_chat : labels.show_chat;
             control.controlText(label);
@@ -407,6 +409,9 @@
         if (!alive()) return;
         var inPlayer = !!control && desktopViewport.matches;
         if (desktop === inPlayer) return;
+        var focused = section.contains(document.activeElement) || dialog.contains(document.activeElement) || document.activeElement === shortcut;
+        var focusedControl = section.contains(document.activeElement) ? document.activeElement : null;
+        var scroll = list.scrollTop;
         if (dialog.open) dialog.close();
         desktop = inPlayer;
         if (desktop) {
@@ -421,6 +426,11 @@
         playerHeading.hidden = !desktop;
         section.hidden = desktop && !shown;
         updateWatchSidebar();
+        list.scrollTop = scroll;
+        if (focused) {
+            var target = focusedControl && focusedControl.getClientRects().length ? focusedControl : desktop ? control.el() : sidebarToggle;
+            target.focus({preventScroll:true});
+        }
     }
     function timeupdate() { if (!player.seeking || !player.seeking()) lastPlaybackPosition = positionMs(); if (visible()) showDue(); }
     function seeking() { seekStartPosition = lastPlaybackPosition; }
@@ -445,6 +455,11 @@
     function syncVisibility() { setVisible(expanded); }
     on(stack,'iv:watch-tools-visibility',syncVisibility);
     on(sidebarToggle,'click',function () { navigate(!expanded); });
+    shortcut.hidden = false;
+    on(shortcut,'click',function () {
+        navigate(true);
+        if (visible()) focusWatchTool(sidebarToggle);
+    });
     on(desktopViewport,'change',placeChat);
     on(document,'iv:chat-preferences',applyPreferences);
     on(document,'iv:chat-timing',function (event) { if (!alive() || event.detail.offsetMs === timingMs) return; timingMs=event.detail.offsetMs; if (visible()) selectPosition(true); });

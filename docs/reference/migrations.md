@@ -33,3 +33,5 @@ Every registered migration runs in its own transaction and records its version i
 | 23 | Create tv pairings | [src/invidious/database/migrations/0023_create_tv_pairings.cr](../../src/invidious/database/migrations/0023_create_tv_pairings.cr) |
 | 24 | Create original video titles | [src/invidious/database/migrations/0024_create_original_video_titles.cr](../../src/invidious/database/migrations/0024_create_original_video_titles.cr) |
 | 25 | Bot protection | [src/invidious/database/migrations/0025_bot_protection.cr](../../src/invidious/database/migrations/0025_bot_protection.cr) |
+| 26 | Playback resume eligibility | [src/invidious/database/migrations/0026_playback_resume_eligibility.cr](../../src/invidious/database/migrations/0026_playback_resume_eligibility.cr) |
+| 27 | Watch history completion | [src/invidious/database/migrations/0027_watch_history_completion.cr](../../src/invidious/database/migrations/0027_watch_history_completion.cr) |

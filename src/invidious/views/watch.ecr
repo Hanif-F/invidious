@@ -167,6 +167,17 @@
 <% unless native_clip %><hr><%= rendered "overhaul/watch_destinations" %><% end %>
 </div></details></div></div>
 <p id="share-status" role="status"></p><div id="share-fallback" hidden><label for="share-url"><%= I18n.translate(locale, "ui_share") %></label><input id="share-url" type="url" readonly></div>
+<% has_comments = params.comments.any? { |source| !source.empty? } && video.comments? %>
+<% if has_tools || has_transcript || has_timestamps || has_comments %>
+<div class="toolbar watch-shortcuts" role="group" aria-label="<%= I18n.translate(locale, "overhaul_video_tools") %>">
+  <% if plid %><a class="button" href="#playlist-panel"><%= I18n.translate(locale, "overhaul_queue") %></a><% end %>
+  <% if has_timestamps %><button class="button" type="button" id="timestamp-shortcut" aria-controls="timestamp-panel" aria-expanded="false" hidden><%= I18n.translate(locale, "ui_timestamps") %></button><% end %>
+  <% if has_transcript %><button class="button" type="button" id="transcript-shortcut" aria-controls="transcript-panel" aria-expanded="false" hidden><%= I18n.translate(locale, "ui_transcript") %></button><% end %>
+  <% if video.live_chat_replay? %><button class="button" type="button" id="chat-shortcut" aria-controls="chat-panel" aria-expanded="false" hidden><%= I18n.translate(locale, "ui_chat_replay") %></button><% end %>
+  <% if params.related_videos %><a class="button" href="#tool-next"><%= I18n.translate(locale, "overhaul_up_next") %></a><% end %>
+  <% if has_comments %><a class="button" href="#comments"><%= I18n.translate(locale, "ui_comments") %></a><% end %>
+</div>
+<% end %>
 <%= rendered "overhaul/watch_description" %>
 </div>
 <% if has_tools || has_transcript || has_timestamps || clip_inline %>
@@ -176,7 +187,7 @@
 <% if has_timestamps %><%= rendered "overhaul/watch_timestamps" %><% end %>
 <% if video.live_chat_replay? %><%= rendered "overhaul/watch_chat" %><% end %>
 <% if plid %><%= rendered "overhaul/watch_queue" %><% end %>
-<% if params.related_videos %><section class="watch-tool recommendations" id="tool-next" aria-labelledby="recommendations-heading"><h2 id="recommendations-heading"><%= I18n.translate(locale, "overhaul_up_next") %></h2>
+<% if params.related_videos %><section class="watch-tool recommendations" id="tool-next" aria-labelledby="recommendations-heading"><h2 id="recommendations-heading" tabindex="-1"><%= I18n.translate(locale, "overhaul_up_next") %></h2>
 <% if !native_clip && !preview_clip && !plid %><div class="continue-control" <%= "hidden" if related_videos.empty? %>><label><input id="continue" name="continue" type="checkbox" <%= "checked" if params.continue %>><%= I18n.translate(locale, "preferences_continue_label") %></label></div><% end %>
 <div id="watch-recommendation-items"><%= rendered "overhaul/watch_recommendations" %></div>
 </section><% end %>
@@ -186,7 +197,7 @@
 <%= rendered "overhaul/watch_comments" %>
 </div>
 <% unless native_clip %><% env.set "dearrow_hide_entry", true %><%= rendered "components/dearrow_contributions" %><% end %>
-<dialog id="download-dialog" aria-labelledby="download-heading"><header class="dialog-heading"><h2 id="download-heading"><%= I18n.translate(locale, "Download") %></h2><form method="dialog"><button class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>"><%= Invidious::Frontend::Icons.render("x") %></button></form></header></dialog>
+<dialog id="download-dialog" class="ui-dialog" aria-labelledby="download-heading"><header class="dialog-heading ui-dialog-heading"><h2 id="download-heading"><%= I18n.translate(locale, "Download") %></h2><form method="dialog"><button class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>"><%= Invidious::Frontend::Icons.render("x") %></button></form></header><div class="ui-dialog-body"></div></dialog>
 <details id="download-fallback"><summary><%= I18n.translate(locale, "Download") %></summary><div id="download-options"><%= Invidious::Frontend::WatchPage.download_widget(locale, video, video_assets, spoiler_title_hidden ? Invidious::Frontend::ChannelSpoilers.label(env, :title, spoiler_date.nil?) : original_title) %></div></details>
 <%= rendered "overhaul/watch_clip_config" %>
 <script src="/js/comment-threads.js?v=<%= ASSET_COMMIT %>"></script><script src="/js/watch.js?v=<%= ASSET_COMMIT %>"></script><script src="/js/player-ui.js?v=<%= ASSET_COMMIT %>"></script><script src="/js/player-dock.js?v=<%= ASSET_COMMIT %>"></script>

@@ -4,6 +4,9 @@
 !/docs/tools/
 !/docs/examples/
 !/docs/archive/
+!/docs/implementResponsiveness/
+/docs/implementResponsiveness/*
+!/docs/implementResponsiveness/*.md
 /docs/tools/__pycache__/
 /dev/
 /lib/

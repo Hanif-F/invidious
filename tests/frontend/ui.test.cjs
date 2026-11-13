@@ -418,7 +418,12 @@ async function captionBackgroundPixels(page) {
         const x = Math.floor((left + right) / 2);
         return [{x, y:Math.floor(Math.min(first.top, second.top) + 10)}, {x, y:Math.floor((top + bottom) / 2)}];
     });
-    const screenshot = await page.screenshot();
+    // Keep the player layout while excluding chrome, glyphs, and fading controls.
+    const screenshot = await page.screenshot({animations:'disabled', style:`
+        #player { background:#90a0b0 !important; }
+        #player > :not(.vjs-text-track-display) { opacity:0 !important; transition:none !important; }
+        .vjs-text-track-cue > div { color:transparent !important; text-shadow:none !important; }
+    `});
     return page.evaluate(async ({png, points}) => {
         const image = new Image(); image.src = 'data:image/png;base64,' + png; await image.decode();
         const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
@@ -490,9 +495,11 @@ for (const engine of engines) {
         assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://invidious.test/clip/IVCL' + 'a'.repeat(32));
         assert.equal(await page.locator('meta[name="twitter:player"]').count(), 0);
         assert.equal(await page.locator('#link-yt-embed, #link-iv-embed').count(), 0);
-        assert.ok((await page.locator('#annotations a').getAttribute('href')).startsWith('/clip/IVCL'));
         assert.ok((await page.locator('#link-iv-listen').getAttribute('href')).startsWith('/clip/IVCL'));
         assert.equal(await page.locator('.watch-heading script').count(), 0);
+        await openPlayerAdvancedAction(page, await page.evaluate(() => video_data.params.annotations ? player_data.hide_annotations : player_data.show_annotations));
+        await page.waitForURL(url => url.searchParams.has('iv_load_policy'));
+        assert.equal(new URL(page.url()).pathname, '/clip/IVCL' + 'a'.repeat(32));
         await page.screenshot({path:path.join(artifacts, `${engine}-native-clip.png`)});
         assert.deepEqual(errors, []); await context.close();
     });
@@ -1242,21 +1249,15 @@ for (const engine of engines) {
             });
             assert.equal(chrome, true);
             assert.equal(await page.locator('.invidious-caption-backgrounds').evaluate(el => el.style.opacity), '1');
-            // A solid backing makes the screenshot colors independent of video
-            // decoding, while invisible glyphs leave all text geometry intact.
-            const pixelStyle = await page.addStyleTag({content:'#player{background:#90a0b0!important}#player .vjs-tech,#player .vjs-poster,#player .vjs-control-bar{visibility:hidden!important}.vjs-text-track-cue>div{color:transparent!important;text-shadow:none!important}'});
             const opacities = touch ? ['1','0.5','0'] : fixture==='embed-mobile' ? ['1','0','0.5'] : ['0','0.5','1'];
             let geometry;
             for (const color of ['#000','#F00']) for (const opacity of opacities) {
-                // Show the controls only while navigating the actual appearance menu.
-                await pixelStyle.evaluate(el => el.sheet.disabled=true);
                 const panel = await openCaptionAppearance(page);
                 await panel.locator('.vjs-font-percent select').selectOption('0.50');
                 await panel.locator('.vjs-bg-color > select').selectOption(color);
                 await panel.locator('.vjs-bg-opacity select').selectOption(opacity);
                 await panel.locator('.vjs-done-button').click();
                 await panel.getByRole('button', {name:'Close',exact:true}).click();
-                await pixelStyle.evaluate(el => el.sheet.disabled=false);
                 const pixels = await captionBackgroundPixels(page);
                 const rgb = color==='#000'?[0,0,0]:[255,0,0];
                 const expected = rgb.map((value,i) => Math.round(value*Number(opacity)+[144,160,176][i]*(1-Number(opacity))));
@@ -1266,12 +1267,9 @@ for (const engine of engines) {
                 if (geometry) assert.deepEqual(next, geometry, 'appearance modes preserve row spacing');
                 geometry = next;
                 if (color==='#000' && opacity==='0.5') {
-                    await pixelStyle.evaluate(el=>el.sheet.disabled=true);
                     await page.locator('#player').screenshot({path:path.join(artifacts,`${engine}-caption-backgrounds-semi-${touch?'touch':fixture}.png`)});
-                    await pixelStyle.evaluate(el=>el.sheet.disabled=false);
                 }
             }
-            await pixelStyle.evaluate(el => el.remove());
             await page.locator('#player').screenshot({path:path.join(artifacts,`${engine}-caption-backgrounds-${touch?'touch':fixture}.png`)});
             await page.reload();
             await page.waitForFunction(() => window.player && player.isReady_);
@@ -2632,7 +2630,7 @@ for (const engine of engines) {
         ];
         const {page, context, errors} = await pageFor(engine, {realPlayer:true, sponsorblock: {enabled:true, modes:{sponsor:'manual', intro:'auto', filler:'disabled', outro:'marker'}}, sponsorblockSegments:segments});
         await page.waitForFunction(() => window.player && typeof player.play === 'function');
-        await page.evaluate(() => { player.muted(true); player.play(); });
+        await page.evaluate(async () => { player.muted(true); await player.play(); });
         await page.waitForFunction(() => player.duration() > 0 && document.querySelectorAll('.sb-range').length === 4);
         await page.evaluate(() => { player.pause(); player.currentTime(.7); });
         await page.waitForFunction(() => document.querySelector('.sb-overlay').classList.contains('sb-visible'));
@@ -4310,7 +4308,7 @@ for (const engine of engines) {
         assert.deepEqual((await cards.locator('h3').allTextContents()).map(text => text.trim()), fixture.map(item => item.lockupViewModel.metadata.lockupMetadataViewModel.title.content));
         assert.deepEqual(await cards.locator('.duration').allTextContents(), ['15:41', '16:19', '20:14']);
         assert.equal(await cards.nth(0).getAttribute('data-channel-id'), 'UCX6OQ3DkcsbYNE6H8uQQuVA');
-        assert.equal(await cards.nth(1).locator('.channel-meta a[href="/channel/UCIPPMRA040LQr5QPyJEbmXA"]').count(), 1);
+        assert.equal(await cards.nth(1).locator('.watch-video-channel a[href="/channel/UCIPPMRA040LQr5QPyJEbmXA"]').count(), 1);
         assert.equal(await cards.nth(2).getAttribute('data-channel-id'), '');
         assert.ok((await cards.nth(2).innerText()).includes('MrBeast 2 and MrBeast'));
         assert.equal(await cards.nth(2).locator('a[href^="/channel/"]').count(), 0);

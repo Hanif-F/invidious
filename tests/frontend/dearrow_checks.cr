@@ -3,7 +3,7 @@ def check_dearrow_preferences
   invalid.params.url["id"] = "invalid"
   response = Invidious::Routes::API::V1::DeArrow.title(invalid)
   raise "Invalid ID accepted" unless invalid.response.status_code == 400 && JSON.parse(response)["error"]?
-  raise "Wrong API content type" unless invalid.response.content_type == "application/json"
+  raise "Wrong API content type" unless invalid.response.headers["Content-Type"]? == "application/json"
 
   defaults = Preferences.from_json("{}")
   raise "DeArrow must be opt-in" if defaults.dearrow_enabled

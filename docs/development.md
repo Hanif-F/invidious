@@ -113,7 +113,7 @@ The account/clip/avatar harnesses additionally require an empty database. Read [
 
 ## Choosing checks for a change
 
-Parser/model changes need focused specs and full compile checking. Route/auth/database changes need matching PostgreSQL/production-route harnesses. Templates/player/styles/storage need fixture rendering and relevant Node/browser coverage, including the 1280–1920px desktop matrix, RTL and keyboard interactions. Preserve existing shared touch/embed contracts; mobile website redesign is deferred. Schema changes need both fresh SQL and a numbered migration, plus migration tracking/backfill tests. API-only builds catch accidental GUI assumptions. Documentation updates need reference regeneration and local link/coverage checks.
+Parser/model changes need focused specs and full compile checking. Route/auth/database changes need matching PostgreSQL/production-route harnesses. Templates, player, styles, and storage changes need production fixtures and relevant browser coverage, including phone portrait, short landscape, the 1280–1920 px desktop matrix, RTL, and keyboard interactions. Preserve the shared touch and embed contracts. Schema changes need both fresh SQL and a numbered migration, plus migration tracking and backfill tests. API-only builds catch assumptions about the web UI. Documentation updates need reference regeneration and local link and coverage checks.
 
 Keep tests meaningful: fixture/browser passes do not certify real upstream parsing forever, physical codec decoding or deployed proxy security. Historical known failures in `SECURITY_READINESS.md` are prior observations, not current test execution results.
 

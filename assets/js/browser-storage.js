@@ -145,6 +145,7 @@ window.InvidiousStorage = (function () {
             });
             // Leave manual recovery available if the browser cancels the automatic reload.
             notice.hidden = false;
+            window.dispatchEvent(new Event('iv:profile-recovery'));
         }
 
         if (context.posted) return;

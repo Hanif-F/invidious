@@ -76,6 +76,7 @@
     window.invidiousTurnstileReady = function () {
         if (!active || paused || widget !== undefined) return;
         widget = window.turnstile.render('#turnstile-widget', {
+            size: document.getElementById('turnstile-widget').clientWidth < 300 ? 'compact' : 'normal',
             sitekey: config.siteKey, action: 'instance_access', callback: complete,
             'error-callback': function () { failure(word('load_error')); },
             'expired-callback': function () { failure(word('expired')); },

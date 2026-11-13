@@ -16,3 +16,15 @@
 @media (forced-colors:active){.embed-page .watch-on-invidious{color:LinkText}.embed-status{border-color:CanvasText}}
 .embed-page .browser-save-status:empty{display:none}
 .embed-page .browser-save-status:not(:empty){position:absolute;inset-inline:16px;inset-block-end:48px;max-width:640px;margin:0 auto;padding:12px;border:1px solid var(--border);border-radius:var(--panel-radius);background:var(--raised);color:var(--text);font:14px/1.5 system-ui,sans-serif;z-index:6}
+
+@media (width < 768px), (width < 960px) and (orientation: landscape) and (height <= 500px) {
+    .embed-page .embed-status, .embed-page .browser-save-status:not(:empty) {
+        inset-inline: max(8px, env(safe-area-inset-left), env(safe-area-inset-right));
+        max-block-size: calc(100dvh - 56px);
+        overflow: auto;
+        overscroll-behavior: contain;
+        padding: 8px;
+    }
+    .embed-status .button { margin-block-start: 4px; }
+    .embed-page[data-embed-state=blocked] .standalone-content { margin: 0 auto; }
+}

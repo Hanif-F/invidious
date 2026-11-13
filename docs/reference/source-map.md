@@ -4,7 +4,7 @@
 
 Generated from the first-party source tree, styles, browser modules and project tooling by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-This inventory covers **455 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
+This inventory covers **459 implementation and tooling files**. Names below describe each file's subject; directory introductions explain its role. Vendored `lib/` and `assets/videojs/`, translated locale JSON, binary artwork, mock data and generated test artifacts are described as families in [development](../development.md) and [frontend](../frontend.md). They are not expanded into duplicate source inventories.
 
 ## .github/workflows
 
@@ -218,6 +218,7 @@ Domain models and cross-cutting integrations, configuration and routing.
 | [src/invidious/native_playlists.cr](../../src/invidious/native_playlists.cr) | native playlists |
 | [src/invidious/native_preferences.cr](../../src/invidious/native_preferences.cr) | native preferences |
 | [src/invidious/original_titles.cr](../../src/invidious/original_titles.cr) | original titles |
+| [src/invidious/playback_progress.cr](../../src/invidious/playback_progress.cr) | playback progress |
 | [src/invidious/playlists/mixes.cr](../../src/invidious/playlists/mixes.cr) | mixes |
 | [src/invidious/playlists/playlists.cr](../../src/invidious/playlists/playlists.cr) | playlists |
 | [src/invidious/routing.cr](../../src/invidious/routing.cr) | routing |
@@ -312,6 +313,8 @@ Versioned transactional schema changes.
 | [src/invidious/database/migrations/0023_create_tv_pairings.cr](../../src/invidious/database/migrations/0023_create_tv_pairings.cr) | 0023 create tv pairings |
 | [src/invidious/database/migrations/0024_create_original_video_titles.cr](../../src/invidious/database/migrations/0024_create_original_video_titles.cr) | 0024 create original video titles |
 | [src/invidious/database/migrations/0025_bot_protection.cr](../../src/invidious/database/migrations/0025_bot_protection.cr) | 0025 bot protection |
+| [src/invidious/database/migrations/0026_playback_resume_eligibility.cr](../../src/invidious/database/migrations/0026_playback_resume_eligibility.cr) | 0026 playback resume eligibility |
+| [src/invidious/database/migrations/0027_watch_history_completion.cr](../../src/invidious/database/migrations/0027_watch_history_completion.cr) | 0027 watch history completion |
 ## src/invidious/frontend
 
 Presentation helpers for cards, filters, history, channels and page data.
@@ -594,6 +597,7 @@ Server-rendered ECR pages and reusable UI components; see frontend documentation
 | [src/invidious/views/overhaul/watch_queue.ecr](../../src/invidious/views/overhaul/watch_queue.ecr) | watch queue |
 | [src/invidious/views/overhaul/watch_recommendation.ecr](../../src/invidious/views/overhaul/watch_recommendation.ecr) | watch recommendation |
 | [src/invidious/views/overhaul/watch_recommendations.ecr](../../src/invidious/views/overhaul/watch_recommendations.ecr) | watch recommendations |
+| [src/invidious/views/overhaul/watch_timestamps.ecr](../../src/invidious/views/overhaul/watch_timestamps.ecr) | watch timestamps |
 | [src/invidious/views/overhaul/watch_transcript.ecr](../../src/invidious/views/overhaul/watch_transcript.ecr) | watch transcript |
 | [src/invidious/views/playlist.ecr](../../src/invidious/views/playlist.ecr) | playlist |
 | [src/invidious/views/post.ecr](../../src/invidious/views/post.ecr) | post |

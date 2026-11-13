@@ -5,3 +5,14 @@
 .verification-panel .verification-toggle{display:flex;align-items:start;gap:12px}.verification-toggle input{flex:none;margin-block-start:4px}.verification-panel select{width:fit-content}
 .verification-panel [role=alert]{border-inline-start-color:var(--danger)}.verification-panel noscript{display:block;margin-block:16px;color:var(--danger)}
 #turnstile-widget{max-width:100%;margin-block:24px}#verification-status{margin-block:16px}.verification-links{padding-block-start:24px;border-block-start:1px solid var(--separator)}
+
+@media (width < 768px), (width < 960px) and (orientation: landscape) and (height <= 500px) {
+    .verification-panel {
+        margin: max(var(--phone-gutter), var(--safe-top)) max(var(--phone-gutter), var(--safe-right))
+            max(var(--phone-gutter), var(--safe-bottom)) max(var(--phone-gutter), var(--safe-left));
+        padding: var(--phone-gutter);
+        overflow-wrap: anywhere;
+    }
+    .verification-panel > header, .verification-panel .brand, #turnstile-widget { margin-block-end: var(--s3); }
+    .verification-panel select { width: 100%; }
+}

@@ -8,7 +8,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="thumbnail" content="<%= HTML.escape(display_thumbnail) %>">
     <link rel="stylesheet" href="/css/foundation.css?v=<%= ASSET_COMMIT %>">
     <script id="browser-profile" type="application/json"><%= {scope: Invidious::BrowserProfiles.render_scope(env), cookieDomain: Invidious::Authentication.cookie_domain(env), saveError: I18n.translate(preferences.locale, "browser_save_error")}.to_json.gsub("<", "\\u003c") %></script>

@@ -39,7 +39,7 @@ async function toggleTranscript(page) {
 }
 async function setup(engine,screen,mode='light',options={}) {
     const fixture=options.fixture || `overhaul-${screen}-${mode}`;
-    const context=await browsers[engine].newContext({viewport:{width:options.width||1440,height:options.height||900},colorScheme:mode==='dark'?'dark':'light',reducedMotion:'reduce',javaScriptEnabled:options.javascript!==false});
+    const context=await browsers[engine].newContext({viewport:{width:options.width||1440,height:options.height||900},colorScheme:mode==='dark'?'dark':'light',reducedMotion:'reduce',javaScriptEnabled:options.javascript!==false,hasTouch:!!options.touch});
     if(options.init)await context.addInitScript(options.init);
     const page=await context.newPage(),requests=[],errors=[];
     page.setDefaultTimeout(10000);
@@ -74,7 +74,7 @@ async function setup(engine,screen,mode='light',options={}) {
         return route.fulfill({contentType:'application/json',body:'{}'});
     });
     await page.goto('https://invidious.test'+(options.url || ({browse:'/feed/popular',watch:'/watch?v=2isYuQZMbdU&list=PLfixture&index=2',playlist:'/playlist?list=IVfixture',settings:'/preferences?section=appearance'}[screen])));
-    if(options.javascript!==false)await page.waitForFunction(()=>document.body.dataset.uiInitialized==='true');
+    if(options.javascript!==false && options.waitForUI!==false)await page.waitForFunction(()=>document.body.dataset.uiInitialized==='true');
     if(screen === 'watch'&&options.javascript!==false) await page.evaluate(()=>player.load());
     return {page,context,requests,errors};
 }
@@ -143,6 +143,344 @@ for(const engine of engines) {
         await watching.page.locator('#sidebar-toggle').click();await watching.page.locator('.nav-scrim').click({position:{x:500,y:100}});
         assert.equal(await watching.page.locator('#sidebar-toggle').getAttribute('aria-expanded'),'false');
         assert.deepEqual(watching.errors,[]);await watching.context.close();
+    });
+    test(`${engine}: phone shell, sticky header and transient drawer`,async()=>{
+        const {page,context,errors}=await setup(engine,'browse','light',{width:320,height:568});
+        try {
+            const trigger=page.locator('#sidebar-toggle'), sidebar=page.locator('#app-sidebar');
+            assert.equal(await page.getByRole('navigation').and(sidebar).count(),0);
+            assert.equal(await trigger.getAttribute('aria-expanded'),'false');
+            await page.locator('main').focus();
+            await page.keyboard.press('/');
+            await assertFocus(page,'#searchbox');
+            await page.evaluate(()=>window.scrollTo(0,200));
+            await page.waitForFunction(()=>scrollY>0);
+            assert.equal(await page.locator('.app-header-top').evaluate(el=>Math.round(el.getBoundingClientRect().top)),0);
+            assert.ok(await page.locator('.header-search').evaluate(el=>el.getBoundingClientRect().bottom<0));
+            const scroll=await page.evaluate(()=>scrollY);
+            // Click the sticky trigger where it is already painted.
+            const triggerBox=await trigger.boundingBox();
+            await page.mouse.click(triggerBox.x+triggerBox.width/2,triggerBox.y+triggerBox.height/2);
+            await assertFocus(page,'.sidebar-link:first-child');
+            assert.equal(await page.locator('main').evaluate(el=>el.inert),true);
+            assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).overflow),'hidden');
+            await page.keyboard.press('Shift+Tab');
+            await assertFocus(page,'#sidebar-toggle');
+            await page.keyboard.press('Shift+Tab');
+            await assertFocus(page,'.sidebar-settings');
+            await page.screenshot({path:path.join(artifacts,`${engine}-phone-drawer-320.png`)});
+            await page.keyboard.press('Escape');
+            await assertFocus(page,'#sidebar-toggle');
+            assert.equal(await sidebar.isVisible(),false);
+            assert.equal(await page.evaluate(()=>scrollY),scroll);
+            await trigger.click();
+            await page.locator('.nav-scrim').click({position:{x:308,y:150}});
+            await assertFocus(page,'#sidebar-toggle');
+            for (const [width,height,phone] of [[767,900,true],[768,900,false],[740,600,true],[959,390,true],[960,390,false],[844,500,true],[844,501,false],[568,320,true]]) {
+                await page.setViewportSize({width,height});
+                await page.waitForFunction(value=>InvidiousUI.phoneViewport.matches===value,phone);
+                await page.waitForFunction(value=>!!document.querySelector('#app-sidebar').getClientRects().length===!value,phone);
+                if(width===740) assert.equal(await page.locator('.app-header-top').evaluate(el=>getComputedStyle(el).position),'relative');
+            }
+            await page.evaluate(()=>window.scrollTo(0,180));
+            await page.waitForFunction(()=>document.querySelector('.app-header-top').getBoundingClientRect().bottom<0);
+            await trigger.click();
+            await page.setViewportSize({width:1280,height:720});
+            await page.waitForFunction(()=>!document.querySelector('main').inert && !document.documentElement.hasAttribute('data-phone-scroll-lock'));
+            await page.setViewportSize({width:320,height:568});
+            await page.waitForFunction(()=>document.activeElement.id==='sidebar-toggle' && !document.querySelector('#app-sidebar').getClientRects().length);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
+    test(`${engine}: phone drawer keeps keyboard focus visible when it wraps`,async()=>{
+        const {page,context}=await setup(engine,'browse','light',{width:568,height:320});
+        try {
+            const trigger=page.locator('#sidebar-toggle');
+            const sidebar=page.locator('#app-sidebar');
+            await page.addStyleTag({content:'.app-sidebar .sidebar-link { min-block-size: 120px; }'});
+            await trigger.click();
+            await assertFocus(page,'.sidebar-link:first-child');
+            await page.keyboard.press('Shift+Tab');
+            await assertFocus(page,'#sidebar-toggle');
+            await page.keyboard.press('Shift+Tab');
+            await assertFocus(page,'.sidebar-settings');
+            assert.ok(await sidebar.evaluate(el=>el.scrollTop>0));
+            const bounds=await sidebar.boundingBox(), focused=await page.locator('.sidebar-settings').boundingBox();
+            assert.ok(focused.y>=bounds.y && focused.y+focused.height<=bounds.y+bounds.height+1);
+            await page.keyboard.press('Escape');
+            await assertFocus(page,'#sidebar-toggle');
+        } finally { await context.close(); }
+    });
+    test(`${engine}: signed-in phone navigation and account menu fit RTL safe areas`,async()=>{
+        const {page,context,errors}=await setup(engine,'browse','light',{fixture:'browse-signed-in',width:320,height:568});
+        try {
+            await page.locator('html').evaluate(el=>el.dir='rtl');
+            await page.addStyleTag({content:':root { --safe-left: 20px; --safe-right: 26px; --safe-top: 12px; --safe-bottom: 18px; }'});
+            const trigger=page.locator('#sidebar-toggle'), account=page.locator('.header-account > summary');
+            const nav=page.getByRole('navigation').and(page.locator('#app-sidebar'));
+            for(const viewport of [{width:320,height:568},{width:568,height:320}]) {
+                await page.setViewportSize(viewport);
+                assert.equal(await nav.count(),0);
+                await trigger.press('Enter');
+                await nav.waitFor();
+                assert.equal(await nav.count(),1);
+                const drawer=await nav.boundingBox();
+                assert.ok(Math.abs(drawer.x+drawer.width-viewport.width)<=1);
+                assert.ok(drawer.y>=12 && drawer.y+drawer.height<=viewport.height-18+1);
+                const links=nav.getByRole('link');
+                assert.deepEqual(await links.evaluateAll(nodes=>nodes.map(link=>link.getAttribute('href'))),[
+                    '/feed/popular','/feed/trending','/feed/subscriptions','/feed/playlists','/feed/history','/feed/clips','/preferences?section=appearance'
+                ]);
+                for(const link of await links.all()) {
+                    assert.equal(await link.evaluate(el=>el===document.activeElement),true);
+                    await page.keyboard.press('Tab');
+                }
+                await assertFocus(page,'#sidebar-toggle');
+                await page.locator('.nav-scrim').click({position:{x:12,y:90}});
+                await assertFocus(page,'#sidebar-toggle');
+                await account.press('ArrowDown');
+                await assertFocus(page,'.header-account a[href="/account"]');
+                const menu=page.locator('.header-account .menu-content');
+                const menuBox=await menu.boundingBox();
+                assert.ok(menuBox.x>=27 && menuBox.x+menuBox.width<=viewport.width-33);
+                assert.ok(menuBox.y>=19 && menuBox.y+menuBox.height<=viewport.height-25);
+                assert.equal(await menu.locator('form[action^="/signout"]').getAttribute('method'),'post');
+                await page.keyboard.press('Escape');
+                await assertFocus(page,'.header-account > summary');
+            }
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
+    test(`${engine}: phone feedback follows a focused control as the page scrolls`,async()=>{
+        const {page,context,errors}=await setup(engine,'browse','light',{width:320,height:568});
+        try {
+            await page.evaluate(()=>{
+                const main=document.getElementById('main-content');
+                const space=document.createElement('div');
+                space.style.height='800px';
+                const control=document.createElement('button');
+                control.id='notice-focus-fixture';
+                control.textContent='Keep reading';
+                main.prepend(space,control);
+                window.scrollTo(0,control.offsetTop-200);
+                control.focus({preventScroll:true});
+                InvidiousUI.notice('A long status message '.repeat(12),()=>{window.noticeRetried=true;});
+            });
+            const notice=page.locator('#ui-notice');
+            await notice.waitFor();
+            assert.equal(await page.locator('html').getAttribute('data-notice-at-top'),null);
+            for(const viewport of [{width:320,height:568},{width:568,height:320}]) {
+                await page.setViewportSize(viewport);
+                await page.evaluate(()=>{
+                    const control=document.getElementById('notice-focus-fixture');
+                    window.scrollBy(0,control.getBoundingClientRect().bottom-innerHeight+20);
+                });
+                await page.waitForFunction(()=>{
+                    const notice=document.getElementById('ui-notice').getBoundingClientRect();
+                    const focus=document.getElementById('notice-focus-fixture').getBoundingClientRect();
+                    return notice.left>=7 && notice.right<=innerWidth-7 && notice.top>=7 && notice.bottom<=focus.top;
+                });
+                await assertFocus(page,'#notice-focus-fixture');
+            }
+            await notice.getByRole('button',{name:'Retry',exact:true}).click();
+            assert.equal(await page.evaluate(()=>window.noticeRetried),true);
+            await notice.getByRole('button',{name:'Close',exact:true}).click();
+            await notice.waitFor({state:'hidden'});
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
+    test(`${engine}: phone native navigation survives disabled and failed scripts`,async()=>{
+        for (const javascript of [false,true]) {
+            const {page,context}=await setup(engine,'browse','light',{
+                width:390,height:844,javascript,waitForUI:false,
+                reply:entry=>javascript&&entry.url.pathname==='/js/overhaul.js'?{status:503,body:''}:null
+            });
+            try {
+                const disclosure=page.locator('#app-navigation');
+                assert.equal(await disclosure.getAttribute('open'),null);
+                assert.equal(await disclosure.locator('nav').isVisible(),false);
+                await disclosure.locator('summary').focus();
+                await page.keyboard.press('Enter');
+                await disclosure.getByRole('link',{name:'Trending'}).click();
+                await page.waitForURL('**/feed/trending');
+            } finally { await context.close(); }
+        }
+    });
+    test(`${engine}: phone Watch shortcuts focus existing tools and retain playback through rotation`,async()=>{
+        const {page,context,errors,requests}=await setup(engine,'watch','light',{
+            fixture:'d5-transcript-only-light',url:'/watch?v=2isYuQZMbdU',width:320,height:568
+        });
+        try {
+            await page.waitForFunction(()=>window.player&&player.readyState()>0);
+            await page.evaluate(()=>{window.originalMedia=player.tech(true).el();player.pause();player.currentTime(1);});
+            assert.equal(await page.locator('.vjs-theater-control').isVisible(),false);
+            assert.equal(await page.locator('#timestamp-shortcut').count(),0);
+            await page.locator('#transcript-shortcut').click();
+            await assertFocus(page,'#transcript-heading');
+            await page.waitForFunction(()=>document.querySelector('.transcript-line'));
+            await page.locator('#transcript-shortcut').click();
+            await assertFocus(page,'#transcript-heading');
+            assert.equal(requests.filter(r=>r.url.pathname==='/js/transcript.js').length,1);
+            await page.screenshot({path:path.join(artifacts,`${engine}-phone-transcript-320.png`)});
+            await page.setViewportSize({width:844,height:390});
+            await page.locator('#transcript-close').click();
+            await assertFocus(page,'#transcript-shortcut');
+            await page.setViewportSize({width:960,height:390});
+            await page.waitForFunction(()=>!document.querySelector('.vjs-theater-control').classList.contains('vjs-hidden'));
+            assert.equal(await page.locator('.watch-shortcuts').isVisible(),false);
+            assert.equal(await page.evaluate(()=>player.tech(true).el()===originalMedia && player.paused() && Math.abs(player.currentTime()-1)<.1),true);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
+    test(`${engine}: phone fine pointer keeps player Settings reachable`,async()=>{
+        const {page,context,errors}=await setup(engine,'watch','light',{
+            fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',width:320,height:568
+        });
+        try {
+            await page.waitForFunction(()=>window.player&&player.readyState()>0);
+            const gear=page.locator('.vjs-desktop-settings');
+            await gear.click();
+            const panel=page.getByRole('dialog',{name:'Settings',exact:true});
+            await panel.waitFor();
+            await panel.getByRole('menuitem',{name:/Playback speed|Speed/}).click();
+            assert.ok(await panel.getByRole('menuitemradio').count()>0);
+            await panel.getByRole('menuitemradio').last().scrollIntoViewIfNeeded();
+            const box=await panel.boundingBox();
+            assert.ok(box.x>=0 && box.x+box.width<=320 && box.y>=0 && box.y+box.height<=568,JSON.stringify(box));
+            await page.screenshot({path:path.join(artifacts,`${engine}-phone-player-settings-320.png`)});
+            await panel.getByRole('button',{name:'Close',exact:true}).click();
+            await assertFocus(page,'.vjs-desktop-settings');
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
+    test(`${engine}: phone Watch opens chapters and reuses inline replay through rotation`,async()=>{
+        const chapters=await setup(engine,'watch','light',{
+            fixture:'d5-timestamps-only-light',url:'/watch?v=2isYuQZMbdU',width:390,height:844
+        });
+        try {
+            const {page,errors}=chapters;
+            await page.locator('#timestamp-shortcut').click();
+            await assertFocus(page,'#timestamp-heading');
+            assert.ok(await page.locator('#timestamp-list li').count()>1);
+            await page.locator('#timestamp-shortcut').click();
+            await assertFocus(page,'#timestamp-heading');
+            await page.locator('#timestamp-close').click();
+            await assertFocus(page,'#timestamp-shortcut');
+            assert.deepEqual(errors,[]);
+        } finally { await chapters.context.close(); }
+
+        const replay=await setup(engine,'watch','light',{
+            fixture:'d5-replay-light',url:'/watch?v=2isYuQZMbdU',width:390,height:844,
+            reply:entry=>entry.url.pathname.startsWith('/api/v1/live_chat/')
+                ?{json:{messages:[replayMessage('phone-replay',0,'A message on the phone')],removedIds:[],continuation:null}}
+                :null
+        });
+        try {
+            const {page,errors,requests}=replay;
+            await page.locator('#chat-shortcut').click();
+            await assertFocus(page,'#chat-toggle');
+            await page.getByText('A message on the phone').waitFor();
+            const reads=()=>requests.filter(r=>r.url.pathname.startsWith('/api/v1/live_chat/')).length;
+            const initial=reads();
+            await page.evaluate(()=>{window.chatPanel=document.getElementById('tool-chat');window.chatMedia=player.tech(true).el();});
+            await page.setViewportSize({width:1280,height:720});
+            await page.waitForFunction(()=>document.querySelector('.video-js > #tool-chat')===chatPanel);
+            await page.setViewportSize({width:844,height:390});
+            await page.waitForFunction(()=>document.querySelector('#watch-tools > #tool-chat')===chatPanel);
+            await page.locator('#chat-shortcut').click();
+            await assertFocus(page,'#chat-toggle');
+            assert.equal(await page.getByText('A message on the phone').isVisible(),true);
+            assert.equal(await page.evaluate(()=>player.tech(true).el()===chatMedia),true);
+            assert.equal(reads(),initial);
+            assert.deepEqual(errors,[]);
+        } finally { await replay.context.close(); }
+    });
+    test(`${engine}: coarse pointer keeps touch controls across phone and wide layouts`,async()=>{
+        const {page,context,errors}=await setup(engine,'watch','light',{
+            fixture:'d5-single-light',url:'/watch?v=2isYuQZMbdU',width:320,height:568,touch:true
+        });
+        try {
+            if (!await page.evaluate(()=>matchMedia('(pointer: coarse)').matches)) return;
+            await page.locator('.vjs-mobile-settings').tap();
+            const panel=page.locator('.mobile-player-settings[open]');
+            await panel.waitFor();
+            await panel.getByRole('button',{name:'Close',exact:true}).tap();
+            await panel.waitFor({state:'hidden'});
+            await page.setViewportSize({width:1280,height:720});
+            assert.equal(await page.evaluate(()=>matchMedia('(pointer: coarse)').matches && !InvidiousUI.phoneViewport.matches),true);
+            assert.equal(await page.locator('.vjs-mobile-settings').count(),1);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
+    test(`${engine}: phone legacy annotations keep their overlay inside the same player`,async()=>{
+        const annotations = `<document><annotations><annotation type="text" style="popup">
+            <TEXT>Fixture annotation</TEXT>
+            <segment><movingRegion type="rect">
+                <rectRegion x="10" y="20" w="35" h="18" t="0:00:00.100"/>
+                <rectRegion x="10" y="20" w="35" h="18" t="0:00:03.500"/>
+            </movingRegion></segment>
+        </annotation></annotations></document>`;
+        const {page,context,errors,requests}=await setup(engine,'watch','light',{
+            fixture:'d5-annotations-light',url:'/watch?v=2isYuQZMbdU&iv_load_policy=1',width:320,height:568,
+            reply:entry=>entry.url.pathname==='/api/v1/annotations/2isYuQZMbdU'?{contentType:'text/xml',body:annotations}:null
+        });
+        try {
+            await page.waitForFunction(()=>typeof player.youtubeAnnotationsPlugin==='function');
+            await page.evaluate(async()=>{
+                window.annotatedMedia=player.tech(true).el();
+                player.loop(true);
+                await player.play();
+            });
+            const annotation=page.locator('#player .__cxt-ar-annotation__').filter({hasText:'Fixture annotation'});
+            await annotation.waitFor();
+            await page.evaluate(()=>player.pause());
+            for(const viewport of [{width:320,height:568},{width:844,height:390}]) {
+                await page.setViewportSize(viewport);
+                await page.waitForFunction(()=>{
+                    const frame=player.el().getBoundingClientRect();
+                    const overlay=document.querySelector('.__cxt-ar-annotations-container__').getBoundingClientRect();
+                    const box=document.querySelector('.__cxt-ar-annotation__').getBoundingClientRect();
+                    return box.height>0 && Math.abs(box.width-overlay.width*.35)<=1 && box.left>=frame.left &&
+                        box.right<=frame.right && box.top>=frame.top && box.bottom<=frame.bottom;
+                });
+            }
+            assert.equal(await page.evaluate(()=>player.tech(true).el()===annotatedMedia && player.paused()),true);
+            assert.equal(requests.filter(entry=>entry.url.pathname.startsWith('/api/v1/annotations/')).length,1);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
+    test(`${engine}: phone VR keeps its canvas and controls inside the same player`,async t=>{
+        const {page,context,errors}=await setup(engine,'watch','light',{
+            fixture:'d5-vr-light',url:'/watch?v=2isYuQZMbdU&vr_mode=1',width:320,height:568
+        });
+        try {
+            assert.equal(await page.evaluate(()=>video_data.vr && video_data.params.vr_mode && player.crossOrigin()==='anonymous'),true);
+            await page.waitForFunction(()=>player.readyState()>=1);
+            await page.evaluate(()=>{window.vrMedia=player.tech(true).el();});
+            if(!await page.evaluate(()=>!!document.createElement('canvas').getContext('webgl'))) {
+                t.diagnostic('Headless WebGL is unavailable. Checking the production VR asset and ordinary media playback.');
+                assert.equal(await page.locator('script[src*="/videojs-vr/videojs-vr.js"]').count(),1);
+                await page.setViewportSize({width:844,height:390});
+                await page.evaluate(()=>player.play());
+                await page.waitForFunction(()=>player.currentTime()>0 && player.tech(true).el()===vrMedia);
+                return;
+            }
+            const canvas=page.locator('#player > canvas');
+            await canvas.waitFor();
+            await page.evaluate(()=>{window.vrCanvas=player.el().querySelector('canvas');});
+            for(const viewport of [{width:320,height:568},{width:844,height:390}]) {
+                await page.setViewportSize(viewport);
+                const frame=await page.locator('#player').boundingBox(), rendered=await canvas.boundingBox();
+                assert.ok(rendered.x>=frame.x-1 && rendered.x+rendered.width<=frame.x+frame.width+1);
+                assert.ok(rendered.y>=frame.y-1 && rendered.y+rendered.height<=frame.y+frame.height+1);
+                const play=page.locator('#player .vjs-big-vr-play-button');
+                await play.waitFor();
+                await play.focus();
+                assert.equal(await play.evaluate(el=>el===document.activeElement),true);
+            }
+            assert.equal(await page.evaluate(()=>player.tech(true).el()===vrMedia && player.el().querySelector('canvas')===vrCanvas),true);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
     });
     test(`${engine}: D1 actual player survives transcript toggling and transcript is deferred`,async()=>{
         const{page,context,requests,errors}=await setup(engine,'watch');
@@ -432,6 +770,42 @@ for(const engine of engines) {
 function settingsFixture(section) { return fs.readFileSync(path.join(generated,'settings-'+section+'.html'),'utf8'); }
 function settingsConfig(section) { return JSON.parse(settingsFixture(section).match(/<script id="settings-config" type="application\/json">([\s\S]*?)<\/script>/)[1]); }
 for (const engine of engines) {
+    test(`${engine}: phone Settings Go retains drafts and recovers a category load`,async()=>{
+        let failBrowsing=true;
+        const {page,context,requests,errors}=await setup(engine,'settings','light',{
+            width:320,height:568,fixture:'settings-appearance',reply({url,method}){
+                const section=url.searchParams.get('section')||'appearance';
+                if(url.pathname!=='/preferences'||method!=='GET')return;
+                if(section==='browsing'&&failBrowsing){failBrowsing=false;return{status:503,contentType:'application/json',body:'{}'};}
+                return{contentType:'text/html',body:settingsFixture(section)};
+            }
+        });
+        try {
+            const picker=page.locator('#settings-category-select'), go=page.getByRole('button',{name:'Go',exact:true});
+            assert.equal(await picker.inputValue(),'/preferences?section=appearance');
+            assert.equal(await picker.locator('option[value="/preferences?section=library"]').count(),1);
+            assert.equal(await picker.locator('option[value="/admin/settings"]').count(),0);
+            await page.locator('#setting-dark_mode').selectOption('dark');
+            await page.locator('#settings-search').fill('Default speed');
+            await picker.selectOption('/preferences?section=browsing');
+            assert.equal(requests.filter(r=>r.url.searchParams.get('section')==='browsing').length,0);
+            await go.click();
+            await page.getByRole('button',{name:'Retry',exact:true}).waitFor();
+            assert.equal(await picker.inputValue(),'/preferences?section=appearance');
+            assert.equal(await page.locator('#settings-search').inputValue(),'');
+            await page.getByRole('button',{name:'Retry',exact:true}).click();
+            await page.waitForURL('**/preferences?section=browsing');
+            assert.equal(await picker.inputValue(),'/preferences?section=browsing');
+            await page.setViewportSize({width:844,height:390});
+            await picker.selectOption('/preferences?section=appearance');
+            await go.click();
+            await page.waitForURL('**/preferences?section=appearance');
+            assert.equal(await page.locator('#setting-dark_mode').inputValue(),'dark');
+            await page.getByRole('button',{name:'Discard changes',exact:true}).click();
+            assert.equal(requests.filter(r=>r.method==='POST').length,0);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
     test(`${engine}: D2 category drafts, local search, Discard and guarded departure`, async()=>{
         let failBrowsing=true;
         const {page,context,requests,errors}=await setup(engine,'settings','light',{fixture:'settings-appearance',reply({url,method}){
@@ -798,7 +1172,7 @@ for (const engine of engines) {
         const body = fixtureHTML('qol-browse'), scope = profileFrom(body);
         let marker = scope, documents = 0;
         const {page, context, errors} = await setup(engine, 'browse', 'light', {
-            fixture: 'qol-browse',
+            fixture: 'qol-browse', width:320, height:568,
             init: () => {
                 window.profileChanges = 0;
                 window.addEventListener('browserprofilechange', () => window.profileChanges++);
@@ -821,6 +1195,11 @@ for (const engine of engines) {
             wrote: InvidiousStorage.local.set('invidious_player_volume', .45)
         })), {changes: 1, current: false, wrote: false});
         assert.equal(await page.locator('.brand').isVisible(), true);
+        for(const viewport of [{width:320,height:568},{width:568,height:320}]) {
+            await page.setViewportSize(viewport);
+            const box=await refresh.boundingBox();
+            assert.ok(box.x>=7 && box.x+box.width<=viewport.width-7 && box.y>=7 && box.y+box.height<=viewport.height-7);
+        }
 
         await Promise.all([page.waitForEvent('domcontentloaded'), refresh.click()]);
         await refresh.waitFor();
@@ -1241,6 +1620,81 @@ for(const engine of engines) {
         await nojs.page.locator('.page-next-container button').click();
         assert.equal(nojs.requests.find(r=>r.method==='POST'&&r.url.pathname==='/add_playlist_items').body.get('list'),'IVfixture');await nojs.context.close();
     });
+    test(`${engine}: phone playlist moves use exact loaded occurrences and reconcile after rotation`,async()=>{
+        let committed, release, fail=false;
+        const {page,context,errors,requests}=await setup(engine,'browse','light',{
+            fixture:'d4-playlist-light',url:'/playlist?list=IVfixture&page=2',width:320,height:568,
+            reply:async entry=>{
+                if(entry.url.pathname!=='/playlist_ajax')return;
+                if(fail)return{status:409,json:{}};
+                await new Promise(resolve=>release=resolve);
+                return{contentType:'application/json',body:savedPlaylistOrder(entry,committed,100,205)};
+            }
+        });
+        try {
+            const rows=page.locator('[data-occurrence]');
+            const order=()=>rows.evaluateAll(nodes=>nodes.map(row=>row.dataset.occurrence));
+            const initial=await order();
+            committed=initial.slice();
+            const first=rows.first(), moved=page.locator(`[data-occurrence="${initial[1]}"]`);
+            const summary=row=>row.locator('.video-context > summary');
+            const width=row=>row.locator('.thumbnail').evaluate(el=>el.getBoundingClientRect().width);
+            const stacked=await width(first);
+            await page.setViewportSize({width:359,height:740});
+            assert.ok(await width(first)>=stacked);
+            await page.setViewportSize({width:360,height:740});
+            assert.ok(await width(first)<stacked);
+            await page.setViewportSize({width:320,height:568});
+            assert.equal(await first.locator('.playlist-grip').isVisible(),false);
+            await summary(first).click();
+            assert.equal(await first.getByRole('button',{name:'Move up',exact:true}).isDisabled(),true);
+            await summary(moved).click();
+            await page.screenshot({path:path.join(artifacts,`${engine}-phone-playlist-menu-320.png`)});
+            await moved.getByRole('button',{name:'Move up',exact:true}).click();
+            await page.waitForFunction(()=>document.querySelector('[data-select-toggle]').disabled);
+            const writes=()=>requests.filter(r=>r.url.pathname==='/playlist_ajax');
+            assert.equal(writes()[0].body.get('source'),initial[1]);
+            assert.equal(writes()[0].body.get('anchor'),initial[0]);
+            assert.equal(writes()[0].body.get('placement'),'before');
+            await page.setViewportSize({width:1280,height:720});
+            release();
+            await page.waitForFunction(()=>document.querySelector('[data-order-status]').textContent.startsWith('Playlist order saved.'));
+            await assertFocus(page,`[data-occurrence="${initial[1]}"] .playlist-grip`);
+            assert.deepEqual(await order(),[initial[1],initial[0],...initial.slice(2)]);
+
+            const gripBox=await moved.locator('.playlist-grip').boundingBox();
+            const targetBox=await rows.nth(1).boundingBox();
+            await page.mouse.move(gripBox.x+gripBox.width/2,gripBox.y+gripBox.height/2);
+            await page.mouse.down();
+            await page.mouse.move(targetBox.x+targetBox.width/2,targetBox.y+targetBox.height/2,{steps:4});
+            await page.locator('[data-occurrence].is-dragging').waitFor();
+            await page.locator('[data-occurrence][data-drop]').waitFor();
+            await page.setViewportSize({width:844,height:390});
+            await page.waitForFunction(()=>document.querySelector('[data-order-status]').textContent==='Move cancelled.');
+            await page.mouse.up();
+            assert.equal(await page.locator('[data-occurrence].is-dragging,[data-occurrence][data-drop]').count(),0);
+            assert.deepEqual(await order(),[initial[1],initial[0],...initial.slice(2)]);
+            assert.equal(writes().length,1);
+            await assertFocus(page,`[data-occurrence="${initial[1]}"] .video-context > summary`);
+
+            await summary(moved).click();
+            await moved.getByRole('button',{name:'Move down',exact:true}).click();
+            await page.waitForFunction(()=>document.querySelector('[data-select-toggle]').disabled);
+            assert.equal(writes()[1].body.get('placement'),'after');
+            release();
+            await assertFocus(page,`[data-occurrence="${initial[1]}"] .video-context > summary`);
+            await page.waitForFunction(id=>document.querySelector('[data-occurrence]').dataset.occurrence===id,initial[0]);
+            assert.deepEqual(await order(),initial);
+            fail=true;
+            await summary(moved).click();
+            await moved.getByRole('button',{name:'Move up',exact:true}).click();
+            await page.locator('#ui-notice .ui-retry').waitFor();
+            assert.deepEqual(await order(),initial);
+            assert.equal(await page.locator('[data-playlist-move]:enabled').count(),0);
+            assert.equal(writes().length,3);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
     test(`${engine}: D4 real playlist rows retain occurrence strings and canonical positions, serialize selection and reject stale order`,async()=>{
         let committed,fail=false,release;
         const {page,context,errors,requests}=await setup(engine,'browse','light',{fixture:'d4-playlist-light',url:'/playlist?list=IVfixture&page=2',reply:async entry=>{
@@ -1300,6 +1754,34 @@ for(const engine of engines) {
         const clear=await setup(engine,'browse','light',{fixture:'d4-clear-history',url:'/clear_watch_history',javascript:false});
         assert.ok((await clear.page.locator('main').textContent()).includes('playback positions'));
         assert.equal(await clear.page.locator('main a').getAttribute('href'),'/feed/history');await clear.context.close();
+    });
+    test(`${engine}: phone batch confirmation keeps its heading and actions reachable`,async()=>{
+        const {page,context,requests,errors}=await setup(engine,'browse','light',{
+            fixture:'avatars-manager-diary',url:'/subscription_manager',width:320,height:568,
+            init:()=>Object.defineProperty(window,'visualViewport',{value:undefined})
+        });
+        try {
+            await page.locator('[data-select-toggle]').click();
+            await page.locator('[data-select-all]').click();
+            await page.locator('[data-batch-apply]').click();
+            const dialog=page.locator('[data-batch-confirm]');
+            await dialog.waitFor();
+            await dialog.locator('[data-confirm-description]').evaluate(el=>el.textContent+=' Confirmation details.'.repeat(80));
+            await page.setViewportSize({width:568,height:320});
+            const confirm=dialog.locator('[value=confirm]');
+            await confirm.scrollIntoViewIfNeeded();
+            const box=await dialog.boundingBox();
+            const heading=await dialog.locator('h2').boundingBox();
+            const action=await confirm.boundingBox();
+            assert.ok(box.y>=7 && box.y+box.height<=313,JSON.stringify(box));
+            assert.ok(heading.y>=box.y && heading.y+heading.height<=action.y);
+            assert.ok(action.y+action.height<=box.y+box.height);
+            await dialog.locator('[value=cancel]').click();
+            await dialog.waitFor({state:'hidden'});
+            assert.equal(await page.locator('[data-select-item]:checked').count(),3);
+            assert.equal(requests.filter(r=>r.url.pathname==='/subscription_ajax').length,0);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
     });
     test(`${engine}: D4 manager keeps cached statistics and failed selections after confirmed bulk unsubscribe`,async()=>{
         const {page,context,requests,errors}=await setup(engine,'browse','light',{fixture:'avatars-manager-diary',url:'/subscription_manager',reply:entry=>entry.url.pathname==='/subscription_ajax'?{status:entry.url.searchParams.get('c')==='UCdirect'?200:403,contentType:'application/json',body:'{}'}:null});
@@ -1486,6 +1968,47 @@ for(const engine of engines) {
         assert.equal(await button.isEnabled(),true);assert.equal(posts,3,'Retry verifies the read without repeating the mutation');
         assert.ok(requests.filter(r=>r.url.pathname==='/subscription_ajax').every(r=>r.body.get('csrf_token')==='fixture-token'));
         assert.deepEqual(errors,[]);await context.close();
+    });
+    test(`${engine}: phone Save dialog keeps its selection and draft within a shortened visual viewport`,async()=>{
+        const {page,context,errors,requests}=await setup(engine,'playlist','light',{
+            width:320,height:568,
+            init:()=>{
+                const viewport=new EventTarget();
+                Object.defineProperties(viewport,{
+                    width:{get:()=>innerWidth}, height:{get:()=>window.keyboardHeight||innerHeight},
+                    offsetTop:{value:0},offsetLeft:{value:0}
+                });
+                Object.defineProperty(window,'visualViewport',{value:viewport});
+            },
+            reply:entry=>entry.url.pathname==='/video_actions'
+                ?{json:{playlists:[{id:'IVfirst',title:'First playlist'},{id:'IVsecond',title:'Second playlist'}]}}
+                :null
+        });
+        try {
+            const menu=page.locator('.video-context').first(), dialog=page.locator('#video-playlist-dialog');
+            await menu.locator('summary').click();
+            await menu.locator('[data-video-action=playlist]').click();
+            await dialog.locator('#video-playlist-select').selectOption('IVsecond');
+            await dialog.locator('#video-playlist-create-details > summary').click();
+            const title=dialog.getByRole('textbox',{name:'Title'});
+            await title.fill('Playlist draft');
+            await page.evaluate(()=>{window.keyboardHeight=260;visualViewport.dispatchEvent(new Event('resize'));});
+            const submit=dialog.getByRole('button',{name:'Create and save'});
+            await submit.scrollIntoViewIfNeeded();
+            const box=await dialog.boundingBox(), close=await dialog.getByRole('button',{name:'Close',exact:true}).boundingBox();
+            assert.ok(box.x>=7 && box.x+box.width<=313 && box.y>=7 && box.y+box.height<=253,JSON.stringify(box));
+            assert.ok(close.y>=box.y && close.y+close.height<box.y+box.height);
+            await page.screenshot({path:path.join(artifacts,`${engine}-phone-save-320-keyboard.png`)});
+            await page.setViewportSize({width:844,height:390});
+            await page.evaluate(()=>{delete window.keyboardHeight;visualViewport.dispatchEvent(new Event('resize'));});
+            assert.equal(await title.inputValue(),'Playlist draft');
+            assert.equal(await dialog.locator('#video-playlist-select').inputValue(),'IVsecond');
+            await dialog.getByRole('button',{name:'Close',exact:true}).click();
+            await dialog.waitFor({state:'hidden'});
+            assert.equal(await menu.locator('summary').evaluate(el=>el===document.activeElement),true);
+            assert.equal(requests.filter(r=>r.method==='POST' && ['/playlist_ajax','/create_playlist'].includes(r.url.pathname)).length,0);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
     });
     test(`${engine}: D4 Save dialog selects, scrolls and saves from the desktop playlist list`, async () => {
         const playlists = Array.from({length: 40}, (_, index) => ({id: 'IVrow' + index, title: 'Playlist ' + index}));
@@ -2018,6 +2541,11 @@ for(const engine of engines) {
         assert.equal(await page.evaluate(()=>InvidiousStorage.local.get('player_dock_enabled')),true);
         await page.evaluate(()=>scrollTo(0,1000));await page.locator('.watch-player.is-docked').waitFor();
         assert.ok(await page.evaluate(()=>Math.abs(document.querySelector('.watch-player').getBoundingClientRect().height-shellHeight)<1));
+        await page.setViewportSize({width:1099,height:720});
+        await page.locator('.watch-player.is-docked').waitFor({state:'hidden'});
+        await page.setViewportSize({width:1100,height:720});
+        await page.locator('.watch-player.is-docked').waitFor();
+        await page.setViewportSize({width:1440,height:900});
         assert.equal(await page.locator('.dock-controls button:visible').count(),4);
         assert.equal(await page.evaluate(()=>player===originalPlayer&&player.tech().el()===originalMedia&&player.paused()),true);
         await page.screenshot({path:path.join(artifacts,`${engine}-d5-docked-light-1440.png`)});
@@ -2882,6 +3410,29 @@ async function readyClipMedia(page,time=40,playing=false) {
     await page.waitForFunction(time=>!player.seeking()&&Math.abs(player.currentTime()-time)<1,time);
 }
 for(const engine of engines) {
+    test(`${engine}: phone clip editor keeps literal time fields and draft through rotation`,async()=>{
+        const {page,context,errors}=await setup(engine,'watch','light',{
+            fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',width:320,height:568,reply:clipFixtureReply
+        });
+        try {
+            await readyClipMedia(page);
+            await page.locator('#create-clip').click();
+            const start=page.locator('#clip-start'), end=page.locator('#clip-end');
+            await start.fill('00:36');
+            const portraitStart=await start.boundingBox(), portraitEnd=await end.boundingBox();
+            assert.equal(portraitStart.x,portraitEnd.x);
+            assert.ok(portraitStart.y+portraitStart.height<portraitEnd.y);
+            assert.equal(await page.locator('.clip-panel-body').evaluate(el=>getComputedStyle(el).overflowY),'visible');
+            assert.equal(await page.locator('.watch-shortcuts').isVisible(),false);
+            await page.setViewportSize({width:568,height:320});
+            assert.equal(await start.inputValue(),'00:36');
+            await page.locator('#clip-close').click();
+            await assertFocus(page,'#create-clip');
+            assert.equal(await page.evaluate(()=>player.tech().el()===clipSourceMedia && player.paused()),true);
+            assert.equal(await page.locator('.watch-shortcuts').isVisible(),true);
+            assert.deepEqual(errors,[]);
+        } finally { await context.close(); }
+    });
     test(`${engine}: D6 clip side editor previews on the same media and restores the sidebar, draft and local progress`,async()=>{
         const {page,context,errors,requests}=await setup(engine,'watch','light',{fixture:'d6-clip-chat-light',url:'/watch?v=2isYuQZMbdU',reply:clipFixtureReply});
         await readyClipMedia(page);const before=await page.evaluate(()=>JSON.stringify(InvidiousStorage.local.get('save_player_pos')));const initialWrites=requests.filter(r=>r.method!=='GET').length;

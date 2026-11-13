@@ -3,7 +3,81 @@
 window.InvidiousUI = (function () {
     if (window.InvidiousUI) return window.InvidiousUI;
     var config = JSON.parse(document.getElementById('ui-config').textContent);
+    // Keep the viewport condition in sync with the phone rules in Foundation.
+    var phoneViewport = window.matchMedia('(width < 768px), (width < 960px) and (orientation: landscape) and (height <= 500px)');
     var locks = new Set();
+    var viewport = window.visualViewport;
+    function visibleBounds() {
+        var safe = getComputedStyle(document.documentElement);
+        function inset(edge) { return parseFloat(safe.getPropertyValue('--safe-' + edge)) || 0; }
+        var top = viewport ? viewport.offsetTop : 0, left = viewport ? viewport.offsetLeft : 0;
+        var width = viewport ? viewport.width : document.documentElement.clientWidth;
+        var height = viewport ? viewport.height : window.innerHeight;
+        return {top: top + inset('top'), left: left + inset('left'),
+            right: left + width - inset('right'), bottom: top + height - inset('bottom')};
+    }
+    if (viewport) {
+        var focusFrame;
+        function updateVisibleViewport() {
+            var root = document.documentElement;
+            if (!phoneViewport.matches) {
+                ['top', 'left', 'right', 'bottom', 'height'].forEach(function (edge) { root.style.removeProperty('--visible-' + edge); });
+                return;
+            }
+            root.style.setProperty('--visible-top', viewport.offsetTop + 'px');
+            root.style.setProperty('--visible-left', viewport.offsetLeft + 'px');
+            root.style.setProperty('--visible-right', Math.max(0, root.clientWidth - viewport.offsetLeft - viewport.width) + 'px');
+            root.style.setProperty('--visible-bottom', Math.max(0, window.innerHeight - viewport.offsetTop - viewport.height) + 'px');
+            root.style.setProperty('--visible-height', viewport.height + 'px');
+        }
+        viewport.addEventListener('resize', function () {
+            updateVisibleViewport();
+            if (!phoneViewport.matches) return;
+            cancelAnimationFrame(focusFrame);
+            focusFrame = requestAnimationFrame(function () {
+                var focused = document.activeElement;
+                if (focused && focused.matches('input,select,textarea') && focused.closest('dialog:modal')) {
+                    focused.scrollIntoView({block:'nearest',inline:'nearest'});
+                }
+            });
+        });
+        viewport.addEventListener('scroll', updateVisibleViewport);
+        phoneViewport.addEventListener('change', updateVisibleViewport);
+        updateVisibleViewport();
+    }
+    function showModal(dialog) {
+        if (dialog.open || document.querySelector('dialog:modal')) return false;
+        dialog.showModal();
+        return true;
+    }
+    function updateNoticePlacement() {
+        var root = document.documentElement, focused = document.activeElement;
+        if (!phoneViewport.matches) { root.removeAttribute('data-notice-at-top'); return; }
+        if (focused && focused.closest('.ui-notice, dialog')) return;
+        root.removeAttribute('data-notice-at-top');
+        var notice = document.querySelector('#browser-profile-recovery:not([hidden])') || document.querySelector('.ui-notice:not([hidden])');
+        if (!notice || !focused || focused === document.body) return;
+        var box = notice.getBoundingClientRect(), focus = focused.getBoundingClientRect();
+        if (focus.bottom > box.top && focus.top < box.bottom && focus.right > box.left && focus.left < box.right) {
+            root.setAttribute('data-notice-at-top', '');
+        }
+    }
+    document.addEventListener('focusin', updateNoticePlacement);
+    window.addEventListener('iv:profile-recovery', updateNoticePlacement);
+    window.addEventListener('resize', updateNoticePlacement);
+    var noticeFrame;
+    function queueNoticePlacement() {
+        if (!phoneViewport.matches || noticeFrame !== undefined || !document.querySelector('.ui-notice:not([hidden])')) return;
+        noticeFrame = requestAnimationFrame(function () {
+            noticeFrame = undefined;
+            updateNoticePlacement();
+        });
+    }
+    document.addEventListener('scroll', queueNoticePlacement, {capture:true, passive:true});
+    if (viewport) {
+        viewport.addEventListener('resize', updateNoticePlacement);
+        viewport.addEventListener('scroll', queueNoticePlacement);
+    }
     var active = true, disposed = false;
     window.addEventListener('pagehide', function (event) { active = false; if (!event.persisted) disposed = true; });
     window.addEventListener('pageshow', function () { if (!disposed) active = true; });
@@ -75,6 +149,7 @@ window.InvidiousUI = (function () {
         if (!target) return;
         target.hidden = false;
         status(target.querySelector('[role=status]'), text, retry);
+        updateNoticePlacement();
         return target;
     }
     function dismissNotice() {
@@ -153,6 +228,6 @@ window.InvidiousUI = (function () {
         var count = document.querySelector('[data-playlist-count]'); if (count && typeof saved.countText === 'string') count.textContent = saved.countText;
         return positions;
     }
-    return {config: config, label: label, request: request, post: post, status: status, notice: notice, dismissNotice: dismissNotice,
+    return {config: config, phoneViewport: phoneViewport, visibleBounds: visibleBounds, showModal: showModal, label: label, request: request, post: post, status: status, notice: notice, dismissNotice: dismissNotice,
         action: action, changed: changed, invalidate: invalidate, removeRows: removeRows, watched: watched, playlistOrder: playlistOrder};
 })();

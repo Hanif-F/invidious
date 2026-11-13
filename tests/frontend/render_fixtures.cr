@@ -140,7 +140,7 @@ def watch_fixture(env, plid : String? = "PLfixture", embed = false, account = fa
     env.set "native_clip_title", native_clip.title
     env.set "native_clip_id", native_clip.id
   end
-  params.vr_mode = false
+  params.vr_mode = !!video.vr? && preferences.vr_mode
   playback_sync = sync_positions && native_clip.nil?
   playback_position = nil
   chat_timing_ms = 0

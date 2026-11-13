@@ -38,3 +38,8 @@
     .dearrow-reveal::before { border-color: ButtonText; background: Highlight; }
     .dearrow-reveal:focus-visible { outline-color: Highlight; }
 }
+
+@media (width < 768px), (width < 960px) and (orientation: landscape) and (height <= 500px) {
+    [data-dearrow-row].dearrow-title-row { padding-inline-end: 48px; min-block-size: 44px; }
+    .dearrow-title-row > .dearrow-reveal { display: grid; place-items: center; inline-size: 44px; block-size: 44px; }
+}

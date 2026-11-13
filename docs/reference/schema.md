@@ -291,6 +291,7 @@ CREATE TABLE IF NOT EXISTS public.playback_positions
     video_id text NOT NULL,
     position_seconds integer NOT NULL CHECK (position_seconds >= 0),
     updated_at timestamptz NOT NULL DEFAULT now(),
+    resume_eligible boolean,
     PRIMARY KEY (email, video_id)
 );
 
@@ -516,6 +517,7 @@ CREATE TABLE IF NOT EXISTS public.watch_history
   latest_watched date,
   archived_dates date[] NOT NULL DEFAULT '{}',
   length_seconds integer CHECK (length_seconds > 0),
+  completed boolean NOT NULL DEFAULT false,
   PRIMARY KEY (email, video_id)
 );
 ```

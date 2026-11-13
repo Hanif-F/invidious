@@ -1,6 +1,6 @@
         <section class="watch-tool queue-panel" id="playlist-panel" aria-labelledby="queue-heading">
             <header class="queue-heading">
-                <h2 id="queue-heading"><%= I18n.translate(locale, "overhaul_queue") %></h2>
+                <h2 id="queue-heading" tabindex="-1"><%= I18n.translate(locale, "overhaul_queue") %></h2>
                 <a id="queue-title" href="/<%= plid.starts_with?("RD") ? "mix" : "playlist" %>?list=<%= plid %>"><%= I18n.translate(locale, "ui_open_playlist") %></a>
                 <p class="queue-context"><span id="queue-count"></span><span id="queue-current" data-dearrow-row><%= I18n.translate(locale, "ui_now_playing") %>: <%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, original_title, spoiler_date, custom: !!native_clip) %></span></p>
             </header>

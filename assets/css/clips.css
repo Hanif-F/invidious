@@ -24,3 +24,14 @@
 .clip-confirmation h2{font-size:20px}.clip-confirmation .toolbar{margin-block-start:20px}
 
 .clip-confirmation p{overflow-wrap:anywhere}
+
+@media (width < 768px), (width < 960px) and (orientation: landscape) and (height <= 500px) {
+    .clip-panel { height: auto; min-height: 0; }
+    .clip-panel-body { overflow: visible; }
+    .clip-title-label, .clip-timeline-labels { flex-wrap: wrap; gap: var(--s2); }
+    .clip-confirmation { padding: var(--s3); }
+}
+
+@media (width < 360px) {
+    .clip-time-fields { grid-template-columns: minmax(0, 1fr); }
+}

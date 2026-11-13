@@ -64,14 +64,14 @@
         }
         function confirmBatch(count, label) {
             var dialog = root.querySelector('[data-batch-confirm]');
-            if (!dialog) return Promise.resolve(false);
+            if (!dialog || document.querySelector('dialog:modal')) return Promise.resolve(false);
             dialog.querySelector('[data-confirm-description]').textContent = ui.label('confirm_bulk',{count:count,action:label});
             dialog.returnValue = 'cancel';
             return new Promise(function (resolve) {
                 function complete() { lifetime.signal.removeEventListener('abort',abort); resolve(dialog.returnValue === 'confirm' && alive()); }
                 function abort() { dialog.close('cancel'); }
                 dialog.addEventListener('close',complete,{once:true}); lifetime.signal.addEventListener('abort',abort,{once:true});
-                dialog.showModal();
+                ui.showModal(dialog);
             });
         }
         function markUncertain(row, id, error) {
@@ -148,10 +148,28 @@
             event.preventDefault(); if (pending || orderPending || !alive()) return;
             var row = form.closest('.media-item,.subscription-row'), action = form.dataset.collectionAction, playlist = targetPlaylist();
             if (!row || (action === 'playlist' && isUncertain(row,playlist))) return;
+            var menu = form.closest('[data-ui-menu]');
+            var summary = menu && menu.querySelector('summary');
+            var related = row.nextElementSibling || row.previousElementSibling;
+            var hadFocus = form.contains(document.activeElement);
             var generation = epoch; feedbackEpoch++; pending = true; root.dispatchEvent(new Event('iv:collection-busy',{bubbles:true})); var submit = event.submitter; if (submit) submit.disabled = true; update();
             try { await perform(row,action,playlist); if (alive() && generation === epoch) { ui.status(status,ui.label('saved')); document.dispatchEvent(new Event('iv:library-change')); } }
             catch (_) { if (alive() && generation === epoch) { ui.status(status,ui.label('error')); if (action === 'playlist' && isUncertain(row,playlist)) checkLink(playlist); } }
-            finally { if (generation !== epoch) return; pending = false; if (alive()) { if (submit && submit.isConnected) submit.disabled = action === 'playlist' && isUncertain(row,playlist); update(); if (document.activeElement === document.body) document.getElementById('main-content').focus({preventScroll:true}); } }
+            finally {
+                if (generation !== epoch) return;
+                pending = false;
+                if (alive()) {
+                    if (submit && submit.isConnected) submit.disabled = action === 'playlist' && isUncertain(row,playlist);
+                    update();
+                    if (document.activeElement === document.body) {
+                        var target = hadFocus && summary && summary.isConnected ? summary : null;
+                        if (!target && hadFocus && related && related.isConnected) {
+                            target = related.querySelector('.media-title a, .channel-attribution, summary');
+                        }
+                        (target || document.getElementById('main-content')).focus({preventScroll:true});
+                    }
+                }
+            }
         });
         on(document,'iv:content-added',function (event) { if (!root.isConnected) { dispose(); return; } if (!event.detail || root.contains(event.detail)) update(); });
         on(document,'iv:library-change',update);

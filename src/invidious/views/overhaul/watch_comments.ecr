@@ -1,5 +1,5 @@
 <section id="comments" class="comment-list watch-comments" aria-labelledby="comments-heading">
-    <h2 id="comments-heading"><%= I18n.translate(locale, "ui_comments") %></h2>
+    <h2 id="comments-heading" tabindex="-1"><%= I18n.translate(locale, "ui_comments") %></h2>
     <% if (params.comments <=> ["", ""]) == 0 %>
         <p id="comments-disabled-message" class="muted"><%= HTML.escape(I18n.translate(locale, "comments_invidious_disabled_text")) %></p>
     <% else %>

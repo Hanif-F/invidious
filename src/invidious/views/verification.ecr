@@ -1,6 +1,6 @@
 <% verification_preferences = env.get?("preferences").try(&.as(Preferences)) || Preferences.from_json("{}"); locale = verification_preferences.locale %>
 <!doctype html>
-<html lang="<%= HTML.escape(locale) %>" dir="<%= I18n.locale_is_rtl?(locale) ? "rtl" : "ltr" %>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><%= I18n.translate(locale, "verify_heading") %> - Invidious</title>
+<html lang="<%= HTML.escape(locale) %>" dir="<%= I18n.locale_is_rtl?(locale) ? "rtl" : "ltr" %>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title><%= I18n.translate(locale, "verify_heading") %> - Invidious</title>
 <link rel="stylesheet" href="/css/foundation.css?v=<%= ASSET_COMMIT %>"><link rel="stylesheet" href="/css/verification.css?v=<%= ASSET_COMMIT %>">
 <script id="verification-config" type="application/json"><%= {siteKey: CONFIG.turnstile_site_key, native: native, returnUrl: destination, enabled: policy.enabled, ready: ready, words: %w(checking failed unavailable verified disabled_return load_error expired timeout complete paused).to_h { |key| {key, I18n.translate(locale, "verify_#{key}")} }}.to_json.gsub("<", "\\u003c") %></script>
 <script src="/js/verification.js?v=<%= ASSET_COMMIT %>" defer></script>

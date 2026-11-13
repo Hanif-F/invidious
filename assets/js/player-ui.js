@@ -10,8 +10,9 @@
     var labels = JSON.parse(document.getElementById('watch_ui_data').textContent);
     var words = player_data.interface_labels || {}, life = new AbortController(), active = true;
     var download = document.getElementById('download-options'), downloadDialog = document.getElementById('download-dialog'), downloadFallback = document.getElementById('download-fallback');
-    if (download && downloadDialog) { downloadDialog.append(download); if (downloadFallback) downloadFallback.hidden = true; }
+    if (download && downloadDialog) { downloadDialog.querySelector('.ui-dialog-body').append(download); if (downloadFallback) downloadFallback.hidden = true; }
     var bar = player.getChild('controlBar'), Button = videojs.getComponent('Button');
+    var wideViewport = matchMedia('(width >= 960px)');
     var wide = new Button(player), shell = layout.querySelector('.watch-player');
     wide.addClass('vjs-theater-control');
     wide.el().setAttribute('aria-controls', 'watch-layout');
@@ -32,11 +33,23 @@
     }
     function restore() { apply(layoutChoice); }
     wide.on('click', function () {
-        if (!current()) return;
+        if (!current() || !wideViewport.matches) return;
         var value = document.body.dataset.watchLayout === 'theater' ? 'standard' : 'theater';
         apply(value);
         if (!storage.local.set('watch_layout', value) && ui) ui.notice(ui.label('page_only'));
     });
+    function syncTheaterControl() {
+        if (wideViewport.matches) wide.show();
+        else {
+            if (wide.el().contains(document.activeElement)) {
+                var replacement = bar.children().find(function (control) { return control.hasClass('vjs-desktop-settings') || control.hasClass('vjs-mobile-settings'); });
+                (replacement ? replacement.el() : player.el()).focus({preventScroll:true});
+            }
+            wide.hide();
+        }
+    }
+    on(wideViewport, 'change', syncTheaterControl);
+    syncTheaterControl();
     on(window, 'browserprofilechange', function () { active = false; wide.disable(); });
     on(window, 'pagehide', function (event) { active = false; if (!event.persisted) dispose(); });
     on(window, 'pageshow', function () { active = !life.signal.aborted; if (current()) { restore(); size(); } });

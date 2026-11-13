@@ -21,6 +21,30 @@
     if (adminControl && typeof adminControl.focus === 'function') adminControl.focus();
     window.addEventListener('hashchange',legacyDestination,{signal:life.signal});
     var search = root.querySelector('#settings-search'), results = root.querySelector('#settings-search-results'), status = root.querySelector('#settings-search-status');
+    var picker = root.querySelector('[data-settings-picker]');
+    if (picker) {
+        var select = picker.querySelector('select');
+        var links = Array.from(root.querySelectorAll('.settings-nav a'));
+        links.forEach(function (link) { select.add(new Option(link.textContent.trim(), link.getAttribute('href'))); });
+        function syncPicker() {
+            var current = links.find(function (link) { return link.hasAttribute('aria-current'); });
+            if (current) select.value = current.getAttribute('href');
+        }
+        function submitCategory(event) {
+            event.preventDefault();
+            var link = links[select.selectedIndex];
+            if (!link) return;
+            search.value = '';
+            search.dispatchEvent(new Event('input'));
+            link.click();
+            syncPicker();
+        }
+        syncPicker();
+        picker.addEventListener('submit', submitCategory, {signal:life.signal});
+        root.addEventListener('iv:settings-category', syncPicker, {signal:life.signal});
+        picker.hidden = false;
+        root.dataset.settingsPickerReady = 'true';
+    }
     search.addEventListener('input',function () {
         var query = search.value.trim().toLocaleLowerCase(); results.replaceChildren(); results.hidden = !query;
         root.querySelector('.settings-nav').hidden = !!query;

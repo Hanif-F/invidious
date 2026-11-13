@@ -2,14 +2,14 @@
 <p class="ai-filter-paused" role="status"><%= I18n.translate(locale, "ai_filter_paused") %></p>
 <p><%= I18n.translate(locale, "ai_filter_description") %></p>
 <p id="ai-filter-actions-hint" class="muted"><%= I18n.translate(locale, "ai_filter_actions_hint") %></p>
-<div class="settings-matrix-scroll"><table class="settings-matrix" aria-describedby="ai-filter-actions-hint">
+<div class="settings-matrix-scroll"><table role="table" class="settings-matrix" aria-describedby="ai-filter-actions-hint">
     <caption class="sr-only"><%= I18n.translate(locale, "ai_filter_title") %></caption>
-    <thead><tr><th scope="col"><%= I18n.translate(locale, "settings_ai_pages") %></th><% {"blocklist", "warnlist"}.each do |kind| %><th scope="col"><%= I18n.translate(locale, "ai_filter_#{kind}") %></th><% end %></tr></thead>
-    <tbody><% {"feeds", "search", "recommendations", "other_pages"}.each do |surface| %><tr>
-        <th scope="row"><span><%= I18n.translate(locale, "ai_filter_#{surface}") %></span><% unless surface == "other_pages" %><p class="sr-only" id="ai-filter-<%= surface %>-hint"><%= I18n.translate(locale, "ai_filter_#{surface}_hint") %></p><% end %></th>
+    <thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col"><%= I18n.translate(locale, "settings_ai_pages") %></th><% {"blocklist", "warnlist"}.each do |kind| %><th role="columnheader" scope="col"><%= I18n.translate(locale, "ai_filter_#{kind}") %></th><% end %></tr></thead>
+    <tbody role="rowgroup"><% {"feeds", "search", "recommendations", "other_pages"}.each do |surface| %><tr role="row">
+        <th role="rowheader" scope="row"><span><%= I18n.translate(locale, "ai_filter_#{surface}") %></span><% unless surface == "other_pages" %><p class="sr-only" id="ai-filter-<%= surface %>-hint"><%= I18n.translate(locale, "ai_filter_#{surface}_hint") %></p><% end %></th>
         <% {"blocklist", "warnlist"}.each do |kind| %>
         <% field = "ai_#{kind}_#{surface}_action" %><% control_id = "setting-#{field}" %><% control_value = settings_ui.value(env, field) %><% choices = settings_ui.options(env, field) %>
-        <td id="<%= control_id %>-row"><label class="sr-only" for="<%= control_id %>"><%= settings_ui.label(locale, field) %></label>
+        <td role="cell" id="<%= control_id %>-row"><label class="settings-matrix-label sr-only" for="<%= control_id %>"><%= settings_ui.label(locale, field) %></label>
             <select id="<%= control_id %>" name="<%= field %>" aria-describedby="ai-filter-<%= surface %>-hint ai-filter-actions-hint">
                 <% unless choices.any? { |entry| entry[0] == control_value } %><option value="<%= HTML.escape(control_value) %>" selected><%= HTML.escape(control_value) %></option><% end %>
                 <% choices.each do |value, label| %><option value="<%= value %>" <%= "selected" if value == control_value %>><%= HTML.escape(label) %></option><% end %>

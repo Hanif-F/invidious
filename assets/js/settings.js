@@ -157,6 +157,7 @@
             document.querySelectorAll('[data-settings-category]').forEach(function (link) {
                 if (link.closest('.settings-nav') && link.dataset.settingsCategory === id) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current');
             });
+            root.dispatchEvent(new Event('iv:settings-category'));
             // This URL is always a real Crystal/ECR GET fallback. No drafts or
             // preference values enter history, localStorage or sessionStorage.
             history.replaceState(history.state,'','/preferences?section=' + encodeURIComponent(id));

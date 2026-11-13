@@ -143,7 +143,8 @@
         if (!alive() || dialog.open) return;
         var menu = trigger.closest('details'); returnFocus = menu ? menu.querySelector('summary') : trigger;
         if (menu) { menu.open = false; returnFocus.setAttribute('aria-expanded','false'); }
-        dialog.showModal(); paintTitles(); update();
+        if (!InvidiousUI.showModal(dialog)) return;
+        paintTitles(); update();
         if (!loaded) reload();
     }
     function dispose() {

@@ -35,6 +35,17 @@
     var lastBlock;
     var activePage = true, requests = new Set(), additions = new Set(), uncertainAdditions = new Set(), creationUncertain = false, uncertainBlocks = new Set();
     var playlistEpoch = 0, pageEpoch = 0;
+    var choiceListViewport = matchMedia('(min-width: 1024px)');
+    var choosing = false;
+    dialog.addEventListener('focusin', function (event) {
+        choosing = event.target === select || playlistList.contains(event.target);
+    });
+    choiceListViewport.addEventListener('change', function () {
+        if (!dialog.open || !choosing) return;
+        var target = choiceListViewport.matches ? playlistList.querySelector(':checked:not(:disabled)') : select;
+        if (target && !target.disabled) target.focus({preventScroll:true});
+        else dialog.querySelector('.dialog-close').focus({preventScroll:true});
+    });
     function alive() { return activePage && dialog.isConnected && InvidiousStorage.isCurrent(); }
     function additionKey() { return selectedVideo + ':' + select.value; }
     function isUncertain(error) { return !error.status || error.status >= 500 || error.status === 408 || error.status < 400; }
@@ -238,19 +249,24 @@
         event.preventDefault();
         closeMenu(menu, true);
         if (action.dataset.videoAction === 'playlist') {
-            if (pending) return;
+            if (pending || dialog.open) return;
             selectedVideo = menu.dataset.videoId;
             additions.forEach(function (key) { if (key.startsWith(selectedVideo+':')) additions.delete(key); });
             returnFocus = menu.matches('details') ? menu.querySelector('summary') : action;
             createDetails.open = false;
-            dialog.showModal();
+            if (!InvidiousUI.showModal(dialog)) return;
             loadPlaylists();
         } else {
             setBlocked(menu.dataset.channelId, menu.dataset.channelName, action.dataset.videoAction === 'block');
         }
     });
-    dialog.addEventListener('close', function () { if (returnFocus) returnFocus.focus(); });
+    dialog.addEventListener('close', function () { choosing = false; if (returnFocus && returnFocus.isConnected) returnFocus.focus(); });
     // Keep the selected video stable until the current request finishes.
+    dialog.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || event.target.matches('select')) return;
+        event.preventDefault();
+        if (!pending) dialog.close();
+    });
     dialog.addEventListener('cancel', function (event) { if (pending) event.preventDefault(); });
     dialog.querySelector('form[method=dialog]').addEventListener('submit', function (event) { if (pending) event.preventDefault(); });
     dialog.addEventListener('click', function (event) {

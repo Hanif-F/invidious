@@ -119,7 +119,7 @@ module Invidious::OriginalTitles
 
   def self.response(env, body : String) : String
     return body unless read_request?(env) && env.response.status_code == 200
-    content_type = env.response.content_type || ""
+    content_type = env.response.headers["Content-Type"]? || ""
     if content_type.starts_with?("application/json") && api_path?(env.request.path)
       json(env, body)
     elsif content_type.includes?("atom+xml")

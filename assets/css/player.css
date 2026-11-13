@@ -512,3 +512,15 @@ body .video-js .vjs-menu li.vjs-menu-item:focus-visible {
 .video-js .chapter-tooltip[hidden] { display: none; }
 .chapter-tooltip > :first-child { font-weight: bold; }
 .video-js.spoiler-thumbnails-hidden .vjs-vtt-thumbnail-display { display: none !important; }
+
+@media (width < 768px), (width < 960px) and (orientation: landscape) and (height <= 500px) {
+    .video-js:not(.vjs-fullscreen) .mobile-player-settings {
+        inset: var(--visible-top, 0px) var(--visible-right, 0px) var(--visible-bottom, 0px) var(--visible-left, 0px);
+        inline-size: auto;
+        block-size: var(--visible-height, 100dvh);
+        padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    }
+    .video-js .mobile-player-settings h2 { min-inline-size: 0; margin: 0; overflow-wrap: anywhere; }
+    .video-js .mobile-setting-title { flex: 1 1 auto; min-inline-size: 0; overflow-wrap: anywhere; }
+    .video-js .mobile-setting-value { flex: 0 1 42%; }
+}

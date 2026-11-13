@@ -5,6 +5,7 @@ def desktop_watch_fixture(kind, mode = "light", locale = "en-US")
   env = account ? signed_in_env("/watch?v=#{video_id}") : fixture_env("/watch?v=#{video_id}", mode, locale: locale)
   prefs = env.get("preferences").as(Preferences)
   prefs.dark_mode = mode; prefs.locale = locale; prefs.listen = kind == "audio"
+  prefs.annotations = true if kind == "annotations"
   env.set "preferences", prefs
   if account
     user = env.get("user").as(User); user.preferences = prefs; user.email = "bob@example.test" if kind == "bob"; env.set "user", user
@@ -14,6 +15,9 @@ def desktop_watch_fixture(kind, mode = "light", locale = "en-US")
     video.info["relatedVideos"].as_a.first.as_h["published"] = JSON::Any.new(Time.utc(2022, 3, 4).to_rfc3339)
   end
   video = audio_fixture_video if kind == "audio"
+  if kind == "vr"
+    video.info["streamingData"] = JSON.parse(%({"adaptiveFormats":[{"itag":242,"mimeType":"video/webm","qualityLabel":"240p","width":426,"height":240,"fps":12,"projectionType":"EQUIRECTANGULAR"}]}))
+  end
   if kind == "dash"
     # IDs match the locally encoded MPD; duplicate audio itags exercise identity.
     formats = JSON.parse(%([
@@ -46,8 +50,18 @@ def desktop_watch_fixture(kind, mode = "light", locale = "en-US")
 end
 
 def write_watch_fixtures(output)
+  alias_env = fixture_env("/shorts/2isYuQZMbdU?t=1&listen=1")
+  alias_env.params.url["id"] = "2isYuQZMbdU"
+  Invidious::Routes::Watch.redirect(alias_env)
+  location = alias_env.response.headers["Location"]
+  target = URI.parse(location)
+  query = URI::Params.parse(target.query || "")
+  unless alias_env.response.status_code == 302 && target.path == "/watch" && query["v"]? == "2isYuQZMbdU" && query["t"]? == "1" && query["listen"]? == "1"
+    raise "Watch ID alias did not retain playback parameters"
+  end
+
   {"light", "dark"}.each do |mode|
-    {"single", "queue", "owned", "replay", "queue-chat", "transcript-only", "timestamps-only", "no-tools", "audio", "portrait", "dash", "quality", "account", "bob", "second", "long"}.each do |kind|
+    {"single", "queue", "owned", "replay", "queue-chat", "transcript-only", "timestamps-only", "no-tools", "audio", "portrait", "dash", "quality", "account", "bob", "second", "long", "annotations", "vr"}.each do |kind|
       source = desktop_watch_fixture(kind, mode)
       raise "D5 produced duplicate media" unless source.scan(/<video\b/).size == 1
       raise "D5 lost its production shell" unless source.includes?("data-overhaul") && source.includes?("data-page=\"watch\"")

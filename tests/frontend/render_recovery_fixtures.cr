@@ -91,6 +91,28 @@ Dir.mkdir_p(output)
   File.write("#{output}/d7-api-login-#{mode}.html", html)
   default_env = recovery_env("/login", mode)
   raise "API-only default return is unavailable" unless Invidious::Authentication.login_referer(default_env) == "/admin/settings"
+  admin_env = recovery_env("/admin/settings", mode)
+  admin_email = "admin@example.test"
+  admin_user = Invidious::User.new({updated: Time.utc, notifications: [] of String, subscriptions: [] of String,
+                                    email: admin_email, username: admin_email, credential_version: 1, preferences: admin_env.get("preferences").as(Preferences),
+                                    password: nil, token: "fixture", watched: [] of String, feed_needs_update: false})
+  admin_env.set "user", admin_user
+  admin_env.set "csrf_token", "fixture-token"
+  CONFIG.admins << admin_email
+  begin
+    html = Invidious::Routes::AdminSettings.handle(admin_env).as(String)
+    raise "API-only admin lost its standalone form" unless html.includes?("admin-settings-form") && !html.includes?("app-sidebar")
+    File.write("#{output}/d7-api-admin-#{mode}.html", html)
+  ensure
+    CONFIG.admins.delete(admin_email)
+  end
+  denied_env = recovery_env("/admin/settings", mode)
+  denied_env.set "user", admin_user
+  Invidious::Routes::AdminSettings.handle(denied_env)
+  raise "API-only settings allowed a non-admin" unless denied_env.response.status_code == 403
+  guest_env = recovery_env("/admin/settings", mode)
+  Invidious::Routes::AdminSettings.handle(guest_env)
+  raise "API-only settings lost the login recovery" unless guest_env.response.headers["Location"] == "/login?referer=%2Fadmin%2Fsettings"
   native = true
   policy = Invidious::BotProtection::Settings.new(false, 12, 1_i64)
   ready = false

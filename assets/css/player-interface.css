@@ -63,3 +63,12 @@
 .watch-heading .video-stats p{display:inline-flex;align-items:center;gap:4px;margin:0}.watch-heading h3{font-size:16px;margin:8px 0}
 .watch-player .video-js.vjs-fullscreen,.video-js.invidious-desktop:fullscreen{width:100%;height:100%;max-height:100%;aspect-ratio:auto;border-radius:0}
 .dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.dialog-heading h2{margin:0}
+
+@media (width < 768px), (width < 960px) and (orientation: landscape) and (height <= 500px) {
+    .video-js:not(.vjs-fullscreen) .player-settings-panel {
+        max-block-size: calc(100% - 48px);
+        background: var(--raised);
+    }
+    .player-settings-panel .player-settings-content { overscroll-behavior: contain; }
+    .player-settings-panel .player-settings-content > :is(button,a) { min-block-size: 44px; }
+}

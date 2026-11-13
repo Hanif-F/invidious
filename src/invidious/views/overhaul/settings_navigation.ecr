@@ -2,6 +2,10 @@
 <div data-settings-search hidden><label class="sr-only" for="settings-search"><%= I18n.translate(locale, "ux_settings_search") %></label><input class="settings-search" type="search" id="settings-search" placeholder="<%= I18n.translate(locale, "ux_settings_search") %>" autocomplete="off">
 <div id="settings-search-results" class="settings-search-results" hidden></div><p class="muted" id="settings-search-status" role="status"></p></div>
 <p class="settings-navigation-status" data-settings-navigation-status role="status" tabindex="-1" hidden></p>
+<form class="settings-category-picker" data-settings-picker hidden>
+<label for="settings-category-select"><%= I18n.translate(locale, "overhaul_settings_categories") %></label>
+<div><select id="settings-category-select"></select><button type="submit" class="button"><%= I18n.translate(locale, "overhaul_settings_go") %></button></div>
+</form>
 <nav class="settings-nav" aria-label="<%= I18n.translate(locale, "overhaul_settings_categories") %>">
 <% Invidious::Frontend::Settings::CATEGORIES.each do |id, entry| %><% next if id == "library" && !env.get?("user") %><a href="/preferences?section=<%= id %>" data-settings-category="<%= id %>" <%= "aria-current=page" if id == section %>><%= Invidious::Frontend::Icons.render(entry[1]) %><%= I18n.translate(locale, entry[0]) %></a><% end %>
 <a href="/preferences/sponsorblock/channels" <%= "aria-current=page" if section == "sponsorblock-channels" %>><%= Invidious::Frontend::Icons.render("shield") %><%= I18n.translate(locale, "sb_channels") %></a>

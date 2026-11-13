@@ -144,8 +144,11 @@
             if (panel.open) content.querySelector('button').focus();
         }
         gear.handleClick = function () {
+            if (panel.open || document.querySelector('dialog:modal')) return;
             cancel(true); overview(); scrollStyle = document.documentElement.style.overflow;
-            document.documentElement.style.overflow = 'hidden'; root.classList.add('mobile-settings-open'); panel.showModal();
+            document.documentElement.style.overflow = 'hidden'; root.classList.add('mobile-settings-open');
+            if (window.InvidiousUI) InvidiousUI.showModal(panel);
+            else panel.showModal();
         };
         panel.addEventListener('close', function () {
             release(); document.documentElement.style.overflow = scrollStyle;

@@ -4,7 +4,7 @@
 <!doctype html>
 <html lang="<%= HTML.escape(locale) %>" dir="<%= I18n.locale_is_rtl?(locale) ? "rtl" : "ltr" %>">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <script id="browser-profile" type="application/json"><%= {scope: Invidious::BrowserProfiles.render_scope(env), cookieDomain: Invidious::Authentication.cookie_domain(env), saveError: I18n.translate(locale, "browser_save_error"), posted: env.request.method == "POST"}.to_json.gsub("<", "\\u003c") %></script>
     <script src="/js/browser-storage.js?v=<%= ASSET_COMMIT %>"></script>
     <script src="/js/_helpers.js?v=<%= ASSET_COMMIT %>"></script>
@@ -23,10 +23,8 @@
 <a class="skip-link" href="#main-content"><%= I18n.translate(locale, "ui_skip_content") %></a>
 <span id="dark_mode_pref" hidden><%= dark_mode %></span>
 <header class="app-header">
+  <div class="app-header-top">
   <div class="brand-group"><button type="button" id="sidebar-toggle" class="icon-button" aria-controls="app-sidebar" aria-expanded="true" aria-label="<%= I18n.translate(locale, "ux_navigation_toggle") %>" title="<%= I18n.translate(locale, "ux_navigation_toggle") %>" hidden><%= Invidious::Frontend::Icons.render("menu") %></button><a class="brand" href="/"><img src="/invidious-colored-vector.svg" alt="">Invidious</a></div>
-  <% if env.get?("search_homepage") %><div class="header-search"></div><% else %>
-  <form class="header-search" action="/search" method="<%= Invidious::Frontend::Desktop.private_search?(env) ? "post" : "get" %>" role="search"><input type="search" id="searchbox" name="q" aria-label="<%= I18n.translate(locale, "search") %>" placeholder="<%= I18n.translate(locale, "search") %>" value="<%= HTML.escape(env.get?("search").try(&.as(String)) || "") %>" autocapitalize="none" spellcheck="false"><button class="icon-button" aria-label="<%= I18n.translate(locale, "search") %>" title="<%= I18n.translate(locale, "search") %>"><%= Invidious::Frontend::Icons.render("search") %></button></form>
-  <% end %>
   <div class="header-actions">
   <% mode_label = I18n.translate(locale, dark_mode.empty? ? "preferences_color_system" : dark_mode) %>
   <form action="/toggle_theme?referer=<%= URI.encode_www_form(page_return) %>" method="post"><input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button class="icon-button" id="toggle_theme" title="<%= HTML.escape(mode_label) %>" aria-label="<%= HTML.escape(mode_label) %>" data-mode-system="<%= I18n.translate(locale, "preferences_color_system") %>" data-mode-light="<%= I18n.translate(locale, "light") %>" data-mode-dark="<%= I18n.translate(locale, "dark") %>"><%= Invidious::Frontend::Icons.render(dark_mode.empty? ? "monitor" : (dark_mode == "light" ? "sun" : "moon")) %></button></form>
@@ -36,9 +34,16 @@
 
     <% if env.get?("user") %><hr><form action="/signout?referer=/" method="post"><input type="hidden" name="csrf_token" value="<%= HTML.escape(env.get?("csrf_token").try(&.as(String)) || "") %>"><button><%= Invidious::Frontend::Icons.render("log-out") %><%= I18n.translate(locale, "Log out") %></button></form><% end %>
   </div></details></div>
+  </div>
+  <% if env.get?("search_homepage") %><div class="header-search"></div><% else %>
+  <form class="header-search" action="/search" method="<%= Invidious::Frontend::Desktop.private_search?(env) ? "post" : "get" %>" role="search"><input type="search" id="searchbox" name="q" aria-label="<%= I18n.translate(locale, "search") %>" placeholder="<%= I18n.translate(locale, "search") %>" value="<%= HTML.escape(env.get?("search").try(&.as(String)) || "") %>" autocapitalize="none" spellcheck="false"><button class="icon-button" aria-label="<%= I18n.translate(locale, "search") %>" title="<%= I18n.translate(locale, "search") %>"><%= Invidious::Frontend::Icons.render("search") %></button></form>
+  <% end %>
 </header>
 <button type="button" class="nav-scrim" tabindex="-1" aria-label="<%= I18n.translate(locale, "Close") %>" hidden></button>
+<details class="app-navigation" id="app-navigation">
+<summary><%= Invidious::Frontend::Icons.render("menu") %><%= I18n.translate(locale, "ui_navigation") %></summary>
 <nav class="app-sidebar" id="app-sidebar" aria-label="<%= I18n.translate(locale, "ui_navigation") %>"><%= rendered "overhaul/navigation" %></nav>
+</details>
 <main class="app-main" id="main-content" tabindex="-1" data-browse-region><%= content %></main>
 <footer class="app-footer"><button class="footer-shortcuts" type="button" data-shortcut-help hidden><%= I18n.translate(locale, "ux_shortcuts") %></button><a href="/privacy"><%= I18n.translate(locale, "View privacy policy.") %></a><a href="/licenses"><%= I18n.translate(locale, "View JavaScript license information.") %></a><a href="<%= HTML.escape(CONFIG.modified_source_code_url || "https://github.com/iv-org/invidious") %>"><%= I18n.translate(locale, "footer_source_code") %></a><% if CONFIG.modified_source_code_url %><a href="https://github.com/iv-org/invidious"><%= I18n.translate(locale, "footer_original_source_code") %></a><% end %><a href="https://github.com/iv-org/documentation"><%= I18n.translate(locale, "footer_documentation") %></a><a href="https://github.com/iv-org/invidious/blob/master/LICENSE">AGPLv3</a><span><%= CURRENT_VERSION %> · <%= CURRENT_COMMIT %></span></footer>
 <aside id="ui-notice" class="ui-notice" hidden><span role="status"></span><button type="button" class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>" data-ui-dismiss><%= Invidious::Frontend::Icons.render("x") %></button></aside>
@@ -46,7 +51,7 @@
   <span role="status"><%= I18n.translate(locale, "browser_profile_refresh") %></span>
   <button type="button" class="button"><%= I18n.translate(locale, "overhaul_refresh") %></button>
 </aside>
-<dialog id="shortcut-help" aria-labelledby="shortcut-heading"><form method="dialog"><button class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>"><%= Invidious::Frontend::Icons.render("x") %></button></form><h2 id="shortcut-heading"><%= I18n.translate(locale, "ux_shortcuts") %></h2><dl><dt>/</dt><dd><%= I18n.translate(locale, "ux_search_focus") %></dd><dt>?</dt><dd><%= I18n.translate(locale, "ux_shortcuts") %></dd><dt>K / Space · J / L · M · F · C</dt><dd><%= I18n.translate(locale, "ux_playback_keys") %></dd></dl></dialog>
+<dialog id="shortcut-help" class="ui-dialog" aria-labelledby="shortcut-heading"><header class="ui-dialog-heading"><form method="dialog"><button class="icon-button" aria-label="<%= I18n.translate(locale, "Close") %>"><%= Invidious::Frontend::Icons.render("x") %></button></form><h2 id="shortcut-heading"><%= I18n.translate(locale, "ux_shortcuts") %></h2></header><div class="ui-dialog-body"><dl><dt>/</dt><dd><%= I18n.translate(locale, "ux_search_focus") %></dd><dt>?</dt><dd><%= I18n.translate(locale, "ux_shortcuts") %></dd><dt>K / Space · J / L · M · F · C</dt><dd><%= I18n.translate(locale, "ux_playback_keys") %></dd></dl></div></dialog>
 <% if Invidious::Frontend::Desktop.listing?(env) || Invidious::Frontend::Desktop.watch?(env) %>
 <%= rendered "components/video-actions-dialog" %>
 <script id="dearrow-config" type="application/json"><%= {"enabled" => preferences.dearrow_enabled, "showOriginal" => preferences.dearrow_show_original, "originalLabel" => I18n.translate(locale, "dearrow_reveal_original"), "replacementLabel" => I18n.translate(locale, "spoilers_next_dearrow")}.to_json.gsub("<", "\\u003c") %></script><script src="/js/dearrow.js?v=<%= ASSET_COMMIT %>" defer></script>

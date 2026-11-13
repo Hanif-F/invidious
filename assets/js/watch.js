@@ -236,6 +236,25 @@ var watchTools = document.getElementById('watch-tools');
 var transcript_panel = document.getElementById('transcript-panel');
 var transcriptToggle = document.getElementById('transcript-toggle');
 
+var watchShortcuts = document.querySelector('.watch-shortcuts');
+function focusWatchTool(target) {
+    target.focus({preventScroll:true});
+    target.scrollIntoView({block:'start'});
+}
+function returnToWatchControl(opener, fallback) {
+    if (opener && opener.getClientRects().length && !opener.hidden) opener.focus();
+    else if (fallback && fallback.getClientRects().length) fallback.focus();
+}
+if (watchShortcuts) watchShortcuts.addEventListener('click', function (event) {
+    var link = event.target.closest('a');
+    if (!link || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    var target = document.getElementById(link.hash.slice(1));
+    var heading = target && document.getElementById(target.getAttribute('aria-labelledby'));
+    if (!heading) return;
+    event.preventDefault();
+    focusWatchTool(heading);
+});
+
 function updateWatchSidebar(widthChanged) {
     var visible = watchTools.hidden || !!watchTools.querySelector('.watch-tool:not([hidden])');
     var resized = watchSidebar.hidden === visible;
@@ -255,6 +274,7 @@ function updateWatchSidebar(widthChanged) {
             return [list, list.scrollTop];
         });
         watchTools.hidden = true;
+        if (watchShortcuts) watchShortcuts.hidden = true;
         panel.hidden = false;
         watchLayout.classList.add('watch-clip-open');
         if (transcriptToggle) transcriptToggle.disabled = true;
@@ -268,6 +288,7 @@ function updateWatchSidebar(widthChanged) {
         if (!scrollPositions) return;
         panel.hidden = true;
         watchTools.hidden = false;
+        if (watchShortcuts) watchShortcuts.hidden = false;
         watchLayout.classList.remove('watch-clip-open');
         if (transcriptToggle) transcriptToggle.disabled = false;
         trigger.setAttribute('aria-expanded','false');
@@ -286,6 +307,7 @@ if (transcript_panel) {
     (function () {
         var life = new AbortController(), owner = null, script = null, loading = false, token = 0;
         var menu = transcriptToggle.closest('details'), heading = document.getElementById('transcript-heading');
+        var shortcut = document.getElementById('transcript-shortcut'), opener;
         function visible() {
             return watchCurrent() && transcript_panel.getClientRects().length > 0;
         }
@@ -316,17 +338,25 @@ if (transcript_panel) {
             };
             document.head.append(script);
         }
-        function setOpen(opening) {
+        function setOpen(opening, trigger) {
             if (!watchCurrent() || watchTools.hidden) return;
+            if (opening && trigger) opener = trigger;
+            var changed = transcript_panel.hidden === opening;
             transcript_panel.hidden = !opening;
             transcriptToggle.setAttribute('aria-expanded', String(opening));
             menu.open = false;
-            updateWatchSidebar();
-            (opening ? heading : menu.querySelector('summary')).focus();
+            shortcut.setAttribute('aria-expanded', String(opening));
+            if (changed) updateWatchSidebar();
+            if (opening) {
+                if (trigger === shortcut) focusWatchTool(heading);
+                else heading.focus();
+            } else returnToWatchControl(opener, menu.querySelector('summary'));
         }
         transcriptToggle.addEventListener('click', function () {
-            setOpen(transcript_panel.hidden);
+            setOpen(transcript_panel.hidden, menu.querySelector('summary'));
         }, {signal:life.signal});
+        shortcut.hidden = false;
+        shortcut.addEventListener('click', function () { setOpen(true, shortcut); }, {signal:life.signal});
         document.getElementById('transcript-close').addEventListener('click', function () {
             setOpen(false);
         }, {signal:life.signal});
@@ -353,15 +383,18 @@ if (transcript_panel) {
     var sidebarPosition = document.createComment('Timestamps sidebar position');
     panel.before(sidebarPosition);
     var life = new AbortController(), expanded = false;
-    var entries, active;
+    var entries, active, opener;
+    var shortcut = document.getElementById('timestamp-shortcut');
 
     function syncVisibility() {
         toggle.disabled = watchTools.hidden;
         panel.hidden = !expanded || toggle.disabled;
         toggle.setAttribute('aria-expanded', String(!panel.hidden));
+        shortcut.setAttribute('aria-expanded', String(!panel.hidden));
         root.classList.toggle('timestamps-fullscreen-open', panel.parentNode === root && !panel.hidden);
     }
-    function setOpen(open, moveFocus) {
+    function setOpen(open, moveFocus, trigger) {
+        if (open && trigger) opener = trigger;
         expanded = open;
         syncVisibility();
         updateWatchSidebar();
@@ -372,14 +405,14 @@ if (transcript_panel) {
                 if (row.top < viewport.top || row.bottom > viewport.bottom) list.scrollTop += row.top - viewport.top;
             }
             if (panel.parentNode === root) heading.focus({preventScroll: true});
-            else if (matchMedia('(max-width: 959px)').matches) {
+            else if (matchMedia('(width < 960px)').matches) {
                 heading.focus({preventScroll: true});
                 panel.scrollIntoView({block: 'start'});
             } else heading.focus();
         } else {
             player.userActive(true);
             player.reportUserActivity();
-            toggle.focus();
+            returnToWatchControl(opener, toggle);
         }
     }
     function placePanel() {
@@ -417,6 +450,7 @@ if (transcript_panel) {
                 return row;
             });
             list.replaceChildren(...rows);
+            shortcut.hidden = !chapters.length;
             if (!chapters.length && expanded) setOpen(false, false);
         }
         var row = list.children[index];
@@ -428,7 +462,10 @@ if (transcript_panel) {
     }
 
     toggle.addEventListener('click', function () {
-        if (watchCurrent() && !toggle.disabled) setOpen(!expanded, true);
+        if (watchCurrent() && !toggle.disabled) setOpen(!expanded, true, toggle);
+    }, {signal: life.signal});
+    shortcut.addEventListener('click', function () {
+        if (watchCurrent() && !toggle.disabled && entries && entries.length) setOpen(true, true, shortcut);
     }, {signal: life.signal});
     document.getElementById('timestamp-close').addEventListener('click', function () {
         if (watchCurrent()) setOpen(false, true);

@@ -188,10 +188,21 @@ begin
   PG_DB.exec("INSERT INTO playlists (id, author, title, video_count) VALUES ('RDabcdefghijk', 'Legacy Name!', 'Legacy mix', -1)")
   PG_DB.exec("CREATE MATERIALIZED VIEW subscriptions_#{sha256("Legacy Name!")} AS #{Invidious::User::Users::MATERIALIZED_VIEW_SQL.call("Legacy Name!")}")
   linked = %w[watch_history playback_positions blocked_channels dearrow_identities playlists]
-  snapshots = linked.to_h { |table| {table, PG_DB.query_one("SELECT json_agg(t)::text FROM #{table} t", as: String)} }
+  legacy_snapshots = linked.to_h { |table| {table, PG_DB.query_one("SELECT jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t))::text FROM #{table} t", as: String)} }
   migration = Invidious::Database::Migrator.new(PG_DB)
   migration.migrate
   migration.migrate
+  linked.each do |table|
+    row = case table
+          when "watch_history"      then "to_jsonb(t) - 'completed'"
+          when "playback_positions" then "to_jsonb(t) - 'resume_eligible'"
+          else                           "to_jsonb(t)"
+          end
+    check(legacy_snapshots[table] == PG_DB.query_one("SELECT jsonb_agg(#{row} ORDER BY #{row})::text FROM #{table} t", as: String), "Migration changed legacy #{table} data")
+  end
+  check(!PG_DB.query_one("SELECT completed FROM watch_history WHERE email = 'Legacy Name!'", as: Bool), "Legacy history should default to incomplete")
+  check(PG_DB.query_one("SELECT resume_eligible FROM playback_positions WHERE email = 'Legacy Name!'", as: Bool?).nil?, "Legacy playback should have unknown resume eligibility")
+  snapshots = linked.to_h { |table| {table, PG_DB.query_one("SELECT jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t))::text FROM #{table} t", as: String)} }
   check(Invidious::Database::SavedPlaylists.exists?("Legacy Name!", "PLlegacy"), "Migration 20 lost a legacy subscription")
   check(Invidious::Database::SavedPlaylists.seed("Legacy Name!", "RDabcdefghijk") == "abcdefghijk", "Migration 20 lost an embedded mix seed")
   check(PG_DB.query_one("SELECT count(*) FROM playlists WHERE id='PLlegacy'", as: Int64) == 1, "Migration 20 deleted the legacy row")
@@ -208,7 +219,7 @@ begin
   check(Invidious::Database::SessionIDs.select_email("v1:old-api").nil?, "API token survived rename")
   check(store.authenticate("Legacy Name!", "old").nil?, "Old name still authenticates")
   check(store.authenticate("RENAMED", "old") != nil, "New name failed")
-  linked.each { |table| check(snapshots[table] == PG_DB.query_one("SELECT json_agg(t)::text FROM #{table} t", as: String), "Rename changed #{table}") }
+  linked.each { |table| check(snapshots[table] == PG_DB.query_one("SELECT jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t))::text FROM #{table} t", as: String), "Rename changed #{table}") }
   check(Invidious::Database::Users.display_name(user.email) == "Renamed", "Display name did not update")
   check(PG_DB.query_one("SELECT count(*) FROM subscriptions_#{sha256(user.email)}", as: Int64) == 0, "Subscription view disappeared")
   new_password = "a memorable password for this account"
