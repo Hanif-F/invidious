@@ -4,7 +4,7 @@
 
 Invidious is a server-rendered alternative interface to YouTube. Users browse videos, channels, playlists, comments and feeds through an Invidious instance. The instance obtains upstream information, renders HTML, provides JSON APIs and proxies selected media and images. It also stores local accounts and libraries independently of Google accounts.
 
-This fork adds account security and native client workflows, synchronized playback positions, detailed watch history, channel blocking, native clips, saved playlist references, archived chat replay, richer stream metadata, SponsorBlock, DeArrow, AI channel filtering, channel-avatar caching and a shared desktop design with Light/Dark/System color modes. The [feature catalog](features.md) describes each capability and its dependencies.
+This fork adds account security and native client workflows, synchronized playback positions, detailed watch history, channel blocking, native clips, saved playlist references, archived chat replay, richer stream metadata, SponsorBlock, DeArrow, AI channel filtering, channel-avatar caching and a responsive web interface with Light/Dark/System color modes. The [feature catalog](features.md) describes each capability and its dependencies.
 
 ## System components
 

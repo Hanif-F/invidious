@@ -14,9 +14,9 @@ Audio menus retain track identity/language and distinguish original/DRC or Stabl
 
 The Preferred audio track setting selects Original Audio, Original Audio (Stable Volume), or a language, including regional variants. It applies to DASH and audio-only playback on watch/embed pages. Missing choices fall back to regular original audio; a general language can match regional tracks, while a specific variant must match exactly. Manual audio choices override the saved preference for the current video and survive buffer refreshes. Audio-only quality changes retain the selected language and processing variant. `/latest_version` accepts optional `audio_track` (the complete upstream track ID, or empty for legacy audio) and `is_drc=true|false` selectors alongside `itag`; these resolve against server metadata before Companion delegation. A vanished variant falls back to original audio. Requests without these selectors retain existing behavior.
 
-Desktop volume persists per browser profile, independently from account preference JSON. It defaults to 100%; mute does not persist. Coarse-pointer mobile players use website volume 100% and device volume controls. Guest speed changes update guest preferences; account speed uses a CSRF-protected sparse PATCH. Volume query parameters and old volume preference fields do not control current persistence.
+With a fine pointer, player volume persists per browser profile, independently from account preference JSON. It defaults to 100%, and mute resets between visits. Coarse-pointer players use website volume 100% and device volume controls. Guest speed changes update guest preferences. Account speed uses a CSRF-protected sparse PATCH. Current persistence uses browser profile storage.
 
-The desktop player has one Settings hierarchy for quality/codec, audio, captions,
+The fine-pointer player has one Settings hierarchy for quality/codec, audio, captions,
 playback speed, enhancement destinations and advanced actions. Advanced contains
 buffer refresh, diagnostics and the Automatic mini player preference. Existing
 selection callbacks still own source changes; opening Settings, changing utility
@@ -25,9 +25,11 @@ the existing Video.js settings and profile storage. Failed, empty or unresolved
 caption loads offer an explicit retry; an unresolved load is reported after eight
 seconds and does not automatically refetch.
 
-The watch page places creator/actions and details below the player and one utility
-panel beside it. Queue takes priority over replay chat, then Up next. A Transcript
-tab loads only when selected, including when it is the only available tool.
+Watch places creator information, actions and details below the player. Below
+960 CSS px, the tools and comments stack underneath. Phone layouts add shortcuts
+for available sections, including Queue, Timestamps, Transcript, Chat Replay,
+Up Next and Comments. Wider layouts can place tools beside the player. Transcript
+content loads on demand.
 Standard/Theater mode persists in this browser profile across videos and sessions.
 Automatic docking defaults off. When enabled, a started player docks after its
 original space scrolls out of view; that space stays reserved. Its controls offer
@@ -58,7 +60,7 @@ picture-in-picture, audio-only playback and clip preview suspend docking.
 | `controls` | Numeric player control switch, enabled at values >=1 |
 | `raw` | Numeric raw mode switch, enabled at 1 |
 | `region` | Optional fetch region; not automatically inherited from every page preference |
-| `hl`, `dark_mode`, `thin_mode` | Locale/color overrides; thin mode remains for ordinary API HTML, without changing desktop imagery |
+| `hl`, `dark_mode`, `thin_mode` | Locale/color overrides. Thin mode applies to ordinary API HTML. |
 
 Server restrictions override requests: disabled DASH falls back to the alternate configured quality path, and disabled local proxy cannot be enabled by the query. Do not use URL overrides as authorization or durable account updates.
 
@@ -108,7 +110,7 @@ Page-wide shortcuts avoid focused inputs, links/buttons, menus, dialogs and edit
 | `w` / `o` | Cycle caption window/text opacity |
 | Enter | Active manual SponsorBlock skip prompt, when focus permits |
 
-The existing `P` previous-video branch is a TODO; do not expect previous-video keyboard navigation. On desktop, wheel changes volume only while hovering the volume control. Mobile settings use a full-viewport dialog. Double-tapping an outer third queues signed seek steps; subsequent taps accumulate and commit after 500 ms inactivity while preserving playback state. These enhancements need JavaScript.
+The existing `P` previous-video branch is a TODO; do not expect previous-video keyboard navigation. With a fine pointer, the wheel changes volume while hovering over the volume control. The coarse-pointer player uses a scrollable Settings dialog. Double-tapping an outer third queues signed seek steps. Subsequent taps accumulate and commit after 500 ms of inactivity while preserving playback state. These enhancements need JavaScript.
 
 Playback preferences offer a Seek interval of 5, 10 (default), 20 or 30 seconds.
 The shared player configuration supplies `seek_seconds` to watch, embed and clips,
@@ -156,7 +158,7 @@ Videos with the `Music` genre start at the beginning on watch pages and embeds u
 
 Replay is read-only and offered when `liveChatReplay` is true and the video is neither live nor upcoming. The public replay API returns messages, removals and an opaque continuation, with an offset in milliseconds. Initial requests obtain a replay continuation; subsequent requests reuse it. Invalid IDs, negative offsets, oversized continuations or offsets beyond duration are rejected. No replay returns 404; upstream failures return 503 without requiring playback to stop.
 
-On desktop watch pages, the **Show chat** button next to player Settings opens synchronized replay beside the video. The Chat size preference adjusts that column up to half the player width. Narrow layouts and touch players show replay in the watch sidebar. Settings → Chat replay and the panel's contextual control open the editor for timestamps, font size, width and filters. Font size, chat width, and hide-user-ID choices stay in the current browser profile. Signed-in viewers save timestamps, blacklists, and per-video timing through the existing authenticated APIs. Guests save supported choices in their browser profile. Web saves preserve native overlay fields. Positive offsets delay chat relative to video. Zero clears the stored offset. For native filter restrictions, see the [native chat contract](mobile-api.md#archive-chat-replay).
+On wider layouts with the **Show chat** player control, the button opens synchronized replay beside the video. The Chat size preference adjusts that column up to half the player width. On phones, the **Chat Replay** shortcut opens or focuses the inline section below the video details. Touch players without the in-player control also use the inline section. Settings → Chat replay and the panel's contextual control open the editor for timestamps, font size, width and filters. Font size, chat width, and hide-user-ID choices stay in the current browser profile. Signed-in viewers save timestamps, blacklists, and per-video timing through the existing authenticated APIs. Guests save supported choices in their browser profile. Web saves preserve native overlay fields. Positive offsets delay chat relative to video. Zero clears the stored offset. For native filter restrictions, see the [native chat contract](mobile-api.md#archive-chat-replay).
 
 ## Downloads and delivery
 
@@ -168,13 +170,13 @@ Downloads do not server-side mux/transcode separate tracks into a new file. Nati
 
 ## Desktop layout and docking
 
-The Theater mode control retains its choice across videos and sessions in the
-current browser profile. Automatic mini player is an optional Advanced player
-setting, disabled by default. Its geometry, controls and playback exclusions are
-described above; it never moves replay chat or other utility-panel content.
+The Theater mode control is available from 960 CSS px and retains its choice
+across videos and sessions in the current browser profile. Automatic mini player
+is an optional Advanced player setting, disabled by default, and docks from
+1100 CSS px. Replay chat and other utility sections stay in place during docking.
 
 Transcript follows inside its own scrolling region. Manual interaction/search disables following until explicitly re-enabled.
 
 ## Diagnostics
 
-Stats for nerds is opt-in from desktop Settings → Advanced or mobile settings. It shows available timing, buffering, rendition, codec/frame and network/player measurements, with unavailable values left unknown. Copy diagnostics creates an allowlisted local JSON snapshot; the panel performs no diagnostics upload. Disable stops observation. Native fullscreen/PiP cannot display the HTML overlay; return to inline playback to inspect it.
+Stats for nerds is opt-in from the fine-pointer Settings → Advanced menu or coarse-pointer Settings dialog. It shows available timing, buffering, rendition, codec/frame and network/player measurements, with unavailable values left unknown. Copy diagnostics creates an allowlisted local JSON snapshot. Disable stops observation. Return from native fullscreen or PiP to inline playback to inspect the HTML overlay.

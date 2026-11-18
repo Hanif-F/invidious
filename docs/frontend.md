@@ -24,7 +24,7 @@ Keep escaping/context correct when adding titles, descriptions, identities or JS
 | `player-dock.js` | Desktop watch-page docking of the existing player without replacing its media element |
 | `themes.js`, `timezone.js` | Color-mode updates/CSRF POST and supported timezone detection |
 | `player.js` | Video.js initialization, playback/resume, volume, keyboard shortcuts and lifecycle sync |
-| `player-ui.js`, `player-settings.js`, `player-mobile.js` | Profile-scoped watch layout, desktop Settings hierarchy, mobile settings and touch gestures |
+| `player-ui.js`, `player-settings.js`, `player-mobile.js` | Profile-scoped Watch layout, fine-pointer Settings hierarchy, coarse-pointer settings and touch gestures |
 | `player-stream-menu.js` | Audio/quality/codec menus, metadata selection and summaries |
 | `player-chapters.js` | Manual chapter indicators/labels and SponsorBlock boundary coexistence |
 | `player-stats.js` | Local opt-in diagnostics, copy fallback and observation lifecycle |
@@ -32,7 +32,7 @@ Keep escaping/context correct when adding titles, descriptions, identities or JS
 | `watched_indicator.js` | Synced/local card progress, including dynamically inserted rows |
 | `comment-threads.js` | One read-only comment/reply owner shared by watch, community and post pages |
 | `transcript.js` | Transcript display, selection and timestamp navigation |
-| `overhaul.js` | Shared navigation/menus/tabs/dialogs and occurrence-aware playlist grips |
+| `overhaul.js` | Shared navigation, menus, tabs, dialogs and occurrence-aware playlist reordering |
 | `subscriptions.js`, `playlist-forms.js`, `video-actions.js` | Subscription/library/context actions and ordinary form enhancement |
 | `sse.js`, `notifications.js` | Notification streams, tab ownership and counters |
 | `sponsorblock.js`, `sponsorblock-preferences.js` | Segment presentation/skipping and category/channel controls |
@@ -54,7 +54,17 @@ Storage denial/quota failure uses bounded cookie fallbacks for small validated s
 
 [foundation.css](../assets/css/foundation.css) defines shared tokens, document layout, cards, navigation, forms, menus and dialogs. Feature sheets cover the player, watch utilities, chat, clips, DeArrow and verification. First-party icons use the local [Lucide sprite](../assets/icons/lucide.svg). The unused Diary theme, Pure stylesheets and Ionicons font assets have been removed; required Video.js/plugin assets remain.
 
-Light/Dark/System uses the existing preference, header toggle in the current document. Browser pages use one grid/row and player design. Older density, thin-mode and player-style values remain compatible with native and legacy preference submissions; browser Settings no longer edits them. Ordinary API playlist HTML still honors thin mode; explicitly requested desktop fragments share browser cards. See [styling](theming.md) for component and player guidance.
+Light/Dark/System uses the existing preference and the header toggle updates the current document. Older density, thin-mode and player-style values remain compatible with native and legacy preference submissions. Ordinary API playlist HTML still honors thin mode. The `ui=desktop` HTML projection uses the shared browser cards at every viewport. See [styling](theming.md) for component and player guidance.
+
+## Responsive layout
+
+The shared phone rules apply below 768 CSS px, or below 960 CSS px in landscape when the viewport is at most 500 CSS px tall. CSS uses this condition and [InvidiousUI.phoneViewport](../assets/js/ui.js) provides the matching JavaScript query. Pointer capability selects player controls and gestures independently of layout. The phone gutter is 12 px, with safe-area insets at the viewport edges.
+
+The phone header puts the existing search form below the wordmark, navigation trigger, theme and account controls. The top row sticks in portrait, and both rows scroll with the page in landscape. The drawer and its native disclosure fallback use the same role-filtered links. Enhanced menus and dialogs use the visible viewport when available. Notices move out of the way of focused controls.
+
+Feed cards stack in portrait and can use two columns in landscape when two 240 px cards fit. Dense numbered or action-heavy rows stack below 360 px. Channel tabs scroll in their own strip, with More always outside it. Phone Settings uses a category selector and explicit Go action with the existing category controller. Editable matrices stack with labels, and category links provide the ordinary HTML fallback. The Save to playlist dialog uses a native selector in phone mode.
+
+Watch stacks the player, details, tools and comments below 960 px. Phone shortcuts lead to the tools available for that video, including inline replay chat. Theater controls return at 960 px and automatic docking is eligible from 1100 px. Resizing keeps the media element and its playback state. Standalone embeds use their own frame dimensions for player controls and recovery links. See the [responsive browser matrix](../tests/frontend/README.md#responsive-browser-matrix).
 
 ## Avatars, card visibility and progress
 
@@ -108,7 +118,7 @@ Owned playlists use Move up and Move down in phone row menus. Wider layouts use 
 the existing CSRF token and playlist ID query parameter. It locks the playlist,
 rechecks ownership and occurrence membership, and changes only its order and
 updated timestamp. Stale occurrences return 409; the browser retains the displayed
-order, disables further dragging and offers an explicit Reload.
+order, disables reordering and offers an explicit Reload.
 Duplicate video IDs and unloaded entries retain their distinct occurrences.
 
 ## Preferences and watching

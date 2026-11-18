@@ -1,6 +1,6 @@
 # Invidious application documentation
 
-This handbook documents **this repository's implementation**, including its fork-specific features. It is based on the source tree reviewed on **2026-11-01**. It describes code behavior, not a claim that a particular deployment or every upstream integration has been tested. Companion software and native client implementations live outside this repository; their server contracts are documented here.
+This handbook documents **this repository's implementation**, including its fork-specific features. It describes source behavior. See [operations](operations.md) for deployment verification. Companion software and native client implementations live outside this repository, and this handbook covers their server contracts.
 
 ## Start here
 
@@ -17,7 +17,7 @@ This handbook documents **this repository's implementation**, including its fork
 | Understand backend design and storage | [Architecture](architecture.md), [database](database.md) |
 | Maintain or deploy an instance | [Operations](operations.md), [security](security.md), [troubleshooting](troubleshooting.md) |
 | Change or test the code | [Development](development.md), [frontend](frontend.md), [documentation maintenance](documentation.md) |
-| Implement phone responsiveness | [Phone responsiveness plan](implementResponsiveness/README.md) |
+| Understand and test the responsive web interface | [Responsive layout](frontend.md#responsive-layout), [browser test matrix](../tests/frontend/README.md#responsive-browser-matrix) |
 | Understand upstream services | [Integrations](integrations.md) |
 
 ## Feature-specific contracts

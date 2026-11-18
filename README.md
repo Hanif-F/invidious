@@ -55,7 +55,7 @@
 
 ## Interface and documentation
 
-The [repository handbook](docs/README.md) describes this fork. The desktop interface uses one shared design with Light, Dark and System modes, category Settings, a tabbed watch panel and unified media controls. [Frontend guidance](docs/frontend.md) and [styling guidance](docs/theming.md) describe its implementation. See [operations](docs/operations.md) for release contents, asset caches, deployment checks and rollback.
+The web interface adapts to phone and desktop viewports. It uses Light, Dark and System color modes, category Settings, shared media controls and Watch tools that stack on narrow screens. The [repository handbook](docs/README.md) covers the fork, including [frontend behavior](docs/frontend.md), [styling](docs/theming.md) and [operations](docs/operations.md).
 
 ## Features
 
@@ -63,7 +63,7 @@ The [repository handbook](docs/README.md) describes this fork. The desktop inter
 - Lightweight
 - No ads
 - No tracking
-- Shared desktop design with Light/Dark/System color modes
+- Responsive web interface with Light/Dark/System color modes
 - Customizable homepage
 - Subscriptions independent from Google
 - Notifications for all subscribed channels

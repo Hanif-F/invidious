@@ -4,14 +4,14 @@ These additions keep YouTube extraction, stream resolution, channel/search reque
 and captions in Invidious and Companion. Playlist subscriptions require migration 20.
 Existing accounts and existing web APIs keep their behavior.
 
-The desktop overhaul changes browser presentation and editors, not this native
-wire contract. `ui_density`, `thin_mode`, `player_style` and raw chat appearance/
-overlay fields remain readable and round-trippable even though desktop controls
-for them are retired. Web category/dedicated saves preserve unrelated native and
-unknown values. The overhaul requires no new native scope or renewed sign-in;
-the feature-specific historical scope additions below still apply to older tokens.
-Android/TV client behavior described here belongs to the separate clients. Their
-source/devices were not modified or exercised by this repository's acceptance.
+The responsive web interface and native clients share account preferences.
+`ui_density`, `thin_mode`, `player_style` and raw chat appearance/overlay fields
+remain readable and round-trippable through native and legacy callers. Web
+category and dedicated editor saves preserve unrelated native and unknown values.
+Existing native sessions retain their scopes, and the feature-specific scope
+additions below still apply to older tokens.
+Android and TV behavior belongs to the separate clients and requires device
+testing alongside the server checks.
 
 ## Stream representation metadata
 

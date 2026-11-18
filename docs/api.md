@@ -8,9 +8,9 @@ The versioned API lives under `/api/v1`. [All routes](reference/routes.md) lists
 
 Responses are usually JSON, but captions/storyboards can return VTT, annotations XML, feeds Atom/OPML and download selectors redirects. `format=html` on supported APIs returns a JSON object containing rendered HTML and continuation/navigation fields; it is not a universal switch for every endpoint. Check status and Content-Type before parsing. A 204 has no JSON body.
 
-The desktop interface requests `ui=desktop` only on HTML-capable endpoints that
-support its shared card/queue projection. Ordinary/native HTML keeps its existing
-thin-mode contract. Browser styling changes do not personalize public discovery
+The web interface requests `ui=desktop` on HTML-capable endpoints that support
+its shared card/queue projection across phone and desktop viewports.
+Ordinary/native HTML keeps its existing thin-mode contract. Browser styling changes do not personalize public discovery
 JSON or replace native schemas, token scopes or occurrence identifiers.
 
 Canonical video IDs are 11-character YouTube IDs; channel IDs are normally `UC` plus 22 characters. Local playlist IDs start `IV`, local clip IDs `IVCL`, and mixes generally `RD`. Different handlers have different historical validation; use returned canonical IDs. Continuations are opaque and endpoint-specific. Most pages start at 1; playlist `index` is a zero-based offset, separate from the stable occurrence ID.

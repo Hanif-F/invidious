@@ -6,5 +6,6 @@ These records preserve useful historical evidence. Their deployment claims, host
 
 - [Security implementation review, October 2026](security-readiness-2026-10.md).
 - [Bot-protection rollout, 22 October 2026](bot-protection-rollout-2026-10-22.md).
+- [Phone responsiveness verification, 13 November 2026](phone-responsiveness-2026-11-13.md).
 
 The active [account upgrade procedure](../../ACCOUNT_SECURITY.md) remains current operational material. Changelogs and dependency/data licenses retain their original history and attribution.

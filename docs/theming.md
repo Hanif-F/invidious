@@ -39,7 +39,7 @@ Preserve direction-aware RTL layout, enlarged text, Light/Dark/System, keyboard
 focus and reduced motion. Forced colors must retain readable text, borders and
 controls, including over arbitrary video. The phone layout uses the shared
 viewport rule and follows the same theme and accessibility requirements.
-Shared media, embed, and native compatibility still apply. [Phone layout and accessibility](implementResponsiveness/01-foundation-and-shell.md#f1-layout-and-accessibility)
+Shared media, embed, and native compatibility still apply. [Responsive layout](frontend.md#responsive-layout)
 
 ## Player and interaction compatibility
 

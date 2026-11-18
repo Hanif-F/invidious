@@ -54,7 +54,7 @@ assume the `tests/frontend` directory unless stated otherwise.
 | `stream-menu.test.cjs` | Rendition grouping, codec/bitrate fallbacks, ties and audio identity |
 | `ui.test.cjs` | Retained product capabilities migrated to current templates/controls, shared touch behavior, metadata and preference contracts |
 | `qol.test.cjs` | Explicit navigation/filtering, Load more/Back, category saves, real-player docking and transcript following |
-| `overhaul.test.cjs` | Desktop shell, categories, discovery, collections, watch, utilities, clips, dedicated editors, enhancement coexistence and repeated setup |
+| `overhaul.test.cjs` | Phone and desktop shell, categories, discovery, collections, Watch, clips, dedicated editors, enhancement coexistence and repeated setup |
 | `account-surfaces.test.cjs` | Ordinary account/consent/session/delete/TV and seven-source import/export forms |
 | `verification-surfaces.test.cjs` | Challenge/admin/recovery forms, separate localized Cloudflare handoff, no-JS/API-only paths, confidentiality and cached/late callbacks |
 | `status-surfaces.test.cjs` | Privacy/licenses/messages/errors, no-JS reading, safe reports, read-only recovery and vendor/LibreJS attribution |
@@ -66,13 +66,26 @@ The full npm command is also used by
 [frontend CI](../../.github/workflows/frontend.yml); it does not run every database
 harness. [Documentation CI](../../.github/workflows/documentation.yml) needs no app.
 
-## Desktop QoL interactions
+## Responsive browser matrix
 
-The desktop matrix uses Chromium/Firefox at 1280×720, 1440×900 and 1920×1080,
-Light/Dark/System, RTL/enlarged text, forced colors, focus, reduced motion and
-long/incomplete content. Inspect generated screenshots alongside behavioral
-results; generating a screenshot does not constitute review.
-Phone checks cover 320 × 568, 390 × 844, and 844 × 390, with breakpoint and interaction cases in the owning suites. See the [phone verification plan](../../docs/implementResponsiveness/05-verification-and-handoffs.md).
+The Chromium and Firefox phone matrix exercises production fixtures at 320 × 568,
+390 × 844 and 844 × 390. The desktop matrix covers 1280 × 720, 1440 × 900 and
+1920 × 1080. Focused checks cover the 359/360 px dense-row boundary, 767/768 px
+portrait shell boundary, 959/960 px landscape width and Watch boundary,
+500/501 px landscape height, and 1099/1100 px docking boundary. The drawer,
+player and dialogs also run at 568 × 320, with embed frames at 320 × 180 and
+640 × 360.
+
+The shared geometry suite checks document overflow, component bounds, local
+scrollers, ordinary HTML, RTL and enlarged text. Owning suites exercise live
+resize, focus and touch interactions, Light/Dark/System, forced colors, reduced
+motion, and simulated safe-area and visual-viewport constraints. The fixture
+matrix includes guest, signed-in, owner, admin, denied and API-only surfaces.
+Compare the captured phone and desktop screenshots with the behavior assertions.
+See [responsive layout](../../docs/frontend.md#responsive-layout) and the
+[November 2026 verification record](../../docs/archive/phone-responsiveness-2026-11-13.md).
+
+## Shell, discovery and library interactions
 
 Shell checks cover one sidebar toggle, profile collapse/watch drawer, role-aware
 navigation, contained menus and keyboard help. Discovery checks use production
@@ -233,7 +246,8 @@ pass; normal fixture generation does not rewrite the public JSON baseline.
 
 Node/browser fixtures do not prove deployed TLS/cache/proxy policy, live YouTube,
 Companion, Cloudflare, physical fullscreen/PiP, codec decoding or native apps.
-PiP is tested only where exposed, and unsupported browsers retain their fallback
-controls. WebKit is outside the declared default suite. Mobile website redesign
-and real Android/iOS/TV acceptance are outside this suite. [Operations](../../docs/operations.md)
-describes deployment smoke checks, cache refresh and rollback.
+PiP is tested where exposed, and other browsers use the fallback controls. The
+phone layout matrix uses Chromium and Firefox with synthetic media and responses.
+WebKit, physical phone keyboards and real Android/iOS/TV device acceptance need
+separate testing. See [operations](../../docs/operations.md) for deployment smoke
+checks, cache refresh and rollback.

@@ -1,6 +1,6 @@
-# Phone responsiveness implementation handoff
+# Phone responsiveness verification, 13 November 2026
 
-The local implementation follows stages 01 through 05. The browser matrix is registered in the existing Frontend regression tests workflow. Hosted GitHub Actions evidence is pending. Changes are staying local at the user's request.
+This record captures local implementation and verification through 13 November 2026, included in commit `4c961a4b`. The browser matrix was registered in the Frontend regression tests workflow. Hosted GitHub Actions evidence was pending at the time of this record. Current behavior and test instructions are in the [frontend guide](../frontend.md#responsive-layout) and [frontend verification guide](../../tests/frontend/README.md).
 
 ## Stage 01. Foundation and shell
 
@@ -34,12 +34,12 @@ The local implementation follows stages 01 through 05. The browser matrix is reg
 - Full-web and API-only production fixture renders passed. The phone matrix passed all 26 reported cases across 135 fixtures at the three required sizes in Chromium and Firefox. The focused phone, pointer, drawer and docking run passed all 28 cases. The separate legacy annotation and VR run passed all four cases with WebGL available in both engines.
 - Both production build variants passed compiler verification with the workflow's Crystal 1.19.2. Both fixture renderers passed with that compiler as well. The original-title handler and the affected test assertions read the `Content-Type` header directly for compatibility with Crystal 1.19.2. Crystal and Spectator also reported 301 and 141 passing examples with the local Crystal 1.22.2 and loopback sockets available.
 - Both frontend workflow database suites passed locally with Crystal 1.19.2 and the workflow's PostgreSQL versions, 14 for blocking and 16 for accounts. The account suite now verifies preservation of legacy data during migration and compares complete migrated rows before and after rename. It also asserts defaults for the columns added by migrations 26 and 27.
-- Local Firefox 153 on this host requires a compatible FFmpeg library for the synthetic MP4, DASH and HLS cases. The seven affected tests also fail on the original revision with the default host libraries. All seven pass when the test process uses FFmpeg 7-compatible libraries.
+- Local Firefox 153 on the test host required a compatible FFmpeg library for the synthetic MP4, DASH and HLS cases. The seven affected tests also failed on the original revision with the default host libraries. All seven passed when the test process used FFmpeg 7-compatible libraries.
 - The legacy suite expected retired clip-annotation and recommendation selectors. The updated tests exercise the current Advanced menu and recommendation markup. Caption pixel comparisons isolate caption paint from player chrome during the screenshot while preserving the player layout and the original color and opacity assertions.
 - The final local integrated run used fixtures rendered with Crystal 1.19.2 and passed all 978 tests with compatible codecs. It includes signed-in RTL navigation, notice placement, the clip editor, playlist drag and write rotation, batch confirmation without the Visual Viewport API, Settings accessibility, and legacy annotation, VR, and caption checks in Chromium and Firefox.
-- The latest hosted browser job ran on an earlier commit and failed before the tests. Its Crystal installer received HTTP 404 responses for `libevent` packages on Ubuntu 24.04. The local workflow now refreshes apt indexes before installing Crystal. GitHub Actions lists no runs for the responsiveness branch. [Hosted browser job](https://github.com/Hanif-F/invidious/actions/runs/37775700600/job/113305845695)
+- The latest hosted browser job inspected on 13 November ran on an earlier commit and failed before the tests. Its Crystal installer received HTTP 404 responses for `libevent` packages on Ubuntu 24.04. The workflow was updated to refresh apt indexes before installing Crystal. GitHub Actions listed no runs for the responsiveness branch at that time. [Hosted browser job](https://github.com/Hanif-F/invidious/actions/runs/37775700600/job/113305845695)
 
-Run from the repository root using the existing frontend dependencies and fixture media. The local integrated command used a process-scoped library path with FFmpeg 7-compatible codecs.
+The recorded commands ran from the repository root with the frontend dependencies and fixture media installed. The library path below was temporary test-host setup containing FFmpeg 7-compatible codecs. Current setup instructions are in the [frontend verification guide](../../tests/frontend/README.md#run).
 
 ```sh
 crystal run tests/frontend/render_fixtures.cr -Dskip_videojs_download
@@ -58,7 +58,7 @@ python3 docs/tools/check_docs.py
 git diff --check
 ```
 
-The frontend matrix combines [phone geometry and ordinary HTML](../../tests/frontend/responsive.test.cjs) with [interactive phone and desktop coverage](../../tests/frontend/overhaul.test.cjs) and the existing feature suites. The shared-template fixture list and aliases in the [route index](README.md#route-and-surface-index) map route families to their rendered destinations. The API-only renderer retains its production login, verification, native handoff and error assertions. The generated handbook references were refreshed to clear pre-existing schema, migration, and source-map drift.
+The frontend matrix combined [phone geometry and ordinary HTML](../../tests/frontend/responsive.test.cjs) with [interactive phone and desktop coverage](../../tests/frontend/overhaul.test.cjs) and the existing feature suites. Shared templates represented related route families. The API-only renderer retained its production login, verification, native handoff and error assertions. The generated handbook references were refreshed to clear pre-existing schema, migration, and source-map drift.
 
 ### Visual review
 

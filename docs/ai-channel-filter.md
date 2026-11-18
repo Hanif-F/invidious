@@ -28,7 +28,7 @@ classification API described in [Mobile API](mobile-api.md#ai-channel-filter).
 
 Replacement thumbnails use a muted charcoal background and grey, regular-weight
 text: “Likely AI-generated” with “AiSList Blocklist”, or “Possibly AI-generated”
-with “AiSList Warnlist”. They replace the image markup entirely while preserving links, titles and controls. Desktop layouts retain imagery regardless of legacy thin-mode preferences. Player posters, avatars and
+with “AiSList Warnlist”. They replace the image markup entirely while preserving links, titles and controls. Phone and desktop browser cards retain imagery regardless of legacy thin-mode preferences. Player posters, avatars and
 aggregate playlist covers retain their existing behavior. Direct links and current
 playback remain accessible. Manual channel blocking and membership filtering continue to apply
 independently. Pagination uses the original upstream result count; filtered pages

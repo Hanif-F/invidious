@@ -12,9 +12,11 @@ Recognized old `/preferences#...` bookmarks open their current category and focu
 
 The [field inventory](reference/preferences.md) lists every model field, and [configuration defaults](reference/configuration.md) lists instance defaults. This guide explains behavior and scope rather than duplicating those tables.
 
+On phones, select a category and choose **Go** to open it. Changing the selection leaves the current form and its draft in place until you choose Go. Ordinary category links remain available without JavaScript.
+
 ## Persistence and precedence
 
-Saved account fields or guest cookie values are parsed over instance defaults. A request may then override rendering through `hl`, `dark_mode` or [video query parameters](playback.md#watch-and-embed-query-options). `thin_mode` remains supported by ordinary API HTML and native/legacy callers; desktop pages and `ui=desktop` fragments use the shared imagery/layout. Browser-local settings such as volume, search choices, temporary player changes and guest enhancements use isolated browser profiles; not every UI action rewrites account preferences.
+Saved account fields or guest cookie values are parsed over instance defaults. A request may then override rendering through `hl`, `dark_mode` or [video query parameters](playback.md#watch-and-embed-query-options). `thin_mode` remains supported by ordinary API HTML and native/legacy callers. The shared web interface and `ui=desktop` fragments use responsive cards with images. Browser-local settings such as volume, search choices, temporary player changes and guest enhancements use isolated browser profiles.
 
 An open document keeps the settings it loaded. Changes saved in another tab or
 client apply after a manual refresh or fresh navigation. Focus changes and cached
@@ -73,14 +75,14 @@ retired theme keys described below are removed on saves.
 | Fields | Behavior |
 | --- | --- |
 | `locale`, `region`, `timezone` | Translation, supported regional requests, and history/calendar grouping; invalid timezone resolves to unset/UTC behavior |
-| `dark_mode` | System (empty), `light` or `dark` in the shared desktop design |
-| `ui_density` | Retained for native/legacy round trips; the desktop interface uses one layout |
-| `thin_mode` | Retained for native/legacy round trips; migrated desktop pages retain their images |
+| `dark_mode` | System (empty), `light` or `dark` in the shared web interface |
+| `ui_density` | Retained for native/legacy round trips. The web layout adapts to the viewport. |
+| `thin_mode` | Retained for native/legacy round trips and ordinary API HTML |
 | `default_home`, `feed_menu` | Home destination and feed navigation entries |
 | `show_nick` | Display username in supported navigation |
 | `automatic_instance_redirect` | Automatic fallback-instance behavior where supported |
 
-Desktop pages use shared neutral Light/Dark/System styles. Diary assets and the alternate browser layouts were retired after all page families migrated. Legacy `theme`, `theme_random`, `theme_random_interval_hours`, and `theme_random_next_at` fields are ignored in old preferences and configuration, omitted from new serialized output, and removed on subsequent saves. This explicit cleanup preserves other unknown fields. No database migration is required for the interface change.
+Phone and desktop pages use shared Light/Dark/System styles. Legacy `theme`, `theme_random`, `theme_random_interval_hours`, and `theme_random_next_at` fields are ignored in old preferences and configuration, omitted from new serialized output, and removed on subsequent saves. This explicit cleanup preserves other unknown fields.
 
 ## Playback and content
 

@@ -8,9 +8,9 @@ signed-in browser. This follows the device interaction and polling behavior of
 signed JSON native tokens. It does not introduce an OAuth server or change
 `POST /api/v1/mobile/login`. Manual native login remains available independently.
 
-The desktop overhaul restyles the browser `/tv` approval/denial form and its
-account/code comparison. It does not build a native TV app or change Tividious's
-polling, credential or QR protocol. Real-device acceptance remains separate.
+The responsive `/tv` page shows the account and code for explicit approval or
+denial from a signed-in browser. Tividious owns the TV interface, polling and QR
+workflow. Device testing covers the complete browser and TV handoff.
 
 ## Protocol
 

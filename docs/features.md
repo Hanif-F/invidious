@@ -64,9 +64,9 @@ The following inventory covers the user-visible capabilities implemented in this
 | Feature | Behavior | Details |
 | --- | --- | --- |
 | Preferences | Account JSON or guest cookie; playback, navigation, privacy, feed and interface settings | [Preferences](preferences.md) |
-| Appearance | Shared desktop design with Light, Dark and System color modes | [Preferences](preferences.md), [theming](theming.md) |
+| Appearance | Responsive web interface with Light, Dark and System color modes | [Preferences](preferences.md), [theming](theming.md) |
 | Localization | Locale JSON, Accept-Language selection, per-request override and English fallback, RTL support | [Frontend](frontend.md) |
-| Layout compatibility | Desktop uses one layout; native/legacy density and thin-mode values remain readable and ordinary API HTML honors thin mode | [Preferences](preferences.md) |
+| Layout compatibility | Phone and desktop share the same templates. Native and legacy density and thin-mode values remain readable, and ordinary API HTML honors thin mode. | [Responsive layout](frontend.md#responsive-layout), [preferences](preferences.md) |
 | Manual channel blocks | Per-account blocks applied on supported personalized browser/native surfaces; direct access remains possible | [Accounts](accounts-and-library.md) |
 | Member-video visibility | Opt-in display of members-only results; does not grant membership or unlock playback | [Discovery](search-and-feeds.md) |
 | SponsorBlock | Eight segment categories, modes/colors, per-channel overrides and local browser changes | [SponsorBlock](sponsorblock.md) |

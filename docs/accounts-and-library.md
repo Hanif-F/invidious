@@ -16,7 +16,7 @@ Existing accounts retain legacy names and password verification behavior after m
 
 `/account` exposes private account controls. Renaming or changing the password requires the current password, preserves owned data, revokes existing sessions/API tokens and establishes a new browser session. Native credential changes return replacement native credentials; clients must replace their stored token. `/change_password` remains available. `/delete_account` confirms credentials before deleting the account and owned data.
 
-Account controls now share the desktop shell. Username failures retain the literal
+Account controls share the responsive web shell. Username failures retain the literal
 submitted name; password fields return empty. Deletion explains its permanent
 consequences and links to portable exports before requiring the current password.
 `/token_manager` shows session type, issuance time and the current browser marker;
@@ -62,7 +62,11 @@ Detailed history includes `video_id`, title, channel name/ID, release date, late
 
 ## Owned playlists
 
-`/feed/playlists` separates **My playlists** from **Saved playlists**. Create a local playlist, choose Public/Unlisted/Private, edit its title/description/privacy, and add/remove video occurrences. Local playlist IDs start with `IV`. An account can own at most 100 playlists, each normally limited by `playlist_length_limit` (default 500). Owners reorder with the leading row grip, using pointer drag with edge scrolling or keyboard Space/Enter, arrows, drop/cancel. There are no movement buttons. Its POST `playlist_ajax?action=move_video_before` action uses decimal occurrence strings (`source`, `anchor`) and `placement=before|after`, not video IDs. The database locks the playlist and rechecks ownership/occurrence membership; a stale occurrence returns 409 and the browser retains the displayed order, disables further dragging and offers Reload. Duplicates and unloaded entries retain their order. Enhanced add/remove/move requests send `include_positions=1` for a transaction-captured position/count snapshot; older callers keep the existing empty JSON success response. Confirmed UI changes use canonical decimal occurrence strings and positions. Add/remove/delete also transact the item rows and ordered index/count together. Concurrent creations share the account lock for the existing 100-playlist limit. This web action is distinct from the native versioned API, which has no occurrence-reordering route.
+`/feed/playlists` separates **My playlists** from **Saved playlists**. Create a local playlist, choose Public/Unlisted/Private, edit its title/description/privacy, and add/remove video occurrences. Local playlist IDs start with `IV`. An account can own at most 100 playlists, each normally limited by `playlist_length_limit` (default 500).
+
+On phones, owners reorder loaded occurrences with **Move up** and **Move down** in the row menu. Wider layouts use the leading grip for pointer drag with edge scrolling or keyboard pickup, arrow movement, and drop or cancel. Both use POST `playlist_ajax?action=move_video_before` with decimal occurrence strings (`source`, `anchor`) and `placement=before|after`. The database locks the playlist and rechecks ownership and occurrence membership. A stale occurrence returns 409. The browser retains the displayed order, disables reordering, and offers Reload. Duplicate videos have independent occurrence IDs, and reordering uses only loaded rows.
+
+Enhanced add/remove/move requests send `include_positions=1` for a transaction-captured position/count snapshot. Older callers keep the existing empty JSON success response. Confirmed UI changes use canonical decimal occurrence strings and positions. Add/remove/delete also transact the item rows and ordered index/count together. Concurrent creations share the account lock for the existing 100-playlist limit. Occurrence reordering is available through the web action.
 
 Public playlists are accessible to other users; unlisted playlists are available through their link; private playlists require the owner. Private access checks apply to page/API/embedded playlist flows, including indexed series/redirects. Nonowners often receive 404 to avoid revealing a private resource. An accessible playlist does not give a viewer edit permission.
 

@@ -6,13 +6,13 @@ Discovery combines upstream requests with locally cached subscription data. Publ
 
 ## Home, popular and trending
 
-`/` redirects/renders according to `default_home`; a blank home uses search. The desktop sidebar provides discovery and account destinations; `feed_menu` remains readable by compatible clients and older callers. Popular uses the instance's channel-video collection and refresh job, so it reflects instance activity/data rather than an exact YouTube homepage. `popular_enabled` controls its availability. Trending offers the supported Livestreams/Gaming choices and region with an explicit Apply form. It requests YouTube data; empty or restricted upstream responses can yield no results.
+`/` redirects or renders according to `default_home`. A blank home uses search. The phone drawer and desktop sidebar share the discovery and account destinations, and `feed_menu` controls the configured feed links. Popular uses the instance's channel-video collection and refresh job, and `popular_enabled` controls its availability. Trending offers the supported Livestreams/Gaming choices and region with an explicit Apply form. Empty or restricted YouTube responses can yield no results.
 
 `/feed/subscriptions`, `/feed/history`, `/feed/playlists` and `/feed/clips` are local account/library entry points. Their collection-specific behavior is in [accounts and library](accounts-and-library.md). Pagination preserves upstream result counts even if local visibility controls hide cards, so a filtered page may contain fewer entries or be empty while a next page still exists.
 
 ## General search
 
-Use `/search?q=...`; `/results?search_query=...` accepts compatible YouTube-style input. `page` defaults 1. Desktop search submits explicitly; typing does not fetch suggestions or results. Filters use an expandable Apply form, removable active chips and Clear filters, with full HTML navigation. Search privacy uses POST form submission and browser-local choices; it does not prevent the server from contacting YouTube with the query.
+Use `/search?q=...` or the compatible YouTube-style `/results?search_query=...`. `page` defaults to 1. Browser search and filter changes submit explicitly. Filters use an expandable Apply form, removable active chips and Clear filters, with full HTML navigation. Search privacy uses POST form submission and browser-local choices. The server still sends the query to YouTube.
 
 | Parameter | Supported values/meaning |
 | --- | --- |
