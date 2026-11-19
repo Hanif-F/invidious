@@ -29,13 +29,15 @@ Any top-level property set to the literal `CHANGE_ME!!` aborts configuration loa
 
 `host_binding` and `port` default to `0.0.0.0:3000`; use loopback or a private network behind a reverse proxy. `socket_binding: {path: /run/invidious/app.sock, permissions: "660"}` selects Unix-socket binding. CLI host/port changes take precedence over ordinary defaults.
 
-Set `domain`, `external_port` when appropriate, and `https_only: true` to describe the externally visible HTTPS origin. `https_only` affects generated URLs/cookies/headers; it does not install a TLS certificate or terminate HTTPS. `hsts` defaults true and emits HSTS when HTTPS is in use, including subdomains/preload. Enable it only for a domain whose intended subdomains support HTTPS.
+Set `domain`, `external_port` when appropriate, and `https_only: true` to describe the externally visible HTTPS origin. Startup validates `domain` after applying environment overrides. Use a bare hostname, such as `video.example.com`, and put any port in `external_port`. `https_only` affects generated URLs/cookies/headers; it does not install a TLS certificate or terminate HTTPS. `hsts` defaults true and emits HSTS when HTTPS is in use, including subdomains/preload. Enable it only for a domain whose intended subdomains support HTTPS.
 
 `alternative_domains` permits listed forwarded hosts for cookie-domain selection. `auth_trusted_proxies` is independently used for authentication client-IP parsing. Configure only actual proxy CIDRs; its default empty list trusts no forwarding chain. See [security](security.md).
 
 ## Companion and outbound access
 
 Each `invidious_companion` entry has `private_url` and optional `public_url`. `private_url` is the application-to-companion address. Omitting `public_url` assigns `/companion` and enables built-in proxy routing. A public URL must be browser-reachable and compatible with the site's TLS/CSP. Multiple companions are selected when metadata is fetched, and the chosen endpoint remains associated with cached metadata.
+
+The built-in proxy returns a JSON `502` when it cannot get a response from Companion. It filters out the instance's authorization, cookie and CSRF headers before forwarding playback requests.
 
 `pool_size` defaults 100 per pool. `force_resolve` accepts `ipv4`, `ipv6` or an unspecified value. `http_proxy` retains its historical name but supports `type: http`, `socks5` or `socks5h`, plus host/port and optional credentials. SOCKS target hostname resolution occurs on the proxy. This config is used by the application's YouTube connection layer; it is not a promise that every external integration or a separate companion process uses it.
 
@@ -103,7 +105,7 @@ existing config-file persistence and environment-override behavior.
 
 ## Presentation and defaults
 
-`default_user_preferences` seeds preference parsing; it does not overwrite every saved account field. `default_playlist` is YAML-ignored in that defaults structure; runtime timezone initializes unset rather than copying the similarly named default field. [Preferences](preferences.md) and its field inventory explain exact runtime initialization and legacy AI conversion. `banner` displays an announcement; `modified_source_code_url` adds a footer link to the deployed fork's source; `admins` identifies accounts allowed to use `/admin/settings`.
+`default_user_preferences` seeds preference parsing; it does not overwrite every saved account field. `default_playlist` is YAML-ignored in that defaults structure; runtime timezone initializes unset rather than copying the similarly named default field. [Preferences](preferences.md) and its field inventory explain exact runtime initialization and legacy AI conversion. `banner` displays an announcement. The optional `footer` accepts operator-supplied HTML for the shared page footer, such as a contact link. `modified_source_code_url` adds a link to the deployed fork's source. `admins` identifies accounts allowed to use `/admin/settings`.
 
 `output` chooses `STDOUT` or an append-only log path; its parent directory is created when needed. `log_level` accepts the levels in [logger.cr](../src/invidious/helpers/logger.cr). `colorize_logs` toggles terminal colors. Avoid credentials in banners and maintain independent redaction at the reverse proxy.
 

@@ -506,6 +506,15 @@ metadata_video.info["description"] = JSON::Any.new("A longer description. " * 12
 metadata_video.length_seconds = 7000
 File.write("#{output}/watch-description.html", watch_fixture(fixture_env("/watch?v=2isYuQZMbdU"), supplied_video: metadata_video))
 
+merge_video = fixture_video
+merge_video.ai_made = true
+merge_video.length_seconds = 930
+timestamp = JSON.parse(%({"watchEndpoint":{"videoId":"#{merge_video.id}","startTimeSeconds":2}}))
+merge_video.description_html = "<p>#{parse_link_endpoint(timestamp, "0:02", merge_video.id)} A timestamp</p>"
+CONFIG.footer = %(<a href="/privacy">Contact the maintainer</a>)
+File.write("#{output}/watch-upstream-merge.html", watch_fixture(fixture_env("/watch?v=#{merge_video.id}"), nil, supplied_video: merge_video))
+CONFIG.footer = nil
+
 require "./member_checks"
 check_member_preferences
 require "./codec_checks"

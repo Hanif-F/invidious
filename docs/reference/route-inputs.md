@@ -91,6 +91,12 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 - Query: `redirect`.
 
+## Routes::Channels.potential_brand_redirect
+
+`GET /:user/:tab`. Source: [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr).
+
+- Path: `tab`.
+
 ## Routes::Login.signup_page
 
 `GET /signup`. Source: [src/invidious/routes/login.cr](../../src/invidious/routes/login.cr).
@@ -719,7 +725,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 
 ## Routes::Images.ggpht
 
-`GET /ggpht/*`. Source: [src/invidious/routes/images.cr](../../src/invidious/routes/images.cr).
+`GET /ggpht/:id`; `GET /ggpht/ytc/:id`; `GET /ggpht/*`. Source: [src/invidious/routes/images.cr](../../src/invidious/routes/images.cr).
 
 Inputs are supplied by shared helpers/context, or this handler takes no literal named inputs.
 

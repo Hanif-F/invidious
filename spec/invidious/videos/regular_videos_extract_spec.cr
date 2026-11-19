@@ -47,6 +47,7 @@ Spectator.describe "parse_video_info" do
     expect(info["isFamilyFriendly"].as_bool).to be_true
     expect(info["isListed"].as_bool).to be_true
     expect(info["isUpcoming"].as_bool).to be_false
+    expect(info["aiMade"].as_bool).to be_false
 
     # Related videos
 
@@ -84,6 +85,16 @@ Spectator.describe "parse_video_info" do
 
     expect(info["authorVerified"].as_bool).to be_true
     expect(info["subCountText"].as_s).to eq("320M")
+  end
+
+  it "recognizes a YouTube AI badge alongside malformed badge entries" do
+    raw_data = load_mock("video/regular_mrbeast.player").merge!(load_mock("video/regular_mrbeast.next"))
+    primary = raw_data.dig("contents", "twoColumnWatchNextResults", "results", "results", "contents").as_a
+      .compact_map(&.["videoPrimaryInfoRenderer"]?).first.as_h
+    primary["badges"] = JSON.parse(%([{"metadataBadgeRenderer":{"label":42}},null,{"metadataBadgeRenderer":{"label":"AI"}}]))
+
+    info = Invidious::Videos::Parser.parse_video_info("2isYuQZMbdU", raw_data)
+    expect(info["aiMade"].as_bool).to be_true
   end
 
   it "parses a regular video with no descrition/comments" do

@@ -15,7 +15,7 @@ struct Video
   # NOTE: don't forget to bump this number if any change is made to
   # the `params` structure in videos/parser.cr!!!
   #
-  SCHEMA_VERSION = 5
+  SCHEMA_VERSION = 6
 
   property id : String
 
@@ -314,6 +314,7 @@ struct Video
   getset_bool authorVerified
   getset_bool isFamilyFriendly
   getset_bool isListed
+  getset_bool aiMade
   predicate_bool upcoming, isUpcoming
 end
 

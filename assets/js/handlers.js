@@ -19,11 +19,24 @@
         var handler_name = t.getAttribute('data-onclick');
 
         switch (handler_name) {
-            case 'jump_to_time':
+            case 'jump_to_time': {
+                if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) break;
+                var activePlayer = window.player;
+                var time = Number(t.getAttribute('data-jump-time'));
+                if (!activePlayer || activePlayer.isDisposed() || !Number.isFinite(time) || time < 0) break;
+                var target = activePlayer.el();
+                if (!target || !target.isConnected) break;
+
                 e.preventDefault();
-                var time = t.getAttribute('data-jump-time');
-                player.currentTime(time);
+                activePlayer.currentTime(time);
+                target.scrollIntoView({
+                    behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+                    block: 'start'
+                });
+                var playback = activePlayer.play();
+                if (playback) playback.catch(function () {});
                 break;
+            }
             case 'get_youtube_replies':
                 e.preventDefault();
                 var load_more = t.getAttribute('data-load-more') !== null;

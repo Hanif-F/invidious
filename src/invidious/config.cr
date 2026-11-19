@@ -202,6 +202,8 @@ class Config
   property cache_annotations : Bool = false
   # Optional banner to be displayed along top of page for announcements, etc.
   property banner : String? = nil
+  # Optional footer banner to be displayed along the bottom of the page. Can be used for maintainer contact info, etc.
+  property footer : String? = nil
   # Enables 'Strict-Transport-Security'. Ensure that `domain` and all subdomains are served securely
   property hsts : Bool? = true
   # Disable proxying server-wide: options: 'dash', 'livestreams', 'downloads', 'local'
@@ -281,7 +283,16 @@ class Config
     env_config_yaml = "INVIDIOUS_CONFIG"
 
     config_file = ENV.has_key?(env_config_file) ? ENV.fetch(env_config_file) : "config/config.yml"
-    config_yaml = ENV.has_key?(env_config_yaml) ? ENV.fetch(env_config_yaml) : File.read(config_file)
+    config_yaml = if ENV.has_key?(env_config_yaml)
+                    ENV.fetch(env_config_yaml)
+                  else
+                    begin
+                      File.read(config_file)
+                    rescue ex : File::Error
+                      puts "Config: Failed to load configuration file: #{ex.message}"
+                      exit(1)
+                    end
+                  end
 
     config = Config.from_yaml(config_yaml)
 
@@ -398,9 +409,36 @@ class Config
       end
     end
 
+    if (domain = config.domain.presence)
+      validate_domain(domain)
+    end
+
     # A private instance must always retain a working sign-in entry point.
     config.login_enabled = true if config.login_required
 
     return config
+  end
+
+  private def self.validate_domain(domain : String)
+    if domain.includes?("://")
+      puts "Config (Hint): Remove the scheme from 'domain'."
+      exit(1)
+    end
+
+    parsed = URI.parse("//#{domain}")
+    hint = if parsed.port
+             "Remove the port from 'domain'. Set 'external_port' separately if needed."
+           elsif !parsed.path.empty? || parsed.query || parsed.fragment
+             "Remove any path, query, or fragment from 'domain'."
+           elsif parsed.host != domain || domain.matches?(/\s/)
+             "Set 'domain' to a hostname."
+           end
+    if hint
+      puts "Config (Hint): #{hint}"
+      exit(1)
+    end
+  rescue URI::Error
+    puts "Config (Hint): Set 'domain' to a hostname."
+    exit(1)
   end
 end

@@ -4,7 +4,7 @@
 
 Generated from [src/invidious/routing.cr](../../src/invidious/routing.cr) by [generate_reference.py](../tools/generate_reference.py). Regenerate after changing the source; do not edit generated tables manually.
 
-All **258 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
+All **261 explicit method/path registrations** are listed in registration order. `:id` and other colon names are path parameters; `*` is a wildcard. Static assets and Kemal's implicit handling (such as HEAD) are not separate rows.
 
 GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media proxies and configured companion routes remain. `/companion/*` requires a nonempty companion configuration. Notification registrations require `enable_user_notifications`. Public routes can still enforce resource privacy; `/api/v1/auth/*` always passes authentication. See [API conventions](../api.md), [security](../security.md), and [playback](../playback.md) for contracts.
 
@@ -28,6 +28,7 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 | GET | `/feed/webhook/:token` | `Routes::Feeds.push_notifications_get` | [src/invidious/routes/feeds.cr](../../src/invidious/routes/feeds.cr) |
 | POST | `/feed/webhook/:token` | `Routes::Feeds.push_notifications_post` | [src/invidious/routes/feeds.cr](../../src/invidious/routes/feeds.cr) |
 | GET | `/modify_notifications` | `Routes::Notifications.modify` | [src/invidious/routes/notifications.cr](../../src/invidious/routes/notifications.cr) |
+| GET | `/:user/:tab` | `Routes::Channels.potential_brand_redirect` | [src/invidious/routes/channels.cr](../../src/invidious/routes/channels.cr) |
 
 ## User routes
 
@@ -210,6 +211,8 @@ GUI groups are omitted by `-Dapi_only`. RSS, JSON API, manifests, image/media pr
 
 | Method | Path | Handler | Implementation |
 | --- | --- | --- | --- |
+| GET | `/ggpht/:id` | `Routes::Images.ggpht` | [src/invidious/routes/images.cr](../../src/invidious/routes/images.cr) |
+| GET | `/ggpht/ytc/:id` | `Routes::Images.ggpht` | [src/invidious/routes/images.cr](../../src/invidious/routes/images.cr) |
 | GET | `/ggpht/*` | `Routes::Images.ggpht` | [src/invidious/routes/images.cr](../../src/invidious/routes/images.cr) |
 | OPTIONS | `/sb/:authority/:id/:storyboard/:index` | `Routes::Images.options_storyboard` | [src/invidious/routes/images.cr](../../src/invidious/routes/images.cr) |
 | GET | `/sb/:authority/:id/:storyboard/:index` | `Routes::Images.get_storyboard` | [src/invidious/routes/images.cr](../../src/invidious/routes/images.cr) |

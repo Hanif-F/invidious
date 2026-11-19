@@ -71,7 +71,7 @@ Detailed video serialization is in [video_json.cr](../src/invidious/jsonify/api_
 | Publication/counts | `published`, `publishedText`, `viewCount`, `likeCount`, `viewCountPrecision`, `likeCountPrecision`; `dislikeCount`/`rating` compatibility values are 0 |
 | Creator | `author`, `authorId`, `authorUrl`, `authorVerified`, `authorThumbnails`, `subCountText` |
 | Availability | `paid`, `premium`, `isMember`, `isFamilyFriendly`, `allowedRegions`, `isListed`, `allowRatings` |
-| Classification | `genre`, `genreUrl`, `license` |
+| Classification | `genre`, `genreUrl`, `license`, `aiMade` (true when the video's YouTube metadata carries the AI badge) |
 | Playback state | `lengthSeconds`, `liveNow`, `liveChatReplay`, `isPostLiveDvr`, `isUpcoming`, optional `premiereTimestamp` |
 | Media | `dashUrl`, optional `hlsUrl`, `adaptiveFormats`, `formatStreams`, `captions`, optional `musicTracks` |
 | Suggestions | `recommendedVideos` with creator, thumbnail, membership, duration and count/date metadata |

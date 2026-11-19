@@ -89,4 +89,31 @@ Spectator.describe "Channel avatar extraction from real video lockups" do
     expect(video.published).to be_close(Time.utc - 2.years, 1.second)
     expect(video.author_thumbnail).not_to be_nil
   end
+
+  it "reads premiere times across metadata rows and keeps member badges" do
+    item = avatar_lockup
+    rows = avatar_metadata(item).dig("metadata", "contentMetadataViewModel", "metadataRows").as_a
+    rows << JSON.parse(%({"badges":[{"badgeViewModel":{"badgeStyle":"BADGE_MEMBERS_ONLY"}}]}))
+    rows << JSON.parse(%({"metadataParts":[{"text":{"content":"Premieres soon"}}]}))
+    rows << JSON.parse(%({"metadataParts":[{"text":{"content":"Premieres 6/29/27, 9:00\u202FPM"}}]}))
+
+    video = parse_item(item).as(SearchVideo)
+    expect(video.premiere_timestamp).to eq(Time.local(2027, 6, 29, 21, 0))
+    expect(video.views).to eq(106_000_000_i64)
+    expect(video.members_only).to be_true
+  end
+
+  it "reads a singular video count in playlist lockups" do
+    item = JSON.parse(<<-JSON)
+      {"lockupViewModel":{
+        "contentType":"LOCKUP_CONTENT_TYPE_PLAYLIST", "contentId":"PLfixture",
+        "contentImage":{"collectionThumbnailViewModel":{"primaryThumbnail":{"thumbnailViewModel":{
+          "image":{"sources":[{"url":"https://i.ytimg.com/fixture.jpg"}]},
+          "overlays":[{"thumbnailOverlayBadgeViewModel":{"thumbnailBadges":[{"thumbnailBadgeViewModel":{"text":"1 video"}}]}}]
+        }}}},
+        "metadata":{"lockupMetadataViewModel":{"title":{"content":"Fixture playlist"}}}
+      }}
+      JSON
+    expect(parse_item(item).as(SearchPlaylist).video_count).to eq(1)
+  end
 end

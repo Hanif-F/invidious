@@ -7,8 +7,10 @@
             <p><a class="button" href="/watch?v=<%= video.id %>&t=<%= native_clip.start_time %>"><%= I18n.translate(locale, "clips_full_video") %></a>
             <% if user && user.email == native_clip.owner %><a href="/delete_clip?id=<%= native_clip.id %>"><%= I18n.translate(locale, "clips_delete") %></a><% end %></p>
             <% else %>
-            <div data-dearrow-row><%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, video.title, spoiler_date, true, true, "h1") %></div>
-
+            <div class="watch-title-row" data-dearrow-row>
+                <%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, video.title, spoiler_date, true, true, "h1") %>
+                <% if video.length_seconds > 0 %><span class="watch-duration"><%= video_length_abbreviated(video.length_seconds.seconds) %></span><% end %>
+            </div>
             <% end %>
     <% if !video.is_listed %>
         <h3>
@@ -31,6 +33,7 @@
     <% end %>
             <div class="video-stats">
                 <% if count = Invidious::Frontend::ViewCounts.get(env, video.id) %><p id="views"><%= HTML.escape(count.text(locale)) %></p><% end %>
+                <% if video.ai_made %><p id="ai-made"><%= I18n.translate(locale, "video_details_ai_made") %></p><% end %>
                 <p id="likes"><%= Invidious::Frontend::Icons.render("thumbs-up") %> <%= number_with_separator(video.likes) %> <%= I18n.translate(locale, "ui_likes") %></p>
                 <p id="published-date"><% if video.premiere_timestamp.try &.> Time.utc %>
                     <%= I18n.translate(locale, "Premieres `x`", video.premiere_timestamp.not_nil!.to_s("%B %-d, %R UTC")) %>

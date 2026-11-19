@@ -52,6 +52,7 @@ add_context_storage_type(Preferences)
 add_context_storage_type(Invidious::User)
 
 NOTIFICATION_CHANNEL = ::Channel(VideoNotification).new(32)
+CONNECTION_CHANNEL   = ::Channel({Bool, ::Channel(PQ::Notification)}).new(32)
 CONFIG               = Config.from_yaml("hmac_key: frontend-fixtures\n")
 HMAC_KEY             = "frontend-fixtures"
 ACCOUNT_TEST_URL     = ENV["ACCOUNT_TEST_DATABASE_URL"]
@@ -70,6 +71,10 @@ LOGGER = Invidious::LogHandler.new(OUTPUT, LogLevel::Off)
 YT_POOL = YoutubeConnectionPool.new(URI.parse("https://www.youtube.com"), capacity: 1)
 GGPHT_POOL = YoutubeConnectionPool.new(URI.parse("https://yt3.ggpht.com"), capacity: 1)
 COMPANION_POOL = CompanionConnectionPool.new(capacity: 1)
+
+def popular_videos
+  Invidious::Jobs::PullPopularVideosJob::POPULAR_VIDEOS.get
+end
 
 def check(value, message)
   raise message unless value
@@ -172,6 +177,7 @@ end
 
 begin
   check(PG_DB.query_one("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'", as: Int64) == 0, "Test database must be empty")
+  check_upstream_channel_and_companion_routes
   PG_DB.exec("CREATE TABLE invidious_migrations (id bigserial PRIMARY KEY, version bigint NOT NULL)")
   Invidious::Database::Migrator.migrations.map(&.new(PG_DB)).sort_by!(&.version).each do |migration|
     migration.migrate if migration.version < 17

@@ -125,6 +125,8 @@ Captions expose available labels/language codes and VTT track responses. Selecte
 
 Manual chapter boundaries come from labeled description lines such as `1:23 Introduction` or `1:02:03 Finale`. Two distinct valid timestamps are sufficient; neither a zero timestamp nor ten-second sections is required. Automatic YouTube chapters and comment timestamps do not supply these chapters. The UI shows current chapter, ticks and combined SponsorBlock hover labels.
 
+On the watch page, a timestamp link to the current video in a comment or description seeks, scrolls to the player, and starts playback when the player is available. The watch heading shows a duration when known and identifies videos carrying YouTube's AI badge.
+
 Storyboards provide sprite thumbnails and VTT references for seek previews. Legacy annotations are fetched from the archive path and optionally cached. They may be missing independently of video playback. VR applies only to supported projection metadata and capable players. See [API](api.md) for selectors and response representations.
 
 Missing, null or incorrectly shaped storyboard containers/renderers produce an

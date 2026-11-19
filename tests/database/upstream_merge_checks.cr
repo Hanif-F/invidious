@@ -109,3 +109,74 @@ def check_upstream_history_imports_and_feeds
   check(retired.response.status_code == 410 && JSON.parse(retired.get("test_result").as(String))["error"].as_s.includes?("Reddit"), "Retired Reddit comment API did not return 410")
   puts "Upstream import ID validation/error statuses, fork import preservation and parameterized subscription filters passed"
 end
+
+def check_upstream_channel_and_companion_routes
+  companions = CONFIG.invidious_companion
+  router = Kemal::RouteHandler::INSTANCE
+  saved_routes, saved_cache = router.routes, router.cached_routes
+  test_router = Kemal::RouteHandler.new
+  router.routes, router.cached_routes = test_router.routes, test_router.cached_routes
+
+  companion = HTTP::Server.new do |env|
+    env.response.status_code = 206 if env.request.method == "GET"
+    env.response.content_type = "application/json"
+    env.response.headers["Connection"] = "close"
+    env.response.print({
+      method: env.request.method,
+      target: env.request.resource,
+      range:  env.request.headers["Range"]?,
+      body:   env.request.body.try(&.gets_to_end),
+      secret: %w[Authorization Cookie X-CSRF-Token].any? { |key| env.request.headers.has_key?(key) },
+    }.to_json)
+  end
+  address = companion.bind_tcp("127.0.0.1", 0)
+  CONFIG.invidious_companion = [Config::CompanionConfig.from_yaml("private_url: http://127.0.0.1:#{address.port}")]
+  Invidious::Routing.register_all
+  spawn { companion.listen }
+  {
+    "/ggpht/avatar=s88"          => "/ggpht/:id",
+    "/ggpht/ytc/avatar=s88"      => "/ggpht/ytc/:id",
+    "/ggpht/s88-c-k/avatar"      => "/ggpht/*",
+    "/feed/subscriptions"        => "/feed/subscriptions",
+    "/admin/settings"            => "/admin/settings",
+    "/api/v1/stats"              => "/api/v1/stats",
+    "/channel/UCfixture/streams" => "/channel/:ucid/streams",
+    "/markrober/streams"         => "/:user/:tab",
+  }.each do |path, pattern|
+    check(router.lookup_route("GET", path).payload.path == pattern, "Channel fallback changed the route for #{path}")
+  end
+
+  request = ->(method : String) do
+    headers = HTTP::Headers{
+      "Authorization" => "Bearer synthetic", "Cookie" => "SID=synthetic",
+      "X-CSRF-Token" => "synthetic", "Range" => "bytes=0-10",
+    }
+    io = IO::Memory.new
+    path = "/companion/media?token=a%2Bb&format=webm"
+    body = "test payload" if method == "POST"
+    env = HTTP::Server::Context.new(HTTP::Request.new(method, path, headers, body), HTTP::Server::Response.new(io))
+    Invidious::Authentication.no_store(env)
+    env.response.headers["Access-Control-Allow-Origin"] = "*"
+    router.call(env)
+    env.response.close
+    HTTP::Client::Response.from_io(IO::Memory.new(io.to_s))
+  end
+  %w[GET POST OPTIONS].each do |method|
+    response = request.call(method)
+    check(response.status_code == (method == "GET" ? 206 : 200), "Companion lost the upstream status")
+    data = JSON.parse(response.body)
+    check(!data["secret"].as_bool && data["range"] == "bytes=0-10", "Companion forwarded account credentials or lost Range")
+    check(data["method"] == method && data["target"] == "/companion/media?token=a%2Bb&format=webm", "Companion altered method or query")
+    check(data["body"].as_s? == (method == "POST" ? "test payload" : nil), "Companion altered the request body")
+  end
+
+  companion.close
+  response = request.call("GET")
+  check(response.status_code == 502 && JSON.parse(response.body)["error"].as_s.includes?("Companion"), "Companion failure did not return JSON 502")
+  check(response.headers["Cache-Control"] == "private, no-store" && response.headers["Access-Control-Allow-Origin"] == "*", "Companion failure removed middleware headers")
+  puts "Upstream channel route precedence, avatar routes, and Companion proxy checks passed"
+ensure
+  companion.try &.close unless companion.try &.closed?
+  router.routes, router.cached_routes = saved_routes, saved_cache if router && saved_routes && saved_cache
+  CONFIG.invidious_companion = companions if companions
+end

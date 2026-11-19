@@ -742,7 +742,7 @@ private module Parsers
           views:              view_count || 0_i64,
           description_html:   "",
           length_seconds:     length_seconds || 0,
-          premiere_timestamp: Time.unix(0),
+          premiere_timestamp: HelperExtractors.get_lockup_premiere(metadata_parts),
           author_verified:    HelperExtractors.lockup_author_verified?(metadata, author),
           author_thumbnail:   Invidious::ChannelAvatars.lockup_thumbnail(metadata, author_id),
           badges:             Invidious::Videos::Membership.detected?(item_contents) ? VideoBadges::MembersOnly : VideoBadges::None,
@@ -802,7 +802,7 @@ private module Parsers
           .compact_map(&.dig?("thumbnailOverlayBadgeViewModel", "thumbnailBadges").try &.as_a)
           .flatten
           .find(nil, &.dig?("thumbnailBadgeViewModel", "text").try do |node|
-            {"episodes", "videos", "lessons"}.any? { |str| node.as_s.ends_with?(str) }
+            {"episodes", "videos", "video", "lessons"}.any? { |str| node.as_s.ends_with?(str) }
           end)
           .try &.dig("thumbnailBadgeViewModel", "text").as_s.to_i(strict: false)
 
@@ -1194,6 +1194,21 @@ module HelperExtractors
     end
     nil
   rescue
+    nil
+  end
+
+  def self.get_lockup_premiere(parts : Array(JSON::Any)) : Time?
+    parts.each do |part|
+      data = part.as_h?.try(&.["text"]?).try(&.as_h?)
+      text = data.try(&.["content"]?).try &.as_s?
+      next unless text && text.starts_with?("Premieres ")
+
+      begin
+        return decode_date(text)
+      rescue Time::Format::Error
+        # A malformed label should not discard the video or other metadata rows.
+      end
+    end
     nil
   end
 

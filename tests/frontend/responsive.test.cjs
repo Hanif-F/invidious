@@ -88,7 +88,7 @@ async function serve(context) {
         if(url.hostname!=='invidious.test') return route.fulfill({status:404,body:''});
         if(url.pathname==='/framed') return route.fulfill({contentType:'text/html',body:'<!doctype html><meta name="viewport" content="width=device-width"><style>body{margin:0}iframe{display:block;border:0;width:100vw;height:100vh}</style><iframe title="Player" src="/fixtures/d7-embed-single-light.html"></iframe>'});
         if(/^\/fixtures\/[a-z0-9-]+\.html$/.test(url.pathname)) return route.fulfill(fileResponse(path.join(generated,path.basename(url.pathname))));
-        if(url.pathname==='/latest_version') return route.fulfill(fileResponse(path.join(generated,'fixture.webm')));
+        if(url.pathname==='/latest_version'||url.pathname==='/fixture.webm') return route.fulfill(fileResponse(path.join(generated,'fixture.webm')));
         const asset = path.join(assets,url.pathname);
         if(fs.existsSync(asset) && fs.statSync(asset).isFile()) return route.fulfill(fileResponse(asset));
         if(/^\/(vi\/|ggpht)/.test(url.pathname)) return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><path fill="#526785" d="M0 0h320v180H0z"/><circle fill="#b6cee4" cx="190" cy="92" r="36"/></svg>'});
@@ -237,6 +237,31 @@ for(const engine of engines) {
                     assert.deepEqual(await geometry(page),[]);
                 } finally { await context.close(); }
             });
+        } finally { await browser.close(); }
+    });
+
+    test(`${engine}: watch metadata, footer, and timestamp playback on phone and desktop`,async()=>{
+        const browser=await playwright[engine].launch({headless:true});
+        try {
+            const context=await browser.newContext({reducedMotion:'reduce'});
+            await serve(context);
+            const page=await context.newPage();
+            for(const viewport of [viewports[0],{width:1440,height:900}]) {
+                await page.setViewportSize(viewport);
+                await page.goto('https://invidious.test/fixtures/watch-upstream-merge.html');
+                assert.equal(await page.locator('.watch-title-row .watch-duration').textContent(),'15 min');
+                assert.equal(await page.locator('#ai-made').textContent(),'Labeled AI-made on YouTube');
+                assert.equal(await page.locator('#footer-info a').textContent(),'Contact the maintainer');
+                assert.deepEqual(await geometry(page),[]);
+                await page.evaluate(()=>new Promise(resolve=>window.player.ready(resolve)));
+                await page.locator('#descriptionWrapper [data-jump-time="2"]').click();
+                await page.waitForFunction(()=>!window.player.paused()&&window.player.currentTime()>=2,{},{timeout:12000});
+                const playerBox=await page.locator('#player').boundingBox();
+                assert.ok(playerBox && playerBox.y>=0 && playerBox.y<viewport.height/2,'Player scrolled into view');
+                assert.ok(page.url().endsWith('/fixtures/watch-upstream-merge.html'));
+            }
+            await page.goto('https://invidious.test/fixtures/d5-single-light.html');
+            assert.equal(await page.locator('#footer-info,#ai-made').count(),0);
         } finally { await browser.close(); }
     });
 }

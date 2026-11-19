@@ -1,60 +1,45 @@
 module Invidious::Routes::Companion
-  # GET /companion
-  def self.get_companion(env)
-    url = env.request.path
-    if env.request.query
-      url += "?#{env.request.query}"
-    end
+  extend self
 
-    begin
-      COMPANION_POOL.client do |wrapper|
-        wrapper.client.get(url, Authentication.proxy_headers(env)) do |resp|
-          return self.proxy_companion(env, resp)
-        end
-      end
-    rescue
-    end
+  # GET /companion
+  def get_companion(env)
+    proxy_companion(env, "GET")
   end
 
   # POST /companion
-  def self.post_companion(env)
-    url = env.request.path
-    if env.request.query
-      url += "?#{env.request.query}"
-    end
-
-    begin
-      COMPANION_POOL.client do |wrapper|
-        wrapper.client.post(url, Authentication.proxy_headers(env), env.request.body) do |resp|
-          return self.proxy_companion(env, resp)
-        end
-      end
-    rescue
-    end
+  def post_companion(env)
+    proxy_companion(env, "POST")
   end
 
-  def self.options_companion(env)
-    url = env.request.path
-    if env.request.query
-      url += "?#{env.request.query}"
-    end
-
-    begin
-      COMPANION_POOL.client do |wrapper|
-        wrapper.client.options(url, Authentication.proxy_headers(env)) do |resp|
-          return self.proxy_companion(env, resp)
-        end
-      end
-    rescue
-    end
+  # OPTIONS /companion
+  def options_companion(env)
+    proxy_companion(env, "OPTIONS")
   end
 
-  private def self.proxy_companion(env, response)
-    env.response.status_code = response.status_code
-    response.headers.each do |key, value|
-      env.response.headers[key] = value
+  private def proxy_companion(env, method)
+    response_received = false
+    stream_error = nil
+    COMPANION_POOL.client do |wrapper|
+      headers = Authentication.proxy_headers(env)
+      body = env.request.body if method == "POST"
+      wrapper.client.exec(method, env.request.resource, headers, body) do |response|
+        response_received = true
+        begin
+          env.response.status_code = response.status_code
+          response.headers.each { |key, value| env.response.headers[key] = value }
+          IO.copy(response.body_io, env.response)
+        rescue ex
+          # The pool retries exceptions from its block. An interrupted response
+          # must terminate the stream without replaying the request.
+          wrapper.close
+          stream_error = ex
+        end
+      end
     end
+    raise stream_error if stream_error
+  rescue ex
+    raise ex if response_received
 
-    return IO.copy response.body_io, env.response
+    Errors.error_json(502, "Couldn't proxy request to Invidious Companion.")
   end
 end

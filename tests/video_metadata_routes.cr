@@ -151,6 +151,10 @@ def check_unavailable_storyboards(label)
 end
 
 check_unavailable_storyboards("missing field")
+check(JSON.parse(video_request[2])["aiMade"].as_bool == false, "Older video metadata did not default aiMade to false")
+VideoFixture.info["aiMade"] = JSON::Any.new(true)
+check(JSON.parse(video_request[2])["aiMade"].as_bool, "Video API lost the AI badge")
+VideoFixture.info.delete("aiMade")
 [%q(null), %q("{}"), %q([]), %q(17), %q(true), %q({}),
  %q({"playerLiveStoryboardSpecRenderer":"bad","playerStoryboardSpecRenderer":null}),
  %q({"playerLiveStoryboardSpecRenderer":{"spec":42},"playerStoryboardSpecRenderer":{"spec":[]}}),

@@ -61,6 +61,11 @@ module Invidious::Routing
     self.register_api_manifest_routes
     self.register_video_playback_routes
     self.register_companion_routes
+
+    {% unless flag?(:api_only) %}
+      # Bare channel handles with a tab, such as /linuxtechtips/streams.
+      get "/:user/:tab", Routes::Channels, :potential_brand_redirect
+    {% end %}
   end
 
   # -------------------
@@ -263,6 +268,9 @@ module Invidious::Routing
   end
 
   def register_image_routes
+    get "/ggpht/:id", Routes::Images, :ggpht
+    get "/ggpht/ytc/:id", Routes::Images, :ggpht
+    # Keep the fixed-host proxy available for legacy multi-part avatar paths.
     get "/ggpht/*", Routes::Images, :ggpht
     options "/sb/:authority/:id/:storyboard/:index", Routes::Images, :options_storyboard
     get "/sb/:authority/:id/:storyboard/:index", Routes::Images, :get_storyboard

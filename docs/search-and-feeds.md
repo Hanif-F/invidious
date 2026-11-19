@@ -46,6 +46,8 @@ Playlist-item search has a fixed owned-playlist target and video scope. Explicit
 
 Canonical channels use `/channel/:ucid`; handles and `/c/`, `/user/`, attribution/profile links resolve to the canonical channel. `/channel/:ucid/live` and legacy live paths resolve an available live video. Unknown future channel tab paths redirect to the channel home after specific routes have had a chance to match.
 
+Recognized tab paths on bare channel names, such as `/markrober/streams`, also resolve to the canonical channel tab. Unknown tabs on bare names return 404.
+
 Core tabs show Videos, Shorts, Live, Playlists, Clips and Posts when available. More contains Podcasts, Releases, Courses, related channels and About, and identifies the selected overflow destination. Channel tools use a contained menu; scoped search and supported sorting submit explicitly. Tabs backed by upstream only appear/work when upstream provides them. Local clips are advertised independently, in website order between playlists and posts. Videos/shorts/streams and playlist-like tabs use upstream continuation tokens; clients must pass tokens through unchanged instead of inventing offsets.
 
 Community pages and `/post/:id` display upstream posts and load supported comments/replies. `/api/v1/post/:id/comments` needs a channel ID for the initial request, or a continuation for subsequent requests. Channel author metadata and avatars are extracted from existing responses; missing or failed avatars use local placeholders rather than extra avatar-only requests. Community/post attachments and replies share structured threads, independent opaque cursors and explicit retry after failed reads. No-JavaScript entry points retain server-rendered comments and continuation links.

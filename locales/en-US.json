@@ -742,6 +742,7 @@
     "timeline_parse_error_placeholder_message": "Invidious encountered an error while trying to parse this item. For more information see below:",
     "timeline_parse_error_show_technical_details": "Show technical details",
     "dmca_content": "This video cannot be downloaded on this instance due to a DMCA/copyright infringement letter sent to the instance administrator.",
+    "video_details_ai_made": "Labeled AI-made on YouTube",
     "ui_skip_content": "Skip to content",
     "ui_navigation": "Menu",
     "ui_home": "Home",

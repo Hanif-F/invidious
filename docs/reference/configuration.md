@@ -45,6 +45,7 @@ Values below are **code defaults**, expressed as Crystal literals, rather than d
 | `check_tables` | `Bool` | `false` |
 | `cache_annotations` | `Bool` | `false` |
 | `banner` | `String?` | `nil` |
+| `footer` | `String?` | `nil` |
 | `hsts` | `Bool?` | `true` |
 | `disable_proxy` | `Bool? \| Array(String)?` | `false` |
 | `enable_user_notifications` | `Bool` | `true` |
