@@ -117,10 +117,25 @@ def check_upstream_channel_and_companion_routes
   test_router = Kemal::RouteHandler.new
   router.routes, router.cached_routes = test_router.routes, test_router.cached_routes
 
+  media_path = "/companion/videoplayback"
+  media_bytes = Bytes[0, 0, 0, 11, 0x6d, 0x64, 0x61, 0x74, 0, 0x80, 0xff]
   companion = HTTP::Server.new do |env|
+    env.response.headers["Connection"] = "close"
+    if env.request.path == media_path
+      if env.request.headers["Range"]? != "bytes=0-10"
+        env.response.status_code = 416
+        next
+      end
+      env.response.status_code = 206
+      env.response.content_type = "video/mp4"
+      env.response.headers["Content-Range"] = "bytes 0-10/100"
+      env.response.headers["Content-Length"] = media_bytes.size.to_s
+      env.response.write(media_bytes)
+      next
+    end
+
     env.response.status_code = 206 if env.request.method == "GET"
     env.response.content_type = "application/json"
-    env.response.headers["Connection"] = "close"
     env.response.print({
       method: env.request.method,
       target: env.request.resource,
@@ -146,32 +161,44 @@ def check_upstream_channel_and_companion_routes
     check(router.lookup_route("GET", path).payload.path == pattern, "Channel fallback changed the route for #{path}")
   end
 
-  request = ->(method : String) do
+  compression = FilteredCompressHandler.new
+  compression.next = router
+  request = ->(method : String, path : String, accept_encoding : String?) do
     headers = HTTP::Headers{
       "Authorization" => "Bearer synthetic", "Cookie" => "SID=synthetic",
       "X-CSRF-Token" => "synthetic", "Range" => "bytes=0-10",
     }
+    headers["Accept-Encoding"] = accept_encoding if accept_encoding
     io = IO::Memory.new
-    path = "/companion/media?token=a%2Bb&format=webm"
     body = "test payload" if method == "POST"
     env = HTTP::Server::Context.new(HTTP::Request.new(method, path, headers, body), HTTP::Server::Response.new(io))
     Invidious::Authentication.no_store(env)
     env.response.headers["Access-Control-Allow-Origin"] = "*"
-    router.call(env)
+    compression.call(env)
     env.response.close
-    HTTP::Client::Response.from_io(IO::Memory.new(io.to_s))
+    HTTP::Client::Response.from_io(IO::Memory.new(io.to_s), decompress: false)
   end
+  metadata_path = "/companion/media?token=a%2Bb&format=webm"
   %w[GET POST OPTIONS].each do |method|
-    response = request.call(method)
+    response = request.call(method, metadata_path, nil)
     check(response.status_code == (method == "GET" ? 206 : 200), "Companion lost the upstream status")
     data = JSON.parse(response.body)
     check(!data["secret"].as_bool && data["range"] == "bytes=0-10", "Companion forwarded account credentials or lost Range")
-    check(data["method"] == method && data["target"] == "/companion/media?token=a%2Bb&format=webm", "Companion altered method or query")
+    check(data["method"] == method && data["target"] == metadata_path, "Companion altered method or query")
     check(data["body"].as_s? == (method == "POST" ? "test payload" : nil), "Companion altered the request body")
   end
 
+  response = request.call("GET", "#{media_path}?itag=137", "gzip, deflate, br")
+  check(response.status_code == 206, "Companion media lost the partial response status")
+  check(!response.headers.has_key?("Content-Encoding"), "Companion media was compressed")
+  check(response.headers["Content-Range"]? == "bytes 0-10/100", "Companion media lost the byte range")
+  check(response.headers["Content-Length"]? == media_bytes.size.to_s, "Companion media lost the range length")
+  check(response.body.to_slice == media_bytes, "Companion media changed the range bytes")
+  response = request.call("GET", metadata_path, "gzip, deflate, br")
+  check(response.headers["Content-Encoding"]? == "gzip", "Other Companion responses lost compression")
+
   companion.close
-  response = request.call("GET")
+  response = request.call("GET", metadata_path, nil)
   check(response.status_code == 502 && JSON.parse(response.body)["error"].as_s.includes?("Companion"), "Companion failure did not return JSON 502")
   check(response.headers["Cache-Control"] == "private, no-store" && response.headers["Access-Control-Allow-Origin"] == "*", "Companion failure removed middleware headers")
   puts "Upstream channel route precedence, avatar routes, and Companion proxy checks passed"
