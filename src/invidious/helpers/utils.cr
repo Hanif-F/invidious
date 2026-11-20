@@ -1,17 +1,5 @@
 PUBSUB_URL = URI.parse("https://pubsubhubbub.appspot.com")
 
-def video_length_abbreviated(length : Time::Span) : String
-  if length.days > 0
-    "#{length.days} d #{length.hours} h #{length.minutes} min"
-  elsif length.hours > 0
-    "#{length.hours} h #{length.minutes} min"
-  elsif length.minutes > 0
-    "#{length.minutes} min"
-  else
-    "#{length.seconds} s"
-  end
-end
-
 def decode_length_seconds(string)
   length_seconds = string.gsub(/[^0-9:]/, "")
   return 0_i32 if length_seconds.empty?

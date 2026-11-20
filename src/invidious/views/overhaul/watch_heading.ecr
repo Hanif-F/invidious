@@ -9,7 +9,6 @@
             <% else %>
             <div class="watch-title-row" data-dearrow-row>
                 <%= Invidious::Frontend::ChannelSpoilers.title(env, video.id, video.ucid, video.title, spoiler_date, true, true, "h1") %>
-                <% if video.length_seconds > 0 %><span class="watch-duration"><%= video_length_abbreviated(video.length_seconds.seconds) %></span><% end %>
             </div>
             <% end %>
     <% if !video.is_listed %>

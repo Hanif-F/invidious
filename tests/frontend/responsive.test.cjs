@@ -249,7 +249,7 @@ for(const engine of engines) {
             for(const viewport of [viewports[0],{width:1440,height:900}]) {
                 await page.setViewportSize(viewport);
                 await page.goto('https://invidious.test/fixtures/watch-upstream-merge.html');
-                assert.equal(await page.locator('.watch-title-row .watch-duration').textContent(),'15 min');
+                assert.equal(await page.locator('.watch-heading').getByText('15 min', {exact:true}).count(),0);
                 assert.equal(await page.locator('#ai-made').textContent(),'Labeled AI-made on YouTube');
                 assert.equal(await page.locator('#footer-info a').textContent(),'Contact the maintainer');
                 assert.deepEqual(await geometry(page),[]);
