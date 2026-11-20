@@ -1231,6 +1231,7 @@ Inputs are supplied by shared helpers/context, or this handler takes no literal 
 `POST /api/v1/auth/history/:id`. Source: [src/invidious/routes/api/v1/authenticated.cr](../../src/invidious/routes/api/v1/authenticated.cr).
 
 - Path: `id`.
+- Query: `event`.
 
 ## Routes::API::V1::Authenticated.mark_unwatched
 

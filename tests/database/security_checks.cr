@@ -135,6 +135,13 @@ class SecurityTestEndpoint
                Invidious::Routes::API::V1::DeArrow.submit(env, DEARROW_TEST_CLIENT)
              when "/api/v1/auth/history"
                Invidious::Routes::API::V1::Authenticated.get_history(env)
+             when .starts_with?("/api/v1/auth/history/")
+               env.params.url["id"] = env.request.path.split('/').last
+               if env.request.method == "POST"
+                 Invidious::Routes::API::V1::Authenticated.mark_watched(env)
+               else
+                 Invidious::Routes::API::V1::Authenticated.mark_unwatched(env)
+               end
              when "/api/v1/auth/playback"
                Invidious::Routes::API::V1::Authenticated.get_playback_positions(env)
              when .starts_with?("/api/v1/auth/playback/")

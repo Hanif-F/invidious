@@ -18,6 +18,7 @@ def check_mobile_security
   login_time = Time.utc.to_unix
   token = data["accessToken"].as_s
   check_music_playback(token, email, sid)
+  check_mobile_history_events(token, email, sid)
   check_mobile_dearrow(token, email, sid)
   check_mobile_sponsorblock(token, email, sid)
   check_mobile_preferences(token, email, sid)
@@ -56,6 +57,10 @@ def check_mobile_security
   check(Preferences::RETIRED_THEME_FIELDS.none? { |key| response.has_key?(key) }, "Native sparse response exposed obsolete theme fields")
   check(after["future_setting"] == stored["future_setting"] && after["dark_mode"] == stored["dark_mode"], "Native settings destroyed unrelated preferences")
   check(Invidious::Database::PlaybackPositions.select_all(email).empty?, "Disabling positions failed to clear saved positions")
+  {"visit", "complete"}.each do |event|
+    check(security_request("POST", "/api/v1/auth/history/disabledvid?event=#{event}", bearer: token).response.status_code == 409,
+      "A disabled history preference accepted #{event}")
+  end
   { %({"theme":"dark"}), %({"watch_history":"false"}), "{}" }.each do |invalid|
     check(security_request("PATCH", "/api/v1/auth/preferences", bearer: token, body: invalid).response.status_code == 400, "Invalid preference patch accepted")
     check(JSON.parse(Invidious::Database::Users.preference_json(email)).as_h == after, "Rejected patch changed preferences")
@@ -101,6 +106,31 @@ def check_mobile_security
     end
   end
   puts "Native sign-in, least privilege, expiry, revocation, settings preservation and history API passed"
+end
+
+def check_mobile_history_events(token, email, sid)
+  visit, legacy = {"historyevt1", "historyevt2"}
+  path = "/api/v1/auth/history/#{visit}"
+  reader = Invidious::Helpers::Tokens.generate_token(email, ["GET:playback"], nil, HMAC_KEY, sid)
+  check(security_request("POST", "#{path}?event=visit", bearer: reader).response.status_code == 403, "History event bypassed the write scope")
+  check(security_request("POST", "#{path}?event=unknown", bearer: token).response.status_code == 400, "Invalid history event accepted")
+  check(security_request("POST", "#{path}?event=visit", bearer: token).response.status_code == 204, "Visit was rejected")
+  response = security_request("GET", "/api/v1/auth/playback", bearer: token)
+  payload = JSON.parse(response.get("test_result").as(String))
+  check(payload["historyEvents"].as_bool && payload["watched"].as_a.any?(&.== visit) && payload["completed"].as_a.none?(&.== visit), "A visit was not advertised or implied completion")
+  PG_DB.exec("UPDATE watch_history SET latest_watched = '2025-01-01' WHERE email=$1 AND video_id=$2", email, visit)
+  2.times do
+    check(security_request("POST", "#{path}?event=complete", bearer: token).response.status_code == 204, "Completion was rejected")
+  end
+  entry = Invidious::Database::WatchHistory.select_all(email).find(&.video_id.==(visit)).not_nil!
+  check(entry.completed && entry.latest_watched == "2025-01-01", "Completion did not preserve the original visit date")
+  check(security_request("POST", "/api/v1/auth/history/#{legacy}", bearer: token).response.status_code == 204, "Legacy mark watched was rejected")
+  check(Invidious::Database::WatchHistory.completed_ids(email).to_set == {visit, legacy}.to_set, "Explicit and legacy completion marks did not agree")
+  check(security_request("DELETE", path, bearer: token).response.status_code == 204, "Removal was rejected")
+  check(Invidious::Database::WatchHistory.completed_ids(email) == [legacy], "Removing history kept a completion mark")
+ensure
+  user = Invidious::Database::Users.select!(email: email)
+  {visit, legacy}.each { |id| Invidious::Database::Users.mark_unwatched(user, id) if id }
 end
 
 def check_music_playback(token, email, sid)

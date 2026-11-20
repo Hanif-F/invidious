@@ -219,7 +219,17 @@ module Invidious::Routes::API::V1::Authenticated
       return Errors.error_json(400, InvalidVideoID.new(id))
     end
 
-    unless Invidious::Database::Users.mark_watched(user, id)
+    recorded = case env.params.query["event"]?
+               when "visit"
+                 Invidious::Database::WatchHistory.record(user, id)
+               when "complete"
+                 Invidious::Database::WatchHistory.complete(user, id)
+               when nil
+                 Invidious::Database::Users.mark_watched(user, id)
+               else
+                 return Errors.error_json(400, "Invalid watch history event.")
+               end
+    unless recorded
       return Errors.error_json(409, "Watch history is disabled in preferences.")
     end
     env.response.status_code = 204
@@ -254,9 +264,10 @@ module Invidious::Routes::API::V1::Authenticated
     user = env.get("user").as(User)
     positions = Invidious::PlaybackProgress.select_all(user.email)
     {
-      positions: positions.to_h { |entry| {entry[:video_id], entry[:position_seconds]} },
-      watched:   user.watched,
-      completed: Invidious::Database::WatchHistory.completed_ids(user.email),
+      positions:     positions.to_h { |entry| {entry[:video_id], entry[:position_seconds]} },
+      watched:       user.watched,
+      completed:     Invidious::Database::WatchHistory.completed_ids(user.email),
+      historyEvents: true,
     }.to_json
   end
 

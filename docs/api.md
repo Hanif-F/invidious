@@ -143,9 +143,10 @@ for browser cookies, account sync and compatibility.
 | Method/path after `/api/v1/auth` | Input/result |
 | --- | --- |
 | `GET /history` | Watched-ID array; page/max_results; details=true adds detail entries; also organized=true returns `{entries,total,hasMore,today,timezone}` with optional q |
-| `POST /history/:id`, `DELETE /history/:id` | Mark watched/unwatched; 204; 409 when history disabled |
+| `POST /history/:id` | Optional `event=visit` records a visit, `event=complete` records completion. Omitting the event marks watched and complete. Returns 204, 400 for an invalid ID or event, or 409 when history is disabled. |
+| `DELETE /history/:id` | Remove the history entry and its completion mark. Returns 204 or 409 when history is disabled. |
 | `DELETE /history` | Clear watched/details and playback positions; 204 |
-| `GET /playback` | `{positions:{id:seconds}, watched:[id], completed:[id]}` |
+| `GET /playback` | `{positions:{id:seconds}, watched:[id], completed:[id], historyEvents:true}`. The capability flag advertises support for the explicit POST events. |
 | `GET /playback/:id` | `{videoId,position,updatedAt}`; absent 404 |
 | `PUT /playback/:id` | `{position:nonnegative integer}` <= Int32 max; 204; disabled 409 |
 | `DELETE /playback/:id`, `DELETE /playback` | Clear one/all positions; 204 |
