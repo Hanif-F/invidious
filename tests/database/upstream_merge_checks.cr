@@ -145,7 +145,8 @@ def check_upstream_channel_and_companion_routes
     }.to_json)
   end
   address = companion.bind_tcp("127.0.0.1", 0)
-  CONFIG.invidious_companion = [Config::CompanionConfig.from_yaml("private_url: http://127.0.0.1:#{address.port}")]
+  companion_config = Config::CompanionConfig.from_yaml("private_url: http://127.0.0.1:#{address.port}\npublic_url: /companion\nbuiltin_proxy: true")
+  CONFIG.invidious_companion = [companion_config]
   Invidious::Routing.register_all
   spawn { companion.listen }
   {
@@ -172,6 +173,7 @@ def check_upstream_channel_and_companion_routes
     io = IO::Memory.new
     body = "test payload" if method == "POST"
     env = HTTP::Server::Context.new(HTTP::Request.new(method, path, headers, body), HTTP::Server::Response.new(io))
+    env.set "preferences", Preferences.from_json("{}")
     Invidious::Authentication.no_store(env)
     env.response.headers["Access-Control-Allow-Origin"] = "*"
     compression.call(env)
@@ -188,12 +190,25 @@ def check_upstream_channel_and_companion_routes
     check(data["body"].as_s? == (method == "POST" ? "test payload" : nil), "Companion altered the request body")
   end
 
-  response = request.call("GET", "#{media_path}?itag=137", "gzip, deflate, br")
-  check(response.status_code == 206, "Companion media lost the partial response status")
-  check(!response.headers.has_key?("Content-Encoding"), "Companion media was compressed")
-  check(response.headers["Content-Range"]? == "bytes 0-10/100", "Companion media lost the byte range")
-  check(response.headers["Content-Length"]? == media_bytes.size.to_s, "Companion media lost the range length")
-  check(response.body.to_slice == media_bytes, "Companion media changed the range bytes")
+  media_target = "#{media_path}?host=invalid.invalid&itag=137"
+  accept_encoding = "gzip, deflate, br"
+  response = request.call("GET", media_target, accept_encoding)
+  check(response.status_code == 400, "Plain media did not use the Invidious handler's host validation")
+
+  {
+    {true, "#{media_target}&enc=true"},
+    {true, "#{media_target}&ump=1"},
+    {false, media_target},
+  }.each do |builtin_proxy, target|
+    companion_config.builtin_proxy = builtin_proxy
+    response = request.call("GET", target, accept_encoding)
+    check(response.status_code == 206, "Forwarded media lost the partial response status")
+    check(!response.headers.has_key?("Content-Encoding"), "Forwarded media was compressed")
+    check(response.headers["Content-Range"]? == "bytes 0-10/100", "Forwarded media lost the byte range")
+    check(response.headers["Content-Length"]? == media_bytes.size.to_s, "Forwarded media lost the range length")
+    check(response.body.to_slice == media_bytes, "Forwarded media changed the range bytes")
+  end
+  companion_config.builtin_proxy = true
   response = request.call("GET", metadata_path, "gzip, deflate, br")
   check(response.headers["Content-Encoding"]? == "gzip", "Other Companion responses lost compression")
 

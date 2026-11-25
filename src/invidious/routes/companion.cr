@@ -3,6 +3,12 @@ module Invidious::Routes::Companion
 
   # GET /companion
   def get_companion(env)
+    if env.request.method == "GET" && env.request.path == "/companion/videoplayback" &&
+       CONFIG.invidious_companion.any?(&.builtin_proxy) &&
+       env.params.query["enc"]? != "true" && !env.params.query.has_key?("ump")
+      return VideoPlayback.get_video_playback(env)
+    end
+
     proxy_companion(env, "GET")
   end
 
