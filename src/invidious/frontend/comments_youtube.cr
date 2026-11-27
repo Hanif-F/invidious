@@ -33,7 +33,7 @@ module Invidious::Frontend::Comments
           html << %(<span class="comment-avatar">) << ChannelAvatars.render_image(child["author"].as_s, avatar_source, 40) << "</span>"
         end
         html << %(<div class="comment-main"><div class="comment-author"><a class="#{owner ? "channel-owner" : ""}" href="#{HTML.escape(child["authorUrl"].as_s)}" dir="auto">#{author_name}</a>)
-        html << %(<span class="verified" title="#{I18n.translate(locale, "Verified")}">#{Icons.render("check")}</span>) if child["verified"]?.try(&.as_bool?)
+        html << %(<span class="verified" title="#{I18n.translate(locale, "Verified")}">#{Icons.render("badge-check")}</span>) if child["verified"]?.try(&.as_bool?)
         if child["isSponsor"]?.try(&.as_bool?)
           if sponsor = image_proxy(child["sponsorIconUrl"]?.try(&.as_s?))
             html << %(<img src="#{HTML.escape(sponsor)}" alt="#{I18n.translate(locale, "Channel Sponsor")}" width="16" height="16" loading="lazy">)

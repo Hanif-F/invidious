@@ -29,3 +29,6 @@
 
 # Spectator's local failed-example cache
 /.spectator-failures
+
+# Qwen Code session data
+/.qwen/

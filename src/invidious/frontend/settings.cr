@@ -4,13 +4,13 @@ module Invidious::Frontend::Settings
   CATEGORIES = {
     "appearance"        => {"overhaul_appearance", "sun"},
     "language"          => {"ui_language", "languages"},
-    "browsing"          => {"ui_browsing_feeds", "house"},
+    "browsing"          => {"ui_browsing_feeds", "compass"},
     "playback"          => {"overhaul_playback", "play"},
     "captions-comments" => {"settings_captions_comments", "captions"},
-    "library"           => {"ui_library", "list-video"},
+    "library"           => {"ui_library", "library"},
     "sponsorblock"      => {"SponsorBlock", "shield"},
-    "dearrow"           => {"DeArrow", "rotate-cw"},
-    "ai-filter"         => {"settings_ai_filter", "filter"},
+    "dearrow"           => {"DeArrow", "replace"},
+    "ai-filter"         => {"settings_ai_filter", "sparkles"},
   }
   LABELS = {
     "dark_mode"                           => "preferences_color_mode_label",

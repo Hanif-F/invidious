@@ -1,7 +1,7 @@
 # Trusted, pinned local SVG symbols. Upstream/license/digests: assets/icons/.
 # This renderer never interpolates arbitrary upstream markup or symbol names.
 module Invidious::Frontend::Icons
-  NAMES = %w(menu search settings user log-out sun moon monitor house trending-up bell history list-video scissors plus check x ellipsis-vertical bookmark share-2 download headphones external-link rss grip-vertical eye eye-off shield captions languages gauge chevron-right chevron-down play pause volume-2 picture-in-picture-2 maximize layout-panel-top info rotate-cw keyboard trash-2 arrow-left filter heart thumbs-up lock globe volume-x)
+  NAMES = %w(menu search settings user log-out sun moon monitor house trending-up bell history list-video scissors plus check x ellipsis-vertical bookmark share-2 download headphones external-link rss grip-vertical eye eye-off shield captions languages gauge chevron-right chevron-down play pause volume-2 picture-in-picture-2 maximize layout-panel-top info rotate-cw keyboard trash-2 arrow-left filter heart thumbs-up lock globe volume-x ban wrench key-round pencil message-square file-text replace undo-2 library compass badge-check tv sparkles users)
 
   def self.render(name : String) : String
     raise ArgumentError.new("Unknown interface icon") unless NAMES.includes?(name)
