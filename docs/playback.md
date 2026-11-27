@@ -170,18 +170,13 @@ Media URLs can pass through `/videoplayback`, manifest rewrite routes or `/compa
 
 Downloads do not server-side mux/transcode separate tracks into a new file. Native app offline playback/export workflows described in the existing mobile guide belong to that external client, not this Crystal server.
 
-### Wingress playback workarounds
+### Companion media playback
 
-- **Media delivery through Invidious.** With `public_url` omitted, plain
-  `GET /companion/videoplayback` requests use Invidious’s existing `/videoplayback`
-  handler. Companion resolves the streams and serves DASH manifests. Encrypted
-  (`enc=true`) and UMP media requests go to Companion. In the browser comparison,
-  the Invidious handler played and sought in both Skyrim (`23RO_dMvPH0`) and Black
-  Ice (`efiW2K8gASM`). Skyrim also played at 1440p with audio.
-- **Gzip exclusion for media ranges.** Commit `d5af767f` skips Invidious’s HTTP gzip
-  middleware on `/companion/videoplayback`, so byte-range headers and bodies pass
-  through without recompression. The exclusion applies whichever handler serves
-  the request. Both videos stalled through Companion even with the exclusion.
+With `public_url` omitted, Invidious’s built-in proxy forwards
+`/companion/videoplayback` requests to Companion. Invidious skips HTTP gzip on
+this route so byte-range headers and bodies pass through without recompression.
+Companion `e415e90` includes the upstream fixes for truncated media responses
+and inclusive byte ranges.
 
 ## Desktop layout and docking
 
